@@ -5,6 +5,7 @@ import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/theme/app_text_styles.dart';
 import 'package:orientmobileapplication/features/technician/domain/entities/technician_entities.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/technician/providers/technician_providers.dart';
 import 'package:orientmobileapplication/features/technician/presentation/widgets/technician_header_widget.dart';
 import 'package:orientmobileapplication/features/technician/presentation/widgets/attendance_section.dart';
@@ -1005,6 +1006,7 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                               ? null
                               : () async {
                                   await notifier.completeJob(job);
+                                  ref.read(syncEngineProvider).syncAll();
                                   if (context.mounted) {
                                     Navigator.pop(context);
                                   }

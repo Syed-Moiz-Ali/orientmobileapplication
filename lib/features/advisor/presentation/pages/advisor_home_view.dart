@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/hive/hive_cleaner.dart';
+import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/core/router/app_router.dart';
+import 'package:orientmobileapplication/core/router/inspection_callbacks.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/widgets/exit_confirmation_dialog.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
@@ -13,9 +20,11 @@ import 'package:orientmobileapplication/features/advisor/domain/entities/followu
 import '../widgets/advisor_body.dart';
 import '../widgets/advisor_fab.dart';
 import '../widgets/advisor_bottom_nav.dart';
+import 'advisor_jobs_view.dart';
+import 'advisor_job_detail_view.dart';
+import 'advisor_reports_view.dart';
 import '../widgets/advisor_profile_sheet.dart';
 import '../widgets/advisor_notification_sheet.dart';
-import '../widgets/advisor_job_card_sheet.dart';
 import '../widgets/advisor_approval_sheet.dart';
 import '../widgets/advisor_contact_sheet.dart';
 import '../widgets/advisor_search_sheet.dart';
@@ -82,36 +91,22 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
 
   void _openInspectionDirect() {
     HapticFeedback.mediumImpact();
-    context.push(
-      AppRoutes.inspectionSheet,
-      extra: {
-        'onBack': () => context.pop(),
-        'onSaveDraft': () {
-          context.pop();
-          _toast(
-            'Draft saved',
-            icon: Icons.save_outlined,
-            color: AppColors.warning,
-          );
-        },
-        'onPreview': () {
-          context.push(
-            AppRoutes.inspectionPreview,
-            extra: {
-              'onBack': () => context.pop(),
-              'onSubmit': () {
-                _toast(
-                  'Inspection Submitted',
-                  icon: Icons.check_circle_outline,
-                  color: AppColors.success,
-                );
-                context.go(AppRoutes.advisorDashboard);
-              },
-            },
-          );
-        },
+    final callbacks = InspectionCallbacks(
+      onBack: () => context.pop(),
+      onSaveDraft: () {
+        context.pop();
+        _toast('Draft saved', icon: Icons.save_outlined, color: AppColors.warning);
+      },
+      onPreview: () {
+        context.push(
+          AppRoutes.inspectionPreview,
+          extra: {
+            'onBack': () => context.go(AppRoutes.advisorDashboard),
+          },
+        );
       },
     );
+    context.push(AppRoutes.inspectionSheet, extra: callbacks);
   }
 
   @override
@@ -119,7 +114,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
     super.initState();
     _tabCtrl = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(advisorDashboardProvider);
+      ref.read(advisorRefreshProvider.notifier).state++;
       Future.delayed(const Duration(milliseconds: 900), () {
         if (mounted) {
           _toast(
@@ -188,7 +183,72 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
     AdvisorProfileSheet(
       onLogout: () {
         Navigator.pop(context);
-        _toast('Logged out', icon: Icons.logout, color: AppColors.text3);
+        if (HiveCleaner.hasPendingSync()) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: AppColors.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+              title: const Row(children: [
+                Icon(Icons.sync_problem_rounded, color: AppColors.warning, size: 22),
+                SizedBox(width: 10),
+                Text('Sync Pending', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              ]),
+              content: const Text(
+                'You have pending sync operations.\nPlease wait for sync to complete before logging out.',
+                style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+            title: const Row(children: [
+              Icon(Icons.logout_rounded, color: AppColors.danger, size: 22),
+              SizedBox(width: 10),
+              Text('Logout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            ]),
+            content: const Text('Are you sure you want to logout?\nAll local data will be cleared.',
+                style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text3)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  HiveCleaner.clearAll().then((_) {
+                    if (mounted) context.go(AppRoutes.roleSelection);
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.danger,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text('Yes, Logout', style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+        );
       },
     ),
   );
@@ -200,7 +260,10 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
 
   void _onJobCard(JobCardEntity jc) {
     HapticFeedback.selectionClick();
-    _sheet(AdvisorJobCardSheet(jc: jc, onOpen: () => Navigator.pop(context)));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AdvisorJobDetailView(jc: jc)),
+    );
   }
 
   void _onApproval(PendingApprovalEntity pa) {
@@ -210,6 +273,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
         pa: pa,
         onApprove: () {
           Navigator.pop(context);
+          _persistApproval(pa, 'approved');
           _toast(
             'Estimate ${pa.estimateId} approved',
             icon: Icons.check_circle_outline,
@@ -218,6 +282,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
         },
         onReject: () {
           Navigator.pop(context);
+          _persistApproval(pa, 'rejected');
           _toast(
             'Sent back for revision',
             icon: Icons.undo,
@@ -226,6 +291,29 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
         },
       ),
     );
+  }
+
+  void _persistApproval(PendingApprovalEntity pa, String action) {
+    final local = GenericLocalDataSource(
+      Hive.box<Map<String, dynamic>>('inspections'),
+    );
+    local.save('approval_${pa.estimateId}', {
+      'estimateId': pa.estimateId,
+      'customerName': pa.customerName,
+      'amount': pa.amount,
+      'action': action,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    });
+    final queue = ref.read(syncQueueProvider);
+    queue.enqueue(SyncOperation(
+      id: const Uuid().v4(),
+      entityType: 'inspection',
+      entityId: pa.estimateId,
+      changeType: ChangeType.update,
+      payload: {'estimateId': pa.estimateId, 'action': action},
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+    ));
+    ref.read(syncEngineProvider).syncAll();
   }
 
   void _onContact(FollowupReminderEntity r) {
@@ -287,12 +375,13 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
       ),
     );
 
-    final isLoading = ref.watch(advisorDashboardProvider).isLoading;
     return ExitConfirmationWrapper(
       child: Scaffold(
         backgroundColor: AppColors.canvas,
-        body: isLoading
-            ? _loadingView()
+        body: _navIndex == 1
+            ? AdvisorJobsListView(onJobCard: _onJobCard)
+            : _navIndex == 2
+            ? const AdvisorReportsView()
             : AdvisorBody(
                 tabCtrl: _tabCtrl,
                 onShowProfile: _showProfile,
@@ -307,11 +396,11 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
                 onStat: _onStat,
               ),
         floatingActionButton: AdvisorFab(
-          onTap: () {
-            HapticFeedback.heavyImpact();
-            _openScan();
-          },
-        ),
+            onTap: () {
+              HapticFeedback.heavyImpact();
+              _openScan();
+            },
+          ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: AdvisorBottomNav(
           navIndex: _navIndex,
@@ -322,40 +411,4 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
     );
   }
 
-  Widget _loadingView() => Container(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        colors: [AppColors.navy, AppColors.accent],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ),
-    ),
-    child: SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(
-              width: 26,
-              height: 26,
-              child: CircularProgressIndicator(
-                color: AppColors.accent,
-                strokeWidth: 2.5,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'Loading…',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }

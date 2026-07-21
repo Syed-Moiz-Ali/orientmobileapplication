@@ -42,17 +42,10 @@ class AdvisorBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stats = ref.watch(advisorDashboardProvider).valueOrNull ?? const AdvisorStatsEntity(
-      newJobCardsToday: 0,
-      inspectionsToday: 0,
-      pendingApprovals: 0,
-      vehiclesWaiting: 0,
-      readyForDelivery: 0,
-      totalOpenJobCards: 0,
-    );
-    final jobCards = ref.watch(advisorRecentJobCardsProvider).valueOrNull ?? <JobCardEntity>[];
-    final approvals = ref.watch(advisorPendingApprovalsProvider).valueOrNull ?? <PendingApprovalEntity>[];
-    final reminders = ref.watch(advisorFollowupRemindersProvider).valueOrNull ?? <FollowupReminderEntity>[];
+    final stats = ref.watch(advisorDashboardProvider);
+    final jobCards = ref.watch(advisorRecentJobCardsProvider);
+    final approvals = ref.watch(advisorPendingApprovalsProvider);
+    final reminders = ref.watch(advisorFollowupRemindersProvider);
     final info = ref.watch(advisorInfoProvider);
 
     return RefreshIndicator(
@@ -60,10 +53,7 @@ class AdvisorBody extends ConsumerWidget {
       strokeWidth: 2.5,
       displacement: 20,
       onRefresh: () async {
-        ref.invalidate(advisorDashboardProvider);
-        ref.invalidate(advisorRecentJobCardsProvider);
-        ref.invalidate(advisorPendingApprovalsProvider);
-        ref.invalidate(advisorFollowupRemindersProvider);
+        ref.read(advisorRefreshProvider.notifier).state++;
       },
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),

@@ -90,6 +90,18 @@ class WorkAssignmentEntity {
     this.remarks = '',
   });
 
+  factory WorkAssignmentEntity.fromMap(Map<String, dynamic> map) =>
+      WorkAssignmentEntity(
+        id: map['id'] as int? ?? 0,
+        description: map['description'] as String? ?? '',
+        department: map['department'] as String? ?? '',
+        technicianName: map['technicianName'] as String? ?? '',
+        dateOfWork: map['dateOfWork'] as String? ?? '',
+        statusPercent: map['statusPercent'] as int? ?? 0,
+        stdTime: map['stdTime'] as String? ?? '',
+        remarks: map['remarks'] as String? ?? '',
+      );
+
   WorkAssignmentEntity copyWith({
     String? description,
     String? department,

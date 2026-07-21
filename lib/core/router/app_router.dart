@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:orientmobileapplication/core/pages/profile_view.dart';
+import 'package:orientmobileapplication/core/pages/settings_view.dart';
+import 'package:orientmobileapplication/core/pages/shift_details_view.dart';
 import 'package:orientmobileapplication/features/advisor/presentation/pages/advisor_home_view.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/choose_inspection_view.dart';
 import 'package:orientmobileapplication/features/auth/domain/entities/user_role.dart';
@@ -14,14 +17,15 @@ import 'package:orientmobileapplication/features/dashboard/presentation/pages/jo
 import 'package:orientmobileapplication/features/dashboard/presentation/pages/pending_approvals_view.dart';
 import 'package:orientmobileapplication/features/job_cards/presentation/pages/job_card_detail_view.dart';
 import 'package:orientmobileapplication/features/supervisor/presentation/supervisor_dashboard_view.dart';
-
 // New Imports for GoRouter migration
 import 'package:orientmobileapplication/features/advisor/vehicle_customer/vehicle_customer_view.dart';
 import 'package:orientmobileapplication/features/advisor/scan_vehicle_view.dart';
 import 'package:orientmobileapplication/features/customer/presentation/customer_book_service_view.dart';
+import 'package:orientmobileapplication/core/router/inspection_callbacks.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/repair_order_view.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/inspection_sheet_view.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/inspection_preview_view.dart';
+import 'package:orientmobileapplication/features/technician/presentation/technician_dashboard_view.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -36,6 +40,7 @@ class AppRoutes {
   static const String pendingApprovals = '/pending_approvals_view';
   static const String documentExpiry = '/document_expiry_view';
   static const String chooseInspection = '/choose_inspection_view';
+  static const String technicianDashboard = '/technician-dashboard';
   static const String supervisorDashboard = '/supervisor_dashboard_view';
   static const String jobStatus = '/job_status_view';
   static const String crmDashboard = '/crm_dashboard_view';
@@ -48,6 +53,9 @@ class AppRoutes {
   static const String inspectionSheet = '/inspection_sheet_view';
   static const String inspectionPreview = '/inspection_preview_view';
   static const String repairOrderPreview = '/repair_order_preview_view';
+  static const String profile = '/profile_view';
+  static const String shiftDetails = '/shift_details_view';
+  static const String settings = '/settings_view';
 
   static UserRole roleFromPath(String role) {
     return UserRole.values.firstWhere(
@@ -124,6 +132,11 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
+      path: AppRoutes.technicianDashboard,
+      name: AppRoutes.technicianDashboard,
+      builder: (context, state) => const TechnicianDashboardView(),
+    ),
+    GoRoute(
       path: AppRoutes.supervisorDashboard,
       name: AppRoutes.supervisorDashboard,
       builder: (context, state) => const SupervisorDashboardView(),
@@ -172,15 +185,13 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.inspectionSheet,
       name: AppRoutes.inspectionSheet,
       builder: (context, state) {
-        final Map<String, dynamic>? extra = state.extra as Map<String, dynamic>?;
-        final onBack = extra?['onBack'] as VoidCallback? ?? () => context.pop();
-        final onSaveDraft = extra?['onSaveDraft'] as VoidCallback? ?? () {};
-        final onPreview = extra?['onPreview'] as VoidCallback? ?? () {};
-        return InspectionSheetView(
-          onBack: onBack,
-          onSaveDraft: onSaveDraft,
-          onPreview: onPreview,
-        );
+        final callbacks = state.extra as InspectionCallbacks? ??
+            InspectionCallbacks(
+              onBack: () => context.pop(),
+              onSaveDraft: () {},
+              onPreview: () {},
+            );
+        return InspectionSheetView(callbacks: callbacks);
       },
     ),
     GoRoute(
@@ -189,11 +200,8 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final Map<String, dynamic>? extra = state.extra as Map<String, dynamic>?;
         final onBack = extra?['onBack'] as VoidCallback? ?? () => context.pop();
-        final onSubmit = extra?['onSubmit'] as VoidCallback? ?? () {};
-        return InspectionPreviewView(
-          onBack: onBack,
-          onSubmit: onSubmit,
-        );
+        final jobId = extra?['jobId'] as String? ?? '';
+        return InspectionPreviewView(onBack: onBack, jobId: jobId);
       },
     ),
     GoRoute(
@@ -204,6 +212,41 @@ final GoRouter appRouter = GoRouter(
         final onBack = extra?['onBack'] as VoidCallback? ?? () => context.pop();
         return RepairOrderPreviewView(
           onBack: onBack,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.profile,
+      name: AppRoutes.profile,
+      builder: (context, state) {
+        final profile = state.extra as ProfileData?;
+        return ProfileView(
+          profile: profile ?? ProfileData(name: '', id: '', role: '', branch: ''),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.shiftDetails,
+      name: AppRoutes.shiftDetails,
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return ShiftDetailsView(
+          employeeName: extra?['name'] as String? ?? '',
+          employeeId: extra?['id'] as String? ?? '',
+          currentShift: extra?['shift'] as String? ?? '',
+          shiftStart: extra?['start'] as String? ?? '8:00 AM',
+          shiftEnd: extra?['end'] as String? ?? '5:00 PM',
+          branch: extra?['branch'] as String? ?? '',
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.settings,
+      name: AppRoutes.settings,
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return SettingsView(
+          appVersion: extra?['version'] as String? ?? '1.0.0',
         );
       },
     ),

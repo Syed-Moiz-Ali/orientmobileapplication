@@ -98,6 +98,19 @@ class CustomerBookingEntity {
     required this.status,
   });
 
+  factory CustomerBookingEntity.fromMap(Map<String, dynamic> map) =>
+      CustomerBookingEntity(
+        service: map['service'] as String? ?? '',
+        vehicleName: map['vehicleName'] as String? ?? '',
+        plateNumber: map['plateNumber'] as String? ?? '',
+        date: map['date'] as String? ?? '',
+        time: map['time'] as String? ?? '',
+        status: BookingStatus.values.firstWhere(
+          (e) => e.name == map['status'],
+          orElse: () => BookingStatus.pending,
+        ),
+      );
+
   String get statusLabel {
     switch (status) {
       case BookingStatus.confirmed:

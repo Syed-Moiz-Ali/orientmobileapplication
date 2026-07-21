@@ -7,6 +7,7 @@ import 'package:orientmobileapplication/features/supervisor/presentation/widgets
 import 'package:orientmobileapplication/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
 import 'package:orientmobileapplication/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart';
 import 'package:orientmobileapplication/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/supervisor/providers/supervisor_providers.dart';
 
 class SupervisorScaffold extends ConsumerWidget {
@@ -37,7 +38,18 @@ class SupervisorScaffold extends ConsumerWidget {
       ),
       floatingActionButton: state.selectedIndex == 1
           ? FloatingActionButton.extended(
-              onPressed: notifier.saveAndAssign,
+              onPressed: () async {
+                await notifier.saveAndAssign();
+                ref.read(syncEngineProvider).syncAll();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Assignments saved locally'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              },
               backgroundColor: AppColors.accent,
               elevation: 4,
               icon: state.isAssignWorkLoading

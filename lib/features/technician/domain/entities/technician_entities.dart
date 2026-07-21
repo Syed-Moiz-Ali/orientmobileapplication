@@ -78,6 +78,14 @@ class AttendanceSummaryEntity {
     breakTime: '0 min',
     workHours: '0h 0m',
   );
+
+  factory AttendanceSummaryEntity.fromMap(Map<String, dynamic> map) =>
+      AttendanceSummaryEntity(
+        punchIn: map['punchIn'] as String? ?? '--:--',
+        punchOut: map['punchOut'] as String? ?? '--:--',
+        breakTime: map['breakTime'] as String? ?? '0 min',
+        workHours: map['workHours'] as String? ?? '0h 0m',
+      );
 }
 
 class TechnicianStatsEntity {
@@ -261,6 +269,17 @@ class WorkTaskEntity {
         startTime: startTime ?? this.startTime,
         endTime: endTime ?? this.endTime,
       );
+
+  factory WorkTaskEntity.fromMap(Map<String, dynamic> map) => WorkTaskEntity(
+        id: map['id'] as int? ?? 0,
+        description: map['description'] as String? ?? '',
+        status: TaskStatus.values.firstWhere(
+          (e) => e.name == map['status'],
+          orElse: () => TaskStatus.pending,
+        ),
+        startTime: map['startTime'] as String?,
+        endTime: map['endTime'] as String?,
+      );
 }
 
 class TechnicianJobEntity {
@@ -285,6 +304,26 @@ class TechnicianJobEntity {
     required this.tasks,
     this.notes = '',
   });
+
+  factory TechnicianJobEntity.fromMap(Map<String, dynamic> map) =>
+      TechnicianJobEntity(
+        jobCardNo: map['jobCardNo'] as String? ?? '',
+        dateOfWork: map['dateOfWork'] as String? ?? '',
+        startTime: map['startTime'] as String? ?? '',
+        vehicleBrand: map['vehicleBrand'] as String? ?? '',
+        vehicleModel: map['vehicleModel'] as String? ?? '',
+        plateNumber: map['plateNumber'] as String? ?? '',
+        status: TechJobStatus.values.firstWhere(
+          (e) => e.name == map['status'],
+          orElse: () => TechJobStatus.pending,
+        ),
+        tasks: (map['tasks'] as List<dynamic>?)
+                ?.map((t) =>
+                    WorkTaskEntity.fromMap(t as Map<String, dynamic>))
+                .toList() ??
+            [],
+        notes: map['notes'] as String? ?? '',
+      );
 
   int get completedTasks =>
       tasks.where((t) => t.status == TaskStatus.completed).length;

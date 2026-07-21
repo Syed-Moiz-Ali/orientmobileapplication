@@ -1,10 +1,40 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/customer/domain/entities/customer_entities.dart';
 
 final customerDashboardProvider =
     NotifierProvider<CustomerDashboardNotifier, CustomerDashboardState>(
       CustomerDashboardNotifier.new,
     );
+
+final customerBookingsProvider = Provider<List<CustomerBookingEntity>>((ref) {
+  try {
+    final box = Hive.box<dynamic>('customer_bookings');
+    final saved = box.values
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .where((v) => v['serviceType'] != null)
+        .map((v) => CustomerBookingEntity(
+              service: v['serviceType'] as String? ?? '',
+              vehicleName: (v['vehicle'] as String?) ?? '',
+              plateNumber: v['plateNumber'] as String? ?? '',
+              date: v['bookingDate'] as String? ?? '',
+              time: '',
+              status: BookingStatus.values.firstWhere(
+                (e) => e.name == v['status'],
+                orElse: () => BookingStatus.pending,
+              ),
+            ))
+        .toList();
+    return saved.isNotEmpty ? saved : CustomerBookingEntity.mock;
+  } catch (_) {
+    return CustomerBookingEntity.mock;
+  }
+});
 
 class CustomerDashboardState {
   final int selectedIndex;
@@ -55,9 +85,20 @@ class CustomerDashboardState {
 
   int get unreadCount => notifications.where((n) => !n.isRead).length;
 
-  int get servicesThisYear => CustomerBookingEntity.mock
-      .where((b) => b.status == BookingStatus.completed)
-      .length;
+  int get servicesThisYear {
+    try {
+      final box = Hive.box<dynamic>('customer_bookings');
+      return box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .where((v) => v['status'] == 'completed')
+          .length;
+    } catch (_) {
+      return CustomerBookingEntity.mock
+          .where((b) => b.status == BookingStatus.completed)
+          .length;
+    }
+  }
 
   int get unpaidInvoices => 1;
 
@@ -68,6 +109,7 @@ class CustomerDashboardState {
 class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
   @override
   CustomerDashboardState build() {
+    final savedVehicles = _loadVehiclesFromHive();
     return CustomerDashboardState(
       selectedIndex: 0,
       isLoading: false,
@@ -76,9 +118,36 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
       bookingDate: null,
       bookingNotes: '',
       bookingSubmitted: false,
-      vehicles: List.from(CustomerVehicleEntity.mock),
+      vehicles: savedVehicles,
       notifications: CustomerNotificationEntity.mock,
     );
+  }
+
+  List<CustomerVehicleEntity> _loadVehiclesFromHive() {
+    try {
+      final box = Hive.box<dynamic>('customer_bookings');
+      final saved = box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .where((v) => v['vehicle'] != null)
+          .map((v) => CustomerVehicleEntity(
+                id: v['id'] as String? ?? '',
+                brand: (v['vehicle'] as String?)?.split(' ').first ?? '',
+                model: (v['vehicle'] as String?)?.split(' ').skip(1).join(' ') ?? '',
+                plateNumber: v['plateNumber'] as String? ?? '',
+                vin: '',
+                color: '',
+                year: DateTime.now().year,
+                mileage: '',
+                lastService: '',
+                nextDue: '',
+                healthScore: 50,
+              ))
+          .toList();
+      return saved.isNotEmpty ? saved : List.from(CustomerVehicleEntity.mock);
+    } catch (_) {
+      return List.from(CustomerVehicleEntity.mock);
+    }
   }
 
   void selectTab(int index) {
@@ -88,8 +157,9 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
 
   Future<void> refresh() async {
     state = state.copyWith(isLoading: true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    state = state.copyWith(isLoading: false);
+    final saved = _loadVehiclesFromHive();
+    await Future.delayed(const Duration(milliseconds: 200));
+    state = state.copyWith(isLoading: false, vehicles: saved);
   }
 
   void markAllRead() {
@@ -128,12 +198,35 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
     state = state.copyWith(bookingNotes: value);
   }
 
-  void submitBooking() {
+  Future<void> submitBooking() async {
     if (state.selectedVehicle.isEmpty ||
         state.selectedServiceType.isEmpty ||
         state.bookingDate == null) {
       return;
     }
+
+    final local = GenericLocalDataSource(Hive.box<dynamic>('customer_bookings'));
+    final payload = {
+      'vehicle': state.selectedVehicle,
+      'serviceType': state.selectedServiceType,
+      'bookingDate': state.bookingDate!.toIso8601String(),
+      'notes': state.bookingNotes,
+      'status': 'pending',
+    };
+    final id = const Uuid().v4();
+    await local.save(id, payload);
+
+    final queue = ref.read(syncQueueProvider);
+    final op = SyncOperation(
+      id: id,
+      entityType: 'booking',
+      entityId: id,
+      changeType: ChangeType.create,
+      payload: payload,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+    );
+    await queue.enqueue(op);
+
     state = state.copyWith(
       bookingSubmitted: true,
       selectedVehicle: '',

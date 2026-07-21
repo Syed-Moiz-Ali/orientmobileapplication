@@ -69,7 +69,7 @@ class _LoginCard extends ConsumerWidget {
       case UserRole.advisor:
         return AppRoutes.advisorDashboard;
       case UserRole.technician:
-        return '/technician-dashboard';
+        return AppRoutes.technicianDashboard;
       case UserRole.customer:
         return AppRoutes.customerPortal;
       case UserRole.supervisor:

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/theme/app_text_styles.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/customer/providers/customer_providers.dart';
 
 const Color _cyanLight = AppColors.cyanLight;
@@ -269,7 +270,10 @@ class CustomerBookServiceTab extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => notifier.submitBooking(),
+              onPressed: () async {
+                await notifier.submitBooking();
+                ref.read(syncEngineProvider).syncAll();
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,

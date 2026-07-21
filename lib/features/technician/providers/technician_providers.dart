@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/technician/domain/entities/technician_entities.dart';
+
+final technicianRefreshProvider = StateProvider<int>((ref) => 0);
 
 class TechnicianState {
   final int selectedTab;
@@ -240,7 +247,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   @override
   TechnicianState build() {
     ref.onDispose(jobCardController.dispose);
-    refresh();
+    _loadFromHive();
     return TechnicianState(
       attendanceSummary: const AttendanceSummaryEntity(
         punchIn: '08:15 AM',
@@ -252,6 +259,32 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     );
   }
 
+  void _loadFromHive() {
+    try {
+      final box = Hive.box<dynamic>('technician_jobs');
+      final att = box.get('attendance');
+      if (att != null) {
+        state = state.copyWith(
+          attendanceStatus: AttendanceStatus.values.firstWhere(
+            (e) => e.name == att['status'],
+            orElse: () => AttendanceStatus.notPunchedIn,
+          ),
+          attendanceSummary: AttendanceSummaryEntity.fromMap(att),
+        );
+      }
+      final savedJobs = box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .where((v) => v['jobCardNo'] != null)
+          .map((v) => TechnicianJobEntity.fromMap(v))
+          .toList();
+      if (savedJobs.isNotEmpty) {
+        _allJobs.clear();
+        _allJobs.addAll(savedJobs);
+      }
+    } catch (_) {}
+  }
+
   void selectTab(int i) {
     if (state.selectedTab == i) return;
     state = state.copyWith(selectedTab: i);
@@ -259,7 +292,8 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
 
   Future<void> refresh() async {
     state = state.copyWith(isLoading: true);
-    await Future.delayed(const Duration(milliseconds: 600));
+    _loadFromHive();
+    await Future.delayed(const Duration(milliseconds: 200));
     state = state.copyWith(isLoading: false);
   }
 
@@ -282,6 +316,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         workHours: '0h 0m',
       ),
     );
+    _persistAttendance();
   }
 
   Future<void> punchOut() async {
@@ -299,16 +334,47 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         workHours: state.attendanceSummary.workHours,
       ),
     );
+    _persistAttendance();
   }
 
   Future<void> startBreak() async {
     if (state.attendanceStatus != AttendanceStatus.working) return;
     state = state.copyWith(attendanceStatus: AttendanceStatus.onBreak);
+    _persistAttendance();
   }
 
   Future<void> endBreak() async {
     if (state.attendanceStatus != AttendanceStatus.onBreak) return;
     state = state.copyWith(attendanceStatus: AttendanceStatus.working);
+    _persistAttendance();
+  }
+
+  void _enqueueSync(String entityId, Map<String, dynamic> payload, {String entityType = 'technician_attendance', ChangeType changeType = ChangeType.update}) {
+    try {
+      final queue = ref.read(syncQueueProvider);
+      queue.enqueue(SyncOperation(
+        id: const Uuid().v4(),
+        entityType: entityType,
+        entityId: entityId,
+        changeType: changeType,
+        payload: payload,
+        timestamp: DateTime.now().millisecondsSinceEpoch,
+      ));
+      ref.read(syncEngineProvider).syncAll();
+    } catch (_) {}
+  }
+
+  void _persistAttendance() {
+    final payload = {
+      'status': state.attendanceStatus.name,
+      'punchIn': state.attendanceSummary.punchIn,
+      'punchOut': state.attendanceSummary.punchOut,
+      'breakTime': state.attendanceSummary.breakTime,
+      'workHours': state.attendanceSummary.workHours,
+    };
+    final box = Hive.box<dynamic>('technician_jobs');
+    box.put('attendance', payload);
+    _enqueueSync('attendance', payload);
   }
 
   void updateAssignedJobStatus(String id, AssignedJobStatus status) {
@@ -317,6 +383,12 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     if (idx == -1) return;
     jobs[idx].status = status;
     state = state.copyWith(assignedJobs: jobs);
+    final payload = {
+      'id': id,
+      'status': status.name,
+    };
+    Hive.box<dynamic>('technician_jobs').put('assigned_$id', payload);
+    _enqueueSync(id, payload, entityType: 'assigned_job');
   }
 
   void searchJobCard() {
@@ -365,6 +437,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       startTime: now,
     );
     _syncJobStatus(job);
+    _persistJob(job);
     state = state.copyWith();
   }
 
@@ -374,6 +447,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     if (idx == -1) return;
     job.tasks[idx] = task.copyWith(status: TaskStatus.completed, endTime: now);
     _syncJobStatus(job);
+    _persistJob(job);
     state = state.copyWith();
   }
 
@@ -391,6 +465,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       endTime: newStatus == TaskStatus.completed ? now : task.endTime,
     );
     _syncJobStatus(job);
+    _persistJob(job);
     state = state.copyWith();
   }
 
@@ -406,13 +481,41 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
 
   void updateNotes(TechnicianJobEntity job, String notes) {
     job.notes = notes;
+    _persistJob(job);
     state = state.copyWith();
+  }
+
+  void _persistJob(TechnicianJobEntity job) {
+    final payload = {
+      'jobCardNo': job.jobCardNo,
+      'dateOfWork': job.dateOfWork,
+      'startTime': job.startTime,
+      'vehicleBrand': job.vehicleBrand,
+      'vehicleModel': job.vehicleModel,
+      'plateNumber': job.plateNumber,
+      'status': job.status.name,
+      'notes': job.notes,
+      'tasks': job.tasks
+          .map((t) => {
+                'id': t.id,
+                'description': t.description,
+                'status': t.status.name,
+                'startTime': t.startTime,
+                'endTime': t.endTime,
+              })
+          .toList(),
+    };
+    final local = GenericLocalDataSource(Hive.box<dynamic>('technician_jobs'));
+    local.save(job.jobCardNo, payload);
+    _enqueueSync(job.jobCardNo, payload, entityType: 'technician_job');
+    ref.read(technicianRefreshProvider.notifier).state++;
   }
 
   Future<void> saveChanges(TechnicianJobEntity job) async {
     if (state.isSaving) return;
     state = state.copyWith(isSaving: true);
-    await Future.delayed(const Duration(milliseconds: 900));
+    await Future.delayed(const Duration(milliseconds: 200));
+    _persistJob(job);
     state = state.copyWith(isSaving: false);
   }
 
@@ -430,6 +533,40 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       }
     }
     job.status = TechJobStatus.completed;
+
+    final local = GenericLocalDataSource(Hive.box<dynamic>('technician_jobs'));
+    final payload = {
+      'jobCardNo': job.jobCardNo,
+      'dateOfWork': job.dateOfWork,
+      'startTime': job.startTime,
+      'vehicleBrand': job.vehicleBrand,
+      'vehicleModel': job.vehicleModel,
+      'plateNumber': job.plateNumber,
+      'status': job.status.name,
+      'notes': job.notes,
+      'tasks': job.tasks
+          .map((t) => {
+                'id': t.id,
+                'description': t.description,
+                'status': t.status.name,
+                'startTime': t.startTime,
+                'endTime': t.endTime,
+              })
+          .toList(),
+    };
+    await local.save(job.jobCardNo, payload);
+
+    final queue = ref.read(syncQueueProvider);
+    final op = SyncOperation(
+      id: const Uuid().v4(),
+      entityType: 'job_complete',
+      entityId: job.jobCardNo,
+      changeType: ChangeType.update,
+      payload: payload,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+    );
+    await queue.enqueue(op);
+
     state = state.copyWith(isSaving: false);
   }
 }

@@ -5,10 +5,10 @@ import 'package:orientmobileapplication/features/advisor/domain/entities/job_car
 import 'package:orientmobileapplication/features/advisor/domain/entities/pending_approval_entity.dart';
 
 abstract class AdvisorRepository {
-  Future<Result<AdvisorStatsEntity>> getStats();
-  Future<Result<List<JobCardEntity>>> getRecentJobCards();
-  Future<Result<List<PendingApprovalEntity>>> getPendingApprovals();
-  Future<Result<List<FollowupReminderEntity>>> getFollowupReminders();
+  Result<AdvisorStatsEntity> getStats();
+  Result<List<JobCardEntity>> getRecentJobCards();
+  Result<List<PendingApprovalEntity>> getPendingApprovals();
+  Result<List<FollowupReminderEntity>> getFollowupReminders();
   String get advisorName;
   String get advisorId;
   String get branch;

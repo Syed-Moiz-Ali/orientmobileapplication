@@ -68,7 +68,7 @@ class CustomerHomeTab extends ConsumerWidget {
                   const SizedBox(height: AppDimensions.s28),
                   _sectionLabel('Recent Bookings'),
                   const SizedBox(height: AppDimensions.s12),
-                  _RecentBookingsList(bookings: CustomerBookingEntity.mock),
+                  _RecentBookingsList(bookings: ref.watch(customerBookingsProvider)),
                 ],
               ),
             ),

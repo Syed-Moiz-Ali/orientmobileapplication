@@ -12,4 +12,13 @@ class PendingApprovalEntity {
     required this.amount,
     required this.timeAgo,
   });
+
+  factory PendingApprovalEntity.fromMap(Map<String, dynamic> map) =>
+      PendingApprovalEntity(
+        estimateId: map['estimateId'] as String? ?? '',
+        customerName: map['customerName'] as String? ?? '',
+        vehicleId: map['vehicleId'] as String? ?? '',
+        amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
+        timeAgo: map['timeAgo'] as String? ?? 'now',
+      );
 }

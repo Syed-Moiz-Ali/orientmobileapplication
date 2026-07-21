@@ -12,40 +12,36 @@ class AdvisorRepositoryImpl implements AdvisorRepository {
   AdvisorRepositoryImpl(this._dataSource);
 
   @override
-  Future<Result<AdvisorStatsEntity>> getStats() async {
+  Result<AdvisorStatsEntity> getStats() {
     try {
-      final stats = await _dataSource.fetchStats();
-      return Success(stats);
+      return Success(_dataSource.fetchStats());
     } catch (e) {
       return Failure(UnknownException(e.toString()));
     }
   }
 
   @override
-  Future<Result<List<JobCardEntity>>> getRecentJobCards() async {
+  Result<List<JobCardEntity>> getRecentJobCards() {
     try {
-      final cards = await _dataSource.fetchRecentJobCards();
-      return Success(cards);
+      return Success(_dataSource.fetchRecentJobCards());
     } catch (e) {
       return Failure(UnknownException(e.toString()));
     }
   }
 
   @override
-  Future<Result<List<PendingApprovalEntity>>> getPendingApprovals() async {
+  Result<List<PendingApprovalEntity>> getPendingApprovals() {
     try {
-      final approvals = await _dataSource.fetchPendingApprovals();
-      return Success(approvals);
+      return Success(_dataSource.fetchPendingApprovals());
     } catch (e) {
       return Failure(UnknownException(e.toString()));
     }
   }
 
   @override
-  Future<Result<List<FollowupReminderEntity>>> getFollowupReminders() async {
+  Result<List<FollowupReminderEntity>> getFollowupReminders() {
     try {
-      final reminders = await _dataSource.fetchFollowupReminders();
-      return Success(reminders);
+      return Success(_dataSource.fetchFollowupReminders());
     } catch (e) {
       return Failure(UnknownException(e.toString()));
     }

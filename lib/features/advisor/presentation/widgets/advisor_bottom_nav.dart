@@ -38,24 +38,14 @@ class AdvisorBottomNav extends StatelessWidget {
             icon: Icons.assignment_outlined,
             label: 'Jobs',
             active: navIndex == 1,
-            onTap: () {
-              onNavChanged(1);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Coming soon')),
-              );
-            },
+            onTap: () => onNavChanged(1),
           ),
           const Expanded(child: SizedBox()),
           AdvisorBottomItem(
             icon: Icons.bar_chart_rounded,
             label: 'Reports',
             active: navIndex == 2,
-            onTap: () {
-              onNavChanged(2);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Coming soon')),
-              );
-            },
+            onTap: () => onNavChanged(2),
           ),
           AdvisorBottomItem(
             icon: Icons.person_outline_rounded,

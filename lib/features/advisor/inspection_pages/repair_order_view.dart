@@ -9,6 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:orientmobileapplication/core/router/app_router.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
+import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_vew_model.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
@@ -1924,46 +1929,7 @@ class RepairOrderPreviewView extends ConsumerWidget {
 
           const SizedBox(height: 20),
 
-          GestureDetector(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Repair Order created successfully!'),
-                  backgroundColor: IC.accent,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: IC.navy,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(AppDimensions.r10),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'CREATE REPAIR ORDER',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          _CreateRepairOrderButton(onBack: onBack),
 
           const SizedBox(height: 40),
         ],
@@ -2079,6 +2045,76 @@ class _TableRow extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _CreateRepairOrderButton extends ConsumerWidget {
+  final VoidCallback onBack;
+  const _CreateRepairOrderButton({required this.onBack});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () async {
+        final state = ref.read(inspectionProvider);
+        final local = GenericLocalDataSource(Hive.box<Map<String, dynamic>>('repair_orders'));
+        final id = const Uuid().v4();
+        await local.save(id, state.toPersistableMap());
+
+        final queue = ref.read(syncQueueProvider);
+        final op = SyncOperation(
+          id: id,
+          entityType: 'repair_order',
+          entityId: id,
+          changeType: ChangeType.create,
+          payload: state.toPersistableMap(),
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        );
+        await queue.enqueue(op);
+
+        ref.read(syncEngineProvider).syncAll();
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Repair Order saved locally'),
+              backgroundColor: IC.accent,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          onBack();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: IC.navy,
+          borderRadius: BorderRadius.all(
+            Radius.circular(AppDimensions.r10),
+          ),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.arrow_forward_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
+            SizedBox(width: 8),
+            Text(
+              'CREATE REPAIR ORDER',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _SectionTotal extends StatelessWidget {

@@ -1,6 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/errors/result.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_vew_model.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
+import 'package:orientmobileapplication/features/advisor/presentation/providers/advisor_providers.dart';
 
 class InspectionState {
   final Map<String, ItemStatus> statuses;
@@ -82,6 +87,62 @@ class InspectionState {
     );
   }
 
+  Map<String, dynamic> toPersistableMap() => {
+        'statuses': statuses.map((k, v) => MapEntry(k, v.name)),
+        'media': media.map((k, v) => MapEntry(k, v.toJson())),
+        'preServicePhotos': preServicePhotos,
+        'serviceLines': serviceLines.map((e) => e.toJson()).toList(),
+        'partLines': partLines.map((e) => e.toJson()).toList(),
+        'referenceNumber': referenceNumber,
+        'placeOfSupply': placeOfSupply,
+        'customerRequests': customerRequests,
+        'garageRecommendations': garageRecommendations,
+        'estimatedDelivery': estimatedDelivery?.toIso8601String(),
+        'notifyOwnerSmsEmail': notifyOwnerSmsEmail,
+        'tag': tag,
+      };
+
+  factory InspectionState.fromPersistableMap(Map<String, dynamic> map) {
+    final statusesRaw = map['statuses'] as Map<String, dynamic>? ?? {};
+    final mediaRaw = map['media'] as Map<String, dynamic>? ?? {};
+    final serviceLinesRaw = map['serviceLines'] as List<dynamic>? ?? [];
+    final partLinesRaw = map['partLines'] as List<dynamic>? ?? [];
+
+    return InspectionState(
+      statuses: statusesRaw.map(
+        (k, v) => MapEntry(
+          k,
+          ItemStatus.values.firstWhere(
+            (e) => e.name == v,
+            orElse: () => ItemStatus.good,
+          ),
+        ),
+      ),
+      media: mediaRaw.map(
+        (k, v) => MapEntry(
+          k,
+          ItemMedia.fromJson(Map<String, dynamic>.from(v as Map)),
+        ),
+      ),
+      preServicePhotos: List<String>.from(map['preServicePhotos'] as List? ?? []),
+      serviceLines: serviceLinesRaw
+          .map((e) => ServiceLineItem.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
+      partLines: partLinesRaw
+          .map((e) => PartLineItem.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
+      referenceNumber: map['referenceNumber'] as String? ?? '',
+      placeOfSupply: map['placeOfSupply'] as String? ?? '',
+      customerRequests: map['customerRequests'] as String? ?? '',
+      garageRecommendations: map['garageRecommendations'] as String? ?? '',
+      estimatedDelivery: map['estimatedDelivery'] != null
+          ? DateTime.tryParse(map['estimatedDelivery'] as String)
+          : null,
+      notifyOwnerSmsEmail: map['notifyOwnerSmsEmail'] as bool? ?? false,
+      tag: map['tag'] as String? ?? '',
+    );
+  }
+
   int get totalItems =>
       kInspectionSections.fold(0, (sum, s) => sum + s.items.length);
 
@@ -112,7 +173,18 @@ class InspectionState {
 
 class InspectionNotifier extends Notifier<InspectionState> {
   @override
-  InspectionState build() => const InspectionState();
+  InspectionState build() {
+    final local = ref.read(advisorLocalDataSourceProvider);
+    final draft = local.getDraft();
+    return draft != null
+        ? InspectionState.fromPersistableMap(draft)
+        : const InspectionState();
+  }
+
+  void _persistDraft() {
+    final local = ref.read(advisorLocalDataSourceProvider);
+    local.saveDraft(state.toPersistableMap());
+  }
 
   void setStatus(String itemId, ItemStatus? status) {
     final s = Map<String, ItemStatus>.from(state.statuses);
@@ -124,6 +196,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
       s[itemId] = status;
     }
     state = state.copyWith(statuses: s);
+    _persistDraft();
   }
 
   void toggleCollapse(String sectionId) {
@@ -164,6 +237,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
       (im) => im.photoPaths = [...im.photoPaths, path],
     );
     state = state.copyWith(media: m);
+    _persistDraft();
   }
 
   void addVideo(String itemId, String path) {
@@ -172,16 +246,19 @@ class InspectionNotifier extends Notifier<InspectionState> {
       (im) => im.videoPaths = [...im.videoPaths, path],
     );
     state = state.copyWith(media: m);
+    _persistDraft();
   }
 
   void setAudio(String itemId, String path) {
     final m = _updatedMediaWith(itemId, (im) => im.audioPath = path);
     state = state.copyWith(media: m);
+    _persistDraft();
   }
 
   void setNote(String itemId, String note) {
     final m = _updatedMediaWith(itemId, (im) => im.note = note);
     state = state.copyWith(media: m);
+    _persistDraft();
   }
 
   void removePhoto(String itemId, int index) {
@@ -190,6 +267,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
     final photos = List<String>.from(im.photoPaths)..removeAt(index);
     final m = _updatedMediaWith(itemId, (im2) => im2.photoPaths = photos);
     state = state.copyWith(media: m);
+    _persistDraft();
   }
 
   void removeVideo(String itemId, int index) {
@@ -198,10 +276,12 @@ class InspectionNotifier extends Notifier<InspectionState> {
     final videos = List<String>.from(im.videoPaths)..removeAt(index);
     final m = _updatedMediaWith(itemId, (im2) => im2.videoPaths = videos);
     state = state.copyWith(media: m);
+    _persistDraft();
   }
 
   void addPreServicePhoto(String path) {
     state = state.copyWith(preServicePhotos: [...state.preServicePhotos, path]);
+    _persistDraft();
   }
 
   Map<String, ItemMedia> _updatedMediaWith(
@@ -229,6 +309,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
     }
     lines.removeWhere((s) => !names.contains(s.name));
     state = state.copyWith(serviceLines: lines);
+    _persistDraft();
   }
 
   void addParts(List<String> names) {
@@ -239,6 +320,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
     }
     lines.removeWhere((p) => !names.contains(p.name));
     state = state.copyWith(partLines: lines);
+    _persistDraft();
   }
 
   void updateServiceLine(
@@ -259,6 +341,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
       discountAmount: discountAmt ?? s.discountAmount,
     );
     state = state.copyWith(serviceLines: lines);
+    _persistDraft();
   }
 
   void updatePartLine(
@@ -279,20 +362,67 @@ class InspectionNotifier extends Notifier<InspectionState> {
       discountAmount: discountAmt ?? p.discountAmount,
     );
     state = state.copyWith(partLines: lines);
+    _persistDraft();
   }
 
-  void setReferenceNumber(String v) =>
-      state = state.copyWith(referenceNumber: v);
-  void setPlaceOfSupply(String v) => state = state.copyWith(placeOfSupply: v);
-  void setCustomerRequests(String v) =>
-      state = state.copyWith(customerRequests: v);
-  void setGarageRecommendations(String v) =>
-      state = state.copyWith(garageRecommendations: v);
-  void setEstimatedDelivery(DateTime dt) =>
-      state = state.copyWith(estimatedDelivery: dt);
-  void toggleNotifyOwnerSmsEmail() =>
-      state = state.copyWith(notifyOwnerSmsEmail: !state.notifyOwnerSmsEmail);
-  void setTag(String v) => state = state.copyWith(tag: v);
+  void setReferenceNumber(String v) {
+    state = state.copyWith(referenceNumber: v);
+    _persistDraft();
+  }
+
+  void setPlaceOfSupply(String v) {
+    state = state.copyWith(placeOfSupply: v);
+    _persistDraft();
+  }
+
+  void setCustomerRequests(String v) {
+    state = state.copyWith(customerRequests: v);
+    _persistDraft();
+  }
+
+  void setGarageRecommendations(String v) {
+    state = state.copyWith(garageRecommendations: v);
+    _persistDraft();
+  }
+
+  void setEstimatedDelivery(DateTime dt) {
+    state = state.copyWith(estimatedDelivery: dt);
+    _persistDraft();
+  }
+
+  void toggleNotifyOwnerSmsEmail() {
+    state = state.copyWith(notifyOwnerSmsEmail: !state.notifyOwnerSmsEmail);
+    _persistDraft();
+  }
+
+  void setTag(String v) {
+    state = state.copyWith(tag: v);
+    _persistDraft();
+  }
+
+  Future<Result<void>> submitInspection() async {
+    final local = ref.read(advisorLocalDataSourceProvider);
+    final queue = ref.read(syncQueueProvider);
+    final id = const Uuid().v4();
+
+    final payload = state.toPersistableMap();
+    await local.saveInspection(id, payload);
+
+    final operation = SyncOperation(
+      id: id,
+      entityType: 'inspection',
+      entityId: id,
+      changeType: ChangeType.create,
+      payload: payload,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+    );
+    await queue.enqueue(operation);
+
+    await local.deleteDraft();
+    state = const InspectionState();
+
+    return const Success(null);
+  }
 
   void reset() {
     state = const InspectionState();
@@ -307,6 +437,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
       estimatedDelivery: null,
       customerRequests: '',
     );
+    _persistDraft();
   }
 }
 

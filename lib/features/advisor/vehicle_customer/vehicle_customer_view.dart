@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:orientmobileapplication/core/router/app_router.dart';
+import 'package:orientmobileapplication/core/router/inspection_callbacks.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
-import 'package:orientmobileapplication/core/router/app_router.dart';
+import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
+import 'package:orientmobileapplication/features/advisor/inspection_pages/inspection_provider.dart';
+import 'package:orientmobileapplication/features/advisor/presentation/providers/advisor_providers.dart';
 import 'vehicle_customer_provider.dart';
 import 'package:orientmobileapplication/features/advisor/vehicle_customer/presentation/widgets/shared_widgets.dart';
 import 'package:orientmobileapplication/features/advisor/vehicle_customer/presentation/widgets/select_brand_sheet.dart';
@@ -18,11 +26,17 @@ class VehicleCustomerView extends ConsumerWidget {
   }
 }
 
-class _Body extends ConsumerWidget {
+class _Body extends ConsumerStatefulWidget {
   const _Body();
+  @override
+  ConsumerState<_Body> createState() => _BodyState();
+}
+
+class _BodyState extends ConsumerState<_Body> {
+  String? _savedJobId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = ref.watch(vehicleCustomerFormProvider);
 
     return Scaffold(
@@ -102,8 +116,47 @@ class _Body extends ConsumerWidget {
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 16),
               child: ElevatedButton(
-                onPressed: () {
-                  context.pushNamed(AppRoutes.chooseInspection);
+                onPressed: () async {
+                  final formState = ref.read(vehicleCustomerFormProvider);
+                  final local = GenericLocalDataSource(
+                    Hive.box<dynamic>('inspections'),
+                  );
+                  final id = const Uuid().v4();
+                  _savedJobId = id;
+                  final now = DateTime.now();
+                  final createdDate =
+                      '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+                  final payload = {
+                    'type': 'vehicle_customer',
+                    'customerName': formState.customerName,
+                    'phoneNumber': formState.phoneNumber,
+                    'email': formState.email,
+                    'vin': formState.vin,
+                    'make': formState.make,
+                    'model': formState.model,
+                    'modelYear': formState.modelYear,
+                    'registrationNumber': formState.registrationNumber,
+                    'odometerReading': formState.odometerReading,
+                    'fuelLevel': formState.fuelLevel,
+                    'customerConsent': formState.customerConsent,
+                    'status': 'inProgress',
+                    'createdDate': createdDate,
+                    'lastUpdated': createdDate,
+                  };
+                  await local.save(id, payload);
+                  final queue = ref.read(syncQueueProvider);
+                  await queue.enqueue(SyncOperation(
+                    id: id,
+                    entityType: 'inspection',
+                    entityId: id,
+                    changeType: ChangeType.create,
+                    payload: payload,
+                    timestamp: DateTime.now().millisecondsSinceEpoch,
+                  ));
+                  ref.read(syncEngineProvider).syncAll();
+                  ref.read(advisorRefreshProvider.notifier).state++;
+                  if (!context.mounted) return;
+                  _showInspectionPrompt(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -128,6 +181,97 @@ class _Body extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showInspectionPrompt(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(
+              color: AppColors.line, borderRadius: BorderRadius.circular(2),
+            )),
+            const SizedBox(height: 20),
+            Container(
+              width: 56, height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppDimensions.r16),
+              ),
+              child: const Icon(Icons.search_outlined, color: AppColors.accent, size: 28),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Job Card Created!',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Would you like to add an inspection?\nYou can add photos, videos, notes, and pricing.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity, height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  ref.read(inspectionProvider.notifier).reset();
+                  final jobId = _savedJobId ?? '';
+                  final callbacks = InspectionCallbacks(
+                    onBack: () => context.pop(),
+                    onSaveDraft: () {
+                      context.pop();
+                      context.pop();
+                    },
+                    onPreview: () {
+                      context.push(AppRoutes.inspectionPreview, extra: {
+                        'onBack': () => context.pop(),
+                        'jobId': jobId,
+                      });
+                    },
+                  );
+                  context.push(AppRoutes.inspectionSheet, extra: callbacks);
+                },
+                icon: const Icon(Icons.search_outlined, size: 20),
+                label: const Text('Add Inspection', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r14)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity, height: 50,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  if (context.mounted) context.pop();
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.text3,
+                  side: const BorderSide(color: AppColors.line),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r14)),
+                ),
+                child: const Text('Skip', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

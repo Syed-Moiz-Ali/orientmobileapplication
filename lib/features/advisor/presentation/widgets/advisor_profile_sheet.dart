@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:orientmobileapplication/core/pages/profile_view.dart';
+import 'package:orientmobileapplication/core/router/app_router.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'advisor_sheet.dart';
@@ -90,22 +93,60 @@ class AdvisorProfileSheet extends StatelessWidget {
           AdvisorMenuItem(
             icon: Icons.person_outline_rounded,
             label: 'My Profile',
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              Navigator.pop(context);
+              context.push(AppRoutes.profile, extra: ProfileData(
+                name: 'Ali Rahman',
+                id: 'ADV-001',
+                role: 'Service Advisor',
+                branch: 'Main Branch - Dubai',
+                shift: 'Morning (8:00 AM - 5:00 PM)',
+                email: 'ali.rahman@orientauto.com',
+                phone: '+971 50 123 4567',
+                totalJobs: 12,
+                completedJobs: 8,
+                pendingJobs: 3,
+              ));
+            },
           ),
           AdvisorMenuItem(
             icon: Icons.swap_horiz_rounded,
             label: 'Switch Branch',
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: const Text('Branch switching coming soon', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                backgroundColor: AppColors.accent,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              ));
+            },
           ),
           AdvisorMenuItem(
             icon: Icons.schedule_rounded,
             label: 'Shift Details',
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              Navigator.pop(context);
+              context.push(AppRoutes.shiftDetails, extra: {
+                'name': 'Ali Rahman',
+                'id': 'ADV-001',
+                'shift': 'Morning',
+                'start': '8:00 AM',
+                'end': '5:00 PM',
+                'branch': 'Main Branch - Dubai',
+              });
+            },
           ),
           AdvisorMenuItem(
             icon: Icons.settings_outlined,
             label: 'Settings',
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              Navigator.pop(context);
+              context.push(AppRoutes.settings, extra: {
+                'version': '1.0.0',
+              });
+            },
           ),
           const AdvisorDivider(),
           Padding(

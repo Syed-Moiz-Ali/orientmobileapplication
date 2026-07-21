@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:orientmobileapplication/core/local/hive/hive_cleaner.dart';
+import 'package:orientmobileapplication/core/pages/profile_view.dart';
+import 'package:orientmobileapplication/core/router/app_router.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/theme/app_text_styles.dart';
@@ -216,14 +220,55 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
+            _menuItem(context,
+              icon: Icons.person_outline_rounded,
+              label: 'My Profile',
+              onTap: () {
+                Navigator.pop(context);
+                context.push(AppRoutes.profile, extra: ProfileData(
+                  name: 'Owner',
+                  id: 'OWN-001',
+                  role: 'Owner',
+                  branch: 'Auto Garage ERP',
+                  shift: '8:00 AM - 6:00 PM',
+                  avatarInitials: 'O',
+                ));
+              },
+            ),
+            _menuItem(context,
+              icon: Icons.calendar_month_outlined,
+              label: 'Shift Details',
+              onTap: () {
+                Navigator.pop(context);
+                context.push(AppRoutes.shiftDetails, extra: {
+                  'name': 'Owner',
+                  'id': 'OWN-001',
+                  'shift': '8:00 AM - 6:00 PM',
+                  'start': '8:00 AM',
+                  'end': '6:00 PM',
+                  'branch': 'Auto Garage ERP',
+                });
+              },
+            ),
+            _menuItem(context,
+              icon: Icons.settings_outlined,
+              label: 'Settings',
+              onTap: () {
+                Navigator.pop(context);
+                context.push(AppRoutes.settings, extra: {
+                  'version': '1.0.0',
+                });
+              },
+            ),
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               height: 50,
               child: OutlinedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
-                  Navigator.of(context).pop();
+                  _showLogoutDialog(context);
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.danger,
@@ -241,6 +286,114 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _menuItem(BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppDimensions.s6),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppDimensions.r12),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.s12,
+              vertical: AppDimensions.s14,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: AppColors.text2),
+                SizedBox(width: AppDimensions.s12),
+                Text(
+                  label,
+                  style: AppTextStyles.rajdhaniBody(color: AppColors.textPrimary),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: AppColors.text3,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    if (HiveCleaner.hasPendingSync()) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+          title: const Row(children: [
+            Icon(Icons.sync_problem_rounded, color: AppColors.warning, size: 22),
+            SizedBox(width: 10),
+            Text('Sync Pending', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          ]),
+          content: const Text(
+            'You have pending sync operations.\nPlease wait for sync to complete before logging out.',
+            style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+        title: const Row(children: [
+          Icon(Icons.logout_rounded, color: AppColors.danger, size: 22),
+          SizedBox(width: 10),
+          Text('Logout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        ]),
+        content: const Text('Are you sure you want to logout?\nAll local data will be cleared.',
+            style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text3)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              HiveCleaner.clearAll().then((_) {
+                if (context.mounted) context.go(AppRoutes.roleSelection);
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('Yes, Logout', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
   }

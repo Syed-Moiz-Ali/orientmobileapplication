@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:orientmobileapplication/core/router/inspection_callbacks.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:go_router/go_router.dart';
 import 'package:orientmobileapplication/core/router/app_router.dart';
@@ -129,28 +130,25 @@ class ChooseInspectionView extends ConsumerWidget {
                 label: 'SELECT AND CONTINUE',
                 onTap: () {
                   ref.read(inspectionProvider.notifier).reset();
-                  context.push(
-                    AppRoutes.inspectionSheet,
-                    extra: {
-                      'onBack': () => context.pop(),
-                      'onSaveDraft': () {
-                        context.pop();
-                        onSelect();
-                      },
-                      'onPreview': () {
-                        context.push(
-                          AppRoutes.inspectionPreview,
-                          extra: {
-                            'onBack': () => context.pop(),
-                            'onSubmit': () {
-                              context.pop();
-                              onSelect();
-                            },
+                  final cb = InspectionCallbacks(
+                    onBack: () => context.pop(),
+                    onSaveDraft: () {
+                      context.pop();
+                      onSelect();
+                    },
+                    onPreview: () {
+                      context.push(
+                        AppRoutes.inspectionPreview,
+                        extra: {
+                          'onBack': () {
+                            context.pop();
+                            onSelect();
                           },
-                        );
-                      },
+                        },
+                      );
                     },
                   );
+                  context.push(AppRoutes.inspectionSheet, extra: cb);
                 },
                 color: IC.accent,
                 small: true,

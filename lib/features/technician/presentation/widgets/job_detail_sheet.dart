@@ -3,19 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/theme/app_text_styles.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/technician/domain/entities/technician_entities.dart';
 import 'package:orientmobileapplication/features/technician/providers/technician_providers.dart';
 
-class JobDetailSheet extends StatefulWidget {
+class JobDetailSheet extends ConsumerStatefulWidget {
   final TechnicianJobEntity job;
 
   const JobDetailSheet({super.key, required this.job});
 
   @override
-  State<JobDetailSheet> createState() => _JobDetailSheetState();
+  ConsumerState<JobDetailSheet> createState() => _JobDetailSheetState();
 }
 
-class _JobDetailSheetState extends State<JobDetailSheet> {
+class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
   late TextEditingController _notesCtrl;
 
   @override
@@ -414,6 +415,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                               ? null
                               : () async {
                                   await notifier.completeJob(job);
+                                  ref.read(syncEngineProvider).syncAll();
                                   if (context.mounted) {
                                     Navigator.pop(context);
                                   }
