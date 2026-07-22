@@ -79,7 +79,6 @@ class _RoleCardState extends ConsumerState<RoleCard>
                 color: _isHovered
                     ? Colors.white.withValues(alpha: 0.28)
                     : Colors.white.withValues(alpha: 0.14),
-                width: 1,
               ),
               borderRadius: BorderRadius.circular(AppDimensions.r14),
             ),

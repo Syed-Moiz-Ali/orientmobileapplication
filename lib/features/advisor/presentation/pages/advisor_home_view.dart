@@ -95,14 +95,16 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
       onBack: () => context.pop(),
       onSaveDraft: () {
         context.pop();
-        _toast('Draft saved', icon: Icons.save_outlined, color: AppColors.warning);
+        _toast(
+          'Draft saved',
+          icon: Icons.save_outlined,
+          color: AppColors.warning,
+        );
       },
       onPreview: () {
         context.push(
           AppRoutes.inspectionPreview,
-          extra: {
-            'onBack': () => context.go(AppRoutes.advisorDashboard),
-          },
+          extra: {'onBack': () => context.go(AppRoutes.advisorDashboard)},
         );
       },
     );
@@ -120,7 +122,6 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
           _toast(
             'Good morning, Ali. You have 5 pending approvals.',
             icon: Icons.wb_sunny_outlined,
-            color: AppColors.accent,
           );
         }
       });
@@ -188,15 +189,34 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
             context: context,
             builder: (ctx) => AlertDialog(
               backgroundColor: AppColors.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
-              title: const Row(children: [
-                Icon(Icons.sync_problem_rounded, color: AppColors.warning, size: 22),
-                SizedBox(width: 10),
-                Text('Sync Pending', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              ]),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.r16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(
+                    Icons.sync_problem_rounded,
+                    color: AppColors.warning,
+                    size: 22,
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Sync Pending',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
               content: const Text(
                 'You have pending sync operations.\nPlease wait for sync to complete before logging out.',
-                style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.text2,
+                  height: 1.5,
+                ),
               ),
               actions: [
                 ElevatedButton(
@@ -204,10 +224,18 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.warning,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimensions.r10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
-                  child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
             ),
@@ -218,18 +246,41 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: AppColors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
-            title: const Row(children: [
-              Icon(Icons.logout_rounded, color: AppColors.danger, size: 22),
-              SizedBox(width: 10),
-              Text('Logout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-            ]),
-            content: const Text('Are you sure you want to logout?\nAll local data will be cleared.',
-                style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.r16),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.logout_rounded, color: AppColors.danger, size: 22),
+                SizedBox(width: 10),
+                Text(
+                  'Logout',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              'Are you sure you want to logout?\nAll local data will be cleared.',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.text2,
+                height: 1.5,
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text3)),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text3,
+                  ),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -241,10 +292,18 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.danger,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r10),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
-                child: const Text('Yes, Logout', style: TextStyle(fontWeight: FontWeight.w700)),
+                child: const Text(
+                  'Yes, Logout',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -306,14 +365,16 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
     });
     final queue = ref.read(syncQueueProvider);
     final id = await IdGenerator.nextId('APPR');
-    await queue.enqueue(SyncOperation(
-      id: id,
-      entityType: 'inspection',
-      entityId: pa.estimateId,
-      changeType: ChangeType.update,
-      payload: {'estimateId': pa.estimateId, 'action': action},
-      timestamp: DateTime.now().millisecondsSinceEpoch,
-    ));
+    await queue.enqueue(
+      SyncOperation(
+        id: id,
+        entityType: 'inspection',
+        entityId: pa.estimateId,
+        changeType: ChangeType.update,
+        payload: {'estimateId': pa.estimateId, 'action': action},
+        timestamp: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
     ref.read(syncEngineProvider).syncAll();
   }
 
@@ -324,11 +385,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
         r: r,
         onCall: () {
           Navigator.pop(context);
-          _toast(
-            'Calling ${r.customerName}…',
-            icon: Icons.phone_outlined,
-            color: AppColors.accent,
-          );
+          _toast('Calling ${r.customerName}…', icon: Icons.phone_outlined);
         },
         onWhatsApp: () {
           Navigator.pop(context);
@@ -340,7 +397,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
         },
         onSms: () {
           Navigator.pop(context);
-          _toast('SMS sent', icon: Icons.sms_outlined, color: AppColors.accent);
+          _toast('SMS sent', icon: Icons.sms_outlined);
         },
         onDone: () {
           Navigator.pop(context);
@@ -397,11 +454,11 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
                 onStat: _onStat,
               ),
         floatingActionButton: AdvisorFab(
-            onTap: () {
-              HapticFeedback.heavyImpact();
-              _openScan();
-            },
-          ),
+          onTap: () {
+            HapticFeedback.heavyImpact();
+            _openScan();
+          },
+        ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: AdvisorBottomNav(
           navIndex: _navIndex,
@@ -411,5 +468,4 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
       ),
     );
   }
-
 }

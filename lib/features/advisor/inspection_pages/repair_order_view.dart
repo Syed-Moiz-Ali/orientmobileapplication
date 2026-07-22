@@ -148,13 +148,13 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
           // ── Customer / Vehicle info ─────────────────────────────────────
           InfoCard(
             child: Column(
-              children: [
+              children: const [
                 Row(
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Customer',
                             style: TextStyle(fontSize: 11, color: IC.text3),
@@ -179,7 +179,7 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Vehicle',
                             style: TextStyle(fontSize: 11, color: IC.text3),
@@ -204,10 +204,10 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                const Divider(color: IC.line, height: 1),
-                const SizedBox(height: 10),
-                const Row(
+                SizedBox(height: 10),
+                Divider(color: IC.line, height: 1),
+                SizedBox(height: 10),
+                Row(
                   children: [
                     Text(
                       'Service Advisor',
@@ -299,16 +299,12 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
           InfoCard(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
+              children: const [
+                Text(
                   'Place Of Supply',
                   style: TextStyle(fontSize: 12, color: IC.text2),
                 ),
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: IC.text3,
-                  size: 18,
-                ),
+                Icon(Icons.keyboard_arrow_down, color: IC.text3, size: 18),
               ],
             ),
           ),
@@ -378,7 +374,6 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                     SolidBtn(
                       label: '+ ADD',
                       onTap: () => _addPreServiceMedia(),
-                      color: IC.accent,
                       small: true,
                     ),
                   ],
@@ -447,12 +442,7 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                     color: IC.text1,
                   ),
                 ),
-                SolidBtn(
-                  label: '+ ADD',
-                  onTap: () {},
-                  color: IC.accent,
-                  small: true,
-                ),
+                SolidBtn(label: '+ ADD', onTap: () {}, small: true),
               ],
             ),
           ),
@@ -878,12 +868,7 @@ class _LineItemsCard extends StatelessWidget {
                 color: IC.text1,
               ),
             ),
-            SolidBtn(
-              label: '+ ADD',
-              onTap: onAdd,
-              color: IC.accent,
-              small: true,
-            ),
+            SolidBtn(label: '+ ADD', onTap: onAdd, small: true),
           ],
         ),
         const SizedBox(height: 8),
@@ -1870,7 +1855,12 @@ class RepairOrderPreviewView extends ConsumerWidget {
             InfoCard(
               child: Column(
                 children: [
-                  _TableHeader(['SERVICES', 'QTY', 'SELLING PRICE', 'AMOUNT']),
+                  _TableHeader(const [
+                    'SERVICES',
+                    'QTY',
+                    'SELLING PRICE',
+                    'AMOUNT',
+                  ]),
                   ...state.serviceLines.map(
                     (s) => _TableRow([
                       s.name,
@@ -1891,7 +1881,12 @@ class RepairOrderPreviewView extends ConsumerWidget {
             InfoCard(
               child: Column(
                 children: [
-                  _TableHeader(['PARTS', 'QTY', 'SELLING PRICE', 'AMOUNT']),
+                  _TableHeader(const [
+                    'PARTS',
+                    'QTY',
+                    'SELLING PRICE',
+                    'AMOUNT',
+                  ]),
                   ...state.partLines.map(
                     (p) => _TableRow([
                       p.name,
@@ -2056,7 +2051,9 @@ class _CreateRepairOrderButton extends ConsumerWidget {
     return GestureDetector(
       onTap: () async {
         final state = ref.read(inspectionProvider);
-        final local = GenericLocalDataSource(Hive.box<Map<String, dynamic>>('repair_orders'));
+        final local = GenericLocalDataSource(
+          Hive.box<Map<String, dynamic>>('repair_orders'),
+        );
         final id = await IdGenerator.nextId('RO');
         await local.save(id, state.toPersistableMap());
 
@@ -2088,18 +2085,12 @@ class _CreateRepairOrderButton extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: IC.navy,
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppDimensions.r10),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.arrow_forward_rounded,
-              color: Colors.white,
-              size: 16,
-            ),
+            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
             SizedBox(width: 8),
             Text(
               'CREATE REPAIR ORDER',

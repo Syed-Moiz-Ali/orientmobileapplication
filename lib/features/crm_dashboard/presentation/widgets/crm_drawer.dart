@@ -37,8 +37,6 @@ class CrmDrawer extends ConsumerWidget {
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [CrmColors.gStart, CrmColors.gEnd],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
               ),
             ),
             child: Row(
@@ -64,8 +62,8 @@ class CrmDrawer extends ConsumerWidget {
                 const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
+                  children: const [
+                    Text(
                       'CRM',
                       style: TextStyle(
                         color: Colors.white,
@@ -74,7 +72,7 @@ class CrmDrawer extends ConsumerWidget {
                         letterSpacing: 2,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'DASHBOARD',
                       style: TextStyle(
                         color: Colors.white70,

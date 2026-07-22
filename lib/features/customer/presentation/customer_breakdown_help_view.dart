@@ -419,7 +419,7 @@ class _CustomerBreakdownHelpViewState
 
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                      children: const [
                         Expanded(
                           child: _InfoCard(
                             icon: Icons.local_shipping_rounded,
@@ -428,7 +428,7 @@ class _CustomerBreakdownHelpViewState
                             sub: 'Free within 40km',
                           ),
                         ),
-                        const SizedBox(width: AppDimensions.s10),
+                        SizedBox(width: AppDimensions.s10),
                         Expanded(
                           child: _InfoCard(
                             icon: Icons.bolt_rounded,
@@ -437,7 +437,7 @@ class _CustomerBreakdownHelpViewState
                             sub: 'Avg response Dubai',
                           ),
                         ),
-                        const SizedBox(width: AppDimensions.s10),
+                        SizedBox(width: AppDimensions.s10),
                         Expanded(
                           child: _InfoCard(
                             icon: Icons.access_time_filled_rounded,

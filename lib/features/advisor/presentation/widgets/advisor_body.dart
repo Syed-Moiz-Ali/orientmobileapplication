@@ -50,7 +50,6 @@ class AdvisorBody extends ConsumerWidget {
 
     return RefreshIndicator(
       color: AppColors.accent,
-      strokeWidth: 2.5,
       displacement: 20,
       onRefresh: () async {
         ref.read(advisorRefreshProvider.notifier).state++;
@@ -58,15 +57,17 @@ class AdvisorBody extends ConsumerWidget {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          SliverToBoxAdapter(child: AdvisorHeader(
-            advisorName: info.name,
-            onShowProfile: onShowProfile,
-            onShowNotifications: onShowNotifications,
-            onShowSearch: onShowSearch,
-            onOpenScan: onOpenScan,
-            onNewJobCard: onNewJobCard,
-            onOpenInspection: onOpenInspection,
-          )),
+          SliverToBoxAdapter(
+            child: AdvisorHeader(
+              advisorName: info.name,
+              onShowProfile: onShowProfile,
+              onShowNotifications: onShowNotifications,
+              onShowSearch: onShowSearch,
+              onOpenScan: onOpenScan,
+              onNewJobCard: onNewJobCard,
+              onOpenInspection: onOpenInspection,
+            ),
+          ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
             sliver: SliverList(
@@ -126,29 +127,39 @@ class AdvisorBody extends ConsumerWidget {
     return Row(
       children: [
         AdvisorStatTile(
-          label: 'Orders', count: stats.newJobCardsToday,
-          color: AppColors.accent, bg: AppColors.accent.withValues(alpha: 0.12),
+          label: 'Orders',
+          count: stats.newJobCardsToday,
+          color: AppColors.accent,
+          bg: AppColors.accent.withValues(alpha: 0.12),
           icon: Icons.inbox_outlined,
-          onTap: () => onStat('Open Orders', stats.newJobCardsToday, AppColors.accent),
+          onTap: () =>
+              onStat('Open Orders', stats.newJobCardsToday, AppColors.accent),
         ),
         const SizedBox(width: 9),
         AdvisorStatTile(
-          label: 'WIP', count: stats.inspectionsToday,
-          color: AppColors.warning, bg: AppColors.warningBg,
+          label: 'WIP',
+          count: stats.inspectionsToday,
+          color: AppColors.warning,
+          bg: AppColors.warningBg,
           icon: Icons.build_circle_outlined,
           onTap: () => onStat('WIP', stats.inspectionsToday, AppColors.warning),
         ),
         const SizedBox(width: 9),
         AdvisorStatTile(
-          label: 'Ready', count: stats.readyForDelivery,
-          color: AppColors.success, bg: AppColors.successBg,
+          label: 'Ready',
+          count: stats.readyForDelivery,
+          color: AppColors.success,
+          bg: AppColors.successBg,
           icon: Icons.verified_outlined,
-          onTap: () => onStat('Ready', stats.readyForDelivery, AppColors.success),
+          onTap: () =>
+              onStat('Ready', stats.readyForDelivery, AppColors.success),
         ),
         const SizedBox(width: 9),
         AdvisorStatTile(
-          label: 'Delivered', count: 4,
-          color: AppColors.info, bg: AppColors.infoBg,
+          label: 'Delivered',
+          count: 4,
+          color: AppColors.info,
+          bg: AppColors.infoBg,
           icon: Icons.local_shipping_outlined,
           onTap: () => onStat('Delivered', 4, AppColors.info),
         ),

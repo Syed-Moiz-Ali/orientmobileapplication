@@ -27,11 +27,7 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       flexibleSpace: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.navy, AppColors.accent],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
+          gradient: LinearGradient(colors: [AppColors.navy, AppColors.accent]),
         ),
       ),
       backgroundColor: Colors.transparent,
@@ -48,22 +44,35 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
             color: Colors.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(AppDimensions.r10),
           ),
-          child: const Icon(Icons.build_circle_rounded, color: Colors.white, size: AppDimensions.iconLg),
+          child: const Icon(
+            Icons.build_circle_rounded,
+            color: Colors.white,
+            size: AppDimensions.iconLg,
+          ),
         ),
       ),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(_titles[selectedIndex], style: AppTextStyles.rajdhaniLabel(color: Colors.white)),
-          Text(_subtitles[selectedIndex], style: AppTextStyles.rajdhaniBodySmall(color: Colors.white70)),
+          Text(
+            _titles[selectedIndex],
+            style: AppTextStyles.rajdhaniLabel(color: Colors.white),
+          ),
+          Text(
+            _subtitles[selectedIndex],
+            style: AppTextStyles.rajdhaniBodySmall(color: Colors.white70),
+          ),
         ],
       ),
       actions: [
         const NotificationBell(),
         Padding(
           padding: const EdgeInsets.only(right: 14),
-          child: UserAvatar(initials: 'S', onTap: () => showProfileSheet(context, _profileData)),
+          child: UserAvatar(
+            initials: 'S',
+            onTap: () => showProfileSheet(context, _profileData),
+          ),
         ),
       ],
     );
@@ -76,20 +85,37 @@ const _profileData = ProfileSheetData(
   roleLabel: 'Supervisor',
   roleBadge: 'Admin \u2022 Auto Garage ERP',
   menuItems: [
-    ProfileSheetItem(icon: Icons.person_outline_rounded, label: 'My Profile', route: AppRoutes.profile, extra: {
-      'name': 'Supervisor',
-      'id': 'SUP-001',
-      'role': 'Supervisor',
-      'branch': 'Auto Garage ERP',
-      'shift': '8:00 AM - 6:00 PM',
-      'avatarInitials': 'S',
-    }),
-    ProfileSheetItem(icon: Icons.calendar_month_outlined, label: 'Shift Details', route: AppRoutes.shiftDetails, extra: {
-      'name': 'Supervisor', 'id': 'SUP-001', 'shift': '8:00 AM - 6:00 PM',
-      'start': '8:00 AM', 'end': '6:00 PM', 'branch': 'Auto Garage ERP',
-    }),
-    ProfileSheetItem(icon: Icons.settings_outlined, label: 'Settings', route: AppRoutes.settings, extra: {
-      'version': '1.0.0',
-    }),
+    ProfileSheetItem(
+      icon: Icons.person_outline_rounded,
+      label: 'My Profile',
+      route: AppRoutes.profile,
+      extra: {
+        'name': 'Supervisor',
+        'id': 'SUP-001',
+        'role': 'Supervisor',
+        'branch': 'Auto Garage ERP',
+        'shift': '8:00 AM - 6:00 PM',
+        'avatarInitials': 'S',
+      },
+    ),
+    ProfileSheetItem(
+      icon: Icons.calendar_month_outlined,
+      label: 'Shift Details',
+      route: AppRoutes.shiftDetails,
+      extra: {
+        'name': 'Supervisor',
+        'id': 'SUP-001',
+        'shift': '8:00 AM - 6:00 PM',
+        'start': '8:00 AM',
+        'end': '6:00 PM',
+        'branch': 'Auto Garage ERP',
+      },
+    ),
+    ProfileSheetItem(
+      icon: Icons.settings_outlined,
+      label: 'Settings',
+      route: AppRoutes.settings,
+      extra: {'version': '1.0.0'},
+    ),
   ],
 );

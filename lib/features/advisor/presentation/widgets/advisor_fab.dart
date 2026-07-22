@@ -29,9 +29,9 @@ class AdvisorFab extends StatelessWidget {
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 22),
-          const SizedBox(height: 1),
+        children: const [
+          Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 22),
+          SizedBox(height: 1),
           Text(
             'SCAN',
             style: TextStyle(

@@ -6,7 +6,7 @@ void main() {
   late RetryInterceptor interceptor;
 
   setUp(() {
-    interceptor = RetryInterceptor(maxRetries: 3);
+    interceptor = RetryInterceptor();
   });
 
   group('RetryInterceptor', () {

@@ -26,7 +26,7 @@ Map<String, dynamic> _$$JobCardEntityImplToJson(_$JobCardEntityImpl instance) =>
       'time': instance.time,
       'createdDate': instance.createdDate,
       'lastUpdated': instance.lastUpdated,
-      'status': _$JobCardStatusEnumMap[instance.status]!,
+      'status': _$JobCardStatusEnumMap[instance.status],
       'technician': instance.technician,
     };
 

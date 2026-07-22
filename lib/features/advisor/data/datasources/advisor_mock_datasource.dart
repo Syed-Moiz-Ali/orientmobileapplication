@@ -11,8 +11,12 @@ class AdvisorMockDataSource {
 
   AdvisorStatsEntity fetchStats() {
     final allData = hiveBox?.values.toList() ?? [];
-    final approvals = allData.where((m) => m['action'] == 'approved' || m['action'] == 'rejected').length;
-    final vehicleCustomers = allData.where((m) => m['type'] == 'vehicle_customer').length;
+    final approvals = allData
+        .where((m) => m['action'] == 'approved' || m['action'] == 'rejected')
+        .length;
+    final vehicleCustomers = allData
+        .where((m) => m['type'] == 'vehicle_customer')
+        .length;
     return AdvisorStatsEntity(
       newJobCardsToday: vehicleCustomers,
       inspectionsToday: vehicleCustomers,
@@ -27,19 +31,39 @@ class AdvisorMockDataSource {
     final allData = hiveBox?.values.toList() ?? [];
     final jobs = allData
         .where((m) => m['type'] == 'vehicle_customer')
-        .map((m) => JobCardEntity(
-              id: m['vin'] as String? ?? '',
-              customerName: m['customerName'] as String? ?? '',
-              vehicleInfo: '${m['make'] ?? ''} ${m['model'] ?? ''}',
-              time: DateTime.now().toString().substring(11, 16),
-              status: JobCardStatus.inProgress,
-            ))
+        .map(
+          (m) => JobCardEntity(
+            id: m['vin'] as String? ?? '',
+            customerName: m['customerName'] as String? ?? '',
+            vehicleInfo: '${m['make'] ?? ''} ${m['model'] ?? ''}',
+            time: DateTime.now().toString().substring(11, 16),
+            status: JobCardStatus.inProgress,
+          ),
+        )
         .toList();
     if (jobs.isEmpty) {
       return const [
-        JobCardEntity(id: 'JC-2024-089', customerName: 'Ahmed Hassan', vehicleInfo: 'Toyota Camry', time: '09:15 AM', status: JobCardStatus.inProgress),
-        JobCardEntity(id: 'JC-2024-088', customerName: 'Fatima Ali', vehicleInfo: 'Honda Accord', time: '08:45 AM', status: JobCardStatus.pendingApproval),
-        JobCardEntity(id: 'JC-2024-087', customerName: 'Khalid Rashid', vehicleInfo: 'Nissan Patrol', time: '08:00 AM', status: JobCardStatus.qualityCheck),
+        JobCardEntity(
+          id: 'JC-2024-089',
+          customerName: 'Ahmed Hassan',
+          vehicleInfo: 'Toyota Camry',
+          time: '09:15 AM',
+          status: JobCardStatus.inProgress,
+        ),
+        JobCardEntity(
+          id: 'JC-2024-088',
+          customerName: 'Fatima Ali',
+          vehicleInfo: 'Honda Accord',
+          time: '08:45 AM',
+          status: JobCardStatus.pendingApproval,
+        ),
+        JobCardEntity(
+          id: 'JC-2024-087',
+          customerName: 'Khalid Rashid',
+          vehicleInfo: 'Nissan Patrol',
+          time: '08:00 AM',
+          status: JobCardStatus.qualityCheck,
+        ),
       ];
     }
     return jobs;
@@ -48,21 +72,36 @@ class AdvisorMockDataSource {
   List<PendingApprovalEntity> fetchPendingApprovals() {
     final allData = hiveBox?.values.toList() ?? [];
     final approvals = allData
-        .where((m) =>
-            m['estimateId'] != null &&
-            (m['action'] == 'approved' || m['action'] == 'rejected'))
-        .map((m) => PendingApprovalEntity(
-              estimateId: m['estimateId'] as String? ?? '',
-              customerName: m['customerName'] as String? ?? '',
-              vehicleId: '',
-              amount: (m['amount'] as num?)?.toDouble() ?? 0.0,
-              timeAgo: 'now',
-            ))
+        .where(
+          (m) =>
+              m['estimateId'] != null &&
+              (m['action'] == 'approved' || m['action'] == 'rejected'),
+        )
+        .map(
+          (m) => PendingApprovalEntity(
+            estimateId: m['estimateId'] as String? ?? '',
+            customerName: m['customerName'] as String? ?? '',
+            vehicleId: '',
+            amount: (m['amount'] as num?)?.toDouble() ?? 0.0,
+          ),
+        )
         .toList();
     if (approvals.isEmpty) {
       return const [
-        PendingApprovalEntity(estimateId: 'EST-2024-089', customerName: 'Ahmed Hassan', vehicleId: 'D-12345', amount: 1250, timeAgo: '10 mins ago'),
-        PendingApprovalEntity(estimateId: 'EST-2024-088', customerName: 'Sara Mohammed', vehicleId: 'D-44321', amount: 875, timeAgo: '25 mins ago'),
+        PendingApprovalEntity(
+          estimateId: 'EST-2024-089',
+          customerName: 'Ahmed Hassan',
+          vehicleId: 'D-12345',
+          amount: 1250,
+          timeAgo: '10 mins ago',
+        ),
+        PendingApprovalEntity(
+          estimateId: 'EST-2024-088',
+          customerName: 'Sara Mohammed',
+          vehicleId: 'D-44321',
+          amount: 875,
+          timeAgo: '25 mins ago',
+        ),
       ];
     }
     return approvals;
@@ -70,9 +109,27 @@ class AdvisorMockDataSource {
 
   List<FollowupReminderEntity> fetchFollowupReminders() {
     return const [
-      FollowupReminderEntity(customerName: 'Ahmed Hassan', vehicleId: 'D-12345', task: 'Follow up on estimate approval', dueDate: 'Due: Today, 2:00 PM', priority: ReminderPriority.high),
-      FollowupReminderEntity(customerName: 'Mariam Salem', vehicleId: 'D-44556', task: 'Notify when parts arrive', dueDate: 'Due: Tomorrow, 10:00 AM', priority: ReminderPriority.medium),
-      FollowupReminderEntity(customerName: 'Omar Khalid', vehicleId: 'D-99001', task: 'Schedule next service', dueDate: 'Due: Apr 10, 2024', priority: ReminderPriority.low),
+      FollowupReminderEntity(
+        customerName: 'Ahmed Hassan',
+        vehicleId: 'D-12345',
+        task: 'Follow up on estimate approval',
+        dueDate: 'Due: Today, 2:00 PM',
+        priority: ReminderPriority.high,
+      ),
+      FollowupReminderEntity(
+        customerName: 'Mariam Salem',
+        vehicleId: 'D-44556',
+        task: 'Notify when parts arrive',
+        dueDate: 'Due: Tomorrow, 10:00 AM',
+        priority: ReminderPriority.medium,
+      ),
+      FollowupReminderEntity(
+        customerName: 'Omar Khalid',
+        vehicleId: 'D-99001',
+        task: 'Schedule next service',
+        dueDate: 'Due: Apr 10, 2024',
+        priority: ReminderPriority.low,
+      ),
     ];
   }
 

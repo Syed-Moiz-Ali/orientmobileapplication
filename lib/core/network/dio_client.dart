@@ -20,7 +20,7 @@ Dio createDio() {
   );
 
   dio.interceptors.add(LoggingInterceptor());
-  dio.interceptors.add(RetryInterceptor(maxRetries: ApiConstants.maxRetries));
+  dio.interceptors.add(RetryInterceptor());
 
   return dio;
 }

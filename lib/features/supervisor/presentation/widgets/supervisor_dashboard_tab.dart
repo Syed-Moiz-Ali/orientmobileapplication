@@ -30,7 +30,6 @@ class SupervisorDashboardTab extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: notifier.refreshDashboard,
       color: AppColors.accent,
-      strokeWidth: 2.5,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
@@ -192,7 +191,7 @@ class _HeaderBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppDimensions.r22),
-        border: Border.all(color: accent.withValues(alpha: 0.4), width: 1),
+        border: Border.all(color: accent.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

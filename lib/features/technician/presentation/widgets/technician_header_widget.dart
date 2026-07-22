@@ -22,11 +22,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.navy, AppColors.accent],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        gradient: LinearGradient(colors: [AppColors.navy, AppColors.accent]),
       ),
       child: SafeArea(
         bottom: false,
@@ -48,9 +44,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 child: Center(
                   child: Text(
                     profile.avatarInitials,
-                    style: AppTextStyles.rajdhaniButton(
-                      color: Colors.white,
-                    ),
+                    style: AppTextStyles.rajdhaniButton(color: Colors.white),
                   ),
                 ),
               ),
@@ -61,16 +55,12 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                   children: [
                     Text(
                       profile.name,
-                      style: AppTextStyles.rajdhaniButton(
-                        color: Colors.white,
-                      ),
+                      style: AppTextStyles.rajdhaniButton(color: Colors.white),
                     ),
                     SizedBox(height: AppDimensions.s4),
                     Text(
                       '${profile.empId} \u2022 ${profile.branch}',
-                      style: AppTextStyles.rajdhaniLabel(
-                        color: Colors.white70,
-                      ),
+                      style: AppTextStyles.rajdhaniLabel(color: Colors.white70),
                     ),
                     SizedBox(height: AppDimensions.s4),
                     Container(
@@ -83,7 +73,6 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(AppDimensions.r20),
                         border: Border.all(
                           color: Colors.white.withValues(alpha: 0.3),
-                          width: 1,
                         ),
                       ),
                       child: Row(
@@ -134,10 +123,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: AppColors.warning,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.navy,
-                          width: 1.5,
-                        ),
+                        border: Border.all(color: AppColors.navy, width: 1.5),
                       ),
                     ),
                   ),
@@ -159,9 +145,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                   child: Center(
                     child: Text(
                       profile.avatarInitials.substring(0, 1),
-                      style: AppTextStyles.rajdhaniBody(
-                        color: Colors.white,
-                      ),
+                      style: AppTextStyles.rajdhaniBody(color: Colors.white),
                     ),
                   ),
                 ),
@@ -213,9 +197,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
               child: Center(
                 child: Text(
                   profile.avatarInitials,
-                  style: AppTextStyles.rajdhaniTitle(
-                    color: Colors.white,
-                  ),
+                  style: AppTextStyles.rajdhaniTitle(color: Colors.white),
                 ),
               ),
             ),
@@ -241,17 +223,13 @@ class TechnicianHeaderWidget extends ConsumerWidget {
               ),
               child: Text(
                 '${profile.role} \u2022 ${profile.branch}',
-                style: AppTextStyles.rajdhaniLabel(
-                  color: AppColors.accent,
-                ),
+                style: AppTextStyles.rajdhaniLabel(color: AppColors.accent),
               ),
             ),
             SizedBox(height: AppDimensions.s6),
             Text(
               'Shift: ${profile.shift}',
-              style: AppTextStyles.rajdhaniBodySmall(
-                color: AppColors.text3,
-              ),
+              style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
             ),
             SizedBox(height: AppDimensions.s24),
             _menuItem(
@@ -260,14 +238,17 @@ class TechnicianHeaderWidget extends ConsumerWidget {
               label: 'My Profile',
               onTap: () {
                 Navigator.pop(context);
-                context.push(AppRoutes.profile, extra: ProfileData(
-                  name: profile.name,
-                  id: profile.empId,
-                  role: profile.role,
-                  branch: profile.branch,
-                  shift: profile.shift,
-                  avatarInitials: profile.avatarInitials,
-                ));
+                context.push(
+                  AppRoutes.profile,
+                  extra: ProfileData(
+                    name: profile.name,
+                    id: profile.empId,
+                    role: profile.role,
+                    branch: profile.branch,
+                    shift: profile.shift,
+                    avatarInitials: profile.avatarInitials,
+                  ),
+                );
               },
             ),
             _menuItem(
@@ -276,14 +257,17 @@ class TechnicianHeaderWidget extends ConsumerWidget {
               label: 'Shift Details',
               onTap: () {
                 Navigator.pop(context);
-                context.push(AppRoutes.shiftDetails, extra: {
-                  'name': profile.name,
-                  'id': profile.empId,
-                  'shift': profile.shift,
-                  'start': profile.shift.split(' - ').first,
-                  'end': profile.shift.split(' - ').last,
-                  'branch': profile.branch,
-                });
+                context.push(
+                  AppRoutes.shiftDetails,
+                  extra: {
+                    'name': profile.name,
+                    'id': profile.empId,
+                    'shift': profile.shift,
+                    'start': profile.shift.split(' - ').first,
+                    'end': profile.shift.split(' - ').last,
+                    'branch': profile.branch,
+                  },
+                );
               },
             ),
             _menuItem(
@@ -292,9 +276,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
               label: 'Settings',
               onTap: () {
                 Navigator.pop(context);
-                context.push(AppRoutes.settings, extra: {
-                  'version': '1.0.0',
-                });
+                context.push(AppRoutes.settings, extra: {'version': '1.0.0'});
               },
             ),
             SizedBox(height: AppDimensions.s8),
@@ -316,9 +298,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 icon: const Icon(Icons.logout_rounded, size: 18),
                 label: Text(
                   'Logout',
-                  style: AppTextStyles.rajdhaniLabel(
-                    color: AppColors.danger,
-                  ),
+                  style: AppTextStyles.rajdhaniLabel(color: AppColors.danger),
                 ),
               ),
             ),
@@ -328,7 +308,8 @@ class TechnicianHeaderWidget extends ConsumerWidget {
     );
   }
 
-  Widget _menuItem(BuildContext context, {
+  Widget _menuItem(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -351,7 +332,9 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 SizedBox(width: AppDimensions.s12),
                 Text(
                   label,
-                  style: AppTextStyles.rajdhaniBody(color: AppColors.textPrimary),
+                  style: AppTextStyles.rajdhaniBody(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const Spacer(),
                 Icon(
@@ -373,12 +356,27 @@ class TechnicianHeaderWidget extends ConsumerWidget {
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
-          title: const Row(children: [
-            Icon(Icons.sync_problem_rounded, color: AppColors.warning, size: 22),
-            SizedBox(width: 10),
-            Text('Sync Pending', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-          ]),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.r16),
+          ),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.sync_problem_rounded,
+                color: AppColors.warning,
+                size: 22,
+              ),
+              SizedBox(width: 10),
+              Text(
+                'Sync Pending',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
           content: const Text(
             'You have pending sync operations.\nPlease wait for sync to complete before logging out.',
             style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
@@ -389,10 +387,18 @@ class TechnicianHeaderWidget extends ConsumerWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.warning,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
-              child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: const Text(
+                'OK',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),
@@ -403,18 +409,37 @@ class TechnicianHeaderWidget extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
-        title: const Row(children: [
-          Icon(Icons.logout_rounded, color: AppColors.danger, size: 22),
-          SizedBox(width: 10),
-          Text('Logout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-        ]),
-        content: const Text('Are you sure you want to logout?\nAll local data will be cleared.',
-            style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.r16),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: AppColors.danger, size: 22),
+            SizedBox(width: 10),
+            Text(
+              'Logout',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to logout?\nAll local data will be cleared.',
+          style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text3)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.text3,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -426,10 +451,15 @@ class TechnicianHeaderWidget extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.r10),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text('Yes, Logout', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Yes, Logout',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),

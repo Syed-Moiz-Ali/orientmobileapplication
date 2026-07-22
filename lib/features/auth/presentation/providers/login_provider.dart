@@ -42,27 +42,28 @@ class LoginNotifier extends Notifier<LoginState> {
     required String password,
   }) async {
     if (username.trim().isEmpty || password.trim().isEmpty) {
-      state = state.copyWith(errorMessage: 'Please enter username and password.');
+      state = state.copyWith(
+        errorMessage: 'Please enter username and password.',
+      );
       return false;
     }
 
-    state = state.copyWith(errorMessage: null, isLoading: true);
+    state = state.copyWith(isLoading: true);
 
-    final result = await ref.read(authenticateProvider).call(
-      username: username,
-      password: password,
-    );
+    final result = await ref
+        .read(authenticateProvider)
+        .call(username: username, password: password);
 
     state = result.when(
       success: (_) => state.copyWith(isLoading: false),
-      failure: (error) => state.copyWith(
-        isLoading: false,
-        errorMessage: error.message,
-      ),
+      failure: (error) =>
+          state.copyWith(isLoading: false, errorMessage: error.message),
     );
 
     if (result case Success(:final data)) {
-      await ref.read(authNotifierProvider.notifier).authenticate(role, data.token);
+      await ref
+          .read(authNotifierProvider.notifier)
+          .authenticate(role, data.token);
     }
 
     return result is Success;
@@ -70,10 +71,11 @@ class LoginNotifier extends Notifier<LoginState> {
 
   void clearError() {
     if (state.errorMessage != null) {
-      state = state.copyWith(errorMessage: null);
+      state = state.copyWith();
     }
   }
 }
 
-final loginNotifierProvider =
-    NotifierProvider<LoginNotifier, LoginState>(LoginNotifier.new);
+final loginNotifierProvider = NotifierProvider<LoginNotifier, LoginState>(
+  LoginNotifier.new,
+);

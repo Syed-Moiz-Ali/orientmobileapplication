@@ -28,7 +28,9 @@ class CrmReportsPage extends ConsumerWidget {
                   height: 130,
                   child: CustomPaint(
                     size: Size.infinite,
-                    painter: _CrmConversionTrendPainter(data: ui.conversionTrend),
+                    painter: _CrmConversionTrendPainter(
+                      data: ui.conversionTrend,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s10),
@@ -160,7 +162,9 @@ class CrmReportsPage extends ConsumerWidget {
                   height: 120,
                   child: CustomPaint(
                     size: Size.infinite,
-                    painter: _CrmResponseTimePainter(data: ui.responseTimeBuckets),
+                    painter: _CrmResponseTimePainter(
+                      data: ui.responseTimeBuckets,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s8),
@@ -198,7 +202,8 @@ class CrmReportsPage extends ConsumerWidget {
                     childAspectRatio: 2.2,
                   ),
                   itemCount: ui.keyMetrics.length,
-                  itemBuilder: (_, i) => _CrmKeyMetricCard(metric: ui.keyMetrics[i]),
+                  itemBuilder: (_, i) =>
+                      _CrmKeyMetricCard(metric: ui.keyMetrics[i]),
                 ),
               ],
             ),
@@ -217,10 +222,7 @@ class CrmReportsPage extends ConsumerWidget {
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
       const SizedBox(width: 4),
-      Text(
-        label,
-        style: const TextStyle(color: CrmColors.textM, fontSize: 10),
-      ),
+      Text(label, style: const TextStyle(color: CrmColors.textM, fontSize: 10)),
     ],
   );
 
@@ -236,10 +238,7 @@ class CrmReportsPage extends ConsumerWidget {
         ),
       ),
       const SizedBox(width: 4),
-      Text(
-        label,
-        style: const TextStyle(color: CrmColors.textM, fontSize: 10),
-      ),
+      Text(label, style: const TextStyle(color: CrmColors.textM, fontSize: 10)),
     ],
   );
 }
@@ -325,7 +324,10 @@ class _CrmConversionTrendPainter extends CustomPainter {
         fill,
         Paint()
           ..shader = LinearGradient(
-            colors: [color.withValues(alpha: 0.15), color.withValues(alpha: 0.0)],
+            colors: [
+              color.withValues(alpha: 0.15),
+              color.withValues(alpha: 0.0),
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
@@ -385,16 +387,16 @@ class _CrmPieChartPainter extends CustomPainter {
 
     final tp = TextPainter(
       text: TextSpan(
-        children: [
+        children: const [
           TextSpan(
             text: '1,247\n',
-            style: const TextStyle(
+            style: TextStyle(
               color: CrmColors.textH,
               fontSize: 12,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const TextSpan(
+          TextSpan(
             text: 'Total',
             style: TextStyle(color: CrmColors.textM, fontSize: 9),
           ),

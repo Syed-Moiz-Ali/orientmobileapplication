@@ -785,8 +785,6 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [color, color.withValues(alpha: 0.8)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
           ),
           borderRadius: BorderRadius.circular(AppDimensions.r12),
           boxShadow: [

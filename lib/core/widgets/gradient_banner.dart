@@ -45,7 +45,8 @@ class GradientBanner extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      width: 6, height: 6,
+                      width: 6,
+                      height: 6,
                       margin: const EdgeInsets.only(right: 6, top: 1),
                       decoration: BoxDecoration(
                         color: liveDotColor ?? AppColors.cyan,
@@ -64,7 +65,10 @@ class GradientBanner extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(greeting, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                Text(
+                  greeting,
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   title,
@@ -79,10 +83,14 @@ class GradientBanner extends StatelessWidget {
                 if (pills.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   Row(
-                    children: pills.map((p) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _pill(p.icon, p.label, p.accent),
-                    )).toList(),
+                    children: pills
+                        .map(
+                          (p) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _pill(p.icon, p.label, p.accent),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ],
               ],
@@ -90,7 +98,8 @@ class GradientBanner extends StatelessWidget {
           ),
           if (icon != null)
             Container(
-              width: 68, height: 68,
+              width: 68,
+              height: 68,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.14),
                 shape: BoxShape.circle,
@@ -112,14 +121,21 @@ class GradientBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppDimensions.r22),
-        border: Border.all(color: accent.withValues(alpha: 0.4), width: 1),
+        border: Border.all(color: accent.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: accent, size: 14),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

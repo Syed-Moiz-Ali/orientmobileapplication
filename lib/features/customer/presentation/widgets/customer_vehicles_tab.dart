@@ -34,7 +34,7 @@ class CustomerVehiclesTab extends ConsumerWidget {
         final v = vehicles[i - 1];
         return Container(
           margin: const EdgeInsets.only(bottom: AppDimensions.s12),
-          child: CustomerVehicleCard(vehicle: v, compact: false),
+          child: CustomerVehicleCard(vehicle: v),
         );
       },
     );

@@ -95,7 +95,6 @@ class CustomerVehiclesView extends ConsumerWidget {
                           ),
                           border: Border.all(
                             color: AppColors.borderMd,
-                            style: BorderStyle.solid,
                             width: 1.5,
                           ),
                         ),
@@ -185,7 +184,9 @@ class _VehicleCard extends StatelessWidget {
                               vertical: AppDimensions.s4,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.textPrimary.withValues(alpha: .08),
+                              color: AppColors.textPrimary.withValues(
+                                alpha: .08,
+                              ),
                               borderRadius: BorderRadius.circular(
                                 AppDimensions.r6,
                               ),

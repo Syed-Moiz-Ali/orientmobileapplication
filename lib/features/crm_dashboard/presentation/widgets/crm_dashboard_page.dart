@@ -19,14 +19,16 @@ class CrmDashboardPage extends ConsumerWidget {
 
     if (ui.isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: CrmColors.accent, strokeWidth: 2.5),
+        child: CircularProgressIndicator(
+          color: CrmColors.accent,
+          strokeWidth: 2.5,
+        ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: ui.refresh,
       color: CrmColors.accent,
-      strokeWidth: 2.5,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
@@ -45,11 +47,11 @@ class CrmDashboardPage extends ConsumerWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.35,
-                    ),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1.35,
+                        ),
                     itemCount: ui.kpis.length,
                     itemBuilder: (_, i) => CrmKpiCard(kpi: ui.kpis[i]),
                   ),

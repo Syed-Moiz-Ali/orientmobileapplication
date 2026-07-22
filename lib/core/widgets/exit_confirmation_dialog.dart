@@ -8,10 +8,7 @@ import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 class ExitConfirmationWrapper extends StatelessWidget {
   final Widget child;
 
-  const ExitConfirmationWrapper({
-    super.key,
-    required this.child,
-  });
+  const ExitConfirmationWrapper({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +31,6 @@ class ExitConfirmationWrapper extends StatelessWidget {
 Future<bool> showExitConfirmationDialog(BuildContext context) async {
   final result = await showDialog<bool>(
     context: context,
-    barrierDismissible: true,
     builder: (BuildContext context) {
       return Dialog(
         shape: RoundedRectangleBorder(
@@ -46,7 +42,6 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
           padding: const EdgeInsets.all(AppDimensions.s20),
           decoration: BoxDecoration(
             color: Colors.white,
-            shape: BoxShape.rectangle,
             borderRadius: BorderRadius.circular(AppDimensions.r16),
             boxShadow: const [
               BoxShadow(
@@ -65,10 +60,7 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                 decoration: BoxDecoration(
                   color: AppColors.dangerBg,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.dangerBorder,
-                    width: 2,
-                  ),
+                  border: Border.all(color: AppColors.dangerBorder, width: 2),
                 ),
                 child: const Icon(
                   Icons.exit_to_app_rounded,
@@ -107,7 +99,9 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.r10),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r10,
+                          ),
                         ),
                       ),
                       child: const Text(
@@ -131,7 +125,9 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.r10),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r10,
+                          ),
                         ),
                       ),
                       child: const Text(

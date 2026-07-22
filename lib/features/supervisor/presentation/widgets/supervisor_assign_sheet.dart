@@ -310,7 +310,6 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                     ),
                     child: Slider(
                       value: widget.row.statusPercent.toDouble(),
-                      min: 0,
                       max: 100,
                       divisions: 20,
                       onChanged: (v) => widget.onChanged(
@@ -349,10 +348,7 @@ class _FormRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.rajdhaniLabel(color: AppColors.text2),
-        ),
+        Text(label, style: AppTextStyles.rajdhaniLabel(color: AppColors.text2)),
         const SizedBox(height: 7),
         child,
       ],
@@ -467,7 +463,11 @@ class _SearchField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: AppColors.text3, fontSize: 13),
-        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.text3, size: 20),
+        prefixIcon: const Icon(
+          Icons.search_rounded,
+          color: AppColors.text3,
+          size: 20,
+        ),
         filled: true,
         fillColor: AppColors.canvas,
         contentPadding: const EdgeInsets.symmetric(vertical: 13),
@@ -507,8 +507,6 @@ class _TealChipButton extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [AppColors.navy, AppColors.accent],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
           ),
           borderRadius: BorderRadius.circular(AppDimensions.r22),
           boxShadow: [

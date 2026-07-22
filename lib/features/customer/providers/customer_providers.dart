@@ -18,17 +18,19 @@ final customerBookingsProvider = Provider<List<CustomerBookingEntity>>((ref) {
         .whereType<Map>()
         .map((m) => Map<String, dynamic>.from(m))
         .where((v) => v['serviceType'] != null)
-        .map((v) => CustomerBookingEntity(
-              service: v['serviceType'] as String? ?? '',
-              vehicleName: (v['vehicle'] as String?) ?? '',
-              plateNumber: v['plateNumber'] as String? ?? '',
-              date: v['bookingDate'] as String? ?? '',
-              time: '',
-              status: BookingStatus.values.firstWhere(
-                (e) => e.name == v['status'],
-                orElse: () => BookingStatus.pending,
-              ),
-            ))
+        .map(
+          (v) => CustomerBookingEntity(
+            service: v['serviceType'] as String? ?? '',
+            vehicleName: (v['vehicle'] as String?) ?? '',
+            plateNumber: v['plateNumber'] as String? ?? '',
+            date: v['bookingDate'] as String? ?? '',
+            time: '',
+            status: BookingStatus.values.firstWhere(
+              (e) => e.name == v['status'],
+              orElse: () => BookingStatus.pending,
+            ),
+          ),
+        )
         .toList();
     return saved.isNotEmpty ? saved : CustomerBookingEntity.mock;
   } catch (_) {
@@ -115,7 +117,6 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
       isLoading: false,
       selectedVehicle: '',
       selectedServiceType: '',
-      bookingDate: null,
       bookingNotes: '',
       bookingSubmitted: false,
       vehicles: savedVehicles,
@@ -130,19 +131,22 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
           .whereType<Map>()
           .map((m) => Map<String, dynamic>.from(m))
           .where((v) => v['vehicle'] != null)
-          .map((v) => CustomerVehicleEntity(
-                id: v['id'] as String? ?? '',
-                brand: (v['vehicle'] as String?)?.split(' ').first ?? '',
-                model: (v['vehicle'] as String?)?.split(' ').skip(1).join(' ') ?? '',
-                plateNumber: v['plateNumber'] as String? ?? '',
-                vin: '',
-                color: '',
-                year: DateTime.now().year,
-                mileage: '',
-                lastService: '',
-                nextDue: '',
-                healthScore: 50,
-              ))
+          .map(
+            (v) => CustomerVehicleEntity(
+              id: v['id'] as String? ?? '',
+              brand: (v['vehicle'] as String?)?.split(' ').first ?? '',
+              model:
+                  (v['vehicle'] as String?)?.split(' ').skip(1).join(' ') ?? '',
+              plateNumber: v['plateNumber'] as String? ?? '',
+              vin: '',
+              color: '',
+              year: DateTime.now().year,
+              mileage: '',
+              lastService: '',
+              nextDue: '',
+              healthScore: 50,
+            ),
+          )
           .toList();
       return saved.isNotEmpty ? saved : List.from(CustomerVehicleEntity.mock);
     } catch (_) {
@@ -163,7 +167,9 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
   }
 
   void markAllRead() {
-    final updated = state.notifications.map((n) => n.copyWith(isRead: true)).toList();
+    final updated = state.notifications
+        .map((n) => n.copyWith(isRead: true))
+        .toList();
     state = state.copyWith(notifications: updated);
   }
 
@@ -202,7 +208,9 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
       return;
     }
 
-    final local = GenericLocalDataSource(Hive.box<dynamic>('customer_bookings'));
+    final local = GenericLocalDataSource(
+      Hive.box<dynamic>('customer_bookings'),
+    );
     final payload = {
       'vehicle': state.selectedVehicle,
       'serviceType': state.selectedServiceType,
@@ -228,7 +236,6 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
       bookingSubmitted: true,
       selectedVehicle: '',
       selectedServiceType: '',
-      bookingDate: null,
       bookingNotes: '',
     );
   }

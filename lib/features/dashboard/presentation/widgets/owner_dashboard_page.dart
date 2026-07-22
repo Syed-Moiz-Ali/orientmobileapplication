@@ -21,14 +21,16 @@ class OwnerDashboardPage extends ConsumerWidget {
 
     if (state.isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2.5),
+        child: CircularProgressIndicator(
+          color: AppColors.accent,
+          strokeWidth: 2.5,
+        ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: notifier.refresh,
       color: AppColors.accent,
-      strokeWidth: 2.5,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(

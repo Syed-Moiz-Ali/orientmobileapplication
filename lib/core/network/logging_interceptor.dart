@@ -5,16 +5,15 @@ class LoggingInterceptor extends Interceptor {
   final Logger _logger;
 
   LoggingInterceptor({Logger? logger})
-      : _logger = logger ??
-            Logger(
-              printer: PrettyPrinter(
-                methodCount: 1,
-                errorMethodCount: 3,
-                lineLength: 120,
-                colors: true,
-                printEmojis: false,
-              ),
-            );
+    : _logger =
+          logger ??
+          Logger(
+            printer: PrettyPrinter(
+              methodCount: 1,
+              errorMethodCount: 3,
+              printEmojis: false,
+            ),
+          );
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {

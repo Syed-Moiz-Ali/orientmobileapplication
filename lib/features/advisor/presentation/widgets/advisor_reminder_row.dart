@@ -7,7 +7,11 @@ import 'advisor_status_badge.dart';
 class AdvisorReminderRow extends StatelessWidget {
   final FollowupReminderEntity r;
   final VoidCallback onContact;
-  const AdvisorReminderRow({super.key, required this.r, required this.onContact});
+  const AdvisorReminderRow({
+    super.key,
+    required this.r,
+    required this.onContact,
+  });
 
   Color get _pc => r.priority == ReminderPriority.high
       ? AppColors.danger
@@ -81,28 +85,44 @@ class AdvisorReminderRow extends StatelessWidget {
                 const SizedBox(height: 7),
                 Row(
                   children: [
-                    Icon(Icons.calendar_today_outlined, size: 11, color: AppColors.text3),
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      size: 11,
+                      color: AppColors.text3,
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         r.dueDate,
-                        style: const TextStyle(fontSize: 10, color: AppColors.text3),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.text3,
+                        ),
                       ),
                     ),
                     GestureDetector(
                       onTap: onContact,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.accent.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(AppDimensions.r8),
-                          border: Border.all(color: AppColors.accent.withValues(alpha: 0.25)),
+                          border: Border.all(
+                            color: AppColors.accent.withValues(alpha: 0.25),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.phone_outlined, size: 12, color: AppColors.accent),
-                            const SizedBox(width: 4),
+                          children: const [
+                            Icon(
+                              Icons.phone_outlined,
+                              size: 12,
+                              color: AppColors.accent,
+                            ),
+                            SizedBox(width: 4),
                             Text(
                               'Contact',
                               style: TextStyle(

@@ -77,7 +77,6 @@ class ChooseInspectionView extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         child: InfoCard(
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Icon
               Container(
@@ -150,7 +149,6 @@ class ChooseInspectionView extends ConsumerWidget {
                   );
                   context.push(AppRoutes.inspectionSheet, extra: cb);
                 },
-                color: IC.accent,
                 small: true,
               ),
             ],

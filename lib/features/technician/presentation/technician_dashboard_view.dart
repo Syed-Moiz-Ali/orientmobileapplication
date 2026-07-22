@@ -45,7 +45,10 @@ class _TechBody extends ConsumerWidget {
         children: [
           const TechnicianHeaderWidget(),
           Container(height: 1, color: AppColors.border),
-          _TechTabBar(selectedTab: state.selectedTab, onTap: notifier.selectTab),
+          _TechTabBar(
+            selectedTab: state.selectedTab,
+            onTap: notifier.selectTab,
+          ),
           Container(height: 1, color: AppColors.border),
           Expanded(
             child: IndexedStack(index: state.selectedTab, children: _pages),
@@ -98,8 +101,12 @@ class _TechTabBar extends StatelessWidget {
                         Text(
                           tabs[i].$3,
                           style: sel
-                              ? AppTextStyles.rajdhaniBody(color: AppColors.accent)
-                              : AppTextStyles.rajdhaniButton(color: AppColors.text3),
+                              ? AppTextStyles.rajdhaniBody(
+                                  color: AppColors.accent,
+                                )
+                              : AppTextStyles.rajdhaniButton(
+                                  color: AppColors.text3,
+                                ),
                         ),
                       ],
                     ),
@@ -133,7 +140,6 @@ class _DashboardTab extends ConsumerWidget {
 
     return RefreshIndicator(
       color: AppColors.accent,
-      strokeWidth: 2.5,
       onRefresh: notifier.refresh,
       child: ListView(
         padding: EdgeInsets.zero,
@@ -157,7 +163,9 @@ class _DashboardTab extends ConsumerWidget {
                 SizedBox(width: AppDimensions.s10),
                 Text(
                   'Technician Dashboard',
-                  style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+                  style: AppTextStyles.rajdhaniTitle(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const Spacer(),
                 GestureDetector(
@@ -204,7 +212,6 @@ class _EfficiencyTab extends ConsumerWidget {
 
     return RefreshIndicator(
       color: AppColors.accent,
-      strokeWidth: 2.5,
       onRefresh: notifier.refresh,
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -269,21 +276,25 @@ class _EfficiencyTab extends ConsumerWidget {
                         ),
                         filled: true,
                         fillColor: AppColors.surface,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 11),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 11,
+                        ),
                         border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppDimensions.r12),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r12,
+                          ),
                           borderSide: BorderSide(color: AppColors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppDimensions.r12),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r12,
+                          ),
                           borderSide: BorderSide(color: AppColors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppDimensions.r12),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r12,
+                          ),
                           borderSide: BorderSide(
                             color: AppColors.accent,
                             width: 1.5,
@@ -404,7 +415,10 @@ class _EfficiencyTab extends ConsumerWidget {
   }
 
   void _openDetail(
-      BuildContext context, WidgetRef ref, TechnicianJobEntity job) {
+    BuildContext context,
+    WidgetRef ref,
+    TechnicianJobEntity job,
+  ) {
     ref.read(technicianDashboardProvider.notifier).openJob(job);
     showModalBottomSheet(
       context: context,
@@ -655,8 +669,6 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [AppColors.navy, AppColors.accent],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
                     ),
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(AppDimensions.r28),
@@ -681,8 +693,9 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r20),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r20,
+                              ),
                               border: Border.all(color: Colors.white38),
                             ),
                             child: Row(
@@ -741,8 +754,9 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.accent.withValues(alpha: 0.12),
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r8),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r8,
+                              ),
                             ),
                             child: Text(
                               job.plateNumber,
@@ -777,8 +791,9 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                         child: LinearProgressIndicator(
                           value: job.progressPercent,
                           backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          valueColor:
-                              const AlwaysStoppedAnimation(Colors.white),
+                          valueColor: const AlwaysStoppedAnimation(
+                            Colors.white,
+                          ),
                           minHeight: 7,
                         ),
                       ),
@@ -797,8 +812,9 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                             height: 20,
                             decoration: BoxDecoration(
                               color: AppColors.accent,
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r2),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r2,
+                              ),
                             ),
                           ),
                           SizedBox(width: AppDimensions.s10),
@@ -871,8 +887,9 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                             height: 20,
                             decoration: BoxDecoration(
                               color: AppColors.accent,
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r2),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r2,
+                              ),
                             ),
                           ),
                           SizedBox(width: AppDimensions.s10),
@@ -909,18 +926,21 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                           fillColor: AppColors.bg,
                           contentPadding: EdgeInsets.all(AppDimensions.s14),
                           border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.r12),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r12,
+                            ),
                             borderSide: BorderSide(color: AppColors.border),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.r12),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r12,
+                            ),
                             borderSide: BorderSide(color: AppColors.border),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.r12),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r12,
+                            ),
                             borderSide: BorderSide(
                               color: AppColors.accent,
                               width: 1.5,
@@ -954,8 +974,9 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                               vertical: AppDimensions.s14,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r12),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r12,
+                              ),
                             ),
                           ),
                           child: Text(
@@ -981,8 +1002,9 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                               vertical: AppDimensions.s14,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r12),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r12,
+                              ),
                             ),
                           ),
                           icon: state.isSaving
@@ -1020,11 +1042,14 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                               gradient: const LinearGradient(
                                 colors: [AppColors.navy, AppColors.accent],
                               ),
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r12),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r12,
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.accent.withValues(alpha: 0.30),
+                                  color: AppColors.accent.withValues(
+                                    alpha: 0.30,
+                                  ),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -1095,7 +1120,6 @@ class _TaskRow extends StatelessWidget {
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             width: 28,

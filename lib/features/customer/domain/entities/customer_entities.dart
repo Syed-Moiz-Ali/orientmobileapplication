@@ -229,39 +229,37 @@ class CustomerNotificationEntity with _$CustomerNotificationEntity {
       _$CustomerNotificationEntityFromJson(json);
 
   static List<CustomerNotificationEntity> get mock => [
-        const CustomerNotificationEntity(
-          id: 'n1',
-          type: NotifType.carReady,
-          title: 'Your car is ready!',
-          body: 'BMW 3 Series has completed its Full Inspection.',
-          time: '26 Mar · 16:30',
-          isRead: false,
-        ),
-        const CustomerNotificationEntity(
-          id: 'n2',
-          type: NotifType.bookingConfirmed,
-          title: 'Booking confirmed',
-          body: 'Full Inspection on 25 Mar 2026 at 09:00 confirmed.',
-          time: '24 Mar · 14:00',
-          isRead: false,
-        ),
-        const CustomerNotificationEntity(
-          id: 'n3',
-          type: NotifType.invoiceReady,
-          title: 'Invoice ready',
-          body: 'Invoice INV-2026-0003 for £380.00 is now available.',
-          time: '26 Mar · 19:00',
-          isRead: true,
-        ),
-        const CustomerNotificationEntity(
-          id: 'n4',
-          type: NotifType.approvalNeeded,
-          title: 'Approval needed',
-          body: 'Worn brake pads & low coolant found.',
-          time: '26 Mar · 10:34',
-          isRead: true,
-        ),
-      ];
+    const CustomerNotificationEntity(
+      id: 'n1',
+      type: NotifType.carReady,
+      title: 'Your car is ready!',
+      body: 'BMW 3 Series has completed its Full Inspection.',
+      time: '26 Mar · 16:30',
+    ),
+    const CustomerNotificationEntity(
+      id: 'n2',
+      type: NotifType.bookingConfirmed,
+      title: 'Booking confirmed',
+      body: 'Full Inspection on 25 Mar 2026 at 09:00 confirmed.',
+      time: '24 Mar · 14:00',
+    ),
+    const CustomerNotificationEntity(
+      id: 'n3',
+      type: NotifType.invoiceReady,
+      title: 'Invoice ready',
+      body: 'Invoice INV-2026-0003 for £380.00 is now available.',
+      time: '26 Mar · 19:00',
+      isRead: true,
+    ),
+    const CustomerNotificationEntity(
+      id: 'n4',
+      type: NotifType.approvalNeeded,
+      title: 'Approval needed',
+      body: 'Worn brake pads & low coolant found.',
+      time: '26 Mar · 10:34',
+      isRead: true,
+    ),
+  ];
 }
 
 @freezed

@@ -31,11 +31,7 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
     return AppBar(
       flexibleSpace: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.navy, AppColors.accent],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
+          gradient: LinearGradient(colors: [AppColors.navy, AppColors.accent]),
         ),
       ),
       backgroundColor: Colors.transparent,
@@ -53,28 +49,48 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppDimensions.r10),
                 ),
-                child: const Icon(Icons.directions_car_rounded, color: Colors.white, size: 22),
+                child: const Icon(
+                  Icons.directions_car_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
             )
           : IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               onPressed: () => notifier.selectTab(0),
             ),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(_titles[state.selectedIndex], style: AppTextStyles.rajdhaniButton(color: Colors.white)),
-          Text(_subtitles[state.selectedIndex], style: AppTextStyles.rajdhaniBodySmall(color: Colors.white70)),
+          Text(
+            _titles[state.selectedIndex],
+            style: AppTextStyles.rajdhaniButton(color: Colors.white),
+          ),
+          Text(
+            _subtitles[state.selectedIndex],
+            style: AppTextStyles.rajdhaniBodySmall(color: Colors.white70),
+          ),
         ],
       ),
       actions: [
         if (state.selectedIndex == 0)
-          const Padding(padding: EdgeInsets.only(right: 6), child: PeriodDropdown()),
+          const Padding(
+            padding: EdgeInsets.only(right: 6),
+            child: PeriodDropdown(),
+          ),
         const NotificationBell(),
         Padding(
           padding: const EdgeInsets.only(right: 14),
-          child: UserAvatar(initials: 'O', onTap: () => showProfileSheet(context, _profileData)),
+          child: UserAvatar(
+            initials: 'O',
+            onTap: () => showProfileSheet(context, _profileData),
+          ),
         ),
       ],
     );

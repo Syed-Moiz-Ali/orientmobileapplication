@@ -51,7 +51,7 @@ class _CustomerBookServiceViewState
   }
 
   List<DateTime?> _calDays() {
-    final first = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
+    final first = DateTime(_focusedMonth.year, _focusedMonth.month);
     final last = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
     final days = <DateTime?>[];
     for (int i = 0; i < first.weekday % 7; i++) {

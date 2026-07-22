@@ -22,7 +22,9 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
   @override
   void initState() {
     super.initState();
-    _msgController = TextEditingController(text: ref.read(dashboardUiProvider).messageText);
+    _msgController = TextEditingController(
+      text: ref.read(dashboardUiProvider).messageText,
+    );
     _msgController.addListener(_onMessageChanged);
   }
 
@@ -78,7 +80,9 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
               children: [
                 Text(
                   'SEND NEW MESSAGE',
-                  style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
+                  style: AppTextStyles.rajdhaniBodySmall(
+                    color: AppColors.text3,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 const FormLabel('SELECT USER'),
@@ -93,16 +97,18 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: state.selectedUser.isEmpty ? null : state.selectedUser,
+                      value: state.selectedUser.isEmpty
+                          ? null
+                          : state.selectedUser,
                       hint: Row(
-                        children: [
-                          const Icon(
+                        children: const [
+                          Icon(
                             Icons.person_outline_rounded,
                             color: AppColors.text3,
                             size: 18,
                           ),
-                          const SizedBox(width: 8),
-                          const Text(
+                          SizedBox(width: 8),
+                          Text(
                             'Choose a user...',
                             style: TextStyle(
                               color: AppColors.text3,
@@ -112,7 +118,10 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                         ],
                       ),
                       dropdownColor: AppColors.surface,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                      ),
                       icon: const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: AppColors.text3,
@@ -135,10 +144,16 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                   controller: _msgController,
                   onChanged: notifier.updateMessage,
                   maxLines: 5,
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Type your message here...',
-                    hintStyle: const TextStyle(color: AppColors.text3, fontSize: 13),
+                    hintStyle: const TextStyle(
+                      color: AppColors.text3,
+                      fontSize: 13,
+                    ),
                     filled: true,
                     fillColor: AppColors.canvas,
                     contentPadding: const EdgeInsets.all(14),
@@ -171,8 +186,6 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [AppColors.navy, AppColors.accent],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
                       ),
                       borderRadius: BorderRadius.circular(AppDimensions.r14),
                       boxShadow: [
@@ -194,7 +207,9 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                         const SizedBox(width: 10),
                         Text(
                           'SEND MESSAGE',
-                          style: AppTextStyles.rajdhaniLabel(color: Colors.white),
+                          style: AppTextStyles.rajdhaniLabel(
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
@@ -218,7 +233,9 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                 const SizedBox(width: 10),
                 Text(
                   'RECENT MESSAGES',
-                  style: AppTextStyles.rajdhaniButton(color: AppColors.textPrimary),
+                  style: AppTextStyles.rajdhaniButton(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),

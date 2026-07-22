@@ -26,8 +26,8 @@ class CrmRecentLeadsCard extends StatelessWidget {
                 _th('S.No', flex: 1),
                 _th('Lead Number', flex: 3),
                 _th('Customer Name', flex: 3),
-                _th('Source', flex: 2),
-                _th('Status', flex: 2),
+                _th('Source'),
+                _th('Status'),
               ],
             ),
           ),
@@ -70,7 +70,6 @@ class _LeadRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            flex: 1,
             child: Text(
               '${lead.sno}',
               style: const TextStyle(color: CrmColors.textM, fontSize: 12),

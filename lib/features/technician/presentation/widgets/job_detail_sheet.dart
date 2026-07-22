@@ -74,8 +74,6 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [AppColors.navy, AppColors.accent],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
                     ),
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(AppDimensions.r28),
@@ -100,7 +98,9 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(AppDimensions.r20),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r20,
+                              ),
                               border: Border.all(color: Colors.white38),
                             ),
                             child: Row(
@@ -159,7 +159,9 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.accent.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(AppDimensions.r7),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r7,
+                              ),
                             ),
                             child: Text(
                               job.plateNumber,
@@ -194,8 +196,9 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                         child: LinearProgressIndicator(
                           value: job.progressPercent,
                           backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          valueColor:
-                              const AlwaysStoppedAnimation(Colors.white),
+                          valueColor: const AlwaysStoppedAnimation(
+                            Colors.white,
+                          ),
                           minHeight: 7,
                         ),
                       ),
@@ -214,7 +217,9 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                             height: 20,
                             decoration: BoxDecoration(
                               color: AppColors.accent,
-                              borderRadius: BorderRadius.circular(AppDimensions.r2),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r2,
+                              ),
                             ),
                           ),
                           SizedBox(width: AppDimensions.s10),
@@ -287,7 +292,9 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                             height: 20,
                             decoration: BoxDecoration(
                               color: AppColors.accent,
-                              borderRadius: BorderRadius.circular(AppDimensions.r2),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r2,
+                              ),
                             ),
                           ),
                           SizedBox(width: AppDimensions.s10),
@@ -310,8 +317,10 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                         controller: _notesCtrl,
                         maxLines: 4,
                         onChanged: (v) => notifier.updateNotes(job, v),
-                        style:
-                            TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                        ),
                         decoration: InputDecoration(
                           hintText:
                               'Add any notes or observations about this job...',
@@ -322,15 +331,21 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                           fillColor: AppColors.bg,
                           contentPadding: EdgeInsets.all(AppDimensions.s14),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppDimensions.r12),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r12,
+                            ),
                             borderSide: BorderSide(color: AppColors.border),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppDimensions.r12),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r12,
+                            ),
                             borderSide: BorderSide(color: AppColors.border),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppDimensions.r12),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r12,
+                            ),
                             borderSide: BorderSide(
                               color: AppColors.accent,
                               width: 1.5,
@@ -364,8 +379,9 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                               vertical: AppDimensions.s14,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r12),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r12,
+                              ),
                             ),
                           ),
                           child: Text(
@@ -377,8 +393,9 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                         ),
                         const Spacer(),
                         OutlinedButton.icon(
-                          onPressed:
-                              state.isSaving ? null : () => notifier.saveChanges(job),
+                          onPressed: state.isSaving
+                              ? null
+                              : () => notifier.saveChanges(job),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.accent,
                             side: BorderSide(
@@ -390,8 +407,9 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                               vertical: AppDimensions.s14,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r12),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r12,
+                              ),
                             ),
                           ),
                           icon: state.isSaving
@@ -429,11 +447,14 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                               gradient: const LinearGradient(
                                 colors: [AppColors.navy, AppColors.accent],
                               ),
-                              borderRadius:
-                                  BorderRadius.circular(AppDimensions.r12),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r12,
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.accent.withValues(alpha: 0.30),
+                                  color: AppColors.accent.withValues(
+                                    alpha: 0.30,
+                                  ),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -515,7 +536,6 @@ class _TaskRow extends StatelessWidget {
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             width: 28,
@@ -572,10 +592,7 @@ class _TaskStatusDropdown extends StatelessWidget {
   final TaskStatus status;
   final void Function(TaskStatus) onChanged;
 
-  const _TaskStatusDropdown({
-    required this.status,
-    required this.onChanged,
-  });
+  const _TaskStatusDropdown({required this.status, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -657,7 +674,9 @@ class _TaskActionButton extends StatelessWidget {
           vertical: AppDimensions.s4,
         ),
         decoration: BoxDecoration(
-          color: inProg ? AppColors.successBg : AppColors.accent.withValues(alpha: 0.12),
+          color: inProg
+              ? AppColors.successBg
+              : AppColors.accent.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(AppDimensions.r8),
           border: Border.all(
             color: inProg ? AppColors.success : AppColors.accent,

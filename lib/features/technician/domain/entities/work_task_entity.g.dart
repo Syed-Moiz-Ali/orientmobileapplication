@@ -22,7 +22,7 @@ Map<String, dynamic> _$$WorkTaskEntityImplToJson(
 ) => <String, dynamic>{
   'id': instance.id,
   'description': instance.description,
-  'status': _$TaskStatusEnumMap[instance.status]!,
+  'status': _$TaskStatusEnumMap[instance.status],
   if (instance.startTime case final value?) 'startTime': value,
   if (instance.endTime case final value?) 'endTime': value,
 };

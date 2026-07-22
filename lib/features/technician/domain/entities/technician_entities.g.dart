@@ -51,7 +51,7 @@ Map<String, dynamic> _$$TechnicianJobEntityImplToJson(
   'vehicleBrand': instance.vehicleBrand,
   'vehicleModel': instance.vehicleModel,
   'plateNumber': instance.plateNumber,
-  'status': _$TechJobStatusEnumMap[instance.status]!,
+  'status': _$TechJobStatusEnumMap[instance.status],
   'tasks': instance.tasks.map((e) => e.toJson()).toList(),
   'notes': instance.notes,
 };

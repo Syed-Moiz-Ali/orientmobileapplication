@@ -173,7 +173,6 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       vehicleBrand: 'Chevrolet',
       vehicleModel: 'Silverado',
       plateNumber: 'GHI-3456',
-      status: TechJobStatus.pending,
       tasks: [
         WorkTaskEntity(id: 1, description: 'Spark plug replacement'),
         WorkTaskEntity(id: 2, description: 'Throttle body cleaning'),
@@ -212,7 +211,6 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       vehicleBrand: 'Mercedes',
       vehicleModel: 'C-Class',
       plateNumber: 'MNO-2468',
-      status: TechJobStatus.pending,
       tasks: [
         WorkTaskEntity(id: 1, description: 'AC compressor check'),
         WorkTaskEntity(id: 2, description: 'Cabin air filter replacement'),
@@ -251,7 +249,6 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     return TechnicianState(
       attendanceSummary: const AttendanceSummaryEntity(
         punchIn: '08:15 AM',
-        punchOut: '--:--',
         breakTime: '25 min',
         workHours: '4h 35m',
       ),
@@ -309,12 +306,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final now = TimeOfDay.now();
     state = state.copyWith(
       attendanceStatus: AttendanceStatus.working,
-      attendanceSummary: AttendanceSummaryEntity(
-        punchIn: _fmt(now),
-        punchOut: '--:--',
-        breakTime: '0 min',
-        workHours: '0h 0m',
-      ),
+      attendanceSummary: AttendanceSummaryEntity(punchIn: _fmt(now)),
     );
     _persistAttendance();
   }
@@ -349,30 +341,39 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     _persistAttendance();
   }
 
-  void _enqueueSync(String entityId, Map<String, dynamic> payload, {String entityType = 'technician_attendance', ChangeType changeType = ChangeType.update}) {
+  void _enqueueSync(
+    String entityId,
+    Map<String, dynamic> payload, {
+    String entityType = 'technician_attendance',
+    ChangeType changeType = ChangeType.update,
+  }) {
     try {
       final queue = ref.read(syncQueueProvider);
       _generateId(entityType).then((id) {
-        queue.enqueue(SyncOperation(
-          id: id,
-          entityType: entityType,
-          entityId: entityId,
-          changeType: changeType,
-          payload: payload,
-          timestamp: DateTime.now().millisecondsSinceEpoch,
-        ));
+        queue.enqueue(
+          SyncOperation(
+            id: id,
+            entityType: entityType,
+            entityId: entityId,
+            changeType: changeType,
+            payload: payload,
+            timestamp: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
         ref.read(syncEngineProvider).syncAll();
       });
     } catch (_) {}
   }
 
   static Future<String> _generateId(String entityType) {
-    final prefix = {
-      'technician_attendance': 'ATT',
-      'assigned_job': 'AJOB',
-      'technician_job': 'TJOB',
-      'job_complete': 'JCMP',
-    }[entityType] ?? 'SYNC';
+    final prefix =
+        {
+          'technician_attendance': 'ATT',
+          'assigned_job': 'AJOB',
+          'technician_job': 'TJOB',
+          'job_complete': 'JCMP',
+        }[entityType] ??
+        'SYNC';
     return IdGenerator.nextId(prefix);
   }
 
@@ -395,10 +396,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     if (idx == -1) return;
     jobs[idx] = jobs[idx].copyWith(status: status);
     state = state.copyWith(assignedJobs: jobs);
-    final payload = {
-      'id': id,
-      'status': status.name,
-    };
+    final payload = {'id': id, 'status': status.name};
     Hive.box<dynamic>('technician_jobs').put('assigned_$id', payload);
     _enqueueSync(id, payload, entityType: 'assigned_job');
   }
@@ -459,7 +457,10 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final idx = job.tasks.indexWhere((t) => t.id == task.id);
     if (idx == -1) return;
     final updatedTasks = List<WorkTaskEntity>.from(job.tasks);
-    updatedTasks[idx] = task.copyWith(status: TaskStatus.completed, endTime: now);
+    updatedTasks[idx] = task.copyWith(
+      status: TaskStatus.completed,
+      endTime: now,
+    );
     final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
     _persistJob(updatedJob);
     state = state.copyWith(selectedJob: updatedJob);
@@ -509,13 +510,15 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       'status': job.status.name,
       'notes': job.notes,
       'tasks': job.tasks
-          .map((t) => {
-                'id': t.id,
-                'description': t.description,
-                'status': t.status.name,
-                'startTime': t.startTime,
-                'endTime': t.endTime,
-              })
+          .map(
+            (t) => {
+              'id': t.id,
+              'description': t.description,
+              'status': t.status.name,
+              'startTime': t.startTime,
+              'endTime': t.endTime,
+            },
+          )
           .toList(),
     };
     final local = GenericLocalDataSource(Hive.box<dynamic>('technician_jobs'));
@@ -546,7 +549,10 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         );
       }
     }
-    final updatedJob = job.copyWith(tasks: updatedTasks, status: TechJobStatus.completed);
+    final updatedJob = job.copyWith(
+      tasks: updatedTasks,
+      status: TechJobStatus.completed,
+    );
 
     final local = GenericLocalDataSource(Hive.box<dynamic>('technician_jobs'));
     final payload = {
@@ -559,13 +565,15 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       'status': updatedJob.status.name,
       'notes': updatedJob.notes,
       'tasks': updatedJob.tasks
-          .map((t) => {
-                'id': t.id,
-                'description': t.description,
-                'status': t.status.name,
-                'startTime': t.startTime,
-                'endTime': t.endTime,
-              })
+          .map(
+            (t) => {
+              'id': t.id,
+              'description': t.description,
+              'status': t.status.name,
+              'startTime': t.startTime,
+              'endTime': t.endTime,
+            },
+          )
           .toList(),
     };
     await local.save(updatedJob.jobCardNo, payload);

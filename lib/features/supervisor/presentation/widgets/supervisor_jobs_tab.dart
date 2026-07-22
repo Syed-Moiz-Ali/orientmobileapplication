@@ -50,8 +50,6 @@ class SupervisorJobsTab extends ConsumerWidget {
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [AppColors.navy, AppColors.accent],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
                     ),
                     borderRadius: BorderRadius.circular(AppDimensions.r22),
                     boxShadow: [

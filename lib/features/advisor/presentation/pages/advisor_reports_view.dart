@@ -98,8 +98,9 @@ class AdvisorReportsView extends ConsumerWidget {
                 ),
               ],
               onChanged: (v) {
-                if (v != null)
+                if (v != null) {
                   ref.read(advisorReportRangeProvider.notifier).state = v;
+                }
               },
             ),
           ),
@@ -352,8 +353,9 @@ class AdvisorReportsView extends ConsumerWidget {
                   showTitles: true,
                   getTitlesWidget: (v, _) {
                     final i = v.toInt();
-                    if (i < 0 || i >= data.weekLabels.length)
+                    if (i < 0 || i >= data.weekLabels.length) {
                       return const SizedBox();
+                    }
                     return Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(

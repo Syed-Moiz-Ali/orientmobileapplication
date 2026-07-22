@@ -74,7 +74,7 @@ Map<String, dynamic> _$$CustomerBookingEntityImplToJson(
   'plateNumber': instance.plateNumber,
   'date': instance.date,
   'time': instance.time,
-  'status': _$BookingStatusEnumMap[instance.status]!,
+  'status': _$BookingStatusEnumMap[instance.status],
 };
 
 const _$BookingStatusEnumMap = {
@@ -97,7 +97,7 @@ Map<String, dynamic> _$$ServiceStageEntityImplToJson(
 ) => <String, dynamic>{
   'name': instance.name,
   if (instance.time case final value?) 'time': value,
-  'status': _$StageStatusEnumMap[instance.status]!,
+  'status': _$StageStatusEnumMap[instance.status],
 };
 
 const _$StageStatusEnumMap = {
@@ -156,7 +156,7 @@ Map<String, dynamic> _$$CustomerNotificationEntityImplToJson(
   'title': instance.title,
   'body': instance.body,
   'time': instance.time,
-  'type': _$NotifTypeEnumMap[instance.type]!,
+  'type': _$NotifTypeEnumMap[instance.type],
   'isRead': instance.isRead,
 };
 

@@ -88,19 +88,19 @@ class InspectionState {
   }
 
   Map<String, dynamic> toPersistableMap() => {
-        'statuses': statuses.map((k, v) => MapEntry(k, v.name)),
-        'media': media.map((k, v) => MapEntry(k, v.toJson())),
-        'preServicePhotos': preServicePhotos,
-        'serviceLines': serviceLines.map((e) => e.toJson()).toList(),
-        'partLines': partLines.map((e) => e.toJson()).toList(),
-        'referenceNumber': referenceNumber,
-        'placeOfSupply': placeOfSupply,
-        'customerRequests': customerRequests,
-        'garageRecommendations': garageRecommendations,
-        'estimatedDelivery': estimatedDelivery?.toIso8601String(),
-        'notifyOwnerSmsEmail': notifyOwnerSmsEmail,
-        'tag': tag,
-      };
+    'statuses': statuses.map((k, v) => MapEntry(k, v.name)),
+    'media': media.map((k, v) => MapEntry(k, v.toJson())),
+    'preServicePhotos': preServicePhotos,
+    'serviceLines': serviceLines.map((e) => e.toJson()).toList(),
+    'partLines': partLines.map((e) => e.toJson()).toList(),
+    'referenceNumber': referenceNumber,
+    'placeOfSupply': placeOfSupply,
+    'customerRequests': customerRequests,
+    'garageRecommendations': garageRecommendations,
+    'estimatedDelivery': estimatedDelivery?.toIso8601String(),
+    'notifyOwnerSmsEmail': notifyOwnerSmsEmail,
+    'tag': tag,
+  };
 
   factory InspectionState.fromPersistableMap(Map<String, dynamic> map) {
     final statusesRaw = map['statuses'] as Map<String, dynamic>? ?? {};
@@ -124,12 +124,19 @@ class InspectionState {
           ItemMedia.fromJson(Map<String, dynamic>.from(v as Map)),
         ),
       ),
-      preServicePhotos: List<String>.from(map['preServicePhotos'] as List? ?? []),
+      preServicePhotos: List<String>.from(
+        map['preServicePhotos'] as List? ?? [],
+      ),
       serviceLines: serviceLinesRaw
-          .map((e) => ServiceLineItem.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) =>
+                ServiceLineItem.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList(),
       partLines: partLinesRaw
-          .map((e) => PartLineItem.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => PartLineItem.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList(),
       referenceNumber: map['referenceNumber'] as String? ?? '',
       placeOfSupply: map['placeOfSupply'] as String? ?? '',
@@ -233,25 +240,45 @@ class InspectionNotifier extends Notifier<InspectionState> {
 
   void addPhoto(String itemId, String path) {
     final im = state.media[itemId] ?? const ItemMedia();
-    state = state.copyWith(media: {...state.media, itemId: im.copyWith(photoPaths: [...im.photoPaths, path])});
+    state = state.copyWith(
+      media: {
+        ...state.media,
+        itemId: im.copyWith(photoPaths: [...im.photoPaths, path]),
+      },
+    );
     _persistDraft();
   }
 
   void addVideo(String itemId, String path) {
     final im = state.media[itemId] ?? const ItemMedia();
-    state = state.copyWith(media: {...state.media, itemId: im.copyWith(videoPaths: [...im.videoPaths, path])});
+    state = state.copyWith(
+      media: {
+        ...state.media,
+        itemId: im.copyWith(videoPaths: [...im.videoPaths, path]),
+      },
+    );
     _persistDraft();
   }
 
   void setAudio(String itemId, String path) {
     final im = state.media[itemId] ?? const ItemMedia();
-    state = state.copyWith(media: {...state.media, itemId: im.copyWith(audioPath: path)});
+    state = state.copyWith(
+      media: {
+        ...state.media,
+        itemId: im.copyWith(audioPath: path),
+      },
+    );
     _persistDraft();
   }
 
   void setNote(String itemId, String note) {
     final im = state.media[itemId] ?? const ItemMedia();
-    state = state.copyWith(media: {...state.media, itemId: im.copyWith(note: note)});
+    state = state.copyWith(
+      media: {
+        ...state.media,
+        itemId: im.copyWith(note: note),
+      },
+    );
     _persistDraft();
   }
 
@@ -259,7 +286,12 @@ class InspectionNotifier extends Notifier<InspectionState> {
     final im = state.media[itemId];
     if (im == null) return;
     final photos = List<String>.from(im.photoPaths)..removeAt(index);
-    state = state.copyWith(media: {...state.media, itemId: im.copyWith(photoPaths: photos)});
+    state = state.copyWith(
+      media: {
+        ...state.media,
+        itemId: im.copyWith(photoPaths: photos),
+      },
+    );
     _persistDraft();
   }
 
@@ -267,7 +299,12 @@ class InspectionNotifier extends Notifier<InspectionState> {
     final im = state.media[itemId];
     if (im == null) return;
     final videos = List<String>.from(im.videoPaths)..removeAt(index);
-    state = state.copyWith(media: {...state.media, itemId: im.copyWith(videoPaths: videos)});
+    state = state.copyWith(
+      media: {
+        ...state.media,
+        itemId: im.copyWith(videoPaths: videos),
+      },
+    );
     _persistDraft();
   }
 
@@ -409,7 +446,6 @@ class InspectionNotifier extends Notifier<InspectionState> {
       globalSearch: '',
       showAll: true,
       tag: '',
-      estimatedDelivery: null,
       customerRequests: '',
     );
     _persistDraft();

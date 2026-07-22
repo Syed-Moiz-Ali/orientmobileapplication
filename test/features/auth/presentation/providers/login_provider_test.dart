@@ -17,12 +17,15 @@ class MockAuthenticate extends Mock implements Authenticate {}
 
 /// Sets up default storage stubs: write and read return null.
 void setupStorageDefaults(MockSecureStorage storage) {
-  when(() => storage.write(
-        key: any(named: 'key'),
-        value: any(named: 'value'),
-      )).thenAnswer((_) async {});
-  when(() => storage.read(key: any(named: 'key')))
-      .thenAnswer((_) async => null);
+  when(
+    () => storage.write(
+      key: any(named: 'key'),
+      value: any(named: 'value'),
+    ),
+  ).thenAnswer((_) async {});
+  when(
+    () => storage.read(key: any(named: 'key')),
+  ).thenAnswer((_) async => null);
 }
 
 void main() {
@@ -57,101 +60,121 @@ void main() {
 
     test('copyWith clears errorMessage when passing null', () {
       const state = LoginState(errorMessage: 'Old error');
-      final copy = state.copyWith(errorMessage: null);
+      final copy = state.copyWith();
       expect(copy.errorMessage, isNull);
     });
   });
 
   group('LoginNotifier', () {
-    test('login with empty username returns false and sets errorMessage', () async {
-      final storage = MockSecureStorage();
-      setupStorageDefaults(storage);
+    test(
+      'login with empty username returns false and sets errorMessage',
+      () async {
+        final storage = MockSecureStorage();
+        setupStorageDefaults(storage);
 
-      final container = ProviderContainer(overrides: [
-        tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
-        authenticateProvider.overrideWithValue(MockAuthenticate()),
-        authNotifierProvider.overrideWith(() => AuthNotifier()),
-      ]);
-      addTearDown(() => container.dispose());
+        final container = ProviderContainer(
+          overrides: [
+            tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
+            authenticateProvider.overrideWithValue(MockAuthenticate()),
+            authNotifierProvider.overrideWith(() => AuthNotifier()),
+          ],
+        );
+        addTearDown(() => container.dispose());
 
-      final result = await container
-          .read(loginNotifierProvider.notifier)
-          .login(role: UserRole.owner, username: '', password: 'pass');
+        final result = await container
+            .read(loginNotifierProvider.notifier)
+            .login(role: UserRole.owner, username: '', password: 'pass');
 
-      expect(result, isFalse);
-      final state = container.read(loginNotifierProvider);
-      expect(state.errorMessage, 'Please enter username and password.');
-      expect(state.isLoading, isFalse);
-    });
+        expect(result, isFalse);
+        final state = container.read(loginNotifierProvider);
+        expect(state.errorMessage, 'Please enter username and password.');
+        expect(state.isLoading, isFalse);
+      },
+    );
 
-    test('login with empty password returns false and sets errorMessage', () async {
-      final storage = MockSecureStorage();
-      setupStorageDefaults(storage);
+    test(
+      'login with empty password returns false and sets errorMessage',
+      () async {
+        final storage = MockSecureStorage();
+        setupStorageDefaults(storage);
 
-      final container = ProviderContainer(overrides: [
-        tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
-        authenticateProvider.overrideWithValue(MockAuthenticate()),
-        authNotifierProvider.overrideWith(() => AuthNotifier()),
-      ]);
-      addTearDown(() => container.dispose());
+        final container = ProviderContainer(
+          overrides: [
+            tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
+            authenticateProvider.overrideWithValue(MockAuthenticate()),
+            authNotifierProvider.overrideWith(() => AuthNotifier()),
+          ],
+        );
+        addTearDown(() => container.dispose());
 
-      final result = await container
-          .read(loginNotifierProvider.notifier)
-          .login(role: UserRole.owner, username: 'user', password: '');
+        final result = await container
+            .read(loginNotifierProvider.notifier)
+            .login(role: UserRole.owner, username: 'user', password: '');
 
-      expect(result, isFalse);
-      final state = container.read(loginNotifierProvider);
-      expect(state.errorMessage, 'Please enter username and password.');
-    });
+        expect(result, isFalse);
+        final state = container.read(loginNotifierProvider);
+        expect(state.errorMessage, 'Please enter username and password.');
+      },
+    );
 
-    test('login with auth failure returns false and sets errorMessage', () async {
-      final storage = MockSecureStorage();
-      setupStorageDefaults(storage);
+    test(
+      'login with auth failure returns false and sets errorMessage',
+      () async {
+        final storage = MockSecureStorage();
+        setupStorageDefaults(storage);
 
-      final authenticate = MockAuthenticate();
-      when(() => authenticate.call(
+        final authenticate = MockAuthenticate();
+        when(
+          () => authenticate.call(
             username: any(named: 'username'),
             password: any(named: 'password'),
-          )).thenAnswer(
-        (_) async => Failure(NetworkException('Invalid credentials')),
-      );
+          ),
+        ).thenAnswer(
+          (_) async => Failure(NetworkException('Invalid credentials')),
+        );
 
-      final container = ProviderContainer(overrides: [
-        tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
-        authenticateProvider.overrideWithValue(authenticate),
-        authNotifierProvider.overrideWith(() => AuthNotifier()),
-      ]);
-      addTearDown(() => container.dispose());
+        final container = ProviderContainer(
+          overrides: [
+            tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
+            authenticateProvider.overrideWithValue(authenticate),
+            authNotifierProvider.overrideWith(() => AuthNotifier()),
+          ],
+        );
+        addTearDown(() => container.dispose());
 
-      final result = await container
-          .read(loginNotifierProvider.notifier)
-          .login(role: UserRole.owner, username: 'user', password: 'wrong');
+        final result = await container
+            .read(loginNotifierProvider.notifier)
+            .login(role: UserRole.owner, username: 'user', password: 'wrong');
 
-      expect(result, isFalse);
-      final state = container.read(loginNotifierProvider);
-      expect(state.errorMessage, 'Invalid credentials');
-      expect(state.isLoading, isFalse);
-    });
+        expect(result, isFalse);
+        final state = container.read(loginNotifierProvider);
+        expect(state.errorMessage, 'Invalid credentials');
+        expect(state.isLoading, isFalse);
+      },
+    );
 
     test('login with auth success returns true and sets auth state', () async {
       final storage = MockSecureStorage();
       setupStorageDefaults(storage);
 
       final authenticate = MockAuthenticate();
-      when(() => authenticate.call(
-            username: any(named: 'username'),
-            password: any(named: 'password'),
-          )).thenAnswer(
-        (_) async => Success(
-          const AuthResult(role: UserRole.owner, token: 'jwt-token'),
+      when(
+        () => authenticate.call(
+          username: any(named: 'username'),
+          password: any(named: 'password'),
         ),
+      ).thenAnswer(
+        (_) async =>
+            Success(const AuthResult(role: UserRole.owner, token: 'jwt-token')),
       );
 
-      final container = ProviderContainer(overrides: [
-        tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
-        authenticateProvider.overrideWithValue(authenticate),
-        authNotifierProvider.overrideWith(() => AuthNotifier()),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
+          authenticateProvider.overrideWithValue(authenticate),
+          authNotifierProvider.overrideWith(() => AuthNotifier()),
+        ],
+      );
       addTearDown(() => container.dispose());
 
       final result = await container
@@ -172,11 +195,13 @@ void main() {
       final storage = MockSecureStorage();
       setupStorageDefaults(storage);
 
-      final container = ProviderContainer(overrides: [
-        tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
-        authenticateProvider.overrideWithValue(MockAuthenticate()),
-        authNotifierProvider.overrideWith(() => AuthNotifier()),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
+          authenticateProvider.overrideWithValue(MockAuthenticate()),
+          authNotifierProvider.overrideWith(() => AuthNotifier()),
+        ],
+      );
       addTearDown(() => container.dispose());
 
       expect(container.read(loginNotifierProvider).isPasswordVisible, isFalse);
@@ -193,18 +218,20 @@ void main() {
       setupStorageDefaults(storage);
 
       final authenticate = MockAuthenticate();
-      when(() => authenticate.call(
-            username: any(named: 'username'),
-            password: any(named: 'password'),
-          )).thenAnswer(
-        (_) async => Failure(NetworkException('oops')),
-      );
+      when(
+        () => authenticate.call(
+          username: any(named: 'username'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async => Failure(NetworkException('oops')));
 
-      final container = ProviderContainer(overrides: [
-        tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
-        authenticateProvider.overrideWithValue(authenticate),
-        authNotifierProvider.overrideWith(() => AuthNotifier()),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          tokenStorageProvider.overrideWithValue(TokenStorage(storage)),
+          authenticateProvider.overrideWithValue(authenticate),
+          authNotifierProvider.overrideWith(() => AuthNotifier()),
+        ],
+      );
       addTearDown(() => container.dispose());
 
       await container
