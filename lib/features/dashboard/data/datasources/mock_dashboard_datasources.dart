@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:orientmobileapplication/core/domain/job_card_status.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/features/dashboard/domain/entities/dashboard_entities.dart';
 
@@ -66,11 +67,11 @@ class MockActiveJobCardsDatasource {
   Future<List<ActiveJobCard>> getJobCards() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [
-      const ActiveJobCard(id: 'JC-2024-0042', customerName: 'Al Fahim Motors', vehicleInfo: 'Toyota Land Cruiser 2024', services: 'Full Engine Overhaul, Transmission Service, AC Repair', technician: 'Ahmed Hassan', estCompletion: '2024-12-08', amount: 15000, status: ActiveJobStatus.inProgress),
-      const ActiveJobCard(id: 'JC-2024-0041', customerName: 'Dubai Fleet Services', vehicleInfo: 'Nissan Patrol 2023', services: 'Brake Pad Replacement, Oil Change', technician: 'Khalid Mohammed', estCompletion: '2024-12-05', amount: 8500, status: ActiveJobStatus.waitingParts),
-      const ActiveJobCard(id: 'JC-2024-0040', customerName: 'Emirates Transport', vehicleInfo: 'Mitsubishi Pajero 2022', services: 'Suspension Overhaul, Wheel Alignment', technician: 'Rashid Ahmed', estCompletion: '2024-12-02', amount: 22000, status: ActiveJobStatus.qualityCheck),
-      const ActiveJobCard(id: 'JC-2024-0039', customerName: 'Sharjah Police HQ', vehicleInfo: 'Ford Explorer 2024', services: 'AC Repair, Electrical Diagnosis', technician: 'Saeed Ali', estCompletion: '2024-11-27', amount: 32000, status: ActiveJobStatus.completed),
-      const ActiveJobCard(id: 'JC-2024-0038', customerName: 'Abu Dhabi Motors', vehicleInfo: 'Mercedes GLE 2024', services: 'Full Service, Diagnostic Scan', technician: 'Omar Hassan', estCompletion: '2024-12-15', amount: 45000, status: ActiveJobStatus.inProgress),
+      const ActiveJobCard(id: 'JC-2024-0042', customerName: 'Al Fahim Motors', vehicleInfo: 'Toyota Land Cruiser 2024', services: 'Full Engine Overhaul, Transmission Service, AC Repair', technician: 'Ahmed Hassan', estCompletion: '2024-12-08', amount: 15000, status: JobCardStatus.inProgress),
+      const ActiveJobCard(id: 'JC-2024-0041', customerName: 'Dubai Fleet Services', vehicleInfo: 'Nissan Patrol 2023', services: 'Brake Pad Replacement, Oil Change', technician: 'Khalid Mohammed', estCompletion: '2024-12-05', amount: 8500, status: JobCardStatus.waitingParts),
+      const ActiveJobCard(id: 'JC-2024-0040', customerName: 'Emirates Transport', vehicleInfo: 'Mitsubishi Pajero 2022', services: 'Suspension Overhaul, Wheel Alignment', technician: 'Rashid Ahmed', estCompletion: '2024-12-02', amount: 22000, status: JobCardStatus.qualityCheck),
+      const ActiveJobCard(id: 'JC-2024-0039', customerName: 'Sharjah Police HQ', vehicleInfo: 'Ford Explorer 2024', services: 'AC Repair, Electrical Diagnosis', technician: 'Saeed Ali', estCompletion: '2024-11-27', amount: 32000, status: JobCardStatus.completed),
+      const ActiveJobCard(id: 'JC-2024-0038', customerName: 'Abu Dhabi Motors', vehicleInfo: 'Mercedes GLE 2024', services: 'Full Service, Diagnostic Scan', technician: 'Omar Hassan', estCompletion: '2024-12-15', amount: 45000, status: JobCardStatus.inProgress),
     ];
   }
 }

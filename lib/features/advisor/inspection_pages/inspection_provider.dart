@@ -3,7 +3,7 @@ import 'package:orientmobileapplication/core/errors/result.dart';
 import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_model.dart';
-import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_vew_model.dart';
+import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/advisor/presentation/providers/advisor_providers.dart';
 
@@ -232,32 +232,26 @@ class InspectionNotifier extends Notifier<InspectionState> {
   }
 
   void addPhoto(String itemId, String path) {
-    final m = _updatedMediaWith(
-      itemId,
-      (im) => im.photoPaths = [...im.photoPaths, path],
-    );
-    state = state.copyWith(media: m);
+    final im = state.media[itemId] ?? const ItemMedia();
+    state = state.copyWith(media: {...state.media, itemId: im.copyWith(photoPaths: [...im.photoPaths, path])});
     _persistDraft();
   }
 
   void addVideo(String itemId, String path) {
-    final m = _updatedMediaWith(
-      itemId,
-      (im) => im.videoPaths = [...im.videoPaths, path],
-    );
-    state = state.copyWith(media: m);
+    final im = state.media[itemId] ?? const ItemMedia();
+    state = state.copyWith(media: {...state.media, itemId: im.copyWith(videoPaths: [...im.videoPaths, path])});
     _persistDraft();
   }
 
   void setAudio(String itemId, String path) {
-    final m = _updatedMediaWith(itemId, (im) => im.audioPath = path);
-    state = state.copyWith(media: m);
+    final im = state.media[itemId] ?? const ItemMedia();
+    state = state.copyWith(media: {...state.media, itemId: im.copyWith(audioPath: path)});
     _persistDraft();
   }
 
   void setNote(String itemId, String note) {
-    final m = _updatedMediaWith(itemId, (im) => im.note = note);
-    state = state.copyWith(media: m);
+    final im = state.media[itemId] ?? const ItemMedia();
+    state = state.copyWith(media: {...state.media, itemId: im.copyWith(note: note)});
     _persistDraft();
   }
 
@@ -265,8 +259,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
     final im = state.media[itemId];
     if (im == null) return;
     final photos = List<String>.from(im.photoPaths)..removeAt(index);
-    final m = _updatedMediaWith(itemId, (im2) => im2.photoPaths = photos);
-    state = state.copyWith(media: m);
+    state = state.copyWith(media: {...state.media, itemId: im.copyWith(photoPaths: photos)});
     _persistDraft();
   }
 
@@ -274,31 +267,13 @@ class InspectionNotifier extends Notifier<InspectionState> {
     final im = state.media[itemId];
     if (im == null) return;
     final videos = List<String>.from(im.videoPaths)..removeAt(index);
-    final m = _updatedMediaWith(itemId, (im2) => im2.videoPaths = videos);
-    state = state.copyWith(media: m);
+    state = state.copyWith(media: {...state.media, itemId: im.copyWith(videoPaths: videos)});
     _persistDraft();
   }
 
   void addPreServicePhoto(String path) {
     state = state.copyWith(preServicePhotos: [...state.preServicePhotos, path]);
     _persistDraft();
-  }
-
-  Map<String, ItemMedia> _updatedMediaWith(
-    String itemId,
-    void Function(ItemMedia) update,
-  ) {
-    final existing = state.media[itemId] ?? ItemMedia();
-    final updated = ItemMedia(
-      photoPaths: List<String>.from(existing.photoPaths),
-      videoPaths: List<String>.from(existing.videoPaths),
-      audioPath: existing.audioPath,
-      note: existing.note,
-    );
-    update(updated);
-    final m = Map<String, ItemMedia>.from(state.media);
-    m[itemId] = updated;
-    return m;
   }
 
   void addServices(List<String> names) {

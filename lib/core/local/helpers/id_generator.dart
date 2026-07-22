@@ -7,7 +7,7 @@ class IdGenerator {
   static String _lastDate = '';
 
   static Future<String> nextId(String prefix) async {
-    final box = Hive.box('id_counters');
+    final box = Hive.box<int>('id_counters');
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final key = '${prefix}_$today';
 
@@ -15,7 +15,7 @@ class IdGenerator {
     if (_lastPrefix == prefix && _lastDate == today && _lastCounter > 0) {
       next = _lastCounter + 1;
     } else {
-      next = (box.get(key, defaultValue: 0) as int) + 1;
+      next = (box.get(key, defaultValue: 0) ?? 0) + 1;
     }
 
     await box.put(key, next);

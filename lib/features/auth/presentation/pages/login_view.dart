@@ -64,23 +64,6 @@ class _LoginCard extends ConsumerWidget {
     required this.passwordController,
   });
 
-  String _getDashboardRoute(UserRole role) {
-    switch (role) {
-      case UserRole.advisor:
-        return AppRoutes.advisorDashboard;
-      case UserRole.technician:
-        return AppRoutes.technicianDashboard;
-      case UserRole.customer:
-        return AppRoutes.customerPortal;
-      case UserRole.supervisor:
-        return AppRoutes.supervisorDashboard;
-      case UserRole.owner:
-        return AppRoutes.ownerDashboard;
-      case UserRole.crmDashboard:
-        return AppRoutes.crmDashboard;
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loginState = ref.watch(loginNotifierProvider);
@@ -220,7 +203,7 @@ class _LoginCard extends ConsumerWidget {
                     password: passwordController.text,
                   );
               if (success && context.mounted) {
-                context.go(_getDashboardRoute(role));
+                context.go(AppRoutes.dashboardForRole(role));
               }
             },
           ),

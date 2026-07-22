@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:meta/meta.dart';
 import 'package:orientmobileapplication/core/pages/profile_view.dart';
 import 'package:orientmobileapplication/core/pages/settings_view.dart';
 import 'package:orientmobileapplication/core/pages/shift_details_view.dart';
@@ -8,6 +11,7 @@ import 'package:orientmobileapplication/features/advisor/inspection_pages/choose
 import 'package:orientmobileapplication/features/auth/domain/entities/user_role.dart';
 import 'package:orientmobileapplication/features/auth/presentation/pages/login_view.dart';
 import 'package:orientmobileapplication/features/auth/presentation/pages/role_selection_view.dart';
+import 'package:orientmobileapplication/features/auth/presentation/providers/auth_state.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_dashboard_view.dart';
 import 'package:orientmobileapplication/features/customer/presentation/customer_dashboard_view.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/dashboard_view.dart';
@@ -63,11 +67,101 @@ class AppRoutes {
       orElse: () => UserRole.owner,
     );
   }
+
+  static String dashboardForRole(UserRole role) {
+  switch (role) {
+    case UserRole.advisor:
+      return AppRoutes.advisorDashboard;
+    case UserRole.technician:
+      return AppRoutes.technicianDashboard;
+    case UserRole.customer:
+      return AppRoutes.customerPortal;
+    case UserRole.supervisor:
+      return AppRoutes.supervisorDashboard;
+    case UserRole.owner:
+      return AppRoutes.ownerDashboard;
+    case UserRole.crmDashboard:
+      return AppRoutes.crmDashboard;
+  }
 }
 
-final GoRouter appRouter = GoRouter(
-  initialLocation: AppRoutes.roleSelection,
-  routes: [
+  @visibleForTesting
+  static const Set<String> publicRoutes = {
+    AppRoutes.roleSelection,
+    '/forgot-password',
+  };
+
+  @visibleForTesting
+  static const Set<String> publicPrefixes = {
+    '/login/',
+    '/forgot-password/',
+  };
+
+  @visibleForTesting
+  static const Map<String, Set<UserRole>> routePermissions = {
+    AppRoutes.ownerDashboard:        {UserRole.owner},
+    AppRoutes.advisorDashboard:      {UserRole.advisor},
+    AppRoutes.technicianDashboard:   {UserRole.technician},
+    AppRoutes.supervisorDashboard:   {UserRole.supervisor},
+    AppRoutes.customerPortal:        {UserRole.customer},
+    AppRoutes.crmDashboard:          {UserRole.crmDashboard},
+    AppRoutes.accountsReceivable:    {UserRole.owner},
+    AppRoutes.documentExpiry:        {UserRole.owner},
+    AppRoutes.pendingApprovals:      {UserRole.owner, UserRole.supervisor},
+    AppRoutes.jobStatus:             {UserRole.owner, UserRole.advisor, UserRole.supervisor},
+    AppRoutes.jobCardDetail:         {UserRole.owner, UserRole.advisor, UserRole.supervisor, UserRole.technician},
+    AppRoutes.chooseInspection:      {UserRole.advisor},
+    AppRoutes.vehicleCustomer:       {UserRole.advisor},
+    AppRoutes.scanVehicle:           {UserRole.advisor},
+    AppRoutes.repairOrder:           {UserRole.advisor},
+    AppRoutes.inspectionSheet:       {UserRole.advisor},
+    AppRoutes.inspectionPreview:     {UserRole.advisor},
+    AppRoutes.repairOrderPreview:    {UserRole.advisor},
+    AppRoutes.customerBookService:   {UserRole.customer},
+    // profile, shiftDetails, settings — accessible by all authenticated roles
+  };
+
+  @visibleForTesting
+  static bool isPublicRoute(String matched) =>
+      publicRoutes.contains(matched) ||
+      publicPrefixes.any((p) => matched.startsWith(p));
+
+  @visibleForTesting
+  static bool hasPermission(UserRole role, String matched) {
+    if (role == UserRole.owner) return true;
+    final allowed = routePermissions[matched];
+    return allowed == null || allowed.contains(role);
+  }
+}
+
+
+final _routerRefreshNotifier = ValueNotifier<void>(null);
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  ref.listen<AuthState>(authNotifierProvider, (_, __) {
+    _routerRefreshNotifier.value = null;
+  });
+
+  return GoRouter(
+    refreshListenable: _routerRefreshNotifier,
+    initialLocation: AppRoutes.roleSelection,
+    redirect: (context, state) {
+      final authState = ref.read(authNotifierProvider);
+      final matched = state.matchedLocation;
+
+      return switch (authState) {
+        AuthUnauthenticated() =>
+          AppRoutes.isPublicRoute(matched) ? null : AppRoutes.roleSelection,
+        AuthLoading() => null,
+        AuthError() =>
+          AppRoutes.isPublicRoute(matched) ? null : AppRoutes.roleSelection,
+        AuthAuthenticated(:final role) =>
+          matched == AppRoutes.roleSelection || matched.startsWith('/login/') ? null :
+          AppRoutes.isPublicRoute(matched) ? AppRoutes.dashboardForRole(role) :
+          AppRoutes.hasPermission(role, matched) ? null : AppRoutes.dashboardForRole(role),
+      };
+    },
+    routes: [
     GoRoute(
       path: AppRoutes.roleSelection,
       name: AppRoutes.roleSelection,
@@ -251,4 +345,5 @@ final GoRouter appRouter = GoRouter(
       },
     ),
   ],
-);
+  );
+});

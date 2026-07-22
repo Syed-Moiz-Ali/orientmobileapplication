@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/material.dart';
+import 'package:orientmobileapplication/core/domain/job_card_status.dart';
 
 part 'dashboard_entities.freezed.dart';
 
@@ -21,8 +22,6 @@ enum JobStage {
 }
 
 enum PendingJobCardStatus { overdue, pending, inProgress }
-
-enum ActiveJobStatus { inProgress, waitingParts, qualityCheck, completed }
 
 enum InvoiceStatus { paid, unpaid, overdue }
 
@@ -91,7 +90,7 @@ class ActiveJobCard with _$ActiveJobCard {
     required String technician,
     required String estCompletion,
     required double amount,
-    required ActiveJobStatus status,
+    required JobCardStatus status,
   }) = _ActiveJobCard;
 }
 

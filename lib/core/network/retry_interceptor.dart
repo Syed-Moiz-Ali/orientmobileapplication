@@ -14,8 +14,8 @@ class RetryInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (_shouldRetry(err) && _getRetryCount(err) < maxRetries) {
-      final retryCount = _getRetryCount(err);
+    if (shouldRetry(err) && getRetryCount(err) < maxRetries) {
+      final retryCount = getRetryCount(err);
       final delay = baseDelay * (1 << retryCount);
       _logger.w(
         'Retrying ${err.requestOptions.path} ($retryCount/$maxRetries) after ${delay.inSeconds}s',
@@ -35,7 +35,7 @@ class RetryInterceptor extends Interceptor {
     handler.next(err);
   }
 
-  bool _shouldRetry(DioException error) {
+  bool shouldRetry(DioException error) {
     return error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout ||
         error.type == DioExceptionType.connectionError ||
@@ -43,7 +43,7 @@ class RetryInterceptor extends Interceptor {
         (error.response?.statusCode ?? 0) >= 500;
   }
 
-  int _getRetryCount(DioException error) {
+  int getRetryCount(DioException error) {
     final header = error.requestOptions.headers['X-Retry-Count'] as String?;
     return int.tryParse(header ?? '0') ?? 0;
   }

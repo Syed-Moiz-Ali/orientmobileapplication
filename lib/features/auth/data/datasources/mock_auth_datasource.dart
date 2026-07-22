@@ -1,9 +1,11 @@
 import 'package:orientmobileapplication/core/errors/result.dart';
+import 'package:orientmobileapplication/features/auth/data/datasources/auth_datasource.dart';
+import 'package:orientmobileapplication/features/auth/domain/entities/auth_result.dart';
 import 'package:orientmobileapplication/features/auth/domain/entities/user_role.dart';
 
-class MockAuthDatasource {
-  Future<Result<UserRole>> authenticate({
-    required UserRole role,
+class MockAuthDatasource implements AuthDatasource {
+  @override
+  Future<Result<AuthResult>> authenticate({
     required String username,
     required String password,
   }) async {
@@ -15,6 +17,11 @@ class MockAuthDatasource {
       );
     }
 
-    return Success(role);
+    return Success(AuthResult(role: UserRole.owner, token: 'mock-jwt-token'));
+  }
+
+  @override
+  Future<Result<AuthResult>> refreshToken(String refreshToken) async {
+    return Failure(const NetworkException('Mock datasource does not support token refresh'));
   }
 }

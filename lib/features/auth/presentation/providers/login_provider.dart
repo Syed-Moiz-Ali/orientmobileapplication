@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/errors/result.dart';
 import 'package:orientmobileapplication/features/auth/domain/entities/user_role.dart';
 import 'package:orientmobileapplication/features/auth/presentation/providers/auth_providers.dart';
+import 'package:orientmobileapplication/features/auth/presentation/providers/auth_state.dart';
 
 class LoginState {
   final bool isPasswordVisible;
@@ -48,7 +49,6 @@ class LoginNotifier extends Notifier<LoginState> {
     state = state.copyWith(errorMessage: null, isLoading: true);
 
     final result = await ref.read(authenticateProvider).call(
-      role: role,
       username: username,
       password: password,
     );
@@ -60,6 +60,10 @@ class LoginNotifier extends Notifier<LoginState> {
         errorMessage: error.message,
       ),
     );
+
+    if (result case Success(:final data)) {
+      await ref.read(authNotifierProvider.notifier).authenticate(role, data.token);
+    }
 
     return result is Success;
   }

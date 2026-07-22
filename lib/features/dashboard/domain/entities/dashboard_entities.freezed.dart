@@ -1157,7 +1157,7 @@ mixin _$ActiveJobCard {
   String get technician => throw _privateConstructorUsedError;
   String get estCompletion => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
-  ActiveJobStatus get status => throw _privateConstructorUsedError;
+  JobCardStatus get status => throw _privateConstructorUsedError;
 
   /// Create a copy of ActiveJobCard
   /// with the given fields replaced by the non-null parameter values.
@@ -1181,7 +1181,7 @@ abstract class $ActiveJobCardCopyWith<$Res> {
     String technician,
     String estCompletion,
     double amount,
-    ActiveJobStatus status,
+    JobCardStatus status,
   });
 }
 
@@ -1242,7 +1242,7 @@ class _$ActiveJobCardCopyWithImpl<$Res, $Val extends ActiveJobCard>
             status: null == status
                 ? _value.status
                 : status // ignore: cast_nullable_to_non_nullable
-                      as ActiveJobStatus,
+                      as JobCardStatus,
           )
           as $Val,
     );
@@ -1266,7 +1266,7 @@ abstract class _$$ActiveJobCardImplCopyWith<$Res>
     String technician,
     String estCompletion,
     double amount,
-    ActiveJobStatus status,
+    JobCardStatus status,
   });
 }
 
@@ -1326,7 +1326,7 @@ class __$$ActiveJobCardImplCopyWithImpl<$Res>
         status: null == status
             ? _value.status
             : status // ignore: cast_nullable_to_non_nullable
-                  as ActiveJobStatus,
+                  as JobCardStatus,
       ),
     );
   }
@@ -1361,7 +1361,7 @@ class _$ActiveJobCardImpl implements _ActiveJobCard {
   @override
   final double amount;
   @override
-  final ActiveJobStatus status;
+  final JobCardStatus status;
 
   @override
   String toString() {
@@ -1419,7 +1419,7 @@ abstract class _ActiveJobCard implements ActiveJobCard {
     required final String technician,
     required final String estCompletion,
     required final double amount,
-    required final ActiveJobStatus status,
+    required final JobCardStatus status,
   }) = _$ActiveJobCardImpl;
 
   @override
@@ -1437,7 +1437,7 @@ abstract class _ActiveJobCard implements ActiveJobCard {
   @override
   double get amount;
   @override
-  ActiveJobStatus get status;
+  JobCardStatus get status;
 
   /// Create a copy of ActiveJobCard
   /// with the given fields replaced by the non-null parameter values.

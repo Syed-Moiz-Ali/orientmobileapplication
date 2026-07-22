@@ -15,7 +15,7 @@ import 'package:orientmobileapplication/core/local/repositories/generic_local_da
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_model.dart';
-import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_vew_model.dart';
+import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/inspection_provider.dart';
 

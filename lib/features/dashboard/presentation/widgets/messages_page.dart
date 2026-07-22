@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/theme/app_text_styles.dart';
+import 'package:orientmobileapplication/features/dashboard/data/datasources/dashboard_mock_datasource.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/widgets/form_label.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/widgets/message_tile.dart';
@@ -119,7 +120,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                       ),
                       isExpanded: true,
                       onChanged: (v) => notifier.selectUser(v ?? ''),
-                      items: DashboardUiState.users
+                      items: DashboardMockDataSource.users
                           .map(
                             (u) => DropdownMenuItem(value: u, child: Text(u)),
                           )

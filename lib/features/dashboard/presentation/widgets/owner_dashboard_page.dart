@@ -42,24 +42,24 @@ class OwnerDashboardPage extends ConsumerWidget {
                 children: [
                   _sectionLabel('KPI Overview'),
                   const SizedBox(height: 12),
-                  KpiGrid(kpis: DashboardUiState.kpis),
+                  KpiGrid(kpis: notifier.kpis),
                   const SizedBox(height: 26),
 
                   _sectionLabel('Job Card Register'),
                   const SizedBox(height: 12),
-                  JobCardRegisterCard(items: DashboardUiState.registerItems),
+                  JobCardRegisterCard(items: notifier.registerItems),
                   const SizedBox(height: 26),
 
                   _sectionLabel('Analytics'),
                   const SizedBox(height: 12),
                   SalesTrendCard(
-                    salesData: DashboardUiState.salesTrend,
-                    profitData: DashboardUiState.profitTrend,
+                    salesData: notifier.salesTrend,
+                    profitData: notifier.profitTrend,
                   ),
                   const SizedBox(height: 12),
                   SalesVsExpensesCard(
-                    salesData: DashboardUiState.salesTrend,
-                    expenseData: DashboardUiState.expensesTrend,
+                    salesData: notifier.salesTrend,
+                    expenseData: notifier.expensesTrend,
                   ),
                   const SizedBox(height: 26),
 
