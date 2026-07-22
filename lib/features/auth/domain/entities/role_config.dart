@@ -1,55 +1,27 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/material.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/features/auth/domain/entities/user_role.dart';
 
-class RoleConfig extends Equatable {
-  final UserRole role;
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color iconBackgroundColor;
-  final Color buttonColor;
-  final String buttonLabel;
-  final List<String> features;
-  final bool showRequestPassword;
-  final bool showCreateAccount;
-  final String? demoUsername;
-  final String? demoPassword;
-  final String usernamePlaceholder;
+part 'role_config.freezed.dart';
 
-  const RoleConfig({
-    required this.role,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.iconBackgroundColor,
-    required this.buttonColor,
-    required this.buttonLabel,
-    this.features = const [],
-    this.showRequestPassword = false,
-    this.showCreateAccount = false,
-    this.demoUsername,
-    this.demoPassword,
-    this.usernamePlaceholder = 'Enter your username',
-  });
-
-  @override
-  List<Object?> get props => [
-    role,
-    title,
-    subtitle,
-    icon,
-    iconBackgroundColor,
-    buttonColor,
-    buttonLabel,
-    features,
-    showRequestPassword,
-    showCreateAccount,
-    demoUsername,
-    demoPassword,
-    usernamePlaceholder,
-  ];
+@freezed
+class RoleConfig with _$RoleConfig {
+  const factory RoleConfig({
+    required UserRole role,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconBackgroundColor,
+    required Color buttonColor,
+    required String buttonLabel,
+    @Default([]) List<String> features,
+    @Default(false) bool showRequestPassword,
+    @Default(false) bool showCreateAccount,
+    String? demoUsername,
+    String? demoPassword,
+    @Default('Enter your username') String usernamePlaceholder,
+  }) = _RoleConfig;
 
   static const List<RoleConfig> configs = [
     RoleConfig(

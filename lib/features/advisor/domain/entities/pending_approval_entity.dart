@@ -1,24 +1,18 @@
-class PendingApprovalEntity {
-  final String estimateId;
-  final String customerName;
-  final String vehicleId;
-  final double amount;
-  final String timeAgo;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  const PendingApprovalEntity({
-    required this.estimateId,
-    required this.customerName,
-    required this.vehicleId,
-    required this.amount,
-    required this.timeAgo,
-  });
+part 'pending_approval_entity.freezed.dart';
+part 'pending_approval_entity.g.dart';
 
-  factory PendingApprovalEntity.fromMap(Map<String, dynamic> map) =>
-      PendingApprovalEntity(
-        estimateId: map['estimateId'] as String? ?? '',
-        customerName: map['customerName'] as String? ?? '',
-        vehicleId: map['vehicleId'] as String? ?? '',
-        amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
-        timeAgo: map['timeAgo'] as String? ?? 'now',
-      );
+@freezed
+class PendingApprovalEntity with _$PendingApprovalEntity {
+  const factory PendingApprovalEntity({
+    required String estimateId,
+    required String customerName,
+    required String vehicleId,
+    required double amount,
+    @Default('now') String timeAgo,
+  }) = _PendingApprovalEntity;
+
+  factory PendingApprovalEntity.fromJson(Map<String, dynamic> json) =>
+      _$PendingApprovalEntityFromJson(json);
 }

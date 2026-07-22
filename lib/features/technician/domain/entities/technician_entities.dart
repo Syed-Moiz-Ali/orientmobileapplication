@@ -1,22 +1,168 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/material.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
+import 'package:orientmobileapplication/features/technician/domain/entities/work_task_entity.dart';
+export 'package:orientmobileapplication/features/technician/domain/entities/work_task_entity.dart';
 
-class TechnicianProfileEntity {
-  final String name;
-  final String empId;
-  final String role;
-  final String branch;
-  final String shift;
-  final String avatarInitials;
+part 'technician_entities.freezed.dart';
+part 'technician_entities.g.dart';
 
-  const TechnicianProfileEntity({
-    required this.name,
-    required this.empId,
-    required this.role,
-    required this.branch,
-    required this.shift,
-    required this.avatarInitials,
-  });
+// ── Enums ──
+
+enum AttendanceStatus { notPunchedIn, working, onBreak, punchedOut }
+
+extension AttendanceStatusX on AttendanceStatus {
+  String get label {
+    switch (this) {
+      case AttendanceStatus.notPunchedIn:
+        return 'Not Punched In';
+      case AttendanceStatus.working:
+        return 'Working';
+      case AttendanceStatus.onBreak:
+        return 'On Break';
+      case AttendanceStatus.punchedOut:
+        return 'Punched Out';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case AttendanceStatus.notPunchedIn:
+        return AppColors.text3;
+      case AttendanceStatus.working:
+        return AppColors.success;
+      case AttendanceStatus.onBreak:
+        return AppColors.warning;
+      case AttendanceStatus.punchedOut:
+        return AppColors.danger;
+    }
+  }
+
+  Color get bgColor {
+    switch (this) {
+      case AttendanceStatus.notPunchedIn:
+        return AppColors.surfaceAlt;
+      case AttendanceStatus.working:
+        return AppColors.successBg;
+      case AttendanceStatus.onBreak:
+        return AppColors.warningBg;
+      case AttendanceStatus.punchedOut:
+        return AppColors.dangerBg;
+    }
+  }
+}
+
+enum AssignedJobStatus { inProgress, pending, waitingParts, completed }
+
+extension AssignedJobStatusX on AssignedJobStatus {
+  String get label {
+    switch (this) {
+      case AssignedJobStatus.inProgress:
+        return 'In Progress';
+      case AssignedJobStatus.pending:
+        return 'Pending';
+      case AssignedJobStatus.waitingParts:
+        return 'Waiting Parts';
+      case AssignedJobStatus.completed:
+        return 'Completed';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case AssignedJobStatus.inProgress:
+        return AppColors.primary;
+      case AssignedJobStatus.pending:
+        return AppColors.text3;
+      case AssignedJobStatus.waitingParts:
+        return AppColors.warning;
+      case AssignedJobStatus.completed:
+        return AppColors.success;
+    }
+  }
+
+  Color get bgColor {
+    switch (this) {
+      case AssignedJobStatus.inProgress:
+        return AppColors.primaryBg;
+      case AssignedJobStatus.pending:
+        return AppColors.surfaceAlt;
+      case AssignedJobStatus.waitingParts:
+        return AppColors.warningBg;
+      case AssignedJobStatus.completed:
+        return AppColors.successBg;
+    }
+  }
+
+  String get actionLabel {
+    switch (this) {
+      case AssignedJobStatus.inProgress:
+        return 'In Progress';
+      case AssignedJobStatus.pending:
+        return 'Start Job';
+      case AssignedJobStatus.waitingParts:
+        return 'On Hold';
+      case AssignedJobStatus.completed:
+        return 'Complete';
+    }
+  }
+}
+
+enum TechJobStatus { inProgress, completed, delayed, pending }
+
+extension TechJobStatusX on TechJobStatus {
+  String get label {
+    switch (this) {
+      case TechJobStatus.inProgress:
+        return 'In Progress';
+      case TechJobStatus.completed:
+        return 'Completed';
+      case TechJobStatus.delayed:
+        return 'Delayed';
+      case TechJobStatus.pending:
+        return 'Pending';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case TechJobStatus.inProgress:
+        return AppColors.primary;
+      case TechJobStatus.completed:
+        return AppColors.success;
+      case TechJobStatus.delayed:
+        return AppColors.danger;
+      case TechJobStatus.pending:
+        return AppColors.warning;
+    }
+  }
+
+  Color get bgColor {
+    switch (this) {
+      case TechJobStatus.inProgress:
+        return AppColors.primaryBg;
+      case TechJobStatus.completed:
+        return AppColors.successBg;
+      case TechJobStatus.delayed:
+        return AppColors.dangerBg;
+      case TechJobStatus.pending:
+        return AppColors.warningBg;
+    }
+  }
+}
+
+// ── Entities ──
+
+@freezed
+class TechnicianProfileEntity with _$TechnicianProfileEntity {
+  const factory TechnicianProfileEntity({
+    required String name,
+    required String empId,
+    required String role,
+    required String branch,
+    required String shift,
+    required String avatarInitials,
+  }) = _TechnicianProfileEntity;
 
   static const mock = TechnicianProfileEntity(
     name: 'Mohammed Hassan',
@@ -28,328 +174,98 @@ class TechnicianProfileEntity {
   );
 }
 
-enum AttendanceStatus { notPunchedIn, working, onBreak, punchedOut }
+@freezed
+class AttendanceSummaryEntity with _$AttendanceSummaryEntity {
+  const factory AttendanceSummaryEntity({
+    @Default('--:--') String punchIn,
+    @Default('--:--') String punchOut,
+    @Default('0 min') String breakTime,
+    @Default('0h 0m') String workHours,
+  }) = _AttendanceSummaryEntity;
 
-extension AttendanceStatusX on AttendanceStatus {
-  String get label {
-    switch (this) {
-      case AttendanceStatus.notPunchedIn: return 'Not Punched In';
-      case AttendanceStatus.working:      return 'Working';
-      case AttendanceStatus.onBreak:      return 'On Break';
-      case AttendanceStatus.punchedOut:   return 'Punched Out';
-    }
-  }
+  static const empty = AttendanceSummaryEntity();
 
-  Color get color {
-    switch (this) {
-      case AttendanceStatus.notPunchedIn: return AppColors.text3;
-      case AttendanceStatus.working:      return AppColors.success;
-      case AttendanceStatus.onBreak:      return AppColors.warning;
-      case AttendanceStatus.punchedOut:   return AppColors.danger;
-    }
-  }
-
-  Color get bgColor {
-    switch (this) {
-      case AttendanceStatus.notPunchedIn: return AppColors.surfaceAlt;
-      case AttendanceStatus.working:      return AppColors.successBg;
-      case AttendanceStatus.onBreak:      return AppColors.warningBg;
-      case AttendanceStatus.punchedOut:   return AppColors.dangerBg;
-    }
-  }
+  factory AttendanceSummaryEntity.fromJson(Map<String, dynamic> json) =>
+      _$AttendanceSummaryEntityFromJson(json);
 }
 
-class AttendanceSummaryEntity {
-  final String punchIn;
-  final String punchOut;
-  final String breakTime;
-  final String workHours;
-
-  const AttendanceSummaryEntity({
-    required this.punchIn,
-    required this.punchOut,
-    required this.breakTime,
-    required this.workHours,
-  });
-
-  static const empty = AttendanceSummaryEntity(
-    punchIn: '--:--',
-    punchOut: '--:--',
-    breakTime: '0 min',
-    workHours: '0h 0m',
-  );
-
-  factory AttendanceSummaryEntity.fromMap(Map<String, dynamic> map) =>
-      AttendanceSummaryEntity(
-        punchIn: map['punchIn'] as String? ?? '--:--',
-        punchOut: map['punchOut'] as String? ?? '--:--',
-        breakTime: map['breakTime'] as String? ?? '0 min',
-        workHours: map['workHours'] as String? ?? '0h 0m',
-      );
+@freezed
+class TechnicianStatsEntity with _$TechnicianStatsEntity {
+  const factory TechnicianStatsEntity({
+    required int assignedJobs,
+    required int inProgress,
+    required int completedToday,
+    required double efficiency,
+    required String avgTimePerJob,
+    required String totalHoursWorked,
+  }) = _TechnicianStatsEntity;
 }
 
-class TechnicianStatsEntity {
-  final int assignedJobs;
-  final int inProgress;
-  final int completedToday;
-  final double efficiency;
-  final String avgTimePerJob;
-  final String totalHoursWorked;
-
-  const TechnicianStatsEntity({
-    required this.assignedJobs,
-    required this.inProgress,
-    required this.completedToday,
-    required this.efficiency,
-    required this.avgTimePerJob,
-    required this.totalHoursWorked,
-  });
-}
-
-enum AssignedJobStatus { inProgress, pending, waitingParts, completed }
-
-extension AssignedJobStatusX on AssignedJobStatus {
-  String get label {
-    switch (this) {
-      case AssignedJobStatus.inProgress:   return 'In Progress';
-      case AssignedJobStatus.pending:      return 'Pending';
-      case AssignedJobStatus.waitingParts: return 'Waiting Parts';
-      case AssignedJobStatus.completed:    return 'Completed';
-    }
-  }
-
-  Color get color {
-    switch (this) {
-      case AssignedJobStatus.inProgress:   return AppColors.primary;
-      case AssignedJobStatus.pending:      return AppColors.text3;
-      case AssignedJobStatus.waitingParts: return AppColors.warning;
-      case AssignedJobStatus.completed:    return AppColors.success;
-    }
-  }
-
-  Color get bgColor {
-    switch (this) {
-      case AssignedJobStatus.inProgress:   return AppColors.primaryBg;
-      case AssignedJobStatus.pending:      return AppColors.surfaceAlt;
-      case AssignedJobStatus.waitingParts: return AppColors.warningBg;
-      case AssignedJobStatus.completed:    return AppColors.successBg;
-    }
-  }
-
-  String get actionLabel {
-    switch (this) {
-      case AssignedJobStatus.inProgress:   return 'In Progress';
-      case AssignedJobStatus.pending:      return 'Start Job';
-      case AssignedJobStatus.waitingParts: return 'On Hold';
-      case AssignedJobStatus.completed:    return 'Complete';
-    }
-  }
-}
-
-class AssignedJobEntity {
-  final String id;
-  final String customerName;
-  final String vehicle;
-  final String service;
-  final double amount;
-  final AssignedJobStatus status;
-
-  const AssignedJobEntity({
-    required this.id,
-    required this.customerName,
-    required this.vehicle,
-    required this.service,
-    required this.amount,
-    required this.status,
-  });
-
-  AssignedJobEntity copyWith({AssignedJobStatus? status}) => AssignedJobEntity(
-        id: id,
-        customerName: customerName,
-        vehicle: vehicle,
-        service: service,
-        amount: amount,
-        status: status ?? this.status,
-      );
+@freezed
+class AssignedJobEntity with _$AssignedJobEntity {
+  const factory AssignedJobEntity({
+    required String id,
+    required String customerName,
+    required String vehicle,
+    required String service,
+    required double amount,
+    required AssignedJobStatus status,
+  }) = _AssignedJobEntity;
 
   static List<AssignedJobEntity> get mockData => [
-    AssignedJobEntity(
-      id: 'JC-2024-1245',
-      customerName: 'Ahmed Al Mansouri',
-      vehicle: 'Toyota Camry - AA-12345',
-      service: 'Engine Diagnostics',
-      amount: 1.2,
-      status: AssignedJobStatus.inProgress,
-    ),
-    AssignedJobEntity(
-      id: 'JC-2024-1246',
-      customerName: 'Fatima Ali',
-      vehicle: 'Honda Accord - BB-67890',
-      service: 'Brake Pad Replacement',
-      amount: 0,
-      status: AssignedJobStatus.pending,
-    ),
-    AssignedJobEntity(
-      id: 'JC-2024-1247',
-      customerName: 'Khalid Rashid',
-      vehicle: 'Nissan Patrol - CC-11223',
-      service: 'AC Repair',
-      amount: 0,
-      status: AssignedJobStatus.waitingParts,
-    ),
-    AssignedJobEntity(
-      id: 'JC-2024-1248',
-      customerName: 'Mariam Salem',
-      vehicle: 'BMW X5 - DD-44556',
-      service: 'Full Service',
-      amount: 0,
-      status: AssignedJobStatus.completed,
-    ),
-  ];
-}
-
-enum TechJobStatus { inProgress, completed, delayed, pending }
-
-extension TechJobStatusX on TechJobStatus {
-  String get label {
-    switch (this) {
-      case TechJobStatus.inProgress: return 'In Progress';
-      case TechJobStatus.completed:  return 'Completed';
-      case TechJobStatus.delayed:    return 'Delayed';
-      case TechJobStatus.pending:    return 'Pending';
-    }
-  }
-
-  Color get color {
-    switch (this) {
-      case TechJobStatus.inProgress: return AppColors.primary;
-      case TechJobStatus.completed:  return AppColors.success;
-      case TechJobStatus.delayed:    return AppColors.danger;
-      case TechJobStatus.pending:    return AppColors.warning;
-    }
-  }
-
-  Color get bgColor {
-    switch (this) {
-      case TechJobStatus.inProgress: return AppColors.primaryBg;
-      case TechJobStatus.completed:  return AppColors.successBg;
-      case TechJobStatus.delayed:    return AppColors.dangerBg;
-      case TechJobStatus.pending:    return AppColors.warningBg;
-    }
-  }
-}
-
-enum TaskStatus { pending, inProgress, completed }
-
-extension TaskStatusX on TaskStatus {
-  String get label {
-    switch (this) {
-      case TaskStatus.pending:    return 'Pending';
-      case TaskStatus.inProgress: return 'In Progress';
-      case TaskStatus.completed:  return 'Completed';
-    }
-  }
-}
-
-class WorkTaskEntity {
-  final int id;
-  final String description;
-  final TaskStatus status;
-  final String? startTime;
-  final String? endTime;
-
-  const WorkTaskEntity({
-    required this.id,
-    required this.description,
-    this.status = TaskStatus.pending,
-    this.startTime,
-    this.endTime,
-  });
-
-  WorkTaskEntity copyWith({
-    TaskStatus? status,
-    String? startTime,
-    String? endTime,
-  }) =>
-      WorkTaskEntity(
-        id: id,
-        description: description,
-        status: status ?? this.status,
-        startTime: startTime ?? this.startTime,
-        endTime: endTime ?? this.endTime,
-      );
-
-  factory WorkTaskEntity.fromMap(Map<String, dynamic> map) => WorkTaskEntity(
-        id: map['id'] as int? ?? 0,
-        description: map['description'] as String? ?? '',
-        status: TaskStatus.values.firstWhere(
-          (e) => e.name == map['status'],
-          orElse: () => TaskStatus.pending,
+        const AssignedJobEntity(
+          id: 'JC-2024-1245',
+          customerName: 'Ahmed Al Mansouri',
+          vehicle: 'Toyota Camry - AA-12345',
+          service: 'Engine Diagnostics',
+          amount: 1.2,
+          status: AssignedJobStatus.inProgress,
         ),
-        startTime: map['startTime'] as String?,
-        endTime: map['endTime'] as String?,
-      );
+        const AssignedJobEntity(
+          id: 'JC-2024-1246',
+          customerName: 'Fatima Ali',
+          vehicle: 'Honda Accord - BB-67890',
+          service: 'Brake Pad Replacement',
+          amount: 0,
+          status: AssignedJobStatus.pending,
+        ),
+        const AssignedJobEntity(
+          id: 'JC-2024-1247',
+          customerName: 'Khalid Rashid',
+          vehicle: 'Nissan Patrol - CC-11223',
+          service: 'AC Repair',
+          amount: 0,
+          status: AssignedJobStatus.waitingParts,
+        ),
+        const AssignedJobEntity(
+          id: 'JC-2024-1248',
+          customerName: 'Mariam Salem',
+          vehicle: 'BMW X5 - DD-44556',
+          service: 'Full Service',
+          amount: 0,
+          status: AssignedJobStatus.completed,
+        ),
+      ];
 }
 
-class TechnicianJobEntity {
-  final String jobCardNo;
-  final String dateOfWork;
-  final String startTime;
-  final String vehicleBrand;
-  final String vehicleModel;
-  final String plateNumber;
-  final TechJobStatus status;
-  final List<WorkTaskEntity> tasks;
-  final String notes;
+@freezed
+class TechnicianJobEntity with _$TechnicianJobEntity {
+  const factory TechnicianJobEntity({
+    required String jobCardNo,
+    required String dateOfWork,
+    required String startTime,
+    required String vehicleBrand,
+    required String vehicleModel,
+    required String plateNumber,
+    @Default(TechJobStatus.pending) TechJobStatus status,
+    required List<WorkTaskEntity> tasks,
+    @Default('') String notes,
+  }) = _TechnicianJobEntity;
 
-  TechnicianJobEntity({
-    required this.jobCardNo,
-    required this.dateOfWork,
-    required this.startTime,
-    required this.vehicleBrand,
-    required this.vehicleModel,
-    required this.plateNumber,
-    this.status = TechJobStatus.pending,
-    required this.tasks,
-    this.notes = '',
-  });
+  const TechnicianJobEntity._();
 
-  TechnicianJobEntity copyWith({
-    TechJobStatus? status,
-    List<WorkTaskEntity>? tasks,
-    String? notes,
-  }) =>
-      TechnicianJobEntity(
-        jobCardNo: jobCardNo,
-        dateOfWork: dateOfWork,
-        startTime: startTime,
-        vehicleBrand: vehicleBrand,
-        vehicleModel: vehicleModel,
-        plateNumber: plateNumber,
-        status: status ?? this.status,
-        tasks: tasks ?? List<WorkTaskEntity>.from(this.tasks),
-        notes: notes ?? this.notes,
-      );
-
-  factory TechnicianJobEntity.fromMap(Map<String, dynamic> map) =>
-      TechnicianJobEntity(
-        jobCardNo: map['jobCardNo'] as String? ?? '',
-        dateOfWork: map['dateOfWork'] as String? ?? '',
-        startTime: map['startTime'] as String? ?? '',
-        vehicleBrand: map['vehicleBrand'] as String? ?? '',
-        vehicleModel: map['vehicleModel'] as String? ?? '',
-        plateNumber: map['plateNumber'] as String? ?? '',
-        status: TechJobStatus.values.firstWhere(
-          (e) => e.name == map['status'],
-          orElse: () => TechJobStatus.pending,
-        ),
-        tasks: (map['tasks'] as List<dynamic>?)
-                ?.map((t) =>
-                    WorkTaskEntity.fromMap(t as Map<String, dynamic>))
-                .toList() ??
-            [],
-        notes: map['notes'] as String? ?? '',
-      );
+  factory TechnicianJobEntity.fromJson(Map<String, dynamic> json) =>
+      _$TechnicianJobEntityFromJson(json);
 
   int get completedTasks =>
       tasks.where((t) => t.status == TaskStatus.completed).length;

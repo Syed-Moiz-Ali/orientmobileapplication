@@ -1,17 +1,15 @@
-class AdvisorStatsEntity {
-  final int newJobCardsToday;
-  final int inspectionsToday;
-  final int pendingApprovals;
-  final int vehiclesWaiting;
-  final int readyForDelivery;
-  final int totalOpenJobCards;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  const AdvisorStatsEntity({
-    required this.newJobCardsToday,
-    required this.inspectionsToday,
-    required this.pendingApprovals,
-    required this.vehiclesWaiting,
-    required this.readyForDelivery,
-    required this.totalOpenJobCards,
-  });
+part 'advisor_stats_entity.freezed.dart';
+
+@freezed
+class AdvisorStatsEntity with _$AdvisorStatsEntity {
+  const factory AdvisorStatsEntity({
+    required int newJobCardsToday,
+    required int inspectionsToday,
+    required int pendingApprovals,
+    required int vehiclesWaiting,
+    required int readyForDelivery,
+    required int totalOpenJobCards,
+  }) = _AdvisorStatsEntity;
 }

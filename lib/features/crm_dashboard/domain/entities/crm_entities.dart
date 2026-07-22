@@ -1,227 +1,138 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/material.dart';
 
-class CrmKpiEntity {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final Color bgColor;
-  final String trend;
-  final bool trendUp;
+part 'crm_entities.freezed.dart';
 
-  const CrmKpiEntity({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    required this.bgColor,
-    required this.trend,
-    required this.trendUp,
-  });
+@freezed
+class CrmKpiEntity with _$CrmKpiEntity {
+  const factory CrmKpiEntity({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required String trend,
+    required bool trendUp,
+  }) = _CrmKpiEntity;
 }
 
-class CrmChannelEntity {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final String value;
-  final String trend;
-  final bool trendUp;
-
-  const CrmChannelEntity({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.value,
-    required this.trend,
-    required this.trendUp,
-  });
+@freezed
+class CrmChannelEntity with _$CrmChannelEntity {
+  const factory CrmChannelEntity({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required String value,
+    required String trend,
+    required bool trendUp,
+  }) = _CrmChannelEntity;
 }
 
-class CrmLeadEntity {
-  final int sno;
-  final String leadNumber;
-  final String customerName;
-  final String phone;
-  final String email;
-  final String source;
-  final Color sourceColor;
-  final String assignedTo;
-  final String status;
-  final Color statusColor;
-  final String lastActivity;
-
-  const CrmLeadEntity({
-    required this.sno,
-    required this.leadNumber,
-    required this.customerName,
-    required this.phone,
-    required this.email,
-    required this.source,
-    required this.sourceColor,
-    required this.assignedTo,
-    required this.status,
-    required this.statusColor,
-    required this.lastActivity,
-  });
+@freezed
+class CrmLeadEntity with _$CrmLeadEntity {
+  const factory CrmLeadEntity({
+    required int sno,
+    required String leadNumber,
+    required String customerName,
+    required String phone,
+    required String email,
+    required String source,
+    required Color sourceColor,
+    required String assignedTo,
+    required String status,
+    required Color statusColor,
+    required String lastActivity,
+  }) = _CrmLeadEntity;
 }
 
-class CrmTaskEntity {
-  final String id;
-  final String title;
-  final String assignedTo;
-  final String dueDate;
-  final String priority;
-  final Color priorityColor;
-  final bool isDone;
-
-  const CrmTaskEntity({
-    required this.id,
-    required this.title,
-    required this.assignedTo,
-    required this.dueDate,
-    required this.priority,
-    required this.priorityColor,
-    this.isDone = false,
-  });
-
-  CrmTaskEntity copyWith({
-    String? id,
-    String? title,
-    String? assignedTo,
-    String? dueDate,
-    String? priority,
-    Color? priorityColor,
-    bool? isDone,
-  }) {
-    return CrmTaskEntity(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      assignedTo: assignedTo ?? this.assignedTo,
-      dueDate: dueDate ?? this.dueDate,
-      priority: priority ?? this.priority,
-      priorityColor: priorityColor ?? this.priorityColor,
-      isDone: isDone ?? this.isDone,
-    );
-  }
+@freezed
+class CrmTaskEntity with _$CrmTaskEntity {
+  const factory CrmTaskEntity({
+    required String id,
+    required String title,
+    required String assignedTo,
+    required String dueDate,
+    required String priority,
+    required Color priorityColor,
+    @Default(false) bool isDone,
+  }) = _CrmTaskEntity;
 }
 
-class CrmTrendPoint {
-  final String month;
-  final double won;
-  final double lost;
-  final double active;
-
-  const CrmTrendPoint(this.month, this.won, this.lost, this.active);
+@freezed
+class CrmTrendPoint with _$CrmTrendPoint {
+  const factory CrmTrendPoint(String month, double won, double lost, double active) = _CrmTrendPoint;
 }
 
-class SalespersonPerf {
-  final String name;
-  final double leads;
-  final double won;
-
-  const SalespersonPerf(this.name, this.leads, this.won);
+@freezed
+class SalespersonPerf with _$SalespersonPerf {
+  const factory SalespersonPerf(String name, double leads, double won) = _SalespersonPerf;
 }
 
-class ResponseTimeBucket {
-  final String label;
-  final double count;
-
-  const ResponseTimeBucket(this.label, this.count);
+@freezed
+class ResponseTimeBucket with _$ResponseTimeBucket {
+  const factory ResponseTimeBucket(String label, double count) = _ResponseTimeBucket;
 }
 
-class LeadSourceSlice {
-  final String label;
-  final double percent;
-  final Color color;
-
-  const LeadSourceSlice(this.label, this.percent, this.color);
+@freezed
+class LeadSourceSlice with _$LeadSourceSlice {
+  const factory LeadSourceSlice(String label, double percent, Color color) = _LeadSourceSlice;
 }
 
-class CrmKeyMetric {
-  final String label;
-  final String value;
-  final String sub;
-  final bool up;
-  final Color color;
-
-  const CrmKeyMetric({
-    required this.label,
-    required this.value,
-    required this.sub,
-    required this.up,
-    required this.color,
-  });
+@freezed
+class CrmKeyMetric with _$CrmKeyMetric {
+  const factory CrmKeyMetric({
+    required String label,
+    required String value,
+    required String sub,
+    required bool up,
+    required Color color,
+  }) = _CrmKeyMetric;
 }
 
-class IntegrationEntity {
-  final String name;
-  final IconData icon;
-  final Color color;
-  final bool connected;
-
-  const IntegrationEntity({
-    required this.name,
-    required this.icon,
-    required this.color,
-    required this.connected,
-  });
+@freezed
+class IntegrationEntity with _$IntegrationEntity {
+  const factory IntegrationEntity({
+    required String name,
+    required IconData icon,
+    required Color color,
+    required bool connected,
+  }) = _IntegrationEntity;
 }
 
-class SalesTeamMember {
-  final String name;
-  final String role;
-  final int leadsHandled;
-  final int wonDeals;
-  final String revenue;
-  final double winRate;
-
-  const SalesTeamMember({
-    required this.name,
-    required this.role,
-    required this.leadsHandled,
-    required this.wonDeals,
-    required this.revenue,
-    required this.winRate,
-  });
+@freezed
+class SalesTeamMember with _$SalesTeamMember {
+  const factory SalesTeamMember({
+    required String name,
+    required String role,
+    required int leadsHandled,
+    required int wonDeals,
+    required String revenue,
+    required double winRate,
+  }) = _SalesTeamMember;
 }
 
-class ConversationEntity {
-  final String id;
-  final String customerName;
-  final String lastMessage;
-  final String time;
-  final String channel;
-  final Color channelColor;
-  final int unread;
-  final String status;
-
-  const ConversationEntity({
-    required this.id,
-    required this.customerName,
-    required this.lastMessage,
-    required this.time,
-    required this.channel,
-    required this.channelColor,
-    required this.unread,
-    required this.status,
-  });
+@freezed
+class ConversationEntity with _$ConversationEntity {
+  const factory ConversationEntity({
+    required String id,
+    required String customerName,
+    required String lastMessage,
+    required String time,
+    required String channel,
+    required Color channelColor,
+    required int unread,
+    required String status,
+  }) = _ConversationEntity;
 }
 
-class CrmNotificationEntity {
-  final String id;
-  final String title;
-  final String body;
-  final String time;
-  final String type;
-  final bool isRead;
-
-  const CrmNotificationEntity({
-    required this.id,
-    required this.title,
-    required this.body,
-    required this.time,
-    required this.type,
-    this.isRead = false,
-  });
+@freezed
+class CrmNotificationEntity with _$CrmNotificationEntity {
+  const factory CrmNotificationEntity({
+    required String id,
+    required String title,
+    required String body,
+    required String time,
+    required String type,
+    @Default(false) bool isRead,
+  }) = _CrmNotificationEntity;
 }

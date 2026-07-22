@@ -1,94 +1,74 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/material.dart';
 
-// ── KPI Stats ──
-class SupervisorKpiEntity {
-  final IconData icon;
-  final Color color;
-  final String value;
-  final String label;
-  final String sub;
+part 'supervisor_entities.freezed.dart';
 
-  const SupervisorKpiEntity({
-    required this.icon,
-    required this.color,
-    required this.value,
-    required this.label,
-    required this.sub,
-  });
+// ── KPI Stats ──
+@freezed
+class SupervisorKpiEntity with _$SupervisorKpiEntity {
+  const factory SupervisorKpiEntity({
+    required IconData icon,
+    required Color color,
+    required String value,
+    required String label,
+    required String sub,
+  }) = _SupervisorKpiEntity;
 }
 
 // ── Advisor Bar Data ──
-class AdvisorJobEntity {
-  final String name;
-  final double count;
-
-  const AdvisorJobEntity({required this.name, required this.count});
+@freezed
+class AdvisorJobEntity with _$AdvisorJobEntity {
+  const factory AdvisorJobEntity({
+    required String name,
+    required double count,
+  }) = _AdvisorJobEntity;
 }
 
 // ── Job Type ──
-class JobTypeEntity {
-  final String label;
-  final int count;
-  final Color color;
-
-  const JobTypeEntity({
-    required this.label,
-    required this.count,
-    required this.color,
-  });
+@freezed
+class JobTypeEntity with _$JobTypeEntity {
+  const factory JobTypeEntity({
+    required String label,
+    required int count,
+    required Color color,
+  }) = _JobTypeEntity;
 }
 
 // ── Revenue Metric ──
-class RevenueMetricEntity {
-  final IconData icon;
-  final String amount;
-  final String label;
-  final String change;
-
-  const RevenueMetricEntity({
-    required this.icon,
-    required this.amount,
-    required this.label,
-    required this.change,
-  });
+@freezed
+class RevenueMetricEntity with _$RevenueMetricEntity {
+  const factory RevenueMetricEntity({
+    required IconData icon,
+    required String amount,
+    required String label,
+    required String change,
+  }) = _RevenueMetricEntity;
 }
 
 // ── Pending Status ──
-class PendingStatusEntity {
-  final IconData icon;
-  final Color color;
-  final String count;
-  final String label;
-
-  const PendingStatusEntity({
-    required this.icon,
-    required this.color,
-    required this.count,
-    required this.label,
-  });
+@freezed
+class PendingStatusEntity with _$PendingStatusEntity {
+  const factory PendingStatusEntity({
+    required IconData icon,
+    required Color color,
+    required String count,
+    required String label,
+  }) = _PendingStatusEntity;
 }
 
 // ── Work Assignment ──
-class WorkAssignmentEntity {
-  final int id;
-  final String description;
-  final String department;
-  final String technicianName;
-  final String dateOfWork;
-  final int statusPercent;
-  final String stdTime;
-  final String remarks;
-
-  const WorkAssignmentEntity({
-    required this.id,
-    this.description = '',
-    this.department = '',
-    this.technicianName = '',
-    this.dateOfWork = '',
-    this.statusPercent = 0,
-    this.stdTime = '',
-    this.remarks = '',
-  });
+@freezed
+class WorkAssignmentEntity with _$WorkAssignmentEntity {
+  const factory WorkAssignmentEntity({
+    required int id,
+    @Default('') String description,
+    @Default('') String department,
+    @Default('') String technicianName,
+    @Default('') String dateOfWork,
+    @Default(0) int statusPercent,
+    @Default('') String stdTime,
+    @Default('') String remarks,
+  }) = _WorkAssignmentEntity;
 
   factory WorkAssignmentEntity.fromMap(Map<String, dynamic> map) =>
       WorkAssignmentEntity(
@@ -101,46 +81,18 @@ class WorkAssignmentEntity {
         stdTime: map['stdTime'] as String? ?? '',
         remarks: map['remarks'] as String? ?? '',
       );
-
-  WorkAssignmentEntity copyWith({
-    String? description,
-    String? department,
-    String? technicianName,
-    String? dateOfWork,
-    int? statusPercent,
-    String? stdTime,
-    String? remarks,
-  }) {
-    return WorkAssignmentEntity(
-      id: id,
-      description: description ?? this.description,
-      department: department ?? this.department,
-      technicianName: technicianName ?? this.technicianName,
-      dateOfWork: dateOfWork ?? this.dateOfWork,
-      statusPercent: statusPercent ?? this.statusPercent,
-      stdTime: stdTime ?? this.stdTime,
-      remarks: remarks ?? this.remarks,
-    );
-  }
 }
 
 // ── Assigned Job ──
-class AssignedJobEntity {
-  final String jobCard;
-  final String customer;
-  final String vehicle;
-  final String dateAssigned;
-  final int done;
-  final int total;
-  final String status;
-
-  const AssignedJobEntity({
-    required this.jobCard,
-    required this.customer,
-    required this.vehicle,
-    required this.dateAssigned,
-    required this.done,
-    required this.total,
-    required this.status,
-  });
+@freezed
+class AssignedJobEntity with _$AssignedJobEntity {
+  const factory AssignedJobEntity({
+    required String jobCard,
+    required String customer,
+    required String vehicle,
+    required String dateAssigned,
+    required int done,
+    required int total,
+    required String status,
+  }) = _AssignedJobEntity;
 }

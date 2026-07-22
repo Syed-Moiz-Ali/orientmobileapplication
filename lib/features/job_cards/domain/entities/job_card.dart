@@ -1,28 +1,24 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:orientmobileapplication/core/domain/job_card_status.dart';
 export 'package:orientmobileapplication/core/domain/job_card_status.dart';
 
-class JobCard {
-  final String id;
-  final String customerName;
-  final String vehicle;
-  final String plateNumber;
-  final List<String> services;
-  final String technician;
-  final String estCompletion;
-  final double amount;
-  final JobCardStatus status;
+part 'job_card.freezed.dart';
 
-  const JobCard({
-    required this.id,
-    required this.customerName,
-    required this.vehicle,
-    required this.plateNumber,
-    required this.services,
-    required this.technician,
-    required this.estCompletion,
-    required this.amount,
-    required this.status,
-  });
+@freezed
+class JobCard with _$JobCard {
+  const factory JobCard({
+    required String id,
+    required String customerName,
+    required String vehicle,
+    required String plateNumber,
+    required List<String> services,
+    required String technician,
+    required String estCompletion,
+    required double amount,
+    required JobCardStatus status,
+  }) = _JobCard;
+
+  const JobCard._();
 
   String get vehicleDisplay => '$vehicle - $plateNumber';
 }

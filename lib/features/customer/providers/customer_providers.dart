@@ -163,16 +163,13 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
   }
 
   void markAllRead() {
-    final updated = state.notifications.map((n) {
-      n.isRead = true;
-      return n;
-    }).toList();
+    final updated = state.notifications.map((n) => n.copyWith(isRead: true)).toList();
     state = state.copyWith(notifications: updated);
   }
 
   void markRead(String id) {
     final updated = state.notifications.map((n) {
-      if (n.id == id) n.isRead = true;
+      if (n.id == id) return n.copyWith(isRead: true);
       return n;
     }).toList();
     state = state.copyWith(notifications: updated);

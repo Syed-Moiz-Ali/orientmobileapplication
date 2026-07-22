@@ -1,29 +1,12 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/material.dart';
 
-// ── Document Expiry ──
+part 'dashboard_entities.freezed.dart';
+
+// ── Enums ──
+
 enum ExpiryUrgency { critical, urgent, warning }
 
-class DocumentExpiry {
-  final String empId;
-  final String employeeName;
-  final String designation;
-  final String documentType;
-  final String expiryDate;
-  final int daysLeft;
-  final ExpiryUrgency urgency;
-
-  const DocumentExpiry({
-    required this.empId,
-    required this.employeeName,
-    required this.designation,
-    required this.documentType,
-    required this.expiryDate,
-    required this.daysLeft,
-    required this.urgency,
-  });
-}
-
-// ── Job Status ──
 enum JobStage {
   waitingInspection,
   waitingPreRequest,
@@ -37,190 +20,141 @@ enum JobStage {
   cancelled
 }
 
-class JobStatus {
-  final String jobCardId;
-  final String customerName;
-  final String vehicleInfo;
-  final String assignedTo;
-  final String createdDate;
-  final String dueDate;
-  final JobStage stage;
-  final double estimatedAmount;
-
-  const JobStatus({
-    required this.jobCardId,
-    required this.customerName,
-    required this.vehicleInfo,
-    required this.assignedTo,
-    required this.createdDate,
-    required this.dueDate,
-    required this.stage,
-    required this.estimatedAmount,
-  });
-}
-
-// ── Pending Approvals ──
-
-class ApprovalCategory {
-  final String title;
-  final String subtitle;
-  final int count;
-  final Color iconBg;
-  final IconData icon;
-
-  const ApprovalCategory({
-    required this.title,
-    required this.subtitle,
-    required this.count,
-    required this.iconBg,
-    required this.icon,
-  });
-}
-
-// ── Pending Job Cards ──
 enum PendingJobCardStatus { overdue, pending, inProgress }
 
-class PendingJobCard {
-  final String jobCardId;
-  final String customerName;
-  final String vehicleInfo;
-  final String assignedTo;
-  final String createdDate;
-  final String dueDate;
-  final int daysOverdue;
-  final PendingJobCardStatus status;
-  final double estimatedAmount;
-
-  const PendingJobCard({
-    required this.jobCardId,
-    required this.customerName,
-    required this.vehicleInfo,
-    required this.assignedTo,
-    required this.createdDate,
-    required this.dueDate,
-    required this.daysOverdue,
-    required this.status,
-    required this.estimatedAmount,
-  });
-}
-
-// ── Active Job Cards ──
 enum ActiveJobStatus { inProgress, waitingParts, qualityCheck, completed }
 
-class ActiveJobCard {
-  final String id;
-  final String customerName;
-  final String vehicleInfo;
-  final String services;
-  final String technician;
-  final String estCompletion;
-  final double amount;
-  final ActiveJobStatus status;
-
-  const ActiveJobCard({
-    required this.id,
-    required this.customerName,
-    required this.vehicleInfo,
-    required this.services,
-    required this.technician,
-    required this.estCompletion,
-    required this.amount,
-    required this.status,
-  });
-}
-
-// ── Sales Invoices ──
 enum InvoiceStatus { paid, unpaid, overdue }
 
-class SalesInvoice {
-  final String id;
-  final String customerName;
-  final String date;
-  final double amount;
-  final InvoiceStatus status;
+// ── Entities ──
 
-  const SalesInvoice({
-    required this.id,
-    required this.customerName,
-    required this.date,
-    required this.amount,
-    required this.status,
-  });
+@freezed
+class DocumentExpiry with _$DocumentExpiry {
+  const factory DocumentExpiry({
+    required String empId,
+    required String employeeName,
+    required String designation,
+    required String documentType,
+    required String expiryDate,
+    required int daysLeft,
+    required ExpiryUrgency urgency,
+  }) = _DocumentExpiry;
 }
 
-// ── Dashboard KPI ──
-class OwnerKpi {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final String sub;
-
-  const OwnerKpi({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    required this.sub,
-  });
+@freezed
+class JobStatus with _$JobStatus {
+  const factory JobStatus({
+    required String jobCardId,
+    required String customerName,
+    required String vehicleInfo,
+    required String assignedTo,
+    required String createdDate,
+    required String dueDate,
+    required JobStage stage,
+    required double estimatedAmount,
+  }) = _JobStatus;
 }
 
-// ── Sales Trend ──
-class SalesTrendPoint {
-  final String month;
-  final double value;
-  const SalesTrendPoint(this.month, this.value);
+@freezed
+class ApprovalCategory with _$ApprovalCategory {
+  const factory ApprovalCategory({
+    required String title,
+    required String subtitle,
+    required int count,
+    required Color iconBg,
+    required IconData icon,
+  }) = _ApprovalCategory;
 }
 
-// ── Top Sales ──
-class TopSalesCategory {
-  final String title;
-  final List<TopSalesItem> items;
-
-  const TopSalesCategory({
-    required this.title,
-    required this.items,
-  });
+@freezed
+class PendingJobCard with _$PendingJobCard {
+  const factory PendingJobCard({
+    required String jobCardId,
+    required String customerName,
+    required String vehicleInfo,
+    required String assignedTo,
+    required String createdDate,
+    required String dueDate,
+    required int daysOverdue,
+    required PendingJobCardStatus status,
+    required double estimatedAmount,
+  }) = _PendingJobCard;
 }
 
-class TopSalesItem {
-  final int sno;
-  final String description;
-  final String value;
-
-  const TopSalesItem({
-    required this.sno,
-    required this.description,
-    required this.value,
-  });
+@freezed
+class ActiveJobCard with _$ActiveJobCard {
+  const factory ActiveJobCard({
+    required String id,
+    required String customerName,
+    required String vehicleInfo,
+    required String services,
+    required String technician,
+    required String estCompletion,
+    required double amount,
+    required ActiveJobStatus status,
+  }) = _ActiveJobCard;
 }
 
-// ── Message ──
-class Message {
-  final String id;
-  final String recipient;
-  final String message;
-  final String time;
-
-  const Message({
-    required this.id,
-    required this.recipient,
-    required this.message,
-    required this.time,
-  });
+@freezed
+class SalesInvoice with _$SalesInvoice {
+  const factory SalesInvoice({
+    required String id,
+    required String customerName,
+    required String date,
+    required double amount,
+    required InvoiceStatus status,
+  }) = _SalesInvoice;
 }
 
-// ── Job Card Register ──
-class JobCardRegisterItem {
-  final String label;
-  final int open;
-  final int completed;
-  final int total;
+@freezed
+class OwnerKpi with _$OwnerKpi {
+  const factory OwnerKpi({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required String sub,
+  }) = _OwnerKpi;
+}
 
-  const JobCardRegisterItem({
-    required this.label,
-    required this.open,
-    required this.completed,
-    required this.total,
-  });
+@freezed
+class SalesTrendPoint with _$SalesTrendPoint {
+  const factory SalesTrendPoint(String month, double value) = _SalesTrendPoint;
+}
+
+@freezed
+class TopSalesCategory with _$TopSalesCategory {
+  const factory TopSalesCategory({
+    required String title,
+    required List<TopSalesItem> items,
+  }) = _TopSalesCategory;
+}
+
+@freezed
+class TopSalesItem with _$TopSalesItem {
+  const factory TopSalesItem({
+    required int sno,
+    required String description,
+    required String value,
+  }) = _TopSalesItem;
+}
+
+@freezed
+class Message with _$Message {
+  const factory Message({
+    required String id,
+    required String recipient,
+    required String message,
+    required String time,
+  }) = _Message;
+}
+
+@freezed
+class JobCardRegisterItem with _$JobCardRegisterItem {
+  const factory JobCardRegisterItem({
+    required String label,
+    required int open,
+    required int completed,
+    required int total,
+  }) = _JobCardRegisterItem;
 }

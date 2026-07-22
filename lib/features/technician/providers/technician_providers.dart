@@ -269,14 +269,14 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
             (e) => e.name == att['status'],
             orElse: () => AttendanceStatus.notPunchedIn,
           ),
-          attendanceSummary: AttendanceSummaryEntity.fromMap(att),
+          attendanceSummary: AttendanceSummaryEntity.fromJson(att),
         );
       }
       final savedJobs = box.values
           .whereType<Map>()
           .map((m) => Map<String, dynamic>.from(m))
           .where((v) => v['jobCardNo'] != null)
-          .map((v) => TechnicianJobEntity.fromMap(v))
+          .map((v) => TechnicianJobEntity.fromJson(v))
           .toList();
       if (savedJobs.isNotEmpty) {
         _allJobs.clear();

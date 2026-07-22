@@ -1,15 +1,36 @@
-class CustomerEntity {
-  final String name;
-  final String firstName;
-  final String avatarInitials;
-  final String memberId;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  const CustomerEntity({
-    required this.name,
-    required this.firstName,
-    required this.avatarInitials,
-    required this.memberId,
-  });
+part 'customer_entities.freezed.dart';
+part 'customer_entities.g.dart';
+
+// ── Enums ──
+
+enum BookingStatus { confirmed, completed, pending, cancelled }
+
+enum StageStatus { done, inProgress, pending }
+
+enum NotifType {
+  carReady,
+  bookingConfirmed,
+  invoiceReady,
+  approvalNeeded,
+  workInProgress,
+  reminder,
+}
+
+// ── Entities ──
+
+@freezed
+class CustomerEntity with _$CustomerEntity {
+  const factory CustomerEntity({
+    required String name,
+    required String firstName,
+    required String avatarInitials,
+    required String memberId,
+  }) = _CustomerEntity;
+
+  factory CustomerEntity.fromJson(Map<String, dynamic> json) =>
+      _$CustomerEntityFromJson(json);
 
   static const mock = CustomerEntity(
     name: 'Ahmed Hassan',
@@ -19,32 +40,26 @@ class CustomerEntity {
   );
 }
 
-class CustomerVehicleEntity {
-  final String id;
-  final String brand;
-  final String model;
-  final String plateNumber;
-  final String vin;
-  final String color;
-  final int year;
-  final String mileage;
-  final String lastService;
-  final String nextDue;
-  final int healthScore;
+@freezed
+class CustomerVehicleEntity with _$CustomerVehicleEntity {
+  const factory CustomerVehicleEntity({
+    required String id,
+    required String brand,
+    required String model,
+    required String plateNumber,
+    required String vin,
+    required String color,
+    required int year,
+    required String mileage,
+    required String lastService,
+    required String nextDue,
+    required int healthScore,
+  }) = _CustomerVehicleEntity;
 
-  const CustomerVehicleEntity({
-    required this.id,
-    required this.brand,
-    required this.model,
-    required this.plateNumber,
-    required this.vin,
-    required this.color,
-    required this.year,
-    required this.mileage,
-    required this.lastService,
-    required this.nextDue,
-    required this.healthScore,
-  });
+  const CustomerVehicleEntity._();
+
+  factory CustomerVehicleEntity.fromJson(Map<String, dynamic> json) =>
+      _$CustomerVehicleEntityFromJson(json);
 
   String get displayName => '$brand $model';
   String get shortLabel => '$brand $model · $plateNumber';
@@ -79,37 +94,21 @@ class CustomerVehicleEntity {
   ];
 }
 
-enum BookingStatus { confirmed, completed, pending, cancelled }
+@freezed
+class CustomerBookingEntity with _$CustomerBookingEntity {
+  const factory CustomerBookingEntity({
+    required String service,
+    required String vehicleName,
+    required String plateNumber,
+    required String date,
+    required String time,
+    required BookingStatus status,
+  }) = _CustomerBookingEntity;
 
-class CustomerBookingEntity {
-  final String service;
-  final String vehicleName;
-  final String plateNumber;
-  final String date;
-  final String time;
-  final BookingStatus status;
+  const CustomerBookingEntity._();
 
-  const CustomerBookingEntity({
-    required this.service,
-    required this.vehicleName,
-    required this.plateNumber,
-    required this.date,
-    required this.time,
-    required this.status,
-  });
-
-  factory CustomerBookingEntity.fromMap(Map<String, dynamic> map) =>
-      CustomerBookingEntity(
-        service: map['service'] as String? ?? '',
-        vehicleName: map['vehicleName'] as String? ?? '',
-        plateNumber: map['plateNumber'] as String? ?? '',
-        date: map['date'] as String? ?? '',
-        time: map['time'] as String? ?? '',
-        status: BookingStatus.values.firstWhere(
-          (e) => e.name == map['status'],
-          orElse: () => BookingStatus.pending,
-        ),
-      );
+  factory CustomerBookingEntity.fromJson(Map<String, dynamic> json) =>
+      _$CustomerBookingEntityFromJson(json);
 
   String get statusLabel {
     switch (status) {
@@ -144,44 +143,35 @@ class CustomerBookingEntity {
   ];
 }
 
-enum StageStatus { done, inProgress, pending }
+@freezed
+class ServiceStageEntity with _$ServiceStageEntity {
+  const factory ServiceStageEntity({
+    required String name,
+    String? time,
+    required StageStatus status,
+  }) = _ServiceStageEntity;
 
-class ServiceStageEntity {
-  final String name;
-  final String? time;
-  final StageStatus status;
-
-  const ServiceStageEntity({
-    required this.name,
-    this.time,
-    required this.status,
-  });
+  factory ServiceStageEntity.fromJson(Map<String, dynamic> json) =>
+      _$ServiceStageEntityFromJson(json);
 }
 
-class CustomerServiceEntity {
-  final String jobCardId;
-  final String plateNumber;
-  final String vehicleName;
-  final String service;
-  final String started;
-  final String estCompletion;
-  final int progressPercent;
-  final String currentStage;
-  final String technicianName;
-  final List<ServiceStageEntity> stages;
+@freezed
+class CustomerServiceEntity with _$CustomerServiceEntity {
+  const factory CustomerServiceEntity({
+    required String jobCardId,
+    required String plateNumber,
+    required String vehicleName,
+    required String service,
+    required String started,
+    required String estCompletion,
+    required int progressPercent,
+    required String currentStage,
+    required String technicianName,
+    required List<ServiceStageEntity> stages,
+  }) = _CustomerServiceEntity;
 
-  const CustomerServiceEntity({
-    required this.jobCardId,
-    required this.plateNumber,
-    required this.vehicleName,
-    required this.service,
-    required this.started,
-    required this.estCompletion,
-    required this.progressPercent,
-    required this.currentStage,
-    required this.technicianName,
-    required this.stages,
-  });
+  factory CustomerServiceEntity.fromJson(Map<String, dynamic> json) =>
+      _$CustomerServiceEntityFromJson(json);
 
   static const mock = CustomerServiceEntity(
     jobCardId: 'JC-2026-1245',
@@ -224,80 +214,67 @@ class CustomerServiceEntity {
   );
 }
 
-enum NotifType {
-  carReady,
-  bookingConfirmed,
-  invoiceReady,
-  approvalNeeded,
-  workInProgress,
-  reminder,
-}
+@freezed
+class CustomerNotificationEntity with _$CustomerNotificationEntity {
+  const factory CustomerNotificationEntity({
+    required String id,
+    required String title,
+    required String body,
+    required String time,
+    required NotifType type,
+    @Default(false) bool isRead,
+  }) = _CustomerNotificationEntity;
 
-class CustomerNotificationEntity {
-  final String id;
-  final String title;
-  final String body;
-  final String time;
-  final NotifType type;
-  bool isRead;
-
-  CustomerNotificationEntity({
-    required this.id,
-    required this.title,
-    required this.body,
-    required this.time,
-    required this.type,
-    this.isRead = false,
-  });
+  factory CustomerNotificationEntity.fromJson(Map<String, dynamic> json) =>
+      _$CustomerNotificationEntityFromJson(json);
 
   static List<CustomerNotificationEntity> get mock => [
-    CustomerNotificationEntity(
-      id: 'n1',
-      type: NotifType.carReady,
-      title: 'Your car is ready!',
-      body: 'BMW 3 Series has completed its Full Inspection.',
-      time: '26 Mar · 16:30',
-      isRead: false,
-    ),
-    CustomerNotificationEntity(
-      id: 'n2',
-      type: NotifType.bookingConfirmed,
-      title: 'Booking confirmed',
-      body: 'Full Inspection on 25 Mar 2026 at 09:00 confirmed.',
-      time: '24 Mar · 14:00',
-      isRead: false,
-    ),
-    CustomerNotificationEntity(
-      id: 'n3',
-      type: NotifType.invoiceReady,
-      title: 'Invoice ready',
-      body: 'Invoice INV-2026-0003 for £380.00 is now available.',
-      time: '26 Mar · 19:00',
-      isRead: true,
-    ),
-    CustomerNotificationEntity(
-      id: 'n4',
-      type: NotifType.approvalNeeded,
-      title: 'Approval needed',
-      body: 'Worn brake pads & low coolant found.',
-      time: '26 Mar · 10:34',
-      isRead: true,
-    ),
-  ];
+        const CustomerNotificationEntity(
+          id: 'n1',
+          type: NotifType.carReady,
+          title: 'Your car is ready!',
+          body: 'BMW 3 Series has completed its Full Inspection.',
+          time: '26 Mar · 16:30',
+          isRead: false,
+        ),
+        const CustomerNotificationEntity(
+          id: 'n2',
+          type: NotifType.bookingConfirmed,
+          title: 'Booking confirmed',
+          body: 'Full Inspection on 25 Mar 2026 at 09:00 confirmed.',
+          time: '24 Mar · 14:00',
+          isRead: false,
+        ),
+        const CustomerNotificationEntity(
+          id: 'n3',
+          type: NotifType.invoiceReady,
+          title: 'Invoice ready',
+          body: 'Invoice INV-2026-0003 for £380.00 is now available.',
+          time: '26 Mar · 19:00',
+          isRead: true,
+        ),
+        const CustomerNotificationEntity(
+          id: 'n4',
+          type: NotifType.approvalNeeded,
+          title: 'Approval needed',
+          body: 'Worn brake pads & low coolant found.',
+          time: '26 Mar · 10:34',
+          isRead: true,
+        ),
+      ];
 }
 
-class ServiceTypeEntity {
-  final String id;
-  final String name;
-  final String price;
-  final String duration;
+@freezed
+class ServiceTypeEntity with _$ServiceTypeEntity {
+  const factory ServiceTypeEntity({
+    required String id,
+    required String name,
+    required String price,
+    required String duration,
+  }) = _ServiceTypeEntity;
 
-  const ServiceTypeEntity({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.duration,
-  });
+  factory ServiceTypeEntity.fromJson(Map<String, dynamic> json) =>
+      _$ServiceTypeEntityFromJson(json);
 
   static const List<ServiceTypeEntity> list = [
     ServiceTypeEntity(

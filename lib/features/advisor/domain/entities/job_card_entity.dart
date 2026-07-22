@@ -1,59 +1,23 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:orientmobileapplication/core/domain/job_card_status.dart';
 export 'package:orientmobileapplication/core/domain/job_card_status.dart';
 
-class JobCardEntity {
-  final String id;
-  final String customerName;
-  final String vehicleInfo;
-  final String time;
-  final String createdDate;
-  final String lastUpdated;
-  final JobCardStatus status;
-  final String technician;
+part 'job_card_entity.freezed.dart';
+part 'job_card_entity.g.dart';
 
-  const JobCardEntity({
-    required this.id,
-    required this.customerName,
-    required this.vehicleInfo,
-    required this.time,
-    this.createdDate = '',
-    this.lastUpdated = '',
-    required this.status,
-    this.technician = '',
-  });
+@freezed
+class JobCardEntity with _$JobCardEntity {
+  const factory JobCardEntity({
+    required String id,
+    required String customerName,
+    required String vehicleInfo,
+    required String time,
+    @Default('') String createdDate,
+    @Default('') String lastUpdated,
+    required JobCardStatus status,
+    @Default('') String technician,
+  }) = _JobCardEntity;
 
-  JobCardEntity copyWith({
-    String? id,
-    String? customerName,
-    String? vehicleInfo,
-    String? time,
-    String? createdDate,
-    String? lastUpdated,
-    JobCardStatus? status,
-    String? technician,
-  }) =>
-      JobCardEntity(
-        id: id ?? this.id,
-        customerName: customerName ?? this.customerName,
-        vehicleInfo: vehicleInfo ?? this.vehicleInfo,
-        time: time ?? this.time,
-        createdDate: createdDate ?? this.createdDate,
-        lastUpdated: lastUpdated ?? this.lastUpdated,
-        status: status ?? this.status,
-        technician: technician ?? this.technician,
-      );
-
-  factory JobCardEntity.fromMap(Map<String, dynamic> map) => JobCardEntity(
-        id: map['id'] as String? ?? '',
-        customerName: map['customerName'] as String? ?? '',
-        vehicleInfo: map['vehicleInfo'] as String? ?? '',
-        time: map['time'] as String? ?? '',
-        createdDate: map['createdDate'] as String? ?? (map['time'] as String? ?? ''),
-        lastUpdated: map['lastUpdated'] as String? ?? (map['time'] as String? ?? ''),
-        status: JobCardStatus.values.firstWhere(
-          (e) => e.name == map['status'],
-          orElse: () => JobCardStatus.inProgress,
-        ),
-        technician: map['technician'] as String? ?? '',
-      );
+  factory JobCardEntity.fromJson(Map<String, dynamic> json) =>
+      _$JobCardEntityFromJson(json);
 }

@@ -1,17 +1,16 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'followup_reminder_entity.freezed.dart';
+
 enum ReminderPriority { high, medium, low }
 
-class FollowupReminderEntity {
-  final String customerName;
-  final String vehicleId;
-  final String task;
-  final String dueDate;
-  final ReminderPriority priority;
-
-  const FollowupReminderEntity({
-    required this.customerName,
-    required this.vehicleId,
-    required this.task,
-    required this.dueDate,
-    required this.priority,
-  });
+@freezed
+class FollowupReminderEntity with _$FollowupReminderEntity {
+  const factory FollowupReminderEntity({
+    required String customerName,
+    required String vehicleId,
+    required String task,
+    required String dueDate,
+    required ReminderPriority priority,
+  }) = _FollowupReminderEntity;
 }
