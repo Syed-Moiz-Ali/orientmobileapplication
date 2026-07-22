@@ -27,6 +27,9 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   engine.registerHandler(DioSyncHandler('technician_job', dio));
   engine.registerHandler(DioSyncHandler('technician_attendance', dio));
   engine.registerHandler(DioSyncHandler('assigned_job', dio));
+  engine.registerHandler(DioSyncHandler('vehicle_customer', dio));
+
+  ref.onDispose(() => engine.dispose());
 
   return engine;
 });

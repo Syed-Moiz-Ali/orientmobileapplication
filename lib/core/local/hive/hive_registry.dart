@@ -20,6 +20,7 @@ class HiveRegistry {
     await Hive.openBox<dynamic>('customer_bookings');
     await Hive.openBox<SyncOperation>('sync_queue');
     await Hive.openBox<SyncOperation>('sync_failed');
+    await Hive.openBox<int>('id_counters');
 
     _initialized = true;
 

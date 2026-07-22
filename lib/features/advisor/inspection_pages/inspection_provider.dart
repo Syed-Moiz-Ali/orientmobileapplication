@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 import 'package:orientmobileapplication/core/errors/result.dart';
+import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:orientmobileapplication/features/advisor/inspection_pages/data/models/inspection_vew_model.dart';
@@ -403,7 +403,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
   Future<Result<void>> submitInspection() async {
     final local = ref.read(advisorLocalDataSourceProvider);
     final queue = ref.read(syncQueueProvider);
-    final id = const Uuid().v4();
+    final id = await IdGenerator.nextId('INS');
 
     final payload = state.toPersistableMap();
     await local.saveInspection(id, payload);

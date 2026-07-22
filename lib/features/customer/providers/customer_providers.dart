@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
-import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
@@ -213,7 +213,7 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
       'notes': state.bookingNotes,
       'status': 'pending',
     };
-    final id = const Uuid().v4();
+    final id = await IdGenerator.nextId('BK');
     await local.save(id, payload);
 
     final queue = ref.read(syncQueueProvider);

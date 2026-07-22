@@ -6,7 +6,7 @@ import 'package:orientmobileapplication/core/router/inspection_callbacks.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:hive/hive.dart';
-import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
@@ -121,7 +121,7 @@ class _BodyState extends ConsumerState<_Body> {
                   final local = GenericLocalDataSource(
                     Hive.box<dynamic>('inspections'),
                   );
-                  final id = const Uuid().v4();
+                  final id = await IdGenerator.nextId('JC');
                   _savedJobId = id;
                   final now = DateTime.now();
                   final createdDate =

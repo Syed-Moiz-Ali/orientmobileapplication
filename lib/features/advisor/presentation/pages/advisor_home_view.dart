@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
-import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/hive/hive_cleaner.dart';
 import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
@@ -293,11 +293,11 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
     );
   }
 
-  void _persistApproval(PendingApprovalEntity pa, String action) {
+  Future<void> _persistApproval(PendingApprovalEntity pa, String action) async {
     final local = GenericLocalDataSource(
       Hive.box<Map<String, dynamic>>('inspections'),
     );
-    local.save('approval_${pa.estimateId}', {
+    await local.save('approval_${pa.estimateId}', {
       'estimateId': pa.estimateId,
       'customerName': pa.customerName,
       'amount': pa.amount,
@@ -305,8 +305,9 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
     final queue = ref.read(syncQueueProvider);
-    queue.enqueue(SyncOperation(
-      id: const Uuid().v4(),
+    final id = await IdGenerator.nextId('APPR');
+    await queue.enqueue(SyncOperation(
+      id: id,
       entityType: 'inspection',
       entityId: pa.estimateId,
       changeType: ChangeType.update,

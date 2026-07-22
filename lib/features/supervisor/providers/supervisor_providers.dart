@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
-import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
@@ -116,7 +116,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
       };
       await local.save(row.id.toString(), payload);
       final op = SyncOperation(
-        id: const Uuid().v4(),
+        id: await IdGenerator.nextId('ASN'),
         entityType: 'work_assignment',
         entityId: row.id.toString(),
         changeType: ChangeType.create,

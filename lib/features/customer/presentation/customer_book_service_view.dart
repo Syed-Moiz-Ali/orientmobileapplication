@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
+import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
+import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
+import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/widgets/app_card.dart';
@@ -98,11 +103,11 @@ class _CustomerBookServiceViewState
             ),
             _BottomBar(
               label: _step == 2 ? 'Confirm Booking' : 'Continue',
-              onTap: () {
+              onTap: () async {
                 if (_step < 2) {
                   setState(() => _step++);
                 } else {
-                  _showConfirmSheet(context);
+                  await _showConfirmSheet(context);
                 }
               },
             ),
@@ -558,7 +563,39 @@ class _CustomerBookServiceViewState
     ],
   );
 
-  void _showConfirmSheet(BuildContext context) {
+  Future<void> _showConfirmSheet(BuildContext context) async {
+    final id = await IdGenerator.nextId('BK');
+    final now = DateTime.now();
+    final payload = {
+      'id': id,
+      'serviceId': _selectedService?.id ?? '',
+      'serviceName': _selectedService?.name ?? '',
+      'servicePrice': _selectedService?.price ?? '',
+      'date': _summaryDate,
+      'time': _selectedTime ?? '',
+      'vehicleId': _selectedVehicle?.id ?? '',
+      'vehicleName': _selectedVehicle?.displayName ?? '',
+      'vehiclePlate': _selectedVehicle?.plateNumber ?? '',
+      'notes': _notesCtrl.text,
+      'status': 'confirmed',
+      'createdAt': now.toIso8601String(),
+    };
+
+    final local = GenericLocalDataSource(Hive.box<dynamic>('customer_bookings'));
+    local.save(id, payload);
+
+    final queue = ref.read(syncQueueProvider);
+    queue.enqueue(SyncOperation(
+      id: id,
+      entityType: 'booking',
+      entityId: id,
+      changeType: ChangeType.create,
+      payload: payload,
+      timestamp: now.millisecondsSinceEpoch,
+    ));
+    ref.read(syncEngineProvider).syncAll();
+
+    if (!context.mounted) return;
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -609,9 +646,9 @@ class _CustomerBookServiceViewState
                 color: AppColors.primaryBg,
                 borderRadius: BorderRadius.circular(AppDimensions.r10),
               ),
-              child: const Text(
-                'Ref: BK-2026-0047',
-                style: TextStyle(
+              child: Text(
+                'Ref: BK-$id',
+                style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
                   fontSize: 13,

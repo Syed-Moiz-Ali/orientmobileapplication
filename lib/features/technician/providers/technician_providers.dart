@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
+import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
@@ -352,16 +352,28 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   void _enqueueSync(String entityId, Map<String, dynamic> payload, {String entityType = 'technician_attendance', ChangeType changeType = ChangeType.update}) {
     try {
       final queue = ref.read(syncQueueProvider);
-      queue.enqueue(SyncOperation(
-        id: const Uuid().v4(),
-        entityType: entityType,
-        entityId: entityId,
-        changeType: changeType,
-        payload: payload,
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-      ));
-      ref.read(syncEngineProvider).syncAll();
+      _generateId(entityType).then((id) {
+        queue.enqueue(SyncOperation(
+          id: id,
+          entityType: entityType,
+          entityId: entityId,
+          changeType: changeType,
+          payload: payload,
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ));
+        ref.read(syncEngineProvider).syncAll();
+      });
     } catch (_) {}
+  }
+
+  static Future<String> _generateId(String entityType) {
+    final prefix = {
+      'technician_attendance': 'ATT',
+      'assigned_job': 'AJOB',
+      'technician_job': 'TJOB',
+      'job_complete': 'JCMP',
+    }[entityType] ?? 'SYNC';
+    return IdGenerator.nextId(prefix);
   }
 
   void _persistAttendance() {
@@ -557,8 +569,9 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     await local.save(job.jobCardNo, payload);
 
     final queue = ref.read(syncQueueProvider);
+    final opId = await IdGenerator.nextId('JCMP');
     final op = SyncOperation(
-      id: const Uuid().v4(),
+      id: opId,
       entityType: 'job_complete',
       entityId: job.jobCardNo,
       changeType: ChangeType.update,
