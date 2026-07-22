@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:orientmobileapplication/core/constants/api_constants.dart';
+import 'package:orientmobileapplication/core/local/helpers/environment_config.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_handler.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/core/local/exceptions/sync_exceptions.dart';
@@ -14,7 +15,7 @@ class DioSyncHandler extends SyncHandler {
   @override
   Future<bool> execute(SyncOperation operation) async {
     final endpoint = _getEndpoint(operation);
-    final url = '${ApiConstants.baseUrl}$endpoint';
+    final url = '${EnvironmentConfig.baseUrl}$endpoint';
 
     try {
       final response = await _dio.post(

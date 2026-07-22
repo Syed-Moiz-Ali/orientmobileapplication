@@ -393,7 +393,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final jobs = List<AssignedJobEntity>.from(state.assignedJobs);
     final idx = jobs.indexWhere((j) => j.id == id);
     if (idx == -1) return;
-    jobs[idx].status = status;
+    jobs[idx] = jobs[idx].copyWith(status: status);
     state = state.copyWith(assignedJobs: jobs);
     final payload = {
       'id': id,
@@ -444,23 +444,25 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final now = DateFormat('HH:mm').format(DateTime.now());
     final idx = job.tasks.indexWhere((t) => t.id == task.id);
     if (idx == -1) return;
-    job.tasks[idx] = task.copyWith(
+    final updatedTasks = List<WorkTaskEntity>.from(job.tasks);
+    updatedTasks[idx] = task.copyWith(
       status: TaskStatus.inProgress,
       startTime: now,
     );
-    _syncJobStatus(job);
-    _persistJob(job);
-    state = state.copyWith();
+    final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
+    _persistJob(updatedJob);
+    state = state.copyWith(selectedJob: updatedJob);
   }
 
   void completeTask(TechnicianJobEntity job, WorkTaskEntity task) {
     final now = DateFormat('HH:mm').format(DateTime.now());
     final idx = job.tasks.indexWhere((t) => t.id == task.id);
     if (idx == -1) return;
-    job.tasks[idx] = task.copyWith(status: TaskStatus.completed, endTime: now);
-    _syncJobStatus(job);
-    _persistJob(job);
-    state = state.copyWith();
+    final updatedTasks = List<WorkTaskEntity>.from(job.tasks);
+    updatedTasks[idx] = task.copyWith(status: TaskStatus.completed, endTime: now);
+    final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
+    _persistJob(updatedJob);
+    state = state.copyWith(selectedJob: updatedJob);
   }
 
   void updateTaskStatus(
@@ -471,30 +473,29 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final now = DateFormat('HH:mm').format(DateTime.now());
     final idx = job.tasks.indexWhere((t) => t.id == task.id);
     if (idx == -1) return;
-    job.tasks[idx] = task.copyWith(
+    final updatedTasks = List<WorkTaskEntity>.from(job.tasks);
+    updatedTasks[idx] = task.copyWith(
       status: newStatus,
       startTime: newStatus == TaskStatus.inProgress ? now : task.startTime,
       endTime: newStatus == TaskStatus.completed ? now : task.endTime,
     );
-    _syncJobStatus(job);
-    _persistJob(job);
-    state = state.copyWith();
+    final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
+    _persistJob(updatedJob);
+    state = state.copyWith(selectedJob: updatedJob);
   }
 
-  void _syncJobStatus(TechnicianJobEntity job) {
+  TechnicianJobEntity _syncJobStatus(TechnicianJobEntity job) {
     final allDone = job.tasks.every((t) => t.status == TaskStatus.completed);
     final anyProgress = job.tasks.any((t) => t.status == TaskStatus.inProgress);
-    if (allDone) {
-      job.status = TechJobStatus.completed;
-    } else if (anyProgress) {
-      job.status = TechJobStatus.inProgress;
-    }
+    if (allDone) return job.copyWith(status: TechJobStatus.completed);
+    if (anyProgress) return job.copyWith(status: TechJobStatus.inProgress);
+    return job;
   }
 
   void updateNotes(TechnicianJobEntity job, String notes) {
-    job.notes = notes;
-    _persistJob(job);
-    state = state.copyWith();
+    final updatedJob = job.copyWith(notes: notes);
+    _persistJob(updatedJob);
+    state = state.copyWith(selectedJob: updatedJob);
   }
 
   void _persistJob(TechnicianJobEntity job) {
@@ -536,27 +537,28 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     state = state.copyWith(isSaving: true);
     await Future.delayed(const Duration(milliseconds: 900));
     final now = DateFormat('HH:mm').format(DateTime.now());
-    for (var i = 0; i < job.tasks.length; i++) {
-      if (job.tasks[i].status != TaskStatus.completed) {
-        job.tasks[i] = job.tasks[i].copyWith(
+    final updatedTasks = List<WorkTaskEntity>.from(job.tasks);
+    for (var i = 0; i < updatedTasks.length; i++) {
+      if (updatedTasks[i].status != TaskStatus.completed) {
+        updatedTasks[i] = updatedTasks[i].copyWith(
           status: TaskStatus.completed,
           endTime: now,
         );
       }
     }
-    job.status = TechJobStatus.completed;
+    final updatedJob = job.copyWith(tasks: updatedTasks, status: TechJobStatus.completed);
 
     final local = GenericLocalDataSource(Hive.box<dynamic>('technician_jobs'));
     final payload = {
-      'jobCardNo': job.jobCardNo,
-      'dateOfWork': job.dateOfWork,
-      'startTime': job.startTime,
-      'vehicleBrand': job.vehicleBrand,
-      'vehicleModel': job.vehicleModel,
-      'plateNumber': job.plateNumber,
-      'status': job.status.name,
-      'notes': job.notes,
-      'tasks': job.tasks
+      'jobCardNo': updatedJob.jobCardNo,
+      'dateOfWork': updatedJob.dateOfWork,
+      'startTime': updatedJob.startTime,
+      'vehicleBrand': updatedJob.vehicleBrand,
+      'vehicleModel': updatedJob.vehicleModel,
+      'plateNumber': updatedJob.plateNumber,
+      'status': updatedJob.status.name,
+      'notes': updatedJob.notes,
+      'tasks': updatedJob.tasks
           .map((t) => {
                 'id': t.id,
                 'description': t.description,
@@ -566,21 +568,21 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
               })
           .toList(),
     };
-    await local.save(job.jobCardNo, payload);
+    await local.save(updatedJob.jobCardNo, payload);
 
     final queue = ref.read(syncQueueProvider);
     final opId = await IdGenerator.nextId('JCMP');
     final op = SyncOperation(
       id: opId,
       entityType: 'job_complete',
-      entityId: job.jobCardNo,
+      entityId: updatedJob.jobCardNo,
       changeType: ChangeType.update,
       payload: payload,
       timestamp: DateTime.now().millisecondsSinceEpoch,
     );
     await queue.enqueue(op);
 
-    state = state.copyWith(isSaving: false);
+    state = state.copyWith(selectedJob: updatedJob, isSaving: false);
   }
 }
 

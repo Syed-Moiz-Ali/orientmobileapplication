@@ -8,7 +8,7 @@ import 'package:orientmobileapplication/features/advisor/inspection_pages/choose
 import 'package:orientmobileapplication/features/auth/domain/entities/user_role.dart';
 import 'package:orientmobileapplication/features/auth/presentation/pages/login_view.dart';
 import 'package:orientmobileapplication/features/auth/presentation/pages/role_selection_view.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/crm_dashboard_view.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_dashboard_view.dart';
 import 'package:orientmobileapplication/features/customer/presentation/customer_dashboard_view.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/dashboard_view.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/pages/accounts_receivable_view.dart';

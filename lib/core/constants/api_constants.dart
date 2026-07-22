@@ -1,8 +1,6 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = 'https://api.orientworkshop.com/v1';
-
   static const String inspections = '/inspections';
   static const String jobComplete = '/jobs/complete';
   static const String workAssignments = '/work-assignments';

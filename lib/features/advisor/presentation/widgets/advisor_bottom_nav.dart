@@ -24,7 +24,7 @@ class AdvisorBottomNav extends StatelessWidget {
     child: Container(
       height: 56,
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.line, width: 1)),
+        border: Border(top: BorderSide(color: AppColors.line)),
       ),
       child: Row(
         children: [

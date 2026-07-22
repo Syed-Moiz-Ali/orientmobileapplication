@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/crm_constants.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/domain/entities/crm_entities.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/widgets/crm_surface_card.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_constants.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/domain/entities/crm_entities.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/widgets/crm_surface_card.dart';
 
 class CrmRecentLeadsCard extends StatelessWidget {
   final List<CrmLeadEntity> leads;

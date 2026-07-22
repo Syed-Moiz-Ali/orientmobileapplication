@@ -118,9 +118,9 @@ class PendingJobCardsState {
     final q = searchQuery.toLowerCase();
     return jobCards.where((j) => j.customerName.toLowerCase().contains(q) || j.jobCardId.toLowerCase().contains(q) || j.vehicleInfo.toLowerCase().contains(q)).toList();
   }
-  int get overdueCount => jobCards.where((j) => j.status == JobCardStatus.overdue).length;
-  int get pendingCount => jobCards.where((j) => j.status == JobCardStatus.pending).length;
-  int get inProgressCount => jobCards.where((j) => j.status == JobCardStatus.inProgress).length;
+  int get overdueCount => jobCards.where((j) => j.status == PendingJobCardStatus.overdue).length;
+  int get pendingCount => jobCards.where((j) => j.status == PendingJobCardStatus.pending).length;
+  int get inProgressCount => jobCards.where((j) => j.status == PendingJobCardStatus.inProgress).length;
 }
 
 class PendingJobCardsNotifier extends Notifier<PendingJobCardsState> {

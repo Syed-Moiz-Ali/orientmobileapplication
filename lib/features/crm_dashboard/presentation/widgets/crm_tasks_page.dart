@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/crm_constants.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/providers/crm_task_provider.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_constants.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/providers/crm_task_provider.dart';
 
 class CrmTasksPage extends ConsumerWidget {
   const CrmTasksPage({super.key});

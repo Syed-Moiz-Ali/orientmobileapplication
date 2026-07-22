@@ -29,11 +29,7 @@ class AdvisorHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.navy, AppColors.accent],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        gradient: LinearGradient(colors: [AppColors.navy, AppColors.accent]),
       ),
       child: SafeArea(
         bottom: false,
@@ -95,7 +91,11 @@ class AdvisorHeader extends StatelessWidget {
                     clipBehavior: Clip.none,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
+                        icon: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                          size: 26,
+                        ),
                         onPressed: onShowNotifications,
                       ),
                       Positioned(
@@ -107,7 +107,10 @@ class AdvisorHeader extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.amber400,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.navy, width: 1.5),
+                            border: Border.all(
+                              color: AppColors.navy,
+                              width: 1.5,
+                            ),
                           ),
                         ),
                       ),
@@ -123,7 +126,10 @@ class AdvisorHeader extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.20),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            width: 1.5,
+                          ),
                         ),
                         child: Center(
                           child: Text(
@@ -144,10 +150,16 @@ class AdvisorHeader extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Row(
-                children: [
-                  const AdvisorMetaPill(icon: Icons.business_outlined, label: 'Main Branch · Dubai'),
-                  const SizedBox(width: 8),
-                  const AdvisorMetaPill(icon: Icons.schedule_outlined, label: '08:00 – 17:00'),
+                children: const [
+                  AdvisorMetaPill(
+                    icon: Icons.business_outlined,
+                    label: 'Main Branch · Dubai',
+                  ),
+                  SizedBox(width: 8),
+                  AdvisorMetaPill(
+                    icon: Icons.schedule_outlined,
+                    label: '08:00 – 17:00',
+                  ),
                 ],
               ),
             ),
@@ -206,13 +218,21 @@ class AdvisorHeader extends StatelessWidget {
                         height: 42,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(AppDimensions.r11),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r11,
+                          ),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.15),
+                          ),
                         ),
                         child: Row(
                           children: [
                             const SizedBox(width: 12),
-                            Icon(Icons.search_rounded, color: Colors.white.withValues(alpha: 0.45), size: 18),
+                            Icon(
+                              Icons.search_rounded,
+                              color: Colors.white.withValues(alpha: 0.45),
+                              size: 18,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Search name, plate, phone…',
@@ -236,7 +256,9 @@ class AdvisorHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(AppDimensions.r11),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.15),
@@ -245,7 +267,11 @@ class AdvisorHeader extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 20),
+                      child: const Icon(
+                        Icons.qr_code_scanner_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ],

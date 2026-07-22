@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/crm_constants.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/providers/crm_ui_provider.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_constants.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 
 class CrmAppBar extends StatelessWidget implements PreferredSizeWidget {
   final CrmUiNotifier notifier;
@@ -27,11 +27,7 @@ class CrmAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       flexibleSpace: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [CrmColors.gStart, CrmColors.gEnd],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
+          gradient: LinearGradient(colors: [CrmColors.gStart, CrmColors.gEnd]),
         ),
       ),
       backgroundColor: Colors.transparent,

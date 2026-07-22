@@ -1,4 +1,5 @@
-enum JobCardStatus { inProgress, waitingParts, qualityCheck, completed, cancelled, pendingApproval }
+import 'package:orientmobileapplication/core/domain/job_card_status.dart';
+export 'package:orientmobileapplication/core/domain/job_card_status.dart';
 
 class JobCard {
   final String id;

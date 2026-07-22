@@ -78,7 +78,7 @@ class ApprovalCategory {
 }
 
 // ── Pending Job Cards ──
-enum JobCardStatus { overdue, pending, inProgress }
+enum PendingJobCardStatus { overdue, pending, inProgress }
 
 class PendingJobCard {
   final String jobCardId;
@@ -88,7 +88,7 @@ class PendingJobCard {
   final String createdDate;
   final String dueDate;
   final int daysOverdue;
-  final JobCardStatus status;
+  final PendingJobCardStatus status;
   final double estimatedAmount;
 
   const PendingJobCard({

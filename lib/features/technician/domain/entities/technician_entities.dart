@@ -152,9 +152,9 @@ class AssignedJobEntity {
   final String vehicle;
   final String service;
   final double amount;
-  AssignedJobStatus status;
+  final AssignedJobStatus status;
 
-  AssignedJobEntity({
+  const AssignedJobEntity({
     required this.id,
     required this.customerName,
     required this.vehicle,
@@ -162,6 +162,15 @@ class AssignedJobEntity {
     required this.amount,
     required this.status,
   });
+
+  AssignedJobEntity copyWith({AssignedJobStatus? status}) => AssignedJobEntity(
+        id: id,
+        customerName: customerName,
+        vehicle: vehicle,
+        service: service,
+        amount: amount,
+        status: status ?? this.status,
+      );
 
   static List<AssignedJobEntity> get mockData => [
     AssignedJobEntity(
@@ -245,11 +254,11 @@ extension TaskStatusX on TaskStatus {
 class WorkTaskEntity {
   final int id;
   final String description;
-  TaskStatus status;
-  String? startTime;
-  String? endTime;
+  final TaskStatus status;
+  final String? startTime;
+  final String? endTime;
 
-  WorkTaskEntity({
+  const WorkTaskEntity({
     required this.id,
     required this.description,
     this.status = TaskStatus.pending,
@@ -289,9 +298,9 @@ class TechnicianJobEntity {
   final String vehicleBrand;
   final String vehicleModel;
   final String plateNumber;
-  TechJobStatus status;
-  List<WorkTaskEntity> tasks;
-  String notes;
+  final TechJobStatus status;
+  final List<WorkTaskEntity> tasks;
+  final String notes;
 
   TechnicianJobEntity({
     required this.jobCardNo,
@@ -304,6 +313,23 @@ class TechnicianJobEntity {
     required this.tasks,
     this.notes = '',
   });
+
+  TechnicianJobEntity copyWith({
+    TechJobStatus? status,
+    List<WorkTaskEntity>? tasks,
+    String? notes,
+  }) =>
+      TechnicianJobEntity(
+        jobCardNo: jobCardNo,
+        dateOfWork: dateOfWork,
+        startTime: startTime,
+        vehicleBrand: vehicleBrand,
+        vehicleModel: vehicleModel,
+        plateNumber: plateNumber,
+        status: status ?? this.status,
+        tasks: tasks ?? List<WorkTaskEntity>.from(this.tasks),
+        notes: notes ?? this.notes,
+      );
 
   factory TechnicianJobEntity.fromMap(Map<String, dynamic> map) =>
       TechnicianJobEntity(

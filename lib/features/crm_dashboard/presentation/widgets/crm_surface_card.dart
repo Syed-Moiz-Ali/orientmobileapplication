@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/crm_constants.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_constants.dart';
 
 class CrmSurfaceCard extends StatelessWidget {
   final Widget child;

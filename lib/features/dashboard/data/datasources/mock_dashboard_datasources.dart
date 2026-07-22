@@ -53,11 +53,11 @@ class MockPendingJobCardsDatasource {
   Future<List<PendingJobCard>> getJobCards() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [
-      const PendingJobCard(jobCardId: 'JC-2024-0042', customerName: 'Al Fahim Motors', vehicleInfo: 'Toyota Land Cruiser 2024', assignedTo: 'Ahmed Technician', createdDate: '2024-12-01', dueDate: '2024-12-08', daysOverdue: 5, status: JobCardStatus.overdue, estimatedAmount: 15000),
-      const PendingJobCard(jobCardId: 'JC-2024-0041', customerName: 'Dubai Fleet Services', vehicleInfo: 'Nissan Patrol 2023', assignedTo: 'Khalid Technician', createdDate: '2024-11-28', dueDate: '2024-12-05', daysOverdue: -3, status: JobCardStatus.inProgress, estimatedAmount: 8500),
-      const PendingJobCard(jobCardId: 'JC-2024-0040', customerName: 'Emirates Transport', vehicleInfo: 'Mitsubishi Pajero 2022', assignedTo: 'Rashid M.', createdDate: '2024-11-25', dueDate: '2024-12-02', daysOverdue: 2, status: JobCardStatus.pending, estimatedAmount: 22000),
-      const PendingJobCard(jobCardId: 'JC-2024-0039', customerName: 'Sharjah Police HQ', vehicleInfo: 'Ford Explorer 2024', assignedTo: 'Saeed A.', createdDate: '2024-11-20', dueDate: '2024-11-27', daysOverdue: -5, status: JobCardStatus.inProgress, estimatedAmount: 32000),
-      const PendingJobCard(jobCardId: 'JC-2024-0038', customerName: 'Abu Dhabi Motors', vehicleInfo: 'Mercedes GLE 2024', assignedTo: 'Ahmed R.', createdDate: '2024-11-15', dueDate: '2024-11-22', daysOverdue: 12, status: JobCardStatus.overdue, estimatedAmount: 45000),
+      const PendingJobCard(jobCardId: 'JC-2024-0042', customerName: 'Al Fahim Motors', vehicleInfo: 'Toyota Land Cruiser 2024', assignedTo: 'Ahmed Technician', createdDate: '2024-12-01', dueDate: '2024-12-08', daysOverdue: 5, status: PendingJobCardStatus.overdue, estimatedAmount: 15000),
+      const PendingJobCard(jobCardId: 'JC-2024-0041', customerName: 'Dubai Fleet Services', vehicleInfo: 'Nissan Patrol 2023', assignedTo: 'Khalid Technician', createdDate: '2024-11-28', dueDate: '2024-12-05', daysOverdue: -3, status: PendingJobCardStatus.inProgress, estimatedAmount: 8500),
+      const PendingJobCard(jobCardId: 'JC-2024-0040', customerName: 'Emirates Transport', vehicleInfo: 'Mitsubishi Pajero 2022', assignedTo: 'Rashid M.', createdDate: '2024-11-25', dueDate: '2024-12-02', daysOverdue: 2, status: PendingJobCardStatus.pending, estimatedAmount: 22000),
+      const PendingJobCard(jobCardId: 'JC-2024-0039', customerName: 'Sharjah Police HQ', vehicleInfo: 'Ford Explorer 2024', assignedTo: 'Saeed A.', createdDate: '2024-11-20', dueDate: '2024-11-27', daysOverdue: -5, status: PendingJobCardStatus.inProgress, estimatedAmount: 32000),
+      const PendingJobCard(jobCardId: 'JC-2024-0038', customerName: 'Abu Dhabi Motors', vehicleInfo: 'Mercedes GLE 2024', assignedTo: 'Ahmed R.', createdDate: '2024-11-15', dueDate: '2024-11-22', daysOverdue: 12, status: PendingJobCardStatus.overdue, estimatedAmount: 45000),
     ];
   }
 }

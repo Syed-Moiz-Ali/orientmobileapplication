@@ -71,15 +71,15 @@ class PendingStatusEntity {
 // ── Work Assignment ──
 class WorkAssignmentEntity {
   final int id;
-  String description;
-  String department;
-  String technicianName;
-  String dateOfWork;
-  int statusPercent;
-  String stdTime;
-  String remarks;
+  final String description;
+  final String department;
+  final String technicianName;
+  final String dateOfWork;
+  final int statusPercent;
+  final String stdTime;
+  final String remarks;
 
-  WorkAssignmentEntity({
+  const WorkAssignmentEntity({
     required this.id,
     this.description = '',
     this.department = '',

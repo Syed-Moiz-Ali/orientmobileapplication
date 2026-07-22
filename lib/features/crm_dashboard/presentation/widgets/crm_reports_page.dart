@@ -2,10 +2,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/crm_constants.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/providers/crm_ui_provider.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/domain/entities/crm_entities.dart';
-import 'package:orientmobileapplication/features/crm_dasboard/presentation/widgets/crm_surface_card.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_constants.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/domain/entities/crm_entities.dart';
+import 'package:orientmobileapplication/features/crm_dashboard/presentation/widgets/crm_surface_card.dart';
 
 class CrmReportsPage extends ConsumerWidget {
   const CrmReportsPage({super.key});

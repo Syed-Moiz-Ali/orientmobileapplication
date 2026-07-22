@@ -84,12 +84,22 @@ class AdvisorReportsView extends ConsumerWidget {
                 color: AppColors.textPrimary,
               ),
               items: const [
-                DropdownMenuItem(value: ReportRange.today, child: Text('Today')),
-                DropdownMenuItem(value: ReportRange.week, child: Text('This Week')),
-                DropdownMenuItem(value: ReportRange.month, child: Text('This Month')),
+                DropdownMenuItem(
+                  value: ReportRange.today,
+                  child: Text('Today'),
+                ),
+                DropdownMenuItem(
+                  value: ReportRange.week,
+                  child: Text('This Week'),
+                ),
+                DropdownMenuItem(
+                  value: ReportRange.month,
+                  child: Text('This Month'),
+                ),
               ],
               onChanged: (v) {
-                if (v != null) ref.read(advisorReportRangeProvider.notifier).state = v;
+                if (v != null)
+                  ref.read(advisorReportRangeProvider.notifier).state = v;
               },
             ),
           ),
@@ -101,18 +111,48 @@ class AdvisorReportsView extends ConsumerWidget {
   Widget _summaryRow(AdvisorReportData data) {
     return Row(
       children: [
-        _summaryCard('Total Jobs', '${data.totalJobs}', AppColors.accent, AppColors.accent.withValues(alpha: 0.12), Icons.assignment_outlined),
+        _summaryCard(
+          'Total Jobs',
+          '${data.totalJobs}',
+          AppColors.accent,
+          AppColors.accent.withValues(alpha: 0.12),
+          Icons.assignment_outlined,
+        ),
         const SizedBox(width: 8),
-        _summaryCard('Completed', '${data.completedJobs}', AppColors.success, AppColors.successBg, Icons.verified_outlined),
+        _summaryCard(
+          'Completed',
+          '${data.completedJobs}',
+          AppColors.success,
+          AppColors.successBg,
+          Icons.verified_outlined,
+        ),
         const SizedBox(width: 8),
-        _summaryCard('In Progress', '${data.inProgressJobs}', AppColors.warning, AppColors.warningBg, Icons.build_circle_outlined),
+        _summaryCard(
+          'In Progress',
+          '${data.inProgressJobs}',
+          AppColors.warning,
+          AppColors.warningBg,
+          Icons.build_circle_outlined,
+        ),
         const SizedBox(width: 8),
-        _summaryCard('Cancelled', '${data.cancelledJobs}', AppColors.danger, AppColors.dangerBg, Icons.cancel_outlined),
+        _summaryCard(
+          'Cancelled',
+          '${data.cancelledJobs}',
+          AppColors.danger,
+          AppColors.dangerBg,
+          Icons.cancel_outlined,
+        ),
       ],
     );
   }
 
-  Widget _summaryCard(String label, String count, Color color, Color bg, IconData icon) {
+  Widget _summaryCard(
+    String label,
+    String count,
+    Color color,
+    Color bg,
+    IconData icon,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
@@ -126,7 +166,10 @@ class AdvisorReportsView extends ConsumerWidget {
             Container(
               width: 28,
               height: 28,
-              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppDimensions.r7)),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(AppDimensions.r7),
+              ),
               child: Center(child: Icon(icon, size: 14, color: color)),
             ),
             const SizedBox(height: 8),
@@ -161,10 +204,14 @@ class AdvisorReportsView extends ConsumerWidget {
   Widget _sectionLabel(String text) {
     return Row(
       children: [
-        Container(width: 4, height: 18, decoration: BoxDecoration(
-          color: AppColors.accent,
-          borderRadius: BorderRadius.circular(AppDimensions.r2),
-        )),
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: AppColors.accent,
+            borderRadius: BorderRadius.circular(AppDimensions.r2),
+          ),
+        ),
         const SizedBox(width: 10),
         Text(
           text,
@@ -204,7 +251,11 @@ class AdvisorReportsView extends ConsumerWidget {
                     color: s.color,
                     radius: p > 0.15 ? 34 : 28,
                     title: p > 0.08 ? '${(p * 100).round()}%' : '',
-                    titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                    titleStyle: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   );
                 }).toList(),
               ),
@@ -220,19 +271,33 @@ class AdvisorReportsView extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      Container(width: 10, height: 10, decoration: BoxDecoration(
-                        color: s.color,
-                        borderRadius: BorderRadius.circular(AppDimensions.r3),
-                      )),
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: s.color,
+                          borderRadius: BorderRadius.circular(AppDimensions.r3),
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(s.label, style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.text2,
-                        )),
+                        child: Text(
+                          s.label,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.text2,
+                          ),
+                        ),
                       ),
-                      Text('${s.count} (${p.round()}%)', style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.text3,
-                      )),
+                      Text(
+                        '${s.count} (${p.round()}%)',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.text3,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -259,18 +324,26 @@ class AdvisorReportsView extends ConsumerWidget {
           BarChartData(
             alignment: BarChartAlignment.spaceAround,
             maxY: (maxVal * 1.3).ceilToDouble(),
-            barTouchData: BarTouchData(enabled: true, touchTooltipData: BarTouchTooltipData(getTooltipItem: (g, gs, b, bi) => null)),
+            barTouchData: BarTouchData(
+              enabled: true,
+              touchTooltipData: BarTouchTooltipData(
+                getTooltipItem: (g, gs, b, bi) => null,
+              ),
+            ),
             titlesData: FlTitlesData(
-              show: true,
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(),
+              rightTitles: const AxisTitles(),
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 28,
                   getTitlesWidget: (v, _) => Text(
                     '${v.toInt()}',
-                    style: const TextStyle(fontSize: 10, color: AppColors.text3, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.text3,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -279,40 +352,53 @@ class AdvisorReportsView extends ConsumerWidget {
                   showTitles: true,
                   getTitlesWidget: (v, _) {
                     final i = v.toInt();
-                    if (i < 0 || i >= data.weekLabels.length) return const SizedBox();
+                    if (i < 0 || i >= data.weekLabels.length)
+                      return const SizedBox();
                     return Padding(
                       padding: const EdgeInsets.only(top: 8),
-                      child: Text(data.weekLabels[i], style: const TextStyle(
-                        fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text3,
-                      )),
+                      child: Text(
+                        data.weekLabels[i],
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.text3,
+                        ),
+                      ),
                     );
                   },
                 ),
               ),
             ),
             gridData: FlGridData(
-              show: true,
               drawVerticalLine: false,
-              horizontalInterval: (maxVal * 1.3 / 4).ceilToDouble().clamp(1, double.infinity),
-              getDrawingHorizontalLine: (_) => FlLine(
-                color: AppColors.line, strokeWidth: 1,
+              horizontalInterval: (maxVal * 1.3 / 4).ceilToDouble().clamp(
+                1,
+                double.infinity,
               ),
+              getDrawingHorizontalLine: (_) =>
+                  FlLine(color: AppColors.line, strokeWidth: 1),
             ),
             borderData: FlBorderData(show: false),
-            barGroups: data.weeklyActivity.asMap().entries.map((e) => BarChartGroupData(
-              x: e.key,
-              barRods: [
-                BarChartRodData(
-                  toY: e.value.toDouble(),
-                  color: AppColors.accent,
-                  width: 18,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(4),
+            barGroups: data.weeklyActivity
+                .asMap()
+                .entries
+                .map(
+                  (e) => BarChartGroupData(
+                    x: e.key,
+                    barRods: [
+                      BarChartRodData(
+                        toY: e.value.toDouble(),
+                        color: AppColors.accent,
+                        width: 18,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(4),
+                          topRight: Radius.circular(4),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            )).toList(),
+                )
+                .toList(),
           ),
         ),
       ),
@@ -328,48 +414,107 @@ class AdvisorReportsView extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          _statusRow('Total Jobs', '${data.totalJobs}', AppColors.textPrimary, Icons.assignment_outlined, AppColors.gray100),
+          _statusRow(
+            'Total Jobs',
+            '${data.totalJobs}',
+            AppColors.textPrimary,
+            Icons.assignment_outlined,
+            AppColors.gray100,
+          ),
           _divider(),
-          _statusRow('In Progress', '${data.inProgressJobs}', AppColors.accent, Icons.build_circle_outlined, AppColors.accent.withValues(alpha: 0.1)),
+          _statusRow(
+            'In Progress',
+            '${data.inProgressJobs}',
+            AppColors.accent,
+            Icons.build_circle_outlined,
+            AppColors.accent.withValues(alpha: 0.1),
+          ),
           _divider(),
-          _statusRow('Pending', '${data.pendingJobs}', AppColors.warning, Icons.hourglass_empty, AppColors.warningBg),
+          _statusRow(
+            'Pending',
+            '${data.pendingJobs}',
+            AppColors.warning,
+            Icons.hourglass_empty,
+            AppColors.warningBg,
+          ),
           _divider(),
-          _statusRow('Completed', '${data.completedJobs}', AppColors.success, Icons.verified_outlined, AppColors.successBg),
+          _statusRow(
+            'Completed',
+            '${data.completedJobs}',
+            AppColors.success,
+            Icons.verified_outlined,
+            AppColors.successBg,
+          ),
           _divider(),
-          _statusRow('Cancelled', '${data.cancelledJobs}', AppColors.danger, Icons.cancel_outlined, AppColors.dangerBg),
-        ],
-      ),
-    );
-  }
-
-  Widget _statusRow(String label, String count, Color color, IconData icon, Color bg) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(width: 36, height: 36, decoration: BoxDecoration(
-            color: bg, borderRadius: BorderRadius.circular(AppDimensions.r10),
-          ), child: Center(child: Icon(icon, size: 18, color: color))),
-          const SizedBox(width: 12),
-          Expanded(child: Text(label, style: const TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary,
-          ))),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppDimensions.rPill),
-            ),
-            child: Text(count, style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w800, color: color,
-            )),
+          _statusRow(
+            'Cancelled',
+            '${data.cancelledJobs}',
+            AppColors.danger,
+            Icons.cancel_outlined,
+            AppColors.dangerBg,
           ),
         ],
       ),
     );
   }
 
-  Widget _divider() => const Divider(height: 1, color: AppColors.line, indent: 16, endIndent: 16);
+  Widget _statusRow(
+    String label,
+    String count,
+    Color color,
+    IconData icon,
+    Color bg,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(AppDimensions.r10),
+            ),
+            child: Center(child: Icon(icon, size: 18, color: color)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppDimensions.rPill),
+            ),
+            child: Text(
+              count,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider() => const Divider(
+    height: 1,
+    color: AppColors.line,
+    indent: 16,
+    endIndent: 16,
+  );
 
   Widget _exportButton(BuildContext context) {
     return SizedBox(
@@ -383,23 +528,36 @@ class AdvisorReportsView extends ConsumerWidget {
                 children: [
                   Icon(Icons.check_circle, color: Colors.white, size: 18),
                   SizedBox(width: 8),
-                  Text('Report exported successfully', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  Text(
+                    'Report exported successfully',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
               backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+              ),
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
             ),
           );
         },
         icon: const Icon(Icons.download_rounded, size: 20),
-        label: const Text('Export Report', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        label: const Text(
+          'Export Report',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.navy,
           foregroundColor: Colors.white,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.r14),
+          ),
         ),
       ),
     );
