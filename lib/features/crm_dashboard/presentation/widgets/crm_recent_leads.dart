@@ -3,7 +3,7 @@ import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/domain/entities/crm_entities.dart';
-import 'package:orientmobileapplication/features/crm_dashboard/presentation/widgets/crm_surface_card.dart';
+import 'package:orientmobileapplication/core/widgets/app_card.dart';
 
 class CrmRecentLeadsCard extends StatelessWidget {
   final List<CrmLeadEntity> leads;
@@ -11,7 +11,7 @@ class CrmRecentLeadsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CrmSurfaceCard(
+    return AppCard.surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

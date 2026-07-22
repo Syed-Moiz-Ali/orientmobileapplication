@@ -27,7 +27,8 @@ class RetryInterceptor extends Interceptor {
         final response = await Dio().fetch(options);
         handler.resolve(response);
         return;
-      } catch (_) {
+      } catch (e, st) {
+        _logger.e('Retry failed for ${err.requestOptions.path}', error: e, stackTrace: st);
         handler.next(err);
         return;
       }

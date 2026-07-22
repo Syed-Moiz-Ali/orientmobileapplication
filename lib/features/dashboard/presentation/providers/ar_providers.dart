@@ -4,7 +4,7 @@ import 'package:orientmobileapplication/features/dashboard/data/repositories/ar_
 import 'package:orientmobileapplication/features/dashboard/domain/entities/accounts_receivable.dart';
 import 'package:orientmobileapplication/features/dashboard/domain/repositories/accounts_receivable_repository.dart';
 
-final arDatasourceProvider = Provider<MockARDatasource>((ref) {
+final arDatasourceProvider = Provider<ARDatasource>((ref) {
   return MockARDatasource();
 });
 

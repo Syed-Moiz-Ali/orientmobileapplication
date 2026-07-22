@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
+import 'package:orientmobileapplication/core/widgets/dashboard_shell.dart';
 import 'package:orientmobileapplication/features/supervisor/presentation/widgets/supervisor_app_bar.dart';
 import 'package:orientmobileapplication/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
 import 'package:orientmobileapplication/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart';
@@ -25,8 +26,7 @@ class SupervisorScaffold extends ConsumerWidget {
       ),
     );
 
-    return Scaffold(
-      backgroundColor: AppColors.canvas,
+    return DashboardShell(
       appBar: SupervisorAppBar(selectedIndex: state.selectedIndex),
       body: IndexedStack(
         index: state.selectedIndex,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:orientmobileapplication/core/theme/app_colors.dart';
+import 'package:orientmobileapplication/core/widgets/dashboard_shell.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/widgets/messages_page.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/widgets/owner_app_bar.dart';
@@ -29,8 +29,7 @@ class DashboardBody extends ConsumerWidget {
       ),
     );
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
+    return DashboardShell(
       appBar: const OwnerAppBar(),
       body: Consumer(
         builder: (context, ref, _) {

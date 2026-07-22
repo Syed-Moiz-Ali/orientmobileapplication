@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:orientmobileapplication/core/app_widgets.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/widgets/app_card.dart';
+import 'package:orientmobileapplication/core/widgets/app_top_bar.dart';
+import 'package:orientmobileapplication/core/widgets/section_header.dart';
+import 'package:orientmobileapplication/core/widgets/status_pill.dart';
 import 'package:orientmobileapplication/features/customer/domain/entities/customer_entities.dart';
 
 class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
@@ -51,7 +53,7 @@ class _CustomerBreakdownHelpViewState
         bottom: false,
         child: Column(
           children: [
-            InnerTopBar(
+            AppTopBar(
               title: 'Breakdown Help',
               trailing: StatusPill(
                 label: 'SOS',

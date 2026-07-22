@@ -11,7 +11,7 @@ import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/core/router/app_router.dart';
 import 'package:orientmobileapplication/core/router/inspection_callbacks.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
-import 'package:orientmobileapplication/core/widgets/exit_confirmation_dialog.dart';
+import 'package:orientmobileapplication/core/widgets/dashboard_shell.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:orientmobileapplication/features/advisor/domain/entities/job_card_entity.dart';
@@ -433,9 +433,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
       ),
     );
 
-    return ExitConfirmationWrapper(
-      child: Scaffold(
-        backgroundColor: AppColors.canvas,
+    return DashboardShell(
         body: _navIndex == 1
             ? AdvisorJobsListView(onJobCard: _onJobCard)
             : _navIndex == 2
@@ -465,7 +463,6 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
           onNavChanged: (i) => setState(() => _navIndex = i),
           onShowProfile: _showProfile,
         ),
-      ),
     );
   }
 }

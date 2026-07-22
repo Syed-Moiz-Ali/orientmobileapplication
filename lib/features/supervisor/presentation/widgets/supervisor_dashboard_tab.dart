@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/theme/app_text_styles.dart';
+import 'package:orientmobileapplication/core/widgets/app_card.dart';
 import 'package:orientmobileapplication/features/supervisor/domain/entities/supervisor_entities.dart';
 import 'package:orientmobileapplication/features/supervisor/presentation/widgets/supervisor_stats_grid.dart';
 import 'package:orientmobileapplication/features/supervisor/providers/supervisor_providers.dart';
@@ -220,7 +221,7 @@ class _AdvisorBarCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final maxVal = data.map((d) => d.count).reduce((a, b) => a > b ? a : b);
 
-    return _SurfaceCard(
+    return AppCard.surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -290,7 +291,7 @@ class _JobTypeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = types.fold(0, (s, t) => s + t.count);
-    return _SurfaceCard(
+    return AppCard.surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -491,7 +492,7 @@ class _RevenueTrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _SurfaceCard(
+    return AppCard.surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -696,31 +697,7 @@ class _PendingCard extends StatelessWidget {
   }
 }
 
-class _SurfaceCard extends StatelessWidget {
-  final Widget child;
-  const _SurfaceCard({required this.child});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.s16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r18),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
-}
 
 class _CardTitle extends StatelessWidget {
   final String text;

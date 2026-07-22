@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/data/datasources/crm_mock_datasource.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/domain/entities/crm_entities.dart';
 
-final crmMockDataSourceProvider = Provider<CrmMockDataSource>((ref) => CrmMockDataSource());
+final crmDataSourceProvider = Provider<CrmDataSource>((ref) => CrmMockDataSource());
 
 class CrmUiState {
   final int selectedIndex;
@@ -49,11 +49,11 @@ class CrmUiState {
 }
 
 class CrmUiNotifier extends Notifier<CrmUiState> {
-  late final CrmMockDataSource _dataSource;
+  late final CrmDataSource _dataSource;
 
   @override
   CrmUiState build() {
-    _dataSource = ref.read(crmMockDataSourceProvider);
+    _dataSource = ref.read(crmDataSourceProvider);
     return const CrmUiState(
       selectedIndex: 0,
       period: 'Today',

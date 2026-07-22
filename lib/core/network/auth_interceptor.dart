@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:orientmobileapplication/core/errors/logger_provider.dart';
 import 'package:orientmobileapplication/features/auth/presentation/providers/auth_state.dart';
 
 class AuthInterceptor extends Interceptor {
@@ -31,7 +32,9 @@ class AuthInterceptor extends Interceptor {
             final response = await Dio().fetch(err.requestOptions);
             handler.resolve(response);
             return;
-          } catch (_) {}
+          } catch (e, st) {
+            _ref.read(loggerProvider).e('Auth retry failed for ${err.requestOptions.path}', error: e, stackTrace: st);
+          }
         }
       }
     }

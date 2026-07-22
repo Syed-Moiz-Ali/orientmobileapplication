@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/features/dashboard/data/datasources/dashboard_mock_datasource.dart';
 import 'package:orientmobileapplication/features/dashboard/domain/entities/dashboard_entities.dart';
 
-final dashboardMockDataSourceProvider = Provider<DashboardMockDataSource>((ref) => DashboardMockDataSource());
+final dashboardDataSourceProvider = Provider<DashboardDataSource>((ref) => DashboardMockDataSource());
 
 class DashboardUiState {
   final int selectedIndex;
@@ -42,12 +42,12 @@ class DashboardUiState {
 }
 
 class DashboardUiNotifier extends Notifier<DashboardUiState> {
-  late final DashboardMockDataSource _dataSource;
+  late final DashboardDataSource _dataSource;
   final Set<int> _expandedIndices = {};
 
   @override
   DashboardUiState build() {
-    _dataSource = ref.read(dashboardMockDataSourceProvider);
+    _dataSource = ref.read(dashboardDataSourceProvider);
     return const DashboardUiState();
   }
 

@@ -7,7 +7,7 @@ import 'package:orientmobileapplication/features/dashboard/data/datasources/dash
 import 'package:orientmobileapplication/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/widgets/form_label.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/widgets/message_tile.dart';
-import 'package:orientmobileapplication/features/dashboard/presentation/widgets/surface_card.dart';
+import 'package:orientmobileapplication/core/widgets/app_card.dart';
 
 class MessagesPage extends ConsumerStatefulWidget {
   const MessagesPage({super.key});
@@ -74,7 +74,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
               ],
             ),
           ),
-          SurfaceCard(
+          AppCard.surface(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

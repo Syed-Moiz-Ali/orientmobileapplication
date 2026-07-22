@@ -3,7 +3,7 @@ import 'package:orientmobileapplication/features/job_cards/domain/entities/job_c
 import 'package:orientmobileapplication/features/job_cards/domain/repositories/job_card_repository.dart';
 
 class JobCardRepositoryImpl implements JobCardRepository {
-  final MockJobCardDatasource _datasource;
+  final JobCardDatasource _datasource;
   JobCardRepositoryImpl(this._datasource);
   @override
   Future<List<JobCard>> getJobCards() => _datasource.getJobCards();

@@ -5,12 +5,12 @@ import 'package:orientmobileapplication/features/dashboard/data/repositories/das
 import 'package:orientmobileapplication/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:orientmobileapplication/features/dashboard/domain/repositories/dashboard_repositories.dart';
 
-final docExpiryDatasourceProvider = Provider<MockDocumentExpiryDatasource>((ref) => MockDocumentExpiryDatasource());
-final jobStatusDatasourceProvider = Provider<MockJobStatusDatasource>((ref) => MockJobStatusDatasource());
-final pendingApprovalsDatasourceProvider = Provider<MockPendingApprovalsDatasource>((ref) => MockPendingApprovalsDatasource());
-final pendingJobCardsDatasourceProvider = Provider<MockPendingJobCardsDatasource>((ref) => MockPendingJobCardsDatasource());
-final activeJobCardsDatasourceProvider = Provider<MockActiveJobCardsDatasource>((ref) => MockActiveJobCardsDatasource());
-final salesInvoicesDatasourceProvider = Provider<MockSalesInvoicesDatasource>((ref) => MockSalesInvoicesDatasource());
+final docExpiryDatasourceProvider = Provider<DocumentExpiryDatasource>((ref) => MockDocumentExpiryDatasource());
+final jobStatusDatasourceProvider = Provider<JobStatusDatasource>((ref) => MockJobStatusDatasource());
+final pendingApprovalsDatasourceProvider = Provider<PendingApprovalsDatasource>((ref) => MockPendingApprovalsDatasource());
+final pendingJobCardsDatasourceProvider = Provider<PendingJobCardsDatasource>((ref) => MockPendingJobCardsDatasource());
+final activeJobCardsDatasourceProvider = Provider<ActiveJobCardsDatasource>((ref) => MockActiveJobCardsDatasource());
+final salesInvoicesDatasourceProvider = Provider<SalesInvoicesDatasource>((ref) => MockSalesInvoicesDatasource());
 
 final docExpiryRepositoryProvider = Provider<DocumentExpiryRepository>((ref) => DocumentExpiryRepositoryImpl(ref.watch(docExpiryDatasourceProvider)));
 final jobStatusRepositoryProvider = Provider<JobStatusRepository>((ref) => JobStatusRepositoryImpl(ref.watch(jobStatusDatasourceProvider)));

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
+import 'package:orientmobileapplication/core/widgets/dashboard_shell.dart';
 import 'package:orientmobileapplication/features/customer/presentation/widgets/customer_app_bar.dart';
 import 'package:orientmobileapplication/features/customer/presentation/widgets/customer_book_service_tab.dart';
 import 'package:orientmobileapplication/features/customer/presentation/widgets/customer_home_tab.dart';
@@ -37,8 +38,7 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
       ),
     );
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
+    return DashboardShell(
       appBar: CustomerAppBar(state: state, notifier: notifier),
       body: IndexedStack(index: state.selectedIndex, children: _pages),
       bottomNavigationBar: _BottomNav(

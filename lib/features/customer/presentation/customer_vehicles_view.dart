@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:orientmobileapplication/core/app_widgets.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/widgets/app_card.dart';
+import 'package:orientmobileapplication/core/widgets/app_top_bar.dart';
 import 'package:orientmobileapplication/features/customer/domain/entities/customer_entities.dart';
 import 'package:orientmobileapplication/features/customer/presentation/add_vehicle_dialogue.dart';
 import 'package:go_router/go_router.dart';
@@ -24,7 +24,7 @@ class CustomerVehiclesView extends ConsumerWidget {
         bottom: false,
         child: Column(
           children: [
-            InnerTopBar(
+            AppTopBar(
               title: 'My Vehicles',
               trailing: GestureDetector(
                 onTap: () async {

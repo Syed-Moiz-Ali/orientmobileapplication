@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:orientmobileapplication/core/errors/logger_provider.dart';
 import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
@@ -7,7 +8,7 @@ import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/supervisor/data/datasources/supervisor_mock_datasource.dart';
 import 'package:orientmobileapplication/features/supervisor/domain/entities/supervisor_entities.dart';
 
-final supervisorMockDataSourceProvider = Provider<SupervisorMockDataSource>((ref) => SupervisorMockDataSource());
+final supervisorDataSourceProvider = Provider<SupervisorDataSource>((ref) => SupervisorMockDataSource());
 
 class SupervisorDashboardState {
   final int selectedIndex;
@@ -54,11 +55,11 @@ class SupervisorDashboardState {
 }
 
 class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
-  late final SupervisorMockDataSource _dataSource;
+  late final SupervisorDataSource _dataSource;
 
   @override
   SupervisorDashboardState build() {
-    _dataSource = ref.read(supervisorMockDataSourceProvider);
+    _dataSource = ref.read(supervisorDataSourceProvider);
     _loadDashboard();
     return SupervisorDashboardState();
   }
@@ -213,7 +214,9 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
         _allJobs.removeWhere((j) => j.jobCard.startsWith('ASN-'));
         _allJobs.addAll(savedJobs);
       }
-    } catch (_) {}
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to load supervisor jobs from Hive', error: e, stackTrace: st);
+    }
   }
 }
 

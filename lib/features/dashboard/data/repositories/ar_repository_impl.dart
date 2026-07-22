@@ -3,7 +3,7 @@ import 'package:orientmobileapplication/features/dashboard/domain/entities/accou
 import 'package:orientmobileapplication/features/dashboard/domain/repositories/accounts_receivable_repository.dart';
 
 class ARRepositoryImpl implements AccountsReceivableRepository {
-  final MockARDatasource _datasource;
+  final ARDatasource _datasource;
 
   ARRepositoryImpl(this._datasource);
 

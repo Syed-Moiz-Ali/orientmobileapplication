@@ -2,7 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/features/dashboard/domain/entities/dashboard_entities.dart';
 
-class DashboardMockDataSource {
+abstract class DashboardDataSource {
+  List<OwnerKpi> get kpis;
+  List<JobCardRegisterItem> get registerItems;
+  List<SalesTrendPoint> get salesTrend;
+  List<SalesTrendPoint> get profitTrend;
+  List<SalesTrendPoint> get expensesTrend;
+  List<TopSalesCategory> get topSalesCategories;
+}
+
+class DashboardMockDataSource implements DashboardDataSource {
   static const periods = ['Today', 'This Week', 'This Month', 'This Year'];
 
   static const users = [
@@ -15,6 +24,7 @@ class DashboardMockDataSource {
     'Sarah HR Manager',
   ];
 
+  @override
   List<OwnerKpi> get kpis => const [
     OwnerKpi(label: 'Active Jobs', value: '145', icon: Icons.work_outline_rounded, color: AppColors.accent, sub: '+12 today'),
     OwnerKpi(label: 'New Jobs', value: '23', icon: Icons.add_circle_outline_rounded, color: AppColors.success, sub: '+5 today'),
@@ -34,6 +44,7 @@ class DashboardMockDataSource {
     OwnerKpi(label: 'Labour Revenue', value: 'AED 7K', icon: Icons.engineering_outlined, color: AppColors.info, sub: '+4%'),
   ];
 
+  @override
   List<JobCardRegisterItem> get registerItems => const [
     JobCardRegisterItem(label: 'Open', open: 40, completed: 0, total: 40),
     JobCardRegisterItem(label: 'Check-In', open: 100, completed: 0, total: 100),
@@ -42,24 +53,28 @@ class DashboardMockDataSource {
     JobCardRegisterItem(label: 'Park Fee', open: 2000, completed: 0, total: 2000),
   ];
 
+  @override
   List<SalesTrendPoint> get salesTrend => const [
     SalesTrendPoint('Jan', 28000), SalesTrendPoint('Feb', 35000), SalesTrendPoint('Mar', 30000),
     SalesTrendPoint('Apr', 42000), SalesTrendPoint('May', 38000), SalesTrendPoint('Jun', 50000),
     SalesTrendPoint('Jul', 45000),
   ];
 
+  @override
   List<SalesTrendPoint> get profitTrend => const [
     SalesTrendPoint('Jan', 8000), SalesTrendPoint('Feb', 12000), SalesTrendPoint('Mar', 10000),
     SalesTrendPoint('Apr', 16000), SalesTrendPoint('May', 14000), SalesTrendPoint('Jun', 20000),
     SalesTrendPoint('Jul', 18000),
   ];
 
+  @override
   List<SalesTrendPoint> get expensesTrend => const [
     SalesTrendPoint('Jan', 20000), SalesTrendPoint('Feb', 23000), SalesTrendPoint('Mar', 20000),
     SalesTrendPoint('Apr', 26000), SalesTrendPoint('May', 24000), SalesTrendPoint('Jun', 30000),
     SalesTrendPoint('Jul', 27000),
   ];
 
+  @override
   List<TopSalesCategory> get topSalesCategories => const [
     TopSalesCategory(title: 'Customer Wise', items: [
       TopSalesItem(sno: 1, description: 'Ahmed Al Mansoori', value: 'AED 45,600'),

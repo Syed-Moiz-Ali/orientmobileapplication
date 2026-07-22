@@ -2,7 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/domain/entities/crm_entities.dart';
 
-class CrmMockDataSource {
+abstract class CrmDataSource {
+  List<CrmKpiEntity> get kpis;
+  List<CrmChannelEntity> get channels;
+  List<CrmTrendPoint> get conversionTrend;
+  List<SalespersonPerf> get salespersonPerf;
+  List<ResponseTimeBucket> get responseTimeBuckets;
+  List<LeadSourceSlice> get leadSources;
+  List<CrmKeyMetric> get keyMetrics;
+  List<IntegrationEntity> get integrations;
+  List<SalesTeamMember> get salesTeam;
+  List<ConversationEntity> get conversations;
+  List<CrmLeadEntity> getLeads();
+  List<CrmTaskEntity> getTasks();
+}
+
+class CrmMockDataSource implements CrmDataSource {
+  @override
   List<CrmKpiEntity> get kpis => const [
     CrmKpiEntity(label: 'Total Messages', value: '1247', icon: Icons.chat_bubble_outline_rounded, color: AppColors.cyanBright, bgColor: Color(0xFF001F2E), trend: '12%', trendUp: true),
     CrmKpiEntity(label: 'Active Leads', value: '3', icon: Icons.person_search_outlined, color: AppColors.purpleAccent, bgColor: Color(0xFF1A0A2E), trend: '8%', trendUp: true),
@@ -12,6 +28,7 @@ class CrmMockDataSource {
     CrmKpiEntity(label: 'No Response', value: '2', icon: Icons.notifications_off_outlined, color: Color(0xFF8B5CF6), bgColor: Color(0xFF1A0A2E), trend: '2%', trendUp: true),
   ];
 
+  @override
   List<CrmChannelEntity> get channels => const [
     CrmChannelEntity(label: 'WhatsApp Lite', icon: Icons.chat_rounded, color: Color(0xFF25D366), value: '487', trend: '15%', trendUp: true),
     CrmChannelEntity(label: 'WhatsApp Cloud', icon: Icons.cloud_queue_rounded, color: AppColors.cyanBright, value: '324', trend: '22%', trendUp: true),
@@ -23,6 +40,7 @@ class CrmMockDataSource {
     CrmChannelEntity(label: 'Email', icon: Icons.email_outlined, color: AppColors.red500, value: '10', trend: '2%', trendUp: false),
   ];
 
+  @override
   List<CrmTrendPoint> get conversionTrend => const [
     CrmTrendPoint('Jan', 20, 10, 40),
     CrmTrendPoint('Feb', 28, 8, 45),
@@ -33,6 +51,7 @@ class CrmMockDataSource {
     CrmTrendPoint('Jul', 40, 8, 48),
   ];
 
+  @override
   List<SalespersonPerf> get salespersonPerf => const [
     SalespersonPerf('John Doe', 125, 85),
     SalespersonPerf('Sarah Smith', 98, 62),
@@ -40,6 +59,7 @@ class CrmMockDataSource {
     SalespersonPerf('Joe Brown', 75, 48),
   ];
 
+  @override
   List<ResponseTimeBucket> get responseTimeBuckets => const [
     ResponseTimeBucket('0-5 min', 340),
     ResponseTimeBucket('5-15 min', 280),
@@ -48,6 +68,7 @@ class CrmMockDataSource {
     ResponseTimeBucket('> 1hr', 110),
   ];
 
+  @override
   List<LeadSourceSlice> get leadSources => const [
     LeadSourceSlice('WhatsApp', 51, Color(0xFF25D366)),
     LeadSourceSlice('Instagram', 17, Color(0xFFE1306C)),
@@ -57,6 +78,7 @@ class CrmMockDataSource {
     LeadSourceSlice('Other', 8, AppColors.text3),
   ];
 
+  @override
   List<CrmKeyMetric> get keyMetrics => const [
     CrmKeyMetric(label: 'Win Rate', value: '63.8%', sub: '\u2191 0.3% from last month', up: true, color: AppColors.greenAccent),
     CrmKeyMetric(label: 'Avg Response Time', value: '8.4m', sub: '\u2193 2.1m from last month', up: false, color: AppColors.cyanBright),
@@ -64,6 +86,7 @@ class CrmMockDataSource {
     CrmKeyMetric(label: 'ROI from Ads', value: '342%', sub: '\u2191 28% from last month', up: true, color: AppColors.warning),
   ];
 
+  @override
   List<IntegrationEntity> get integrations => const [
     IntegrationEntity(name: 'WhatsApp Business API', icon: Icons.chat_rounded, color: Color(0xFF25D366), connected: true),
     IntegrationEntity(name: 'Instagram', icon: Icons.camera_alt_outlined, color: Color(0xFFE1306C), connected: false),
@@ -73,6 +96,7 @@ class CrmMockDataSource {
     IntegrationEntity(name: 'SMS Provider', icon: Icons.sms_outlined, color: AppColors.purpleAccent, connected: true),
   ];
 
+  @override
   List<SalesTeamMember> get salesTeam => const [
     SalesTeamMember(name: 'John Doe', role: 'Senior Sales Rep', leadsHandled: 125, wonDeals: 85, revenue: 'AED 95,800', winRate: 0.68),
     SalesTeamMember(name: 'Sarah Smith', role: 'Sales Representative', leadsHandled: 98, wonDeals: 62, revenue: 'AED 72,400', winRate: 0.63),
@@ -80,11 +104,29 @@ class CrmMockDataSource {
     SalesTeamMember(name: 'Joe Brown', role: 'Junior Sales Rep', leadsHandled: 75, wonDeals: 48, revenue: 'AED 44,300', winRate: 0.64),
   ];
 
+  @override
   List<ConversationEntity> get conversations => const [
     ConversationEntity(id: '1', customerName: 'James Anderson', lastMessage: 'I am interested in your services, can we schedule a call?', time: '14:23', channel: 'WhatsApp', channelColor: Color(0xFF25D366), unread: 2, status: 'ACTIVE'),
     ConversationEntity(id: '2', customerName: 'Emily Chen', lastMessage: 'Thank you for the quick response!', time: '13:45', channel: 'Instagram', channelColor: Color(0xFFE1306C), unread: 0, status: 'WON'),
     ConversationEntity(id: '3', customerName: 'Michael Roberts', lastMessage: 'Please send me the quotation as soon as possible.', time: '12:15', channel: 'Google Ads', channelColor: AppColors.amber500, unread: 1, status: 'ACTIVE'),
     ConversationEntity(id: '4', customerName: 'Sarah Williams', lastMessage: 'No reply yet on the proposal.', time: 'Yesterday', channel: 'Website', channelColor: AppColors.cyanBright, unread: 0, status: 'UNANSWERED'),
     ConversationEntity(id: '5', customerName: 'David Martinez', lastMessage: 'Going with a competitor unfortunately.', time: '2 days ago', channel: 'SMS', channelColor: AppColors.purpleAccent, unread: 0, status: 'LOST'),
+  ];
+
+  @override
+  List<CrmLeadEntity> getLeads() => const [
+    CrmLeadEntity(sno: 1, leadNumber: 'LEAD#A1023', customerName: 'James Anderson', phone: '+1 (555) 123-4567', email: 'james.anderson@email.com', source: 'WhatsApp', sourceColor: Color(0xFF25D366), assignedTo: 'John Doe', status: 'ACTIVE', statusColor: AppColors.greenAccent, lastActivity: '2026-04-29 14:23'),
+    CrmLeadEntity(sno: 2, leadNumber: 'LEAD#A1024', customerName: 'Emily Chen', phone: '+1 (555) 234-5678', email: 'emily.chen@email.com', source: 'Instagram', sourceColor: Color(0xFFE1306C), assignedTo: 'Sarah Smith', status: 'WON', statusColor: AppColors.greenAccent, lastActivity: '2026-04-29 13:45'),
+    CrmLeadEntity(sno: 3, leadNumber: 'LEAD#A1025', customerName: 'Michael Roberts', phone: '+1 (555) 345-6789', email: 'michael.roberts@email.com', source: 'Google Ads', sourceColor: AppColors.amber500, assignedTo: 'Mike Johnson', status: 'ACTIVE', statusColor: AppColors.greenAccent, lastActivity: '2026-04-29 12:15'),
+    CrmLeadEntity(sno: 4, leadNumber: 'LEAD#A1026', customerName: 'Sarah Williams', phone: '+1 (555) 456-7890', email: 'sarah.williams@email.com', source: 'Website', sourceColor: AppColors.cyanBright, assignedTo: 'John Doe', status: 'UNANSWERED', statusColor: AppColors.warning, lastActivity: '2026-04-28 18:30'),
+    CrmLeadEntity(sno: 5, leadNumber: 'LEAD#A1027', customerName: 'David Martinez', phone: '+1 (555) 567-8901', email: 'david.martinez@email.com', source: 'SMS', sourceColor: AppColors.purpleAccent, assignedTo: 'Sarah Smith', status: 'LOST', statusColor: AppColors.red500, lastActivity: '2026-04-27 09:45'),
+  ];
+
+  @override
+  List<CrmTaskEntity> getTasks() => const [
+    CrmTaskEntity(id: '1', title: 'Follow up with James Anderson', assignedTo: 'John Doe', dueDate: '2026-04-30', priority: 'HIGH', priorityColor: AppColors.red500),
+    CrmTaskEntity(id: '2', title: 'Send proposal to Emily Chen', assignedTo: 'Sarah Smith', dueDate: '2026-05-01', priority: 'MEDIUM', priorityColor: AppColors.warning),
+    CrmTaskEntity(id: '3', title: 'Update CRM data for Q2', assignedTo: 'Mike Johnson', dueDate: '2026-05-03', priority: 'LOW', priorityColor: AppColors.greenAccent),
+    CrmTaskEntity(id: '4', title: 'Review lost lead analysis', assignedTo: 'Joe Brown', dueDate: '2026-05-02', priority: 'HIGH', priorityColor: AppColors.red500),
   ];
 }

@@ -4,7 +4,7 @@ import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/widgets/card_title.dart';
 import 'package:orientmobileapplication/features/dashboard/presentation/widgets/dual_line_painter.dart';
-import 'package:orientmobileapplication/features/dashboard/presentation/widgets/surface_card.dart';
+import 'package:orientmobileapplication/core/widgets/app_card.dart';
 
 class SalesTrendCard extends StatelessWidget {
   final List<SalesTrendPoint> salesData;
@@ -17,7 +17,7 @@ class SalesTrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SurfaceCard(
+    return AppCard.surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

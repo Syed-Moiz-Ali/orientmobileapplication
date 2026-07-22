@@ -5,7 +5,23 @@ import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/domain/entities/crm_entities.dart';
-import 'package:orientmobileapplication/features/crm_dashboard/presentation/widgets/crm_surface_card.dart';
+import 'package:orientmobileapplication/core/widgets/app_card.dart';
+
+class CrmCardTitle extends StatelessWidget {
+  final String text;
+  const CrmCardTitle(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(
+      color: CrmColors.textH,
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.3,
+    ),
+  );
+}
 
 class CrmReportsPage extends ConsumerWidget {
   const CrmReportsPage({super.key});
@@ -18,7 +34,7 @@ class CrmReportsPage extends ConsumerWidget {
       padding: const EdgeInsets.all(AppDimensions.s16),
       child: Column(
         children: [
-          CrmSurfaceCard(
+          AppCard.surface(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -65,7 +81,7 @@ class CrmReportsPage extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: CrmSurfaceCard(
+                child: AppCard.surface(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -122,7 +138,7 @@ class CrmReportsPage extends ConsumerWidget {
               ),
               const SizedBox(width: AppDimensions.s12),
               Expanded(
-                child: CrmSurfaceCard(
+                child: AppCard.surface(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -152,7 +168,7 @@ class CrmReportsPage extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppDimensions.s12),
-          CrmSurfaceCard(
+          AppCard.surface(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -186,7 +202,7 @@ class CrmReportsPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppDimensions.s12),
-          CrmSurfaceCard(
+          AppCard.surface(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

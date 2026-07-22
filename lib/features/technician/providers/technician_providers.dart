@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:orientmobileapplication/core/errors/logger_provider.dart';
 import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
@@ -279,7 +280,15 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         _allJobs.clear();
         _allJobs.addAll(savedJobs);
       }
-    } catch (_) {}
+    } catch (e, st) {
+      ref
+          .read(loggerProvider)
+          .e(
+            'Failed to load technician jobs from Hive',
+            error: e,
+            stackTrace: st,
+          );
+    }
   }
 
   void selectTab(int i) {
@@ -362,7 +371,15 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         );
         ref.read(syncEngineProvider).syncAll();
       });
-    } catch (_) {}
+    } catch (e, st) {
+      ref
+          .read(loggerProvider)
+          .e(
+            'Failed to save technician state to Hive',
+            error: e,
+            stackTrace: st,
+          );
+    }
   }
 
   static Future<String> _generateId(String entityType) {

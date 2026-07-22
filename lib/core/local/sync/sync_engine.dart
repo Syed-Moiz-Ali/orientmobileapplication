@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive/hive.dart';
+import 'package:logger/logger.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_handler.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_queue.dart';
@@ -12,6 +13,7 @@ class SyncEngine {
   final Box _failedBox;
   final Map<String, SyncHandler> _handlers = {};
   final Connectivity _connectivity;
+  final Logger _logger;
   StreamSubscription? _connectivitySub;
 
   SyncStatus _status = SyncStatus.idle;
@@ -26,9 +28,11 @@ class SyncEngine {
     required SyncQueue queue,
     required Box failedBox,
     Connectivity? connectivity,
+    Logger? logger,
   })  : _queue = queue,
         _failedBox = failedBox,
-        _connectivity = connectivity ?? Connectivity() {
+        _connectivity = connectivity ?? Connectivity(),
+        _logger = logger ?? Logger() {
     _initConnectivity();
   }
 
@@ -91,7 +95,8 @@ class SyncEngine {
         hasConflict = true;
         await _moveToFailed(op);
         await _queue.remove(op.id);
-      } catch (_) {
+      } catch (e, st) {
+        _logger.e('Sync failed for operation ${op.id} (${op.entityType})', error: e, stackTrace: st);
         op.retryCount++;
         if (op.retryCount >= 3) {
           await _moveToFailed(op);

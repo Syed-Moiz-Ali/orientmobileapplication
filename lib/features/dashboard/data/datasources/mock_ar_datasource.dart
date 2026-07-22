@@ -1,6 +1,12 @@
 import 'package:orientmobileapplication/features/dashboard/domain/entities/accounts_receivable.dart';
 
-class MockARDatasource {
+abstract class ARDatasource {
+  Future<ARSummary> getSummary();
+  Future<List<ARRecord>> getRecords();
+}
+
+class MockARDatasource implements ARDatasource {
+  @override
   Future<ARSummary> getSummary() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return const ARSummary(
@@ -12,6 +18,7 @@ class MockARDatasource {
     );
   }
 
+  @override
   Future<List<ARRecord>> getRecords() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [

@@ -3,7 +3,12 @@ import 'package:orientmobileapplication/core/domain/job_card_status.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/features/dashboard/domain/entities/dashboard_entities.dart';
 
-class MockDocumentExpiryDatasource {
+abstract class DocumentExpiryDatasource {
+  Future<List<DocumentExpiry>> getDocuments();
+}
+
+class MockDocumentExpiryDatasource implements DocumentExpiryDatasource {
+  @override
   Future<List<DocumentExpiry>> getDocuments() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [
@@ -16,7 +21,12 @@ class MockDocumentExpiryDatasource {
   }
 }
 
-class MockJobStatusDatasource {
+abstract class JobStatusDatasource {
+  Future<List<JobStatus>> getJobStatuses();
+}
+
+class MockJobStatusDatasource implements JobStatusDatasource {
+  @override
   Future<List<JobStatus>> getJobStatuses() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [
@@ -29,7 +39,12 @@ class MockJobStatusDatasource {
   }
 }
 
-class MockPendingApprovalsDatasource {
+abstract class PendingApprovalsDatasource {
+  Future<List<ApprovalCategory>> getCategories();
+}
+
+class MockPendingApprovalsDatasource implements PendingApprovalsDatasource {
+  @override
   Future<List<ApprovalCategory>> getCategories() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [
@@ -50,7 +65,12 @@ class MockPendingApprovalsDatasource {
   }
 }
 
-class MockPendingJobCardsDatasource {
+abstract class PendingJobCardsDatasource {
+  Future<List<PendingJobCard>> getJobCards();
+}
+
+class MockPendingJobCardsDatasource implements PendingJobCardsDatasource {
+  @override
   Future<List<PendingJobCard>> getJobCards() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [
@@ -63,7 +83,12 @@ class MockPendingJobCardsDatasource {
   }
 }
 
-class MockActiveJobCardsDatasource {
+abstract class ActiveJobCardsDatasource {
+  Future<List<ActiveJobCard>> getJobCards();
+}
+
+class MockActiveJobCardsDatasource implements ActiveJobCardsDatasource {
+  @override
   Future<List<ActiveJobCard>> getJobCards() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [
@@ -76,7 +101,12 @@ class MockActiveJobCardsDatasource {
   }
 }
 
-class MockSalesInvoicesDatasource {
+abstract class SalesInvoicesDatasource {
+  Future<List<SalesInvoice>> getInvoices();
+}
+
+class MockSalesInvoicesDatasource implements SalesInvoicesDatasource {
+  @override
   Future<List<SalesInvoice>> getInvoices() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [

@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:logger/logger.dart';
+import 'package:orientmobileapplication/core/errors/logger_provider.dart';
 import 'package:orientmobileapplication/features/advisor/data/datasources/advisor_local_datasource.dart';
 import 'package:orientmobileapplication/features/advisor/domain/entities/advisor_stats_entity.dart';
 import 'package:orientmobileapplication/features/advisor/domain/entities/followup_reminder_entity.dart';
@@ -34,7 +36,8 @@ final advisorDashboardProvider = Provider<AdvisorStatsEntity>((ref) {
       readyForDelivery: (allData.length * 0.3).round(),
       totalOpenJobCards: allData.length,
     );
-  } catch (_) {
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load advisor dashboard stats from Hive', error: e, stackTrace: st);
     return const AdvisorStatsEntity(
       newJobCardsToday: 0,
       inspectionsToday: 0,
@@ -126,7 +129,8 @@ DateTime _parseDate(String dateStr) {
       int.parse(timeParts[0]),
       int.parse(timeParts[1]),
     );
-  } catch (_) {
+  } catch (e, st) {
+    Logger().e('Failed to parse date time from jobCard', error: e, stackTrace: st);
     return DateTime(2000);
   }
 }
@@ -175,7 +179,8 @@ final advisorPendingApprovalsProvider = Provider<List<PendingApprovalEntity>>((
       ];
     }
     return approvals;
-  } catch (_) {
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load pending approvals from Hive', error: e, stackTrace: st);
     return const [];
   }
 });

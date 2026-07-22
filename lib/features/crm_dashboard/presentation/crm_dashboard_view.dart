@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:orientmobileapplication/core/widgets/dashboard_shell.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/presentation/widgets/crm_app_bar.dart';
@@ -14,26 +15,8 @@ import 'package:orientmobileapplication/features/crm_dashboard/presentation/widg
 import 'package:orientmobileapplication/features/crm_dashboard/presentation/widgets/crm_integrations_page.dart';
 import 'package:orientmobileapplication/features/crm_dashboard/presentation/widgets/crm_settings_page.dart';
 
-import 'package:orientmobileapplication/core/widgets/exit_confirmation_dialog.dart';
-
-class CrmDashboardView extends ConsumerStatefulWidget {
+class CrmDashboardView extends ConsumerWidget {
   const CrmDashboardView({super.key});
-
-  @override
-  ConsumerState<CrmDashboardView> createState() => _CrmDashboardViewState();
-}
-
-class _CrmDashboardViewState extends ConsumerState<CrmDashboardView> {
-  @override
-  Widget build(BuildContext context) {
-    return const ExitConfirmationWrapper(
-      child: _CrmScaffold(),
-    );
-  }
-}
-
-class _CrmScaffold extends ConsumerWidget {
-  const _CrmScaffold();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,8 +41,7 @@ class _CrmScaffold extends ConsumerWidget {
       const CrmSettingsPage(),
     ];
 
-    return Scaffold(
-      backgroundColor: CrmColors.scaffold,
+    return DashboardShell(
       appBar: CrmAppBar(notifier: notifier),
       drawer: CrmDrawer(notifier: notifier),
       body: IndexedStack(index: state.selectedIndex, children: pages),

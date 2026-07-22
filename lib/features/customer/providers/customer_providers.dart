@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:logger/logger.dart';
+import 'package:orientmobileapplication/core/errors/logger_provider.dart';
 import 'package:orientmobileapplication/core/local/helpers/id_generator.dart';
 import 'package:orientmobileapplication/core/local/repositories/generic_local_datasource.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_operation.dart';
@@ -33,7 +35,8 @@ final customerBookingsProvider = Provider<List<CustomerBookingEntity>>((ref) {
         )
         .toList();
     return saved.isNotEmpty ? saved : CustomerBookingEntity.mock;
-  } catch (_) {
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load customer bookings from Hive', error: e, stackTrace: st);
     return CustomerBookingEntity.mock;
   }
 });
@@ -95,7 +98,8 @@ class CustomerDashboardState {
           .map((m) => Map<String, dynamic>.from(m))
           .where((v) => v['status'] == 'completed')
           .length;
-    } catch (_) {
+    } catch (e, st) {
+      Logger().e('Failed to count services this year from Hive', error: e, stackTrace: st);
       return CustomerBookingEntity.mock
           .where((b) => b.status == BookingStatus.completed)
           .length;
@@ -149,7 +153,8 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
           )
           .toList();
       return saved.isNotEmpty ? saved : List.from(CustomerVehicleEntity.mock);
-    } catch (_) {
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to load vehicles from Hive', error: e, stackTrace: st);
       return List.from(CustomerVehicleEntity.mock);
     }
   }

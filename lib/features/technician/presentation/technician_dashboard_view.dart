@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:orientmobileapplication/core/theme/app_colors.dart';
 import 'package:orientmobileapplication/core/theme/app_dimensions.dart';
 import 'package:orientmobileapplication/core/theme/app_text_styles.dart';
+import 'package:orientmobileapplication/core/widgets/dashboard_shell.dart';
 import 'package:orientmobileapplication/features/technician/domain/entities/technician_entities.dart';
 import 'package:orientmobileapplication/core/local/sync/sync_providers.dart';
 import 'package:orientmobileapplication/features/technician/providers/technician_providers.dart';
@@ -39,8 +40,7 @@ class _TechBody extends ConsumerWidget {
       ),
     );
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
+    return DashboardShell(
       body: Column(
         children: [
           const TechnicianHeaderWidget(),

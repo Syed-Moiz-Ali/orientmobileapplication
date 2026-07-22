@@ -4,7 +4,7 @@ import 'package:orientmobileapplication/features/job_cards/data/repositories/job
 import 'package:orientmobileapplication/features/job_cards/domain/entities/job_card.dart';
 import 'package:orientmobileapplication/features/job_cards/domain/repositories/job_card_repository.dart';
 
-final jobCardDatasourceProvider = Provider<MockJobCardDatasource>((ref) => MockJobCardDatasource());
+final jobCardDatasourceProvider = Provider<JobCardDatasource>((ref) => MockJobCardDatasource());
 final jobCardRepositoryProvider = Provider<JobCardRepository>((ref) => JobCardRepositoryImpl(ref.watch(jobCardDatasourceProvider)));
 
 class JobCardsState {

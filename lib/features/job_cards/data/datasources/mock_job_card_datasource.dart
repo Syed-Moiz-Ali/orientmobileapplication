@@ -1,6 +1,11 @@
 import 'package:orientmobileapplication/features/job_cards/domain/entities/job_card.dart';
 
-class MockJobCardDatasource {
+abstract class JobCardDatasource {
+  Future<List<JobCard>> getJobCards();
+}
+
+class MockJobCardDatasource implements JobCardDatasource {
+  @override
   Future<List<JobCard>> getJobCards() async {
     await Future.delayed(const Duration(milliseconds: 700));
     return const [
