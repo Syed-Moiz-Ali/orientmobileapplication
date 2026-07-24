@@ -1,0 +1,248 @@
+
+Launching lib\main.dart on Redmi Note 7 Pro in debug mode...
+Error: Couldn't resolve the package 'flutter_animate' in 'package:flutter_animate/flutter_animate.dart'.
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:2:8: Error: Not found: 'package:flutter_animate/flutter_animate.dart'
+import 'package:flutter_animate/flutter_animate.dart';
+       ^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:53:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 300.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:141:13: Error: The method 'animate' isn't defined for the type 'Container'.
+ - 'Container' is from 'package:flutter/src/widgets/container.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/container.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 600.ms, curve: Curves.easeOut).scale(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:141:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 600.ms, curve: Curves.easeOut).scale(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:144:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 600.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:160:13: Error: The method 'animate' isn't defined for the type 'Text'.
+ - 'Text' is from 'package:flutter/src/widgets/text.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/text.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:160:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:160:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(
+                                                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:163:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 500.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:179:13: Error: The method 'animate' isn't defined for the type 'Text'.
+ - 'Text' is from 'package:flutter/src/widgets/text.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/text.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:179:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:179:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(
+                                                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:182:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 500.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:246:13: Error: The method 'animate' isn't defined for the type 'Container'.
+ - 'Container' is from 'package:flutter/src/widgets/container.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/container.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideY(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:246:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideY(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:246:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideY(
+                                                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:249:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 500.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:272:17: Error: The method 'animate' isn't defined for the type 'Row'.
+ - 'Row' is from 'package:flutter/src/widgets/basic.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/basic.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+              ).animate().shake(duration: 400.ms),
+                ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:272:47: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+              ).animate().shake(duration: 400.ms),
+                                              ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:327:13: Error: The method 'animate' isn't defined for the type 'SizedBox'.
+ - 'SizedBox' is from 'package:flutter/src/widgets/basic.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/basic.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 400.ms).slideY(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:327:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 400.ms).slideY(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:327:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 400.ms).slideY(
+                                                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:330:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 500.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:345:13: Error: The method 'animate' isn't defined for the type 'Text'.
+ - 'Text' is from 'package:flutter/src/widgets/text.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/text.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 500.ms),
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:345:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 500.ms),
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:345:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 500.ms),
+                                                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:425:13: Error: The method 'animate' isn't defined for the type 'Container'.
+ - 'Container' is from 'package:flutter/src/widgets/container.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/container.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms).scale(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:425:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms).scale(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:428:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 500.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:443:13: Error: The method 'animate' isn't defined for the type 'Text'.
+ - 'Text' is from 'package:flutter/src/widgets/text.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/text.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:443:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:443:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(
+                                                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:446:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 500.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:470:13: Error: The method 'animate' isn't defined for the type 'Text'.
+ - 'Text' is from 'package:flutter/src/widgets/text.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/text.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:470:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:470:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(
+                                                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:473:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 500.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:535:13: Error: The method 'animate' isn't defined for the type 'Row'.
+ - 'Row' is from 'package:flutter/src/widgets/basic.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/basic.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideY(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:535:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideY(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:535:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideY(
+                                                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:538:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 500.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:560:17: Error: The method 'animate' isn't defined for the type 'Row'.
+ - 'Row' is from 'package:flutter/src/widgets/basic.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/basic.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+              ).animate().shake(duration: 400.ms),
+                ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:560:47: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+              ).animate().shake(duration: 400.ms),
+                                              ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:621:13: Error: The method 'animate' isn't defined for the type 'SizedBox'.
+ - 'SizedBox' is from 'package:flutter/src/widgets/basic.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/basic.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 400.ms).slideY(
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:621:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 400.ms).slideY(
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:621:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 400.ms).slideY(
+                                                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:624:27: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+            duration: 500.ms,
+                          ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:672:13: Error: The method 'animate' isn't defined for the type 'Row'.
+ - 'Row' is from 'package:flutter/src/widgets/basic.dart' ('/C:/Users/sanja/Downloads/flutter_windows_3.35.7-stable/flutter/packages/flutter/lib/src/widgets/basic.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'animate'.
+          ).animate().fadeIn(duration: 500.ms, delay: 500.ms),
+            ^^^^^^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:672:44: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 500.ms),
+                                           ^^
+../../packages/shared_auth/lib/src/presentation/pages/login_view.dart:672:59: Error: The getter 'ms' isn't defined for the type 'int'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ms'.
+          ).animate().fadeIn(duration: 500.ms, delay: 500.ms),
+                                                          ^^
+Unhandled exception:
+FileSystemException(uri=org-dartlang-untranslatable-uri:package%3Aflutter_animate%2Fflutter_animate.dart; message=StandardFileSystem only supports file:* and data:* URIs)
+#0      StandardFileSystem.entityForUri (package:front_end/src/api_prototype/standard_file_system.dart:45)
+#1      asFileUri (package:vm/kernel_front_end.dart:1002)
+#2      writeDepfile (package:vm/kernel_front_end.dart:1165)
+<asynchronous suspension>
+#3      FrontendCompiler.compile (package:frontend_server/frontend_server.dart:729)
+<asynchronous suspension>
+#4      starter (package:frontend_server/starter.dart:102)
+<asynchronous suspension>
+#5      main (file:///C:/b/s/w/ir/x/w/sdk/pkg/frontend_server/bin/frontend_server_starter.dart:13)
+<asynchronous suspension>
+
+Target kernel_snapshot_program failed: Exception
+2
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildDebug'.
+> Process 'command 'C:\Users\sanja\Downloads\flutter_windows_3.35.7-stable\flutter\bin\flutter.bat'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 8s
+Error: Gradle task assembleDebug failed with exit code 1
+
+Exited (1).

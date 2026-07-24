@@ -1,0 +1,47 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Staff App (Advisor/Supervisor/Technician)",
+      "type": "dart",
+      "request": "launch",
+      "program": "apps/staff_app/lib/main.dart",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Owner App",
+      "type": "dart",
+      "request": "launch",
+      "program": "apps/owner_app/lib/main.dart",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Customer App",
+      "type": "dart",
+      "request": "launch",
+      "program": "apps/customer_app/lib/main.dart",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "CRM App",
+      "type": "dart",
+      "request": "launch",
+      "program": "apps/crm_app/lib/main.dart",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Staff App (Profile)",
+      "type": "dart",
+      "request": "launch",
+      "program": "apps/staff_app/lib/main.dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Staff App (Release)",
+      "type": "dart",
+      "request": "launch",
+      "program": "apps/staff_app/lib/main.dart",
+      "flutterMode": "release"
+    }
+  ]
+}
