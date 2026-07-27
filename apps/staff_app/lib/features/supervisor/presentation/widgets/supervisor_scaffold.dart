@@ -7,6 +7,9 @@ import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_ap
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_staff_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_schedule_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_reports_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 
 class SupervisorScaffold extends ConsumerWidget {
@@ -32,6 +35,9 @@ class SupervisorScaffold extends ConsumerWidget {
           SupervisorDashboardTab(),
           SupervisorAssignSheet(),
           SupervisorJobsTab(),
+          SupervisorStaffTab(),
+          SupervisorScheduleTab(),
+          SupervisorReportsTab(),
         ],
       ),
       floatingActionButton: state.selectedIndex == 1
@@ -89,6 +95,9 @@ class _BottomNav extends StatelessWidget {
       (Icons.dashboard_rounded, Icons.dashboard_outlined, 'Dashboard'),
       (Icons.assignment_rounded, Icons.assignment_outlined, 'Assign'),
       (Icons.list_alt_rounded, Icons.list_alt_outlined, 'Work List'),
+      (Icons.groups_rounded, Icons.groups_outlined, 'Staff'),
+      (Icons.calendar_month_rounded, Icons.calendar_month_outlined, 'Schedule'),
+      (Icons.bar_chart_rounded, Icons.bar_chart_outlined, 'Reports'),
     ];
 
     return Container(

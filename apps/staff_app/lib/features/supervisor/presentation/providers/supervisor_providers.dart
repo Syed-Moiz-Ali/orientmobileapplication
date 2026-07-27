@@ -56,7 +56,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   @override
   SupervisorDashboardState build() {
     _dataSource = ref.read(supervisorDataSourceProvider);
-    _loadDashboard();
+    _loadAssignmentsFromHive();
     return SupervisorDashboardState();
   }
 

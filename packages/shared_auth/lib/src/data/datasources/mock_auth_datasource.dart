@@ -44,7 +44,8 @@ class MockAuthDatasource implements AuthDatasource {
     if (defaultRole != null) return defaultRole!;
 
     final cleaned = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    switch (cleaned) {
+    final suffix = cleaned.length >= 3 ? cleaned.substring(cleaned.length - 3) : cleaned;
+    switch (suffix) {
       case '001':
         return UserRole.advisor;
       case '002':

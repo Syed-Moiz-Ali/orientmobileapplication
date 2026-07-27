@@ -185,32 +185,71 @@ final advisorPendingApprovalsProvider = Provider<List<PendingApprovalEntity>>((
   }
 });
 
-final advisorFollowupRemindersProvider = Provider<List<FollowupReminderEntity>>(
-  (ref) {
-    return const [
-      FollowupReminderEntity(
-        customerName: 'Ahmed Hassan',
-        vehicleId: 'D-12345',
-        task: 'Follow up on estimate approval',
-        dueDate: 'Due: Today, 2:00 PM',
-        priority: ReminderPriority.high,
-      ),
-      FollowupReminderEntity(
-        customerName: 'Mariam Salem',
-        vehicleId: 'D-44556',
-        task: 'Notify when parts arrive',
-        dueDate: 'Due: Tomorrow, 10:00 AM',
-        priority: ReminderPriority.medium,
-      ),
-      FollowupReminderEntity(
-        customerName: 'Omar Khalid',
-        vehicleId: 'D-99001',
-        task: 'Schedule next service',
-        dueDate: 'Due: Apr 10, 2024',
-        priority: ReminderPriority.low,
-      ),
-    ];
-  },
+class ReminderNotifier extends Notifier<List<FollowupReminderEntity>> {
+  @override
+  List<FollowupReminderEntity> build() {
+    return _loadFromHive();
+  }
+
+  List<FollowupReminderEntity> _loadFromHive() {
+    try {
+      final box = Hive.box<dynamic>('inspections');
+      return box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .where((m) => m['type'] == 'reminder')
+          .map((m) => FollowupReminderEntity(
+                customerName: m['customerName'] as String? ?? '',
+                vehicleId: m['vehicleId'] as String? ?? '',
+                task: m['task'] as String? ?? '',
+                dueDate: m['dueDate'] as String? ?? '',
+                priority: ReminderPriority.values.firstWhere(
+                  (e) => e.name == m['priority'],
+                  orElse: () => ReminderPriority.medium,
+                ),
+              ))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> addReminder(FollowupReminderEntity reminder) async {
+    final local = GenericLocalDataSource(Hive.box<dynamic>('inspections'));
+    final id = await IdGenerator.nextId('REM');
+    await local.save(id, {
+      'id': id,
+      'type': 'reminder',
+      'customerName': reminder.customerName,
+      'vehicleId': reminder.vehicleId,
+      'task': reminder.task,
+      'dueDate': reminder.dueDate,
+      'priority': reminder.priority.name,
+    });
+    ref.invalidate(advisorRefreshProvider);
+    state = _loadFromHive();
+  }
+
+  Future<void> dismissReminder(int index) async {
+    final box = Hive.box<dynamic>('inspections');
+    final reminder = state[index];
+    final key = box.keys.firstWhere(
+      (k) {
+        final v = box.get(k);
+        return v is Map && v['type'] == 'reminder' && v['task'] == reminder.task && v['customerName'] == reminder.customerName;
+      },
+      orElse: () => '',
+    );
+    if (key != '') {
+      await box.delete(key);
+    }
+    ref.invalidate(advisorRefreshProvider);
+    state = _loadFromHive();
+  }
+}
+
+final advisorFollowupRemindersProvider = NotifierProvider<ReminderNotifier, List<FollowupReminderEntity>>(
+  ReminderNotifier.new,
 );
 
 final advisorInfoProvider = Provider<AdvisorInfo>((ref) {

@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/presentation/pages/advisor_home_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/scan_vehicle_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/vehicle_customer_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/choose_inspection_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/inspection_sheet_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/inspection_preview_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/repair_order_view.dart';
 import 'package:staff_app/features/supervisor/presentation/supervisor_dashboard_view.dart';
 import 'package:staff_app/features/technician/presentation/technician_dashboard_view.dart';
 
@@ -89,6 +96,51 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.technicianDashboard,
         name: AppRoutes.technicianDashboard,
         builder: (context, state) => const TechnicianDashboardView(),
+      ),
+      GoRoute(
+        path: AppRoutes.scanVehicle,
+        name: AppRoutes.scanVehicle,
+        builder: (context, state) => const ScanVehicleView(),
+      ),
+      GoRoute(
+        path: AppRoutes.vehicleCustomer,
+        name: AppRoutes.vehicleCustomer,
+        builder: (context, state) => const VehicleCustomerView(),
+      ),
+      GoRoute(
+        path: AppRoutes.chooseInspection,
+        name: AppRoutes.chooseInspection,
+        builder: (context, state) => ChooseInspectionView(
+          onSelect: () => context.pop(),
+          onSkip: () => context.pop(),
+          onBack: () => context.pop(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.inspectionSheet,
+        name: AppRoutes.inspectionSheet,
+        builder: (context, state) => InspectionSheetView(
+          callbacks: InspectionCallbacks(
+            onBack: () => context.pop(),
+            onSaveDraft: () {},
+            onPreview: () {},
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.inspectionPreview,
+        name: AppRoutes.inspectionPreview,
+        builder: (context, state) => InspectionPreviewView(onBack: () => context.pop()),
+      ),
+      GoRoute(
+        path: AppRoutes.repairOrder,
+        name: AppRoutes.repairOrder,
+        builder: (context, state) => RepairOrderView(onBack: () => context.pop()),
+      ),
+      GoRoute(
+        path: AppRoutes.repairOrderPreview,
+        name: AppRoutes.repairOrderPreview,
+        builder: (context, state) => RepairOrderPreviewView(onBack: () => context.pop()),
       ),
     ],
   );

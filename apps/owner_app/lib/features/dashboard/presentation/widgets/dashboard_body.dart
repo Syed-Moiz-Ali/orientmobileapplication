@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/messages_page.dart';
+import 'package:owner_app/features/dashboard/presentation/widgets/owner_activity_feed_tab.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/owner_app_bar.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/owner_bottom_nav.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/owner_dashboard_page.dart';
@@ -16,6 +17,7 @@ class DashboardBody extends ConsumerWidget {
     OwnerDashboardPage(),
     TopSalesPage(),
     MessagesPage(),
+    OwnerActivityFeedTab(),
   ];
 
   @override

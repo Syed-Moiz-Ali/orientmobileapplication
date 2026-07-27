@@ -9,11 +9,12 @@ import 'package:owner_app/features/dashboard/presentation/widgets/period_dropdow
 class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const OwnerAppBar({super.key});
 
-  static const _titles = ['Owner Dashboard', 'Top Sales', 'Messages'];
+  static const _titles = ['Owner Dashboard', 'Top Sales', 'Messages', 'Activity'];
   static const _subtitles = [
     'Bircon, Hifri',
     'Performance Breakdown by Category',
     'Internal Messaging',
+    'Workshop Activity Feed',
   ];
 
   @override

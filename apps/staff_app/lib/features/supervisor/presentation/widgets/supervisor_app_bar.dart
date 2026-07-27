@@ -8,11 +8,14 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedIndex;
   const SupervisorAppBar({super.key, required this.selectedIndex});
 
-  static const _titles = ['Dashboard', 'Assign Work', 'Work List'];
+  static const _titles = ['Dashboard', 'Assign Work', 'Work List', 'Staff', 'Schedule', 'Reports'];
   static const _subtitles = [
     'Overview & Analytics',
     'Assign Tasks to Technicians',
     'All Job Assignments',
+    'Team Overview',
+    'Today\'s Jobs',
+    'Job Statistics',
   ];
 
   @override

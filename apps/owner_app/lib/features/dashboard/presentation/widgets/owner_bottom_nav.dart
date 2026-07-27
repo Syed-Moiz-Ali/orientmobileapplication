@@ -15,11 +15,8 @@ class OwnerBottomNav extends StatelessWidget {
     const items = [
       (Icons.dashboard_rounded, Icons.dashboard_outlined, 'Dashboard'),
       (Icons.leaderboard_rounded, Icons.leaderboard_outlined, 'Top Sales'),
-      (
-        Icons.chat_bubble_rounded,
-        Icons.chat_bubble_outline_rounded,
-        'Messages',
-      ),
+      (Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'Messages'),
+      (Icons.notifications_rounded, Icons.notifications_outlined, 'Activity'),
     ];
 
     return Container(

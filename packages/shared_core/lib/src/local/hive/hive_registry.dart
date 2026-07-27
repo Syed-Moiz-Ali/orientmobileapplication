@@ -20,6 +20,7 @@ class HiveRegistry {
     await Hive.openBox<dynamic>('customer_bookings');
     await Hive.openBox<dynamic>('customer_breakdowns');
     await Hive.openBox<dynamic>('owner_messages');
+    await Hive.openBox<dynamic>('owner_activity');
     await Hive.openBox<SyncOperation>('sync_queue');
     await Hive.openBox<SyncOperation>('sync_failed');
     await Hive.openBox<int>('id_counters');
@@ -34,11 +35,12 @@ class HiveRegistry {
       final bookings = Hive.box<dynamic>('customer_bookings').length;
       final breakdowns = Hive.box<dynamic>('customer_breakdowns').length;
       final ownerMessages = Hive.box<dynamic>('owner_messages').length;
+      final ownerActivity = Hive.box<dynamic>('owner_activity').length;
       final queue = Hive.box<SyncOperation>('sync_queue').length;
       final failed = Hive.box<SyncOperation>('sync_failed').length;
       debugPrint('Hive initialized: inspections=$inspections, repairOrders=$repairOrders, '
           'technicianJobs=$techJobs, assignments=$assignments, bookings=$bookings, '
-          'breakdowns=$breakdowns, ownerMessages=$ownerMessages, queue=$queue, failed=$failed');
+          'breakdowns=$breakdowns, ownerMessages=$ownerMessages, ownerActivity=$ownerActivity, queue=$queue, failed=$failed');
     }
   }
 }

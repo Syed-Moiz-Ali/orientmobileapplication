@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Customer",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["run", "-t", "apps/customer_app/lib/main.dart"]
+    },
+    {
+      "label": "Run Owner",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["run", "-t", "apps/owner_app/lib/main.dart"]
+    },
+    {
+      "label": "Run Staff",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["run", "-t", "apps/staff_app/lib/main.dart"]
+    },
+    {
+      "label": "Run CRM",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["run", "-t", "apps/crm_app/lib/main.dart"]
+    }
+  ]
+}
