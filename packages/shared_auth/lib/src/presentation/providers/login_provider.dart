@@ -47,9 +47,8 @@ class LoginNotifier extends Notifier<LoginState> {
     final cleaned = phone.replaceAll(RegExp(r'[^\d]'), '');
     if (cleaned.isEmpty) return 'Phone number is required';
     if (!EnvironmentConfig.useMocks) {
-      if (cleaned.length != 10) return 'Phone number must be exactly 10 digits';
-      if (!cleaned.startsWith(RegExp(r'[5-9]'))) {
-        return 'Phone number must start with 5, 6, 7, 8, or 9';
+      if (cleaned.length < 8 || cleaned.length > 10) {
+        return 'Please enter a valid phone number';
       }
     }
     return null;
