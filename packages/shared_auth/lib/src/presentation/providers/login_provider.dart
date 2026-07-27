@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_core/src/errors/result.dart';
+import 'package:shared_core/src/local/helpers/environment_config.dart';
 
 class LoginState {
   final bool isLoading;
@@ -45,9 +46,11 @@ class LoginNotifier extends Notifier<LoginState> {
   String? _validatePhone(String phone) {
     final cleaned = phone.replaceAll(RegExp(r'[^\d]'), '');
     if (cleaned.isEmpty) return 'Phone number is required';
-    if (cleaned.length != 10) return 'Phone number must be exactly 10 digits';
-    if (!cleaned.startsWith(RegExp(r'[5-9]'))) {
-      return 'Phone number must start with 5, 6, 7, 8, or 9';
+    if (!EnvironmentConfig.useMocks) {
+      if (cleaned.length != 10) return 'Phone number must be exactly 10 digits';
+      if (!cleaned.startsWith(RegExp(r'[5-9]'))) {
+        return 'Phone number must start with 5, 6, 7, 8, or 9';
+      }
     }
     return null;
   }

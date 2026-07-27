@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   final logger = createLogger();
   AppErrorHandler.init(logger);
@@ -25,11 +27,12 @@ class StaffApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final brand = ref.watch(brandConfigProvider);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       routerConfig: router,
-      title: 'Staff Portal',
-      theme: AppTheme.light,
+      title: brand.appName,
+      theme: AppTheme.light(brand),
     );
   }
 }

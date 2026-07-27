@@ -14,35 +14,6 @@ class CustomerBookServiceTab extends ConsumerWidget {
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
 
-    if (state.bookingSubmitted) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle_rounded,
-              color: AppColors.success,
-              size: 64,
-            ),
-            SizedBox(height: AppDimensions.s16),
-            Text(
-              'Booking Submitted!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: AppDimensions.s8),
-            Text(
-              'We\'ll confirm your appointment shortly.',
-              style: TextStyle(fontSize: 14, color: AppColors.text3),
-            ),
-          ],
-        ),
-      );
-    }
-
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
         AppDimensions.s16,
@@ -263,12 +234,38 @@ class CustomerBookServiceTab extends ConsumerWidget {
               ),
             ),
           ),
+          if (state.bookingError != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppDimensions.s14),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, size: 16, color: AppColors.danger),
+                  const SizedBox(width: AppDimensions.s8),
+                  Expanded(
+                    child: Text(
+                      state.bookingError!,
+                      style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: AppDimensions.s24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                await notifier.submitBooking();
+                final ok = await notifier.submitBooking();
+                if (ok && context.mounted) {
+                  notifier.selectTab(0);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Booking submitted successfully!'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,

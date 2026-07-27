@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   final logger = createLogger();
   AppErrorHandler.init(logger);
@@ -13,7 +16,10 @@ void main() async {
 
   runApp(
     ProviderScope(
-      overrides: [loggerProvider.overrideWithValue(logger)],
+      overrides: [
+        loggerProvider.overrideWithValue(logger),
+        mockAuthDefaultRoleProvider.overrideWithValue(UserRole.customer),
+      ],
       child: const CustomerApp(),
     ),
   );
@@ -25,11 +31,12 @@ class CustomerApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final brand = ref.watch(brandConfigProvider);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       routerConfig: router,
-      title: 'Customer Portal',
-      theme: AppTheme.light,
+      title: brand.appName,
+      theme: AppTheme.light(brand),
     );
   }
 }

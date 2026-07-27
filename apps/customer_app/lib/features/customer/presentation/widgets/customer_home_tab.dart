@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:go_router/go_router.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_service_card.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_stat_card.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicle_card.dart';
+import 'package:customer_app/core/router/app_router.dart';
 
 const Color _navy = AppColors.darkNavy;
 const Color _cyanLight = AppColors.cyanLight;
@@ -67,6 +69,12 @@ class CustomerHomeTab extends ConsumerWidget {
                   const SizedBox(height: AppDimensions.s12),
                   _RecentBookingsList(
                     bookings: ref.watch(customerBookingsProvider),
+                  ),
+                  const SizedBox(height: AppDimensions.s28),
+                  _sectionLabel('Breakdown History'),
+                  const SizedBox(height: AppDimensions.s12),
+                  _RecentBreakdownsList(
+                    breakdowns: ref.watch(customerBreakdownsProvider),
                   ),
                 ],
               ),
@@ -243,7 +251,7 @@ class _QuickActionsGrid extends StatelessWidget {
         'Book\nAppointment',
         AppColors.accent,
         _cyanLight,
-        () => notifier.selectTab(2),
+        () => context.push(AppRoutes.customerBookService),
       ),
       _QAction(
         Icons.directions_car_rounded,
@@ -264,7 +272,7 @@ class _QuickActionsGrid extends StatelessWidget {
         'Breakdown\nHelp',
         AppColors.danger,
         AppColors.dangerBg,
-        () {},
+        () => context.push(AppRoutes.customerBreakdownHelp),
       ),
     ];
 
@@ -449,6 +457,136 @@ class _RecentBookingsList extends StatelessWidget {
                   ),
                   child: Text(
                     b.statusLabel,
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _RecentBreakdownsList extends StatelessWidget {
+  final List<Map<String, dynamic>> breakdowns;
+  const _RecentBreakdownsList({required this.breakdowns});
+
+  (Color, Color) _statusColors(String s) {
+    switch (s) {
+      case 'resolved':
+        return (AppColors.successBg, AppColors.success);
+      case 'inProgress':
+        return (AppColors.infoBg, AppColors.info);
+      default:
+        return (AppColors.warningBg, AppColors.warning);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (breakdowns.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r14)),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Center(
+          child: Text(
+            'No breakdown requests yet',
+            style: TextStyle(fontSize: 13, color: AppColors.text3),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r14)),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: breakdowns.take(3).toList().asMap().entries.map((e) {
+          final b = e.value;
+          final isLast = e.key == breakdowns.length - 1 || e.key == 2;
+          final status = b['status'] as String? ?? 'pending';
+          final (bg, fg) = _statusColors(status);
+          final statusLabel = status == 'resolved' ? 'Resolved' : status == 'inProgress' ? 'In Progress' : 'Pending';
+
+          return Container(
+            padding: EdgeInsets.fromLTRB(
+              0,
+              e.key == 0 ? 0 : 12,
+              0,
+              isLast ? 0 : 12,
+            ),
+            decoration: BoxDecoration(
+              border: isLast
+                  ? null
+                  : const Border(
+                      bottom: BorderSide(color: AppColors.border, width: 0.8),
+                    ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.dangerBg,
+                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+                  ),
+                  child: const Icon(
+                    Icons.emergency_rounded,
+                    color: AppColors.danger,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        b['issue'] as String? ?? 'Breakdown',
+                        style: AppTextStyles.rajdhaniLabel(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.s4),
+                      Text(
+                        '${b['vehicleName'] as String? ?? ''}  \u00b7  ${b['location'] as String? ?? ''}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.text3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s10,
+                    vertical: AppDimensions.s4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(AppDimensions.r20),
+                  ),
+                  child: Text(
+                    statusLabel,
                     style: TextStyle(
                       color: fg,
                       fontSize: 10,

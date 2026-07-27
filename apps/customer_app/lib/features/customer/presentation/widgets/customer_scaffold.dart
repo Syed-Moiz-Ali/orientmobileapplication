@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_app_bar.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_book_service_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_bookings_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_service_status_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicles_tab.dart';
 
@@ -20,7 +20,7 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
   static const _pages = <Widget>[
     CustomerHomeTab(),
     CustomerServiceStatusTab(),
-    CustomerBookServiceTab(),
+    CustomerBookingsTab(),
     CustomerVehiclesTab(),
   ];
 
@@ -57,7 +57,7 @@ class _BottomNav extends StatelessWidget {
     const items = [
       (Icons.home_rounded, Icons.home_outlined, 'Home'),
       (Icons.track_changes_rounded, Icons.track_changes_outlined, 'Status'),
-      (Icons.calendar_month_rounded, Icons.calendar_month_outlined, 'Book'),
+      (Icons.calendar_month_rounded, Icons.calendar_month_outlined, 'Bookings'),
       (Icons.directions_car_rounded, Icons.directions_car_outlined, 'Vehicles'),
     ];
 

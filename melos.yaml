@@ -1,4 +1,74 @@
 name: orient_mobile
+version: 1.0.0
 packages:
   - packages/*
   - apps/*
+
+scripts:
+  analyze:
+    run: dart analyze
+    description: Analyze all packages and apps
+
+  analyze:staff:
+    run: dart analyze
+    path: apps/staff_app
+    description: Analyze staff app
+
+  analyze:owner:
+    run: dart analyze
+    path: apps/owner_app
+    description: Analyze owner app
+
+  analyze:customer:
+    run: dart analyze
+    path: apps/customer_app
+    description: Analyze customer app
+
+  analyze:crm:
+    run: dart analyze
+    path: apps/crm_app
+    description: Analyze CRM app
+
+  get:
+    run: flutter pub get
+    description: Get dependencies for all packages and apps
+
+  build:staff:
+    run: flutter build apk --release
+    path: apps/staff_app
+    description: Build staff app release APK
+
+  build:owner:
+    run: flutter build apk --release
+    path: apps/owner_app
+    description: Build owner app release APK
+
+  build:customer:
+    run: flutter build apk --release
+    path: apps/customer_app
+    description: Build customer app release APK
+
+  build:crm:
+    run: flutter build apk --release
+    path: apps/crm_app
+    description: Build CRM app release APK
+
+  build:apk:all:
+    run: |
+      melos run build:staff
+      melos run build:owner
+      melos run build:customer
+      melos run build:crm
+    description: Build all 4 apps release APK
+
+  test:
+    run: flutter test
+    description: Run tests for all packages and apps
+
+  clean:
+    run: flutter clean
+    description: Clean all packages and apps
+
+  format:
+    run: dart format .
+    description: Format all Dart code

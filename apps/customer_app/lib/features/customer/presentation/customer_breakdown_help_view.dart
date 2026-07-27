@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
 class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
   const CustomerBreakdownHelpView({super.key});
@@ -15,7 +17,7 @@ class _CustomerBreakdownHelpViewState
   CustomerVehicleEntity? _selectedVehicle;
   String? _selectedIssue;
   final _locationCtrl = TextEditingController();
-  bool _requestSent = false;
+  bool _isSaving = false;
 
   static const _issues = [
     ('\u{1f50b}', 'Battery Dead'),
@@ -344,45 +346,30 @@ class _CustomerBreakdownHelpViewState
 
                           SizedBox(
                             width: double.infinity,
-                            child: _requestSent
-                                ? Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: AppDimensions.s14,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.successBg,
-                                      borderRadius: BorderRadius.circular(
-                                        AppDimensions.r10,
-                                      ),
-                                      border: Border.all(
-                                        color: AppColors.successBorder,
-                                      ),
-                                    ),
-                                    child: const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.check_circle_rounded,
-                                          color: AppColors.success,
-                                          size: 18,
-                                        ),
-                                        SizedBox(width: AppDimensions.s8),
-                                        Text(
-                                          'Help is on the way!',
-                                          style: TextStyle(
-                                            color: AppColors.success,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : ElevatedButton.icon(
-                                    onPressed: () =>
-                                        setState(() => _requestSent = true),
-                                    icon: const Icon(
+                            child: ElevatedButton.icon(
+                                onPressed: _isSaving
+                                    ? null
+                                    : () async {
+                                        setState(() => _isSaving = true);
+                                        final id = await IdGenerator.nextId('BD');
+                                        final payload = {
+                                          'id': id,
+                                          'issue': _selectedIssue ?? '',
+                                          'vehicleId': _selectedVehicle?.id ?? '',
+                                          'vehicleName': _selectedVehicle?.displayName ?? '',
+                                          'vehiclePlate': _selectedVehicle?.plateNumber ?? '',
+                                          'location': _locationCtrl.text,
+                                          'status': 'pending',
+                                          'createdAt': DateTime.now().toIso8601String(),
+                                        };
+                                        await GenericLocalDataSource(
+                                          Hive.box<dynamic>('customer_breakdowns'),
+                                        ).save(id, payload);
+                                        ref.invalidate(customerBreakdownsProvider);
+                                        if (!context.mounted) return;
+                                        Navigator.pop(context);
+                                      },
+                                icon: const Icon(
                                       Icons.warning_amber_outlined,
                                       size: 18,
                                     ),

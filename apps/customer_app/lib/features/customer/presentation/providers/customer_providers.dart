@@ -15,14 +15,14 @@ final customerBookingsProvider = Provider<List<CustomerBookingEntity>>((ref) {
     final saved = box.values
         .whereType<Map>()
         .map((m) => Map<String, dynamic>.from(m))
-        .where((v) => v['serviceType'] != null)
+        .where((v) => v['serviceType'] != null || v['serviceName'] != null)
         .map(
           (v) => CustomerBookingEntity(
-            service: v['serviceType'] as String? ?? '',
-            vehicleName: (v['vehicle'] as String?) ?? '',
-            plateNumber: v['plateNumber'] as String? ?? '',
-            date: v['bookingDate'] as String? ?? '',
-            time: '',
+            service: (v['serviceType'] as String?) ?? (v['serviceName'] as String?) ?? '',
+            vehicleName: (v['vehicleName'] as String?) ?? (v['vehicle'] as String?) ?? '',
+            plateNumber: (v['plateNumber'] as String?) ?? (v['vehiclePlate'] as String?) ?? '',
+            date: (v['bookingDate'] as String?) ?? (v['date'] as String?) ?? '',
+            time: v['time'] as String? ?? '',
             status: BookingStatus.values.firstWhere(
               (e) => e.name == v['status'],
               orElse: () => BookingStatus.pending,
@@ -37,6 +37,20 @@ final customerBookingsProvider = Provider<List<CustomerBookingEntity>>((ref) {
   }
 });
 
+final customerBreakdownsProvider = Provider<List<Map<String, dynamic>>>((ref) {
+  try {
+    final box = Hive.box<dynamic>('customer_breakdowns');
+    return box.values
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList()
+      ..sort((a, b) => (b['createdAt'] as String? ?? '').compareTo(a['createdAt'] as String? ?? ''));
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load breakdowns from Hive', error: e, stackTrace: st);
+    return [];
+  }
+});
+
 class CustomerDashboardState {
   final int selectedIndex;
   final bool isLoading;
@@ -44,7 +58,7 @@ class CustomerDashboardState {
   final String selectedServiceType;
   final DateTime? bookingDate;
   final String bookingNotes;
-  final bool bookingSubmitted;
+  final String? bookingError;
   final List<CustomerVehicleEntity> vehicles;
   final List<CustomerNotificationEntity> notifications;
 
@@ -55,7 +69,7 @@ class CustomerDashboardState {
     required this.selectedServiceType,
     this.bookingDate,
     required this.bookingNotes,
-    required this.bookingSubmitted,
+    this.bookingError,
     required this.vehicles,
     required this.notifications,
   });
@@ -67,7 +81,7 @@ class CustomerDashboardState {
     String? selectedServiceType,
     DateTime? bookingDate,
     String? bookingNotes,
-    bool? bookingSubmitted,
+    String? bookingError,
     List<CustomerVehicleEntity>? vehicles,
     List<CustomerNotificationEntity>? notifications,
   }) {
@@ -78,7 +92,7 @@ class CustomerDashboardState {
       selectedServiceType: selectedServiceType ?? this.selectedServiceType,
       bookingDate: bookingDate ?? this.bookingDate,
       bookingNotes: bookingNotes ?? this.bookingNotes,
-      bookingSubmitted: bookingSubmitted ?? this.bookingSubmitted,
+      bookingError: bookingError,
       vehicles: vehicles ?? this.vehicles,
       notifications: notifications ?? this.notifications,
     );
@@ -118,41 +132,14 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
       selectedVehicle: '',
       selectedServiceType: '',
       bookingNotes: '',
-      bookingSubmitted: false,
+      bookingError: null,
       vehicles: savedVehicles,
       notifications: CustomerNotificationEntity.mock,
     );
   }
 
   List<CustomerVehicleEntity> _loadVehiclesFromHive() {
-    try {
-      final box = Hive.box<dynamic>('customer_bookings');
-      final saved = box.values
-          .whereType<Map>()
-          .map((m) => Map<String, dynamic>.from(m))
-          .where((v) => v['vehicle'] != null)
-          .map(
-            (v) => CustomerVehicleEntity(
-              id: v['id'] as String? ?? '',
-              brand: (v['vehicle'] as String?)?.split(' ').first ?? '',
-              model:
-                  (v['vehicle'] as String?)?.split(' ').skip(1).join(' ') ?? '',
-              plateNumber: v['plateNumber'] as String? ?? '',
-              vin: '',
-              color: '',
-              year: DateTime.now().year,
-              mileage: '',
-              lastService: '',
-              nextDue: '',
-              healthScore: 50,
-            ),
-          )
-          .toList();
-      return saved.isNotEmpty ? saved : List.from(CustomerVehicleEntity.mock);
-    } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to load vehicles from Hive', error: e, stackTrace: st);
-      return List.from(CustomerVehicleEntity.mock);
-    }
+    return List.from(CustomerVehicleEntity.mock);
   }
 
   void selectTab(int index) {
@@ -187,33 +174,43 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
   }
 
   void setSelectedVehicle(String value) {
-    state = state.copyWith(selectedVehicle: value);
+    state = state.copyWith(selectedVehicle: value, bookingError: null);
   }
 
   void setSelectedServiceType(String value) {
-    state = state.copyWith(selectedServiceType: value);
+    state = state.copyWith(selectedServiceType: value, bookingError: null);
   }
 
   void setBookingDate(DateTime date) {
-    state = state.copyWith(bookingDate: date);
+    state = state.copyWith(bookingDate: date, bookingError: null);
   }
 
   void setBookingNotes(String value) {
     state = state.copyWith(bookingNotes: value);
   }
 
-  Future<void> submitBooking() async {
-    if (state.selectedVehicle.isEmpty ||
-        state.selectedServiceType.isEmpty ||
-        state.bookingDate == null) {
-      return;
+  Future<bool> submitBooking() async {
+    if (state.selectedVehicle.isEmpty) {
+      state = state.copyWith(bookingError: 'Please select a vehicle');
+      return false;
+    }
+    if (state.selectedServiceType.isEmpty) {
+      state = state.copyWith(bookingError: 'Please select a service type');
+      return false;
+    }
+    if (state.bookingDate == null) {
+      state = state.copyWith(bookingError: 'Please select a preferred date');
+      return false;
     }
 
     final local = GenericLocalDataSource(
       Hive.box<dynamic>('customer_bookings'),
     );
+    final vehicle = state.vehicles.where((v) => v.id == state.selectedVehicle).firstOrNull;
     final payload = {
       'vehicle': state.selectedVehicle,
+      'vehicleName': vehicle?.displayName ?? '',
+      'plateNumber': vehicle?.plateNumber ?? '',
       'serviceType': state.selectedServiceType,
       'bookingDate': state.bookingDate!.toIso8601String(),
       'notes': state.bookingNotes,
@@ -233,12 +230,16 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
     );
     await queue.enqueue(op);
 
+    ref.invalidate(customerBookingsProvider);
+
     state = state.copyWith(
-      bookingSubmitted: true,
       selectedVehicle: '',
       selectedServiceType: '',
       bookingNotes: '',
+      bookingDate: null,
+      bookingError: null,
     );
+    return true;
   }
 
   List<ServiceStep> get serviceSteps => const [

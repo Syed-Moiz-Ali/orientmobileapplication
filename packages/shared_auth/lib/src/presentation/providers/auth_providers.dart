@@ -9,10 +9,14 @@ import 'package:shared_auth/src/domain/usecases/authenticate.dart';
 import 'package:shared_auth/src/domain/usecases/get_role_configs.dart';
 import 'package:shared_auth/src/network/dio_client_provider.dart';
 import 'package:shared_core/src/local/helpers/environment_config.dart';
+import 'package:shared_models/src/user_role.dart';
+
+final mockAuthDefaultRoleProvider = Provider<UserRole?>((ref) => null);
 
 final authDatasourceProvider = Provider<AuthDatasource>((ref) {
   if (EnvironmentConfig.useMocks) {
-    return MockAuthDatasource();
+    final roleOverride = ref.read(mockAuthDefaultRoleProvider);
+    return MockAuthDatasource(defaultRole: roleOverride);
   }
   return AuthRemoteDatasource(ref.read(dioClientProvider));
 });

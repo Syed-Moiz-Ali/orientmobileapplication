@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_core/src/branding/brand_config.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
-class GradientBanner extends StatelessWidget {
+class GradientBanner extends ConsumerWidget {
   final String title;
   final String greeting;
   final String? liveLabel;
   final Color? liveDotColor;
   final List<GradientBannerPill> pills;
   final IconData? icon;
-  final LinearGradient gradient;
+  final LinearGradient? gradient;
 
   const GradientBanner({
     super.key,
@@ -19,20 +20,23 @@ class GradientBanner extends StatelessWidget {
     this.liveDotColor,
     this.pills = const [],
     this.icon,
-    this.gradient = const LinearGradient(
-      colors: [AppColors.navy, AppColors.accent],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
+    this.gradient,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final brand = ref.watch(brandConfigProvider);
+    final effectiveGradient = gradient ?? LinearGradient(
+      colors: [brand.accentColor, brand.iconColor],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 26),
       decoration: BoxDecoration(
-        gradient: gradient,
+        gradient: effectiveGradient,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
       child: Row(
@@ -42,28 +46,29 @@ class GradientBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.only(right: 6, top: 1),
-                      decoration: BoxDecoration(
-                        color: liveDotColor ?? AppColors.cyan,
-                        shape: BoxShape.circle,
+                if (liveLabel != null)
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.only(right: 6, top: 1),
+                        decoration: BoxDecoration(
+                          color: liveDotColor ?? brand.buttonColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    Text(
-                      liveLabel ?? '',
-                      style: TextStyle(
-                        color: liveDotColor ?? AppColors.cyan,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
+                      Text(
+                        liveLabel!,
+                        style: TextStyle(
+                          color: liveDotColor ?? brand.buttonColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 const SizedBox(height: 6),
                 Text(
                   greeting,

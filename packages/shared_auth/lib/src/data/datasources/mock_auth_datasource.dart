@@ -4,13 +4,13 @@ import 'package:shared_core/src/errors/result.dart';
 import 'package:shared_models/src/user_role.dart';
 
 class MockAuthDatasource implements AuthDatasource {
+  final UserRole? defaultRole;
+
+  MockAuthDatasource({this.defaultRole});
+
   @override
   Future<Result<void>> sendOtp(String phone) async {
     await Future.delayed(const Duration(seconds: 1));
-
-    if (phone.length < 10) {
-      return Failure(ValidationException('Invalid phone number'));
-    }
     return const Success(null);
   }
 
@@ -22,7 +22,7 @@ class MockAuthDatasource implements AuthDatasource {
       return Failure(ValidationException('Invalid OTP'));
     }
 
-    final role = _inferRole(phone);
+    final role = _resolveRole(phone);
     return Success(AuthResult(
       role: role,
       token: 'mock_token_${role.name}_${DateTime.now().millisecondsSinceEpoch}',
@@ -34,30 +34,23 @@ class MockAuthDatasource implements AuthDatasource {
   Future<Result<AuthResult>> refreshToken(String refreshToken) async {
     await Future.delayed(const Duration(milliseconds: 500));
     return Success(AuthResult(
-      role: UserRole.owner,
+      role: defaultRole ?? UserRole.advisor,
       token: 'refreshed_mock_token',
       refreshToken: 'refreshed_mock_refresh',
     ));
   }
 
-  UserRole _inferRole(String phone) {
-    final last4 = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    if (last4.length < 4) return UserRole.advisor;
+  UserRole _resolveRole(String phone) {
+    if (defaultRole != null) return defaultRole!;
 
-    final suffix = last4.substring(last4.length - 4);
-    switch (suffix) {
-      case '0001':
-        return UserRole.owner;
-      case '0002':
+    final cleaned = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    switch (cleaned) {
+      case '001':
         return UserRole.advisor;
-      case '0003':
-        return UserRole.technician;
-      case '0004':
-        return UserRole.customer;
-      case '0005':
+      case '002':
         return UserRole.supervisor;
-      case '0006':
-        return UserRole.crmDashboard;
+      case '003':
+        return UserRole.technician;
       default:
         return UserRole.advisor;
     }

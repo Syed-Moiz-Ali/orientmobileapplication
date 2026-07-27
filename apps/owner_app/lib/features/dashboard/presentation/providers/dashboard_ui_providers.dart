@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:owner_app/features/dashboard/data/datasources/dashboard_mock_datasource.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
+import 'package:shared_core/shared_core.dart';
 
 final dashboardDataSourceProvider = Provider<DashboardDataSource>((ref) => DashboardMockDataSource());
 
@@ -48,7 +50,27 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
   @override
   DashboardUiState build() {
     _dataSource = ref.read(dashboardDataSourceProvider);
-    return const DashboardUiState();
+    final saved = _loadMessages();
+    return DashboardUiState(sentMessages: saved);
+  }
+
+  List<Message> _loadMessages() {
+    try {
+      final box = Hive.box<dynamic>('owner_messages');
+      return box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .map((m) => Message(
+                id: m['id'] as String? ?? '',
+                recipient: m['recipient'] as String? ?? '',
+                message: m['message'] as String? ?? '',
+                time: m['time'] as String? ?? '',
+              ))
+          .toList()
+        ..sort((a, b) => b.id.compareTo(a.id));
+    } catch (_) {
+      return [];
+    }
   }
 
   List<OwnerKpi> get kpis => _dataSource.kpis;
@@ -83,6 +105,13 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
       message: state.messageText.trim(),
       time: '$hour:$min $ampm',
     );
+    final payload = {
+      'id': msg.id,
+      'recipient': msg.recipient,
+      'message': msg.message,
+      'time': msg.time,
+    };
+    GenericLocalDataSource(Hive.box<dynamic>('owner_messages')).save(msg.id, payload);
     state = state.copyWith(
       sentMessages: [msg, ...state.sentMessages],
       selectedUser: '',

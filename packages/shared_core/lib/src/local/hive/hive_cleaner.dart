@@ -8,6 +8,8 @@ class HiveCleaner {
     await Hive.box<dynamic>('technician_jobs').clear();
     await Hive.box<dynamic>('supervisor_assignments').clear();
     await Hive.box<dynamic>('customer_bookings').clear();
+    await Hive.box<dynamic>('customer_breakdowns').clear();
+    await Hive.box<dynamic>('owner_messages').clear();
     await Hive.box<SyncOperation>('sync_queue').clear();
     await Hive.box<SyncOperation>('sync_failed').clear();
   }
