@@ -60,40 +60,15 @@ final advisorRecentJobCardsProvider = Provider<List<JobCardEntity>>((ref) {
       .where((m) => m['type'] == 'vehicle_customer')
       .toList();
   if (filtered.isEmpty) {
-    return const [
-      JobCardEntity(
-        id: 'JC-2024-089',
-        customerName: 'Ahmed Hassan',
-        vehicleInfo: 'Toyota Camry',
-        time: '09:15 AM',
-        createdDate: '12/07/2024 09:15',
-        lastUpdated: '12/07/2024 09:15',
-        status: JobCardStatus.inProgress,
-      ),
-      JobCardEntity(
-        id: 'JC-2024-088',
-        customerName: 'Fatima Ali',
-        vehicleInfo: 'Honda Accord',
-        time: '08:45 AM',
-        createdDate: '12/07/2024 08:45',
-        lastUpdated: '12/07/2024 08:45',
-        status: JobCardStatus.pendingApproval,
-      ),
-      JobCardEntity(
-        id: 'JC-2024-087',
-        customerName: 'Khalid Rashid',
-        vehicleInfo: 'Nissan Patrol',
-        time: '08:00 AM',
-        createdDate: '12/07/2024 08:00',
-        lastUpdated: '12/07/2024 08:00',
-        status: JobCardStatus.qualityCheck,
-      ),
-    ];
+    return const [];
   }
   final parsed = filtered.map((m) {
     final cd = m['createdDate'] as String? ?? '';
+    final id = m['id'] as String? ?? '';
+    final vin = m['vin'] as String? ?? '';
+    final regNo = m['registrationNumber'] as String? ?? '';
     return JobCardEntity(
-      id: m['vin'] as String? ?? '',
+      id: id.isNotEmpty ? id : (vin.isNotEmpty ? vin : regNo),
       customerName: m['customerName'] as String? ?? '',
       vehicleInfo: '${m['make'] ?? ''} ${m['model'] ?? ''}',
       time: cd.isNotEmpty && cd.length >= 16 ? cd.substring(11, 16) : '',
@@ -161,22 +136,7 @@ final advisorPendingApprovalsProvider = Provider<List<PendingApprovalEntity>>((
         )
         .toList();
     if (approvals.isEmpty) {
-      return const [
-        PendingApprovalEntity(
-          estimateId: 'EST-2024-089',
-          customerName: 'Ahmed Hassan',
-          vehicleId: 'D-12345',
-          amount: 1250,
-          timeAgo: '10 mins ago',
-        ),
-        PendingApprovalEntity(
-          estimateId: 'EST-2024-088',
-          customerName: 'Sara Mohammed',
-          vehicleId: 'D-44321',
-          amount: 875,
-          timeAgo: '25 mins ago',
-        ),
-      ];
+      return const [];
     }
     return approvals;
   } catch (e, st) {
@@ -253,11 +213,23 @@ final advisorFollowupRemindersProvider = NotifierProvider<ReminderNotifier, List
 );
 
 final advisorInfoProvider = Provider<AdvisorInfo>((ref) {
+  try {
+    final box = Hive.box<dynamic>('inspections');
+    final profile = box.get('advisor_profile');
+    if (profile is Map) {
+      return AdvisorInfo(
+        name: (profile['name'] ?? 'Advisor').toString(),
+        id: (profile['id'] ?? 'ADV001').toString(),
+        branch: (profile['branch'] ?? 'Main Branch').toString(),
+        shift: (profile['shift'] ?? '').toString(),
+      );
+    }
+  } catch (_) {}
   return const AdvisorInfo(
-    name: 'Ali Rahman',
+    name: 'Advisor',
     id: 'ADV001',
-    branch: 'Main Branch - Dubai',
-    shift: 'Morning (8:00 AM - 5:00 PM)',
+    branch: 'Main Branch',
+    shift: '',
   );
 });
 

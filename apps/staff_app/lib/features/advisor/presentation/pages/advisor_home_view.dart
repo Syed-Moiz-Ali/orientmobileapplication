@@ -347,7 +347,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
 
   Future<void> _persistApproval(PendingApprovalEntity pa, String action) async {
     final local = GenericLocalDataSource(
-      Hive.box<Map<String, dynamic>>('inspections'),
+      Hive.box<dynamic>('inspections'),
     );
     await local.save('approval_${pa.estimateId}', {
       'estimateId': pa.estimateId,

@@ -41,6 +41,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera is needed to scan vehicle VIN barcodes and QR codes</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone is needed to record audio notes during inspections</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo library is needed to attach photos to inspection reports</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Photos need to be saved for inspection records</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

@@ -1,12 +1,20 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:video_player/video_player.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/services/audio_recorder_service.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
+import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
 import 'inspection_provider.dart';
+import 'inspection_preview_view.dart';
 
 class InspectionSheetView extends ConsumerWidget {
   final InspectionCallbacks callbacks;
@@ -24,7 +32,7 @@ class InspectionSheetView extends ConsumerWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: callbacks.onBack,
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -561,7 +569,7 @@ class _ItemRow extends ConsumerWidget {
             children: [
               _mediaBtn(
                 Icons.camera_alt_outlined,
-                'Photo',
+                'Camera',
                 hasPhotos,
                 AppColors.primary,
                 () => _pickPhoto(context, notifier, itemId, fromCamera: true),
@@ -587,7 +595,7 @@ class _ItemRow extends ConsumerWidget {
                 Icons.mic_outlined,
                 'Audio',
                 hasAudio,
-                AppColors.primary,
+                AppColors.warning,
                 () => _showAudioDialog(context, state, notifier, itemId),
               ),
               const SizedBox(width: 4),
@@ -595,7 +603,7 @@ class _ItemRow extends ConsumerWidget {
                 Icons.edit_outlined,
                 'Note',
                 hasNote,
-                AppColors.primary,
+                AppColors.info,
                 () => _showNoteDialog(
                   context,
                   notifier,
@@ -614,13 +622,18 @@ class _ItemRow extends ConsumerWidget {
                     color: AppColors.primaryBg,
                     borderRadius: BorderRadius.circular(AppDimensions.rPill),
                   ),
-                  child: Text(
-                    'Media added',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${(itemMedia?.photoPaths.length ?? 0) + (itemMedia?.videoPaths.length ?? 0) + (itemMedia?.audioPath.isNotEmpty == true ? 1 : 0) + (itemMedia?.note.isNotEmpty == true ? 1 : 0)} files',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -690,88 +703,405 @@ class _ItemRow extends ConsumerWidget {
               ],
             ],
           ),
-          if (hasPhotos && itemMedia != null) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 56,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: itemMedia.photoPaths.length,
-                itemBuilder: (_, i) => Stack(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      margin: const EdgeInsets.only(right: 6),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppDimensions.r8),
-                        border: Border.all(color: const Color(0xFFE4E7EE)),
+          if (hasMedia && itemMedia != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppDimensions.r10),
+                border: Border.all(color: const Color(0xFFE8ECF0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.attachment_rounded,
+                          size: 14, color: AppColors.text2),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Attachments',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.text2,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppDimensions.r7),
-                        child: Image.file(
-                          File(itemMedia.photoPaths[i]),
-                          fit: BoxFit.cover,
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => _confirmClearAllMedia(
+                            context, notifier, itemId, itemMedia),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.dangerBg,
+                            borderRadius: BorderRadius.circular(
+                                AppDimensions.rPill),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.delete_sweep_outlined,
+                                  size: 12, color: AppColors.danger),
+                              SizedBox(width: 3),
+                              Text(
+                                'Clear all',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.danger,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // ── Photos ──────────────────────────────────────────
+                  if (itemMedia.photoPaths.isNotEmpty) ...[
+                    _mediaLabel(Icons.image_outlined, 'Photos',
+                        itemMedia.photoPaths.length),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 72,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: itemMedia.photoPaths.length,
+                        itemBuilder: (_, i) => GestureDetector(
+                          onTap: () => _showFullScreenMedia(
+                              context, itemMedia.photoPaths[i], isVideo: false),
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 72,
+                                height: 72,
+                                margin: const EdgeInsets.only(right: 8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(
+                                      AppDimensions.r8),
+                                  border: Border.all(
+                                      color: const Color(0xFFE4E7EE)),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                      AppDimensions.r7),
+                                  child: Image.file(
+                                    File(itemMedia.photoPaths[i]),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        const Icon(Icons.broken_image,
+                                            color: AppColors.text3, size: 24),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 3,
+                                right: 11,
+                                child: GestureDetector(
+                                  onTap: () =>
+                                      notifier.removePhoto(itemId, i),
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    Positioned(
-                      top: 2,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () => notifier.removePhoto(itemId, i),
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: const BoxDecoration(
-                            color: AppColors.danger,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 10,
-                          ),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // ── Videos ──────────────────────────────────────────
+                  if (itemMedia.videoPaths.isNotEmpty) ...[
+                    _mediaLabel(Icons.videocam_outlined, 'Videos',
+                        itemMedia.videoPaths.length),
+                    const SizedBox(height: 6),
+                    ...itemMedia.videoPaths.asMap().entries.map((e) {
+                      final vi = e.key;
+                      final vp = e.value;
+                      final fileName = vp.split('/').last;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _showFullScreenMedia(
+                                  context, vp, isVideo: true),
+                              child: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryBg,
+                                  borderRadius: BorderRadius.circular(
+                                      AppDimensions.r8),
+                                  border: Border.all(
+                                      color: const Color(0xFFE4E7EE)),
+                                ),
+                                child: const Icon(Icons.play_circle_filled,
+                                    color: AppColors.primary, size: 28),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    fileName,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  GestureDetector(
+                                    onTap: () => _showFullScreenMedia(
+                                        context, vp, isVideo: true),
+                                    child: const Text(
+                                      'Tap to play',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => notifier.removeVideo(itemId, vi),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: AppColors.dangerBg,
+                                  borderRadius: BorderRadius.circular(
+                                      AppDimensions.r8),
+                                ),
+                                child: const Icon(Icons.delete_outline,
+                                    color: AppColors.danger, size: 16),
+                              ),
+                            ),
+                          ],
                         ),
+                      );
+                    }),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // ── Audio ───────────────────────────────────────────
+                  if (itemMedia.audioPath.isNotEmpty) ...[
+                    _mediaLabel(
+                        Icons.audiotrack, 'Audio Note', null),
+                    const SizedBox(height: 4),
+                    _AudioPlayerRow(audioPath: itemMedia.audioPath),
+                    GestureDetector(
+                      onTap: () {
+                        notifier.setAudio(itemId, '');
+                        try {
+                          File(itemMedia.audioPath).deleteSync();
+                        } catch (_) {}
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete_outline,
+                                size: 14, color: AppColors.text3),
+                            SizedBox(width: 4),
+                            Text(
+                              'Remove audio',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.text3,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // ── Note ────────────────────────────────────────────
+                  if (itemMedia.note.isNotEmpty) ...[
+                    _mediaLabel(Icons.notes_rounded, 'Note', null),
+                    const SizedBox(height: 4),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F7FA),
+                        borderRadius:
+                            BorderRadius.circular(AppDimensions.r8),
+                        border: Border.all(color: const Color(0xFFE4E7EE)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              itemMedia.note,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.text2,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => _showNoteDialog(
+                              context,
+                              notifier,
+                              itemId,
+                              itemMedia.note,
+                            ),
+                            child: const Icon(Icons.edit_outlined,
+                                size: 16, color: AppColors.text3),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => notifier.setNote(itemId, ''),
+                            child: const Icon(Icons.delete_outline,
+                                size: 16, color: AppColors.danger),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
-              ),
-            ),
-          ],
-          if (hasNote && itemMedia != null) ...[
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F7FA),
-                borderRadius: BorderRadius.circular(AppDimensions.r8),
-                border: Border.all(color: const Color(0xFFE4E7EE)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.notes_rounded,
-                    size: 14,
-                    color: AppColors.text3,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      itemMedia.note,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.text2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
                 ],
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _mediaLabel(IconData icon, String label, int? count) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: AppColors.text2),
+        const SizedBox(width: 6),
+        Text(
+          count != null ? '$label ($count)' : label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.text2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showFullScreenMedia(BuildContext context, String path,
+      {required bool isVideo}) {
+    if (isVideo) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => _VideoPlayerPage(filePath: path),
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Colors.black,
+              iconTheme: const IconThemeData(color: Colors.white),
+              elevation: 0,
+            ),
+            body: Center(
+              child: InteractiveViewer(
+                child: Image.file(File(path), fit: BoxFit.contain),
+              ),
+            ),
+          ),
+        ),
+    );
+    }
+  }
+
+
+  void _confirmClearAllMedia(BuildContext context, InspectionNotifier notifier,
+      String itemId, ItemMedia media) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.r16),
+        ),
+        title: const Text(
+          'Clear all attachments?',
+          style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary),
+        ),
+        content: const Text(
+          'This will remove all photos, videos, audio and notes for this item.',
+          style: TextStyle(fontSize: 13, color: AppColors.text2, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel',
+                style: TextStyle(
+                    color: AppColors.text3,
+                    fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.r10),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              for (final p in media.photoPaths) {
+                try { File(p).deleteSync(); } catch (_) {}
+              }
+              for (final v in media.videoPaths) {
+                try { File(v).deleteSync(); } catch (_) {}
+              }
+              if (media.audioPath.isNotEmpty) {
+                try { File(media.audioPath).deleteSync(); } catch (_) {}
+              }
+              notifier.setMedia(itemId, const ItemMedia());
+            },
+            child: const Text('Clear All',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );
@@ -854,6 +1184,20 @@ class _ItemRow extends ConsumerWidget {
     );
   }
 
+  Future<String> _persistFile(String sourcePath, String prefix) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final ext = sourcePath.split('.').last;
+      final fileName =
+          '${prefix}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final destPath = '${dir.path}/$fileName';
+      await File(sourcePath).copy(destPath);
+      return destPath;
+    } catch (_) {
+      return sourcePath;
+    }
+  }
+
   Future<void> _pickPhoto(
     BuildContext context,
     InspectionNotifier notifier,
@@ -867,7 +1211,10 @@ class _ItemRow extends ConsumerWidget {
         imageQuality: 80,
         maxWidth: 1200,
       );
-      if (file != null) notifier.addPhoto(itemId, file.path);
+      if (file != null) {
+        final persistedPath = await _persistFile(file.path, 'photo');
+        notifier.addPhoto(itemId, persistedPath);
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -890,7 +1237,10 @@ class _ItemRow extends ConsumerWidget {
     try {
       final picker = ImagePicker();
       final XFile? file = await picker.pickVideo(source: ImageSource.camera);
-      if (file != null) notifier.addVideo(itemId, file.path);
+      if (file != null) {
+        final persistedPath = await _persistFile(file.path, 'video');
+        notifier.addVideo(itemId, persistedPath);
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1023,6 +1373,217 @@ class _ItemRow extends ConsumerWidget {
       ),
     );
   }
+
+  void _showConditionRequiredDialog(
+      BuildContext context, Map<String, String> violations) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.r16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 32, height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.dangerBg,
+                borderRadius: BorderRadius.circular(AppDimensions.r8),
+              ),
+              child: const Icon(Icons.warning_amber_rounded,
+                  color: AppColors.danger, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Conditions Required',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary),
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Items with attachments must have a condition selected (Good / Fair / Poor):',
+                style: TextStyle(
+                    fontSize: 13, color: AppColors.text2, height: 1.5),
+              ),
+              const SizedBox(height: 12),
+              ...violations.entries.map((e) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 3),
+                        width: 6, height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.danger,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(
+                                fontSize: 12, height: 1.4,
+                                color: AppColors.textPrimary),
+                            children: [
+                              TextSpan(
+                                text: e.key,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
+                              ),
+                              TextSpan(
+                                text: '  -  ${e.value}',
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.text3,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text(
+                "OK, I'll Set Conditions",
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AudioPlayerRow extends StatefulWidget {
+  final String audioPath;
+  const _AudioPlayerRow({required this.audioPath});
+
+  @override
+  State<_AudioPlayerRow> createState() => _AudioPlayerRowState();
+}
+
+class _AudioPlayerRowState extends State<_AudioPlayerRow> {
+  final AudioPlayer _player = AudioPlayer();
+  bool _playing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.onPlayerComplete.listen((_) {
+      if (mounted) setState(() => _playing = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _togglePlay() async {
+    try {
+      if (_playing) {
+        await _player.pause();
+        setState(() => _playing = false);
+      } else {
+        await _player.play(DeviceFileSource(widget.audioPath));
+        setState(() => _playing = true);
+      }
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.warningBg,
+        borderRadius: BorderRadius.circular(AppDimensions.r8),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: _togglePlay,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: _playing ? AppColors.warning : AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _playing ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _playing ? 'Playing...' : 'Tap to listen',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _playing
+                        ? AppColors.warning
+                        : AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  widget.audioPath.split('/').last,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.text3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _AudioDialog extends StatefulWidget {
@@ -1039,15 +1600,143 @@ class _AudioDialog extends StatefulWidget {
   State<_AudioDialog> createState() => _AudioDialogState();
 }
 
-class _AudioDialogState extends State<_AudioDialog> {
+class _AudioDialogState extends State<_AudioDialog>
+    with SingleTickerProviderStateMixin {
   bool _recording = false;
   int _seconds = 0;
   late final String _existingPath;
+  Timer? _timer;
+
+  final AudioRecorderService _recorder = AudioRecorderService();
+  String? _recordedPath;
+  bool _permissionDenied = false;
+  late AnimationController _pulseCtrl;
+  late Animation<double> _pulse;
 
   @override
   void initState() {
     super.initState();
     _existingPath = widget.existing;
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _startRecording() async {
+    final hasMic = await Permission.microphone.request();
+    if (!hasMic.isGranted) {
+      setState(() => _permissionDenied = true);
+      return;
+    }
+
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName =
+          'audio_${widget.itemId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      _recordedPath = '${dir.path}/$fileName';
+
+      final started = await _recorder.startRecording(_recordedPath!);
+      if (!started) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not start recording'),
+              backgroundColor: AppColors.danger,
+            ),
+          );
+        }
+        return;
+      }
+
+      setState(() {
+        _recording = true;
+        _seconds = 0;
+      });
+
+      _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+        if (!mounted || !_recording) {
+          t.cancel();
+          return;
+        }
+        setState(() => _seconds++);
+        if (_seconds >= 60) {
+          _stopRecording();
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not start recording: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    _timer?.cancel();
+    try {
+      final path = await _recorder.stopRecording();
+      setState(() => _recording = false);
+      if (path != null &&
+          path.isNotEmpty &&
+          File(path).existsSync() &&
+          mounted) {
+        widget.onSave(path);
+        Navigator.pop(context);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recording was empty, please try again'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _recording = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error stopping recording: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _playExisting() async {
+    if (_existingPath.isEmpty || !File(_existingPath).existsSync()) return;
+    final player = AudioPlayer();
+    try {
+      await player.play(DeviceFileSource(_existingPath));
+    } catch (_) {}
+  }
+
+  void _deleteExisting() {
+    if (_existingPath.isNotEmpty) {
+      final file = File(_existingPath);
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+    }
+    widget.onSave('');
+    setState(() {
+      _existingPath = '';
+    });
   }
 
   @override
@@ -1074,6 +1763,32 @@ class _AudioDialogState extends State<_AudioDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (_permissionDenied) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.dangerBg,
+                borderRadius: BorderRadius.circular(AppDimensions.r10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.mic_off, color: AppColors.danger, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Microphone permission denied. Please enable in settings.',
+                      style: TextStyle(
+                        color: AppColors.danger,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (_existingPath.isNotEmpty) ...[
             Container(
               padding: const EdgeInsets.all(12),
@@ -1081,79 +1796,96 @@ class _AudioDialogState extends State<_AudioDialog> {
                 color: AppColors.primaryBg,
                 borderRadius: BorderRadius.circular(AppDimensions.r10),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.audio_file, color: AppColors.primary, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Audio recording saved',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                  const Icon(Icons.audio_file,
+                      color: AppColors.primary, size: 18),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Audio recording saved',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                  ),
+                  GestureDetector(
+                    onTap: _playExisting,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.play_arrow,
+                          color: Colors.white, size: 16),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: _deleteExisting,
+                    child: const Icon(Icons.delete_outline,
+                        color: AppColors.danger, size: 18),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
           ],
-          const Text(
-            'Tap the button to start recording',
-            style: TextStyle(fontSize: 13, color: AppColors.text2),
+          Text(
+            _recording
+                ? 'Recording... tap stop when done'
+                : 'Tap the microphone to start recording',
+            style: const TextStyle(fontSize: 13, color: AppColors.text2),
           ),
           const SizedBox(height: 20),
           GestureDetector(
             onTap: () async {
               if (_recording) {
-                setState(() => _recording = false);
-                widget.onSave(
-                  'audio_${widget.itemId}_${DateTime.now().millisecondsSinceEpoch}.m4a',
-                );
-                Navigator.pop(context);
-              } else {
-                setState(() {
-                  _recording = true;
-                  _seconds = 0;
-                });
-                Future.doWhile(() async {
-                  await Future.delayed(const Duration(seconds: 1));
-                  if (!mounted || !_recording) return false;
-                  setState(() => _seconds++);
-                  return _seconds < 60;
-                });
+                await _stopRecording();
+              } else if (!_permissionDenied) {
+                await _startRecording();
               }
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: _recording ? AppColors.danger : AppColors.primary,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (_recording ? AppColors.danger : AppColors.primary)
-                        .withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(
-                _recording ? Icons.stop : Icons.mic,
-                color: Colors.white,
-                size: 30,
+            child: ScaleTransition(
+              scale: _recording ? _pulse : const AlwaysStoppedAnimation(1.0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: _recording ? AppColors.danger : AppColors.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color:
+                          (_recording ? AppColors.danger : AppColors.primary)
+                              .withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _recording ? Icons.stop : Icons.mic,
+                  color: Colors.white,
+                  size: 30,
+                ),
               ),
             ),
           ),
           if (_recording) ...[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.dangerBg,
-                borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                borderRadius:
+                    BorderRadius.circular(AppDimensions.rPill),
               ),
               child: Text(
                 '$_seconds s',
@@ -1169,7 +1901,12 @@ class _AudioDialogState extends State<_AudioDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (_recording) {
+              _stopRecording();
+            }
+            Navigator.pop(context);
+          },
           child: const Text(
             'Cancel',
             style: TextStyle(
@@ -1183,6 +1920,131 @@ class _AudioDialogState extends State<_AudioDialog> {
   }
 }
 
+class _VideoPlayerPage extends StatefulWidget {
+  final String filePath;
+  const _VideoPlayerPage({required this.filePath});
+
+  @override
+  State<_VideoPlayerPage> createState() => _VideoPlayerPageState();
+}
+
+class _VideoPlayerPageState extends State<_VideoPlayerPage> {
+  late VideoPlayerController _controller;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.file(File(widget.filePath));
+    _controller.initialize().then((_) {
+      if (mounted) {
+        setState(() => _initialized = true);
+        _controller.play();
+      }
+    });
+    _controller.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        title: Text(
+          widget.filePath.split('/').last,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      body: Center(
+        child: _initialized
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AspectRatio(
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: VideoPlayer(_controller),
+                  ),
+                ],
+              )
+            : const CircularProgressIndicator(color: AppColors.primary),
+      ),
+      bottomNavigationBar: _initialized
+          ? Container(
+              color: Colors.black,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      _controller.seekTo(
+                        _controller.value.position -
+                            const Duration(seconds: 10),
+                      );
+                    },
+                    child: const Icon(Icons.replay_10,
+                        color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 24),
+                  GestureDetector(
+                    onTap: () {
+                      if (_controller.value.isPlaying) {
+                        _controller.pause();
+                      } else {
+                        _controller.play();
+                      }
+                      setState(() {});
+                    },
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: const BoxDecoration(
+                        color: Colors.white24,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _controller.value.isPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  GestureDetector(
+                    onTap: () {
+                      _controller.seekTo(
+                        _controller.value.position +
+                            const Duration(seconds: 10),
+                      );
+                    },
+                    child: const Icon(Icons.forward_10,
+                        color: Colors.white, size: 28),
+                  ),
+                ],
+              ),
+            )
+          : null,
+    );
+  }
+}
+
 class _Footer extends ConsumerWidget {
   final InspectionCallbacks callbacks;
   const _Footer({required this.callbacks});
@@ -1191,6 +2053,210 @@ class _Footer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(inspectionProvider);
     final notifier = ref.read(inspectionProvider.notifier);
+
+    void handlePreview() {
+      final violations = <String, String>{};
+      for (final sec in kInspectionSections) {
+        for (var i = 0; i < sec.items.length; i++) {
+          final itemId = '${sec.id}_$i';
+          final m = state.media[itemId];
+          final hasStatus = state.statuses.containsKey(itemId);
+          final hasMedia = m != null &&
+              (m.photoPaths.isNotEmpty ||
+                  m.videoPaths.isNotEmpty ||
+                  m.audioPath.isNotEmpty ||
+                  m.note.isNotEmpty);
+          if (hasMedia && !hasStatus) {
+            violations[sec.items[i]] =
+                sec.label.replaceFirst(RegExp(r'^\d+\.\s*'), '');
+  }
+
+  void _showConditionRequiredDialog(
+      BuildContext context, Map<String, String> violations) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.r16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 32, height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.dangerBg,
+                borderRadius: BorderRadius.circular(AppDimensions.r8),
+              ),
+              child: const Icon(Icons.warning_amber_rounded,
+                  color: AppColors.danger, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text('Conditions Required',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Items with attachments must have a condition:',
+                style: TextStyle(fontSize: 13, color: AppColors.text2, height: 1.5),
+              ),
+              const SizedBox(height: 10),
+              ...violations.entries.map((e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 3),
+                          width: 6, height: 6,
+                          decoration: const BoxDecoration(
+                            color: AppColors.danger, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                  fontSize: 12, height: 1.4,
+                                  color: AppColors.textPrimary),
+                              children: [
+                                TextSpan(
+                                  text: e.key,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700)),
+                                TextSpan(
+                                  text: '  -  ${e.value}',
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.text3)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.r10)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text("OK, I'll Set Conditions",
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+      }
+      if (violations.isNotEmpty) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.r16),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 22),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text('Conditions Required',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Items with attachments must have a condition (Good/Fair/Poor):',
+                      style: TextStyle(fontSize: 13, color: AppColors.text2, height: 1.5)),
+                  const SizedBox(height: 10),
+                  ...violations.entries.map((e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(margin: const EdgeInsets.only(top: 3), width: 6, height: 6,
+                          decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: const TextStyle(fontSize: 12, height: 1.4, color: AppColors.textPrimary),
+                              children: [
+                                TextSpan(text: e.key, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                TextSpan(text: '  -  ${e.value}', style: const TextStyle(fontSize: 11, color: AppColors.text3)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                ],
+              ),
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text("OK, I'll Set Conditions",
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                ),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+      final jobId = state.jobCardId;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (ctx) => InspectionPreviewView(
+            onBack: () => Navigator.of(ctx).pop(),
+            jobId: jobId,
+          ),
+        ),
+      );
+    }
+
+    void handleSaveDraft() {
+      Navigator.of(context).pop();
+    }
 
     return Container(
       decoration: const BoxDecoration(
@@ -1274,7 +2340,7 @@ class _Footer extends ConsumerWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: callbacks.onSaveDraft,
+                  onPressed: handleSaveDraft,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.text2,
                     side: const BorderSide(color: Color(0xFFD4D9E6)),
@@ -1292,7 +2358,7 @@ class _Footer extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: callbacks.onPreview,
+                  onPressed: handlePreview,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     elevation: 0,

@@ -99,8 +99,33 @@ final advisorReportDataProvider = Provider<AdvisorReportData>((ref) {
     inProgressJobs: (statuses['inProgress'] ?? 0) + (statuses['qualityCheck'] ?? 0),
     cancelledJobs: statuses['cancelled'] ?? 0,
     statusBreakdown: breakdown,
-    weeklyActivity: [4, 6, 3, 7, 5, 8, 2],
+    weeklyActivity: _computeWeeklyActivity(jobData),
     weekLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   );
 });
+
+List<int> _computeWeeklyActivity(List<Map<String, dynamic>> jobs) {
+  final now = DateTime.now();
+  final days = List.generate(7, (i) {
+    final d = now.subtract(Duration(days: 6 - i));
+    return jobs.where((j) {
+      final cd = j['createdDate'] as String? ?? '';
+      try {
+        final parts = cd.split(' ');
+        if (parts.length != 2) return false;
+        final dateParts = parts[0].split('/');
+        if (dateParts.length != 3) return false;
+        final dd = DateTime(
+          int.parse(dateParts[2]),
+          int.parse(dateParts[1]),
+          int.parse(dateParts[0]),
+        );
+        return dd.year == d.year && dd.month == d.month && dd.day == d.day;
+      } catch (_) {
+        return false;
+      }
+    }).length;
+  });
+  return days;
+}
 

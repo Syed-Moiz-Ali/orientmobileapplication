@@ -35,6 +35,28 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
   bool _showParts = false;
   List<String> _pendingServices = [];
   List<String> _pendingParts = [];
+  Map<String, dynamic>? _customerData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomerData();
+  }
+
+  void _loadCustomerData() {
+    try {
+      final box = Hive.box<dynamic>('inspections');
+      final all = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+      final state = ref.read(inspectionProvider);
+      final jid = state.jobCardId;
+      _customerData = all.cast<Map<String, dynamic>?>().firstWhere(
+        (m) => m?['id'] == jid || m?['type'] == 'vehicle_customer',
+        orElse: () => null,
+      );
+    } catch (_) {}
+  }
+
+  String _getVal(String key) => _customerData?[key]?.toString() ?? '';
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +167,7 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
           // ── Customer / Vehicle info ─────────────────────────────────────
           InfoCard(
             child: Column(
-              children: const [
+              children: [
                 Row(
                   children: [
                     Expanded(
@@ -158,16 +180,15 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Ttef',
+                            _getVal('customerName'),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: IC.text1,
                             ),
                           ),
-                          // +971 country code
                           Text(
-                            '+971 555 555 555',
+                            _getVal('phoneNumber'),
                             style: TextStyle(fontSize: 11, color: IC.text2),
                           ),
                         ],
@@ -183,17 +204,17 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Alfa Romeo 145 DIESEL',
+                            _getVal('registrationNumber').isEmpty
+                                ? '${_getVal('make')} ${_getVal('model')}'
+                                : _getVal('registrationNumber'),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: IC.text1,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            'GYYYY',
+                            _getVal('vin'),
                             style: TextStyle(fontSize: 11, color: IC.text2),
                           ),
                         ],
@@ -1763,7 +1784,7 @@ class RepairOrderPreviewView extends ConsumerWidget {
                             ),
                           ),
                           Text(
-                            'nalgonda',
+                            '--',
                             style: TextStyle(fontSize: 11, color: IC.text2),
                           ),
                           SizedBox(height: 4),
@@ -1777,7 +1798,7 @@ class RepairOrderPreviewView extends ConsumerWidget {
                               SizedBox(width: 4),
                               // +971 country code
                               Text(
-                                '+971 998 750 009',
+                                '--',
                                 style: TextStyle(fontSize: 11, color: IC.text2),
                               ),
                             ],
@@ -1792,7 +1813,7 @@ class RepairOrderPreviewView extends ConsumerWidget {
                               ),
                               SizedBox(width: 4),
                               Text(
-                                'test@gmail.com',
+                                '--',
                                 style: TextStyle(fontSize: 11, color: IC.text2),
                               ),
                             ],
@@ -1830,10 +1851,10 @@ class RepairOrderPreviewView extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      _PreviewHeaderCell('CUSTOMER', 'Ttef\n+971 555 555 555'),
+                      _PreviewHeaderCell('CUSTOMER', '--\n--'),
                       _PreviewHeaderCell(
                         'VEHICLE',
-                        'Alfa Romeo\n145 DIESEL\nGYYY',
+                        '--\n--\n--',
                       ),
                       _PreviewHeaderCell(
                         'ESTIMATE',

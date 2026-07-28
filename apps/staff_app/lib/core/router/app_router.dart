@@ -119,18 +119,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.inspectionSheet,
         name: AppRoutes.inspectionSheet,
-        builder: (context, state) => InspectionSheetView(
-          callbacks: InspectionCallbacks(
-            onBack: () => context.pop(),
-            onSaveDraft: () {},
-            onPreview: () {},
-          ),
-        ),
+        builder: (context, state) {
+          final callbacks = state.extra as InspectionCallbacks?;
+          return InspectionSheetView(
+            callbacks: callbacks ??
+                InspectionCallbacks(
+                  onBack: () => context.pop(),
+                  onSaveDraft: () => context.pop(),
+                  onPreview: () => context.push(AppRoutes.inspectionPreview),
+                ),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.inspectionPreview,
         name: AppRoutes.inspectionPreview,
-        builder: (context, state) => InspectionPreviewView(onBack: () => context.pop()),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return InspectionPreviewView(
+            onBack: extra?['onBack'] as VoidCallback? ?? (() => context.pop()),
+            jobId: extra?['jobId'] as String? ?? '',
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.repairOrder,

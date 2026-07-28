@@ -11,6 +11,7 @@ import 'package:staff_app/features/advisor/presentation/providers/vehicle_custom
 import 'package:staff_app/features/advisor/presentation/widgets/vehicle_customer_shared_widgets.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/select_brand_sheet.dart';
 import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.dart';
+import 'scan_vehicle_view.dart';
 
 class VehicleCustomerView extends ConsumerWidget {
   const VehicleCustomerView({super.key});
@@ -72,14 +73,23 @@ class _BodyState extends ConsumerState<_Body> {
                 const SizedBox(height: 16),
 
                 // ── Search mode (Image 1) ────────────────────────────────
-                _SearchModeSection(state: state, ref: ref),
+                _SearchModeSection(
+                  state: state,
+                  ref: ref,
+                  onScanVin: () => _scanAndSetVin(context, ref),
+                  onScanQr: () => _scanVehicleQr(context, ref),
+                ),
                 const SizedBox(height: 16),
 
                 // ── Customer Details (Images 3-5) ────────────────────────
                 _CustomerDetailsSection(state: state, ref: ref),
 
                 // ── Vehicle Details (Images 6-14) ────────────────────────
-                _VehicleDetailsSection(state: state, ref: ref),
+                _VehicleDetailsSection(
+                  state: state,
+                  ref: ref,
+                  onScanVin: () => _scanAndSetVin(context, ref),
+                ),
 
                 // ── Additional Information (Image 15) ────────────────────
                 _AdditionalInfoSection(state: state, ref: ref),
@@ -113,6 +123,11 @@ class _BodyState extends ConsumerState<_Body> {
               child: ElevatedButton(
                 onPressed: () async {
                   final formState = ref.read(vehicleCustomerFormProvider);
+                  final errors = _validateForm(formState);
+                  if (errors.isNotEmpty) {
+                    _showValidationErrors(context, errors);
+                    return;
+                  }
                   final local = GenericLocalDataSource(
                     Hive.box<dynamic>('inspections'),
                   );
@@ -122,6 +137,7 @@ class _BodyState extends ConsumerState<_Body> {
                   final createdDate =
                       '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
                   final payload = {
+                    'id': id,
                     'type': 'vehicle_customer',
                     'customerName': formState.customerName,
                     'phoneNumber': formState.phoneNumber,
@@ -180,6 +196,157 @@ class _BodyState extends ConsumerState<_Body> {
     );
   }
 
+  List<MapEntry<String, String>> _validateForm(VehicleCustomerFormState s) {
+    final errors = <MapEntry<String, String>>[];
+    if (s.customerName.trim().isEmpty) {
+      errors.add(const MapEntry('Customer Name', 'Customer name is required'));
+    }
+    if (s.phoneNumber.trim().isEmpty) {
+      errors.add(const MapEntry('Phone Number', 'Phone number is required'));
+    } else if (s.phoneNumber.trim().length < 8) {
+      errors.add(const MapEntry(
+          'Phone Number', 'Enter a valid phone number (at least 8 digits)'));
+    }
+    if (s.registrationNumber.trim().isEmpty) {
+      errors.add(
+          const MapEntry('Registration Number', 'Registration number is required'));
+    }
+    if (s.make.trim().isEmpty) {
+      errors.add(const MapEntry('Make/Brand', 'Please select a vehicle brand'));
+    }
+    if (s.model.trim().isEmpty) {
+      errors.add(const MapEntry('Model', 'Please select a vehicle model'));
+    }
+    return errors;
+  }
+
+  void _showValidationErrors(
+      BuildContext context, List<MapEntry<String, String>> errors) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.r16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.dangerBg,
+                borderRadius: BorderRadius.circular(AppDimensions.r8),
+              ),
+              child: const Icon(Icons.error_outline,
+                  color: AppColors.danger, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Validation Errors',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Please fix the following ${errors.length} issue(s):',
+              style: const TextStyle(
+                  fontSize: 13, color: AppColors.text2, height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            ...errors.map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppColors.danger,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                              fontSize: 13, height: 1.4, color: AppColors.textPrimary),
+                          children: [
+                            TextSpan(
+                              text: '${e.key}: ',
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            TextSpan(text: e.value),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text(
+                'OK, I\'ll Fix Them',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _scanAndSetVin(BuildContext context, WidgetRef ref) async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => const ScanVehicleView(scanMode: 'VIN'),
+      ),
+    );
+    if (result != null && mounted) {
+      ref.read(vehicleCustomerFormProvider.notifier).setVin(result);
+    }
+  }
+
+  Future<void> _scanVehicleQr(BuildContext context, WidgetRef ref) async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => const ScanVehicleView(scanMode: 'QR'),
+      ),
+    );
+    if (result != null && mounted) {
+      ref.read(vehicleCustomerFormProvider.notifier).setRegistrationNumber(result);
+    }
+  }
+
   void _showInspectionPrompt(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -224,6 +391,7 @@ class _BodyState extends ConsumerState<_Body> {
                   Navigator.pop(ctx);
                   ref.read(inspectionProvider.notifier).reset();
                   final jobId = _savedJobId ?? '';
+                  ref.read(inspectionProvider.notifier).setJobCardId(jobId);
                   final callbacks = InspectionCallbacks(
                     onBack: () => context.pop(),
                     onSaveDraft: () {
@@ -278,7 +446,14 @@ class _BodyState extends ConsumerState<_Body> {
 class _SearchModeSection extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
-  const _SearchModeSection({required this.state, required this.ref});
+  final VoidCallback onScanVin;
+  final VoidCallback onScanQr;
+  const _SearchModeSection({
+    required this.state,
+    required this.ref,
+    required this.onScanVin,
+    required this.onScanQr,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +540,7 @@ class _SearchModeSection extends StatelessWidget {
             ),
           ),
           // SCAN VIN
-          _OutlineButton(icon: Icons.qr_code, label: 'SCAN VIN', onTap: () {}),
+          _OutlineButton(icon: Icons.qr_code, label: 'SCAN VIN', onTap: onScanVin),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Text(
@@ -381,7 +556,7 @@ class _SearchModeSection extends StatelessWidget {
           _OutlineButton(
             icon: Icons.qr_code_scanner,
             label: 'SCAN VEHICLE QR CODE',
-            onTap: () {},
+            onTap: onScanQr,
           ),
         ],
       ),
@@ -753,7 +928,12 @@ class _TagRow extends StatelessWidget {
 class _VehicleDetailsSection extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
-  const _VehicleDetailsSection({required this.state, required this.ref});
+  final VoidCallback onScanVin;
+  const _VehicleDetailsSection({
+    required this.state,
+    required this.ref,
+    required this.onScanVin,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -795,9 +975,12 @@ class _VehicleDetailsSection extends StatelessWidget {
             hint: 'VIN(Chasis number)',
             onChanged: (v) =>
                 ref.read(vehicleCustomerFormProvider.notifier).setVin(v),
-            suffix: const Padding(
-              padding: EdgeInsets.only(right: 10),
-              child: Icon(Icons.qr_code_scanner, color: kHintColor, size: 18),
+            suffix: GestureDetector(
+              onTap: onScanVin,
+              child: const Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: Icon(Icons.qr_code_scanner, color: kHintColor, size: 18),
+              ),
             ),
           ),
           kGap12,
@@ -1208,19 +1391,21 @@ class _FuelLevelSlider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Ticks bar
         Expanded(
           child: Row(
             children: List.generate(10, (i) {
               final isFilled = i < value;
               return Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 1),
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: isFilled ? AppColors.primary : AppColors.border,
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(AppDimensions.r2),
+                child: GestureDetector(
+                  onTap: () => onChanged(i + 1),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: isFilled ? AppColors.primary : AppColors.border,
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r2),
+                      ),
                     ),
                   ),
                 ),
@@ -1229,7 +1414,33 @@ class _FuelLevelSlider extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        const Icon(Icons.local_gas_station, color: kLabelColor, size: 20),
+        GestureDetector(
+          onTap: () => onChanged(value.clamp(1, 10)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                value >= 8
+                    ? Icons.local_gas_station
+                    : value >= 4
+                        ? Icons.local_gas_station
+                        : Icons.local_gas_station_outlined,
+                color: value >= 4
+                    ? AppColors.warning
+                    : AppColors.danger,
+                size: 22,
+              ),
+              Text(
+                '$value/10',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: value >= 4 ? AppColors.warning : AppColors.danger,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

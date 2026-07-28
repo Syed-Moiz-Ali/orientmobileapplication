@@ -22,6 +22,7 @@ class InspectionState {
   final DateTime? estimatedDelivery;
   final bool notifyOwnerSmsEmail;
   final String tag;
+  final String jobCardId;
 
   const InspectionState({
     this.statuses = const {},
@@ -41,6 +42,7 @@ class InspectionState {
     this.estimatedDelivery,
     this.notifyOwnerSmsEmail = false,
     this.tag = '',
+    this.jobCardId = '',
   });
 
   InspectionState copyWith({
@@ -61,6 +63,7 @@ class InspectionState {
     DateTime? estimatedDelivery,
     bool? notifyOwnerSmsEmail,
     String? tag,
+    String? jobCardId,
   }) {
     return InspectionState(
       statuses: statuses ?? this.statuses,
@@ -81,6 +84,7 @@ class InspectionState {
       estimatedDelivery: estimatedDelivery ?? this.estimatedDelivery,
       notifyOwnerSmsEmail: notifyOwnerSmsEmail ?? this.notifyOwnerSmsEmail,
       tag: tag ?? this.tag,
+      jobCardId: jobCardId ?? this.jobCardId,
     );
   }
 
@@ -97,6 +101,7 @@ class InspectionState {
     'estimatedDelivery': estimatedDelivery?.toIso8601String(),
     'notifyOwnerSmsEmail': notifyOwnerSmsEmail,
     'tag': tag,
+    'jobCardId': jobCardId,
   };
 
   factory InspectionState.fromPersistableMap(Map<String, dynamic> map) {
@@ -144,6 +149,7 @@ class InspectionState {
           : null,
       notifyOwnerSmsEmail: map['notifyOwnerSmsEmail'] as bool? ?? false,
       tag: map['tag'] as String? ?? '',
+      jobCardId: map['jobCardId'] as String? ?? '',
     );
   }
 
@@ -292,6 +298,16 @@ class InspectionNotifier extends Notifier<InspectionState> {
     _persistDraft();
   }
 
+  void setMedia(String itemId, ItemMedia media) {
+    state = state.copyWith(
+      media: {
+        ...state.media,
+        itemId: media,
+      },
+    );
+    _persistDraft();
+  }
+
   void removeVideo(String itemId, int index) {
     final im = state.media[itemId];
     if (im == null) return;
@@ -401,6 +417,11 @@ class InspectionNotifier extends Notifier<InspectionState> {
 
   void toggleNotifyOwnerSmsEmail() {
     state = state.copyWith(notifyOwnerSmsEmail: !state.notifyOwnerSmsEmail);
+    _persistDraft();
+  }
+
+  void setJobCardId(String v) {
+    state = state.copyWith(jobCardId: v);
     _persistDraft();
   }
 
