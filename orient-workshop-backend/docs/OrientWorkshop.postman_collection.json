@@ -1,0 +1,236 @@
+{
+  "info": {
+    "name": "Orient Workshop API",
+    "description": "Complete API collection organized by module\n\nBase URL: http://localhost:8080/api/v1\n\nOTP is hardcoded to 123456 in dev mode.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1", "type": "string" },
+    { "key": "phone", "value": "971501234567", "type": "string" },
+    { "key": "email", "value": "ahmed@example.com", "type": "string" },
+    { "key": "otp", "value": "123456", "type": "string" },
+    { "key": "password", "value": "password123", "type": "string" },
+    { "key": "name", "value": "Ahmed Hassan", "type": "string" },
+    { "key": "role", "value": "customer", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "customerId", "value": "", "type": "string" },
+    { "key": "vehicleId", "value": "", "type": "string" },
+    { "key": "bookingId", "value": "", "type": "string" },
+    { "key": "notifId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] } }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        { "name": "1. SMS - Send OTP", "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"type\":\"sms\",\"phone\":\"{{phone}}\"}"}, "url": {"raw":"{{baseUrl}}/auth/send-otp","host":["{{baseUrl}}"],"path":["auth","send-otp"]} } },
+        { "name": "2. SMS - Verify OTP", "event":[{"listen":"test","script":{"exec":["const b=pm.response.json().data;if(b&&b.token){pm.variables.set('token',b.token);pm.variables.set('refreshToken',b.refreshToken)}"],"type":"text/javascript"}}], "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"type\":\"sms\",\"phone\":\"{{phone}}\",\"otp\":\"{{otp}}\"}"}, "url": {"raw":"{{baseUrl}}/auth/verify-otp","host":["{{baseUrl}}"],"path":["auth","verify-otp"]} } },
+        { "name": "3. Email - Send OTP", "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"type\":\"email\",\"email\":\"{{email}}\"}"}, "url": {"raw":"{{baseUrl}}/auth/send-otp","host":["{{baseUrl}}"],"path":["auth","send-otp"]} } },
+        { "name": "4. Email - Verify OTP", "event":[{"listen":"test","script":{"exec":["const b=pm.response.json().data;if(b&&b.token){pm.variables.set('token',b.token);pm.variables.set('refreshToken',b.refreshToken)}"],"type":"text/javascript"}}], "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"type\":\"email\",\"email\":\"{{email}}\",\"otp\":\"{{otp}}\"}"}, "url": {"raw":"{{baseUrl}}/auth/verify-otp","host":["{{baseUrl}}"],"path":["auth","verify-otp"]} } },
+        { "name": "5. Register", "event":[{"listen":"test","script":{"exec":["const b=pm.response.json().data;if(b&&b.token){pm.variables.set('token',b.token);pm.variables.set('refreshToken',b.refreshToken)}"],"type":"text/javascript"}}], "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"name\":\"{{name}}\",\"email\":\"{{email}}\",\"phone\":\"{{phone}}\",\"password\":\"{{password}}\",\"role\":\"{{role}}\"}"}, "url": {"raw":"{{baseUrl}}/auth/register","host":["{{baseUrl}}"],"path":["auth","register"]} } },
+        { "name": "6. Login", "event":[{"listen":"test","script":{"exec":["const b=pm.response.json().data;if(b&&b.token){pm.variables.set('token',b.token);pm.variables.set('refreshToken',b.refreshToken)}"],"type":"text/javascript"}}], "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"email\":\"{{email}}\",\"password\":\"{{password}}\"}"}, "url": {"raw":"{{baseUrl}}/auth/login","host":["{{baseUrl}}"],"path":["auth","login"]} } },
+        { "name": "7. Refresh Token", "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"refreshToken\":\"{{refreshToken}}\"}"}, "url": {"raw":"{{baseUrl}}/auth/refresh","host":["{{baseUrl}}"],"path":["auth","refresh"]} } },
+        { "name": "8. Logout", "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"refreshToken\":\"{{refreshToken}}\"}"}, "url": {"raw":"{{baseUrl}}/auth/logout","host":["{{baseUrl}}"],"path":["auth","logout"]} } }
+      ]
+    },
+    {
+      "name": "Customer Portal",
+      "item": [
+        { "name": "Profile", "item": [{"name":"GET /customers/profile","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/customers/profile","host":["{{baseUrl}}"],"path":["customers","profile"]}}}] },
+        { "name": "Vehicles", "item": [
+          {"name":"GET /customers/vehicles","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/customers/vehicles","host":["{{baseUrl}}"],"path":["customers","vehicles"]}}},
+          {"name":"POST /customers/vehicles","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"brand\":\"BMW\",\"model\":\"3 Series\",\"plateNumber\":\"ABC123\",\"vin\":\"WBA8E9G58GNT44078\",\"color\":\"Alpine White\",\"year\":2019,\"mileage\":\"41,200 km\"}"},"url":{"raw":"{{baseUrl}}/customers/vehicles","host":["{{baseUrl}}"],"path":["customers","vehicles"]}}}
+        ]},
+        { "name": "Bookings", "item": [
+          {"name":"GET /customers/bookings","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/customers/bookings","host":["{{baseUrl}}"],"path":["customers","bookings"]}}},
+          {"name":"POST /bookings","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"vehicleName\":\"BMW 3 Series\",\"plateNumber\":\"ABC123\",\"serviceType\":\"Full Service\",\"bookingDate\":\"2026-07-28T10:00:00.000\",\"notes\":\"Please check AC too\"}"},"url":{"raw":"{{baseUrl}}/bookings","host":["{{baseUrl}}"],"path":["bookings"]}}}
+        ]},
+        { "name": "Services", "item": [
+          {"name":"GET /customers/services/active","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/customers/services/active","host":["{{baseUrl}}"],"path":["customers","services","active"]}}},
+          {"name":"GET /services/types","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/services/types","host":["{{baseUrl}}"],"path":["services","types"]}}}
+        ]},
+        { "name": "Breakdowns", "item": [{"name":"POST /customers/breakdowns","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"issue\":\"Flat Tyre\",\"vehicleName\":\"BMW 3 Series\",\"vehiclePlate\":\"ABC123\",\"location\":\"Sheikh Zayed Rd, Dubai\"}"},"url":{"raw":"{{baseUrl}}/customers/breakdowns","host":["{{baseUrl}}"],"path":["customers","breakdowns"]}}}] },
+        { "name": "Notifications", "item": [
+          {"name":"GET /customers/notifications","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/customers/notifications","host":["{{baseUrl}}"],"path":["customers","notifications"]}}},
+          {"name":"PUT /customers/notifications/{id}/read","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/customers/notifications/1/read","host":["{{baseUrl}}"],"path":["customers","notifications","1","read"]}}},
+          {"name":"PUT /customers/notifications/read-all","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/customers/notifications/read-all","host":["{{baseUrl}}"],"path":["customers","notifications","read-all"]}}}
+        ]}
+      ]
+    },
+    {
+      "name": "Advisor",
+      "item": [
+        { "name": "Dashboard", "item": [{"name":"GET /advisor/stats","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/advisor/stats","host":["{{baseUrl}}"],"path":["advisor","stats"]}}}] },
+        { "name": "Job Cards", "item": [
+          {"name":"GET /advisor/job-cards","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/advisor/job-cards","host":["{{baseUrl}}"],"path":["advisor","job-cards"]}}},
+          {"name":"GET /advisor/job-cards/{id}","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/advisor/job-cards/1","host":["{{baseUrl}}"],"path":["advisor","job-cards","1"]}}},
+          {"name":"PUT /advisor/job-cards/{id}/status","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"status\":\"inProgress\"}"},"url":{"raw":"{{baseUrl}}/advisor/job-cards/1/status","host":["{{baseUrl}}"],"path":["advisor","job-cards","1","status"]}}},
+          {"name":"PUT /advisor/job-cards/{id}/technician","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"technician\":\"Khalid A.\"}"},"url":{"raw":"{{baseUrl}}/advisor/job-cards/1/technician","host":["{{baseUrl}}"],"path":["advisor","job-cards","1","technician"]}}}
+        ]},
+        { "name": "Inspections", "item": [
+          {"name":"POST /inspections","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"type\":\"vehicle_customer\",\"status\":\"inProgress\",\"customer\":{\"customerName\":\"Ahmed Hassan\",\"phoneNumber\":\"+971501234567\"},\"vehicle\":{\"make\":\"BMW\",\"model\":\"3 Series\",\"vin\":\"WBA...\",\"vehicleColor\":\"White\"},\"tag\":\"Express\"}"},"url":{"raw":"{{baseUrl}}/inspections","host":["{{baseUrl}}"],"path":["inspections"]}}},
+          {"name":"GET /inspections/{id}/draft","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/inspections/1/draft","host":["{{baseUrl}}"],"path":["inspections","1","draft"]}}},
+          {"name":"PUT /inspections/{id}/draft","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"tag\":\"Express\"}"},"url":{"raw":"{{baseUrl}}/inspections/1/draft","host":["{{baseUrl}}"],"path":["inspections","1","draft"]}}},
+          {"name":"DELETE /inspections/{id}/draft","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/inspections/1/draft","host":["{{baseUrl}}"],"path":["inspections","1","draft"]}}}
+        ]},
+        { "name": "Approvals", "item": [
+          {"name":"GET /advisor/approvals/pending","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/advisor/approvals/pending","host":["{{baseUrl}}"],"path":["advisor","approvals","pending"]}}},
+          {"name":"POST /advisor/approvals/{id}","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"action\":\"approved\",\"customerName\":\"Ahmed Hassan\",\"amount\":1250.0}"},"url":{"raw":"{{baseUrl}}/advisor/approvals/EST-001","host":["{{baseUrl}}"],"path":["advisor","approvals","EST-001"]}}}
+        ]},
+        { "name": "Reminders", "item": [
+          {"name":"GET /advisor/reminders","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/advisor/reminders","host":["{{baseUrl}}"],"path":["advisor","reminders"]}}},
+          {"name":"POST /advisor/reminders","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"customerName\":\"Ahmed Hassan\",\"task\":\"Follow up on estimate approval\",\"priority\":\"high\"}"},"url":{"raw":"{{baseUrl}}/advisor/reminders","host":["{{baseUrl}}"],"path":["advisor","reminders"]}}},
+          {"name":"DELETE /advisor/reminders/{id}","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/advisor/reminders/1","host":["{{baseUrl}}"],"path":["advisor","reminders","1"]}}}
+        ]},
+        { "name": "Repair Orders", "item": [{"name":"POST /repair-orders","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"services\":[{\"name\":\"Oil Change\",\"qty\":1,\"rate\":65.0}],\"parts\":[{\"name\":\"Oil Filter\",\"qty\":1,\"rate\":25.0}],\"grandTotal\":90.0}"},"url":{"raw":"{{baseUrl}}/repair-orders","host":["{{baseUrl}}"],"path":["repair-orders"]}}}] },
+        { "name": "Reports", "item": [{"name":"GET /advisor/reports","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/advisor/reports?range=today","host":["{{baseUrl}}"],"path":["advisor","reports"],"query":[{"key":"range","value":"today"}]}}}] },
+        { "name": "Search", "item": [
+          {"name":"GET /customers/search","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/customers/search?q=Ahmed","host":["{{baseUrl}}"],"path":["customers","search"],"query":[{"key":"q","value":"Ahmed"}]}}},
+          {"name":"GET /vehicles/search","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/vehicles/search?q=ABC123","host":["{{baseUrl}}"],"path":["vehicles","search"],"query":[{"key":"q","value":"ABC123"}]}}}
+        ]}
+      ]
+    },
+    {
+      "name": "Supervisor",
+      "item": [
+        { "name":"Dashboard KPIs", "item":[
+          {"name":"GET /supervisor/kpis","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/supervisor/kpis","host":["{{baseUrl}}"],"path":["supervisor","kpis"]}}},
+          {"name":"GET /supervisor/advisor-jobs","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/supervisor/advisor-jobs","host":["{{baseUrl}}"],"path":["supervisor","advisor-jobs"]}}},
+          {"name":"GET /supervisor/job-types","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/supervisor/job-types","host":["{{baseUrl}}"],"path":["supervisor","job-types"]}}},
+          {"name":"GET /supervisor/revenue-metrics","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/supervisor/revenue-metrics","host":["{{baseUrl}}"],"path":["supervisor","revenue-metrics"]}}},
+          {"name":"GET /supervisor/pending-statuses","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/supervisor/pending-statuses","host":["{{baseUrl}}"],"path":["supervisor","pending-statuses"]}}}
+        ]},
+        { "name":"Reference Data", "item":[
+          {"name":"GET /departments","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/departments","host":["{{baseUrl}}"],"path":["departments"]}}},
+          {"name":"GET /technicians","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/technicians","host":["{{baseUrl}}"],"path":["technicians"]}}}
+        ]},
+        { "name":"Assignments", "item":[
+          {"name":"POST /work-assignments","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"items\":[{\"description\":\"AC Repair - Toyota Camry\",\"department\":\"AC & Cooling\",\"technicianName\":\"Ravi Kumar\",\"stdTime\":\"2 hrs\"}]}"},"url":{"raw":"{{baseUrl}}/work-assignments","host":["{{baseUrl}}"],"path":["work-assignments"]}}},
+          {"name":"GET /supervisor/assigned-jobs","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/supervisor/assigned-jobs","host":["{{baseUrl}}"],"path":["supervisor","assigned-jobs"]}}}
+        ]}
+      ]
+    },
+    {
+      "name": "Technician",
+      "item": [
+        { "name":"Profile","item":[{"name":"GET /technicians/profile","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/technicians/profile?empId=EMP-001","host":["{{baseUrl}}"],"path":["technicians","profile"],"query":[{"key":"empId","value":"EMP-001"}]}}}] },
+        { "name":"Attendance","item":[
+          {"name":"POST /technicians/attendance/punch-in","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"empId\":\"EMP-001\",\"status\":\"working\",\"punchIn\":\"08:15 AM\",\"date\":\"2026-07-27\"}"},"url":{"raw":"{{baseUrl}}/technicians/attendance/punch-in","host":["{{baseUrl}}"],"path":["technicians","attendance","punch-in"]}}},
+          {"name":"POST /technicians/attendance/punch-out","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"empId\":\"EMP-001\",\"status\":\"punchedOut\",\"punchIn\":\"08:15 AM\",\"punchOut\":\"05:00 PM\",\"breakTime\":\"25 min\",\"workHours\":\"8h 20m\"}"},"url":{"raw":"{{baseUrl}}/technicians/attendance/punch-out","host":["{{baseUrl}}"],"path":["technicians","attendance","punch-out"]}}},
+          {"name":"POST /technicians/attendance/break-start","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"empId\":\"EMP-001\",\"status\":\"onBreak\"}"},"url":{"raw":"{{baseUrl}}/technicians/attendance/break-start","host":["{{baseUrl}}"],"path":["technicians","attendance","break-start"]}}},
+          {"name":"POST /technicians/attendance/break-end","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"empId\":\"EMP-001\",\"status\":\"working\"}"},"url":{"raw":"{{baseUrl}}/technicians/attendance/break-end","host":["{{baseUrl}}"],"path":["technicians","attendance","break-end"]}}},
+          {"name":"GET /technicians/attendance","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/technicians/attendance?empId=EMP-001","host":["{{baseUrl}}"],"path":["technicians","attendance"],"query":[{"key":"empId","value":"EMP-001"}]}}}
+        ]},
+        { "name":"Assigned Jobs","item":[
+          {"name":"GET /technicians/assigned-jobs","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/technicians/assigned-jobs?empId=EMP-001","host":["{{baseUrl}}"],"path":["technicians","assigned-jobs"],"query":[{"key":"empId","value":"EMP-001"}]}}},
+          {"name":"PUT /technicians/assigned-jobs/{id}/status","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"empId\":\"EMP-001\",\"status\":\"inProgress\"}"},"url":{"raw":"{{baseUrl}}/technicians/assigned-jobs/1/status","host":["{{baseUrl}}"],"path":["technicians","assigned-jobs","1","status"]}}}
+        ]},
+        { "name":"Jobs","item":[
+          {"name":"GET /technicians/jobs","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/technicians/jobs?empId=EMP-001","host":["{{baseUrl}}"],"path":["technicians","jobs"],"query":[{"key":"empId","value":"EMP-001"}]}}},
+          {"name":"GET /technicians/jobs/search","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/technicians/jobs/search?q=JC-001","host":["{{baseUrl}}"],"path":["technicians","jobs","search"],"query":[{"key":"q","value":"JC-001"}]}}},
+          {"name":"PUT /technicians/jobs/{jobCardNo}/notes","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"notes\":\"Replaced brake pads. Test drive successful.\"}"},"url":{"raw":"{{baseUrl}}/technicians/jobs/JC-001/notes","host":["{{baseUrl}}"],"path":["technicians","jobs","JC-001","notes"]}}}
+        ]},
+        { "name":"Tasks","item":[
+          {"name":"PUT /technicians/jobs/{jobCardNo}/tasks/{taskId}/start","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"startTime\":\"09:15\"}"},"url":{"raw":"{{baseUrl}}/technicians/jobs/JC-001/tasks/t1/start","host":["{{baseUrl}}"],"path":["technicians","jobs","JC-001","tasks","t1","start"]}}},
+          {"name":"PUT /technicians/jobs/{jobCardNo}/tasks/{taskId}/complete","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"endTime\":\"09:30\"}"},"url":{"raw":"{{baseUrl}}/technicians/jobs/JC-001/tasks/t1/complete","host":["{{baseUrl}}"],"path":["technicians","jobs","JC-001","tasks","t1","complete"]}}},
+          {"name":"PUT /technicians/jobs/{jobCardNo}/tasks/{taskId}/status","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"status\":\"inProgress\"}"},"url":{"raw":"{{baseUrl}}/technicians/jobs/JC-001/tasks/t1/status","host":["{{baseUrl}}"],"path":["technicians","jobs","JC-001","tasks","t1","status"]}}},
+          {"name":"POST /jobs/complete","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"jobCardNo\":\"JC-001\",\"empId\":\"EMP-001\",\"status\":\"completed\"}"},"url":{"raw":"{{baseUrl}}/jobs/complete","host":["{{baseUrl}}"],"path":["jobs","complete"]}}}
+        ]},
+        { "name":"Productivity","item":[{"name":"GET /technicians/productivity","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/technicians/productivity?empId=EMP-001","host":["{{baseUrl}}"],"path":["technicians","productivity"],"query":[{"key":"empId","value":"EMP-001"}]}}}] }
+      ]
+    },
+    {
+      "name": "Owner Dashboard",
+      "item": [
+        { "name":"Main Dashboard","item":[
+          {"name":"GET /owner/dashboard/kpis","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/dashboard/kpis","host":["{{baseUrl}}"],"path":["owner","dashboard","kpis"]}}},
+          {"name":"GET /owner/dashboard/sales-trend","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/dashboard/sales-trend","host":["{{baseUrl}}"],"path":["owner","dashboard","sales-trend"]}}},
+          {"name":"GET /owner/dashboard/profit-trend","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/dashboard/profit-trend","host":["{{baseUrl}}"],"path":["owner","dashboard","profit-trend"]}}},
+          {"name":"GET /owner/dashboard/expenses-trend","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/dashboard/expenses-trend","host":["{{baseUrl}}"],"path":["owner","dashboard","expenses-trend"]}}},
+          {"name":"GET /owner/dashboard/job-card-register","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/dashboard/job-card-register","host":["{{baseUrl}}"],"path":["owner","dashboard","job-card-register"]}}},
+          {"name":"GET /owner/dashboard/top-sales","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/dashboard/top-sales","host":["{{baseUrl}}"],"path":["owner","dashboard","top-sales"]}}}
+        ]},
+        { "name":"Jobs & Documents","item":[
+          {"name":"GET /owner/job-cards","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/job-cards","host":["{{baseUrl}}"],"path":["owner","job-cards"]}}},
+          {"name":"GET /owner/documents/expiry","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/documents/expiry","host":["{{baseUrl}}"],"path":["owner","documents","expiry"]}}},
+          {"name":"GET /owner/jobs/status","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/jobs/status?stage=wip","host":["{{baseUrl}}"],"path":["owner","jobs","status"],"query":[{"key":"stage","value":"wip"}]}}},
+          {"name":"GET /owner/jobs/pending","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/jobs/pending","host":["{{baseUrl}}"],"path":["owner","jobs","pending"]}}},
+          {"name":"GET /owner/jobs/active","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/jobs/active","host":["{{baseUrl}}"],"path":["owner","jobs","active"]}}}
+        ]},
+        { "name":"Approvals & Invoices","item":[
+          {"name":"GET /owner/approvals/categories","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/approvals/categories","host":["{{baseUrl}}"],"path":["owner","approvals","categories"]}}},
+          {"name":"GET /owner/invoices","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/invoices?status=unpaid","host":["{{baseUrl}}"],"path":["owner","invoices"],"query":[{"key":"status","value":"unpaid"}]}}}
+        ]},
+        { "name":"Accounts Receivable","item":[
+          {"name":"GET /owner/accounts-receivable/summary","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/accounts-receivable/summary","host":["{{baseUrl}}"],"path":["owner","accounts-receivable","summary"]}}},
+          {"name":"GET /owner/accounts-receivable/records","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/accounts-receivable/records","host":["{{baseUrl}}"],"path":["owner","accounts-receivable","records"]}}}
+        ]},
+        { "name":"Messages & Activity","item":[
+          {"name":"GET /owner/messages","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/messages","host":["{{baseUrl}}"],"path":["owner","messages"]}}},
+          {"name":"POST /owner/messages","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"recipient\":\"John Smith\",\"message\":\"Parts arrived for JC-1245\"}"},"url":{"raw":"{{baseUrl}}/owner/messages","host":["{{baseUrl}}"],"path":["owner","messages"]}}},
+          {"name":"GET /owner/activity","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/owner/activity","host":["{{baseUrl}}"],"path":["owner","activity"]}}}
+        ]}
+      ]
+    },
+    {
+      "name": "CRM",
+      "item": [
+        {"name":"GET /crm/dashboard/kpis","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/dashboard/kpis","host":["{{baseUrl}}"],"path":["crm","dashboard","kpis"]}}},
+        {"name":"GET /crm/channels","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/channels","host":["{{baseUrl}}"],"path":["crm","channels"]}}},
+        {"name":"GET /crm/conversion-trend","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/conversion-trend","host":["{{baseUrl}}"],"path":["crm","conversion-trend"]}}},
+        {"name":"GET /crm/salesperson-performance","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/salesperson-performance","host":["{{baseUrl}}"],"path":["crm","salesperson-performance"]}}},
+        {"name":"GET /crm/response-times","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/response-times","host":["{{baseUrl}}"],"path":["crm","response-times"]}}},
+        {"name":"GET /crm/lead-sources","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/lead-sources","host":["{{baseUrl}}"],"path":["crm","lead-sources"]}}},
+        {"name":"GET /crm/key-metrics","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/key-metrics","host":["{{baseUrl}}"],"path":["crm","key-metrics"]}}},
+        {"name":"GET /crm/integrations","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/integrations","host":["{{baseUrl}}"],"path":["crm","integrations"]}}},
+        {"name":"GET /crm/sales-team","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/sales-team","host":["{{baseUrl}}"],"path":["crm","sales-team"]}}},
+        {"name":"GET /crm/conversations","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/conversations","host":["{{baseUrl}}"],"path":["crm","conversations"]}}},
+        {"name":"GET /crm/leads","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/leads?status=ACTIVE","host":["{{baseUrl}}"],"path":["crm","leads"],"query":[{"key":"status","value":"ACTIVE"},{"key":"source","value":"whatsapp"}]}}},
+        {"name":"GET /crm/tasks","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/crm/tasks","host":["{{baseUrl}}"],"path":["crm","tasks"]}}},
+        {"name":"PUT /crm/tasks/{id}","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"isDone\":true}"},"url":{"raw":"{{baseUrl}}/crm/tasks/1","host":["{{baseUrl}}"],"path":["crm","tasks","1"]}}}
+      ]
+    },
+    {
+      "name": "Media",
+      "item": [
+        {"name":"POST /repair-orders/{id}/media","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"body":{"mode":"formdata","formdata":[{"key":"file","type":"file","src":""},{"key":"type","value":"photo"},{"key":"itemId","value":"Wiper Blade"}]},"url":{"raw":"{{baseUrl}}/repair-orders/RO-001/media","host":["{{baseUrl}}"],"path":["repair-orders","RO-001","media"]}}}
+      ]
+    },
+    {
+      "name": "Branches",
+      "item": [
+        {"name":"GET /branches","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/branches","host":["{{baseUrl}}"],"path":["branches"]}}},
+        {"name":"POST /branches","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"name\":\"New Branch\",\"address\":\"Dubai\",\"phone\":\"+971401234567\"}"},"url":{"raw":"{{baseUrl}}/branches","host":["{{baseUrl}}"],"path":["branches"]}}},
+        {"name":"PUT /branches/{id}","request":{"method":"PUT","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"name\":\"Updated Name\"}"},"url":{"raw":"{{baseUrl}}/branches/1","host":["{{baseUrl}}"],"path":["branches","1"]}}}
+      ]
+    },
+    {
+      "name": "Feedback",
+      "item": [
+        {"name":"POST /feedback (submit)","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"jobCardId\":1,\"rating\":5,\"comment\":\"Great service!\"}"},"url":{"raw":"{{baseUrl}}/feedback","host":["{{baseUrl}}"],"path":["feedback"]}}},
+        {"name":"GET /feedback","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/feedback","host":["{{baseUrl}}"],"path":["feedback"]}}},
+        {"name":"GET /feedback/stats","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/feedback/stats","host":["{{baseUrl}}"],"path":["feedback","stats"]}}}
+      ]
+    },
+    {
+      "name": "WhatsApp",
+      "item": [
+        {"name":"POST /whatsapp/send","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"customerPhone\":\"971501234567\",\"templateName\":\"car_ready\",\"message\":\"Your BMW is ready!\"}"},"url":{"raw":"{{baseUrl}}/whatsapp/send","host":["{{baseUrl}}"],"path":["whatsapp","send"]}}},
+        {"name":"POST /whatsapp/webhook","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"externalId\":\"ext_123\",\"status\":\"delivered\"}"},"url":{"raw":"{{baseUrl}}/whatsapp/webhook","host":["{{baseUrl}}"],"path":["whatsapp","webhook"]}}},
+        {"name":"GET /whatsapp/messages","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":{"raw":"{{baseUrl}}/whatsapp/messages?customerPhone=971501234567","host":["{{baseUrl}}"],"path":["whatsapp","messages"],"query":[{"key":"customerPhone","value":"971501234567"}]}}}
+      ]
+    },
+    {
+      "name": "Sync (Offline)",
+      "item": [
+        {"name":"POST /sync/inspections/{id}","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"},{"key":"Idempotency-Key","value":"uuid-here"}],"body":{"mode":"raw","raw":"{\"jobCardId\":\"JC-001\"}"},"url":{"raw":"{{baseUrl}}/sync/inspections/INS-001","host":["{{baseUrl}}"],"path":["sync","inspections","INS-001"]}}},
+        {"name":"POST /sync/jobs/complete/{id}","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"},{"key":"Idempotency-Key","value":"uuid-here"}],"body":{"mode":"raw","raw":"{\"status\":\"completed\"}"},"url":{"raw":"{{baseUrl}}/sync/jobs/complete/JC-001","host":["{{baseUrl}}"],"path":["sync","jobs","complete","JC-001"]}}},
+        {"name":"POST /sync/repair-orders/{id}","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"},{"key":"Idempotency-Key","value":"uuid-here"}],"body":{"mode":"raw","raw":"{\"grandTotal\":100}"},"url":{"raw":"{{baseUrl}}/sync/repair-orders/RO-001","host":["{{baseUrl}}"],"path":["sync","repair-orders","RO-001"]}}}
+      ]
+    }
+  ]
+}

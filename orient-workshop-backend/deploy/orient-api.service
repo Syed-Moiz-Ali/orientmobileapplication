@@ -1,0 +1,24 @@
+[Unit]
+Description=Orient Workshop Backend API
+After=network.target mysql.service redis.service
+Wants=mysql.service redis.service
+
+[Service]
+Type=simple
+User=orient
+WorkingDirectory=/opt/orient-api
+ExecStart=/usr/bin/java -jar /opt/orient-api/orient-gateway.jar --spring.profiles.active=mysql
+Restart=on-failure
+RestartSec=10
+Environment="DB_HOST=localhost"
+Environment="DB_PORT=3306"
+Environment="DB_NAME=orient_workshop"
+Environment="DB_USERNAME=root"
+Environment="DB_PASSWORD=root"
+Environment="REDIS_HOST=localhost"
+Environment="REDIS_PORT=6379"
+Environment="JWT_SECRET=your-256-bit-secret-key-change-in-production"
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

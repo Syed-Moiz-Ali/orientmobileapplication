@@ -1,0 +1,24 @@
+package com.orient.workshop.technician.controller;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+
+import com.orient.workshop.common.response.ApiResponse;
+import com.orient.workshop.technician.model.dto.ProductivityResponse;
+import com.orient.workshop.technician.service.TechnicianJobService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+@Tag(name = "Technician")
+@RestController
+@RequestMapping("/technicians")
+@RequiredArgsConstructor
+public class ProductivityController {
+
+    private final TechnicianJobService jobService;
+
+    @GetMapping("/productivity")
+    public ApiResponse<ProductivityResponse> getProductivity(@RequestParam String empId) {
+        return ApiResponse.success(jobService.getProductivity(empId));
+    }
+}
+

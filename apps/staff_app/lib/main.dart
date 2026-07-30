@@ -6,6 +6,7 @@ import 'package:staff_app/core/router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EnvironmentConfig.init();
   GoogleFonts.config.allowRuntimeFetching = false;
 
   final logger = createLogger();

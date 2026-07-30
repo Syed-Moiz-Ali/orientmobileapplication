@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
-import 'package:customer_app/features/customer/presentation/add_vehicle_dialogue.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
 class CustomerVehiclesView extends ConsumerWidget {
@@ -24,16 +23,7 @@ class CustomerVehiclesView extends ConsumerWidget {
             AppTopBar(
               title: 'My Vehicles',
               trailing: GestureDetector(
-                onTap: () async {
-                  final newVehicle = await showDialog<CustomerVehicleEntity?>(
-                    context: context,
-                    builder: (_) => const AddVehicleDialog(),
-                  );
-
-                  if (newVehicle != null) {
-                    notifier.addVehicle(newVehicle);
-                  }
-                },
+                onTap: () => context.push(AppRoutes.customerAddVehicle),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppDimensions.s12,

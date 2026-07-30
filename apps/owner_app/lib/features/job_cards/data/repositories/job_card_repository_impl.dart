@@ -1,4 +1,4 @@
-import 'package:owner_app/features/job_cards/data/datasources/mock_job_card_datasource.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_adapters.dart';
 import 'package:owner_app/features/job_cards/domain/entities/job_card.dart';
 import 'package:owner_app/features/job_cards/domain/repositories/job_card_repository.dart';
 

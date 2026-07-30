@@ -19,6 +19,7 @@ class HiveRegistry {
     await Hive.openBox<dynamic>('supervisor_assignments');
     await Hive.openBox<dynamic>('customer_bookings');
     await Hive.openBox<dynamic>('customer_breakdowns');
+    await Hive.openBox<dynamic>('customer_cache');
     await Hive.openBox<dynamic>('owner_messages');
     await Hive.openBox<dynamic>('owner_activity');
     await Hive.openBox<SyncOperation>('sync_queue');

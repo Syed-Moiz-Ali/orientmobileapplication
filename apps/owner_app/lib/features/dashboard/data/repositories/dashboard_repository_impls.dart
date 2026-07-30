@@ -1,4 +1,4 @@
-import 'package:owner_app/features/dashboard/data/datasources/mock_dashboard_datasources.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_adapters.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/domain/repositories/dashboard_repositories.dart';
 

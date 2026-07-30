@@ -1,0 +1,66 @@
+package com.orient.workshop.customer.service;
+
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.customer.model.dto.AddVehicleRequest;
+import com.orient.workshop.customer.model.dto.VehicleResponse;
+import com.orient.workshop.core.model.entity.Customer;
+import com.orient.workshop.core.model.entity.Vehicle;
+import com.orient.workshop.core.repository.VehicleMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class VehicleService {
+
+    private final VehicleMapper vehicleMapper;
+    private final CustomerService customerService;
+
+    public List<VehicleResponse> getVehicles(JwtUserPrincipal principal) {
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
+        List<Vehicle> vehicles = vehicleMapper.findByCustomerId(customer.getId());
+        return vehicles.stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public VehicleResponse addVehicle(JwtUserPrincipal principal, AddVehicleRequest req) {
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
+
+        Vehicle vehicle = Vehicle.builder()
+                .customerId(customer.getId())
+                .make(req.getBrand())
+                .model(req.getModel())
+                .plateNumber(req.getPlateNumber())
+                .vin(req.getVin())
+                .vehicleColor(req.getColor())
+                .modelYear(req.getYear())
+                .mileage(req.getMileage())
+                .lastService(req.getLastService())
+                .nextDue(req.getNextDue())
+                .healthScore(req.getHealthScore())
+                .build();
+        vehicleMapper.insert(vehicle);
+
+        return toResponse(vehicle);
+    }
+
+    private VehicleResponse toResponse(Vehicle v) {
+        return VehicleResponse.builder()
+                .id(String.valueOf(v.getId()))
+                .brand(v.getMake())
+                .model(v.getModel())
+                .plateNumber(v.getPlateNumber())
+                .vin(v.getVin())
+                .color(v.getVehicleColor())
+                .year(v.getModelYear() != null ? v.getModelYear() : 0)
+                .mileage(v.getMileage())
+                .lastService(v.getLastService())
+                .nextDue(v.getNextDue())
+                .healthScore(v.getHealthScore() != null ? v.getHealthScore() : 100)
+                .build();
+    }
+}

@@ -1,10 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:crm_app/features/crm_dashboard/data/datasources/crm_mock_datasource.dart';
+import 'package:shared_auth/shared_auth.dart';
+import 'package:crm_app/features/crm_dashboard/data/datasources/crm_remote_adapter.dart';
+import 'package:crm_app/features/crm_dashboard/data/datasources/crm_remote_datasource.dart';
 import 'package:crm_app/features/crm_dashboard/data/repositories/crm_repository_impl.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 import 'package:crm_app/features/crm_dashboard/domain/repositories/crm_repository.dart';
 
-final crmRepositoryProvider = Provider<CrmRepository>((ref) => CrmRepositoryImpl(CrmMockDataSource()));
+final crmRepositoryProvider = Provider<CrmRepository>((ref) {
+  final adapter = CrmRemoteAdapter(CrmRemoteDataSource(ref.read(apiClientProvider)));
+  adapter.loadAll();
+  return CrmRepositoryImpl(adapter);
+});
 
 class CrmUiState {
   final int selectedIndex;

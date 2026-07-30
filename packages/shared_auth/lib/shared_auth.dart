@@ -7,7 +7,6 @@ export 'src/domain/usecases/get_role_configs.dart';
 
 export 'src/data/datasources/auth_datasource.dart';
 export 'src/data/datasources/auth_remote_datasource.dart';
-export 'src/data/datasources/mock_auth_datasource.dart';
 export 'src/data/repositories/auth_repository_impl.dart';
 
 export 'src/network/auth_interceptor.dart';
@@ -17,6 +16,7 @@ export 'src/presentation/providers/auth_state.dart';
 export 'src/presentation/providers/auth_providers.dart';
 export 'src/presentation/providers/login_provider.dart';
 export 'src/presentation/pages/login_view.dart';
+export 'src/presentation/pages/forgot_password_view.dart';
 export 'src/presentation/widgets/auth_background.dart';
 export 'src/presentation/widgets/auth_button.dart';
 export 'src/presentation/widgets/auth_header.dart';

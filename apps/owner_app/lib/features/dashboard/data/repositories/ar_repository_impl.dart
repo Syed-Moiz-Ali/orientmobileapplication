@@ -1,4 +1,4 @@
-import 'package:owner_app/features/dashboard/data/datasources/mock_ar_datasource.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_adapters.dart';
 import 'package:owner_app/features/dashboard/domain/entities/accounts_receivable.dart';
 import 'package:owner_app/features/dashboard/domain/repositories/accounts_receivable_repository.dart';
 

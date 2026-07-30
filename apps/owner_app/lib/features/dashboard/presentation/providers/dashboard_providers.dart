@@ -1,16 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:owner_app/features/dashboard/data/datasources/mock_dashboard_datasources.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_adapters.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_datasource.dart';
 import 'package:owner_app/features/dashboard/data/repositories/dashboard_repository_impls.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/domain/repositories/dashboard_repositories.dart';
 
-final docExpiryDatasourceProvider = Provider<DocumentExpiryDatasource>((ref) => MockDocumentExpiryDatasource());
-final jobStatusDatasourceProvider = Provider<JobStatusDatasource>((ref) => MockJobStatusDatasource());
-final pendingApprovalsDatasourceProvider = Provider<PendingApprovalsDatasource>((ref) => MockPendingApprovalsDatasource());
-final pendingJobCardsDatasourceProvider = Provider<PendingJobCardsDatasource>((ref) => MockPendingJobCardsDatasource());
-final activeJobCardsDatasourceProvider = Provider<ActiveJobCardsDatasource>((ref) => MockActiveJobCardsDatasource());
-final salesInvoicesDatasourceProvider = Provider<SalesInvoicesDatasource>((ref) => MockSalesInvoicesDatasource());
+final _ownerRemoteProvider = Provider<OwnerRemoteDataSource>((ref) => OwnerRemoteDataSource(ref.read(apiClientProvider)));
+
+final docExpiryDatasourceProvider = Provider<DocumentExpiryDatasource>((ref) => DocumentExpiryRemoteDatasource(ref.read(_ownerRemoteProvider)));
+final jobStatusDatasourceProvider = Provider<JobStatusDatasource>((ref) => JobStatusRemoteDatasource(ref.read(_ownerRemoteProvider)));
+final pendingApprovalsDatasourceProvider = Provider<PendingApprovalsDatasource>((ref) => PendingApprovalsRemoteDatasource(ref.read(_ownerRemoteProvider)));
+final pendingJobCardsDatasourceProvider = Provider<PendingJobCardsDatasource>((ref) => PendingJobCardsRemoteDatasource(ref.read(_ownerRemoteProvider)));
+final activeJobCardsDatasourceProvider = Provider<ActiveJobCardsDatasource>((ref) => ActiveJobCardsRemoteDatasource(ref.read(_ownerRemoteProvider)));
+final salesInvoicesDatasourceProvider = Provider<SalesInvoicesDatasource>((ref) => SalesInvoicesRemoteDatasource(ref.read(_ownerRemoteProvider)));
 
 final docExpiryRepositoryProvider = Provider<DocumentExpiryRepository>((ref) => DocumentExpiryRepositoryImpl(ref.watch(docExpiryDatasourceProvider)));
 final jobStatusRepositoryProvider = Provider<JobStatusRepository>((ref) => JobStatusRepositoryImpl(ref.watch(jobStatusDatasourceProvider)));

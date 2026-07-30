@@ -1,4 +1,4 @@
-import 'package:crm_app/features/crm_dashboard/data/datasources/crm_mock_datasource.dart';
+import 'package:crm_app/features/crm_dashboard/data/datasources/crm_remote_adapter.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 import 'package:crm_app/features/crm_dashboard/domain/repositories/crm_repository.dart';
 

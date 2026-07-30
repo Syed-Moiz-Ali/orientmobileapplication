@@ -1,10 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:owner_app/features/job_cards/data/datasources/mock_job_card_datasource.dart';
+import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_adapters.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_datasource.dart';
 import 'package:owner_app/features/job_cards/data/repositories/job_card_repository_impl.dart';
 import 'package:owner_app/features/job_cards/domain/entities/job_card.dart';
 import 'package:owner_app/features/job_cards/domain/repositories/job_card_repository.dart';
 
-final jobCardDatasourceProvider = Provider<JobCardDatasource>((ref) => MockJobCardDatasource());
+final jobCardDatasourceProvider = Provider<JobCardDatasource>((ref) => JobCardRemoteDatasource(OwnerRemoteDataSource(ref.read(apiClientProvider))));
 final jobCardRepositoryProvider = Provider<JobCardRepository>((ref) => JobCardRepositoryImpl(ref.watch(jobCardDatasourceProvider)));
 
 class JobCardsState {

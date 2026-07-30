@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EnvironmentConfig.init();
   GoogleFonts.config.allowRuntimeFetching = false;
 
   final logger = createLogger();
@@ -18,7 +18,6 @@ void main() async {
     ProviderScope(
       overrides: [
         loggerProvider.overrideWithValue(logger),
-        mockAuthDefaultRoleProvider.overrideWithValue(UserRole.customer),
       ],
       child: const CustomerApp(),
     ),
@@ -40,3 +39,4 @@ class CustomerApp extends ConsumerWidget {
     );
   }
 }
+

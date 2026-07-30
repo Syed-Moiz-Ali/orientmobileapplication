@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:owner_app/features/dashboard/data/datasources/mock_ar_datasource.dart';
+import 'package:shared_auth/shared_auth.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_adapters.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_datasource.dart';
 import 'package:owner_app/features/dashboard/data/repositories/ar_repository_impl.dart';
 import 'package:owner_app/features/dashboard/domain/entities/accounts_receivable.dart';
 import 'package:owner_app/features/dashboard/domain/repositories/accounts_receivable_repository.dart';
 
 final arDatasourceProvider = Provider<ARDatasource>((ref) {
-  return MockARDatasource();
+  return ARRemoteDatasource(OwnerRemoteDataSource(ref.read(apiClientProvider)));
 });
 
 final arRepositoryProvider = Provider<AccountsReceivableRepository>((ref) {

@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:shared_core/src/constants/api_constants.dart';
+import 'package:shared_core/src/constants/api_constants.dart' show ApiEndpoints;
 import 'package:shared_core/src/local/helpers/environment_config.dart';
 import 'package:shared_core/src/local/sync/sync_handler.dart';
 import 'package:shared_core/src/local/sync/sync_operation.dart';
@@ -46,15 +46,15 @@ class DioSyncHandler extends SyncHandler {
   String _getEndpoint(SyncOperation op) {
     switch (op.entityType) {
       case 'inspection':
-        return '${ApiConstants.inspections}/${op.entityId}';
+        return ApiEndpoints.syncInspection(op.entityId);
       case 'job_complete':
-        return '${ApiConstants.jobComplete}/${op.entityId}';
+        return ApiEndpoints.syncJobCompleteById(op.entityId);
       case 'work_assignment':
-        return ApiConstants.workAssignments;
+        return ApiEndpoints.workAssignments;
       case 'booking':
-        return ApiConstants.bookings;
+        return ApiEndpoints.createBooking;
       case 'repair_order':
-        return '${ApiConstants.repairOrders}/${op.entityId}';
+        return ApiEndpoints.syncRepairOrder(op.entityId);
       default:
         throw ArgumentError('Unknown entity type: ${op.entityType}');
     }

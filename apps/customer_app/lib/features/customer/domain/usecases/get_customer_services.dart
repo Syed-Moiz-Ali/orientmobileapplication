@@ -6,7 +6,6 @@ class GetCustomerServices {
 
   GetCustomerServices(this.repository);
 
-  CustomerServiceEntity getActiveService() => repository.getActiveService();
-
-  List<CustomerBookingEntity> getBookings() => repository.getBookings();
+  Future<CustomerServiceEntity> getActiveService() => repository.getActiveService();
+  Future<List<CustomerBookingEntity>> getBookings() => repository.getBookings();
 }

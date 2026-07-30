@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
-import 'package:owner_app/features/dashboard/data/datasources/dashboard_mock_datasource.dart';
-import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_adapters.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_datasource.dart';
+import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 
-final dashboardDataSourceProvider = Provider<DashboardDataSource>((ref) => DashboardMockDataSource());
+final dashboardDataSourceProvider = Provider<DashboardDataSource>((ref) {
+  final adapter = DashboardUIRemoteAdapter(OwnerRemoteDataSource(ref.read(apiClientProvider)));
+  adapter.loadAll();
+  return adapter;
+});
 
 class DashboardUiState {
   final int selectedIndex;

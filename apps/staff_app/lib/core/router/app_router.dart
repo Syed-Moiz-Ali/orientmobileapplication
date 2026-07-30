@@ -30,6 +30,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String shiftDetails = '/shift-details';
   static const String settings = '/settings';
+  static const String forgotPassword = '/forgot-password';
 
   static String dashboardForRole(UserRole role) {
     switch (role) {
@@ -45,11 +46,11 @@ class AppRoutes {
   }
 }
 
-final _routerRefreshNotifier = ValueNotifier<void>(null);
+final _routerRefreshNotifier = ValueNotifier<int>(0);
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   ref.listen<AuthState>(authNotifierProvider, (_, __) {
-    _routerRefreshNotifier.value = null;
+    _routerRefreshNotifier.value++;
   });
 
   return GoRouter(
@@ -80,6 +81,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               context.go(AppRoutes.dashboardForRole(authState.role));
             }
           },
+          onForgotPassword: () => context.push(AppRoutes.forgotPassword),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        name: AppRoutes.forgotPassword,
+        builder: (context, state) => ForgotPasswordView(
+          onBackToLogin: () => context.pop(),
         ),
       ),
       GoRoute(

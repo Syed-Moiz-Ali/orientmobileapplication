@@ -18,3 +18,32 @@ dependencies:
   logger: ^2.5.0
   flutter_secure_storage: ^9.2.4
   intl: ^0.20.2
+  flutter_dotenv: ^5.2.1
+
+flutter:
+  assets:
+    - assets/.env
+    - assets/images/logo.png
+  fonts:
+    - family: Rajdhani
+      fonts:
+        - asset: assets/fonts/rajdhani/Rajdhani-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/rajdhani/Rajdhani-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/rajdhani/Rajdhani-Bold.ttf
+          weight: 700
+    - family: Orbitron
+      fonts:
+        - asset: assets/fonts/orbitron/Orbitron-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/orbitron/Orbitron-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/orbitron/Orbitron-Black.ttf
+          weight: 900
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/jetbrainsmono/JetBrainsMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/jetbrainsmono/JetBrainsMono-SemiBold.ttf
+          weight: 600

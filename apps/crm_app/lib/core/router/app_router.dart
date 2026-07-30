@@ -9,13 +9,14 @@ class AppRoutes {
 
   static const String login = '/login';
   static const String crmDashboard = '/crm_dashboard_view';
+  static const String forgotPassword = '/forgot-password';
 }
 
-final _routerRefreshNotifier = ValueNotifier<void>(null);
+final _routerRefreshNotifier = ValueNotifier<int>(0);
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   ref.listen<AuthState>(authNotifierProvider, (_, __) {
-    _routerRefreshNotifier.value = null;
+    _routerRefreshNotifier.value++;
   });
 
   return GoRouter(
@@ -41,7 +42,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.login,
         builder: (context, state) => LoginView(
           onLoginSuccess: () => context.go(AppRoutes.crmDashboard),
+          onForgotPassword: () => context.push(AppRoutes.forgotPassword),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        name: AppRoutes.forgotPassword,
+        builder: (context, state) => ForgotPasswordView(onBackToLogin: () => context.pop()),
       ),
       GoRoute(
         path: AppRoutes.crmDashboard,

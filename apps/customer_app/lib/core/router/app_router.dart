@@ -7,6 +7,7 @@ import 'package:customer_app/features/customer/presentation/customer_book_servic
 import 'package:customer_app/features/customer/presentation/customer_breakdown_help_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_booking_detail_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_breakdown_detail_view.dart';
+import 'package:customer_app/features/customer/presentation/add_vehicle_view.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 
 class AppRoutes {
@@ -18,13 +19,16 @@ class AppRoutes {
   static const String customerBreakdownHelp = '/customer_breakdown_help_view';
   static const String customerBookingDetail = '/customer_booking_detail';
   static const String customerBreakdownDetail = '/customer_breakdown_detail';
+  static const String forgotPassword = '/forgot-password';
+  static const String customerAddVehicle = '/add-vehicle';
+  static String customerEditVehicle(String id) => '/edit-vehicle/$id';
 }
 
-final _routerRefreshNotifier = ValueNotifier<void>(null);
+final _routerRefreshNotifier = ValueNotifier<int>(0);
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   ref.listen<AuthState>(authNotifierProvider, (_, __) {
-    _routerRefreshNotifier.value = null;
+    _routerRefreshNotifier.value++;
   });
 
   return GoRouter(
@@ -50,7 +54,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.login,
         builder: (context, state) => LoginView(
           onLoginSuccess: () => context.go(AppRoutes.customerDashboard),
+          onForgotPassword: () => context.push(AppRoutes.forgotPassword),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        name: AppRoutes.forgotPassword,
+        builder: (context, state) => ForgotPasswordView(onBackToLogin: () => context.pop()),
       ),
       GoRoute(
         path: AppRoutes.customerDashboard,
@@ -66,6 +76,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.customerBreakdownHelp,
         name: AppRoutes.customerBreakdownHelp,
         builder: (context, state) => const CustomerBreakdownHelpView(),
+      ),
+      GoRoute(
+        path: AppRoutes.customerAddVehicle,
+        name: AppRoutes.customerAddVehicle,
+        builder: (context, state) => const AddVehicleView(),
+      ),
+      GoRoute(
+        path: '/edit-vehicle/:id',
+        name: 'edit-vehicle',
+        builder: (context, state) => AddVehicleView(vehicleId: state.pathParameters['id']),
       ),
       GoRoute(
         path: AppRoutes.customerBookingDetail,

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:owner_app/features/dashboard/data/datasources/dashboard_mock_datasource.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/form_label.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/message_tile.dart';
+
+const _users = [
+  'Ahmed Service Advisor', 'Mohammed Technician', 'Ali Workshop Manager',
+  'Hassan Accountant', 'Omar Parts Manager', 'Fatima Admin', 'Sarah HR Manager',
+];
 
 class MessagesPage extends ConsumerStatefulWidget {
   const MessagesPage({super.key});
@@ -126,7 +130,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                       ),
                       isExpanded: true,
                       onChanged: (v) => notifier.selectUser(v ?? ''),
-                      items: DashboardMockDataSource.users
+                      items: _users
                           .map(
                             (u) => DropdownMenuItem(value: u, child: Text(u)),
                           )

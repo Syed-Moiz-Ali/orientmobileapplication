@@ -48,10 +48,12 @@ class CustomerHomeTab extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CustomerActiveServiceCard(
-                    svc: CustomerServiceEntity.mock,
-                    onTap: () => notifier.selectTab(1),
-                  ),
+                  state.activeService != null && state.activeService!.jobCardId.isNotEmpty
+                      ? CustomerActiveServiceCard(
+                          svc: state.activeService!,
+                          onTap: () => notifier.selectTab(1),
+                        )
+                      : const SizedBox.shrink(),
                   const SizedBox(height: AppDimensions.s24),
                   _sectionLabel('Overview'),
                   const SizedBox(height: AppDimensions.s12),
@@ -161,7 +163,7 @@ class _HeaderBanner extends StatelessWidget {
                   style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 Text(
-                  CustomerEntity.mock.name,
+                  state.profile?.name ?? 'Customer',
                   style: AppTextStyles.orbitronDisplayMedium(
                     color: Colors.white,
                   ),
@@ -173,7 +175,7 @@ class _HeaderBanner extends StatelessWidget {
                   children: [
                     _pill(
                       Icons.build_circle_outlined,
-                      '${CustomerServiceEntity.mock.progressPercent}% Done',
+                      '${state.activeService?.progressPercent ?? 0}% Done',
                       AppColors.warning,
                     ),
                     const SizedBox(width: AppDimensions.s8),

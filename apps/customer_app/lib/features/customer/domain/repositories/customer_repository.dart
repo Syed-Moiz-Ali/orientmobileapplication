@@ -1,9 +1,9 @@
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 
 abstract class CustomerRepository {
-  CustomerEntity getCustomerProfile();
-  List<CustomerVehicleEntity> getVehicles();
-  List<CustomerBookingEntity> getBookings();
-  List<CustomerNotificationEntity> getNotifications();
-  CustomerServiceEntity getActiveService();
+  Future<CustomerEntity> getCustomerProfile();
+  Future<List<CustomerVehicleEntity>> getVehicles();
+  Future<List<CustomerBookingEntity>> getBookings();
+  Future<List<CustomerNotificationEntity>> getNotifications();
+  Future<CustomerServiceEntity> getActiveService();
 }

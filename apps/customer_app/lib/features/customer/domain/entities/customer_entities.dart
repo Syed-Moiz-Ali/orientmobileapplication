@@ -24,12 +24,11 @@ class CustomerEntity {
     required this.memberId,
   });
 
-  static const mock = CustomerEntity(
-    name: 'Ahmed Hassan',
-    firstName: 'Ahmed',
-    avatarInitials: 'AH',
-    memberId: 'CUST-001',
-  );
+  static const mock = CustomerEntity(name: 'Ahmed Hassan', firstName: 'Ahmed', avatarInitials: 'AH', memberId: 'CUST-001');
+  Map<String, dynamic> toJson() => {'name': name, 'firstName': firstName, 'avatarInitials': avatarInitials, 'memberId': memberId};
+  factory CustomerEntity.fromJson(Map<String, dynamic> j) => CustomerEntity(
+    name: j['name'] as String? ?? '', firstName: j['firstName'] as String? ?? '',
+    avatarInitials: j['avatarInitials'] as String? ?? '', memberId: j['memberId'] as String? ?? '');
 }
 
 class CustomerVehicleEntity {
@@ -90,6 +89,13 @@ class CustomerVehicleEntity {
       healthScore: 64,
     ),
   ];
+  Map<String, dynamic> toJson() => {'id': id, 'brand': brand, 'model': model, 'plateNumber': plateNumber, 'vin': vin, 'color': color, 'year': year, 'mileage': mileage, 'lastService': lastService, 'nextDue': nextDue, 'healthScore': healthScore};
+  factory CustomerVehicleEntity.fromJson(Map<String, dynamic> j) => CustomerVehicleEntity(
+    id: j['id'] as String? ?? '', brand: j['brand'] as String? ?? '', model: j['model'] as String? ?? '',
+    plateNumber: j['plateNumber'] as String? ?? '', vin: j['vin'] as String? ?? '', color: j['color'] as String? ?? '',
+    year: j['year'] as int? ?? 0, mileage: j['mileage'] as String? ?? '',
+    lastService: j['lastService'] as String? ?? '', nextDue: j['nextDue'] as String? ?? '',
+    healthScore: j['healthScore'] as int? ?? 0);
 }
 
 class CustomerBookingEntity {
@@ -123,23 +129,15 @@ class CustomerBookingEntity {
   }
 
   static const List<CustomerBookingEntity> mock = [
-    CustomerBookingEntity(
-      service: 'Oil Change & Filter',
-      vehicleName: 'BMW 3 Series',
-      plateNumber: 'AB19 XYZ',
-      date: '5 Apr 2026',
-      time: '10:00 AM',
-      status: BookingStatus.confirmed,
-    ),
-    CustomerBookingEntity(
-      service: 'Brake Inspection',
-      vehicleName: 'Ford Focus',
-      plateNumber: 'FO21 CUS',
-      date: '20 Mar 2026',
-      time: '2:00 PM',
-      status: BookingStatus.completed,
-    ),
+    CustomerBookingEntity(service: 'Oil Change & Filter', vehicleName: 'BMW 3 Series', plateNumber: 'AB19 XYZ', date: '5 Apr 2026', time: '10:00 AM', status: BookingStatus.confirmed),
+    CustomerBookingEntity(service: 'Brake Inspection', vehicleName: 'Ford Focus', plateNumber: 'FO21 CUS', date: '20 Mar 2026', time: '2:00 PM', status: BookingStatus.completed),
   ];
+  Map<String, dynamic> toJson() => {'service': service, 'vehicleName': vehicleName, 'plateNumber': plateNumber, 'date': date, 'time': time, 'status': status.name};
+  factory CustomerBookingEntity.fromJson(Map<String, dynamic> j) => CustomerBookingEntity(
+    service: j['service'] as String? ?? '', vehicleName: j['vehicleName'] as String? ?? '',
+    plateNumber: j['plateNumber'] as String? ?? '', date: j['date'] as String? ?? '',
+    time: j['time'] as String? ?? '',
+    status: BookingStatus.values.firstWhere((e) => e.name == j['status'], orElse: () => BookingStatus.pending));
 }
 
 class ServiceStageEntity {
@@ -147,11 +145,11 @@ class ServiceStageEntity {
   final String? time;
   final StageStatus status;
 
-  const ServiceStageEntity({
-    required this.name,
-    this.time,
-    required this.status,
-  });
+  const ServiceStageEntity({required this.name, this.time, required this.status});
+  Map<String, dynamic> toJson() => {'name': name, 'time': time, 'status': status.name};
+  factory ServiceStageEntity.fromJson(Map<String, dynamic> j) => ServiceStageEntity(
+    name: j['name'] as String? ?? '', time: j['time'] as String?,
+    status: StageStatus.values.firstWhere((e) => e.name == j['status'], orElse: () => StageStatus.pending));
 }
 
 class CustomerServiceEntity {
@@ -212,12 +210,17 @@ class CustomerServiceEntity {
       ),
       ServiceStageEntity(name: 'Quality Check', status: StageStatus.pending),
       ServiceStageEntity(name: 'Wash & Cleaning', status: StageStatus.pending),
-      ServiceStageEntity(
-        name: 'Ready for Delivery',
-        status: StageStatus.pending,
-      ),
+      ServiceStageEntity(name: 'Ready for Delivery', status: StageStatus.pending),
     ],
   );
+  Map<String, dynamic> toJson() => {'jobCardId': jobCardId, 'plateNumber': plateNumber, 'vehicleName': vehicleName, 'service': service, 'started': started, 'estCompletion': estCompletion, 'progressPercent': progressPercent, 'currentStage': currentStage, 'technicianName': technicianName, 'stages': stages.map((s) => s.toJson()).toList()};
+  factory CustomerServiceEntity.fromJson(Map<String, dynamic> j) => CustomerServiceEntity(
+    jobCardId: j['jobCardId'] as String? ?? '', plateNumber: j['plateNumber'] as String? ?? '',
+    vehicleName: j['vehicleName'] as String? ?? '', service: j['service'] as String? ?? '',
+    started: j['started'] as String? ?? '', estCompletion: j['estCompletion'] as String? ?? '',
+    progressPercent: j['progressPercent'] as int? ?? 0, currentStage: j['currentStage'] as String? ?? '',
+    technicianName: j['technicianName'] as String? ?? '',
+    stages: (j['stages'] as List?)?.map((s) => ServiceStageEntity.fromJson(Map<String, dynamic>.from(s as Map))).toList() ?? []);
 }
 
 class CustomerNotificationEntity {
@@ -280,6 +283,11 @@ class CustomerNotificationEntity {
       isRead: true,
     ),
   ];
+  Map<String, dynamic> toJson() => {'id': id, 'title': title, 'body': body, 'time': time, 'type': type.name, 'isRead': isRead};
+  factory CustomerNotificationEntity.fromJson(Map<String, dynamic> j) => CustomerNotificationEntity(
+    id: j['id'] as String? ?? '', title: j['title'] as String? ?? '', body: j['body'] as String? ?? '',
+    time: j['time'] as String? ?? '', isRead: j['isRead'] as bool? ?? false,
+    type: NotifType.values.firstWhere((e) => e.name == j['type'], orElse: () => NotifType.carReady));
 }
 
 class ServiceTypeEntity {
