@@ -374,6 +374,7 @@ CREATE TABLE IF NOT EXISTS leads (
     assigned_to     VARCHAR(100) DEFAULT '',
     status          VARCHAR(20) DEFAULT 'ACTIVE',
     last_activity   VARCHAR(100) DEFAULT '',
+    external_id     VARCHAR(100) DEFAULT '',
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -404,7 +405,10 @@ CREATE TABLE IF NOT EXISTS crm_tasks (
 CREATE TABLE IF NOT EXISTS crm_integrations (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     name            VARCHAR(100) NOT NULL UNIQUE,
-    connected       BOOLEAN DEFAULT FALSE
+    connected       BOOLEAN DEFAULT FALSE,
+    credentials     TEXT,
+    last_sync_at    TIMESTAMP NULL,
+    sync_status     VARCHAR(20) DEFAULT 'IDLE'
 );
 
 CREATE TABLE IF NOT EXISTS idempotency_keys (

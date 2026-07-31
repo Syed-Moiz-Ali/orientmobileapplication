@@ -5,6 +5,8 @@ import 'package:shared_core/src/errors/result.dart';
 
 enum AuthMethod { sms, email, password }
 
+enum PasswordIdentifier { email, phone }
+
 class LoginState {
   final bool isLoading;
   final String? error;
@@ -17,6 +19,7 @@ class LoginState {
   final bool isRegistering;
   final int resendCooldown;
   final AuthMethod method;
+  final PasswordIdentifier identifier;
 
   const LoginState({
     this.isLoading = false,
@@ -30,6 +33,7 @@ class LoginState {
     this.isRegistering = false,
     this.resendCooldown = 0,
     this.method = AuthMethod.sms,
+    this.identifier = PasswordIdentifier.email,
   });
 
   LoginState copyWith({
@@ -44,6 +48,7 @@ class LoginState {
     bool? isRegistering,
     int? resendCooldown,
     AuthMethod? method,
+    PasswordIdentifier? identifier,
   }) => LoginState(
     isLoading: isLoading ?? this.isLoading,
     error: error,
@@ -56,6 +61,7 @@ class LoginState {
     isRegistering: isRegistering ?? this.isRegistering,
     resendCooldown: resendCooldown ?? this.resendCooldown,
     method: method ?? this.method,
+    identifier: identifier ?? this.identifier,
   );
 }
 
@@ -64,6 +70,14 @@ class LoginNotifier extends Notifier<LoginState> {
   LoginState build() => const LoginState();
 
   void setMethod(AuthMethod m) => state = LoginState(method: m);
+  void setPasswordIdentifier(PasswordIdentifier value) {
+    state = state.copyWith(
+      identifier: value,
+      email: value == PasswordIdentifier.email ? state.email : '',
+      phone: value == PasswordIdentifier.phone ? state.phone : '',
+    );
+  }
+
   void setPhone(String v) {
     final c = v.replaceAll(RegExp(r'[^\d]'), '');
     if (c.length <= 10) state = state.copyWith(phone: c);
@@ -77,7 +91,8 @@ class LoginNotifier extends Notifier<LoginState> {
     if (c.length <= 6) state = state.copyWith(otp: c);
   }
 
-  void toggleRegister() => state = state.copyWith(isRegistering: !state.isRegistering);
+  void toggleRegister() =>
+      state = state.copyWith(isRegistering: !state.isRegistering);
 
   String _fullPhone(String p) {
     final c = p.replaceAll(RegExp(r'[^\d]'), '');
@@ -109,9 +124,14 @@ class LoginNotifier extends Notifier<LoginState> {
       return;
     }
     state = state.copyWith(isLoading: true);
-    final r = await ref.read(verifyOtpProvider)(_fullPhone(state.phone), state.otp);
+    final r = await ref.read(verifyOtpProvider)(
+      _fullPhone(state.phone),
+      state.otp,
+    );
     if (r case Success(data: final a)) {
-      await ref.read(authNotifierProvider.notifier).authenticate(a.role, a.token, refreshToken: a.refreshToken);
+      await ref
+          .read(authNotifierProvider.notifier)
+          .authenticate(a.role, a.token, refreshToken: a.refreshToken);
     } else if (r case Failure(:final error)) {
       state = state.copyWith(isLoading: false, error: error.message);
     }
@@ -139,9 +159,14 @@ class LoginNotifier extends Notifier<LoginState> {
       return;
     }
     state = state.copyWith(isLoading: true);
-    final r = await ref.read(verifyEmailOtpProvider)(state.email.trim(), state.otp);
+    final r = await ref.read(verifyEmailOtpProvider)(
+      state.email.trim(),
+      state.otp,
+    );
     if (r case Success(data: final a)) {
-      await ref.read(authNotifierProvider.notifier).authenticate(a.role, a.token, refreshToken: a.refreshToken);
+      await ref
+          .read(authNotifierProvider.notifier)
+          .authenticate(a.role, a.token, refreshToken: a.refreshToken);
     } else if (r case Failure(:final error)) {
       state = state.copyWith(isLoading: false, error: error.message);
     }
@@ -152,14 +177,28 @@ class LoginNotifier extends Notifier<LoginState> {
       state = state.copyWith(error: 'Enter your password');
       return;
     }
-    if (state.email.isEmpty && state.phone.isEmpty) {
-      state = state.copyWith(error: 'Enter email or phone');
+    if (state.identifier == PasswordIdentifier.email &&
+        (state.email.isEmpty || !state.email.contains('@'))) {
+      state = state.copyWith(error: 'Enter a valid email');
+      return;
+    }
+    if (state.identifier == PasswordIdentifier.phone &&
+        state.phone.length < 8) {
+      state = state.copyWith(error: 'Enter a valid phone number');
       return;
     }
     state = state.copyWith(isLoading: true);
-    final r = await ref.read(loginWithPasswordProvider)(state.email, _fullPhone(state.phone), state.password);
+    final r = await ref.read(loginWithPasswordProvider)(
+      state.identifier == PasswordIdentifier.email ? state.email.trim() : '',
+      state.identifier == PasswordIdentifier.phone
+          ? _fullPhone(state.phone)
+          : '',
+      state.password,
+    );
     if (r case Success(data: final a)) {
-      await ref.read(authNotifierProvider.notifier).authenticate(a.role, a.token, refreshToken: a.refreshToken);
+      await ref
+          .read(authNotifierProvider.notifier)
+          .authenticate(a.role, a.token, refreshToken: a.refreshToken);
     } else if (r case Failure(:final error)) {
       state = state.copyWith(isLoading: false, error: error.message);
     }
@@ -174,16 +213,30 @@ class LoginNotifier extends Notifier<LoginState> {
       state = state.copyWith(error: 'Password must be 6+ chars');
       return;
     }
+    if (state.identifier == PasswordIdentifier.email &&
+        (state.email.isEmpty || !state.email.contains('@'))) {
+      state = state.copyWith(error: 'Enter a valid email');
+      return;
+    }
+    if (state.identifier == PasswordIdentifier.phone &&
+        state.phone.length < 8) {
+      state = state.copyWith(error: 'Enter a valid phone number');
+      return;
+    }
     state = state.copyWith(isLoading: true);
     final r = await ref.read(registerUserProvider)(
       state.name,
-      state.email.trim(),
-      _fullPhone(state.phone),
+      state.identifier == PasswordIdentifier.email ? state.email.trim() : '',
+      state.identifier == PasswordIdentifier.phone
+          ? _fullPhone(state.phone)
+          : '',
       state.password,
       'customer',
     );
     if (r case Success(data: final a)) {
-      await ref.read(authNotifierProvider.notifier).authenticate(a.role, a.token, refreshToken: a.refreshToken);
+      await ref
+          .read(authNotifierProvider.notifier)
+          .authenticate(a.role, a.token, refreshToken: a.refreshToken);
     } else if (r case Failure(:final error)) {
       state = state.copyWith(isLoading: false, error: error.message);
     }
@@ -205,4 +258,6 @@ class LoginNotifier extends Notifier<LoginState> {
   }
 }
 
-final loginProvider = NotifierProvider<LoginNotifier, LoginState>(LoginNotifier.new);
+final loginProvider = NotifierProvider<LoginNotifier, LoginState>(
+  LoginNotifier.new,
+);

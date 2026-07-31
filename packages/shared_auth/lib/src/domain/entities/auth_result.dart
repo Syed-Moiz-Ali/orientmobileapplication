@@ -5,5 +5,9 @@ class AuthResult {
   final String token;
   final String? refreshToken;
 
-  const AuthResult({required this.role, required this.token, this.refreshToken});
+  const AuthResult({
+    required this.role,
+    required this.token,
+    this.refreshToken,
+  });
 }

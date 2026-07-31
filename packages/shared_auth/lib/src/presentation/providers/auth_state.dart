@@ -49,12 +49,14 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<void> authenticate(UserRole role, String token, {String? refreshToken}) async {
-    await ref.read(tokenStorageProvider).save(
-      token: token,
-      refreshToken: refreshToken,
-      role: role.name,
-    );
+  Future<void> authenticate(
+    UserRole role,
+    String token, {
+    String? refreshToken,
+  }) async {
+    await ref
+        .read(tokenStorageProvider)
+        .save(token: token, refreshToken: refreshToken, role: role.name);
     state = AuthAuthenticated(role: role, token: token);
   }
 

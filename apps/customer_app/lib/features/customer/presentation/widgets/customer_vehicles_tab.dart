@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/router/app_router.dart';
-import 'package:customer_app/features/customer/data/datasources/customer_remote_datasource.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicle_card.dart';

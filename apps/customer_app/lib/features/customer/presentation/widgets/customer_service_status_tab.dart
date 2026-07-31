@@ -26,6 +26,9 @@ class CustomerServiceStatusTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bookings = ref.watch(customerBookingsProvider);
     final breakdowns = ref.watch(customerBreakdownsProvider);
+    final dash = ref.watch(customerDashboardProvider);
+    final activeService = dash.activeService;
+    final hasActiveService = activeService != null && activeService.jobCardId.isNotEmpty;
     final active = bookings.where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending).toList();
 
     return SingleChildScrollView(
@@ -33,7 +36,18 @@ class CustomerServiceStatusTab extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (active.isNotEmpty) ...[
+          if (hasActiveService) ...[
+            Row(
+              children: [
+                Container(width: 4, height: 20, decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(2))),
+                const SizedBox(width: AppDimensions.s10),
+                Text('Current Service', style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary)),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s12),
+            _ActiveServiceTimelineCard(service: activeService),
+            const SizedBox(height: AppDimensions.s24),
+          ] else if (active.isNotEmpty) ...[
             Row(
               children: [
                 Container(width: 4, height: 20, decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(2))),
@@ -183,6 +197,171 @@ class CustomerServiceStatusTab extends ConsumerWidget {
               );
             }),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveServiceTimelineCard extends StatelessWidget {
+  final CustomerServiceEntity service;
+  const _ActiveServiceTimelineCard({required this.service});
+
+  (Color, Color) _stageColors(StageStatus s) {
+    switch (s) {
+      case StageStatus.done:
+        return (AppColors.success, AppColors.successBg);
+      case StageStatus.inProgress:
+        return (AppColors.warning, AppColors.warningBg);
+      case StageStatus.pending:
+        return (AppColors.text3, AppColors.surfaceAlt);
+    }
+  }
+
+  String _stageLabel(StageStatus s) {
+    switch (s) {
+      case StageStatus.done: return 'Completed';
+      case StageStatus.inProgress: return 'In progress...';
+      case StageStatus.pending: return 'Pending';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stages = service.stages;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.s18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.r16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [AppColors.accent, Color(0xFF40B3C0)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  borderRadius: BorderRadius.circular(AppDimensions.r12),
+                ),
+                child: const Icon(Icons.build_circle_outlined, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(service.service.isNotEmpty ? service.service : 'Service in Progress', style: AppTextStyles.rajdhaniLabel(color: AppColors.textPrimary)),
+                    const SizedBox(height: 4),
+                    Text(
+                      service.vehicleName.isNotEmpty
+                          ? '${service.vehicleName}  \u00b7  ${service.plateNumber}'
+                          : 'Job Card ${service.jobCardId}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.text3),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: AppColors.cyanLight, borderRadius: BorderRadius.circular(AppDimensions.r20)),
+                child: Text('${service.progressPercent}%', style: const TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s8),
+          Row(
+            children: [
+              const Icon(Icons.badge_outlined, color: AppColors.text3, size: 12),
+              const SizedBox(width: 5),
+              Text('Job Card: ${service.jobCardId}', style: const TextStyle(fontSize: 11, color: AppColors.text3)),
+              const Spacer(),
+              if (service.technicianName.isNotEmpty) ...[
+                const Icon(Icons.engineering_outlined, color: AppColors.text3, size: 12),
+                const SizedBox(width: 5),
+                Text(service.technicianName, style: const TextStyle(fontSize: 11, color: AppColors.text3)),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s18),
+          LinearProgressIndicator(
+            value: (service.progressPercent / 100).clamp(0.0, 1.0),
+            backgroundColor: AppColors.surfaceAlt,
+            color: AppColors.accent,
+            minHeight: 6,
+            borderRadius: BorderRadius.circular(3),
+          ),
+          const SizedBox(height: AppDimensions.s20),
+          ...stages.asMap().entries.map((e) {
+            final i = e.key;
+            final stage = e.value;
+            final isLast = i == stages.length - 1;
+            final (fg, bg) = _stageColors(stage.status);
+            final completed = stage.status == StageStatus.done;
+            final active = stage.status == StageStatus.inProgress;
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 24, height: 24,
+                        decoration: BoxDecoration(
+                          color: completed ? AppColors.success : active ? fg : AppColors.surfaceAlt,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: completed ? AppColors.success : active ? fg : AppColors.border,
+                            width: 2,
+                          ),
+                        ),
+                        child: Icon(
+                          completed ? Icons.check_rounded : active ? Icons.autorenew_rounded : Icons.circle_outlined,
+                          size: 12,
+                          color: completed || active ? Colors.white : AppColors.text3,
+                        ),
+                      ),
+                      if (!isLast)
+                        Container(width: 2, height: 30, color: completed ? AppColors.success : AppColors.border),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s10),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          stage.name,
+                          style: TextStyle(
+                            color: active ? fg : AppColors.textPrimary,
+                            fontSize: 13, fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          stage.time ?? _stageLabel(stage.status),
+                          style: const TextStyle(color: AppColors.text3, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (active)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppDimensions.r20)),
+                    child: Text('Current', style: TextStyle(color: fg, fontSize: 9, fontWeight: FontWeight.w700)),
+                  ),
+              ],
+            );
+          }),
         ],
       ),
     );

@@ -117,6 +117,15 @@ class ApiEndpoints {
   static String technicianJobNotes(String jobCard) => '/technicians/jobs/$jobCard/notes';
   static String branchById(String id) => '/branches/$id';
   static String crmTaskById(String id) => '/crm/tasks/$id';
+  static String crmLeadById(String id) => '/crm/leads/$id';
+  static String crmLeadActivities(String id) => '/crm/leads/$id/activities';
+  static const String crmTeamMembers = '/crm/team-members';
+  static const String crmLeadStats = '/crm/leads/stats';
+  static const String crmLeadFollowUps = '/crm/leads/follow-ups';
+  static const String crmActivityFeed = '/crm/activity-feed';
+  static String crmIntegrationConnect(String name) => '/crm/integrations/$name/connect';
+  static String crmIntegrationDisconnect(String name) => '/crm/integrations/$name/disconnect';
+  static String crmIntegrationSync(String name) => '/crm/integrations/$name/sync';
   static String syncInspection(String id) => '/sync/inspections/$id';
   static String syncJobCompleteById(String id) => '/sync/jobs/complete/$id';
   static String syncRepairOrder(String id) => '/sync/repair-orders/$id';

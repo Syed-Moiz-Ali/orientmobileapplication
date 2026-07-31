@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_lead_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
@@ -170,55 +171,73 @@ class CrmDrawer extends ConsumerWidget {
             decoration: const BoxDecoration(
               border: Border(top: BorderSide(color: CrmColors.border)),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [CrmColors.gStart, CrmColors.gEnd],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'A',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+                onTap: () async {
+                  final confirmed = await showLogoutDialog(context);
+                  if (confirmed == true && context.mounted) {
+                    await ref.read(authNotifierProvider.notifier).logout();
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [CrmColors.gStart, CrmColors.gEnd],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'A',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Admin',
+                            style: TextStyle(
+                              color: CrmColors.textH,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            'Super Admin',
+                            style: TextStyle(
+                              color: CrmColors.textM,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.logout_rounded,
+                        color: CrmColors.red.withValues(alpha: 0.7),
+                        size: 18,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 10),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Admin',
-                      style: TextStyle(
-                        color: CrmColors.textH,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      'Super Admin',
-                      style: TextStyle(color: CrmColors.textM, fontSize: 11),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Icon(
-                  Icons.logout_rounded,
-                  color: CrmColors.red.withValues(alpha: 0.7),
-                  size: 18,
-                ),
-              ],
+              ),
             ),
           ),
         ],

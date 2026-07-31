@@ -4,15 +4,11 @@ import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.auth.model.entity.User;
 import com.orient.workshop.auth.repository.UserMapper;
 import com.orient.workshop.common.exception.NotFoundException;
-import com.orient.workshop.customer.model.dto.ActiveServiceResponse;
 import com.orient.workshop.customer.model.dto.CustomerProfileResponse;
-import com.orient.workshop.customer.model.dto.NotificationResponse;
-import com.orient.workshop.customer.model.dto.VehicleResponse;
 import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.repository.CustomerMapper;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,40 +57,6 @@ public class CustomerService {
                 .firstName(firstName)
                 .avatarInitials(initials)
                 .memberId("CUST-" + String.format("%03d", customer.getId()))
-                .build();
-    }
-
-    public List<VehicleResponse> getVehicles(JwtUserPrincipal principal) {
-        return List.of();
-    }
-
-    public VehicleResponse addVehicle(JwtUserPrincipal principal, VehicleResponse request) {
-        return request;
-    }
-
-    public VehicleResponse updateVehicle(JwtUserPrincipal principal, Long id, VehicleResponse request) {
-        return request;
-    }
-
-    public void deleteVehicle(JwtUserPrincipal principal, Long id) {
-    }
-
-    public List<NotificationResponse> getNotifications(JwtUserPrincipal principal) {
-        return List.of();
-    }
-
-    public ActiveServiceResponse getActiveService(JwtUserPrincipal principal) {
-        return ActiveServiceResponse.builder()
-                .jobCardId("")
-                .plateNumber("")
-                .vehicleName("")
-                .service("")
-                .started("")
-                .estCompletion("")
-                .progressPercent(0)
-                .currentStage("")
-                .technicianName("")
-                .stages(List.of())
                 .build();
     }
 

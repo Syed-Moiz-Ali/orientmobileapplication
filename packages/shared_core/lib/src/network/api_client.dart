@@ -56,6 +56,12 @@ class ApiClient {
     try {
       final response = await request();
       final data = response.data;
+      if (data is Map) {
+        final code = data['code'];
+        if (code is int && code >= 400) {
+          return Failure(NetworkException(data['message']?.toString() ?? 'Request failed'));
+        }
+      }
       if (fromJson != null && data != null) {
         return Success(fromJson(data));
       }

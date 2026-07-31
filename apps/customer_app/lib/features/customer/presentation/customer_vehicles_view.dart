@@ -12,7 +12,6 @@ class CustomerVehiclesView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vehicles = ref.watch(customerDashboardProvider).vehicles;
-    final notifier = ref.read(customerDashboardProvider.notifier);
 
     return Scaffold(
       backgroundColor: AppColors.bg,

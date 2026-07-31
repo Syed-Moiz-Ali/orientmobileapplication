@@ -1,5 +1,4 @@
 import 'package:hive/hive.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/data/datasources/customer_remote_datasource.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/domain/repositories/customer_repository.dart';

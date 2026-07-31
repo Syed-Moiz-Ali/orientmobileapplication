@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class LeadResponse {
+    private String id;
     private int sno;
     private String leadNumber;
     private String customerName;
@@ -16,4 +17,7 @@ public class LeadResponse {
     private String assignedTo;
     private String status;
     private String lastActivity;
+    private String notes;
+    private java.math.BigDecimal leadValue;
+    private String followUpDate;
 }

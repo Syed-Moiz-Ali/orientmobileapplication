@@ -1,0 +1,631 @@
+You are a Principal Software Architect, CTO, Product Manager, Senior UX Designer, DevOps Engineer, Security Engineer, QA Lead, and Startup Investor.
+
+Your task is to perform a COMPLETE, DEEP, LINE-BY-LINE AUDIT of this entire codebase.
+
+Do NOT give a surface-level review.
+
+I want you to scan EVERYTHING recursively.
+
+## Scan Scope
+
+Analyze every part of the project including:
+
+• Every folder
+• Every file
+• Every line of code
+• Every widget/component
+• Every API
+• Every model
+• Every service
+• Every repository
+• Every provider/state manager
+• Every database interaction
+• Every asset
+• Every configuration
+• Every build file
+• Every dependency
+• Every environment configuration
+• Every route
+• Every authentication flow
+• Every notification flow
+• Every background task
+• Every permission
+• Every validation
+• Every business logic
+• Every utility/helper
+• Every error handler
+• Every loading state
+• Every animation
+• Every responsive layout
+• Every localization possibility
+• Every security vulnerability
+
+Leave nothing unchecked.
+
+--------------------------------------------------
+
+# Analyze from these perspectives
+
+## 1. Startup Founder
+
+If this product was your startup,
+
+• Would you launch it?
+• What features are missing?
+• What would increase customer retention?
+• What would increase revenue?
+• What would reduce churn?
+• What premium features should exist?
+• What subscription model fits?
+• What KPIs should be tracked?
+• What analytics are missing?
+
+--------------------------------------------------
+
+## 2. Investor Perspective
+
+Imagine you are investing $5M into this company.
+
+Review:
+
+• Product maturity
+• Scalability
+• Competitive advantage
+• Missing enterprise features
+• Missing business modules
+• Technical debt
+• Maintainability
+• Code quality
+• Growth potential
+
+Would you invest?
+
+Why?
+
+--------------------------------------------------
+
+## 3. Customer Perspective
+
+Review every customer flow.
+
+Is it:
+
+• Easy?
+• Fast?
+• Beautiful?
+• Trustworthy?
+• Modern?
+• Intuitive?
+
+Find every point of friction.
+
+Suggest improvements.
+
+--------------------------------------------------
+
+## 4. Owner/Admin Perspective
+
+Review everything an owner needs.
+
+Examples:
+
+Dashboard
+
+Reports
+
+Revenue
+
+Expenses
+
+Inventory
+
+Attendance
+
+Payroll
+
+Service History
+
+Invoices
+
+GST
+
+Tax
+
+Notifications
+
+Audit Logs
+
+Role Management
+
+Permissions
+
+Approvals
+
+Business Analytics
+
+AI Insights
+
+Predictive Reports
+
+Find everything missing.
+
+--------------------------------------------------
+
+## 5. Staff Perspective
+
+Review daily workflow.
+
+Can staff perform their work quickly?
+
+Are there unnecessary steps?
+
+Can tasks be automated?
+
+Can AI help?
+
+What features improve productivity?
+
+--------------------------------------------------
+
+## 6. Technician Perspective
+
+Review technician workflows.
+
+Job assignments
+
+Service requests
+
+Navigation
+
+Customer history
+
+Before/After photos
+
+Digital signatures
+
+Parts usage
+
+Offline mode
+
+Voice notes
+
+Barcode/QR scanning
+
+GPS
+
+Time tracking
+
+Performance metrics
+
+Find missing features.
+
+--------------------------------------------------
+
+## 7. Customer Support Perspective
+
+Review support flows.
+
+Tickets
+
+Live Chat
+
+WhatsApp
+
+Call Logs
+
+FAQs
+
+Knowledge Base
+
+Feedback
+
+Complaint Resolution
+
+CSAT
+
+NPS
+
+Automation
+
+--------------------------------------------------
+
+## 8. Developer Perspective
+
+Review the codebase professionally.
+
+Check:
+
+Architecture
+
+Folder Structure
+
+Naming
+
+Clean Code
+
+SOLID
+
+DRY
+
+KISS
+
+Dependency Injection
+
+State Management
+
+Memory Leaks
+
+Performance
+
+Widget Rebuilds
+
+Caching
+
+Database Queries
+
+Pagination
+
+API Design
+
+Logging
+
+Error Handling
+
+Testing
+
+CI/CD
+
+Versioning
+
+Scalability
+
+Security
+
+Everything.
+
+--------------------------------------------------
+
+## 9. UI/UX Audit
+
+Review every screen.
+
+Rate each page.
+
+Check:
+
+Consistency
+
+Spacing
+
+Typography
+
+Color System
+
+Icons
+
+Accessibility
+
+Dark Mode
+
+Tablet
+
+Desktop
+
+Animations
+
+Micro Interactions
+
+Loading
+
+Skeletons
+
+Empty States
+
+Success States
+
+Error States
+
+One-handed usability
+
+Professional appearance
+
+Make it look like a premium enterprise SaaS product.
+
+--------------------------------------------------
+
+## 10. Security Audit
+
+Check:
+
+Authentication
+
+Authorization
+
+JWT
+
+Token Storage
+
+Encryption
+
+API Security
+
+SQL Injection
+
+XSS
+
+CSRF
+
+Secrets
+
+Environment Variables
+
+Permissions
+
+Biometric Authentication
+
+Secure Storage
+
+Certificate Pinning
+
+Rate limiting
+
+Audit logs
+
+--------------------------------------------------
+
+## 11. Backend Audit
+
+Review:
+
+API architecture
+
+Controllers
+
+Repositories
+
+Services
+
+Database schema
+
+Indexes
+
+Transactions
+
+Caching
+
+Queues
+
+Cron Jobs
+
+File Uploads
+
+Notifications
+
+Email
+
+SMS
+
+Logging
+
+Monitoring
+
+Scalability
+
+Microservices readiness
+
+--------------------------------------------------
+
+## 12. Deployment Audit
+
+Can this be deployed today?
+
+Review:
+
+Docker
+
+Environment configs
+
+CI/CD
+
+GitHub Actions
+
+Monitoring
+
+Crash Reporting
+
+Firebase
+
+Sentry
+
+Backups
+
+Scaling
+
+Production Logging
+
+Performance Monitoring
+
+--------------------------------------------------
+
+## 13. Performance Audit
+
+Measure possible bottlenecks.
+
+Find:
+
+Slow widgets
+
+Slow queries
+
+Heavy rebuilds
+
+Memory leaks
+
+Large images
+
+Bundle size
+
+Startup time
+
+API latency
+
+Database latency
+
+Network optimization
+
+--------------------------------------------------
+
+## 14. Enterprise Readiness
+
+Can this be sold to:
+
+Small businesses
+
+Medium businesses
+
+Large enterprises
+
+Government organizations
+
+Franchise businesses
+
+Multi-location businesses
+
+If not,
+
+Explain what is missing.
+
+--------------------------------------------------
+
+## 15. AI Opportunities
+
+Find everywhere AI can improve the application.
+
+Examples:
+
+Predictive maintenance
+
+Smart scheduling
+
+Auto assignment
+
+Chatbot
+
+Voice assistant
+
+OCR
+
+Invoice scanning
+
+Customer recommendations
+
+Business forecasting
+
+Automatic report generation
+
+AI analytics
+
+--------------------------------------------------
+
+# Output Format
+
+Produce a professional audit report.
+
+For every issue include:
+
+• Severity
+  - Critical
+  - High
+  - Medium
+  - Low
+
+• File Path
+
+• File Name
+
+• Line Number(s)
+
+• Problem Description
+
+• Business Impact
+
+• Technical Impact
+
+• Recommended Solution
+
+• Example Implementation
+
+• Estimated Development Time
+
+• Priority
+
+--------------------------------------------------
+
+Finally provide:
+
+1. Overall Architecture Score (/10)
+2. Code Quality Score (/10)
+3. Security Score (/10)
+4. Performance Score (/10)
+5. UI/UX Score (/10)
+6. Scalability Score (/10)
+7. Maintainability Score (/10)
+8. Enterprise Readiness Score (/10)
+9. Investor Readiness Score (/10)
+10. Production Readiness Score (/10)
+
+Then create:
+
+• Top 100 improvements
+• Missing enterprise features
+• Missing business modules
+• Missing automation opportunities
+• Missing AI features
+• Technical debt list
+• Security checklist
+• Deployment checklist
+• Performance optimization checklist
+• UI/UX improvement checklist
+• Phase-wise roadmap (V1 → V2 → V3 → Enterprise)
+• Estimated effort in weeks
+• Team roles required
+• Final recommendation:
+  - Not Ready
+  - Beta Ready
+  - Production Ready
+  - Enterprise Ready
+
+This application is an **Auto Garage Management Platform** that manages the complete lifecycle of a vehicle service business.
+
+It supports multiple roles including:
+- Super Admin
+- Garage Owner
+- Branch Manager
+- Service Advisor
+- Receptionist
+- Technician/Mechanic
+- Inventory Manager
+- Accountant
+- Customer
+
+The platform handles:
+- Multi-branch garage management
+- Customer management
+- Vehicle history
+- Job cards
+- Service booking
+- Inspection reports
+- Work orders
+- Technician assignment
+- Spare parts inventory
+- Purchase and supplier management
+- Billing & invoicing
+- Payments
+- Payroll
+- Attendance
+- Reports & analytics
+- Notifications
+- Customer communication
+- Feedback & ratings
+
+Review the project as if it will be launched globally as a premium SaaS product competing with the best automotive workshop management software. Identify every missing feature, workflow, security enhancement, performance optimization, scalability improvement, and business opportunity required to make it world-class.

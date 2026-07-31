@@ -21,6 +21,7 @@ class CrmUiState {
   final bool notificationsEnabled;
   final bool darkMode;
   final bool autoAssign;
+  final int revision;
 
   const CrmUiState({
     required this.selectedIndex,
@@ -31,6 +32,7 @@ class CrmUiState {
     required this.notificationsEnabled,
     required this.darkMode,
     required this.autoAssign,
+    this.revision = 0,
   });
 
   CrmUiState copyWith({
@@ -42,6 +44,7 @@ class CrmUiState {
     bool? notificationsEnabled,
     bool? darkMode,
     bool? autoAssign,
+    int? revision,
   }) {
     return CrmUiState(
       selectedIndex: selectedIndex ?? this.selectedIndex,
@@ -52,6 +55,7 @@ class CrmUiState {
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       darkMode: darkMode ?? this.darkMode,
       autoAssign: autoAssign ?? this.autoAssign,
+      revision: revision ?? this.revision,
     );
   }
 }
@@ -119,6 +123,26 @@ class CrmUiNotifier extends Notifier<CrmUiState> {
   List<IntegrationEntity> get integrations => _repository.integrations;
   List<SalesTeamMember> get salesTeam => _repository.salesTeam;
   List<ConversationEntity> get conversations => _repository.conversations;
+
+  Future<IntegrationEntity> connectIntegration(String name, Map<String, String> credentials) async {
+    final result = await _repository.connectIntegration(name, credentials);
+    _bump();
+    return result;
+  }
+
+  Future<IntegrationEntity> disconnectIntegration(String name) async {
+    final result = await _repository.disconnectIntegration(name);
+    _bump();
+    return result;
+  }
+
+  Future<IntegrationEntity> syncIntegration(String name) async {
+    final result = await _repository.syncIntegration(name);
+    _bump();
+    return result;
+  }
+
+  void _bump() => state = state.copyWith(revision: state.revision + 1);
 }
 
 final crmUiProvider = NotifierProvider<CrmUiNotifier, CrmUiState>(

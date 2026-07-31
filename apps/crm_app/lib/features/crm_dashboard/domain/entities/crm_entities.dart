@@ -78,6 +78,7 @@ class CrmChannelEntity {
 }
 
 class CrmLeadEntity {
+  final String id;
   final int sno;
   final String leadNumber;
   final String customerName;
@@ -89,8 +90,12 @@ class CrmLeadEntity {
   final String status;
   final Color statusColor;
   final String lastActivity;
+  final String notes;
+  final double leadValue;
+  final String followUpDate;
 
   const CrmLeadEntity({
+    this.id = '',
     required this.sno,
     required this.leadNumber,
     required this.customerName,
@@ -102,6 +107,9 @@ class CrmLeadEntity {
     required this.status,
     required this.statusColor,
     required this.lastActivity,
+    this.notes = '',
+    this.leadValue = 0,
+    this.followUpDate = '',
   });
 
   @override
@@ -109,6 +117,7 @@ class CrmLeadEntity {
       identical(this, other) ||
       other is CrmLeadEntity &&
           runtimeType == other.runtimeType &&
+          id == other.id &&
           sno == other.sno &&
           leadNumber == other.leadNumber &&
           customerName == other.customerName &&
@@ -122,7 +131,7 @@ class CrmLeadEntity {
           lastActivity == other.lastActivity;
 
   @override
-  int get hashCode => Object.hash(runtimeType, sno, leadNumber, customerName, phone, email, source,
+  int get hashCode => Object.hash(runtimeType, id, sno, leadNumber, customerName, phone, email, source,
       sourceColor, assignedTo, status, statusColor, lastActivity);
 
   @override
@@ -322,13 +331,23 @@ class IntegrationEntity {
   final IconData icon;
   final Color color;
   final bool connected;
+  final String? lastSyncAt;
+  final String syncStatus;
+  final int leadCount;
 
   const IntegrationEntity({
     required this.name,
     required this.icon,
     required this.color,
     required this.connected,
+    this.lastSyncAt,
+    this.syncStatus = 'IDLE',
+    this.leadCount = 0,
   });
+
+  bool get isSyncing => syncStatus == 'SYNCING';
+  bool get hasError => syncStatus == 'ERROR';
+  bool get isMeta => name.toUpperCase() == 'META';
 
   @override
   bool operator ==(Object other) =>
@@ -338,14 +357,15 @@ class IntegrationEntity {
           name == other.name &&
           icon == other.icon &&
           color == other.color &&
-          connected == other.connected;
+          connected == other.connected &&
+          syncStatus == other.syncStatus;
 
   @override
-  int get hashCode => Object.hash(runtimeType, name, icon, color, connected);
+  int get hashCode => Object.hash(runtimeType, name, icon, color, connected, syncStatus);
 
   @override
   String toString() =>
-      'IntegrationEntity(name: $name, icon: $icon, color: $color, connected: $connected)';
+      'IntegrationEntity(name: $name, connected: $connected, syncStatus: $syncStatus)';
 }
 
 class SalesTeamMember {
@@ -446,4 +466,134 @@ class CrmNotificationEntity {
     required this.type,
     this.isRead = false,
   });
+}
+
+class TeamMemberEntity {
+  final String name;
+  final String role;
+  final String designation;
+  final int leadsHandled;
+  final int wonDeals;
+
+  const TeamMemberEntity({
+    required this.name,
+    required this.role,
+    required this.designation,
+    required this.leadsHandled,
+    required this.wonDeals,
+  });
+}
+
+class LeadActivityEntity {
+  final String id;
+  final String action;
+  final String detail;
+  final String createdAt;
+
+  const LeadActivityEntity({
+    required this.id,
+    required this.action,
+    required this.detail,
+    required this.createdAt,
+  });
+
+  String get actionLabel {
+    switch (action) {
+      case 'CREATED': return 'Lead created';
+      case 'IMPORTED': return 'Lead imported';
+      case 'STATUS': return 'Status changed';
+      case 'ASSIGNED': return 'Assigned to';
+      case 'UPDATED': return 'Lead updated';
+      default: return action;
+    }
+  }
+}
+
+class PipelineStageEntity {
+  final String status;
+  final int count;
+  final double value;
+
+  const PipelineStageEntity({
+    required this.status,
+    required this.count,
+    required this.value,
+  });
+}
+
+class LeadStatsEntity {
+  final int total;
+  final int active;
+  final int won;
+  final int lost;
+  final int unanswered;
+  final double totalValue;
+  final double wonValue;
+  final double conversionRate;
+  final List<PipelineStageEntity> pipeline;
+
+  const LeadStatsEntity({
+    this.total = 0,
+    this.active = 0,
+    this.won = 0,
+    this.lost = 0,
+    this.unanswered = 0,
+    this.totalValue = 0,
+    this.wonValue = 0,
+    this.conversionRate = 0,
+    this.pipeline = const [],
+  });
+}
+
+class FollowUpEntity {
+  final String leadId;
+  final String leadNumber;
+  final String customerName;
+  final String phone;
+  final String source;
+  final String assignedTo;
+  final String status;
+  final String followUpDate;
+  final double leadValue;
+
+  const FollowUpEntity({
+    required this.leadId,
+    required this.leadNumber,
+    required this.customerName,
+    required this.phone,
+    required this.source,
+    required this.assignedTo,
+    required this.status,
+    required this.followUpDate,
+    required this.leadValue,
+  });
+}
+
+class ActivityFeedEntity {
+  final String id;
+  final String leadId;
+  final String customerName;
+  final String action;
+  final String detail;
+  final String createdAt;
+
+  const ActivityFeedEntity({
+    required this.id,
+    required this.leadId,
+    required this.customerName,
+    required this.action,
+    required this.detail,
+    required this.createdAt,
+  });
+
+  String get actionLabel {
+    switch (action) {
+      case 'CREATED': return 'Lead created';
+      case 'IMPORTED': return 'Lead imported';
+      case 'STATUS': return 'Status changed';
+      case 'ASSIGNED': return 'Assigned to';
+      case 'UPDATED': return 'Lead updated';
+      default: return action;
+    }
+  }
 }

@@ -36,5 +36,20 @@ public class VehicleController {
         VehicleResponse vehicle = vehicleService.addVehicle(principal, request);
         return ApiResponse.success(vehicle);
     }
+
+    @PutMapping("/vehicles/{id}")
+    public ApiResponse<VehicleResponse> updateVehicle(@AuthenticationPrincipal JwtUserPrincipal principal,
+                                                       @PathVariable Long id,
+                                                       @Valid @RequestBody AddVehicleRequest request) {
+        VehicleResponse vehicle = vehicleService.updateVehicle(principal, id, request);
+        return ApiResponse.success(vehicle);
+    }
+
+    @DeleteMapping("/vehicles/{id}")
+    public ApiResponse<Void> deleteVehicle(@AuthenticationPrincipal JwtUserPrincipal principal,
+                                            @PathVariable Long id) {
+        vehicleService.deleteVehicle(principal, id);
+        return ApiResponse.success(null);
+    }
 }
 

@@ -32,8 +32,10 @@ class OtpInputField extends StatefulWidget {
 
 class _OtpInputFieldState extends State<OtpInputField> {
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
 
   @override
   void initState() {
@@ -142,16 +144,20 @@ class _OtpInputFieldState extends State<OtpInputField> {
               width: 44,
               height: 52,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF161E2E) : const Color(0xFFF8FAFC),
+                color: isDark
+                    ? const Color(0xFF161E2E)
+                    : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: widget.error != null
                       ? AppColors.danger
                       : (isFocused
-                          ? accentColor
-                          : (isFilled
-                              ? accentColor.withValues(alpha: 0.5)
-                              : (isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)))),
+                            ? accentColor
+                            : (isFilled
+                                  ? accentColor.withValues(alpha: 0.5)
+                                  : (isDark
+                                        ? const Color(0xFF26334D)
+                                        : const Color(0xFFE2E8F0)))),
                   width: isFocused ? 1.5 : 1.0,
                 ),
               ),
@@ -215,7 +221,9 @@ class _OtpInputFieldState extends State<OtpInputField> {
                   ? (isDark ? Colors.white38 : AppColors.text4)
                   : accentColor,
               fontSize: 14,
-              fontWeight: widget.resendCooldown > 0 ? FontWeight.w400 : FontWeight.w600,
+              fontWeight: widget.resendCooldown > 0
+                  ? FontWeight.w400
+                  : FontWeight.w600,
             ),
           ),
         ),

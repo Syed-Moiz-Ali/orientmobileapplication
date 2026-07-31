@@ -39,40 +39,44 @@ class CrmReportsPage extends ConsumerWidget {
               children: [
                 const CrmCardTitle('Conversion Trends'),
                 const SizedBox(height: AppDimensions.s16),
-                SizedBox(
-                  height: 130,
-                  child: CustomPaint(
-                    size: Size.infinite,
-                    painter: _CrmConversionTrendPainter(
-                      data: ui.conversionTrend,
+                if (ui.conversionTrend.isEmpty)
+                  const _EmptyChart('No conversion data yet')
+                else ...[
+                  SizedBox(
+                    height: 130,
+                    child: CustomPaint(
+                      size: Size.infinite,
+                      painter: _CrmConversionTrendPainter(
+                        data: ui.conversionTrend,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppDimensions.s10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: ui.conversionTrend
-                      .map(
-                        (p) => Text(
-                          p.month,
-                          style: const TextStyle(
-                            color: CrmColors.textM,
-                            fontSize: 10,
+                  const SizedBox(height: AppDimensions.s10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: ui.conversionTrend
+                        .map(
+                          (p) => Text(
+                            p.month,
+                            style: const TextStyle(
+                              color: CrmColors.textM,
+                              fontSize: 10,
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                ),
-                const SizedBox(height: AppDimensions.s10),
-                Row(
-                  children: [
-                    _legendDot(CrmColors.green, 'Won'),
-                    const SizedBox(width: AppDimensions.s12),
-                    _legendDot(CrmColors.red, 'Lost'),
-                    const SizedBox(width: AppDimensions.s12),
-                    _legendDot(CrmColors.accent, 'Active'),
-                  ],
-                ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: AppDimensions.s10),
+                  Row(
+                    children: [
+                      _legendDot(CrmColors.green, 'Won'),
+                      const SizedBox(width: AppDimensions.s12),
+                      _legendDot(CrmColors.red, 'Lost'),
+                      const SizedBox(width: AppDimensions.s12),
+                      _legendDot(CrmColors.accent, 'Active'),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -86,51 +90,55 @@ class CrmReportsPage extends ConsumerWidget {
                     children: [
                       const CrmCardTitle('Lead Sources'),
                       const SizedBox(height: AppDimensions.s12),
-                      SizedBox(
-                        height: 140,
-                        child: CustomPaint(
-                          size: Size.infinite,
-                          painter: _CrmPieChartPainter(slices: ui.leadSources),
+                      if (ui.leadSources.isEmpty)
+                        const _EmptyChart('No source data yet')
+                      else ...[
+                        SizedBox(
+                          height: 140,
+                          child: CustomPaint(
+                            size: Size.infinite,
+                            painter: _CrmPieChartPainter(slices: ui.leadSources),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: AppDimensions.s10),
-                      ...ui.leadSources
-                          .take(4)
-                          .map(
-                            (s) => Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: s.color,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      s.label,
-                                      style: const TextStyle(
-                                        color: CrmColors.textM,
-                                        fontSize: 10,
+                        const SizedBox(height: AppDimensions.s10),
+                        ...ui.leadSources
+                            .take(4)
+                            .map(
+                              (s) => Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: s.color,
+                                        shape: BoxShape.circle,
                                       ),
                                     ),
-                                  ),
-                                  Text(
-                                    '${s.percent.round()}%',
-                                    style: TextStyle(
-                                      color: s.color,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        s.label,
+                                        style: const TextStyle(
+                                          color: CrmColors.textM,
+                                          fontSize: 10,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      '${s.percent.round()}%',
+                                      style: TextStyle(
+                                        color: s.color,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
+                      ],
                     ],
                   ),
                 ),
@@ -143,23 +151,27 @@ class CrmReportsPage extends ConsumerWidget {
                     children: [
                       const CrmCardTitle('Salesperson\nPerformance'),
                       const SizedBox(height: AppDimensions.s12),
-                      SizedBox(
-                        height: 140,
-                        child: CustomPaint(
-                          size: Size.infinite,
-                          painter: _CrmSalespersonBarPainter(
-                            data: ui.salespersonPerf,
+                      if (ui.salespersonPerf.isEmpty)
+                        const _EmptyChart('No salesperson data yet')
+                      else ...[
+                        SizedBox(
+                          height: 140,
+                          child: CustomPaint(
+                            size: Size.infinite,
+                            painter: _CrmSalespersonBarPainter(
+                              data: ui.salespersonPerf,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: AppDimensions.s10),
-                      Row(
-                        children: [
-                          _legendRect(CrmColors.accent, 'Leads'),
-                          const SizedBox(width: AppDimensions.s8),
-                          _legendRect(CrmColors.green, 'Won'),
-                        ],
-                      ),
+                        const SizedBox(height: AppDimensions.s10),
+                        Row(
+                          children: [
+                            _legendRect(CrmColors.accent, 'Leads'),
+                            const SizedBox(width: AppDimensions.s8),
+                            _legendRect(CrmColors.green, 'Won'),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -173,30 +185,34 @@ class CrmReportsPage extends ConsumerWidget {
               children: [
                 const CrmCardTitle('Response Time Analysis'),
                 const SizedBox(height: AppDimensions.s16),
-                SizedBox(
-                  height: 120,
-                  child: CustomPaint(
-                    size: Size.infinite,
-                    painter: _CrmResponseTimePainter(
-                      data: ui.responseTimeBuckets,
+                if (ui.responseTimeBuckets.isEmpty)
+                  const _EmptyChart('No response time data yet')
+                else ...[
+                  SizedBox(
+                    height: 120,
+                    child: CustomPaint(
+                      size: Size.infinite,
+                      painter: _CrmResponseTimePainter(
+                        data: ui.responseTimeBuckets,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppDimensions.s8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: ui.responseTimeBuckets
-                      .map(
-                        (b) => Text(
-                          b.label,
-                          style: const TextStyle(
-                            color: CrmColors.textM,
-                            fontSize: 9,
+                  const SizedBox(height: AppDimensions.s8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: ui.responseTimeBuckets
+                        .map(
+                          (b) => Text(
+                            b.label,
+                            style: const TextStyle(
+                              color: CrmColors.textM,
+                              fontSize: 9,
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                ),
+                        )
+                        .toList(),
+                  ),
+                ],
               ],
             ),
           ),
@@ -258,6 +274,31 @@ class CrmReportsPage extends ConsumerWidget {
   );
 }
 
+class _EmptyChart extends StatelessWidget {
+  final String message;
+  const _EmptyChart(this.message);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 100,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.insert_chart_outlined_rounded, size: 28, color: CrmColors.textM.withValues(alpha: 0.6)),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: const TextStyle(color: CrmColors.textM, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _CrmKeyMetricCard extends StatelessWidget {
   final CrmKeyMetric metric;
   const _CrmKeyMetricCard({required this.metric});
@@ -310,6 +351,7 @@ class _CrmConversionTrendPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
     final wonVals = data.map((d) => d.won).toList();
     final lostVals = data.map((d) => d.lost).toList();
     final activeVals = data.map((d) => d.active).toList();
@@ -381,6 +423,7 @@ class _CrmPieChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (slices.isEmpty) return;
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 - 10;
     double startAngle = -math.pi / 2;
@@ -400,18 +443,19 @@ class _CrmPieChartPainter extends CustomPainter {
       startAngle += sweep;
     }
 
+    final total = slices.fold<double>(0, (sum, s) => sum + s.percent);
     final tp = TextPainter(
       text: TextSpan(
-        children: const [
+        children: [
           TextSpan(
-            text: '1,247\n',
-            style: TextStyle(
+            text: '$total\n',
+            style: const TextStyle(
               color: CrmColors.textH,
               fontSize: 12,
               fontWeight: FontWeight.w900,
             ),
           ),
-          TextSpan(
+          const TextSpan(
             text: 'Total',
             style: TextStyle(color: CrmColors.textM, fontSize: 9),
           ),
@@ -436,6 +480,7 @@ class _CrmSalespersonBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
     final maxVal = data.map((d) => d.leads).reduce(math.max);
     const bottomPad = 16.0;
     final chartH = size.height - bottomPad;
@@ -490,6 +535,7 @@ class _CrmResponseTimePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
     final maxVal = data.map((d) => d.count).reduce(math.max);
     const bottomPad = 14.0;
     final chartH = size.height - bottomPad;

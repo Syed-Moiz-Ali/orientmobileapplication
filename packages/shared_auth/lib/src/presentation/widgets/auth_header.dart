@@ -31,11 +31,7 @@ class AuthHeader extends StatelessWidget {
             color: accentColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            iconData,
-            color: accentColor,
-            size: 22,
-          ),
+          child: Icon(iconData, color: accentColor, size: 22),
         ),
         const SizedBox(height: 24),
         Text(

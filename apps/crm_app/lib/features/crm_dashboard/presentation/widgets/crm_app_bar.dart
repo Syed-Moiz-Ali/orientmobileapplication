@@ -67,8 +67,21 @@ class CrmAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        Padding(padding: const EdgeInsets.only(right: 4), child: _CrmPeriodDropdown(notifier: notifier)),
-        Padding(padding: const EdgeInsets.only(right: 4), child: _CrmSalespersonDropdown(notifier: notifier)),
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: GestureDetector(
+            onTap: () => notifier.refresh(),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.refresh_rounded, color: Colors.white, size: 19),
+            ),
+          ),
+        ),
         const NotificationBell(),
         Padding(
           padding: const EdgeInsets.only(right: 14),
@@ -115,36 +128,6 @@ class _HamburgerLine extends StatelessWidget {
         color: faded ? Colors.white70 : Colors.white,
         borderRadius: BorderRadius.circular(1),
       ),
-    );
-  }
-}
-
-class _CrmPeriodDropdown extends StatelessWidget {
-  final CrmUiNotifier notifier;
-  const _CrmPeriodDropdown({required this.notifier});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppDropdownButton(
-      value: notifier.period,
-      items: notifier.periods,
-      onChanged: (v) => notifier.setPeriod(v),
-      dropdownColor: CrmColors.primary,
-    );
-  }
-}
-
-class _CrmSalespersonDropdown extends StatelessWidget {
-  final CrmUiNotifier notifier;
-  const _CrmSalespersonDropdown({required this.notifier});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppDropdownButton(
-      value: notifier.salesperson,
-      items: notifier.salespeople,
-      onChanged: (v) => notifier.setSalesperson(v),
-      dropdownColor: CrmColors.primary,
     );
   }
 }

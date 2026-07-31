@@ -1,6 +1,7 @@
 package com.orient.workshop.customer.service;
 
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.customer.model.dto.AddVehicleRequest;
 import com.orient.workshop.customer.model.dto.VehicleResponse;
 import com.orient.workshop.core.model.entity.Customer;
@@ -46,6 +47,38 @@ public class VehicleService {
         vehicleMapper.insert(vehicle);
 
         return toResponse(vehicle);
+    }
+
+    @Transactional
+    public VehicleResponse updateVehicle(JwtUserPrincipal principal, Long id, AddVehicleRequest req) {
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
+        Vehicle vehicle = vehicleMapper.selectById(id);
+        if (vehicle == null || !vehicle.getCustomerId().equals(customer.getId())) {
+            throw new NotFoundException("Vehicle not found with id: " + id);
+        }
+        vehicle.setMake(req.getBrand());
+        vehicle.setModel(req.getModel());
+        vehicle.setPlateNumber(req.getPlateNumber());
+        vehicle.setVin(req.getVin());
+        vehicle.setVehicleColor(req.getColor());
+        vehicle.setModelYear(req.getYear());
+        vehicle.setMileage(req.getMileage());
+        vehicle.setLastService(req.getLastService());
+        vehicle.setNextDue(req.getNextDue());
+        vehicle.setHealthScore(req.getHealthScore());
+        vehicleMapper.updateById(vehicle);
+
+        return toResponse(vehicle);
+    }
+
+    @Transactional
+    public void deleteVehicle(JwtUserPrincipal principal, Long id) {
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
+        Vehicle vehicle = vehicleMapper.selectById(id);
+        if (vehicle == null || !vehicle.getCustomerId().equals(customer.getId())) {
+            throw new NotFoundException("Vehicle not found with id: " + id);
+        }
+        vehicleMapper.deleteById(id);
     }
 
     private VehicleResponse toResponse(Vehicle v) {

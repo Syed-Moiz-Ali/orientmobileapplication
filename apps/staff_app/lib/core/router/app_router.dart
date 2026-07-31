@@ -16,6 +16,7 @@ import 'package:staff_app/features/technician/presentation/technician_dashboard_
 class AppRoutes {
   AppRoutes._();
 
+  static const String startup = '/';
   static const String login = '/login';
   static const String advisorDashboard = '/advisor_home_view';
   static const String supervisorDashboard = '/supervisor_dashboard_view';
@@ -55,22 +56,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     refreshListenable: _routerRefreshNotifier,
-    initialLocation: AppRoutes.login,
+    initialLocation: AppRoutes.startup,
     redirect: (context, state) {
       final authState = ref.read(authNotifierProvider);
       final matched = state.matchedLocation;
 
       return switch (authState) {
         AuthUnauthenticated() =>
-          matched == AppRoutes.login ? null : AppRoutes.login,
-        AuthLoading() => null,
+          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
+              ? null
+              : AppRoutes.login,
+        AuthLoading() =>
+          matched == AppRoutes.startup ? null : AppRoutes.startup,
         AuthError() =>
-          matched == AppRoutes.login ? null : AppRoutes.login,
+          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
+              ? null
+              : AppRoutes.login,
         AuthAuthenticated(:final role) =>
-          matched == AppRoutes.login ? AppRoutes.dashboardForRole(role) : null,
+          matched == AppRoutes.login || matched == AppRoutes.startup
+              ? AppRoutes.dashboardForRole(role)
+              : null,
       };
     },
     routes: [
+      GoRoute(
+        path: AppRoutes.startup,
+        builder: (context, state) => const AuthLoadingView(),
+      ),
       GoRoute(
         path: AppRoutes.login,
         name: AppRoutes.login,
@@ -87,9 +99,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) => ForgotPasswordView(
-          onBackToLogin: () => context.pop(),
-        ),
+        builder: (context, state) =>
+            ForgotPasswordView(onBackToLogin: () => context.pop()),
       ),
       GoRoute(
         path: AppRoutes.advisorDashboard,
@@ -131,7 +142,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final callbacks = state.extra as InspectionCallbacks?;
           return InspectionSheetView(
-            callbacks: callbacks ??
+            callbacks:
+                callbacks ??
                 InspectionCallbacks(
                   onBack: () => context.pop(),
                   onSaveDraft: () => context.pop(),
@@ -154,12 +166,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.repairOrder,
         name: AppRoutes.repairOrder,
-        builder: (context, state) => RepairOrderView(onBack: () => context.pop()),
+        builder: (context, state) =>
+            RepairOrderView(onBack: () => context.pop()),
       ),
       GoRoute(
         path: AppRoutes.repairOrderPreview,
         name: AppRoutes.repairOrderPreview,
-        builder: (context, state) => RepairOrderPreviewView(onBack: () => context.pop()),
+        builder: (context, state) =>
+            RepairOrderPreviewView(onBack: () => context.pop()),
       ),
     ],
   );

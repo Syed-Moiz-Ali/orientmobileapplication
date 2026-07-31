@@ -13,4 +13,20 @@ abstract class CrmRepository {
   List<ConversationEntity> get conversations;
   List<CrmLeadEntity> getLeads();
   List<CrmTaskEntity> getTasks();
+  Future<void> refreshLeads();
+  Future<void> refreshTasks();
+  Future<CrmTaskEntity> createTask(Map<String, dynamic> data);
+  Future<CrmTaskEntity> updateTask(String id, Map<String, dynamic> data);
+  Future<void> deleteTask(String id);
+  Future<CrmLeadEntity> createLead(Map<String, dynamic> data);
+  Future<CrmLeadEntity> updateLead(String id, Map<String, dynamic> data);
+  Future<void> deleteLead(String id);
+  Future<IntegrationEntity> connectIntegration(String name, Map<String, String> credentials);
+  Future<IntegrationEntity> disconnectIntegration(String name);
+  Future<IntegrationEntity> syncIntegration(String name);
+  Future<List<TeamMemberEntity>> getTeamMembers();
+  Future<List<LeadActivityEntity>> getLeadActivities(String id);
+  Future<LeadStatsEntity> getLeadStats();
+  Future<List<FollowUpEntity>> getFollowUps();
+  Future<List<ActivityFeedEntity>> getActivityFeed();
 }

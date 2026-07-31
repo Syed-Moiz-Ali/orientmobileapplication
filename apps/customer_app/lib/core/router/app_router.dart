@@ -13,6 +13,7 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 class AppRoutes {
   AppRoutes._();
 
+  static const String startup = '/';
   static const String login = '/login';
   static const String customerDashboard = '/customer_dashboard_view';
   static const String customerBookService = '/customer_book_service_view';
@@ -33,34 +34,47 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     refreshListenable: _routerRefreshNotifier,
-    initialLocation: AppRoutes.login,
+    initialLocation: AppRoutes.startup,
     redirect: (context, state) {
       final authState = ref.read(authNotifierProvider);
       final matched = state.matchedLocation;
 
       return switch (authState) {
         AuthUnauthenticated() =>
-          matched == AppRoutes.login ? null : AppRoutes.login,
-        AuthLoading() => null,
+          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
+              ? null
+              : AppRoutes.login,
+        AuthLoading() =>
+          matched == AppRoutes.startup ? null : AppRoutes.startup,
         AuthError() =>
-          matched == AppRoutes.login ? null : AppRoutes.login,
+          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
+              ? null
+              : AppRoutes.login,
         AuthAuthenticated() =>
-          matched == AppRoutes.login ? AppRoutes.customerDashboard : null,
+          matched == AppRoutes.login || matched == AppRoutes.startup
+              ? AppRoutes.customerDashboard
+              : null,
       };
     },
     routes: [
+      GoRoute(
+        path: AppRoutes.startup,
+        builder: (context, state) => const AuthLoadingView(),
+      ),
       GoRoute(
         path: AppRoutes.login,
         name: AppRoutes.login,
         builder: (context, state) => LoginView(
           onLoginSuccess: () => context.go(AppRoutes.customerDashboard),
           onForgotPassword: () => context.push(AppRoutes.forgotPassword),
+          allowRegistration: true,
         ),
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) => ForgotPasswordView(onBackToLogin: () => context.pop()),
+        builder: (context, state) =>
+            ForgotPasswordView(onBackToLogin: () => context.pop()),
       ),
       GoRoute(
         path: AppRoutes.customerDashboard,
@@ -85,7 +99,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/edit-vehicle/:id',
         name: 'edit-vehicle',
-        builder: (context, state) => AddVehicleView(vehicleId: state.pathParameters['id']),
+        builder: (context, state) =>
+            AddVehicleView(vehicleId: state.pathParameters['id']),
       ),
       GoRoute(
         path: AppRoutes.customerBookingDetail,

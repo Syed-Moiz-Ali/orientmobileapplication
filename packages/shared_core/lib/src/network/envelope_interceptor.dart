@@ -5,7 +5,7 @@ class EnvelopeInterceptor extends Interceptor {
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (response.data is Map<String, dynamic>) {
       final body = response.data as Map<String, dynamic>;
-      if (body.containsKey('code') && body.containsKey('data')) {
+      if (body.containsKey('code')) {
         final code = body['code'] as int? ?? 200;
         if (code >= 400) {
           handler.reject(
@@ -18,7 +18,9 @@ class EnvelopeInterceptor extends Interceptor {
           );
           return;
         }
-        response.data = body['data'];
+        if (body.containsKey('data')) {
+          response.data = body['data'];
+        }
       }
     }
     handler.next(response);
