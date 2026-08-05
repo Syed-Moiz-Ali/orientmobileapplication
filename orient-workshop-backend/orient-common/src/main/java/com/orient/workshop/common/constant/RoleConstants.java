@@ -10,8 +10,9 @@ public final class RoleConstants {
     public static final String CUSTOMER = "customer";
     public static final String SUPERVISOR = "supervisor";
     public static final String CRM_DASHBOARD = "crmDashboard";
+    public static final String ADMIN = "admin";
 
     public static final String[] ALL_ROLES = {
-            OWNER, ADVISOR, TECHNICIAN, CUSTOMER, SUPERVISOR, CRM_DASHBOARD
+            OWNER, ADVISOR, TECHNICIAN, CUSTOMER, SUPERVISOR, CRM_DASHBOARD, ADMIN
     };
 }

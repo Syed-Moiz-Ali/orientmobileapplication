@@ -13,6 +13,7 @@ public class WorkAssignmentRequest {
 
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class AssignmentItem {
+        private String jobCardId;
         private String description;
         private String department;
         private String technicianName;

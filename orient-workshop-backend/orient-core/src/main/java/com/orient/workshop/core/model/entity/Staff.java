@@ -14,6 +14,7 @@ public class Staff {
     private String empId;
     private String name;
     private String role;
+    private Long branchId;
     private String branch;
     private String shift;
     private String designation;

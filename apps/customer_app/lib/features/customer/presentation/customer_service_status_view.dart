@@ -232,14 +232,32 @@ class CustomerServiceStatusView extends ConsumerWidget {
                             icon: Icons.call_rounded,
                             color: AppColors.success,
                             bg: AppColors.successBg,
-                            onTap: () {},
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Calling support is not available yet',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(width: AppDimensions.s8),
                           _IconBtn(
                             icon: Icons.chat_bubble_outline_rounded,
                             color: AppColors.primary,
                             bg: AppColors.primaryBg,
-                            onTap: () {},
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Chat is not available yet',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),

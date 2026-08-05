@@ -13,6 +13,7 @@ public class WorkAssignment {
     @TableId(type = IdType.AUTO) private Long id;
     private String assignmentRef;
     private Long jobCardId;
+    private Long branchId;
     private String description;
     private String department;
     private String technicianName;

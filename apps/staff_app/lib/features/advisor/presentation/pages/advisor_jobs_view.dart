@@ -24,7 +24,8 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
 
   @override
   Widget build(BuildContext context) {
-    final jobCards = ref.watch(advisorRecentJobCardsProvider);
+    final jobCardsAsync = ref.watch(advisorRecentJobCardsProvider);
+    final jobCards = jobCardsAsync.value ?? const <JobCardEntity>[];
     final selectedFilter = ref.watch(_jobsFilterProvider);
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -41,12 +42,6 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
             letterSpacing: 0.3,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search_rounded, color: AppColors.text2),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Column(
         children: [

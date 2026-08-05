@@ -10,6 +10,7 @@ class ApiEndpoints {
   static const String login = '/auth/login';
   static const String forgotPassword = '/auth/forgot-password';
   static const String resetPassword = '/auth/reset-password';
+  static const String me = '/auth/me';
 
   // Customer Portal
   static const String customerProfile = '/customers/profile';
@@ -29,6 +30,7 @@ class ApiEndpoints {
   // Advisor
   static const String advisorStats = '/advisor/stats';
   static const String advisorJobCards = '/advisor/job-cards';
+  static const String advisorApprovals = '/advisor/approvals';
   static const String advisorApprovalsPending = '/advisor/approvals/pending';
   static const String advisorReminders = '/advisor/reminders';
   static const String advisorReports = '/advisor/reports';
@@ -36,6 +38,18 @@ class ApiEndpoints {
   static const String repairOrders = '/repair-orders';
   static const String customerSearch = '/customers/search';
   static const String vehicleSearch = '/vehicles/search';
+
+  // Approval / reminder action endpoints
+  static String approvalAction(String id) => '/advisor/approvals/$id';
+  static const String reminderCreate = '/advisor/reminders';
+
+  // Media upload (multipart, backend MediaController)
+  static const String mediaUpload = '/repair-orders/media';
+  static String mediaUploadFor(String recordId) => '/repair-orders/$recordId/media';
+
+  // Messages / activity (backend OwnerDashboardController)
+  static const String messagesCreate = '/owner/messages';
+  static const String activityFeed = '/owner/activity';
 
   // Supervisor
   static const String supervisorKpis = '/supervisor/kpis';

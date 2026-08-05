@@ -41,11 +41,15 @@ class AdvisorBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stats = ref.watch(advisorDashboardProvider);
-    final jobCards = ref.watch(advisorRecentJobCardsProvider);
-    final approvals = ref.watch(advisorPendingApprovalsProvider);
+    final statsAsync = ref.watch(advisorDashboardProvider);
+    final jobCardsAsync = ref.watch(advisorRecentJobCardsProvider);
+    final approvalsAsync = ref.watch(advisorPendingApprovalsProvider);
     final reminders = ref.watch(advisorFollowupRemindersProvider);
     final info = ref.watch(advisorInfoProvider);
+
+    final stats = statsAsync.value ?? _emptyStats;
+    final jobCards = jobCardsAsync.value ?? const <JobCardEntity>[];
+    final approvals = approvalsAsync.value ?? const <PendingApprovalEntity>[];
 
     return RefreshIndicator(
       color: AppColors.accent,
@@ -59,6 +63,8 @@ class AdvisorBody extends ConsumerWidget {
           SliverToBoxAdapter(
             child: AdvisorHeader(
               advisorName: info.name,
+              advisorInitials: info.initials,
+              advisorBranch: info.branch,
               onShowProfile: onShowProfile,
               onShowNotifications: onShowNotifications,
               onShowSearch: onShowSearch,
@@ -156,14 +162,23 @@ class AdvisorBody extends ConsumerWidget {
         const SizedBox(width: 9),
         AdvisorStatTile(
           label: 'Delivered',
-          count: 4,
+          count: stats.delivered,
           color: AppColors.info,
           bg: AppColors.infoBg,
           icon: Icons.local_shipping_outlined,
-          onTap: () => onStat('Delivered', 4, AppColors.info),
+          onTap: () => onStat('Delivered', stats.delivered, AppColors.info),
         ),
       ],
     );
   }
 }
+
+const _emptyStats = AdvisorStatsEntity(
+  newJobCardsToday: 0,
+  inspectionsToday: 0,
+  pendingApprovals: 0,
+  vehiclesWaiting: 0,
+  readyForDelivery: 0,
+  totalOpenJobCards: 0,
+);
 

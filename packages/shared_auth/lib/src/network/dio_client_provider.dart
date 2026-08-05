@@ -6,7 +6,7 @@ import 'package:shared_core/src/network/dio_client.dart';
 
 final dioClientProvider = Provider<Dio>((ref) {
   final dio = createDio();
-  dio.interceptors.add(AuthInterceptor(ref));
+  dio.interceptors.add(AuthInterceptor(ref, dio));
   return dio;
 });
 

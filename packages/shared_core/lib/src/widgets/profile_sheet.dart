@@ -21,6 +21,7 @@ class ProfileSheetData {
   final String initials;
   final String roleLabel;
   final String roleBadge;
+  final String branch;
   final List<ProfileSheetItem> menuItems;
 
   const ProfileSheetData({
@@ -28,6 +29,7 @@ class ProfileSheetData {
     required this.initials,
     required this.roleLabel,
     required this.roleBadge,
+    this.branch = '',
     this.menuItems = const [],
   });
 }

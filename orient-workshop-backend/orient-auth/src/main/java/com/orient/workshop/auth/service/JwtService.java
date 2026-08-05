@@ -47,16 +47,26 @@ public class JwtService {
             throw new BadRequestException("Invalid refresh token");
         }
 
-        RefreshTokenEntity storedToken = refreshTokenMapper.findValidByToken(refreshTokenValue)
-                .orElseThrow(() -> new UnauthorizedException("Refresh token expired or revoked"));
-
         Long userId = jwtUtil.getUserIdFromToken(refreshTokenValue);
         User user = userMapper.selectById(userId);
-        if (user == null || !user.getIsActive()) {
+        if (user == null || !Boolean.TRUE.equals(user.getIsActive())) {
             throw new UnauthorizedException("User not found or inactive");
         }
 
-        refreshTokenMapper.revokeById(storedToken.getId());
+        // H-1: rotation must be atomic. A token that is already revoked (or unknown)
+        // indicates reuse of a rotated token -> likely theft: revoke the whole family.
+        RefreshTokenEntity storedToken = refreshTokenMapper.findByToken(refreshTokenValue).orElse(null);
+        if (storedToken == null || Boolean.TRUE.equals(storedToken.getRevoked())) {
+            refreshTokenMapper.revokeByUserId(userId);
+            throw new UnauthorizedException("Refresh token has been revoked; please log in again");
+        }
+
+        int revoked = refreshTokenMapper.revokeByIdIfNotRevoked(storedToken.getId());
+        if (revoked != 1) {
+            refreshTokenMapper.revokeByUserId(userId);
+            throw new UnauthorizedException("Refresh token has been revoked; please log in again");
+        }
+
         return createTokenPair(user);
     }
 

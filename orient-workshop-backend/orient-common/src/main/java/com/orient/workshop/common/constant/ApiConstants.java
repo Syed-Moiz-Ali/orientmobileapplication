@@ -12,7 +12,12 @@ public final class ApiConstants {
     public static final int OTP_EXPIRY_MINUTES = 5;
     public static final int OTP_MAX_ATTEMPTS = 5;
 
-    public static final long ACCESS_TOKEN_EXPIRY_MS = 86_400_000;
+    /**
+     * Aligned with app.jwt.access-token-expiry (default 900000 ms = 15 min) in
+     * orient-auth.properties — these constants document the runtime defaults and must be
+     * kept in sync with the config file.
+     */
+    public static final long ACCESS_TOKEN_EXPIRY_MS = 900_000;
     public static final long REFRESH_TOKEN_EXPIRY_MS = 2_592_000_000L;
 
     public static final String DATE_FORMAT = "yyyy-MM-dd";

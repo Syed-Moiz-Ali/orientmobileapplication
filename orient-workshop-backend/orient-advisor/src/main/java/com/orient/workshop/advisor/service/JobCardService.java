@@ -1,8 +1,9 @@
 package com.orient.workshop.advisor.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.orient.workshop.advisor.model.dto.JobCardDetailResponse;
 import com.orient.workshop.advisor.model.dto.JobCardResponse;
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.common.response.PageResponse;
@@ -16,71 +17,122 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class JobCardService {
 
+    private static final Set<String> VALID_STATUSES = Set.of(
+            "inProgress", "pendingApproval", "qualityCheck", "completed",
+            "cancelled", "waitingParts", "pending");
+
     private final JobCardMapper jobCardMapper;
     private final CustomerMapper customerMapper;
     private final VehicleMapper vehicleMapper;
 
-    public PageResponse<JobCardResponse> listJobCards(String status, String search, int page, int limit) {
+    public PageResponse<JobCardResponse> listJobCards(String status, String search, int page, int limit,
+                                                      JwtUserPrincipal principal) {
         int offset = (page - 1) * limit;
+        Long branchId = scopedBranchId(principal);
         List<JobCard> cards;
+        long total;
 
         if (search != null && !search.isBlank()) {
-            LambdaQueryWrapper<JobCard> q = new LambdaQueryWrapper<JobCard>()
-                    .like(JobCard::getJobCardRef, search);
-            cards = jobCardMapper.selectList(q);
+            if (branchId != null) {
+                cards = jobCardMapper.searchCardsByBranch(search, branchId, limit, offset);
+                total = jobCardMapper.countSearchByBranch(search, branchId);
+            } else {
+                cards = jobCardMapper.searchCards(search, limit, offset);
+                total = jobCardMapper.countSearch(search);
+            }
         } else if (status != null && !status.isBlank()) {
-            cards = jobCardMapper.findByStatus(status, limit, offset);
+            if (branchId != null) {
+                cards = jobCardMapper.findByStatusAndBranch(status, branchId, limit, offset);
+                total = jobCardMapper.countByStatusAndBranch(status, branchId);
+            } else {
+                cards = jobCardMapper.findByStatus(status, limit, offset);
+                total = jobCardMapper.countByStatus(status);
+            }
         } else {
-            cards = jobCardMapper.findRecent(limit, offset);
+            if (branchId != null) {
+                cards = jobCardMapper.findRecentByBranch(branchId, limit, offset);
+                total = jobCardMapper.countAllByBranch(branchId);
+            } else {
+                cards = jobCardMapper.findRecent(limit, offset);
+                total = jobCardMapper.countAll();
+            }
         }
 
-        long total = jobCardMapper.countAll();
-
-        List<JobCardResponse> items = cards.stream().map(this::toResponse).collect(Collectors.toList());
+        List<JobCardResponse> items = toResponses(cards);
         return PageResponse.of(items, page, limit, total);
     }
 
-    public JobCardDetailResponse getJobCard(Long id) {
+    public JobCardDetailResponse getJobCard(Long id, JwtUserPrincipal principal) {
         JobCard card = jobCardMapper.selectById(id);
-        if (card == null) throw new NotFoundException("Job card not found");
-
+        if (card == null || !inScope(card, principal)) {
+            throw new NotFoundException("Job card not found");
+        }
         return toDetailResponse(card);
     }
 
     @Transactional
-    public void updateStatus(Long id, String status) {
+    public void updateStatus(Long id, String status, JwtUserPrincipal principal) {
+        if (status == null || !VALID_STATUSES.contains(status)) {
+            throw new BadRequestException("Invalid status '" + status + "'. Allowed values: "
+                    + String.join(", ", VALID_STATUSES));
+        }
         JobCard card = jobCardMapper.selectById(id);
-        if (card == null) throw new NotFoundException("Job card not found");
+        if (card == null || !inScope(card, principal)) {
+            throw new NotFoundException("Job card not found");
+        }
         card.setStatus(status);
         jobCardMapper.updateById(card);
     }
 
     @Transactional
-    public void assignTechnician(Long id, String technician) {
+    public void assignTechnician(Long id, String technician, JwtUserPrincipal principal) {
         JobCard card = jobCardMapper.selectById(id);
-        if (card == null) throw new NotFoundException("Job card not found");
+        if (card == null || !inScope(card, principal)) {
+            throw new NotFoundException("Job card not found");
+        }
         card.setTechnician(technician);
         jobCardMapper.updateById(card);
     }
 
-    private JobCardResponse toResponse(JobCard c) {
+    private List<JobCardResponse> toResponses(List<JobCard> cards) {
+        if (cards.isEmpty()) return Collections.emptyList();
+
+        Set<Long> customerIds = cards.stream()
+                .map(JobCard::getCustomerId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<Long> vehicleIds = cards.stream()
+                .map(JobCard::getVehicleId).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        Map<Long, Customer> customers = customerIds.isEmpty() ? Collections.emptyMap()
+                : customerMapper.selectBatchIds(customerIds).stream()
+                        .collect(Collectors.toMap(Customer::getId, Function.identity()));
+        Map<Long, Vehicle> vehicles = vehicleIds.isEmpty() ? Collections.emptyMap()
+                : vehicleMapper.selectBatchIds(vehicleIds).stream()
+                        .collect(Collectors.toMap(Vehicle::getId, Function.identity()));
+
+        return cards.stream().map(c -> toResponse(c, customers, vehicles)).collect(Collectors.toList());
+    }
+
+    private JobCardResponse toResponse(JobCard c, Map<Long, Customer> customers, Map<Long, Vehicle> vehicles) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         String custName = "";
         if (c.getCustomerId() != null) {
-            Customer cust = customerMapper.selectById(c.getCustomerId());
+            Customer cust = customers.get(c.getCustomerId());
             if (cust != null) custName = cust.getCustomerName();
         }
         String vehicleInfo = "";
         if (c.getVehicleId() != null) {
-            Vehicle v = vehicleMapper.selectById(c.getVehicleId());
-            if (v != null) vehicleInfo = v.getMake() + " " + v.getModel();
+            Vehicle v = vehicles.get(c.getVehicleId());
+            if (v != null) vehicleInfo = (v.getMake() != null ? v.getMake() : "") + " "
+                    + (v.getModel() != null ? v.getModel() : "");
+            vehicleInfo = vehicleInfo.trim();
         }
         return JobCardResponse.builder()
                 .id(c.getJobCardRef())
@@ -108,5 +160,17 @@ public class JobCardService {
                 .lastUpdated(c.getUpdatedAt() != null ? c.getUpdatedAt().format(fmt) : "")
                 .estimatedDelivery(c.getEstimatedDelivery() != null ? c.getEstimatedDelivery().toString() : "")
                 .build();
+    }
+
+    private boolean inScope(JobCard card, JwtUserPrincipal principal) {
+        Long branchId = scopedBranchId(principal);
+        return branchId == null || card.getBranchId() == null || branchId.equals(card.getBranchId());
+    }
+
+    private Long scopedBranchId(JwtUserPrincipal principal) {
+        if (principal == null || principal.getBranchId() == null) return null;
+        String role = principal.getRole() != null ? principal.getRole().toLowerCase() : "";
+        if ("owner".equals(role) || "crmdashboard".equals(role) || "admin".equals(role)) return null;
+        return principal.getBranchId();
     }
 }

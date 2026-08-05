@@ -5,18 +5,21 @@ services:
     image: mysql:8.0
     container_name: orient-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: orient_workshop
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docs/DATABASE_SCHEMA.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./deploy/initdb/01-app-user.sql:/docker-entrypoint-initdb.d/02-app-user.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
+    mem_limit: 768m
+    cpus: '1.0'
 
   redis:
     image: redis:7-alpine
@@ -28,6 +31,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    mem_limit: 256m
+    cpus: '0.5'
 
   app:
     build: .
@@ -39,16 +44,30 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: orient_workshop
-      DB_USERNAME: root
-      DB_PASSWORD: ${DB_PASSWORD:-root}
+      DB_USERNAME: orient_app
+      DB_PASSWORD: ${DB_PASSWORD:-orient_app_dev}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET}
+      # CR-6: never resolve to a real secret here. The default "change-me" is
+      # REJECTED by the app's fail-fast check, so an insecure deployment cannot
+      # silently start. Set real values at deploy time: JWT_SECRET=... ENCRYPTION_KEY=...
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      # CR-6: dedicated encryption key for integration credentials (AES-256-GCM).
+      # Same rule as JWT_SECRET: set a real value; "change-me" fails fast.
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change-me}
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    mem_limit: 1g
+    cpus: '1.0'
     volumes:
       - media_data:/data/orient/media
 

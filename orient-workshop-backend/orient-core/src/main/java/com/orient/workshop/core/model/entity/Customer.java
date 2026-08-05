@@ -17,6 +17,7 @@ public class Customer {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
+    private Long branchId;
     private Boolean isB2b;
     private String customerName;
     private String phoneNumber;

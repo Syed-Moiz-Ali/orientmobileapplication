@@ -22,17 +22,20 @@ public class VehicleService {
     private final CustomerService customerService;
 
     public List<VehicleResponse> getVehicles(JwtUserPrincipal principal) {
-        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
-        List<Vehicle> vehicles = vehicleMapper.findByCustomerId(customer.getId());
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
+        List<Vehicle> vehicles = principal.getBranchId() != null
+                ? vehicleMapper.findByCustomerIdAndBranch(customer.getId(), principal.getBranchId())
+                : vehicleMapper.findByCustomerId(customer.getId());
         return vehicles.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Transactional
     public VehicleResponse addVehicle(JwtUserPrincipal principal, AddVehicleRequest req) {
-        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
 
         Vehicle vehicle = Vehicle.builder()
                 .customerId(customer.getId())
+                .branchId(principal.getBranchId())
                 .make(req.getBrand())
                 .model(req.getModel())
                 .plateNumber(req.getPlateNumber())
@@ -51,7 +54,7 @@ public class VehicleService {
 
     @Transactional
     public VehicleResponse updateVehicle(JwtUserPrincipal principal, Long id, AddVehicleRequest req) {
-        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
         Vehicle vehicle = vehicleMapper.selectById(id);
         if (vehicle == null || !vehicle.getCustomerId().equals(customer.getId())) {
             throw new NotFoundException("Vehicle not found with id: " + id);
@@ -73,7 +76,7 @@ public class VehicleService {
 
     @Transactional
     public void deleteVehicle(JwtUserPrincipal principal, Long id) {
-        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
         Vehicle vehicle = vehicleMapper.selectById(id);
         if (vehicle == null || !vehicle.getCustomerId().equals(customer.getId())) {
             throw new NotFoundException("Vehicle not found with id: " + id);

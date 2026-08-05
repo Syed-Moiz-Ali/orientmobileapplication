@@ -1,6 +1,7 @@
 package com.orient.workshop.customer.service;
 
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.customer.model.dto.BreakdownRequest;
 import com.orient.workshop.customer.model.dto.IdResponse;
 import com.orient.workshop.core.model.entity.Breakdown;
@@ -9,8 +10,6 @@ import com.orient.workshop.core.repository.BreakdownMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -21,9 +20,9 @@ public class BreakdownService {
 
     @Transactional
     public IdResponse createBreakdown(JwtUserPrincipal principal, BreakdownRequest req) {
-        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
 
-        String ref = "BD-" + LocalDate.now().toString() + "-" + String.format("%04d", System.currentTimeMillis() % 10000);
+        String ref = IdGenerator.shortRef("BD");
 
         Breakdown breakdown = Breakdown.builder()
                 .breakdownRef(ref)

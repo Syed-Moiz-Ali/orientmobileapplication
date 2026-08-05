@@ -24,10 +24,7 @@ class CrmDashboardView extends ConsumerWidget {
     final state = ref.watch(crmUiProvider);
 
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: CrmColors.primary,
-        statusBarIconBrightness: Brightness.light,
-      ),
+      const SystemUiOverlayStyle(statusBarColor: CrmColors.primary, statusBarIconBrightness: Brightness.light),
     );
 
     final pages = <Widget>[

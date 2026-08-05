@@ -18,6 +18,7 @@ public class Vehicle {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long customerId;
+    private Long branchId;
     private String registrationNumber;
     private String vin;
     private String make;

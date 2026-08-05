@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:staff_app/core/router/app_router.dart';
 
 class SupervisorLoginView extends ConsumerStatefulWidget {
   const SupervisorLoginView({super.key});
@@ -27,22 +27,39 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
   }
 
   Future<void> _login() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+    if (username.isEmpty || password.isEmpty) {
+      setState(() => _error = 'Enter username and password');
+      return;
+    }
     setState(() {
       _isLoading = true;
       _error = null;
     });
-    await Future.delayed(const Duration(milliseconds: 800));
 
-    if (_usernameController.text == 'supervisor' &&
-        _passwordController.text == 'super123') {
-      if (!mounted) return;
-      context.pushReplacement(AppRoutes.supervisorDashboard);
-    } else {
-      setState(() {
-        _isLoading = false;
-        _error = 'Invalid username or password.';
-      });
-    }
+    final login = ref.read(loginWithPasswordProvider);
+    final isEmail = username.contains('@');
+    final result = await login(
+      isEmail ? username : '',
+      isEmail ? '' : username,
+      password,
+    );
+
+    if (!mounted) return;
+    result.when(
+      success: (auth) async {
+        await ref
+            .read(authNotifierProvider.notifier)
+            .authenticate(auth.role, auth.token, refreshToken: auth.refreshToken);
+      },
+      failure: (e) {
+        setState(() {
+          _isLoading = false;
+          _error = e.message;
+        });
+      },
+    );
   }
 
   @override
@@ -154,7 +171,7 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: GestureDetector(
-                              onTap: () {},
+                              onTap: () => context.push('/forgot-password'),
                               child: const Text(
                                 'Forgot Password?',
                                 style: TextStyle(

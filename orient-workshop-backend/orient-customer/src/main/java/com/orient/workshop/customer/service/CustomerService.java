@@ -22,13 +22,19 @@ public class CustomerService {
     private final UserMapper userMapper;
 
     public Customer findOrCreateCustomer(Long userId) {
-        return customerMapper.findByUserId(userId).orElseGet(() -> {
+        return findOrCreateCustomer(userId, null);
+    }
+
+    public Customer findOrCreateCustomer(Long userId, Long branchId) {
+        return (branchId != null ? customerMapper.findByUserIdAndBranch(userId, branchId) : customerMapper.findByUserId(userId))
+                .orElseGet(() -> {
             User user = userMapper.selectById(userId);
             String name = (user != null && user.getName() != null && !user.getName().isBlank())
                     ? user.getName() : "Customer";
             String phone = user != null ? user.getPhone() : "";
             Customer c = Customer.builder()
                     .userId(userId)
+                    .branchId(branchId)
                     .customerName(name)
                     .phoneNumber(phone != null ? phone : "")
                     .source("SMS")

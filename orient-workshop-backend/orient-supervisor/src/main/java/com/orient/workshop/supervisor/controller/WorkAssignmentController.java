@@ -2,6 +2,7 @@ package com.orient.workshop.supervisor.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.response.ApiResponse;
 import com.orient.workshop.supervisor.model.dto.AssignedJobResponse;
 import com.orient.workshop.supervisor.model.dto.WorkAssignmentRequest;
@@ -9,6 +10,7 @@ import com.orient.workshop.supervisor.model.dto.WorkAssignmentResponse;
 import com.orient.workshop.supervisor.service.WorkAssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,8 +23,9 @@ public class WorkAssignmentController {
     private final WorkAssignmentService workAssignmentService;
 
     @PostMapping("/work-assignments")
-    public ApiResponse<WorkAssignmentResponse> createAssignments(@Valid @RequestBody WorkAssignmentRequest req) {
-        return ApiResponse.success(workAssignmentService.createAssignments(req));
+    public ApiResponse<WorkAssignmentResponse> createAssignments(@AuthenticationPrincipal JwtUserPrincipal principal,
+                                                                  @Valid @RequestBody WorkAssignmentRequest req) {
+        return ApiResponse.success(workAssignmentService.createAssignments(principal, req));
     }
 
     @GetMapping("/supervisor/assigned-jobs")

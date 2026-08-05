@@ -7,21 +7,29 @@ import com.orient.workshop.advisor.model.dto.InspectionRequest;
 import com.orient.workshop.advisor.model.dto.InspectionResponse;
 import com.orient.workshop.advisor.model.entity.Inspection;
 import com.orient.workshop.advisor.repository.InspectionMapper;
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.common.exception.BadRequestException;
+import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.common.exception.NotFoundException;
+import com.orient.workshop.common.util.DateParse;
+import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.model.entity.JobCard;
 import com.orient.workshop.core.model.entity.Vehicle;
 import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.VehicleMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.orient.workshop.core.repository.JobCardMapper;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InspectionService {
@@ -32,31 +40,17 @@ public class InspectionService {
     private final VehicleMapper vehicleMapper;
     private final ObjectMapper objectMapper;
 
-    @Transactional
-    public InspectionResponse createInspection(InspectionRequest req) {
-        Customer customer = null;
-        Vehicle vehicle = null;
+    private final Map<Long, Long> draftOwners = new ConcurrentHashMap<>();
 
-        if (req.getCustomer() != null) {
-            customer = Customer.builder()
-                    .customerName(req.getCustomer().getCustomerName())
-                    .phoneNumber(req.getCustomer().getPhoneNumber())
-                    .email(req.getCustomer().getEmail())
-                    .customerGroup(req.getCustomer().getCustomerGroup())
-                    .gender(req.getCustomer().getGender())
-                    .address(req.getCustomer().getAddress())
-                    .taxNumber(req.getCustomer().getTaxNumber())
-                    .occupation(req.getCustomer().getOccupation())
-                    .organisation(req.getCustomer().getOrganisation())
-                    .source(req.getCustomer().getSource())
-                    .isB2b(req.getCustomer().getIsB2B())
-                    .build();
-            customerMapper.insert(customer);
-        }
+    @Transactional
+    public InspectionResponse createInspection(JwtUserPrincipal principal, InspectionRequest req) {
+        Customer customer = resolveCustomer(principal, req);
+        Vehicle vehicle = null;
 
         if (req.getVehicle() != null && customer != null) {
             vehicle = Vehicle.builder()
                     .customerId(customer.getId())
+                    .branchId(principal != null ? principal.getBranchId() : null)
                     .registrationNumber(req.getVehicle().getRegistrationNumber())
                     .vin(req.getVehicle().getVin())
                     .make(req.getVehicle().getMake())
@@ -71,25 +65,23 @@ public class InspectionService {
             vehicleMapper.insert(vehicle);
         }
 
-        String jcRef = "JC-" + LocalDate.now().getYear() + "-" + String.format("%03d", System.currentTimeMillis() % 1000);
+        String jcRef = IdGenerator.shortRef("JC");
         JobCard jobCard = JobCard.builder()
                 .jobCardRef(jcRef)
-                .customerId(customer != null ? customer.getId() : null)
+                .customerId(customer.getId())
+                .branchId(principal != null ? principal.getBranchId() : null)
                 .vehicleId(vehicle != null ? vehicle.getId() : null)
                 .status(req.getStatus() != null ? req.getStatus() : "pending")
                 .technician(req.getTechnician())
                 .tag(req.getTag())
                 .customerRequests(req.getCustomerRequests())
                 .garageRecommendations(req.getGarageRecommendations())
-                .estimatedDelivery(req.getEstimatedDelivery() != null ? java.time.LocalDateTime.parse(req.getEstimatedDelivery()) : null)
+                .estimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"))
                 .build();
         jobCardMapper.insert(jobCard);
 
-        String insRef = "INS-" + String.format("%03d", System.currentTimeMillis() % 1000);
-        String sectionsJson = null;
-        try {
-            if (req.getSections() != null) sectionsJson = objectMapper.writeValueAsString(req.getSections());
-        } catch (JsonProcessingException ignored) {}
+        String insRef = IdGenerator.shortRef("INS");
+        String sectionsJson = toJson(req.getSections());
 
         Inspection inspection = Inspection.builder()
                 .inspectionRef(insRef)
@@ -98,7 +90,7 @@ public class InspectionService {
                 .placeOfSupply(req.getPlaceOfSupply())
                 .customerRequests(req.getCustomerRequests())
                 .garageRecommendations(req.getGarageRecommendations())
-                .estimatedDelivery(req.getEstimatedDelivery() != null ? java.time.LocalDateTime.parse(req.getEstimatedDelivery()) : null)
+                .estimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"))
                 .notifyOwnerSmsEmail(req.getNotifyOwnerSmsEmail())
                 .tag(req.getTag())
                 .sections(sectionsJson)
@@ -108,31 +100,93 @@ public class InspectionService {
         return InspectionResponse.builder().id(insRef).build();
     }
 
-    public InspectionDraftResponse getDraft(Long id) {
+    public InspectionDraftResponse getDraft(JwtUserPrincipal principal, Long id) {
+        verifyDraftOwnership(principal, id);
         Inspection draft = inspectionMapper.findDraftById(id)
                 .orElseThrow(() -> new NotFoundException("Draft not found"));
         return toDraftResponse(draft);
     }
 
     @Transactional
-    public void saveDraft(Long id, InspectionRequest req) {
+    public void saveDraft(JwtUserPrincipal principal, Long id, InspectionRequest req) {
         Inspection inspection = inspectionMapper.selectById(id);
         if (inspection == null) throw new NotFoundException("Inspection not found");
-        try {
-            if (req.getSections() != null)
-                inspection.setSections(objectMapper.writeValueAsString(req.getSections()));
-        } catch (JsonProcessingException ignored) {}
+        verifyDraftOwnership(principal, id);
+        if (req.getSections() != null) {
+            inspection.setSections(toJson(req.getSections()));
+        }
         inspection.setCustomerRequests(req.getCustomerRequests());
         inspection.setGarageRecommendations(req.getGarageRecommendations());
         inspection.setIsDraft(true);
         inspectionMapper.updateById(inspection);
+        if (principal != null && principal.getUserId() != null) {
+            draftOwners.put(id, principal.getUserId());
+        }
     }
 
     @Transactional
-    public void deleteDraft(Long id) {
+    public void deleteDraft(JwtUserPrincipal principal, Long id) {
+        verifyDraftOwnership(principal, id);
         Inspection draft = inspectionMapper.findDraftById(id)
                 .orElseThrow(() -> new NotFoundException("Draft not found"));
         inspectionMapper.deleteById(draft.getId());
+        draftOwners.remove(id);
+    }
+
+    private Customer resolveCustomer(JwtUserPrincipal principal, InspectionRequest req) {
+        if (req.getCustomerId() != null && !req.getCustomerId().isBlank()) {
+            Long customerId;
+            try {
+                customerId = Long.parseLong(req.getCustomerId());
+            } catch (NumberFormatException e) {
+                throw new BadRequestException("Invalid customerId '" + req.getCustomerId() + "'");
+            }
+            Customer customer = customerMapper.selectById(customerId);
+            if (customer == null) {
+                throw new BadRequestException("Customer not found with id: " + customerId);
+            }
+            return customer;
+        }
+        if (req.getCustomer() != null) {
+            Customer customer = Customer.builder()
+                    .branchId(principal != null ? principal.getBranchId() : null)
+                    .customerName(req.getCustomer().getCustomerName())
+                    .phoneNumber(req.getCustomer().getPhoneNumber())
+                    .email(req.getCustomer().getEmail())
+                    .customerGroup(req.getCustomer().getCustomerGroup())
+                    .gender(req.getCustomer().getGender())
+                    .address(req.getCustomer().getAddress())
+                    .taxNumber(req.getCustomer().getTaxNumber())
+                    .occupation(req.getCustomer().getOccupation())
+                    .organisation(req.getCustomer().getOrganisation())
+                    .source(req.getCustomer().getSource())
+                    .isB2b(req.getCustomer().getIsB2B())
+                    .build();
+            customerMapper.insert(customer);
+            return customer;
+        }
+        throw new BadRequestException("customerId is required when creating a job card. " +
+                "Provide customerId or customer details in the request");
+    }
+
+    private void verifyDraftOwnership(JwtUserPrincipal principal, Long id) {
+        if (principal == null || principal.getUserId() == null) {
+            throw new ForbiddenException("Authenticated user not found");
+        }
+        Long owner = draftOwners.get(id);
+        if (owner != null && !owner.equals(principal.getUserId())) {
+            throw new ForbiddenException("Draft does not belong to the current user");
+        }
+    }
+
+    private String toJson(Object value) {
+        if (value == null) return null;
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize sections JSON", e);
+            throw new BadRequestException("Invalid sections payload: " + e.getOriginalMessage());
+        }
     }
 
     private InspectionDraftResponse toDraftResponse(Inspection i) {
@@ -140,7 +194,10 @@ public class InspectionService {
         try {
             if (i.getSections() != null)
                 sections = objectMapper.readValue(i.getSections(), Map.class);
-        } catch (JsonProcessingException ignored) {}
+        } catch (JsonProcessingException e) {
+            log.error("Failed to deserialize sections JSON for inspection {}", i.getId(), e);
+            throw new BadRequestException("Stored sections payload is corrupt");
+        }
         return InspectionDraftResponse.builder()
                 .id(String.valueOf(i.getId()))
                 .jobCardId(String.valueOf(i.getJobCardId()))

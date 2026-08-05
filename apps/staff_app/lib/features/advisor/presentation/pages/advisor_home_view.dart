@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/core/router/app_router.dart';
@@ -110,14 +111,6 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
     _tabCtrl = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(advisorRefreshProvider.notifier).state++;
-      Future.delayed(const Duration(milliseconds: 900), () {
-        if (mounted) {
-          _toast(
-            'Good morning, Ali. You have 5 pending approvals.',
-            icon: Icons.wb_sunny_outlined,
-          );
-        }
-      });
     });
   }
 
@@ -173,137 +166,21 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
     );
   }
 
-  void _showProfile() => _sheet(
-    AdvisorProfileSheet(
-      onLogout: () {
-        Navigator.pop(context);
-        if (HiveCleaner.hasPendingSync()) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              backgroundColor: AppColors.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r16),
-              ),
-              title: const Row(
-                children: [
-                  Icon(
-                    Icons.sync_problem_rounded,
-                    color: AppColors.warning,
-                    size: 22,
-                  ),
-                  SizedBox(width: 10),
-                  Text(
-                    'Sync Pending',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              content: const Text(
-                'You have pending sync operations.\nPlease wait for sync to complete before logging out.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.text2,
-                  height: 1.5,
-                ),
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.warning,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r10),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: const Text(
-                    'OK',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
+  void _showProfile() {
+    _sheet(
+      AdvisorProfileSheet(
+        onLogout: () async {
+          Navigator.pop(context);
+          await showLogoutDialog(
+            context,
+            onLogout: () {
+              ref.read(authNotifierProvider.notifier).logout();
+            },
           );
-          return;
-        }
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: AppColors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.r16),
-            ),
-            title: const Row(
-              children: [
-                Icon(Icons.logout_rounded, color: AppColors.danger, size: 22),
-                SizedBox(width: 10),
-                Text(
-                  'Logout',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            content: const Text(
-              'Are you sure you want to logout?\nAll local data will be cleared.',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.text2,
-                height: 1.5,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.text3,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  HiveCleaner.clearAll().then((_) {
-                    if (mounted) context.go(AppRoutes.login);
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.danger,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.r10),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                ),
-                child: const Text(
-                  'Yes, Logout',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    ),
-  );
+        },
+      ),
+    );
+  }
 
   void _showNotifications() {
     HapticFeedback.lightImpact();
@@ -361,14 +238,19 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
     await queue.enqueue(
       SyncOperation(
         id: id,
-        entityType: 'inspection',
+        entityType: 'approval',
         entityId: pa.estimateId,
         changeType: ChangeType.update,
-        payload: {'estimateId': pa.estimateId, 'action': action},
+        payload: {
+          'estimateId': pa.estimateId,
+          'action': action,
+          'customerName': pa.customerName,
+          'amount': pa.amount,
+        },
         timestamp: DateTime.now().millisecondsSinceEpoch,
       ),
     );
-    ref.read(syncEngineProvider).syncAll();
+    await ref.read(syncEngineProvider).syncAll();
   }
 
   void _onContact(FollowupReminderEntity r) {

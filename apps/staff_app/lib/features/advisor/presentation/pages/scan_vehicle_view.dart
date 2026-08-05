@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -41,7 +41,7 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
   }
 
   Future<void> _initCamera() async {
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (!kIsWeb) {
       final status = await Permission.camera.request();
       if (status.isGranted) {
         if (mounted) {

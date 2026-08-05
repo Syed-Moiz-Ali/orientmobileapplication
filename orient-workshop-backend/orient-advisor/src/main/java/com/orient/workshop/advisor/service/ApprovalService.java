@@ -4,6 +4,7 @@ import com.orient.workshop.advisor.model.dto.ApprovalActionRequest;
 import com.orient.workshop.advisor.model.dto.PendingApprovalResponse;
 import com.orient.workshop.advisor.model.entity.Approval;
 import com.orient.workshop.advisor.repository.ApprovalMapper;
+import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,13 +35,24 @@ public class ApprovalService {
                 .build()).collect(Collectors.toList());
     }
 
+    private static final Map<String, String> ACTIONS = Map.of(
+            "approve", "approved",
+            "reject", "rejected",
+            "revise", "pending");
+
     @Transactional
     public void processApproval(String estimateId, ApprovalActionRequest req) {
+        String action = req.getAction() != null ? req.getAction().trim().toLowerCase() : "";
+        String storedAction = ACTIONS.get(action);
+        if (storedAction == null) {
+            throw new BadRequestException("Invalid action '" + req.getAction()
+                    + "'. Allowed values: approve, reject, revise");
+        }
         Approval approval = approvalMapper.selectOne(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Approval>()
                         .eq(Approval::getEstimateId, estimateId));
         if (approval == null) throw new NotFoundException("Approval not found");
-        approval.setAction(req.getAction());
+        approval.setAction(storedAction);
         approval.setCustomerName(req.getCustomerName());
         approval.setAmount(req.getAmount());
         approvalMapper.updateById(approval);

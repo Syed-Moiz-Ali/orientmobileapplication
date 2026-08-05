@@ -25,4 +25,18 @@ class JobCard {
   });
 
   String get vehicleDisplay => '$vehicle - $plateNumber';
+
+  JobCard copyWith({JobCardStatus? status}) {
+    return JobCard(
+      id: id,
+      customerName: customerName,
+      vehicle: vehicle,
+      plateNumber: plateNumber,
+      services: services,
+      technician: technician,
+      estCompletion: estCompletion,
+      amount: amount,
+      status: status ?? this.status,
+    );
+  }
 }

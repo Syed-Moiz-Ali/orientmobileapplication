@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/shared_auth.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/data/datasources/owner_remote_adapters.dart';
 import 'package:owner_app/features/dashboard/data/datasources/owner_remote_datasource.dart';
 import 'package:owner_app/features/job_cards/data/repositories/job_card_repository_impl.dart';
@@ -65,6 +64,22 @@ class JobCardsNotifier extends Notifier<JobCardsState> {
 
   void setFilter(JobCardStatus? status) {
     state = state.copyWith(activeFilter: status, filtered: _applyFilters(state.all, state.searchQuery, status));
+  }
+
+  /// Marks a job card as completed locally (no backend write endpoint exists).
+  void markComplete(String id) {
+    final updated = state.all
+        .map((jc) => jc.id == id ? jc.copyWith(status: JobCardStatus.completed) : jc)
+        .toList();
+    state = state.copyWith(
+      all: updated,
+      filtered: _applyFilters(updated, state.searchQuery, state.activeFilter),
+    );
+    final selected = ref.read(selectedJobCardProvider);
+    if (selected != null && selected.id == id) {
+      ref.read(selectedJobCardProvider.notifier).state =
+          selected.copyWith(status: JobCardStatus.completed);
+    }
   }
 
   List<JobCard> _applyFilters(List<JobCard> cards, String query, JobCardStatus? status) {

@@ -5,4 +5,5 @@ const ownerProfileData = ProfileSheetData(
   initials: 'O',
   roleLabel: 'Owner',
   roleBadge: 'Owner \u2022 Auto Garage ERP',
+  branch: 'Head Office',
 );

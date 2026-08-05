@@ -1,22 +1,46 @@
 package com.orient.workshop.owner.service;
 
+import com.orient.workshop.core.model.entity.Customer;
+import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.owner.model.dto.InvoiceResponse;
+import com.orient.workshop.owner.model.entity.Invoice;
+import com.orient.workshop.owner.repository.InvoiceMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class InvoiceService {
 
-    public List<InvoiceResponse> getInvoices(String status) {
-        return List.of(
-            inv("INV-2026-0001", "Ahmed Hassan", "01/07/2026", 3800.0, "unpaid"),
-            inv("INV-2026-0002", "John Anderson", "28/06/2026", 5200.0, "paid"),
-            inv("INV-2026-0003", "Sarah Williams", "25/06/2026", 2100.0, "unpaid")
-        ).stream().filter(i -> status == null || i.getStatus().equals(status)).collect(java.util.stream.Collectors.toList());
-    }
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private InvoiceResponse inv(String id, String name, String date, double amount, String status) {
-        return InvoiceResponse.builder().id(id).customerName(name).date(date).amount(amount).status(status).build();
+    private final InvoiceMapper invoiceMapper;
+    private final CustomerMapper customerMapper;
+
+    public List<InvoiceResponse> getInvoices(String status) {
+        Map<Long, Customer> customers = customerMapper.selectList(null).stream()
+                .collect(Collectors.toMap(Customer::getId, Function.identity()));
+        return invoiceMapper.selectList(null).stream()
+                .filter(inv -> status == null || status.isBlank() || status.equalsIgnoreCase(inv.getStatus()))
+                .map(inv -> {
+                    Customer customer = customers.get(inv.getCustomerId());
+                    String name = customer != null && customer.getCustomerName() != null
+                            ? customer.getCustomerName() : "";
+                    return InvoiceResponse.builder()
+                            .id(inv.getInvoiceRef())
+                            .customerName(name)
+                            .date(inv.getIssuedDate() != null ? inv.getIssuedDate().format(DATE_FMT) : "")
+                            .amount(inv.getAmount() != null ? inv.getAmount().doubleValue() : 0.0)
+                            .status(inv.getStatus() != null ? inv.getStatus() : "")
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

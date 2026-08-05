@@ -18,6 +18,7 @@ public class Booking {
     private Long id;
     private String bookingRef;
     private Long customerId;
+    private Long branchId;
     private Long vehicleId;
     private String vehicleName;
     private String plateNumber;

@@ -1,5 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
@@ -99,6 +103,7 @@ class InspectionState {
     'customerRequests': customerRequests,
     'garageRecommendations': garageRecommendations,
     'estimatedDelivery': estimatedDelivery?.toIso8601String(),
+    'notifyOwner': notifyOwner,
     'notifyOwnerSmsEmail': notifyOwnerSmsEmail,
     'tag': tag,
     'jobCardId': jobCardId,
@@ -148,6 +153,7 @@ class InspectionState {
           ? DateTime.tryParse(map['estimatedDelivery'] as String)
           : null,
       notifyOwnerSmsEmail: map['notifyOwnerSmsEmail'] as bool? ?? false,
+      notifyOwner: map['notifyOwner'] as bool? ?? false,
       tag: map['tag'] as String? ?? '',
       jobCardId: map['jobCardId'] as String? ?? '',
     );
@@ -448,10 +454,47 @@ class InspectionNotifier extends Notifier<InspectionState> {
     );
     await queue.enqueue(operation);
 
+    await uploadInspectionMedia(id);
+    await ref.read(syncEngineProvider).syncAll();
+
     await local.deleteDraft();
     state = const InspectionState();
 
     return const Success(null);
+  }
+
+  /// Uploads all captured media (photos / videos / audio) to the backend.
+  /// When offline, uploads are queued in the 'pending_media' Hive box and
+  /// retried later (see [flushPendingMediaUploads]).
+  Future<void> uploadInspectionMedia(String recordId) async {
+    final paths = <String>[];
+    for (final m in state.media.values) {
+      paths.addAll(m.photoPaths);
+      paths.addAll(m.videoPaths);
+      if (m.audioPath.isNotEmpty) paths.add(m.audioPath);
+    }
+    paths.addAll(state.preServicePhotos);
+    if (paths.isEmpty) return;
+    // File-path based uploads are not supported on web.
+    if (kIsWeb) return;
+
+    final mediaClient = MediaClient(ref.read(dioClientProvider));
+    final pending = MediaUploadQueue(Hive.box<dynamic>('pending_media'));
+    for (final path in paths) {
+      try {
+        await mediaClient.uploadMedia(recordId, path);
+      } catch (_) {
+        final pendingId = await IdGenerator.nextId('MED');
+        await pending.enqueue(
+          PendingMediaUpload(
+            id: pendingId,
+            recordId: recordId,
+            filePath: path,
+            timestamp: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
+      }
+    }
   }
 
   void reset() {

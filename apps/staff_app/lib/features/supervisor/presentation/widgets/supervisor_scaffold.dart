@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_app_bar.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart';
@@ -44,11 +43,18 @@ class SupervisorScaffold extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () async {
                 await notifier.saveAndAssign();
-                ref.read(syncEngineProvider).syncAll();
                 if (context.mounted) {
+                  final msg = state.assignWorkSuccess.isNotEmpty
+                      ? state.assignWorkSuccess
+                      : state.assignWorkError.isNotEmpty
+                      ? state.assignWorkError
+                      : 'Assignments saved locally';
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Assignments saved locally'),
+                    SnackBar(
+                      content: Text(msg),
+                      backgroundColor: state.assignWorkError.isNotEmpty
+                          ? AppColors.danger
+                          : AppColors.success,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );

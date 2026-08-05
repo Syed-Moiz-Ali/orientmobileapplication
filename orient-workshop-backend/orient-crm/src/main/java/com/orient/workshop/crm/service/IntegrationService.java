@@ -5,18 +5,20 @@ import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.crm.model.dto.IntegrationResponse;
 import com.orient.workshop.crm.model.entity.CrmIntegration;
 import com.orient.workshop.crm.repository.CrmIntegrationMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -26,19 +28,29 @@ import java.util.stream.Collectors;
 @Service
 public class IntegrationService {
 
+    /**
+     * CR-6: integration credentials are encrypted with a DEDICATED key
+     * (app.encryption-key) — never the JWT signing secret — using AES-256-GCM
+     * with a random 12-byte IV per encryption. The IV is prepended to the
+     * ciphertext and the whole blob is base64-encoded.
+     */
+    private static final String AES_GCM = "AES/GCM/NoPadding";
+    private static final int GCM_IV_BYTES = 12;
+    private static final int GCM_TAG_BITS = 128;
+    private static final String DEV_FALLBACK_KEY = "orient-dev-only-encryption-key-0123456789";
+
     private final CrmIntegrationMapper integrationMapper;
     private final LeadService leadService;
     private final MetaLeadFetcher metaLeadFetcher;
+    private final byte[] encryptionKey;
 
     public IntegrationService(CrmIntegrationMapper integrationMapper, LeadService leadService,
-                              @Lazy MetaLeadFetcher metaLeadFetcher) {
+                              @Lazy MetaLeadFetcher metaLeadFetcher, Environment environment) {
         this.integrationMapper = integrationMapper;
         this.leadService = leadService;
         this.metaLeadFetcher = metaLeadFetcher;
+        this.encryptionKey = resolveEncryptionKey(environment);
     }
-
-    @Value("${app.jwt.secret:orient-workshop-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}")
-    private String secret;
 
     public List<IntegrationResponse> getIntegrations() {
         return integrationMapper.selectList(null).stream()
@@ -134,15 +146,51 @@ public class IntegrationService {
                 .build();
     }
 
-    // ===== AES encryption helpers =====
+    // ===== AES-GCM encryption helpers (CR-6) =====
+
+    /**
+     * Resolves the dedicated encryption key. Requires app.encryption-key (>= 16 chars)
+     * and refuses to start with one that equals the JWT secret. A dev-only fallback key
+     * is used when the property is missing AND the dev profile is active.
+     */
+    private byte[] resolveEncryptionKey(Environment environment) {
+        String configured = environment.getProperty("app.encryption-key");
+        if (configured == null || configured.isBlank()) {
+            boolean devProfile = Arrays.stream(environment.getActiveProfiles())
+                    .anyMatch(p -> "dev".equalsIgnoreCase(p));
+            if (!devProfile) {
+                throw new IllegalStateException(
+                        "app.encryption-key is not configured. Set ENCRYPTION_KEY (>= 16 chars) before starting the service.");
+            }
+            log.warn("app.encryption-key not set; using DEV-ONLY fallback key. Never use this outside the dev profile.");
+            configured = DEV_FALLBACK_KEY;
+        }
+        if (configured.length() < 16) {
+            throw new IllegalStateException("app.encryption-key must be at least 16 characters");
+        }
+        String jwtSecret = environment.getProperty("app.jwt.secret");
+        if (jwtSecret != null && jwtSecret.equals(configured)) {
+            throw new IllegalStateException("app.encryption-key must NOT be the same as app.jwt.secret");
+        }
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(configured.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to derive encryption key", e);
+        }
+    }
 
     private String encrypt(String plain) {
         try {
-            byte[] key = padKey(secret);
-            SecretKeySpec spec = new SecretKeySpec(key, "AES");
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, spec);
-            return Base64.getEncoder().encodeToString(cipher.doFinal(plain.getBytes(StandardCharsets.UTF_8)));
+            byte[] iv = new byte[GCM_IV_BYTES];
+            new SecureRandom().nextBytes(iv);
+            Cipher cipher = Cipher.getInstance(AES_GCM);
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(encryptionKey, "AES"),
+                    new GCMParameterSpec(GCM_TAG_BITS, iv));
+            byte[] ciphertext = cipher.doFinal(plain.getBytes(StandardCharsets.UTF_8));
+            byte[] blob = new byte[iv.length + ciphertext.length];
+            System.arraycopy(iv, 0, blob, 0, iv.length);
+            System.arraycopy(ciphertext, 0, blob, iv.length, ciphertext.length);
+            return Base64.getEncoder().encodeToString(blob);
         } catch (Exception e) {
             throw new RuntimeException("Failed to encrypt credentials", e);
         }
@@ -150,21 +198,22 @@ public class IntegrationService {
 
     private String decrypt(String encoded) {
         try {
-            byte[] key = padKey(secret);
-            SecretKeySpec spec = new SecretKeySpec(key, "AES");
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, spec);
-            return new String(cipher.doFinal(Base64.getDecoder().decode(encoded)), StandardCharsets.UTF_8);
+            byte[] blob = Base64.getDecoder().decode(encoded);
+            if (blob.length < GCM_IV_BYTES + GCM_TAG_BITS / 8) {
+                throw new IllegalArgumentException("Encrypted blob is too short");
+            }
+            byte[] iv = Arrays.copyOfRange(blob, 0, GCM_IV_BYTES);
+            byte[] ciphertext = Arrays.copyOfRange(blob, GCM_IV_BYTES, blob.length);
+            Cipher cipher = Cipher.getInstance(AES_GCM);
+            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(encryptionKey, "AES"),
+                    new GCMParameterSpec(GCM_TAG_BITS, iv));
+            return new String(cipher.doFinal(ciphertext), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to decrypt credentials", e);
+            // Credentials stored with the legacy AES/ECB + JWT-secret scheme cannot be
+            // migrated silently; the integration must be reconnected.
+            throw new IllegalStateException(
+                    "Failed to decrypt integration credentials (legacy blobs require reconnect)", e);
         }
-    }
-
-    private byte[] padKey(String s) {
-        byte[] raw = s.getBytes(StandardCharsets.UTF_8);
-        byte[] key = new byte[16];
-        System.arraycopy(raw, 0, key, 0, Math.min(raw.length, 16));
-        return key;
     }
 
     @SuppressWarnings("unchecked")

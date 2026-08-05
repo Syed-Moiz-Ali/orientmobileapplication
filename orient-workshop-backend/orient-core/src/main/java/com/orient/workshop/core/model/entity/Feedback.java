@@ -14,6 +14,7 @@ public class Feedback {
     private Long branchId;
     private Integer rating;
     private String comment;
-    private Boolean isPublic;
+    @Builder.Default private Boolean isPublic = true;
+    @TableField(exist = false) @Builder.Default private Boolean isModerated = false;
     @TableField(fill = FieldFill.INSERT) private LocalDateTime createdAt;
 }

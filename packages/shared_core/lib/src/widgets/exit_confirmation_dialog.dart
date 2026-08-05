@@ -75,7 +75,7 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
-                  fontFamily: 'Inter',
+                  
                 ),
               ),
               const SizedBox(height: 10),
@@ -86,7 +86,7 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                   fontSize: 14,
                   color: AppColors.text3,
                   height: 1.4,
-                  fontFamily: 'Inter',
+                  
                 ),
               ),
               const SizedBox(height: 24),
@@ -110,7 +110,7 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                           color: AppColors.text2,
                           fontWeight: FontWeight.w600,
                           fontSize: 15,
-                          fontFamily: 'Inter',
+                          
                         ),
                       ),
                     ),
@@ -135,7 +135,7 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 15,
-                          fontFamily: 'Inter',
+                          
                         ),
                       ),
                     ),

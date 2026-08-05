@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 
 enum ReportRange { today, week, month }
@@ -38,94 +38,41 @@ class AdvisorReportData {
 
 final advisorReportRangeProvider = StateProvider<ReportRange>((ref) => ReportRange.week);
 
-final advisorReportDataProvider = Provider<AdvisorReportData>((ref) {
+/// Report data loaded from the backend (ReportResponse). Falls back to empty
+/// data on failure — never fabricated numbers.
+final advisorReportDataProvider = FutureProvider<AdvisorReportData>((ref) async {
   ref.watch(advisorRefreshProvider);
   ref.watch(advisorReportRangeProvider);
-
-  final box = Hive.box<dynamic>('inspections');
-  final allData = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
-  final jobData = allData.where((m) => m['type'] == 'vehicle_customer').toList();
-
-  if (jobData.isEmpty) {
+  final range = ref.watch(advisorReportRangeProvider);
+  final remote = ref.read(advisorRemoteDataSourceProvider);
+  try {
+    final r = await remote.getReports(_rangeParam(range));
     return AdvisorReportData(
-      totalJobs: 3,
-      completedJobs: 1,
-      pendingJobs: 1,
-      inProgressJobs: 1,
+      totalJobs: r.totalJobs,
+      completedJobs: r.completedJobs,
+      pendingJobs: r.totalJobs - r.completedJobs - r.inProgressJobs - r.cancelledJobs,
+      inProgressJobs: r.inProgressJobs,
+      cancelledJobs: r.cancelledJobs,
       statusBreakdown: [
-        StatusCount('In Progress', 1, const Color(0xFF1B9AAA)),
-        StatusCount('Pending', 1, const Color(0xFFD97706)),
-        StatusCount('Completed', 1, const Color(0xFF16A34A)),
+        StatusCount('Completed', r.completedJobs, const Color(0xFF16A34A)),
+        StatusCount('In Progress', r.inProgressJobs, const Color(0xFF1B9AAA)),
+        StatusCount('Cancelled', r.cancelledJobs, const Color(0xFFDC2626)),
       ],
-      weeklyActivity: [4, 6, 3, 7, 5, 8, 2],
-      weekLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      weeklyActivity: r.weeklyActivity.map((w) => w.count).toList(),
+      weekLabels: r.weeklyActivity.map((w) => w.day).toList(),
     );
+  } catch (_) {
+    return const AdvisorReportData();
   }
-
-  final statuses = <String, int>{};
-  for (final d in jobData) {
-    final s = d['status'] as String? ?? 'inProgress';
-    statuses[s] = (statuses[s] ?? 0) + 1;
-  }
-
-  final statusColors = <String, Color>{
-    'inProgress': const Color(0xFF1B9AAA),
-    'pendingApproval': const Color(0xFFD97706),
-    'completed': const Color(0xFF16A34A),
-    'waitingParts': const Color(0xFF7C3AED),
-    'qualityCheck': const Color(0xFF2563EB),
-    'cancelled': const Color(0xFFDC2626),
-  };
-
-  const statusLabels = <String, String>{
-    'inProgress': 'In Progress',
-    'pendingApproval': 'Pending',
-    'completed': 'Completed',
-    'waitingParts': 'Waiting Parts',
-    'qualityCheck': 'QC Check',
-    'cancelled': 'Cancelled',
-  };
-
-  final breakdown = statuses.entries.map((e) => StatusCount(
-    statusLabels[e.key] ?? e.key,
-    e.value,
-    statusColors[e.key] ?? const Color(0xFF94A3B8),
-  )).toList();
-
-  return AdvisorReportData(
-    totalJobs: jobData.length,
-    completedJobs: statuses['completed'] ?? 0,
-    pendingJobs: (statuses['pendingApproval'] ?? 0) + (statuses['waitingParts'] ?? 0),
-    inProgressJobs: (statuses['inProgress'] ?? 0) + (statuses['qualityCheck'] ?? 0),
-    cancelledJobs: statuses['cancelled'] ?? 0,
-    statusBreakdown: breakdown,
-    weeklyActivity: _computeWeeklyActivity(jobData),
-    weekLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  );
 });
 
-List<int> _computeWeeklyActivity(List<Map<String, dynamic>> jobs) {
-  final now = DateTime.now();
-  final days = List.generate(7, (i) {
-    final d = now.subtract(Duration(days: 6 - i));
-    return jobs.where((j) {
-      final cd = j['createdDate'] as String? ?? '';
-      try {
-        final parts = cd.split(' ');
-        if (parts.length != 2) return false;
-        final dateParts = parts[0].split('/');
-        if (dateParts.length != 3) return false;
-        final dd = DateTime(
-          int.parse(dateParts[2]),
-          int.parse(dateParts[1]),
-          int.parse(dateParts[0]),
-        );
-        return dd.year == d.year && dd.month == d.month && dd.day == d.day;
-      } catch (_) {
-        return false;
-      }
-    }).length;
-  });
-  return days;
+String _rangeParam(ReportRange range) {
+  switch (range) {
+    case ReportRange.today:
+      return 'today';
+    case ReportRange.week:
+      return 'week';
+    case ReportRange.month:
+      return 'month';
+  }
 }
-

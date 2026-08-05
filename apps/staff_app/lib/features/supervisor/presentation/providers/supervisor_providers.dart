@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/supervisor/data/datasources/supervisor_remote_datasource.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
 
@@ -17,6 +18,8 @@ class SupervisorDashboardState {
   final bool isWorkListLoading;
   final String searchQuery;
   final String jobCardSearch;
+  final String assignWorkError;
+  final String assignWorkSuccess;
   final List<WorkAssignmentEntity> assignmentRows;
   final int nextRowId;
 
@@ -27,6 +30,8 @@ class SupervisorDashboardState {
     this.isWorkListLoading = false,
     this.searchQuery = '',
     this.jobCardSearch = '',
+    this.assignWorkError = '',
+    this.assignWorkSuccess = '',
     List<WorkAssignmentEntity>? assignmentRows,
     this.nextRowId = 2,
   }) : assignmentRows = assignmentRows ?? [WorkAssignmentEntity(id: 1)];
@@ -38,6 +43,8 @@ class SupervisorDashboardState {
     bool? isWorkListLoading,
     String? searchQuery,
     String? jobCardSearch,
+    String? assignWorkError,
+    String? assignWorkSuccess,
     List<WorkAssignmentEntity>? assignmentRows,
     int? nextRowId,
   }) {
@@ -48,6 +55,8 @@ class SupervisorDashboardState {
       isWorkListLoading: isWorkListLoading ?? this.isWorkListLoading,
       searchQuery: searchQuery ?? this.searchQuery,
       jobCardSearch: jobCardSearch ?? this.jobCardSearch,
+      assignWorkError: assignWorkError ?? this.assignWorkError,
+      assignWorkSuccess: assignWorkSuccess ?? this.assignWorkSuccess,
       assignmentRows: assignmentRows ?? this.assignmentRows,
       nextRowId: nextRowId ?? this.nextRowId,
     );
@@ -114,42 +123,74 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   }
 
   Future<void> saveAndAssign() async {
-    state = state.copyWith(isAssignWorkLoading: true);
-    await Future.delayed(const Duration(milliseconds: 1200));
-
-    final local = GenericLocalDataSource(Hive.box<dynamic>('supervisor_assignments'));
-    final queue = ref.read(syncQueueProvider);
-    for (final row in state.assignmentRows) {
-      final payload = {
-        'id': row.id, 'description': row.description, 'department': row.department,
-        'technicianName': row.technicianName, 'dateOfWork': row.dateOfWork,
-        'statusPercent': row.statusPercent, 'stdTime': row.stdTime, 'remarks': row.remarks,
-      };
-      await local.save(row.id.toString(), payload);
-      final op = SyncOperation(
-        id: await IdGenerator.nextId('ASN'), entityType: 'work_assignment',
-        entityId: row.id.toString(), changeType: ChangeType.create,
-        payload: payload, timestamp: DateTime.now().millisecondsSinceEpoch,
+    final rows = state.assignmentRows
+        .where(
+          (r) => r.description.isNotEmpty || r.technicianName.isNotEmpty,
+        )
+        .toList();
+    if (rows.isEmpty) {
+      state = state.copyWith(
+        isAssignWorkLoading: false,
+        assignWorkError: 'Add at least one work assignment before saving.',
+        assignWorkSuccess: '',
       );
-      await queue.enqueue(op);
-
-      final jobCard = 'ASN-${row.id}';
-      final jobStatus = row.statusPercent >= 100 ? 'Completed' : row.statusPercent > 0 ? 'In Progress' : 'Pending';
-      final jobEntry = AssignedJobEntity(
-        jobCard: jobCard,
-        customer: row.technicianName.isEmpty ? 'Unassigned' : row.technicianName,
-        vehicle: row.description.isEmpty ? 'No description' : row.description,
-        dateAssigned: row.dateOfWork.isEmpty ? DateTime.now().toIso8601String().split('T').first : row.dateOfWork,
-        done: row.statusPercent ~/ 10, total: 10, status: jobStatus,
-      );
-      _allJobs.insert(0, jobEntry);
-      await local.save('job_$jobCard', {
-        'jobCard': jobCard, 'customer': jobEntry.customer, 'vehicle': jobEntry.vehicle,
-        'dateAssigned': jobEntry.dateAssigned, 'done': jobEntry.done,
-        'total': jobEntry.total, 'status': jobEntry.status,
-      });
+      return;
     }
-    state = state.copyWith(isAssignWorkLoading: false);
+    state = state.copyWith(
+      isAssignWorkLoading: true,
+      assignWorkError: '',
+      assignWorkSuccess: '',
+    );
+    try {
+      // Build the payload matching the backend WorkAssignmentRequest DTO:
+      // { items: [ { description, department, technicianName, dateOfWork,
+      //   statusPercent, stdTime, remarks } ] }
+      final jobCardId = state.jobCardSearch.trim();
+      final items = rows.map((row) {
+        return {
+          'description': row.description.isEmpty
+              ? (jobCardId.isEmpty ? 'General work' : 'Job $jobCardId')
+              : row.description,
+          'department': row.department,
+          'technicianName': row.technicianName,
+          'dateOfWork': row.dateOfWork,
+          'statusPercent': row.statusPercent,
+          'stdTime': row.stdTime,
+          'remarks': row.remarks,
+        };
+      }).toList();
+
+      final queue = ref.read(syncQueueProvider);
+      final id = await IdGenerator.nextId('ASN');
+      await queue.enqueue(
+        SyncOperation(
+          id: id,
+          entityType: 'work_assignment',
+          entityId: jobCardId.isEmpty ? id : jobCardId,
+          changeType: ChangeType.create,
+          payload: {'items': items},
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+      await ref.read(syncEngineProvider).syncAll();
+
+      state = state.copyWith(
+        isAssignWorkLoading: false,
+        assignWorkSuccess:
+            'Work assignment submitted (${rows.length} task${rows.length == 1 ? '' : 's'})',
+        assignWorkError: '',
+        assignmentRows: [WorkAssignmentEntity(id: 1)],
+      );
+    } catch (e, st) {
+      ref
+          .read(loggerProvider)
+          .e('Failed to save work assignment', error: e, stackTrace: st);
+      state = state.copyWith(
+        isAssignWorkLoading: false,
+        assignWorkError: 'Could not submit the assignment. Try again.',
+        assignWorkSuccess: '',
+      );
+    }
   }
 
   void onNewAssignment() => selectTab(1);

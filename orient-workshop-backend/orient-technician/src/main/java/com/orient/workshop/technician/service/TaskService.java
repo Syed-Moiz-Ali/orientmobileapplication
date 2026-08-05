@@ -1,9 +1,16 @@
 package com.orient.workshop.technician.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.technician.model.dto.CompleteJobRequest;
 import com.orient.workshop.technician.model.dto.TaskActionRequest;
+import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.model.entity.Staff;
 import com.orient.workshop.core.model.entity.TechnicianTask;
+import com.orient.workshop.core.repository.JobCardMapper;
+import com.orient.workshop.core.repository.StaffMapper;
 import com.orient.workshop.core.repository.TechnicianTaskMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,9 +23,13 @@ import java.util.List;
 public class TaskService {
 
     private final TechnicianTaskMapper taskMapper;
+    private final StaffMapper staffMapper;
+    private final JobCardMapper jobCardMapper;
 
     @Transactional
-    public void startTask(String jobCardNo, String taskRef, TaskActionRequest req) {
+    public void startTask(JwtUserPrincipal principal, String jobCardNo, String taskRef, TaskActionRequest req) {
+        Staff staff = resolveStaff(principal);
+        verifyOwnership(staff, jobCardNo);
         TechnicianTask task = findTask(jobCardNo, taskRef);
         task.setStatus("inProgress");
         task.setStartTime(req.getStartTime() != null ? req.getStartTime() : "");
@@ -26,7 +37,9 @@ public class TaskService {
     }
 
     @Transactional
-    public void completeTask(String jobCardNo, String taskRef, TaskActionRequest req) {
+    public void completeTask(JwtUserPrincipal principal, String jobCardNo, String taskRef, TaskActionRequest req) {
+        Staff staff = resolveStaff(principal);
+        verifyOwnership(staff, jobCardNo);
         TechnicianTask task = findTask(jobCardNo, taskRef);
         task.setStatus("completed");
         task.setEndTime(req.getEndTime() != null ? req.getEndTime() : "");
@@ -34,18 +47,22 @@ public class TaskService {
     }
 
     @Transactional
-    public void updateTaskStatus(String jobCardNo, String taskRef, TaskActionRequest req) {
+    public void updateTaskStatus(JwtUserPrincipal principal, String jobCardNo, String taskRef, TaskActionRequest req) {
+        Staff staff = resolveStaff(principal);
+        verifyOwnership(staff, jobCardNo);
         TechnicianTask task = findTask(jobCardNo, taskRef);
         task.setStatus(req.getStatus() != null ? req.getStatus() : task.getStatus());
         taskMapper.updateById(task);
     }
 
     @Transactional
-    public void completeJob(CompleteJobRequest req) {
+    public void completeJob(JwtUserPrincipal principal, CompleteJobRequest req) {
+        Staff staff = resolveStaff(principal);
+        verifyOwnership(staff, req.getJobCardNo());
         if (req.getTasks() != null) {
             for (CompleteJobRequest.TaskCompletion tc : req.getTasks()) {
                 TechnicianTask task = taskMapper.selectOne(
-                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<TechnicianTask>()
+                        new LambdaQueryWrapper<TechnicianTask>()
                                 .eq(TechnicianTask::getJobCardNo, req.getJobCardNo())
                                 .eq(TechnicianTask::getTaskRef, tc.getId()));
                 if (task != null) {
@@ -56,6 +73,25 @@ public class TaskService {
                 }
             }
         }
+    }
+
+    private void verifyOwnership(Staff staff, String jobCardNo) {
+        JobCard card = jobCardMapper.selectOne(
+                new LambdaQueryWrapper<JobCard>()
+                        .eq(JobCard::getJobCardRef, jobCardNo));
+        if (card == null) throw new NotFoundException("Job card not found: " + jobCardNo);
+        if (card.getTechnician() == null || !card.getTechnician().equals(staff.getName())) {
+            throw new ForbiddenException("Job card is not assigned to the current user");
+        }
+    }
+
+    private Staff resolveStaff(JwtUserPrincipal principal) {
+        if (principal == null || principal.getUserId() == null) {
+            throw new ForbiddenException("Authenticated user not found");
+        }
+        return staffMapper.findByUserId(principal.getUserId())
+                .orElseThrow(() -> new ForbiddenException(
+                        "No staff record linked to the authenticated user"));
     }
 
     private TechnicianTask findTask(String jobCardNo, String taskRef) {

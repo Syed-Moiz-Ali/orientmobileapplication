@@ -4,18 +4,22 @@ import com.orient.workshop.auth.model.entity.OtpRecord;
 import com.orient.workshop.auth.repository.OtpRecordMapper;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.TooManyRequestsException;
+import com.orient.workshop.common.util.PhoneUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OtpService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final OtpRecordMapper otpRecordMapper;
 
@@ -24,6 +28,14 @@ public class OtpService {
 
     @Value("${app.otp.max-attempts:5}")
     private int maxAttempts;
+
+    /**
+     * M-15: dev-only fixed OTP. When set (application-dev.yml sets it to "123456"
+     * so development/demo logins keep working), generateOtp returns this value.
+     * When blank (default), a SecureRandom 6-digit code is generated.
+     */
+    @Value("${app.otp.fixed-value:}")
+    private String fixedOtpValue;
 
     @Transactional
     public void sendSmsOtp(String phone) {
@@ -34,7 +46,7 @@ public class OtpService {
         });
 
         String otpCode = generateOtp();
-        log.info("SMS OTP for {}: {}", phone, otpCode);
+        log.info("SMS OTP for {}: {}", PhoneUtil.mask(phone), otpCode);
 
         OtpRecord record = OtpRecord.builder()
                 .phone(phone)
@@ -90,6 +102,9 @@ public class OtpService {
     }
 
     private String generateOtp() {
-        return "123456";
+        if (fixedOtpValue != null && !fixedOtpValue.isBlank()) {
+            return fixedOtpValue;
+        }
+        return String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
     }
 }

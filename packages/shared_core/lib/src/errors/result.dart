@@ -31,6 +31,10 @@ class NetworkException extends AppException {
   const NetworkException(super.message);
 }
 
+class UnauthorizedException extends AppException {
+  const UnauthorizedException(super.message);
+}
+
 class CacheException extends AppException {
   const CacheException(super.message);
 }

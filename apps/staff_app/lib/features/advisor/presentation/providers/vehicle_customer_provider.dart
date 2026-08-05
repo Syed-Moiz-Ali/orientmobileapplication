@@ -1,5 +1,65 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.dart';
+
+/// A previously saved vehicle/customer record matching a search query.
+class VehicleMatch {
+  final String customerName;
+  final String phoneNumber;
+  final String email;
+  final String vin;
+  final String make;
+  final String model;
+  final String registrationNumber;
+
+  const VehicleMatch({
+    required this.customerName,
+    required this.phoneNumber,
+    required this.email,
+    required this.vin,
+    required this.make,
+    required this.model,
+    required this.registrationNumber,
+  });
+}
+
+/// Client-side search over locally saved vehicle/customer records.
+final advisorVehicleMatchesProvider = Provider<List<VehicleMatch>>((ref) {
+  final form = ref.watch(vehicleCustomerFormProvider);
+  final q = form.customerSearch.trim().toLowerCase();
+  if (q.isEmpty) return const [];
+  try {
+    final box = Hive.box<dynamic>('inspections');
+    return box.values
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .where((m) => m['type'] == 'vehicle_customer')
+        .where((m) {
+          final name = (m['customerName'] ?? '').toString().toLowerCase();
+          final phone = (m['phoneNumber'] ?? '').toString().toLowerCase();
+          final reg = (m['registrationNumber'] ?? '').toString().toLowerCase();
+          final vin = (m['vin'] ?? '').toString().toLowerCase();
+          return form.searchMode == SearchMode.byVehicleReg
+              ? reg.contains(q) || vin.contains(q)
+              : name.contains(q) || phone.contains(q);
+        })
+        .take(5)
+        .map(
+          (m) => VehicleMatch(
+            customerName: (m['customerName'] ?? '').toString(),
+            phoneNumber: (m['phoneNumber'] ?? '').toString(),
+            email: (m['email'] ?? '').toString(),
+            vin: (m['vin'] ?? '').toString(),
+            make: (m['make'] ?? '').toString(),
+            model: (m['model'] ?? '').toString(),
+            registrationNumber: (m['registrationNumber'] ?? '').toString(),
+          ),
+        )
+        .toList();
+  } catch (_) {
+    return const [];
+  }
+});
 
 class VehicleCustomerFormState {
   final SearchMode searchMode;

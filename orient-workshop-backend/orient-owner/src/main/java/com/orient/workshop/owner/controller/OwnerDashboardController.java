@@ -107,7 +107,7 @@ public class OwnerDashboardController {
     public ApiResponse<List<MessageResponse>> getMessages(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(messageService.getMessages());
+        return ApiResponse.success(messageService.getMessages(page, size));
     }
 
     @PostMapping("/messages")

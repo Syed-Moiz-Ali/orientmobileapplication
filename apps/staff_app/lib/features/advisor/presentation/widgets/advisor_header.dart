@@ -6,6 +6,8 @@ import 'advisor_header_button.dart';
 
 class AdvisorHeader extends StatelessWidget {
   final String advisorName;
+  final String advisorInitials;
+  final String advisorBranch;
   final VoidCallback onShowProfile;
   final VoidCallback onShowNotifications;
   final VoidCallback onShowSearch;
@@ -16,6 +18,8 @@ class AdvisorHeader extends StatelessWidget {
   const AdvisorHeader({
     super.key,
     required this.advisorName,
+    required this.advisorInitials,
+    required this.advisorBranch,
     required this.onShowProfile,
     required this.onShowNotifications,
     required this.onShowSearch,
@@ -43,7 +47,7 @@ class AdvisorHeader extends StatelessWidget {
                     onTap: onShowProfile,
                     child: Row(
                       children: [
-                        const AdvisorAvatar(initials: 'AR', size: 40),
+                        AdvisorAvatar(initials: advisorInitials, size: 40),
                         const SizedBox(width: 10),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +136,7 @@ class AdvisorHeader extends StatelessWidget {
                         ),
                         child: Center(
                           child: Text(
-                            'A',
+                            advisorInitials.substring(0, 1),
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w900,
@@ -149,10 +153,10 @@ class AdvisorHeader extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Row(
-                children: const [
+                children: [
                   AdvisorMetaPill(
                     icon: Icons.business_outlined,
-                    label: 'Main Branch · Dubai',
+                    label: advisorBranch,
                   ),
                   SizedBox(width: 8),
                   AdvisorMetaPill(
@@ -211,65 +215,73 @@ class AdvisorHeader extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: GestureDetector(
-                      onTap: onShowSearch,
-                      child: Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.r11,
-                          ),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.15),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 12),
-                            Icon(
-                              Icons.search_rounded,
-                              color: Colors.white.withValues(alpha: 0.45),
-                              size: 18,
+                    child: Semantics(
+                      button: true,
+                      label: 'Search',
+                      child: GestureDetector(
+                        onTap: onShowSearch,
+                        child: Container(
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r11,
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Search name, plate, phone…',
-                              style: TextStyle(
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              Icon(
+                                Icons.search_rounded,
                                 color: Colors.white.withValues(alpha: 0.45),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                size: 18,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              Text(
+                                'Search name, plate, phone…',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: onOpenScan,
-                    child: Container(
-                      height: 42,
-                      width: 42,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(AppDimensions.r11),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
+                  Semantics(
+                    button: true,
+                    label: 'Scan vehicle QR code',
+                    child: GestureDetector(
+                      onTap: onOpenScan,
+                      child: Container(
+                        height: 42,
+                        width: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(AppDimensions.r11),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
                           ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.qr_code_scanner_rounded,
-                        color: Colors.white,
-                        size: 20,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.qr_code_scanner_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ),

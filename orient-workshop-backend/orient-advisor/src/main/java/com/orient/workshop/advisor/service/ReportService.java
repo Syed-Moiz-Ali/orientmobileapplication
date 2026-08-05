@@ -1,11 +1,17 @@
 package com.orient.workshop.advisor.service;
 
 import com.orient.workshop.advisor.model.dto.ReportResponse;
+import com.orient.workshop.core.model.entity.JobCard;
 import com.orient.workshop.core.repository.JobCardMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,10 +25,24 @@ public class ReportService {
         int inProgress = jobCardMapper.countInProgress();
         int cancelled = jobCardMapper.countCancelled();
 
-        ReportResponse.ActivityDto[] weekDays = {
-                activity("Mon", 3), activity("Tue", 5), activity("Wed", 4),
-                activity("Thu", 6), activity("Fri", 2), activity("Sat", 4), activity("Sun", 1)
-        };
+        LocalDateTime cutoff = LocalDateTime.now().minusDays("month".equalsIgnoreCase(range) ? 30 : 7);
+        List<JobCard> recent = jobCardMapper.selectList(null).stream()
+                .filter(c -> c.getCreatedAt() != null && c.getCreatedAt().isAfter(cutoff))
+                .collect(Collectors.toList());
+
+        Map<DayOfWeek, Long> byWeekday = recent.stream()
+                .filter(c -> c.getCreatedAt() != null)
+                .collect(Collectors.groupingBy(c -> c.getCreatedAt().getDayOfWeek(), Collectors.counting()));
+
+        List<ReportResponse.ActivityDto> weekDays = List.of(
+                activity("Mon", byWeekday.getOrDefault(DayOfWeek.MONDAY, 0L).intValue()),
+                activity("Tue", byWeekday.getOrDefault(DayOfWeek.TUESDAY, 0L).intValue()),
+                activity("Wed", byWeekday.getOrDefault(DayOfWeek.WEDNESDAY, 0L).intValue()),
+                activity("Thu", byWeekday.getOrDefault(DayOfWeek.THURSDAY, 0L).intValue()),
+                activity("Fri", byWeekday.getOrDefault(DayOfWeek.FRIDAY, 0L).intValue()),
+                activity("Sat", byWeekday.getOrDefault(DayOfWeek.SATURDAY, 0L).intValue()),
+                activity("Sun", byWeekday.getOrDefault(DayOfWeek.SUNDAY, 0L).intValue())
+        );
 
         int totalForPercent = completed + inProgress + cancelled;
         return ReportResponse.builder()
@@ -30,7 +50,7 @@ public class ReportService {
                 .completedJobs(completed)
                 .inProgressJobs(inProgress)
                 .cancelledJobs(cancelled)
-                .weeklyActivity(List.of(weekDays))
+                .weeklyActivity(weekDays)
                 .statusBreakdown(List.of(
                         breakdown("completed", completed, totalForPercent),
                         breakdown("inProgress", inProgress, totalForPercent),

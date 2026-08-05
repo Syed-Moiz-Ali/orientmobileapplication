@@ -5,11 +5,14 @@ import com.orient.workshop.advisor.model.dto.ReminderResponse;
 import com.orient.workshop.advisor.model.entity.Reminder;
 import com.orient.workshop.advisor.repository.ReminderMapper;
 import com.orient.workshop.common.exception.NotFoundException;
+import com.orient.workshop.common.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,15 +20,19 @@ import java.util.stream.Collectors;
 public class ReminderService {
 
     private final ReminderMapper reminderMapper;
-    private long counter = 0;
+
+    private final Set<Long> softDeletedIds = ConcurrentHashMap.newKeySet();
 
     public List<ReminderResponse> getReminders() {
-        return reminderMapper.findActive().stream().map(this::toResponse).collect(Collectors.toList());
+        return reminderMapper.findActive().stream()
+                .filter(r -> !softDeletedIds.contains(r.getId()))
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public ReminderResponse createReminder(CreateReminderRequest req) {
-        String ref = "REM-" + String.format("%03d", ++counter);
+        String ref = IdGenerator.shortRef("REM");
         Reminder r = Reminder.builder()
                 .reminderRef(ref)
                 .customerName(req.getCustomerName())
@@ -43,8 +50,10 @@ public class ReminderService {
     public void deleteReminder(Long id) {
         Reminder r = reminderMapper.selectById(id);
         if (r == null) throw new NotFoundException("Reminder not found");
-        r.setIsCompleted(true);
-        reminderMapper.updateById(r);
+        if (r.getIsCompleted() != null && r.getIsCompleted()) {
+            throw new NotFoundException("Reminder not found");
+        }
+        softDeletedIds.add(id);
     }
 
     private ReminderResponse toResponse(Reminder r) {

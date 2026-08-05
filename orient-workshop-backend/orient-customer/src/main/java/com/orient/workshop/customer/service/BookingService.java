@@ -1,6 +1,8 @@
 package com.orient.workshop.customer.service;
 
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.common.util.DateParse;
+import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.customer.model.dto.BookingResponse;
 import com.orient.workshop.customer.model.dto.CreateBookingRequest;
 import com.orient.workshop.customer.model.dto.IdResponse;
@@ -11,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -25,24 +26,27 @@ public class BookingService {
     private final CustomerService customerService;
 
     public List<BookingResponse> getBookings(JwtUserPrincipal principal) {
-        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
-        List<Booking> bookings = bookingMapper.findByCustomerId(customer.getId());
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
+        List<Booking> bookings = principal.getBranchId() != null
+                ? bookingMapper.findByCustomerIdAndBranch(customer.getId(), principal.getBranchId())
+                : bookingMapper.findByCustomerId(customer.getId());
         return bookings.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Transactional
     public IdResponse createBooking(JwtUserPrincipal principal, CreateBookingRequest req) {
-        Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
 
-        String ref = "BK-" + LocalDate.now().toString() + "-" + String.format("%04d", System.currentTimeMillis() % 10000);
+        String ref = IdGenerator.shortRef("BK");
 
         LocalDateTime bookingDate = req.getBookingDate() != null
-                ? LocalDateTime.parse(req.getBookingDate(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                ? DateParse.parseLocalDateTime(req.getBookingDate(), "bookingDate")
                 : LocalDateTime.now();
 
         Booking booking = Booking.builder()
                 .bookingRef(ref)
                 .customerId(customer.getId())
+                .branchId(principal.getBranchId())
                 .vehicleId(req.getVehicleId() != null ? Long.parseLong(req.getVehicleId()) : null)
                 .vehicleName(req.getVehicleName())
                 .plateNumber(req.getPlateNumber())

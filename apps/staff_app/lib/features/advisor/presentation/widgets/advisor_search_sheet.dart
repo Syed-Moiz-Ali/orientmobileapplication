@@ -71,8 +71,10 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final jobCards = ref.watch(advisorRecentJobCardsProvider);
-    final approvals = ref.watch(advisorPendingApprovalsProvider);
+    final jobCardsAsync = ref.watch(advisorRecentJobCardsProvider);
+    final approvalsAsync = ref.watch(advisorPendingApprovalsProvider);
+    final jobCards = jobCardsAsync.value ?? const <JobCardEntity>[];
+    final approvals = approvalsAsync.value ?? const <PendingApprovalEntity>[];
     final cardResults = _searchJobCards(jobCards);
     final approvalResults = _searchApprovals(approvals);
     final customerResults = _searchCustomers();

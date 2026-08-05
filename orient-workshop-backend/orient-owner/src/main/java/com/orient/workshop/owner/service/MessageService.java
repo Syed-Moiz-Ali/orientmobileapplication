@@ -2,37 +2,47 @@ package com.orient.workshop.owner.service;
 
 import com.orient.workshop.owner.model.dto.MessageRequest;
 import com.orient.workshop.owner.model.dto.MessageResponse;
+import com.orient.workshop.owner.model.entity.Message;
+import com.orient.workshop.owner.repository.MessageMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class MessageService {
 
-    private final List<MessageResponse> messages = new ArrayList<>();
-    private final AtomicLong counter = new AtomicLong(0);
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("h:mm a");
 
-    {
-        messages.add(msg("m1", "John Smith", "Parts have arrived for JC-1245", "2:30 PM"));
+    private final MessageMapper messageMapper;
+
+    public List<MessageResponse> getMessages(int page, int size) {
+        int offset = Math.max(page - 1, 0) * size;
+        return messageMapper.findPaged(size, offset).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
-    public List<MessageResponse> getMessages() {
-        return messages;
-    }
-
+    @Transactional
     public MessageResponse sendMessage(MessageRequest req) {
-        String id = "m" + counter.incrementAndGet();
-        MessageResponse msg = MessageResponse.builder()
-                .id(id).recipient(req.getRecipient())
-                .message(req.getMessage()).time(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("h:mm a")))
+        Message msg = Message.builder()
+                .recipient(req.getRecipient())
+                .message(req.getMessage())
                 .build();
-        messages.add(0, msg);
-        return msg;
+        messageMapper.insert(msg);
+        return toResponse(msg);
     }
 
-    private MessageResponse msg(String id, String recipient, String message, String time) {
-        return MessageResponse.builder().id(id).recipient(recipient).message(message).time(time).build();
+    private MessageResponse toResponse(Message m) {
+        return MessageResponse.builder()
+                .id(String.valueOf(m.getId()))
+                .recipient(m.getRecipient())
+                .message(m.getMessage())
+                .time(m.getCreatedAt() != null ? m.getCreatedAt().format(TIME_FMT) : "")
+                .build();
     }
 }

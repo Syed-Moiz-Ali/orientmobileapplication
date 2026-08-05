@@ -88,7 +88,20 @@ public class CrmDashboardService {
     }
 
     public List<ResponseTimeResponse> getResponseTimes() {
-        return List.of();
+        long under1h = 0, between1and24 = 0, over24 = 0;
+        for (com.orient.workshop.crm.model.entity.Lead lead : leadMapper.selectList(null)) {
+            if (lead.getCreatedAt() == null || lead.getUpdatedAt() == null) continue;
+            long minutes = ChronoUnit.MINUTES.between(lead.getCreatedAt(), lead.getUpdatedAt());
+            if (minutes <= 0) continue;
+            if (minutes < 60) under1h++;
+            else if (minutes <= 24 * 60) between1and24++;
+            else over24++;
+        }
+        return List.of(
+                responseTime("< 1 hour", (int) under1h),
+                responseTime("1 - 24 hours", (int) between1and24),
+                responseTime("> 24 hours", (int) over24)
+        );
     }
 
     public List<LeadSourceResponse> getLeadSources() {
@@ -107,12 +120,25 @@ public class CrmDashboardService {
         double avgRating = feedbackMapper.selectList(null).stream()
                 .mapToInt(com.orient.workshop.core.model.entity.Feedback::getRating)
                 .average().orElse(0.0);
+        long minutes = 0, samples = 0;
+        for (com.orient.workshop.crm.model.entity.Lead lead : leadMapper.selectList(null)) {
+            if (lead.getCreatedAt() == null || lead.getUpdatedAt() == null) continue;
+            long m = ChronoUnit.MINUTES.between(lead.getCreatedAt(), lead.getUpdatedAt());
+            if (m <= 0) continue;
+            minutes += m;
+            samples++;
+        }
+        String avgResponseTime = samples > 0 ? Math.round((double) minutes / samples) + "m" : "";
         return KeyMetricResponse.builder()
                 .winRate(winRate)
-                .avgResponseTime("")
+                .avgResponseTime(avgResponseTime)
                 .satisfaction(Math.round(avgRating * 10) / 10.0)
                 .roi(0)
                 .build();
+    }
+
+    private ResponseTimeResponse responseTime(String label, int count) {
+        return ResponseTimeResponse.builder().label(label).count(count).build();
     }
 
     private CrmKpiResponse kpi(String label, String value, String change) {

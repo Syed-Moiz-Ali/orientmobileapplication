@@ -22,6 +22,8 @@ class SyncEngine {
   bool _isOnline = true;
   bool get isOnline => _isOnline;
 
+  bool _disposed = false;
+
   final List<void Function(SyncStatus)> _listeners = [];
 
   SyncEngine({
@@ -38,6 +40,7 @@ class SyncEngine {
 
   void _initConnectivity() {
     _connectivitySub = _connectivity.onConnectivityChanged.listen((results) {
+      if (_disposed) return;
       final online = results.any((r) => r != ConnectivityResult.none);
       if (online && !_isOnline && _queue.length > 0) {
         syncAll();
@@ -47,7 +50,11 @@ class SyncEngine {
   }
 
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     _connectivitySub?.cancel();
+    _connectivitySub = null;
+    _listeners.clear();
   }
 
   void registerHandler(SyncHandler handler) {
@@ -70,7 +77,7 @@ class SyncEngine {
   }
 
   Future<void> syncAll() async {
-    if (_status == SyncStatus.syncing) return;
+    if (_disposed || _status == SyncStatus.syncing) return;
 
     _notify(SyncStatus.syncing);
     final operations = _queue.peekAll();

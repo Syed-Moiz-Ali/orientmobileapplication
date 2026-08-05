@@ -2,11 +2,14 @@ package com.orient.workshop.auth.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.auth.model.dto.*;
 import com.orient.workshop.auth.service.AuthService;
 import com.orient.workshop.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Authentication")
@@ -16,6 +19,18 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+
+    /**
+     * Unified session/profile endpoint: validates the JWT (Authorization header)
+     * and returns the caller identity, role and role-specific record. Clients
+     * call this on splash to decide dashboard vs login.
+     */
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<MeResponse> me(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(authService.getMe(principal));
+    }
+
 
     @PostMapping("/send-otp")
     public ApiResponse<Void> sendOtp(@Valid @RequestBody SendOtpRequest request) {
@@ -52,6 +67,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<Void> logout(@RequestBody(required = false) RefreshTokenRequest request) {
         if (request != null) {
             authService.logout(request.getRefreshToken());

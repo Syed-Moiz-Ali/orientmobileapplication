@@ -356,6 +356,7 @@ class _CrmConversionTrendPainter extends CustomPainter {
     final lostVals = data.map((d) => d.lost).toList();
     final activeVals = data.map((d) => d.active).toList();
     final allVals = [...wonVals, ...lostVals, ...activeVals];
+    if (allVals.isEmpty) return;
     final maxVal = allVals.reduce(math.max);
 
     void drawLine(List<double> values, Color color) {

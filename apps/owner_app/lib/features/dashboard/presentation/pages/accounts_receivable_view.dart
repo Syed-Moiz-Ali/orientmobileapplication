@@ -110,14 +110,20 @@ class _AccountsReceivableViewState
                   color: AppColors.gray50,
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 10),
-                  child: const Row(
-                    children: [
-                      _TableHeader(text: 'AR ID', flex: 2),
-                      _TableHeader(text: 'Customer', flex: 3),
-                      _TableHeader(text: 'Inv. Date', flex: 2),
-                      _TableHeader(text: 'Due Date', flex: 2),
-                      _TableHeader(text: 'Aging', flex: 2),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final narrow = constraints.maxWidth < 360;
+                      return Row(
+                        children: [
+                          const _TableHeader(text: 'AR ID', flex: 2),
+                          const _TableHeader(text: 'Customer', flex: 3),
+                          const _TableHeader(text: 'Inv. Date', flex: 2),
+                          if (!narrow)
+                            const _TableHeader(text: 'Due Date', flex: 2),
+                          const _TableHeader(text: 'Aging', flex: 2),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 const Divider(height: 1, color: AppColors.gray200),
@@ -236,51 +242,69 @@ class _ARTableRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(record.arId,
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.gray900)),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(record.customer,
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.gray900)),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(record.invoiceDate,
-                style: const TextStyle(
-                    fontSize: 11, color: AppColors.gray500)),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(record.dueDate,
-                style: const TextStyle(
-                    fontSize: 11, color: AppColors.gray500)),
-          ),
-          Expanded(
-            flex: 2,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: agingColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppDimensions.r4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // On narrow screens (< 360dp) hide the aging badge to avoid
+          // overflowing the row; text cells always truncate with ellipsis.
+          final narrow = constraints.maxWidth < 360;
+          return Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(record.arId,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.gray900)),
               ),
-              child: Text(
-                agingLabel,
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: agingColor),
+              Expanded(
+                flex: 3,
+                child: Text(record.customer,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.gray900)),
               ),
-            ),
-          ),
-        ],
+              Expanded(
+                flex: 2,
+                child: Text(record.invoiceDate,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.gray500)),
+              ),
+              if (!narrow)
+                Expanded(
+                  flex: 2,
+                  child: Text(record.dueDate,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.gray500)),
+                ),
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: agingColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppDimensions.r4),
+                  ),
+                  child: Text(
+                    agingLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: agingColor),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

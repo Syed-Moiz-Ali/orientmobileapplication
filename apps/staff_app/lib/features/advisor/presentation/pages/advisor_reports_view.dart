@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_reports_provider.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 
@@ -11,7 +12,8 @@ class AdvisorReportsView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(advisorReportDataProvider);
+    final dataAsync = ref.watch(advisorReportDataProvider);
+    final data = dataAsync.value ?? const AdvisorReportData();
     final range = ref.watch(advisorReportRangeProvider);
 
     return Scaffold(
@@ -44,7 +46,7 @@ class AdvisorReportsView extends ConsumerWidget {
                 const SizedBox(height: 12),
                 _statusList(data),
                 const SizedBox(height: 24),
-                _exportButton(context),
+                _exportButton(context, data),
               ],
             ),
           ),
@@ -310,7 +312,8 @@ class AdvisorReportsView extends ConsumerWidget {
   }
 
   Widget _barChartSection(AdvisorReportData data) {
-    final maxVal = data.weeklyActivity.reduce(max);
+    final activity = data.weeklyActivity;
+    final maxVal = activity.isEmpty ? 1 : activity.reduce(max);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
       decoration: BoxDecoration(
@@ -517,36 +520,12 @@ class AdvisorReportsView extends ConsumerWidget {
     endIndent: 16,
   );
 
-  Widget _exportButton(BuildContext context) {
+  Widget _exportButton(BuildContext context, AdvisorReportData data) {
     return SizedBox(
       width: double.infinity,
       height: 48,
       child: ElevatedButton.icon(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Report exported successfully',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-              ),
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-            ),
-          );
-        },
+        onPressed: () => _exportCsv(context, data),
         icon: const Icon(Icons.download_rounded, size: 20),
         label: const Text(
           'Export Report',
@@ -562,6 +541,36 @@ class AdvisorReportsView extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _exportCsv(BuildContext context, AdvisorReportData data) async {
+    final buffer = StringBuffer()
+      ..writeln('Status,Count')
+      ..writeln('Total Jobs,${data.totalJobs}')
+      ..writeln('In Progress,${data.inProgressJobs}')
+      ..writeln('Pending,${data.pendingJobs}')
+      ..writeln('Completed,${data.completedJobs}')
+      ..writeln('Cancelled,${data.cancelledJobs}')
+      ..writeln()
+      ..writeln('Day,Activity');
+    for (var i = 0; i < data.weeklyActivity.length; i++) {
+      final label = i < data.weekLabels.length
+          ? data.weekLabels[i]
+          : 'Day ${i + 1}';
+      buffer.writeln('$label,${data.weeklyActivity[i]}');
+    }
+    try {
+      await Share.share(buffer.toString(), subject: 'Advisor Report');
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Export failed'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 }
 

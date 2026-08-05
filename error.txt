@@ -1,180 +1,25 @@
+2026-07-31T17:50:17.492+05:30  INFO 25296 --- [orient-workshop-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-07-31T17:50:17.625+05:30  INFO 25296 --- [orient-workshop-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2e93108a
+2026-07-31T17:50:17.627+05:30  INFO 25296 --- [orient-workshop-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-07-31T17:50:17.666+05:30  INFO 25296 --- [orient-workshop-backend] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mysql://localhost:3306/orient_workshop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8 (MySQL 8.0)
+2026-07-31T17:50:17.723+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.033s)
+2026-07-31T17:50:17.741+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema `orient_workshop`: 2
+2026-07-31T17:50:17.744+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.f.core.internal.command.DbMigrate      : Schema `orient_workshop` is up to date. No migration necessary.
+2026-07-31T17:50:17.895+05:30 ERROR 25296 --- [orient-workshop-backend] [           main] c.b.m.core.MybatisConfiguration          : mapper[com.orient.workshop.sync.repository.IdempotencyKeyMapper.findByKeyWithinTtl] is ignored, because it exists, maybe from xml file
+2026-07-31T17:50:17.986+05:30 DEBUG 25296 --- [orient-workshop-backend] [           main] c.o.w.a.filter.JwtAuthenticationFilter   : Filter 'jwtAuthenticationFilter' configured for use
+2026-07-31T17:50:18.932+05:30  WARN 25296 --- [orient-workshop-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration :
 
-I/flutter (14716): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Using generated security password: ea50f888-a9b5-47e8-becc-a8d2379735ba
 
-════════ Exception caught by rendering library ═════════════════════════════════
-The following StateError was thrown during paint():
-Bad state: No element
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
 
-The relevant error-causing widget was:
-    CustomPaint CustomPaint:file:///E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_reports_page.dart:44:26
-
-When the exception was thrown, this was the stack:
-#0      ListBase.reduce (dart:collection/list.dart:187:22)
-#1      _CrmConversionTrendPainter.paint (package:crm_app/features/crm_dashboard/presentation/widgets/crm_reports_page.dart:317:28)
-#2      RenderCustomPaint._paintWithPainter (package:flutter/src/rendering/custom_paint.dart:593:13)
-#3      RenderCustomPaint.paint (package:flutter/src/rendering/custom_paint.dart:641:7)
-#4      RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#5      PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#6      RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#7      RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#8      PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#9      RenderBoxContainerDefaultsMixin.defaultPaint (package:flutter/src/rendering/box.dart:3367:15)
-#10     RenderFlex.paint (package:flutter/src/rendering/flex.dart:1317:7)
-#11     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#12     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#13     RenderShiftedBox.paint (package:flutter/src/rendering/shifted_box.dart:81:15)
-#14     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#15     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#16     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#17     RenderDecoratedBox.paint (package:flutter/src/rendering/proxy_box.dart:2444:11)
-#18     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#19     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#20     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#21     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#22     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#23     RenderBoxContainerDefaultsMixin.defaultPaint (package:flutter/src/rendering/box.dart:3367:15)
-#24     RenderFlex.paint (package:flutter/src/rendering/flex.dart:1317:7)
-#25     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#26     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#27     RenderShiftedBox.paint (package:flutter/src/rendering/shifted_box.dart:81:15)
-#28     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#29     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#30     _RenderSingleChildViewport.paint.paintContents (package:flutter/src/widgets/single_child_scroll_view.dart:550:17)
-#31     _RenderSingleChildViewport.paint (package:flutter/src/widgets/single_child_scroll_view.dart:564:9)
-#32     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#33     PaintingContext._repaintCompositedChild (package:flutter/src/rendering/object.dart:176:11)
-#34     PaintingContext.repaintCompositedChild (package:flutter/src/rendering/object.dart:121:5)
-#35     PaintingContext._compositeChild (package:flutter/src/rendering/object.dart:272:7)
-#36     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:253:7)
-#37     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#38     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#39     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#40     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#41     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#42     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#43     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#44     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#45     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#46     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#47     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#48     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#49     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#50     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#51     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#52     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#53     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#54     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#55     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#56     RenderTransform.paint (package:flutter/src/rendering/proxy_box.dart:2688:17)
-#57     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#58     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#59     RenderClipRect.paint (package:flutter/src/rendering/proxy_box.dart:1585:17)
-#60     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#61     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#62     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#63     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#64     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#65     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#66     _RenderVisibility.paint (package:flutter/src/widgets/visibility.dart:615:11)
-#67     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#68     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#69     RenderIndexedStack.paintStack (package:flutter/src/rendering/stack.dart:863:13)
-#70     RenderStack.paint (package:flutter/src/rendering/stack.dart:719:7)
-#71     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#72     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#73     RenderBoxContainerDefaultsMixin.defaultPaint (package:flutter/src/rendering/box.dart:3367:15)
-#74     RenderCustomMultiChildLayoutBox.paint (package:flutter/src/rendering/custom_layout.dart:425:5)
-#75     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#76     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#77     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#78     _RenderInkFeatures.paint (package:flutter/src/material/material.dart:634:11)
-#79     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#80     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#81     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#82     RenderPhysicalModel.paint.<anonymous closure> (package:flutter/src/rendering/proxy_box.dart:2184:15)
-#83     PaintingContext.pushClipRRect (package:flutter/src/rendering/object.dart:609:14)
-#84     RenderPhysicalModel.paint (package:flutter/src/rendering/proxy_box.dart:2171:21)
-#85     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#86     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#87     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#88     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#89     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:261:13)
-#90     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:140:13)
-#91     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-#92     PaintingContext._repaintCompositedChild (package:flutter/src/rendering/object.dart:176:11)
-#93     PaintingContext.repaintCompositedChild (package:flutter/src/rendering/object.dart:121:5)
-#94     PipelineOwner.flushPaint (package:flutter/src/rendering/object.dart:1309:31)
-#95     PipelineOwner.flushPaint (package:flutter/src/rendering/object.dart:1319:15)
-#96     RendererBinding.drawFrame (package:flutter/src/rendering/binding.dart:631:23)
-#97     WidgetsBinding.drawFrame (package:flutter/src/widgets/binding.dart:1261:13)
-#98     RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:495:5)
-#99     SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1434:15)
-#100    SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1347:9)
-#101    SchedulerBinding._handleDrawFrame (package:flutter/src/scheduler/binding.dart:1200:5)
-#102    _invoke (dart:ui/hooks.dart:330:13)
-#103    PlatformDispatcher._drawFrame (dart:ui/platform_dispatcher.dart:444:5)
-#104    _drawFrame (dart:ui/hooks.dart:302:31)
-
-The following RenderObject was being processed when the exception was fired: RenderCustomPaint#e8805 relayoutBoundary=up20
-    parentData: <none> (can use size)
-    constraints: BoxConstraints(0.0<=w<=425.1, h=130.0)
-    size: Size(425.1, 130.0)
-    painter: _CrmConversionTrendPainter#749b9()
-    preferredSize: Size(Infinity, Infinity)
-RenderObject: RenderCustomPaint#e8805 relayoutBoundary=up20
-    parentData: <none> (can use size)
-    constraints: BoxConstraints(0.0<=w<=425.1, h=130.0)
-    size: Size(425.1, 130.0)
-    painter: _CrmConversionTrendPainter#749b9()
-    preferredSize: Size(Infinity, Infinity)
-════════════════════════════════════════════════════════════════════════════════
-I/flutter (14716): │ Bad state: No element
-I/flutter (14716): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter (14716): │ #0   ListBase.reduce (dart:collection/list.dart:187:22)
-I/flutter (14716): │ #1   _CrmConversionTrendPainter.paint (package:crm_app/features/crm_dashboard/presentation/widgets/crm_reports_page.dart:317:28)
-I/flutter (14716): │ #2   RenderCustomPaint._paintWithPainter (package:flutter/src/rendering/custom_paint.dart:593:13)
-I/flutter (14716): │ #3   RenderCustomPaint.paint (package:flutter/src/rendering/custom_paint.dart:641:7)
-I/flutter (14716): │ #4   RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-I/flutter (14716): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter (14716): │ 14:02:31.105 (+0:00:25.060670)
-I/flutter (14716): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter (14716): │ Flutter framework error
-I/flutter (14716): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-════════ Exception caught by rendering library ═════════════════════════════════
-Bad state: No element
-The relevant error-causing widget was:
-    CustomPaint CustomPaint:file:///E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_reports_page.dart:148:32
-════════════════════════════════════════════════════════════════════════════════
-I/flutter (14716): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-I/flutter (14716): │ Bad state: No element
-I/flutter (14716): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter (14716): │ #0   ListIterable.reduce (dart:_internal/iterable.dart:191:22)
-I/flutter (14716): │ #1   _CrmSalespersonBarPainter.paint (package:crm_app/features/crm_dashboard/presentation/widgets/crm_reports_page.dart:439:45)
-I/flutter (14716): │ #2   RenderCustomPaint._paintWithPainter (package:flutter/src/rendering/custom_paint.dart:593:13)
-I/flutter (14716): │ #3   RenderCustomPaint.paint (package:flutter/src/rendering/custom_paint.dart:641:7)
-I/flutter (14716): │ #4   RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-I/flutter (14716): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter (14716): │ 14:02:31.145 (+0:00:25.101072)
-I/flutter (14716): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter (14716): │ Flutter framework error
-I/flutter (14716): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-I/flutter (14716): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-I/flutter (14716): │ Bad state: No element
-I/flutter (14716): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter (14716): │ #0   ListIterable.reduce (dart:_internal/iterable.dart:191:22)
-I/flutter (14716): │ #1   _CrmResponseTimePainter.paint (package:crm_app/features/crm_dashboard/presentation/widgets/crm_reports_page.dart:493:45)
-I/flutter (14716): │ #2   RenderCustomPaint._paintWithPainter (package:flutter/src/rendering/custom_paint.dart:593:13)
-I/flutter (14716): │ #3   RenderCustomPaint.paint (package:flutter/src/rendering/custom_paint.dart:641:7)
-I/flutter (14716): │ #4   RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3423:7)
-I/flutter (14716): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter (14716): │ 14:02:31.166 (+0:00:25.121826)
-I/flutter (14716): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter (14716): │ Flutter framework error
-I/flutter (14716): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-════════ Exception caught by rendering library ═════════════════════════════════
-Bad state: No element
-The relevant error-causing widget was:
-    CustomPaint CustomPaint:file:///E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_reports_page.dart:178:26
-════════════════════════════════════════════════════════════════════════════════
+2026-07-31T17:50:18.953+05:30  INFO 25296 --- [orient-workshop-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-07-31T17:50:19.254+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-07-31T17:50:19.704+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/api/v1'
+2026-07-31T17:50:19.720+05:30  INFO 25296 --- [orient-workshop-backend] [           main] c.o.w.gateway.OrientGatewayApplication   : Started OrientGatewayApplication in 5.575 seconds (process running for 5.96)
+2026-07-31T17:50:19.746+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-2] c.o.w.a.r.OtpRecordMapper.deleteExpired  : ==>  Preparing: DELETE FROM otp_records WHERE expires_at < NOW()
+2026-07-31T17:50:19.755+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-2] c.o.w.a.r.OtpRecordMapper.deleteExpired  : ==> Parameters:
+2026-07-31T17:50:19.756+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-2] c.o.w.a.r.OtpRecordMapper.deleteExpired  : <==    Updates: 0
+2026-07-31T17:50:19.783+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-1] c.o.w.c.r.C.selectList                   : ==>  Preparing: SELECT id,name,connected,credentials,last_sync_at,sync_status FROM crm_integrations WHERE (name = ?)
+2026-07-31T17:50:19.784+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-1] c.o.w.c.r.C.selectList                   : ==> Parameters: META(String)
+2026-07-31T17:50:19.792+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-1] c.o.w.c.r.C.selectList                   : <==      Total: 1

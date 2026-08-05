@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_auth/src/presentation/providers/login_provider.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_background.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_header.dart';
 import 'package:shared_auth/src/presentation/widgets/otp_input_field.dart';
-import 'package:shared_auth/src/presentation/widgets/phone_input_field.dart';
 import 'package:shared_auth/src/presentation/widgets/security_badge.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -13,36 +13,65 @@ class LoginView extends ConsumerStatefulWidget {
   final VoidCallback onLoginSuccess;
   final VoidCallback? onForgotPassword;
   final bool allowRegistration;
-  const LoginView({
-    super.key,
-    required this.onLoginSuccess,
-    this.onForgotPassword,
-    this.allowRegistration = false,
-  });
+
+  const LoginView({super.key, required this.onLoginSuccess, this.onForgotPassword, this.allowRegistration = false});
+
   @override
   ConsumerState<LoginView> createState() => _LoginViewState();
 }
 
 class _LoginViewState extends ConsumerState<LoginView> {
-  final TextEditingController _emailCtrl = TextEditingController();
+  final TextEditingController _unifiedCtrl = TextEditingController();
   final TextEditingController _passCtrl = TextEditingController();
   final TextEditingController _nameCtrl = TextEditingController();
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
+    _unifiedCtrl.dispose();
     _passCtrl.dispose();
     _nameCtrl.dispose();
     super.dispose();
   }
 
+  void _listenToAuth(AuthState? previous, AuthState next) {
+    if (next is AuthAuthenticated && previous is! AuthAuthenticated) {
+      widget.onLoginSuccess();
+    }
+  }
+
+  void _handleSmartSubmit(LoginNotifier notifier) {
+    final input = _unifiedCtrl.text.trim();
+    if (input.isEmpty) return;
+
+    final isEmail = input.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(input);
+
+    if (isEmail) {
+      notifier.setMethod(AuthMethod.email);
+      notifier.setEmail(input);
+      notifier.sendEmailOtp();
+    } else {
+      notifier.setMethod(AuthMethod.sms);
+      notifier.setPhone(input);
+      notifier.sendSmsOtp();
+    }
+  }
+
+  void _switchToOtp(LoginNotifier notifier) {
+    final input = _unifiedCtrl.text.trim();
+    final isEmail = input.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(input);
+    notifier.setMethod(isEmail ? AuthMethod.email : AuthMethod.sms);
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen(authNotifierProvider, _listenToAuth);
     final s = ref.watch(loginProvider);
     final brand = ref.watch(brandConfigProvider);
     final notifier = ref.read(loginProvider.notifier);
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       body: AuthBackground(
         brand: brand,
         child: LayoutBuilder(
@@ -51,67 +80,31 @@ class _LoginViewState extends ConsumerState<LoginView> {
             return Center(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(
-                  horizontal: compact ? 18 : 28,
-                  vertical: 28,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: compact ? 24 : 48, vertical: 48),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 440),
+                  constraints: const BoxConstraints(maxWidth: 420),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _BrandIntro(brand: brand),
-                      const SizedBox(height: 22),
-                      Container(
-                        padding: EdgeInsets.all(compact ? 20 : 28),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xD9162235)
-                              : Colors.white.withValues(alpha: 0.94),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : const Color(0xFFE2EAED),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(
-                                alpha: compact ? 0.06 : 0.09,
-                              ),
-                              blurRadius: 34,
-                              offset: const Offset(0, 16),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            _MethodTabs(
-                              method: s.method,
-                              brand: brand,
-                              onChanged: notifier.setMethod,
-                            ),
-                            const SizedBox(height: 26),
-                            if (s.method == AuthMethod.sms)
-                              _SmsView(s, brand, notifier),
-                            if (s.method == AuthMethod.email)
-                              _EmailView(s, brand, notifier, _emailCtrl),
-                            if (s.method == AuthMethod.password)
-                              _PasswordView(
-                                s,
-                                brand,
-                                notifier,
-                                _emailCtrl,
-                                _passCtrl,
-                                _nameCtrl,
-                                widget.onForgotPassword,
-                                widget.allowRegistration,
-                              ),
-                          ],
+                      const SizedBox(height: 56),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        layoutBuilder: (currentChild, previousChildren) {
+                          return Stack(
+                            alignment: Alignment.topLeft,
+                            children: <Widget>[...previousChildren, if (currentChild != null) currentChild],
+                          );
+                        },
+                        child: KeyedSubtree(
+                          key: ValueKey('${s.method}_${s.otpSent}'),
+                          child: _buildDynamicFlow(s, brand, notifier),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 64),
                       const Center(child: SecurityBadge()),
                     ],
                   ),
@@ -123,287 +116,161 @@ class _LoginViewState extends ConsumerState<LoginView> {
       ),
     );
   }
+
+  Widget _buildDynamicFlow(LoginState s, BrandConfig brand, LoginNotifier notifier) {
+    if (s.otpSent) {
+      final isEmail = s.method == AuthMethod.email;
+      return _OtpVerificationView(
+        brand: brand,
+        state: s,
+        notifier: notifier,
+        identifier: isEmail ? s.email : '${s.countryCode} ${s.phone}',
+        isEmail: isEmail,
+        onBack: () => _switchToOtp(notifier),
+      );
+    }
+
+    if (s.method == AuthMethod.password) {
+      return _PasswordView(
+        s: s,
+        brand: brand,
+        n: notifier,
+        unifiedCtrl: _unifiedCtrl,
+        passCtrl: _passCtrl,
+        nameCtrl: _nameCtrl,
+        onForgotPassword: widget.onForgotPassword,
+        allowRegistration: widget.allowRegistration,
+        onSwitchToOtp: () => _switchToOtp(notifier),
+      );
+    }
+
+    return _UnifiedInputView(
+      brand: brand,
+      state: s,
+      controller: _unifiedCtrl,
+      onContinue: () => _handleSmartSubmit(notifier),
+      onSwitchToPassword: () => notifier.setMethod(AuthMethod.password),
+    );
+  }
 }
 
 class _BrandIntro extends StatelessWidget {
   final BrandConfig brand;
-
   const _BrandIntro({required this.brand});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: brand.accentColor,
-            borderRadius: BorderRadius.circular(13),
-            boxShadow: [
-              BoxShadow(
-                color: brand.accentColor.withValues(alpha: 0.25),
-                blurRadius: 16,
-                offset: const Offset(0, 7),
-              ),
-            ],
+        Icon(brand.icon, color: theme.colorScheme.primary, size: 40),
+        const SizedBox(height: 32),
+        Text(
+          brand.appName,
+          style: theme.textTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: -1.0,
+            color: theme.colorScheme.onSurface,
           ),
-          child: Icon(brand.icon, color: Colors.white, size: 22),
         ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              brand.appName,
-              style: TextStyle(
-                color: isDark ? Colors.white : AppColors.textPrimary,
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.4,
-              ),
-            ),
-            Text(
-              brand.tagline ?? 'Secure workspace access',
-              style: TextStyle(
-                color: isDark ? const Color(0xFF94A3B8) : AppColors.text3,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        const SizedBox(height: 8),
+        Text(
+          brand.tagline ?? 'Secure workspace access',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            fontWeight: FontWeight.w400,
+          ),
         ),
       ],
     );
   }
 }
 
-class _MethodTabs extends StatelessWidget {
-  final AuthMethod method;
+class _UnifiedInputView extends StatelessWidget {
   final BrandConfig brand;
-  final ValueChanged<AuthMethod> onChanged;
-  const _MethodTabs({
-    required this.method,
+  final LoginState state;
+  final TextEditingController controller;
+  final VoidCallback onContinue;
+  final VoidCallback onSwitchToPassword;
+
+  const _UnifiedInputView({
     required this.brand,
-    required this.onChanged,
+    required this.state,
+    required this.controller,
+    required this.onContinue,
+    required this.onSwitchToPassword,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0D1727) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0),
-        ),
-      ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          _tab(context, 'SMS OTP', AuthMethod.sms, Icons.phone_android_rounded),
-          _tab(context, 'Email OTP', AuthMethod.email, Icons.email_outlined),
-          _tab(
-            context,
-            'Password',
-            AuthMethod.password,
-            Icons.lock_outline_rounded,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tab(BuildContext context, String label, AuthMethod m, IconData icon) {
-    final selected = method == m;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedColor = brand.accentColor;
-    final foregroundColor = selected
-        ? Colors.white
-        : (isDark ? Colors.white70 : AppColors.text2);
-    return Expanded(
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: 'Sign in with $label',
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => onChanged(m),
-            borderRadius: BorderRadius.circular(10),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
-              decoration: BoxDecoration(
-                color: selected ? selectedColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: selectedColor.withValues(alpha: 0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 16, color: foregroundColor),
-                  const SizedBox(width: 5),
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: foregroundColor,
-                          letterSpacing: -0.1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SmsView extends StatelessWidget {
-  final LoginState s;
-  final BrandConfig brand;
-  final LoginNotifier n;
-  const _SmsView(this.s, this.brand, this.n);
-
-  @override
-  Widget build(BuildContext context) {
-    if (s.otpSent) {
-      return Column(
-        children: [
-          AuthHeader(
-            brand: brand,
-            title: 'Verify your phone',
-            subtitle: 'Enter the 6-digit code we sent by SMS.',
-            customIcon: Icons.lock_outline_rounded,
-          ),
-          const SizedBox(height: 24),
-          OtpInputField(
-            brand: brand,
-            phone: s.phone,
-            error: s.error,
-            isLoading: s.isLoading,
-            resendCooldown: s.resendCooldown,
-            onResend: () => n.sendSmsOtp(),
-            onChangePhone: n.reset,
-            onOtpChanged: n.setOtp,
-            onVerify: n.verifySmsOtp,
-          ),
-          const SizedBox(height: 16),
-          AuthButton(
-            text: 'Verify & sign in',
-            isLoading: s.isLoading,
-            onPressed: n.verifySmsOtp,
-            brand: brand,
-          ),
-        ],
-      );
-    }
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AuthHeader(
-          brand: brand,
-          title: 'Welcome back',
-          subtitle: 'Enter your mobile number to receive a secure code.',
+        _PremiumTextField(
+          controller: controller,
+          hint: 'Email or phone',
+          keyboardType: TextInputType.emailAddress,
+          error: state.error,
+          onSubmitted: (_) => onContinue(),
         ),
+        const SizedBox(height: 40),
+        AuthButton(text: 'Continue', isLoading: state.isLoading, onPressed: onContinue, brand: brand),
         const SizedBox(height: 24),
-        PhoneInputField(
-          brand: brand,
-          error: s.error,
-          onChanged: n.setPhone,
-          onSubmitted: n.sendSmsOtp,
-        ),
-        const SizedBox(height: 16),
-        AuthButton(
-          text: 'Send OTP',
-          isLoading: s.isLoading,
-          onPressed: s.phone.length >= 8 ? n.sendSmsOtp : null,
-          brand: brand,
-        ),
+        _ActionLink(text: 'Use password instead', onTap: onSwitchToPassword),
       ],
     );
   }
 }
 
-class _EmailView extends StatelessWidget {
-  final LoginState s;
+class _OtpVerificationView extends StatelessWidget {
   final BrandConfig brand;
-  final LoginNotifier n;
-  final TextEditingController c;
-  const _EmailView(this.s, this.brand, this.n, this.c);
+  final LoginState state;
+  final LoginNotifier notifier;
+  final String identifier;
+  final bool isEmail;
+  final VoidCallback onBack;
+
+  const _OtpVerificationView({
+    required this.brand,
+    required this.state,
+    required this.notifier,
+    required this.identifier,
+    required this.isEmail,
+    required this.onBack,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (s.otpSent) {
-      return Column(
-        children: [
-          AuthHeader(
-            brand: brand,
-            title: 'Verify your email',
-            subtitle: 'Enter the 6-digit code we sent to your inbox.',
-            customIcon: Icons.lock_outline_rounded,
-          ),
-          const SizedBox(height: 24),
-          OtpInputField(
-            brand: brand,
-            phone: s.email,
-            error: s.error,
-            isLoading: s.isLoading,
-            resendCooldown: s.resendCooldown,
-            onResend: () => n.sendEmailOtp(),
-            onChangePhone: n.reset,
-            onOtpChanged: n.setOtp,
-            onVerify: n.verifyEmailOtp,
-          ),
-          const SizedBox(height: 16),
-          AuthButton(
-            text: 'Verify & sign in',
-            isLoading: s.isLoading,
-            onPressed: n.verifyEmailOtp,
-            brand: brand,
-          ),
-        ],
-      );
-    }
+    final theme = Theme.of(context);
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AuthHeader(
+        Text(
+          'Check ${isEmail ? 'inbox' : 'messages'}.',
+          style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.5),
+        ),
+        // Removed the duplicate identifier Text widget here
+        const SizedBox(height: 40),
+        OtpInputField(
           brand: brand,
-          title: 'Welcome back',
-          subtitle: 'Enter your email to receive a secure code.',
+          phone: identifier,
+          identifierLabel: identifier, // Handled completely by your custom widget now
+          error: state.error,
+          isLoading: state.isLoading,
+          resendCooldown: state.resendCooldown,
+          onResend: isEmail ? notifier.sendEmailOtp : notifier.sendSmsOtp,
+          onChangePhone: notifier.reset,
+          onOtpChanged: notifier.setOtp,
+          onVerify: isEmail ? notifier.verifyEmailOtp : notifier.verifySmsOtp,
         ),
-        const SizedBox(height: 24),
-        _EmailField(
-          controller: c,
-          error: s.error,
-          onChanged: n.setEmail,
-          onSubmitted: n.sendEmailOtp,
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 40),
         AuthButton(
-          text: 'Send OTP',
-          isLoading: s.isLoading,
-          onPressed: s.email.contains('@') ? n.sendEmailOtp : null,
+          text: 'Verify',
+          isLoading: state.isLoading,
+          onPressed: isEmail ? notifier.verifyEmailOtp : notifier.verifySmsOtp,
           brand: brand,
         ),
       ],
@@ -415,293 +282,195 @@ class _PasswordView extends StatelessWidget {
   final LoginState s;
   final BrandConfig brand;
   final LoginNotifier n;
-  final TextEditingController eCtrl, pCtrl, nCtrl;
+  final TextEditingController unifiedCtrl, passCtrl, nameCtrl;
   final VoidCallback? onForgotPassword;
   final bool allowRegistration;
-  const _PasswordView(
-    this.s,
-    this.brand,
-    this.n,
-    this.eCtrl,
-    this.pCtrl,
-    this.nCtrl,
-    this.onForgotPassword,
-    this.allowRegistration,
-  );
+  final VoidCallback onSwitchToOtp;
+
+  const _PasswordView({
+    required this.s,
+    required this.brand,
+    required this.n,
+    required this.unifiedCtrl,
+    required this.passCtrl,
+    required this.nameCtrl,
+    required this.onForgotPassword,
+    required this.allowRegistration,
+    required this.onSwitchToOtp,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AuthHeader(
-          brand: brand,
-          title: s.isRegistering ? 'Create Account' : 'Welcome back',
-          subtitle: s.isRegistering
-              ? 'Create an account with email or phone.'
-              : 'Enter your credentials to sign in.',
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: s.isRegistering
+              ? Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: _PremiumTextField(controller: nameCtrl, hint: 'Full name', onChanged: n.setName),
+                )
+              : const SizedBox.shrink(),
+        ),
+        _PremiumTextField(
+          controller: unifiedCtrl,
+          hint: 'Email or phone',
+          keyboardType: TextInputType.emailAddress,
+          onChanged: (val) {
+            final isEmail = val.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(val);
+            if (isEmail) {
+              n.setPasswordIdentifier(PasswordIdentifier.email);
+              n.setEmail(val);
+            } else {
+              n.setPasswordIdentifier(PasswordIdentifier.phone);
+              n.setPhone(val);
+            }
+          },
         ),
         const SizedBox(height: 24),
-        if (s.isRegistering)
-          _TextField(
-            controller: nCtrl,
-            hint: 'Full name',
-            onChanged: n.setName,
-            icon: Icons.person_outline_rounded,
-          ),
-        if (s.isRegistering) const SizedBox(height: 12),
-        _IdentifierToggle(
-          identifier: s.identifier,
-          onChanged: n.setPasswordIdentifier,
-        ),
-        const SizedBox(height: 12),
-        if (s.identifier == PasswordIdentifier.email)
-          _TextField(
-            controller: eCtrl,
-            hint: 'Email address',
-            onChanged: n.setEmail,
-            icon: Icons.email_outlined,
-            keyboardType: TextInputType.emailAddress,
-          )
-        else
-          _PhoneField(onChanged: n.setPhone),
-        const SizedBox(height: 12),
-        _TextField(
-          controller: pCtrl,
+        _PremiumTextField(
+          controller: passCtrl,
           hint: 'Password',
-          onChanged: n.setPassword,
-          icon: Icons.lock_outline_rounded,
           obscure: true,
+          onChanged: n.setPassword,
+          error: s.error,
         ),
-        const SizedBox(height: 8),
-        if (s.error != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              s.error!,
-              style: const TextStyle(color: AppColors.danger, fontSize: 13),
-            ),
-          ),
+        const SizedBox(height: 40),
         AuthButton(
           text: s.isRegistering ? 'Create Account' : 'Sign In',
           isLoading: s.isLoading,
-          onPressed: () {
-            if (s.isRegistering) {
-              n.register();
-            } else {
-              n.loginWithPassword();
-            }
-          },
+          onPressed: () => s.isRegistering ? n.register() : n.loginWithPassword(),
           brand: brand,
         ),
-        const SizedBox(height: 12),
-        if (!s.isRegistering)
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: onForgotPassword,
-              child: Text(
-                'Forgot Password?',
-                style: TextStyle(fontSize: 13, color: brand.accentColor),
+        const SizedBox(height: 32),
+
+        Wrap(
+          spacing: 24,
+          runSpacing: 16,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _ActionLink(text: 'Use magic code', onTap: onSwitchToOtp),
+            if (!s.isRegistering && onForgotPassword != null)
+              _ActionLink(text: 'Forgot password?', onTap: onForgotPassword!, color: theme.colorScheme.primary),
+            if (allowRegistration)
+              _ActionLink(
+                text: s.isRegistering ? 'Sign in instead' : 'Create account',
+                onTap: n.toggleRegister,
+                color: theme.colorScheme.primary,
               ),
-            ),
-          ),
-        if (allowRegistration)
-          TextButton(
-            onPressed: n.toggleRegister,
-            child: Text(
-              s.isRegistering
-                  ? 'Already have an account? Sign in'
-                  : 'Don\'t have an account? Register',
-            ),
-          ),
+          ],
+        ),
       ],
     );
   }
 }
 
-class _IdentifierToggle extends StatelessWidget {
-  final PasswordIdentifier identifier;
-  final ValueChanged<PasswordIdentifier> onChanged;
+class _PremiumTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final bool obscure;
+  final TextInputType? keyboardType;
+  final String? error;
 
-  const _IdentifierToggle({required this.identifier, required this.onChanged});
+  const _PremiumTextField({
+    required this.controller,
+    required this.hint,
+    this.onChanged,
+    this.onSubmitted,
+    this.obscure = false,
+    this.keyboardType,
+    this.error,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).colorScheme.primary;
-    return Row(
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Continue with',
-          style: TextStyle(color: AppColors.text3, fontSize: 12),
+        TextField(
+          controller: controller,
+          obscureText: obscure,
+          keyboardType: keyboardType,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.3,
+            color: theme.colorScheme.onSurface,
+          ),
+          cursorColor: theme.colorScheme.primary,
+          cursorHeight: 24,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: theme.textTheme.titleLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+              fontWeight: FontWeight.w400,
+              letterSpacing: -0.3,
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.15), width: 1.0),
+            ),
+            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.colorScheme.primary, width: 2.0)),
+            isDense: true,
+          ),
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
         ),
-        const Spacer(),
-        _choice(
-          'Email',
-          PasswordIdentifier.email,
-          Icons.email_outlined,
-          accent,
-        ),
-        const SizedBox(width: 8),
-        _choice(
-          'Phone',
-          PasswordIdentifier.phone,
-          Icons.phone_outlined,
-          accent,
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: error != null
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    error!,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
       ],
     );
   }
+}
 
-  Widget _choice(
-    String label,
-    PasswordIdentifier value,
-    IconData icon,
-    Color accent,
-  ) {
-    final selected = identifier == value;
-    return InkWell(
-      onTap: () => onChanged(value),
-      borderRadius: BorderRadius.circular(20),
+class _ActionLink extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _ActionLink({required this.text, required this.onTap, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: selected ? accent.withValues(alpha: 0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? accent : AppColors.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: selected ? accent : AppColors.text3),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: selected ? accent : AppColors.text3,
-              ),
-            ),
-          ],
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          text,
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: color ?? theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
   }
-}
-
-Widget _EmailField({
-  required TextEditingController controller,
-  String? error,
-  ValueChanged<String>? onChanged,
-  VoidCallback? onSubmitted,
-}) {
-  return Container(
-    height: 52,
-    decoration: BoxDecoration(
-      color: const Color(0xFFF8FAFC),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFFE2E8F0)),
-    ),
-    child: Row(
-      children: [
-        const SizedBox(width: 14),
-        const Icon(Icons.email_outlined, size: 20, color: AppColors.text4),
-        const SizedBox(width: 10),
-        Expanded(
-          child: TextField(
-            controller: controller,
-            keyboardType: TextInputType.emailAddress,
-            style: const TextStyle(fontSize: 15),
-            decoration: const InputDecoration(
-              hintText: 'email@example.com',
-              border: InputBorder.none,
-              hintStyle: TextStyle(color: AppColors.text4, fontSize: 14),
-            ),
-            onChanged: onChanged,
-            onSubmitted: (_) => onSubmitted?.call(),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _PhoneField({ValueChanged<String>? onChanged}) {
-  return Container(
-    height: 52,
-    decoration: BoxDecoration(
-      color: const Color(0xFFF8FAFC),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFFE2E8F0)),
-    ),
-    child: Row(
-      children: [
-        const SizedBox(width: 14),
-        const Text(
-          '+971',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
-        Container(
-          width: 1,
-          height: 24,
-          color: const Color(0xFFE2E8F0),
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-        ),
-        Expanded(
-          child: TextField(
-            keyboardType: TextInputType.phone,
-            style: const TextStyle(fontSize: 15),
-            decoration: const InputDecoration(
-              hintText: '50 123 4567',
-              border: InputBorder.none,
-              hintStyle: TextStyle(color: AppColors.text4, fontSize: 14),
-            ),
-            onChanged: onChanged,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _TextField({
-  required TextEditingController controller,
-  required String hint,
-  ValueChanged<String>? onChanged,
-  IconData? icon,
-  bool obscure = false,
-  TextInputType? keyboardType,
-}) {
-  return Container(
-    height: 52,
-    decoration: BoxDecoration(
-      color: const Color(0xFFF8FAFC),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFFE2E8F0)),
-    ),
-    child: Row(
-      children: [
-        if (icon != null) ...[
-          const SizedBox(width: 14),
-          Icon(icon, size: 20, color: AppColors.text4),
-          const SizedBox(width: 10),
-        ],
-        Expanded(
-          child: TextField(
-            controller: controller,
-            obscureText: obscure,
-            keyboardType: keyboardType,
-            style: const TextStyle(fontSize: 15),
-            decoration: InputDecoration(
-              hintText: hint,
-              border: InputBorder.none,
-              hintStyle: const TextStyle(color: AppColors.text4, fontSize: 14),
-            ),
-            onChanged: onChanged,
-          ),
-        ),
-      ],
-    ),
-  );
 }

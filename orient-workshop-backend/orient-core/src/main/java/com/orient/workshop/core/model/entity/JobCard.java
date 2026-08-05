@@ -18,6 +18,7 @@ public class JobCard {
     private Long id;
     private String jobCardRef;
     private Long customerId;
+    private Long branchId;
     private Long vehicleId;
     private String status;
     private String technician;

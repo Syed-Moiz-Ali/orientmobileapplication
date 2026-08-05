@@ -89,13 +89,38 @@ class AdvisorNotificationSheet extends StatelessWidget {
           if (items.isNotEmpty)
             ...items.map((n) => AdvisorNotificationRow(n: n)),
           if (items.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 30),
-              child: Center(
-                child: Text(
-                  'No notifications yet',
-                  style: TextStyle(color: AppColors.text3, fontSize: 13),
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 30),
+              child: Column(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: AppColors.canvas,
+                      borderRadius: BorderRadius.circular(AppDimensions.r16),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_off_outlined,
+                      color: AppColors.text3,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'No notifications yet',
+                    style: TextStyle(
+                      color: AppColors.text3,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Approval updates and reminders will appear here.',
+                    style: TextStyle(color: AppColors.text4, fontSize: 11),
+                  ),
+                ],
               ),
             ),
           const SizedBox(height: 8),

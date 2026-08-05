@@ -2,11 +2,13 @@
 
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
@@ -123,10 +125,6 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                 fontSize: 13,
               ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {},
           ),
         ],
       ),
@@ -417,8 +415,8 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                           borderRadius: BorderRadius.all(
                             Radius.circular(AppDimensions.r7),
                           ),
-                          child: Image.file(
-                            File(state.preServicePhotos[i]),
+                          child: localImage(
+                            state.preServicePhotos[i],
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -460,7 +458,11 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                     color: IC.text1,
                   ),
                 ),
-                SolidBtn(label: '+ ADD', onTap: () {}, small: true),
+                SolidBtn(
+                  label: '+ ADD',
+                  small: true,
+                  onTap: () => _showTagDialog(context, notifier, state.tag),
+                ),
               ],
             ),
           ),
@@ -928,6 +930,86 @@ class _LineItemsCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SERVICE LINE ROW — with Selling Price column
 // ─────────────────────────────────────────────────────────────────────────────
+void _showItemInfo(BuildContext context, String name) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.r14),
+      ),
+      title: const Text(
+        'Line Item',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      content: Text(
+        name,
+        style: const TextStyle(fontSize: 13, color: AppColors.text2),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showTagDialog(
+  BuildContext context,
+  InspectionNotifier notifier,
+  String currentTag,
+) {
+  final controller = TextEditingController(text: currentTag);
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.r14),
+      ),
+      title: const Text(
+        'Tag',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          hintText: 'Enter a tag (e.g. VIP, Fleet, Insurance)',
+          border: OutlineInputBorder(),
+        ),
+        onSubmitted: (v) {
+          notifier.setTag(v.trim());
+          Navigator.pop(ctx);
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            notifier.setTag(controller.text.trim());
+            Navigator.pop(ctx);
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+}
+
 class _ServiceLineRow extends StatelessWidget {
   final int index;
   final ServiceLineItem item;
@@ -962,7 +1044,7 @@ class _ServiceLineRow extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () => _showItemInfo(context, item.name),
                 child: const Icon(
                   Icons.info_outline,
                   size: 14,
@@ -1103,7 +1185,7 @@ class _PartLineRow extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () => _showItemInfo(context, item.name),
                 child: const Icon(
                   Icons.info_outline,
                   size: 14,
@@ -1696,13 +1778,83 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
 // ─────────────────────────────────────────────────────────────────────────────
 //  REPAIR ORDER PREVIEW
 // ─────────────────────────────────────────────────────────────────────────────
-class RepairOrderPreviewView extends ConsumerWidget {
+class RepairOrderPreviewView extends ConsumerStatefulWidget {
   final VoidCallback onBack;
   const RepairOrderPreviewView({super.key, required this.onBack});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RepairOrderPreviewView> createState() =>
+      _RepairOrderPreviewViewState();
+}
+
+class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView> {
+  Map<String, dynamic>? _customerData;
+  Uint8List? _signatureBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomerData();
+  }
+
+  void _loadCustomerData() {
+    try {
+      final box = Hive.box<dynamic>('inspections');
+      final all = box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
+      final state = ref.read(inspectionProvider);
+      final jid = state.jobCardId;
+      _customerData = all.cast<Map<String, dynamic>?>().firstWhere(
+        (m) => m?['id'] == jid || m?['type'] == 'vehicle_customer',
+        orElse: () => null,
+      );
+    } catch (_) {}
+  }
+
+  String _getVal(String key) => _customerData?[key]?.toString() ?? '';
+
+  Future<void> _captureSignature() async {
+    final result = await showModalBottomSheet<Uint8List>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => const _SignaturePadSheet(),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _signatureBytes = result;
+    });
+    // Persist the signature so it can be attached to the repair order later.
+    final path = await saveSignatureFile(
+      result,
+      'signature_${DateTime.now().millisecondsSinceEpoch}.png',
+    );
+    if (path.isNotEmpty && mounted) {
+      try {
+        final box = Hive.box<dynamic>('inspections');
+        box.put('repair_order_signature', {
+          'path': path,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        });
+      } catch (_) {}
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(inspectionProvider);
+    final brand = ref.watch(brandConfigProvider);
+    final now = DateTime.now();
+    final customerName = _getVal('customerName');
+    final phone = _getVal('phoneNumber');
+    final email = _getVal('email');
+    final vehicle =
+        '${_getVal('make')} ${_getVal('model')}\n${_getVal('registrationNumber')}\n${_getVal('vin')}';
 
     return Scaffold(
       backgroundColor: IC.canvas,
@@ -1711,7 +1863,7 @@ class RepairOrderPreviewView extends ConsumerWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: onBack,
+          onPressed: widget.onBack,
         ),
         title: const Text(
           'Preview',
@@ -1723,8 +1875,8 @@ class RepairOrderPreviewView extends ConsumerWidget {
         ),
         actions: [
           TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.edit, color: IC.accent, size: 14),
+            onPressed: _captureSignature,
+            icon: const Icon(Icons.draw_outlined, color: IC.accent, size: 16),
             label: const Text(
               'SIGNATURE',
               style: TextStyle(
@@ -1753,14 +1905,14 @@ class RepairOrderPreviewView extends ConsumerWidget {
                           Radius.circular(AppDimensions.r8),
                         ),
                       ),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.image_outlined, color: IC.text3, size: 20),
+                          Icon(brand.icon, color: IC.accent, size: 22),
                           Text(
-                            'YOUR\nLOGO\nHERE',
+                            brand.appName,
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 7,
                               color: IC.text3,
                               fontWeight: FontWeight.w600,
@@ -1771,50 +1923,60 @@ class RepairOrderPreviewView extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'SWAMI AUTO SERVICES',
-                            style: TextStyle(
+                            brand.appName.toUpperCase(),
+                            style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w800,
                               color: IC.text1,
                             ),
                           ),
                           Text(
-                            '--',
-                            style: TextStyle(fontSize: 11, color: IC.text2),
+                            _getVal('address').isEmpty
+                                ? 'Auto Garage Services'
+                                : _getVal('address'),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: IC.text2,
+                            ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.phone_outlined,
                                 size: 11,
                                 color: IC.text3,
                               ),
-                              SizedBox(width: 4),
-                              // +971 country code
+                              const SizedBox(width: 4),
                               Text(
-                                '--',
-                                style: TextStyle(fontSize: 11, color: IC.text2),
+                                phone.isEmpty ? '--' : phone,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: IC.text2,
+                                ),
                               ),
                             ],
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.email_outlined,
                                 size: 11,
                                 color: IC.text3,
                               ),
-                              SizedBox(width: 4),
+                              const SizedBox(width: 4),
                               Text(
-                                '--',
-                                style: TextStyle(fontSize: 11, color: IC.text2),
+                                email.isEmpty ? '--' : email,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: IC.text2,
+                                ),
                               ),
                             ],
                           ),
@@ -1844,25 +2006,57 @@ class RepairOrderPreviewView extends ConsumerWidget {
                 Container(
                   decoration: BoxDecoration(
                     color: IC.canvas,
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(AppDimensions.r8),
-                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
                     border: Border.all(color: IC.line),
                   ),
                   child: Row(
                     children: [
-                      _PreviewHeaderCell('CUSTOMER', '--\n--'),
+                      _PreviewHeaderCell(
+                        'CUSTOMER',
+                        customerName.isEmpty ? '--' : '$customerName\n$phone',
+                      ),
                       _PreviewHeaderCell(
                         'VEHICLE',
-                        '--\n--\n--',
+                        _getVal('make').isEmpty ? '--' : vehicle,
                       ),
                       _PreviewHeaderCell(
                         'ESTIMATE',
-                        'Apr 5, 2026\n12:59:38\nAmount:\nAED ${state.grandTotal.toStringAsFixed(2)}',
+                        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}\n${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}\nAmount:\nAED ${state.grandTotal.toStringAsFixed(2)}',
                       ),
                     ],
                   ),
                 ),
+                if (_signatureBytes != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: IC.canvas,
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                      border: Border.all(color: IC.line),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'CUSTOMER SIGNATURE',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: IC.text3,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Image.memory(
+                          _signatureBytes!,
+                          height: 80,
+                          fit: BoxFit.contain,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1942,13 +2136,169 @@ class RepairOrderPreviewView extends ConsumerWidget {
 
           const SizedBox(height: 20),
 
-          _CreateRepairOrderButton(onBack: onBack),
+          _CreateRepairOrderButton(onBack: widget.onBack),
 
           const SizedBox(height: 40),
         ],
       ),
     );
   }
+}
+
+/// Minimal hand-drawn signature pad rendered with CustomPaint.
+class _SignaturePadSheet extends StatefulWidget {
+  const _SignaturePadSheet();
+
+  @override
+  State<_SignaturePadSheet> createState() => _SignaturePadSheetState();
+}
+
+class _SignaturePadSheetState extends State<_SignaturePadSheet> {
+  final List<List<Offset>> _strokes = [];
+  List<Offset> _current = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Customer Signature',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 14),
+            GestureDetector(
+              onPanStart: (d) => _current = [d.localPosition],
+              onPanUpdate: (d) {
+                setState(() => _current.add(d.localPosition));
+              },
+              onPanEnd: (_) {
+                setState(() {
+                  _strokes.add(List.from(_current));
+                  _current = [];
+                });
+              },
+              child: Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CustomPaint(
+                    painter: _SignaturePainter(
+                      strokes: _strokes,
+                      current: _current,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => setState(() {
+                      _strokes.clear();
+                      _current = [];
+                    }),
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Clear'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _strokes.isEmpty
+                        ? null
+                        : () async {
+                            final bytes = await _renderSignaturePng();
+                            if (context.mounted) {
+                              Navigator.of(context).pop(bytes);
+                            }
+                          },
+                    icon: const Icon(Icons.check_rounded, size: 18),
+                    label: const Text('Use Signature'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<Uint8List> _renderSignaturePng() async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    const width = 800.0;
+    const height = 320.0;
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, width, height),
+      Paint()..color = Colors.white,
+    );
+    final painter = _SignaturePainter(strokes: _strokes, current: const []);
+    painter.paint(canvas, const Size(width, height));
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(width.toInt(), height.toInt());
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    return data?.buffer.asUint8List() ?? Uint8List(0);
+  }
+}
+
+class _SignaturePainter extends CustomPainter {
+  final List<List<Offset>> strokes;
+  final List<Offset> current;
+
+  const _SignaturePainter({required this.strokes, required this.current});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    for (final stroke in strokes) {
+      _drawPath(canvas, paint, stroke);
+    }
+    _drawPath(canvas, paint, current);
+  }
+
+  void _drawPath(Canvas canvas, Paint paint, List<Offset> points) {
+    if (points.isEmpty) return;
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    for (final p in points.skip(1)) {
+      path.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SignaturePainter oldDelegate) => true;
 }
 
 class _PreviewHeaderCell extends StatelessWidget {

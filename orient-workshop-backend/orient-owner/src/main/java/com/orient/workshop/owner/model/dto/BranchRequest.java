@@ -1,0 +1,17 @@
+package com.orient.workshop.owner.model.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
+public class BranchRequest {
+    @NotBlank private String name;
+    private String address;
+    private String phone;
+    private String email;
+    private String timezone;
+    private Boolean isActive;
+}

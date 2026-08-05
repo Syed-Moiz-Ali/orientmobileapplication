@@ -62,8 +62,44 @@ scripts:
     description: Build all 4 apps release APK
 
   test:
-    run: flutter test
+    run: |
+      melos run test:core
+      melos run test:auth
+      melos run test:staff
+      melos run test:owner
+      melos run test:customer
+      melos run test:crm
     description: Run tests for all packages and apps
+
+  test:core:
+    run: flutter test
+    path: packages/shared_core
+    description: Run shared_core tests
+
+  test:auth:
+    run: flutter test
+    path: packages/shared_auth
+    description: Run shared_auth tests
+
+  test:staff:
+    run: flutter test
+    path: apps/staff_app
+    description: Run staff app tests
+
+  test:owner:
+    run: flutter test
+    path: apps/owner_app
+    description: Run owner app tests
+
+  test:customer:
+    run: flutter test
+    path: apps/customer_app
+    description: Run customer app tests
+
+  test:crm:
+    run: flutter test
+    path: apps/crm_app
+    description: Run CRM app tests
 
   clean:
     run: flutter clean

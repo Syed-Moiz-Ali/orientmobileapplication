@@ -13,6 +13,10 @@ final dashboardDataSourceProvider = Provider<DashboardDataSource>((ref) {
   return adapter;
 });
 
+final _ownerRemoteProvider = Provider<OwnerRemoteDataSource>(
+  (ref) => OwnerRemoteDataSource(ref.read(apiClientProvider)),
+);
+
 class DashboardUiState {
   final int selectedIndex;
   final String period;
@@ -99,7 +103,7 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
   void selectUser(String user) => state = state.copyWith(selectedUser: user);
   void updateMessage(String text) => state = state.copyWith(messageText: text);
 
-  void sendMessage() {
+  Future<void> sendMessage() async {
     if (state.selectedUser.isEmpty || state.messageText.trim().isEmpty) return;
     final now = TimeOfDay.now();
     final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
@@ -111,18 +115,41 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
       message: state.messageText.trim(),
       time: '$hour:$min $ampm',
     );
-    final payload = {
-      'id': msg.id,
-      'recipient': msg.recipient,
-      'message': msg.message,
-      'time': msg.time,
-    };
-    GenericLocalDataSource(Hive.box<dynamic>('owner_messages')).save(msg.id, payload);
-    state = state.copyWith(
-      sentMessages: [msg, ...state.sentMessages],
-      selectedUser: '',
-      messageText: '',
-    );
+    // Send through the backend; keep a local copy for offline resilience.
+    try {
+      final remote = ref.read(_ownerRemoteProvider);
+      final response = await remote.sendMessage(msg.recipient, msg.message);
+      final delivered = response.recipient.isNotEmpty;
+      final payload = {
+        'id': msg.id,
+        'recipient': msg.recipient,
+        'message': msg.message,
+        'time': msg.time,
+        'delivered': delivered,
+      };
+      GenericLocalDataSource(Hive.box<dynamic>('owner_messages'))
+          .save(msg.id, payload);
+      state = state.copyWith(
+        sentMessages: [msg, ...state.sentMessages],
+        selectedUser: '',
+        messageText: '',
+      );
+    } catch (_) {
+      // Offline: keep the message locally and clear the compose box.
+      GenericLocalDataSource(Hive.box<dynamic>('owner_messages'))
+          .save(msg.id, {
+        'id': msg.id,
+        'recipient': msg.recipient,
+        'message': msg.message,
+        'time': msg.time,
+        'delivered': false,
+      });
+      state = state.copyWith(
+        sentMessages: [msg, ...state.sentMessages],
+        selectedUser: '',
+        messageText: '',
+      );
+    }
   }
 
   void toggleCategory(int index) {

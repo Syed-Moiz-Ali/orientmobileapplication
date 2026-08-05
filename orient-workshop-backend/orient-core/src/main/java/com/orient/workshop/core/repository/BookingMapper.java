@@ -13,4 +13,7 @@ public interface BookingMapper extends BaseMapper<Booking> {
 
     @Select("SELECT * FROM bookings WHERE customer_id = #{customerId} ORDER BY created_at DESC")
     List<Booking> findByCustomerId(@Param("customerId") Long customerId);
+
+    @Select("SELECT * FROM bookings WHERE customer_id = #{customerId} AND branch_id = #{branchId} ORDER BY created_at DESC")
+    List<Booking> findByCustomerIdAndBranch(@Param("customerId") Long customerId, @Param("branchId") Long branchId);
 }

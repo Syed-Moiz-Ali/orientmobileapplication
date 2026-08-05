@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/models/profile_data.dart';
+import 'package:staff_app/features/common/presentation/simple_pages.dart';
 import 'package:staff_app/features/advisor/presentation/pages/advisor_home_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/scan_vehicle_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/vehicle_customer_view.dart';
@@ -11,6 +13,7 @@ import 'package:staff_app/features/advisor/presentation/pages/inspection_sheet_v
 import 'package:staff_app/features/advisor/presentation/pages/inspection_preview_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/repair_order_view.dart';
 import 'package:staff_app/features/supervisor/presentation/supervisor_dashboard_view.dart';
+import 'package:staff_app/features/supervisor/presentation/supervisor_login_view.dart';
 import 'package:staff_app/features/technician/presentation/technician_dashboard_view.dart';
 
 class AppRoutes {
@@ -18,6 +21,7 @@ class AppRoutes {
 
   static const String startup = '/';
   static const String login = '/login';
+  static const String supervisorLogin = '/supervisor-login';
   static const String advisorDashboard = '/advisor_home_view';
   static const String supervisorDashboard = '/supervisor_dashboard_view';
   static const String technicianDashboard = '/technician-dashboard';
@@ -174,6 +178,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.repairOrderPreview,
         builder: (context, state) =>
             RepairOrderPreviewView(onBack: () => context.pop()),
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        name: AppRoutes.profile,
+        builder: (context, state) {
+          final extra = state.extra;
+          return ProfilePage(
+            data: extra is ProfileData
+                ? extra
+                : ProfileData(name: '', id: '', role: '', branch: ''),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.shiftDetails,
+        name: AppRoutes.shiftDetails,
+        builder: (context, state) =>
+            ShiftDetailsPage(data: state.extra as Map<String, dynamic>?),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        name: AppRoutes.settings,
+        builder: (context, state) =>
+            SettingsPage(data: state.extra as Map<String, dynamic>?),
+      ),
+      GoRoute(
+        path: AppRoutes.supervisorLogin,
+        name: AppRoutes.supervisorLogin,
+        builder: (context, state) => const SupervisorLoginView(),
       ),
     ],
   );

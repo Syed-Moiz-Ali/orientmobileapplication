@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/core/models/profile_data.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
@@ -10,12 +11,6 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const OwnerAppBar({super.key});
 
   static const _titles = ['Owner Dashboard', 'Top Sales', 'Messages', 'Activity'];
-  static const _subtitles = [
-    'Bircon, Hifri',
-    'Performance Breakdown by Category',
-    'Internal Messaging',
-    'Workshop Activity Feed',
-  ];
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
@@ -70,7 +65,9 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
             style: AppTextStyles.rajdhaniButton(color: Colors.white),
           ),
           Text(
-            _subtitles[state.selectedIndex],
+            state.selectedIndex == 0
+                ? ownerProfileData.branch
+                : _subtitles(state.selectedIndex),
             style: AppTextStyles.rajdhaniBodySmall(color: Colors.white70),
           ),
         ],
@@ -85,11 +82,30 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
         Padding(
           padding: const EdgeInsets.only(right: 14),
           child: UserAvatar(
-            initials: 'O',
-            onTap: () => showProfileSheet(context, ownerProfileData),
+            initials: ownerProfileData.initials,
+            onTap: () => showProfileSheet(
+              context,
+              ownerProfileData,
+              onLogout: () {
+                ref.read(authNotifierProvider.notifier).logout();
+              },
+            ),
           ),
         ),
       ],
     );
+  }
+
+  static String _subtitles(int index) {
+    switch (index) {
+      case 1:
+        return 'Performance Breakdown by Category';
+      case 2:
+        return 'Internal Messaging';
+      case 3:
+        return 'Workshop Activity Feed';
+      default:
+        return '';
+    }
   }
 }

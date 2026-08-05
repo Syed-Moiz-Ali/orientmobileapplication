@@ -59,7 +59,7 @@ class ApiClient {
       if (data is Map) {
         final code = data['code'];
         if (code is int && code >= 400) {
-          return Failure(NetworkException(data['message']?.toString() ?? 'Request failed'));
+          return Failure(_mapError(code, data['message']?.toString()));
         }
       }
       if (fromJson != null && data != null) {
@@ -70,7 +70,18 @@ class ApiClient {
       final msg = e.response?.data is Map
           ? (e.response!.data as Map)['message'] as String? ?? e.message
           : e.message ?? 'Request failed';
-      return Failure(NetworkException(msg ?? 'Request failed'));
+      return Failure(_mapError(e.response?.statusCode, msg));
     }
+  }
+
+  AppException _mapError(int? statusCode, String? message) {
+    if (statusCode == 401) return UnauthorizedException(message ?? 'Unauthorized');
+    if (statusCode != null && statusCode >= 400 && statusCode < 500) {
+      return ValidationException(message ?? 'Request failed');
+    }
+    if (statusCode != null && statusCode >= 500) {
+      return UnknownException(message ?? 'Server error');
+    }
+    return NetworkException(message ?? 'Request failed');
   }
 }

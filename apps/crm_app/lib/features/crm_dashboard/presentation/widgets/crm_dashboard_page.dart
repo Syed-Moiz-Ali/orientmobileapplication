@@ -26,12 +26,7 @@ class CrmDashboardPage extends ConsumerWidget {
     final anyConnected = integrations.any((i) => i.connected);
 
     if (ui.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: CrmColors.accent,
-          strokeWidth: 2.5,
-        ),
-      );
+      return const Center(child: CircularProgressIndicator(color: CrmColors.accent, strokeWidth: 2.5));
     }
 
     final hasData = leads.isNotEmpty || ui.channels.isNotEmpty;
@@ -48,10 +43,7 @@ class CrmDashboardPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const CrmHeaderBanner(),
-            if (!anyConnected)
-              _connectBanner(context)
-            else if (!hasData)
-              _emptyBanner(context, ui.refresh),
+            if (!anyConnected) _connectBanner(context) else if (!hasData) _emptyBanner(context, ui.refresh),
             Padding(
               padding: const EdgeInsets.all(AppDimensions.s16),
               child: Column(
@@ -152,11 +144,7 @@ class CrmDashboardPage extends ConsumerWidget {
               children: [
                 Text(
                   'No CRMs connected',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
                 ),
                 SizedBox(height: 2),
                 Text(
@@ -170,17 +158,10 @@ class CrmDashboardPage extends ConsumerWidget {
             onTap: () => ConnectIntegrationSheet.show(context),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
               child: const Text(
                 'Connect',
-                style: TextStyle(
-                  color: CrmColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(color: CrmColors.primary, fontSize: 12, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -208,17 +189,10 @@ class CrmDashboardPage extends ConsumerWidget {
               children: [
                 Text(
                   'Syncing leads...',
-                  style: TextStyle(
-                    color: CrmColors.textH,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(color: CrmColors.textH, fontSize: 13, fontWeight: FontWeight.w800),
                 ),
                 SizedBox(height: 2),
-                Text(
-                  'Your CRM is connected but no leads yet',
-                  style: TextStyle(color: CrmColors.textM, fontSize: 11),
-                ),
+                Text('Your CRM is connected but no leads yet', style: TextStyle(color: CrmColors.textM, fontSize: 11)),
               ],
             ),
           ),
@@ -226,17 +200,10 @@ class CrmDashboardPage extends ConsumerWidget {
             onTap: onSync,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: CrmColors.primary,
-                borderRadius: BorderRadius.circular(20),
-              ),
+              decoration: BoxDecoration(color: CrmColors.primary, borderRadius: BorderRadius.circular(20)),
               child: const Text(
                 'Sync Now',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -260,11 +227,7 @@ class CrmDashboardPage extends ConsumerWidget {
           const SizedBox(height: 10),
           Text(
             title,
-            style: const TextStyle(
-              color: CrmColors.textH,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
+            style: const TextStyle(color: CrmColors.textH, fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
@@ -282,20 +245,12 @@ class CrmDashboardPage extends ConsumerWidget {
       Container(
         width: 4,
         height: 20,
-        decoration: BoxDecoration(
-          color: CrmColors.accent,
-          borderRadius: BorderRadius.circular(AppDimensions.r2),
-        ),
+        decoration: BoxDecoration(color: CrmColors.accent, borderRadius: BorderRadius.circular(AppDimensions.r2)),
       ),
       const SizedBox(width: AppDimensions.s10),
       Text(
         text,
-        style: const TextStyle(
-          color: CrmColors.textH,
-          fontSize: 19,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-        ),
+        style: const TextStyle(color: CrmColors.textH, fontSize: 19, fontWeight: FontWeight.w700, letterSpacing: 0.5),
       ),
     ],
   );

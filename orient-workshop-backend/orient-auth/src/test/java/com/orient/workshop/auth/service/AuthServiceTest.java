@@ -3,6 +3,9 @@ package com.orient.workshop.auth.service;
 import com.orient.workshop.auth.model.dto.TokenResponse;
 import com.orient.workshop.auth.model.entity.User;
 import com.orient.workshop.auth.repository.UserMapper;
+import com.orient.workshop.core.repository.BranchMapper;
+import com.orient.workshop.core.repository.CustomerMapper;
+import com.orient.workshop.core.repository.StaffMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,12 +26,16 @@ class AuthServiceTest {
     @Mock private OtpService otpService;
     @Mock private JwtService jwtService;
     @Mock private PasswordService passwordService;
+    @Mock private StaffMapper staffMapper;
+    @Mock private CustomerMapper customerMapper;
+    @Mock private BranchMapper branchMapper;
 
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userMapper, otpService, jwtService, passwordService);
+        authService = new AuthService(userMapper, otpService, jwtService, passwordService,
+                staffMapper, customerMapper, branchMapper);
     }
 
     @Test

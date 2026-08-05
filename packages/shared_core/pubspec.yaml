@@ -20,6 +20,10 @@ dependencies:
   intl: ^0.20.2
   flutter_dotenv: ^5.2.1
 
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
 flutter:
   assets:
     - assets/.env

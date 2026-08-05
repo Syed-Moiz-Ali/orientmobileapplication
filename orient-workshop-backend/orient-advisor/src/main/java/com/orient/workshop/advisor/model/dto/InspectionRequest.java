@@ -14,6 +14,7 @@ public class InspectionRequest {
     private String createdDate;
     private String lastUpdated;
     private String technician;
+    private String customerId;
     private CustomerInfo customer;
     private VehicleInfo vehicle;
     private AdditionalInfo additional;

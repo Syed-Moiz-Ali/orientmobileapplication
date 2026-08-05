@@ -109,28 +109,6 @@ class _CustomerBreakdownHelpViewState
                               color: AppColors.text3,
                             ),
                           ),
-                          const SizedBox(height: AppDimensions.s16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _CallBtn(
-                                  icon: Icons.call_rounded,
-                                  label: 'Call Now',
-                                  color: AppColors.success,
-                                  onTap: () {},
-                                ),
-                              ),
-                              const SizedBox(width: AppDimensions.s12),
-                              Expanded(
-                                child: _CallBtn(
-                                  icon: Icons.chat_bubble_rounded,
-                                  label: 'WhatsApp',
-                                  color: AppColors.success,
-                                  onTap: () {},
-                                ),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
                     ),
@@ -319,7 +297,16 @@ class _CustomerBreakdownHelpViewState
                               ),
                               const SizedBox(width: AppDimensions.s8),
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Location sharing is not available yet',
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.all(
                                     AppDimensions.s12,
@@ -389,7 +376,7 @@ class _CustomerBreakdownHelpViewState
                                         ),
                                       ),
                                       textStyle: const TextStyle(
-                                        fontFamily: 'Inter',
+                                        
                                         fontWeight: FontWeight.w700,
                                         fontSize: 14,
                                       ),
@@ -502,45 +489,6 @@ class _CustomerBreakdownHelpViewState
   }
 }
 
-class _CallBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  const _CallBtn({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: AppDimensions.s12),
-      decoration: BoxDecoration(
-        color: AppColors.successBg,
-        borderRadius: BorderRadius.circular(AppDimensions.r12),
-        border: Border.all(color: AppColors.successBorder),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: AppDimensions.s6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
 class _InfoCard extends StatelessWidget {
   final IconData icon;

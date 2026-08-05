@@ -22,6 +22,7 @@ class PhoneInputField extends StatefulWidget {
   final ValueChanged<String> onChanged;
   final VoidCallback? onSubmitted;
   final TextEditingController? controller;
+  final ValueChanged<String>? onCountryChanged;
 
   const PhoneInputField({
     super.key,
@@ -30,6 +31,7 @@ class PhoneInputField extends StatefulWidget {
     required this.onChanged,
     this.onSubmitted,
     this.controller,
+    this.onCountryChanged,
   });
 
   static const List<CountryOption> countries = [
@@ -155,6 +157,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                           setState(() {
                             _selectedCountry = c;
                           });
+                          widget.onCountryChanged?.call(c.code);
                           Navigator.pop(ctx);
                         },
                       );

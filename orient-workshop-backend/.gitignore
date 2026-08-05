@@ -14,5 +14,4 @@ target/
 *~
 .DS_Store
 Thumbs.db
-application-prod.yml
 .env

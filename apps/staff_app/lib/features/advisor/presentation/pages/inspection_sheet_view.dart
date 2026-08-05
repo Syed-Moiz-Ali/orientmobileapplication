@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,12 +9,12 @@ import 'package:video_player/video_player.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/core/services/audio_recorder_service.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
 import 'inspection_provider.dart';
-import 'inspection_preview_view.dart';
 
 class InspectionSheetView extends ConsumerWidget {
   final InspectionCallbacks callbacks;
@@ -32,7 +32,7 @@ class InspectionSheetView extends ConsumerWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: callbacks.onBack,
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,8 +113,6 @@ class _ProgressHeader extends ConsumerWidget {
                             }
                           },
                         ),
-                        const SizedBox(width: 8),
-                        _chip('Search', AppColors.text3, () {}),
                       ],
                     ),
                   ],
@@ -661,11 +659,9 @@ class _ItemRow extends ConsumerWidget {
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(AppDimensions.r7),
-                                  child: Image.file(
-                                    File(itemMedia.photoPaths[i]),
+                                  child: localImage(
+                                    itemMedia.photoPaths[i],
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        const Icon(Icons.broken_image, color: AppColors.text3, size: 24),
                                   ),
                                 ),
                               ),
@@ -771,9 +767,7 @@ class _ItemRow extends ConsumerWidget {
                     GestureDetector(
                       onTap: () {
                         notifier.setAudio(itemId, '');
-                        try {
-                          File(itemMedia.audioPath).deleteSync();
-                        } catch (_) {}
+                        deleteLocalFile(itemMedia.audioPath);
                       },
                       child: const Padding(
                         padding: EdgeInsets.only(top: 4),
@@ -864,7 +858,9 @@ class _ItemRow extends ConsumerWidget {
               elevation: 0,
             ),
             body: Center(
-              child: InteractiveViewer(child: Image.file(File(path), fit: BoxFit.contain)),
+              child: InteractiveViewer(
+                child: localImage(path, fit: BoxFit.contain),
+              ),
             ),
           ),
         ),
@@ -903,19 +899,13 @@ class _ItemRow extends ConsumerWidget {
             onPressed: () {
               Navigator.pop(ctx);
               for (final p in media.photoPaths) {
-                try {
-                  File(p).deleteSync();
-                } catch (_) {}
+                deleteLocalFile(p);
               }
               for (final v in media.videoPaths) {
-                try {
-                  File(v).deleteSync();
-                } catch (_) {}
+                deleteLocalFile(v);
               }
               if (media.audioPath.isNotEmpty) {
-                try {
-                  File(media.audioPath).deleteSync();
-                } catch (_) {}
+                deleteLocalFile(media.audioPath);
               }
               notifier.setMedia(itemId, const ItemMedia());
             },
@@ -929,17 +919,21 @@ class _ItemRow extends ConsumerWidget {
   Widget _mediaBtn(IconData icon, String tooltip, bool active, Color color, VoidCallback onTap) {
     return Tooltip(
       message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: active ? color.withValues(alpha: 0.1) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: active ? color.withValues(alpha: 0.3) : const Color(0xFFD4D9E6), width: 1.2),
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: active ? color.withValues(alpha: 0.1) : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: active ? color.withValues(alpha: 0.3) : const Color(0xFFD4D9E6), width: 1.2),
+            ),
+            child: Icon(icon, size: 18, color: active ? color : AppColors.text3),
           ),
-          child: Icon(icon, size: 15, color: active ? color : AppColors.text3),
         ),
       ),
     );
@@ -983,13 +977,13 @@ class _ItemRow extends ConsumerWidget {
   }
 
   Future<String> _persistFile(String sourcePath, String prefix) async {
+    if (kIsWeb) return sourcePath;
     try {
       final dir = await getApplicationDocumentsDirectory();
       final ext = sourcePath.split('.').last;
       final fileName = '${prefix}_${DateTime.now().millisecondsSinceEpoch}.$ext';
       final destPath = '${dir.path}/$fileName';
-      await File(sourcePath).copy(destPath);
-      return destPath;
+      return await persistMediaFile(sourcePath, destPath);
     } catch (_) {
       return sourcePath;
     }
@@ -1308,7 +1302,7 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
     try {
       final path = await _recorder.stopRecording();
       setState(() => _recording = false);
-      if (path != null && path.isNotEmpty && File(path).existsSync() && mounted) {
+      if (path != null && path.isNotEmpty && localFileExists(path) && mounted) {
         widget.onSave(path);
         Navigator.pop(context);
       } else if (mounted) {
@@ -1327,7 +1321,7 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
   }
 
   Future<void> _playExisting() async {
-    if (_existingPath.isEmpty || !File(_existingPath).existsSync()) return;
+    if (_existingPath.isEmpty || !localFileExists(_existingPath)) return;
     final player = AudioPlayer();
     try {
       await player.play(DeviceFileSource(_existingPath));
@@ -1336,10 +1330,7 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
 
   void _deleteExisting() {
     if (_existingPath.isNotEmpty) {
-      final file = File(_existingPath);
-      if (file.existsSync()) {
-        file.deleteSync();
-      }
+      deleteLocalFile(_existingPath);
     }
     widget.onSave('');
     setState(() {
@@ -1506,7 +1497,8 @@ class _VideoPlayerPageState extends State<_VideoPlayerPage> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.file(File(widget.filePath));
+    if (kIsWeb) return;
+    _controller = createVideoController(widget.filePath);
     _controller.initialize().then((_) {
       if (mounted) {
         setState(() => _initialized = true);
@@ -1520,7 +1512,9 @@ class _VideoPlayerPageState extends State<_VideoPlayerPage> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (!kIsWeb && _initialized) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 
@@ -1706,16 +1700,11 @@ class _Footer extends ConsumerWidget {
         );
         return;
       }
-      final jobId = state.jobCardId;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (ctx) => InspectionPreviewView(onBack: () => Navigator.of(ctx).pop(), jobId: jobId),
-        ),
-      );
+      callbacks.onPreview();
     }
 
     void handleSaveDraft() {
-      Navigator.of(context).pop();
+      callbacks.onSaveDraft();
     }
 
     return Container(

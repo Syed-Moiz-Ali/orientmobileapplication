@@ -1,49 +1,127 @@
 package com.orient.workshop.advisor.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.orient.workshop.advisor.model.dto.RepairOrderRequest;
 import com.orient.workshop.advisor.model.dto.RepairOrderResponse;
 import com.orient.workshop.advisor.model.entity.RepairOrder;
+import com.orient.workshop.advisor.model.entity.RepairOrderPartItem;
+import com.orient.workshop.advisor.model.entity.RepairOrderServiceItem;
 import com.orient.workshop.advisor.repository.RepairOrderMapper;
+import com.orient.workshop.advisor.repository.RepairOrderPartMapper;
+import com.orient.workshop.advisor.repository.RepairOrderServiceMapper;
+import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.NotFoundException;
+import com.orient.workshop.common.util.DateParse;
+import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.core.model.entity.JobCard;
 import com.orient.workshop.core.repository.JobCardMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RepairOrderService {
 
     private final RepairOrderMapper repairOrderMapper;
+    private final RepairOrderServiceMapper serviceMapper;
+    private final RepairOrderPartMapper partMapper;
     private final JobCardMapper jobCardMapper;
 
     @Transactional
     public RepairOrderResponse createRepairOrder(RepairOrderRequest req) {
-        if (req.getJobCardId() != null) {
-            JobCard jc = jobCardMapper.selectById(Long.parseLong(req.getJobCardId()));
-            if (jc == null) throw new NotFoundException("Job card not found");
+        if (req.getJobCardId() == null || req.getJobCardId().isBlank()) {
+            throw new BadRequestException("jobCardId is required");
+        }
+        Long jobCardId;
+        try {
+            jobCardId = Long.parseLong(req.getJobCardId());
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("Invalid jobCardId '" + req.getJobCardId() + "'");
+        }
+        JobCard jc = jobCardMapper.selectById(jobCardId);
+        if (jc == null) {
+            throw new BadRequestException("Job card not found with id: " + jobCardId);
         }
 
-        String ref = "RO-" + LocalDate.now().toString() + "-" + String.format("%04d", System.currentTimeMillis() % 10000);
+        String ref = IdGenerator.shortRef("RO");
 
         RepairOrder ro = RepairOrder.builder()
                 .repairOrderRef(ref)
-                .jobCardId(req.getJobCardId() != null ? Long.parseLong(req.getJobCardId()) : null)
-                .servicesTotal(req.getServicesTotal())
-                .partsTotal(req.getPartsTotal())
-                .grandTotal(req.getGrandTotal())
+                .jobCardId(jobCardId)
+                .servicesTotal(0.0)
+                .partsTotal(0.0)
+                .grandTotal(0.0)
                 .tag(req.getTag())
                 .customerRequests(req.getCustomerRequests())
                 .garageRecommendations(req.getGarageRecommendations())
-                .estimatedDelivery(req.getEstimatedDelivery() != null ? java.time.LocalDateTime.parse(req.getEstimatedDelivery()) : null)
+                .estimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"))
                 .notifyOwnerSmsEmail(req.getNotifyOwnerSmsEmail())
                 .build();
         repairOrderMapper.insert(ro);
 
+        double servicesTotal = persistServices(ro.getId(), req.getServices());
+        double partsTotal = persistParts(ro.getId(), req.getParts());
+
+        ro.setServicesTotal(servicesTotal);
+        ro.setPartsTotal(partsTotal);
+        ro.setGrandTotal(servicesTotal + partsTotal);
+        repairOrderMapper.updateById(ro);
+
+        log.info("Repair order {} created for jobCardId={}, grandTotal={}", ref, jobCardId, ro.getGrandTotal());
+
         return RepairOrderResponse.builder().id(ref).build();
+    }
+
+    private double persistServices(Long repairOrderId, List<RepairOrderRequest.LineItem> items) {
+        double total = 0;
+        if (items == null) return 0;
+        for (RepairOrderRequest.LineItem li : items) {
+            double lineTotal = lineTotal(li);
+            total += lineTotal;
+            serviceMapper.insert(RepairOrderServiceItem.builder()
+                    .repairOrderId(repairOrderId)
+                    .name(li.getName())
+                    .qty(li.getQty() != null ? li.getQty() : 1)
+                    .rate(li.getRate() != null ? li.getRate() : 0)
+                    .discountPercent(li.getDiscountPercent() != null ? li.getDiscountPercent() : 0)
+                    .discountAmount(li.getDiscountAmount() != null ? li.getDiscountAmount() : 0)
+                    .build());
+        }
+        return round2(total);
+    }
+
+    private double persistParts(Long repairOrderId, List<RepairOrderRequest.LineItem> items) {
+        double total = 0;
+        if (items == null) return 0;
+        for (RepairOrderRequest.LineItem li : items) {
+            double lineTotal = lineTotal(li);
+            total += lineTotal;
+            partMapper.insert(RepairOrderPartItem.builder()
+                    .repairOrderId(repairOrderId)
+                    .name(li.getName())
+                    .qty(li.getQty() != null ? li.getQty() : 1)
+                    .rate(li.getRate() != null ? li.getRate() : 0)
+                    .discountPercent(li.getDiscountPercent() != null ? li.getDiscountPercent() : 0)
+                    .discountAmount(li.getDiscountAmount() != null ? li.getDiscountAmount() : 0)
+                    .build());
+        }
+        return round2(total);
+    }
+
+    private double lineTotal(RepairOrderRequest.LineItem li) {
+        double qty = li.getQty() != null ? li.getQty() : 1;
+        double rate = li.getRate() != null ? li.getRate() : 0;
+        double discPct = li.getDiscountPercent() != null ? li.getDiscountPercent() : 0;
+        double discAmt = li.getDiscountAmount() != null ? li.getDiscountAmount() : 0;
+        double total = qty * rate * (1 - discPct / 100.0) - discAmt;
+        return Math.max(0, total);
+    }
+
+    private double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

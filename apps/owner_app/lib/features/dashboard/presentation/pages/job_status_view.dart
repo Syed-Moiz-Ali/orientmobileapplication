@@ -21,7 +21,17 @@ class _JobStatusViewState extends ConsumerState<JobStatusView> {
         backgroundColor: Colors.white, elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.gray700), onPressed: () => context.pop()),
         title: const Text('Job Status Tracking', style: TextStyle(color: AppColors.gray900, fontSize: 17, fontWeight: FontWeight.w700)),
-        actions: [Padding(padding: const EdgeInsets.only(right: 12), child: IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.gray700), onPressed: () {}))],
+        actions: [Padding(padding: const EdgeInsets.only(right: 12), child: IconButton(
+          icon: const Icon(Icons.notifications_outlined, color: AppColors.gray700),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Notifications are not available yet'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+        ))],
       ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))

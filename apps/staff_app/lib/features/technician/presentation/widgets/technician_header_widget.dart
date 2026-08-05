@@ -100,49 +100,27 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                   ],
                 ),
               ),
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.white,
-                      size: 26,
-                    ),
-                    onPressed: () {},
-                  ),
-                  Positioned(
-                    right: 10,
-                    top: 10,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: AppColors.warning,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.navy, width: 1.5),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               GestureDetector(
                 onTap: () => _showProfile(context, ref),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.20),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      width: 1.5,
+                child: Semantics(
+                  button: true,
+                  label: 'Open profile',
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.20),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        width: 1.5,
+                      ),
                     ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      profile.avatarInitials.substring(0, 1),
-                      style: AppTextStyles.rajdhaniBody(color: Colors.white),
+                    child: Center(
+                      child: Text(
+                        profile.avatarInitials.substring(0, 1),
+                        style: AppTextStyles.rajdhaniBody(color: Colors.white),
+                      ),
                     ),
                   ),
                 ),

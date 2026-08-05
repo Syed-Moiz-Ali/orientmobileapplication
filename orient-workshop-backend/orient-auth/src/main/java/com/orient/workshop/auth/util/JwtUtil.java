@@ -1,5 +1,6 @@
 package com.orient.workshop.auth.util;
 
+import com.orient.workshop.auth.config.JwtConfig;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,7 @@ public class JwtUtil {
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.access-token-expiry}") long accessTokenExpiry,
             @Value("${app.jwt.refresh-token-expiry}") long refreshTokenExpiry) {
+        JwtConfig.validateSecret(secret);
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpiry = accessTokenExpiry;
         this.refreshTokenExpiry = refreshTokenExpiry;

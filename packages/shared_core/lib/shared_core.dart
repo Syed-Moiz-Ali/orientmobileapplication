@@ -24,6 +24,7 @@ export 'src/widgets/status_pill.dart';
 export 'src/widgets/user_avatar.dart';
 
 export 'src/network/api_client.dart';
+export 'src/network/api_response.dart';
 export 'src/network/dio_client.dart';
 export 'src/network/logging_interceptor.dart';
 export 'src/network/retry_interceptor.dart';
@@ -41,6 +42,7 @@ export 'src/local/repositories/generic_local_datasource.dart';
 export 'src/local/repositories/local_repository.dart';
 export 'src/local/repositories/remote_repository.dart';
 export 'src/local/sync/sync_engine.dart';
+export 'src/local/sync/media_upload_queue.dart';
 export 'src/local/sync/sync_queue.dart';
 export 'src/local/sync/sync_handler.dart';
 export 'src/local/sync/dio_sync_handler.dart';

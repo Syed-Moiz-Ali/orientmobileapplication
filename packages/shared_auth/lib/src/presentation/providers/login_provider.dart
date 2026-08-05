@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
@@ -20,6 +21,7 @@ class LoginState {
   final int resendCooldown;
   final AuthMethod method;
   final PasswordIdentifier identifier;
+  final String countryCode;
 
   const LoginState({
     this.isLoading = false,
@@ -34,6 +36,7 @@ class LoginState {
     this.resendCooldown = 0,
     this.method = AuthMethod.sms,
     this.identifier = PasswordIdentifier.email,
+    this.countryCode = '+971',
   });
 
   LoginState copyWith({
@@ -49,6 +52,7 @@ class LoginState {
     int? resendCooldown,
     AuthMethod? method,
     PasswordIdentifier? identifier,
+    String? countryCode,
   }) => LoginState(
     isLoading: isLoading ?? this.isLoading,
     error: error,
@@ -62,14 +66,28 @@ class LoginState {
     resendCooldown: resendCooldown ?? this.resendCooldown,
     method: method ?? this.method,
     identifier: identifier ?? this.identifier,
+    countryCode: countryCode ?? this.countryCode,
   );
 }
 
 class LoginNotifier extends Notifier<LoginState> {
-  @override
-  LoginState build() => const LoginState();
+  Timer? _cooldownTimer;
 
-  void setMethod(AuthMethod m) => state = LoginState(method: m);
+  @override
+  LoginState build() {
+    ref.onDispose(cancelCooldown);
+    return const LoginState();
+  }
+
+  void cancelCooldown() {
+    _cooldownTimer?.cancel();
+    _cooldownTimer = null;
+  }
+
+  void setMethod(AuthMethod m) {
+    cancelCooldown();
+    state = LoginState(method: m);
+  }
   void setPasswordIdentifier(PasswordIdentifier value) {
     state = state.copyWith(
       identifier: value,
@@ -77,6 +95,8 @@ class LoginNotifier extends Notifier<LoginState> {
       phone: value == PasswordIdentifier.phone ? state.phone : '',
     );
   }
+
+  void setCountryCode(String code) => state = state.copyWith(countryCode: code);
 
   void setPhone(String v) {
     final c = v.replaceAll(RegExp(r'[^\d]'), '');
@@ -96,9 +116,14 @@ class LoginNotifier extends Notifier<LoginState> {
 
   String _fullPhone(String p) {
     final c = p.replaceAll(RegExp(r'[^\d]'), '');
-    if (c.startsWith('971')) return c;
+    final cc = state.countryCode.replaceAll(RegExp(r'[^\d]'), '');
+    if (c.startsWith(cc)) return c;
     final z = c.startsWith('0') ? c.substring(1) : c;
-    return '971$z';
+    return '$cc$z';
+  }
+
+  Future<void> _completeAuth() async {
+    state = state.copyWith(isLoading: false, otpSent: false);
   }
 
   Future<void> sendSmsOtp() async {
@@ -132,6 +157,7 @@ class LoginNotifier extends Notifier<LoginState> {
       await ref
           .read(authNotifierProvider.notifier)
           .authenticate(a.role, a.token, refreshToken: a.refreshToken);
+      await _completeAuth();
     } else if (r case Failure(:final error)) {
       state = state.copyWith(isLoading: false, error: error.message);
     }
@@ -167,6 +193,7 @@ class LoginNotifier extends Notifier<LoginState> {
       await ref
           .read(authNotifierProvider.notifier)
           .authenticate(a.role, a.token, refreshToken: a.refreshToken);
+      await _completeAuth();
     } else if (r case Failure(:final error)) {
       state = state.copyWith(isLoading: false, error: error.message);
     }
@@ -199,6 +226,7 @@ class LoginNotifier extends Notifier<LoginState> {
       await ref
           .read(authNotifierProvider.notifier)
           .authenticate(a.role, a.token, refreshToken: a.refreshToken);
+      await _completeAuth();
     } else if (r case Failure(:final error)) {
       state = state.copyWith(isLoading: false, error: error.message);
     }
@@ -237,23 +265,28 @@ class LoginNotifier extends Notifier<LoginState> {
       await ref
           .read(authNotifierProvider.notifier)
           .authenticate(a.role, a.token, refreshToken: a.refreshToken);
+      await _completeAuth();
     } else if (r case Failure(:final error)) {
       state = state.copyWith(isLoading: false, error: error.message);
     }
   }
 
-  void reset() => state = const LoginState();
+  void reset() {
+    cancelCooldown();
+    state = const LoginState();
+  }
 
   void _startCooldown() {
+    cancelCooldown();
     state = state.copyWith(resendCooldown: 30);
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!state.otpSent || state.resendCooldown <= 1) {
+        timer.cancel();
+        _cooldownTimer = null;
         state = state.copyWith(resendCooldown: 0);
-        return false;
+        return;
       }
       state = state.copyWith(resendCooldown: state.resendCooldown - 1);
-      return true;
     });
   }
 }

@@ -1,46 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:owner_app/features/dashboard/data/datasources/owner_remote_datasource.dart';
+import 'package:shared_auth/shared_auth.dart';
 
-final ownerActivityFeedProvider = Provider<List<Map<String, dynamic>>>((ref) {
+/// Activity feed loaded from the backend (OwnerRemoteDataSource.getActivity).
+final ownerActivityFeedProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   try {
-    final box = Hive.box<dynamic>('owner_activity');
-    final saved = box.values
-        .whereType<Map>()
-        .map((m) => Map<String, dynamic>.from(m))
-        .toList();
-    if (saved.isEmpty) {
-      _seedMockData(box);
-      return box.values
-          .whereType<Map>()
-          .map((m) => Map<String, dynamic>.from(m))
-          .toList()
-        ..sort((a, b) => (b['timestamp'] as String? ?? '').compareTo(a['timestamp'] as String? ?? ''));
-    }
-    saved.sort((a, b) => (b['timestamp'] as String? ?? '').compareTo(a['timestamp'] as String? ?? ''));
-    return saved;
+    final remote = OwnerRemoteDataSource(ref.read(apiClientProvider));
+    final activities = await remote.getActivity(1, 50);
+    return activities.map((a) {
+      return <String, dynamic>{
+        'id': a.id,
+        'type': a.type,
+        'title': a.title,
+        'description': a.description,
+        'timestamp': a.timestamp,
+      };
+    }).toList()
+      ..sort((a, b) =>
+          (b['timestamp'] as String? ?? '').compareTo(a['timestamp'] as String? ?? ''));
   } catch (_) {
     return [];
   }
 });
-
-void _seedMockData(Box<dynamic> box) {
-  final now = DateTime.now();
-  final mock = [
-    {'id': 'a1', 'type': 'job_card', 'title': 'New job card created', 'description': 'Ahmed Hassan \u00b7 Toyota Camry \u00b7 Full Service', 'timestamp': now.subtract(const Duration(minutes: 15)).toIso8601String(), 'icon': 'assignment', 'color': '#1F6FEB'},
-    {'id': 'a2', 'type': 'inspection', 'title': 'Inspection completed', 'description': 'BMW 3 Series \u00b7 AB19 XYZ \u00b7 All sections passed', 'timestamp': now.subtract(const Duration(minutes: 45)).toIso8601String(), 'icon': 'fact_check', 'color': '#238636'},
-    {'id': 'a3', 'type': 'approval', 'title': 'Estimate approved', 'description': 'Nissan Patrol \u00b7 EST-2024-089 \u00b7 AED 1,250', 'timestamp': now.subtract(const Duration(hours: 1)).toIso8601String(), 'icon': 'thumb_up', 'color': '#8957E5'},
-    {'id': 'a4', 'type': 'invoice', 'title': 'Invoice raised', 'description': 'Ford Focus \u00b7 INV-2026-003 \u00b7 AED 3,800', 'timestamp': now.subtract(const Duration(hours: 2)).toIso8601String(), 'icon': 'receipt', 'color': '#DA3633'},
-    {'id': 'a5', 'type': 'parts', 'title': 'Parts arrived', 'description': 'Order #PO-2026-042 \u00b7 Brake pads, Oil filters', 'timestamp': now.subtract(const Duration(hours: 3)).toIso8601String(), 'icon': 'inventory', 'color': '#E3B341'},
-    {'id': 'a6', 'type': 'job_card', 'title': 'Job card completed', 'description': 'Mercedes C-Class \u00b7 Full Inspection \u00b7 Ready for delivery', 'timestamp': now.subtract(const Duration(hours: 5)).toIso8601String(), 'icon': 'check_circle', 'color': '#238636'},
-    {'id': 'a7', 'type': 'payment', 'title': 'Payment received', 'description': 'Honda Accord \u00b7 INV-2026-001 \u00b7 AED 2,450', 'timestamp': now.subtract(const Duration(hours: 6)).toIso8601String(), 'icon': 'payments', 'color': '#1F6FEB'},
-    {'id': 'a8', 'type': 'technician', 'title': 'Technician assigned', 'description': 'Ravi Kumar \u2192 Toyota Camry \u00b7 AC Repair', 'timestamp': now.subtract(const Duration(hours: 8)).toIso8601String(), 'icon': 'engineering', 'color': '#FF7B00'},
-  ];
-  for (final item in mock) {
-    box.put(item['id'], item);
-  }
-}
 
 IconData _iconFor(String icon) {
   switch (icon) {
@@ -78,7 +61,40 @@ class OwnerActivityFeedTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activities = ref.watch(ownerActivityFeedProvider);
+    final activitiesAsync = ref.watch(ownerActivityFeedProvider);
+    final activities = activitiesAsync.value ?? const <Map<String, dynamic>>[];
+
+    if (activities.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(AppDimensions.s16),
+        children: [
+          const SizedBox(height: 60),
+          const Icon(
+            Icons.history_toggle_off_rounded,
+            size: 48,
+            color: AppColors.text4,
+          ),
+          const SizedBox(height: 12),
+          const Center(
+            child: Text(
+              'No activity yet',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.text3,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Center(
+            child: Text(
+              'Job cards, approvals and payments will show up here.',
+              style: TextStyle(fontSize: 12, color: AppColors.text4),
+            ),
+          ),
+        ],
+      );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(AppDimensions.s16),

@@ -69,7 +69,7 @@ class CustomerVehiclesView extends ConsumerWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () => context.push(AppRoutes.customerAddVehicle),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
@@ -299,7 +299,7 @@ class _VehicleCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppDimensions.r10),
                       ),
                       textStyle: const TextStyle(
-                        fontFamily: 'Inter',
+                        
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
@@ -309,7 +309,21 @@ class _VehicleCard extends StatelessWidget {
                 const SizedBox(width: AppDimensions.s10),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Last service: ${vehicle.lastService} · Next due: ${vehicle.nextDue}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          backgroundColor: AppColors.primary,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.history_rounded, size: 15),
                     label: const Text('History'),
                     style: OutlinedButton.styleFrom(
@@ -322,7 +336,7 @@ class _VehicleCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppDimensions.r10),
                       ),
                       textStyle: const TextStyle(
-                        fontFamily: 'Inter',
+                        
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),

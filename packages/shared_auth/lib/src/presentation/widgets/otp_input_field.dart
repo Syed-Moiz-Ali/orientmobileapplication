@@ -5,6 +5,10 @@ import 'package:shared_core/shared_core.dart';
 class OtpInputField extends StatefulWidget {
   final BrandConfig brand;
   final String phone;
+
+  /// Display label for the verification target (e.g. '+971 50 123 4567').
+  /// When null the widget falls back to showing the raw [phone] value.
+  final String? identifierLabel;
   final String? error;
   final bool isLoading;
   final int resendCooldown;
@@ -17,6 +21,7 @@ class OtpInputField extends StatefulWidget {
     super.key,
     required this.brand,
     required this.phone,
+    this.identifierLabel,
     required this.error,
     required this.isLoading,
     required this.resendCooldown,
@@ -111,7 +116,7 @@ class _OtpInputFieldState extends State<OtpInputField> {
         Row(
           children: [
             Text(
-              '+971 ${widget.phone}',
+              widget.identifierLabel ?? widget.phone,
               style: TextStyle(
                 color: isDark ? Colors.white : AppColors.textPrimary,
                 fontSize: 14,
@@ -161,39 +166,26 @@ class _OtpInputFieldState extends State<OtpInputField> {
                   width: isFocused ? 1.5 : 1.0,
                 ),
               ),
-              child: KeyboardListener(
-                focusNode: FocusNode(),
-                onKeyEvent: (event) {
-                  if (event is KeyDownEvent &&
-                      event.logicalKey == LogicalKeyboardKey.backspace &&
-                      _controllers[index].text.isEmpty &&
-                      index > 0) {
-                    _focusNodes[index - 1].requestFocus();
-                    _controllers[index - 1].clear();
-                    widget.onOtpChanged(_controllers.map((c) => c.text).join());
-                  }
-                },
-                child: TextField(
-                  controller: _controllers[index],
-                  focusNode: _focusNodes[index],
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  maxLength: 1,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: TextStyle(
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: const InputDecoration(
-                    counterText: '',
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  onChanged: (value) => _onDigitChanged(index, value),
+              child: TextField(
+                controller: _controllers[index],
+                focusNode: _focusNodes[index],
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                maxLength: 1,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                 ),
+                decoration: const InputDecoration(
+                  counterText: '',
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onChanged: (value) => _onDigitChanged(index, value),
               ),
             );
           }),

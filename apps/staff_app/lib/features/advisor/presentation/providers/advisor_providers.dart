@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
-import 'package:logger/logger.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_local_datasource.dart';
+import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/domain/entities/advisor_stats_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/followup_reminder_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
@@ -14,133 +15,80 @@ final advisorLocalDataSourceProvider = Provider<AdvisorLocalDataSource>((ref) {
 
 final advisorRefreshProvider = StateProvider<int>((ref) => 0);
 
-final advisorDashboardProvider = Provider<AdvisorStatsEntity>((ref) {
+const _emptyStats = AdvisorStatsEntity(
+  newJobCardsToday: 0,
+  inspectionsToday: 0,
+  pendingApprovals: 0,
+  vehiclesWaiting: 0,
+  readyForDelivery: 0,
+  totalOpenJobCards: 0,
+);
+
+/// Loads advisor stats from the backend. Falls back to empty data (never
+/// fabricated numbers) when the request fails or the app is offline.
+final advisorDashboardProvider = FutureProvider<AdvisorStatsEntity>((ref) async {
   ref.watch(advisorRefreshProvider);
+  final remote = ref.read(advisorRemoteDataSourceProvider);
   try {
-    final box = Hive.box<dynamic>('inspections');
-    final allData = box.values
-        .whereType<Map>()
-        .map((m) => Map<String, dynamic>.from(m))
-        .toList();
-    final approvals = allData
-        .where((m) => m['action'] == 'approved' || m['action'] == 'rejected')
-        .length;
-    final vehicleCustomers = allData
-        .where((m) => m['type'] == 'vehicle_customer')
-        .length;
+    final s = await remote.getStats();
     return AdvisorStatsEntity(
-      newJobCardsToday: vehicleCustomers,
-      inspectionsToday: vehicleCustomers,
-      pendingApprovals: approvals,
-      vehiclesWaiting: vehicleCustomers,
-      readyForDelivery: (allData.length * 0.3).round(),
-      totalOpenJobCards: allData.length,
+      newJobCardsToday: s.newJobCardsToday,
+      inspectionsToday: s.inspectionsToday,
+      pendingApprovals: s.pendingApprovals,
+      vehiclesWaiting: s.vehiclesWaiting,
+      readyForDelivery: s.readyForDelivery,
+      totalOpenJobCards: s.totalOpenJobCards,
     );
   } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load advisor dashboard stats from Hive', error: e, stackTrace: st);
-    return const AdvisorStatsEntity(
-      newJobCardsToday: 0,
-      inspectionsToday: 0,
-      pendingApprovals: 0,
-      vehiclesWaiting: 0,
-      readyForDelivery: 0,
-      totalOpenJobCards: 0,
-    );
+    ref.read(loggerProvider).e('Failed to load advisor stats', error: e, stackTrace: st);
+    return _emptyStats;
   }
 });
 
-final advisorRecentJobCardsProvider = Provider<List<JobCardEntity>>((ref) {
+final advisorRecentJobCardsProvider = FutureProvider<List<JobCardEntity>>((ref) async {
   ref.watch(advisorRefreshProvider);
-  final box = Hive.box<dynamic>('inspections');
-  final allData = box.values
-      .whereType<Map>()
-      .map((m) => Map<String, dynamic>.from(m))
-      .toList();
-  final filtered = allData
-      .where((m) => m['type'] == 'vehicle_customer')
-      .toList();
-  if (filtered.isEmpty) {
+  final remote = ref.read(advisorRemoteDataSourceProvider);
+  try {
+    final page = await remote.getJobCards(page: 1, size: 50);
+    final jobs = page.content;
+    final parsed = jobs.map((j) {
+      return JobCardEntity(
+        id: j.id,
+        customerName: j.customerName,
+        vehicleInfo: j.vehicleInfo,
+        time: j.time,
+        createdDate: j.createdDate,
+        lastUpdated: j.lastUpdated,
+        status: JobCardStatus.values.firstWhere(
+          (e) => e.name == j.status,
+          orElse: () => JobCardStatus.inProgress,
+        ),
+        technician: j.technician,
+      );
+    }).toList();
+    return parsed;
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load advisor job cards', error: e, stackTrace: st);
     return const [];
   }
-  final parsed = filtered.map((m) {
-    final cd = m['createdDate'] as String? ?? '';
-    final id = m['id'] as String? ?? '';
-    final vin = m['vin'] as String? ?? '';
-    final regNo = m['registrationNumber'] as String? ?? '';
-    return JobCardEntity(
-      id: id.isNotEmpty ? id : (vin.isNotEmpty ? vin : regNo),
-      customerName: m['customerName'] as String? ?? '',
-      vehicleInfo: '${m['make'] ?? ''} ${m['model'] ?? ''}',
-      time: cd.isNotEmpty && cd.length >= 16 ? cd.substring(11, 16) : '',
-      createdDate: cd,
-      lastUpdated: m['lastUpdated'] as String? ?? cd,
-      status: JobCardStatus.values.firstWhere(
-        (e) => e.name == m['status'],
-        orElse: () => JobCardStatus.inProgress,
-      ),
-      technician: m['technician'] as String? ?? '',
-    );
-  }).toList();
-  parsed.sort((a, b) {
-    final aDate = _parseDate(a.createdDate);
-    final bDate = _parseDate(b.createdDate);
-    return bDate.compareTo(aDate);
-  });
-  return parsed;
 });
 
-DateTime _parseDate(String dateStr) {
-  try {
-    final parts = dateStr.split(' ');
-    if (parts.length != 2) return DateTime(2000);
-    final dateParts = parts[0].split('/');
-    if (dateParts.length != 3) return DateTime(2000);
-    final timeParts = parts[1].split(':');
-    if (timeParts.length != 2) return DateTime(2000);
-    return DateTime(
-      int.parse(dateParts[2]),
-      int.parse(dateParts[1]),
-      int.parse(dateParts[0]),
-      int.parse(timeParts[0]),
-      int.parse(timeParts[1]),
-    );
-  } catch (e, st) {
-    Logger().e('Failed to parse date time from jobCard', error: e, stackTrace: st);
-    return DateTime(2000);
-  }
-}
-
-final advisorPendingApprovalsProvider = Provider<List<PendingApprovalEntity>>((
-  ref,
-) {
+final advisorPendingApprovalsProvider = FutureProvider<List<PendingApprovalEntity>>((ref) async {
   ref.watch(advisorRefreshProvider);
+  final remote = ref.read(advisorRemoteDataSourceProvider);
   try {
-    final box = Hive.box<dynamic>('inspections');
-    final allData = box.values
-        .whereType<Map>()
-        .map((m) => Map<String, dynamic>.from(m))
-        .toList();
-    final approvals = allData
-        .where(
-          (m) =>
-              m['estimateId'] != null &&
-              (m['action'] == 'approved' || m['action'] == 'rejected'),
-        )
-        .map(
-          (m) => PendingApprovalEntity(
-            estimateId: m['estimateId'] as String? ?? '',
-            customerName: m['customerName'] as String? ?? '',
-            vehicleId: '',
-            amount: (m['amount'] as num?)?.toDouble() ?? 0.0,
-          ),
-        )
-        .toList();
-    if (approvals.isEmpty) {
-      return const [];
-    }
-    return approvals;
+    final approvals = await remote.getPendingApprovals();
+    return approvals.map((a) {
+      return PendingApprovalEntity(
+        estimateId: a.estimateId,
+        customerName: a.customerName,
+        vehicleId: a.vehicleId,
+        amount: a.amount,
+        timeAgo: a.timeAgo,
+      );
+    }).toList();
   } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load pending approvals from Hive', error: e, stackTrace: st);
+    ref.read(loggerProvider).e('Failed to load pending approvals', error: e, stackTrace: st);
     return const [];
   }
 });
@@ -148,7 +96,9 @@ final advisorPendingApprovalsProvider = Provider<List<PendingApprovalEntity>>((
 class ReminderNotifier extends Notifier<List<FollowupReminderEntity>> {
   @override
   List<FollowupReminderEntity> build() {
-    return _loadFromHive();
+    final local = _loadFromHive();
+    _loadFromRemote();
+    return local;
   }
 
   List<FollowupReminderEntity> _loadFromHive() {
@@ -174,6 +124,28 @@ class ReminderNotifier extends Notifier<List<FollowupReminderEntity>> {
     }
   }
 
+  Future<void> _loadFromRemote() async {
+    try {
+      final remote = ref.read(advisorRemoteDataSourceProvider);
+      final reminders = await remote.getReminders();
+      if (reminders.isEmpty) return;
+      state = reminders.map((r) {
+        return FollowupReminderEntity(
+          customerName: r.customerName,
+          vehicleId: r.vehicleId,
+          task: r.task,
+          dueDate: r.dueDate,
+          priority: ReminderPriority.values.firstWhere(
+            (e) => e.name == r.priority,
+            orElse: () => ReminderPriority.medium,
+          ),
+        );
+      }).toList();
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to load reminders', error: e, stackTrace: st);
+    }
+  }
+
   Future<void> addReminder(FollowupReminderEntity reminder) async {
     final local = GenericLocalDataSource(Hive.box<dynamic>('inspections'));
     final id = await IdGenerator.nextId('REM');
@@ -186,6 +158,24 @@ class ReminderNotifier extends Notifier<List<FollowupReminderEntity>> {
       'dueDate': reminder.dueDate,
       'priority': reminder.priority.name,
     });
+    final queue = ref.read(syncQueueProvider);
+    await queue.enqueue(
+      SyncOperation(
+        id: id,
+        entityType: 'reminder',
+        entityId: id,
+        changeType: ChangeType.create,
+        payload: {
+          'customerName': reminder.customerName,
+          'vehicleId': reminder.vehicleId,
+          'task': reminder.task,
+          'dueDate': reminder.dueDate,
+          'priority': reminder.priority.name,
+        },
+        timestamp: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+    await ref.read(syncEngineProvider).syncAll();
     ref.invalidate(advisorRefreshProvider);
     state = _loadFromHive();
   }
@@ -244,5 +234,12 @@ class AdvisorInfo {
     required this.branch,
     required this.shift,
   });
-}
 
+  String get initials {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return 'A';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
+  }
+}

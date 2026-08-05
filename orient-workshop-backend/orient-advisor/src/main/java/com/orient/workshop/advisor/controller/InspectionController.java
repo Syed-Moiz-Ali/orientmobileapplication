@@ -6,9 +6,11 @@ import com.orient.workshop.advisor.model.dto.InspectionDraftResponse;
 import com.orient.workshop.advisor.model.dto.InspectionRequest;
 import com.orient.workshop.advisor.model.dto.InspectionResponse;
 import com.orient.workshop.advisor.service.InspectionService;
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Advisor")
@@ -20,26 +22,29 @@ public class InspectionController {
     private final InspectionService inspectionService;
 
     @PostMapping
-    public ApiResponse<InspectionResponse> createInspection(@Valid @RequestBody InspectionRequest req) {
-        InspectionResponse response = inspectionService.createInspection(req);
+    public ApiResponse<InspectionResponse> createInspection(@AuthenticationPrincipal JwtUserPrincipal principal,
+                                                            @Valid @RequestBody InspectionRequest req) {
+        InspectionResponse response = inspectionService.createInspection(principal, req);
         return ApiResponse.success(response);
     }
 
     @GetMapping("/{id}/draft")
-    public ApiResponse<InspectionDraftResponse> getDraft(@PathVariable Long id) {
-        return ApiResponse.success(inspectionService.getDraft(id));
+    public ApiResponse<InspectionDraftResponse> getDraft(@AuthenticationPrincipal JwtUserPrincipal principal,
+                                                          @PathVariable Long id) {
+        return ApiResponse.success(inspectionService.getDraft(principal, id));
     }
 
     @PutMapping("/{id}/draft")
-    public ApiResponse<Void> saveDraft(@PathVariable Long id, @RequestBody InspectionRequest req) {
-        inspectionService.saveDraft(id, req);
+    public ApiResponse<Void> saveDraft(@AuthenticationPrincipal JwtUserPrincipal principal,
+                                       @PathVariable Long id, @RequestBody InspectionRequest req) {
+        inspectionService.saveDraft(principal, id, req);
         return ApiResponse.success(null);
     }
 
     @DeleteMapping("/{id}/draft")
-    public ApiResponse<Void> deleteDraft(@PathVariable Long id) {
-        inspectionService.deleteDraft(id);
+    public ApiResponse<Void> deleteDraft(@AuthenticationPrincipal JwtUserPrincipal principal,
+                                         @PathVariable Long id) {
+        inspectionService.deleteDraft(principal, id);
         return ApiResponse.success(null);
     }
 }
-

@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/models/profile_data.dart';
 import 'package:staff_app/core/router/app_router.dart';
+import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'advisor_sheet.dart';
 import 'advisor_handle.dart';
 import 'advisor_divider.dart';
 import 'advisor_menu_item.dart';
 
-class AdvisorProfileSheet extends StatelessWidget {
+class AdvisorProfileSheet extends ConsumerWidget {
   final VoidCallback onLogout;
   const AdvisorProfileSheet({super.key, required this.onLogout});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(advisorInfoProvider);
+
     return AdvisorSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -32,7 +37,7 @@ class AdvisorProfileSheet extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                'AR',
+                info.initials,
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
@@ -42,9 +47,9 @@ class AdvisorProfileSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Ali Rahman',
-            style: TextStyle(
+          Text(
+            info.name,
+            style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 19,
               fontWeight: FontWeight.w700,
@@ -52,9 +57,9 @@ class AdvisorProfileSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'ADV-001 · Service Advisor',
-            style: TextStyle(fontSize: 13, color: AppColors.text2),
+          Text(
+            '${info.id} · Service Advisor',
+            style: const TextStyle(fontSize: 13, color: AppColors.text2),
           ),
           const SizedBox(height: 8),
           Container(
@@ -76,7 +81,7 @@ class AdvisorProfileSheet extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'On Shift — Morning',
+                  info.shift.isNotEmpty ? info.shift : 'On Shift',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -94,16 +99,11 @@ class AdvisorProfileSheet extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               context.push(AppRoutes.profile, extra: ProfileData(
-                name: 'Ali Rahman',
-                id: 'ADV-001',
+                name: info.name,
+                id: info.id,
                 role: 'Service Advisor',
-                branch: 'Main Branch - Dubai',
-                shift: 'Morning (8:00 AM - 5:00 PM)',
-                email: 'ali.rahman@orientauto.com',
-                phone: '+971 50 123 4567',
-                totalJobs: 12,
-                completedJobs: 8,
-                pendingJobs: 3,
+                branch: info.branch,
+                shift: info.shift,
               ));
             },
           ),
@@ -119,31 +119,6 @@ class AdvisorProfileSheet extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
               ));
-            },
-          ),
-          AdvisorMenuItem(
-            icon: Icons.schedule_rounded,
-            label: 'Shift Details',
-            onTap: () {
-              Navigator.pop(context);
-              context.push(AppRoutes.shiftDetails, extra: {
-                'name': 'Ali Rahman',
-                'id': 'ADV-001',
-                'shift': 'Morning',
-                'start': '8:00 AM',
-                'end': '5:00 PM',
-                'branch': 'Main Branch - Dubai',
-              });
-            },
-          ),
-          AdvisorMenuItem(
-            icon: Icons.settings_outlined,
-            label: 'Settings',
-            onTap: () {
-              Navigator.pop(context);
-              context.push(AppRoutes.settings, extra: {
-                'version': '1.0.0',
-              });
             },
           ),
           const AdvisorDivider(),
@@ -174,31 +149,5 @@ class AdvisorProfileSheet extends StatelessWidget {
       ),
     );
   }
-}
-
-class ProfileData {
-  final String name;
-  final String id;
-  final String role;
-  final String branch;
-  final String shift;
-  final String email;
-  final String phone;
-  final int totalJobs;
-  final int completedJobs;
-  final int pendingJobs;
-
-  const ProfileData({
-    required this.name,
-    required this.id,
-    required this.role,
-    required this.branch,
-    required this.shift,
-    required this.email,
-    required this.phone,
-    required this.totalJobs,
-    required this.completedJobs,
-    required this.pendingJobs,
-  });
 }
 

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/local/sync_providers.dart';
+import 'package:staff_app/features/technician/data/datasources/technician_providers.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 
 final technicianRefreshProvider = StateProvider<int>((ref) => 0);
@@ -64,15 +66,24 @@ class TechnicianState {
 }
 
 class TechnicianNotifier extends Notifier<TechnicianState> {
-  final TechnicianProfileEntity profile = TechnicianProfileEntity.mock;
+  static const String _defaultEmpId = 'EMP-001';
 
-  final TechnicianStatsEntity productivity = const TechnicianStatsEntity(
-    assignedJobs: 4,
-    inProgress: 1,
-    completedToday: 1,
-    efficiency: 87,
-    avgTimePerJob: '1.2 hrs',
-    totalHoursWorked: '4h 35m',
+  TechnicianProfileEntity profile = const TechnicianProfileEntity(
+    name: '',
+    empId: _defaultEmpId,
+    role: 'Technician',
+    branch: '',
+    shift: '',
+    avatarInitials: 'T',
+  );
+
+  TechnicianStatsEntity productivity = const TechnicianStatsEntity(
+    assignedJobs: 0,
+    inProgress: 0,
+    completedToday: 0,
+    efficiency: 0,
+    avgTimePerJob: '',
+    totalHoursWorked: '',
   );
 
   final TextEditingController jobCardController = TextEditingController();
@@ -84,136 +95,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     'Pending',
   ];
 
-  final List<TechnicianJobEntity> _allJobs = [
-    TechnicianJobEntity(
-      jobCardNo: 'JC-2026-0423',
-      dateOfWork: '2026-04-23',
-      startTime: '08:30',
-      vehicleBrand: 'Toyota',
-      vehicleModel: 'Camry',
-      plateNumber: 'ABC-1234',
-      status: TechJobStatus.inProgress,
-      tasks: [
-        WorkTaskEntity(
-          id: 1,
-          description: 'Engine oil change and filter replacement',
-          status: TaskStatus.completed,
-          startTime: '08:35',
-        ),
-        WorkTaskEntity(
-          id: 2,
-          description: 'Brake pad inspection and replacement',
-          status: TaskStatus.inProgress,
-          startTime: '09:15',
-        ),
-        WorkTaskEntity(id: 3, description: 'Tire rotation and alignment check'),
-        WorkTaskEntity(
-          id: 4,
-          description: 'Battery voltage test and terminal cleaning',
-        ),
-      ],
-    ),
-    TechnicianJobEntity(
-      jobCardNo: 'JC-2026-0422',
-      dateOfWork: '2026-04-22',
-      startTime: '10:00',
-      vehicleBrand: 'Honda',
-      vehicleModel: 'Accord',
-      plateNumber: 'XYZ-5678',
-      status: TechJobStatus.completed,
-      tasks: [
-        WorkTaskEntity(
-          id: 1,
-          description: 'Full service inspection',
-          status: TaskStatus.completed,
-          startTime: '10:05',
-          endTime: '11:30',
-        ),
-        WorkTaskEntity(
-          id: 2,
-          description: 'Air filter replacement',
-          status: TaskStatus.completed,
-          startTime: '11:35',
-          endTime: '12:00',
-        ),
-        WorkTaskEntity(
-          id: 3,
-          description: 'Coolant top-up and pressure test',
-          status: TaskStatus.completed,
-          startTime: '12:05',
-          endTime: '12:45',
-        ),
-      ],
-    ),
-    TechnicianJobEntity(
-      jobCardNo: 'JC-2026-0421',
-      dateOfWork: '2026-04-21',
-      startTime: '14:30',
-      vehicleBrand: 'Ford',
-      vehicleModel: 'F-150',
-      plateNumber: 'DEF-9012',
-      status: TechJobStatus.delayed,
-      tasks: [
-        WorkTaskEntity(
-          id: 1,
-          description: 'Transmission fluid change',
-          status: TaskStatus.inProgress,
-          startTime: '14:35',
-        ),
-        WorkTaskEntity(id: 2, description: 'Differential oil replacement'),
-      ],
-    ),
-    TechnicianJobEntity(
-      jobCardNo: 'JC-2026-0420',
-      dateOfWork: '2026-04-20',
-      startTime: '09:00',
-      vehicleBrand: 'Chevrolet',
-      vehicleModel: 'Silverado',
-      plateNumber: 'GHI-3456',
-      tasks: [
-        WorkTaskEntity(id: 1, description: 'Spark plug replacement'),
-        WorkTaskEntity(id: 2, description: 'Throttle body cleaning'),
-        WorkTaskEntity(id: 3, description: 'PCV valve inspection'),
-      ],
-    ),
-    TechnicianJobEntity(
-      jobCardNo: 'JC-2026-0419',
-      dateOfWork: '2026-04-19',
-      startTime: '11:30',
-      vehicleBrand: 'BMW',
-      vehicleModel: '328i',
-      plateNumber: 'JKL-7890',
-      status: TechJobStatus.inProgress,
-      tasks: [
-        WorkTaskEntity(
-          id: 1,
-          description: 'DSC sensor calibration',
-          status: TaskStatus.completed,
-          startTime: '11:35',
-          endTime: '12:10',
-        ),
-        WorkTaskEntity(
-          id: 2,
-          description: 'Brake fluid flush',
-          status: TaskStatus.inProgress,
-          startTime: '12:15',
-        ),
-        WorkTaskEntity(id: 3, description: 'Wheel bearing inspection'),
-      ],
-    ),
-    TechnicianJobEntity(
-      jobCardNo: 'JC-2026-0418',
-      dateOfWork: '2026-04-18',
-      startTime: '15:00',
-      vehicleBrand: 'Mercedes',
-      vehicleModel: 'C-Class',
-      plateNumber: 'MNO-2468',
-      tasks: [
-        WorkTaskEntity(id: 1, description: 'AC compressor check'),
-        WorkTaskEntity(id: 2, description: 'Cabin air filter replacement'),
-      ],
-    ),
-  ];
+  final List<TechnicianJobEntity> _allJobs = [];
 
   List<TechnicianJobEntity> get allJobs => _allJobs;
 
@@ -243,14 +125,138 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   TechnicianState build() {
     ref.onDispose(jobCardController.dispose);
     _loadFromHive();
+    _loadFromRemote();
     return TechnicianState(
-      attendanceSummary: const AttendanceSummaryEntity(
-        punchIn: '08:15 AM',
-        breakTime: '25 min',
-        workHours: '4h 35m',
-      ),
-      assignedJobs: List.from(AssignedJobEntity.mockData),
+      attendanceSummary: const AttendanceSummaryEntity(),
+      assignedJobs: const [],
     );
+  }
+
+  Future<void> _loadFromRemote() async {
+    final remote = ref.read(technicianRemoteDataSourceProvider);
+    final logger = ref.read(loggerProvider);
+
+    try {
+      final profileResponse = await remote.getProfile(_defaultEmpId);
+      profile = TechnicianProfileEntity(
+        name: profileResponse.name,
+        empId: profileResponse.empId.isEmpty
+            ? _defaultEmpId
+            : profileResponse.empId,
+        role: profileResponse.role.isEmpty
+            ? 'Technician'
+            : profileResponse.role,
+        branch: profileResponse.branch,
+        shift: profileResponse.shift,
+        avatarInitials: profileResponse.avatarInitials.isEmpty
+            ? _initials(profileResponse.name)
+            : profileResponse.avatarInitials,
+      );
+
+      final jobs = await remote.getJobs(_defaultEmpId);
+      if (jobs.isNotEmpty) {
+        _allJobs.clear();
+        _allJobs.addAll(jobs.map(_jobFromResponse));
+      }
+
+      final assigned = await remote.getAssignedJobs(_defaultEmpId);
+      if (assigned.isNotEmpty) {
+        state = state.copyWith(
+          assignedJobs: assigned.map(_assignedFromResponse).toList(),
+        );
+      }
+
+      final att = await remote.getAttendance(_defaultEmpId);
+      if (att.status.isNotEmpty && att.status != 'notPunchedIn') {
+        state = state.copyWith(
+          attendanceStatus: AttendanceStatus.values.firstWhere(
+            (e) => e.name == att.status,
+            orElse: () => AttendanceStatus.notPunchedIn,
+          ),
+          attendanceSummary: AttendanceSummaryEntity(
+            punchIn: att.punchIn.isEmpty ? '--:--' : att.punchIn,
+            punchOut: att.punchOut.isEmpty ? '--:--' : att.punchOut,
+            breakTime: att.breakTime.isEmpty ? '0 min' : att.breakTime,
+            workHours: att.workHours.isEmpty ? '0h 0m' : att.workHours,
+          ),
+        );
+      }
+
+      final prod = await remote.getProductivity(_defaultEmpId);
+      if (prod.assignedJobs > 0 || prod.totalHoursWorked.isNotEmpty) {
+        productivity = TechnicianStatsEntity(
+          assignedJobs: prod.assignedJobs,
+          inProgress: prod.inProgress,
+          completedToday: prod.completedToday,
+          efficiency: prod.efficiency.toDouble(),
+          avgTimePerJob: prod.avgTimePerJob,
+          totalHoursWorked: prod.totalHoursWorked,
+        );
+      }
+
+      ref.read(technicianRefreshProvider.notifier).state++;
+    } catch (e, st) {
+      logger.e(
+        'Failed to load technician data from remote',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  TechnicianJobEntity _jobFromResponse(TechnicianJobResponse j) {
+    final tasks = <WorkTaskEntity>[];
+    for (var i = 0; i < j.tasks.length; i++) {
+      final t = j.tasks[i];
+      tasks.add(
+        WorkTaskEntity(
+          id: int.tryParse(t.id) ?? i + 1,
+          description: t.description,
+          status: TaskStatus.values.firstWhere(
+            (e) => e.name == t.status,
+            orElse: () => TaskStatus.pending,
+          ),
+          startTime: t.startTime.isEmpty ? null : t.startTime,
+          endTime: t.endTime.isEmpty ? null : t.endTime,
+        ),
+      );
+    }
+    return TechnicianJobEntity(
+      jobCardNo: j.jobCardNo,
+      dateOfWork: j.dateOfWork,
+      startTime: j.startTime,
+      vehicleBrand: j.vehicleBrand,
+      vehicleModel: j.vehicleModel,
+      plateNumber: j.plateNumber,
+      status: TechJobStatus.values.firstWhere(
+        (e) => e.name == j.status,
+        orElse: () => TechJobStatus.pending,
+      ),
+      tasks: tasks,
+      notes: j.notes,
+    );
+  }
+
+  AssignedJobEntity _assignedFromResponse(AssignedJobResponse j) {
+    return AssignedJobEntity(
+      id: j.id,
+      customerName: j.customerName,
+      vehicle: j.vehicle,
+      service: j.service,
+      amount: double.tryParse(j.amount) ?? 0,
+      status: AssignedJobStatus.values.firstWhere(
+        (e) => e.name == j.status,
+        orElse: () => AssignedJobStatus.pending,
+      ),
+    );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return 'T';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
   }
 
   void _loadFromHive() {
@@ -295,7 +301,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   Future<void> refresh() async {
     state = state.copyWith(isLoading: true);
     _loadFromHive();
-    await Future.delayed(const Duration(milliseconds: 200));
+    await _loadFromRemote();
     state = state.copyWith(isLoading: false);
   }
 
@@ -313,7 +319,8 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       attendanceStatus: AttendanceStatus.working,
       attendanceSummary: AttendanceSummaryEntity(punchIn: _fmt(now)),
     );
-    _persistAttendance();
+    await _persistAttendance();
+    await ref.read(syncEngineProvider).syncAll();
   }
 
   Future<void> punchOut() async {
@@ -331,47 +338,48 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         workHours: state.attendanceSummary.workHours,
       ),
     );
-    _persistAttendance();
+    await _persistAttendance();
+    await ref.read(syncEngineProvider).syncAll();
   }
 
   Future<void> startBreak() async {
     if (state.attendanceStatus != AttendanceStatus.working) return;
     state = state.copyWith(attendanceStatus: AttendanceStatus.onBreak);
-    _persistAttendance();
+    await _persistAttendance();
+    await ref.read(syncEngineProvider).syncAll();
   }
 
   Future<void> endBreak() async {
     if (state.attendanceStatus != AttendanceStatus.onBreak) return;
     state = state.copyWith(attendanceStatus: AttendanceStatus.working);
-    _persistAttendance();
+    await _persistAttendance();
+    await ref.read(syncEngineProvider).syncAll();
   }
 
-  void _enqueueSync(
+  Future<void> _enqueueSync(
     String entityId,
     Map<String, dynamic> payload, {
-    String entityType = 'technician_attendance',
+    String entityType = 'attendance',
     ChangeType changeType = ChangeType.update,
-  }) {
+  }) async {
     try {
       final queue = ref.read(syncQueueProvider);
-      _generateId(entityType).then((id) {
-        queue.enqueue(
-          SyncOperation(
-            id: id,
-            entityType: entityType,
-            entityId: entityId,
-            changeType: changeType,
-            payload: payload,
-            timestamp: DateTime.now().millisecondsSinceEpoch,
-          ),
-        );
-        ref.read(syncQueueProvider);
-      });
+      final id = await _generateId(entityType);
+      await queue.enqueue(
+        SyncOperation(
+          id: id,
+          entityType: entityType,
+          entityId: entityId,
+          changeType: changeType,
+          payload: payload,
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
     } catch (e, st) {
       ref
           .read(loggerProvider)
           .e(
-            'Failed to save technician state to Hive',
+            'Failed to enqueue $entityType sync op',
             error: e,
             stackTrace: st,
           );
@@ -381,7 +389,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   static Future<String> _generateId(String entityType) {
     final prefix =
         {
-          'technician_attendance': 'ATT',
+          'attendance': 'ATT',
           'assigned_job': 'AJOB',
           'technician_job': 'TJOB',
           'job_complete': 'JCMP',
@@ -390,28 +398,31 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     return IdGenerator.nextId(prefix);
   }
 
-  void _persistAttendance() {
+  Future<void> _persistAttendance() async {
     final payload = {
+      'empId': profile.empId,
       'status': state.attendanceStatus.name,
       'punchIn': state.attendanceSummary.punchIn,
       'punchOut': state.attendanceSummary.punchOut,
       'breakTime': state.attendanceSummary.breakTime,
       'workHours': state.attendanceSummary.workHours,
+      'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
     };
     final box = Hive.box<dynamic>('technician_jobs');
     box.put('attendance', payload);
-    _enqueueSync('attendance', payload);
+    await _enqueueSync('attendance', payload);
   }
 
-  void updateAssignedJobStatus(String id, AssignedJobStatus status) {
+  Future<void> updateAssignedJobStatus(String id, AssignedJobStatus status) async {
     final jobs = List<AssignedJobEntity>.from(state.assignedJobs);
     final idx = jobs.indexWhere((j) => j.id == id);
     if (idx == -1) return;
     jobs[idx] = jobs[idx].copyWith(status: status);
     state = state.copyWith(assignedJobs: jobs);
-    final payload = {'id': id, 'status': status.name};
+    final payload = {'empId': profile.empId, 'status': status.name};
     Hive.box<dynamic>('technician_jobs').put('assigned_$id', payload);
-    _enqueueSync(id, payload, entityType: 'assigned_job');
+    await _enqueueSync(id, payload, entityType: 'assigned_job');
+    await ref.read(syncEngineProvider).syncAll();
   }
 
   void searchJobCard() {
@@ -543,15 +554,14 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   Future<void> saveChanges(TechnicianJobEntity job) async {
     if (state.isSaving) return;
     state = state.copyWith(isSaving: true);
-    await Future.delayed(const Duration(milliseconds: 200));
     _persistJob(job);
+    await ref.read(syncEngineProvider).syncAll();
     state = state.copyWith(isSaving: false);
   }
 
   Future<void> completeJob(TechnicianJobEntity job) async {
     if (state.isSaving) return;
     state = state.copyWith(isSaving: true);
-    await Future.delayed(const Duration(milliseconds: 900));
     final now = DateFormat('HH:mm').format(DateTime.now());
     final updatedTasks = List<WorkTaskEntity>.from(job.tasks);
     for (var i = 0; i < updatedTasks.length; i++) {
@@ -570,6 +580,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final local = GenericLocalDataSource(Hive.box<dynamic>('technician_jobs'));
     final payload = {
       'jobCardNo': updatedJob.jobCardNo,
+      'empId': profile.empId,
       'dateOfWork': updatedJob.dateOfWork,
       'startTime': updatedJob.startTime,
       'vehicleBrand': updatedJob.vehicleBrand,
@@ -602,6 +613,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       timestamp: DateTime.now().millisecondsSinceEpoch,
     );
     await queue.enqueue(op);
+    await ref.read(syncEngineProvider).syncAll();
 
     state = state.copyWith(selectedJob: updatedJob, isSaving: false);
   }

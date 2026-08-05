@@ -7,17 +7,12 @@ Wants=mysql.service redis.service
 Type=simple
 User=orient
 WorkingDirectory=/opt/orient-api
+# CR-6: no secrets in this file. All environment values (DB password, JWT secret,
+# encryption key, ...) live in /etc/orient/orient-api.env, which is NOT committed.
+EnvironmentFile=/etc/orient/orient-api.env
 ExecStart=/usr/bin/java -jar /opt/orient-api/orient-gateway.jar --spring.profiles.active=mysql
 Restart=on-failure
 RestartSec=10
-Environment="DB_HOST=localhost"
-Environment="DB_PORT=3306"
-Environment="DB_NAME=orient_workshop"
-Environment="DB_USERNAME=root"
-Environment="DB_PASSWORD=root"
-Environment="REDIS_HOST=localhost"
-Environment="REDIS_PORT=6379"
-Environment="JWT_SECRET=your-256-bit-secret-key-change-in-production"
 SuccessExitStatus=143
 
 [Install]

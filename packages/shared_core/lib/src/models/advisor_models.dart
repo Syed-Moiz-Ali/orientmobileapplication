@@ -79,12 +79,40 @@ class ReminderResponse {
     dueDate: j['dueDate']as String? ?? '',priority: j['priority']as String? ?? 'medium');
 }
 
+class ReportActivityDto {
+  final String day;
+  final int count;
+  const ReportActivityDto({this.day = '', this.count = 0});
+  factory ReportActivityDto.fromJson(Map<String, dynamic> j) =>
+      ReportActivityDto(
+        day: j['day'] as String? ?? '',
+        count: (j['count'] as num?)?.toInt() ?? 0,
+      );
+}
+
 class ReportResponse {
-  final int totalJobs;final int completedJobs;final int inProgressJobs;final int cancelledJobs;
-  const ReportResponse({this.totalJobs=0,this.completedJobs=0,this.inProgressJobs=0,this.cancelledJobs=0});
-  factory ReportResponse.fromJson(Map<String,dynamic> j) => ReportResponse(
-    totalJobs: j['totalJobs']as int? ?? 0,completedJobs: j['completedJobs']as int? ?? 0,
-    inProgressJobs: j['inProgressJobs']as int? ?? 0,cancelledJobs: j['cancelledJobs']as int? ?? 0);
+  final int totalJobs;
+  final int completedJobs;
+  final int inProgressJobs;
+  final int cancelledJobs;
+  final List<ReportActivityDto> weeklyActivity;
+  const ReportResponse({
+    this.totalJobs = 0,
+    this.completedJobs = 0,
+    this.inProgressJobs = 0,
+    this.cancelledJobs = 0,
+    this.weeklyActivity = const [],
+  });
+  factory ReportResponse.fromJson(Map<String, dynamic> j) => ReportResponse(
+    totalJobs: j['totalJobs'] as int? ?? 0,
+    completedJobs: j['completedJobs'] as int? ?? 0,
+    inProgressJobs: j['inProgressJobs'] as int? ?? 0,
+    cancelledJobs: j['cancelledJobs'] as int? ?? 0,
+    weeklyActivity: (j['weeklyActivity'] as List<dynamic>?)
+        ?.map((e) => ReportActivityDto.fromJson(e as Map<String, dynamic>))
+        .toList() ??
+        const [],
+  );
 }
 
 class RepairOrderResponse {

@@ -17,6 +17,7 @@ public class Notification {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
+    private Long branchId;
     private String title;
     private String body;
     private String type;

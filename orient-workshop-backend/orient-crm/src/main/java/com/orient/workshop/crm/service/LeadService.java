@@ -1,6 +1,8 @@
 package com.orient.workshop.crm.service;
 
+import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.NotFoundException;
+import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.crm.model.dto.LeadActivityResponse;
 import com.orient.workshop.crm.model.dto.LeadResponse;
 import com.orient.workshop.crm.model.entity.Lead;
@@ -13,12 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class LeadService {
+
+    private static final Set<String> VALID_STATUSES = Set.of(
+            "ACTIVE", "WON", "UNANSWERED", "LOST", "NO_RESPONSE");
 
     private final LeadMapper leadMapper;
     private final LeadActivityMapper activityMapper;
@@ -45,6 +51,8 @@ public class LeadService {
 
     @Transactional
     public LeadResponse createLead(LeadResponse req) {
+        String status = req.getStatus() != null ? req.getStatus() : "ACTIVE";
+        validateStatus(status);
         Lead lead = Lead.builder()
                 .leadNumber(req.getLeadNumber() != null ? req.getLeadNumber() : generateLeadNumber())
                 .customerName(req.getCustomerName())
@@ -52,7 +60,7 @@ public class LeadService {
                 .email(req.getEmail() != null ? req.getEmail() : "")
                 .source(req.getSource() != null ? req.getSource() : "MANUAL")
                 .assignedTo(req.getAssignedTo() != null ? req.getAssignedTo() : "")
-                .status(req.getStatus() != null ? req.getStatus() : "ACTIVE")
+                .status(status)
                 .lastActivity(req.getLastActivity() != null ? req.getLastActivity() : "Just now")
                 .notes(req.getNotes())
                 .leadValue(req.getLeadValue() != null ? req.getLeadValue() : BigDecimal.ZERO)
@@ -76,7 +84,10 @@ public class LeadService {
         if (req.getEmail() != null) lead.setEmail(req.getEmail());
         if (req.getSource() != null) lead.setSource(req.getSource());
         if (req.getAssignedTo() != null) lead.setAssignedTo(req.getAssignedTo());
-        if (req.getStatus() != null) lead.setStatus(req.getStatus());
+        if (req.getStatus() != null) {
+            validateStatus(req.getStatus());
+            lead.setStatus(req.getStatus());
+        }
         if (req.getLastActivity() != null) lead.setLastActivity(req.getLastActivity());
         if (req.getNotes() != null) lead.setNotes(req.getNotes());
         if (req.getLeadValue() != null) lead.setLeadValue(req.getLeadValue());
@@ -183,6 +194,13 @@ public class LeadService {
     }
 
     private String generateLeadNumber() {
-        return "LD-" + System.currentTimeMillis();
+        return IdGenerator.shortRef("LD");
+    }
+
+    private void validateStatus(String status) {
+        if (status == null || !VALID_STATUSES.contains(status)) {
+            throw new BadRequestException("Invalid lead status '" + status + "'. Allowed values: "
+                    + String.join(", ", VALID_STATUSES));
+        }
     }
 }

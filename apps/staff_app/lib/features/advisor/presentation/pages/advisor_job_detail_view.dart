@@ -1,10 +1,12 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
+import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_status_badge.dart';
@@ -91,12 +93,6 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             letterSpacing: 0.3,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert_rounded, color: AppColors.text2),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
@@ -192,7 +188,13 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            child: _actionButton(context, 'Call Customer', Icons.phone_outlined, AppColors.text3, () {}),
+            child: _actionButton(
+              context,
+              'Call Customer',
+              Icons.phone_outlined,
+              AppColors.text3,
+              _callCustomer,
+            ),
           ),
         ],
       ),
@@ -394,11 +396,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppDimensions.r7),
-                      child: Image.file(
-                        File(photoPaths[i]),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: AppColors.text3, size: 20),
-                      ),
+                      child: localImage(photoPaths[i], fit: BoxFit.cover),
                     ),
                   ),
                 ),
@@ -407,7 +405,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           ],
           if (hasVideos) ...[
             const SizedBox(height: 6),
-            for (final vp in videoPaths.where((p) => p.isNotEmpty && File(p).existsSync())) ...[
+            for (final vp in videoPaths.where((p) => p.isNotEmpty && localFileExists(p))) ...[
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => _VideoDetailPlayer(filePath: vp)));
@@ -442,7 +440,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               ),
             ],
           ],
-          if (audioPath.isNotEmpty && File(audioPath).existsSync()) ...[
+          if (audioPath.isNotEmpty && localFileExists(audioPath)) ...[
             const SizedBox(height: 6),
             _AudioDetailPlayer(audioPath: audioPath),
           ],
@@ -524,6 +522,20 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     ];
   }
 
+  void _callCustomer() {
+    final phone = _getVal('phoneNumber').replaceAll(RegExp(r'[^\d+]'), '');
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No phone number on file'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    launchUrl(Uri.parse('tel:$phone'), mode: LaunchMode.externalApplication);
+  }
+
   void _showFullImage(BuildContext context, String path) {
     showDialog(
       context: context,
@@ -531,7 +543,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         backgroundColor: Colors.transparent,
         child: Stack(
           children: [
-            InteractiveViewer(child: Image.file(File(path))),
+            InteractiveViewer(child: localImage(path, fit: BoxFit.contain)),
             Positioned(
               top: 0,
               right: 0,
@@ -1073,7 +1085,8 @@ class _VideoDetailPlayerState extends State<_VideoDetailPlayer> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.file(File(widget.filePath));
+    if (kIsWeb) return;
+    _controller = createVideoController(widget.filePath);
     _controller.initialize().then((_) {
       if (mounted) {
         setState(() => _initialized = true);
@@ -1087,7 +1100,9 @@ class _VideoDetailPlayerState extends State<_VideoDetailPlayer> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (!kIsWeb && _initialized) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 

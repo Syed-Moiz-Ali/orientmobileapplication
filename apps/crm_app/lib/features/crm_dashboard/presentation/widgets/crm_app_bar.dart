@@ -26,9 +26,7 @@ class CrmAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [CrmColors.gStart, CrmColors.gEnd]),
-        ),
+        decoration: const BoxDecoration(gradient: LinearGradient(colors: [CrmColors.gStart, CrmColors.gEnd])),
       ),
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -41,7 +39,8 @@ class CrmAppBar extends StatelessWidget implements PreferredSizeWidget {
           onTap: () => Scaffold.of(ctx).openDrawer(),
           borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
           child: const SizedBox(
-            width: 56, height: 56,
+            width: 56,
+            height: 56,
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -62,8 +61,14 @@ class CrmAppBar extends StatelessWidget implements PreferredSizeWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(_titles[notifier.selectedIndex], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-          const Text('CRM \u2014 Bircon, Hifri', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.4)),
+          Text(
+            _titles[notifier.selectedIndex],
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+          ),
+          const Text(
+            'CRM \u2014 Bircon, Hifri',
+            style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.4),
+          ),
         ],
       ),
       actions: [
@@ -101,18 +106,6 @@ final _profileData = ProfileSheetData(
   initials: 'A',
   roleLabel: 'Admin',
   roleBadge: 'Super Admin \u2022 CRM',
-  menuItems: [
-    ProfileSheetItem(
-      icon: Icons.person_outline_rounded,
-      label: 'My Profile',
-      onTap: () {},
-    ),
-    ProfileSheetItem(
-      icon: Icons.settings_outlined,
-      label: 'Settings',
-      onTap: () {},
-    ),
-  ],
 );
 
 class _HamburgerLine extends StatelessWidget {
@@ -123,11 +116,9 @@ class _HamburgerLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 2, width: width,
-      decoration: BoxDecoration(
-        color: faded ? Colors.white70 : Colors.white,
-        borderRadius: BorderRadius.circular(1),
-      ),
+      height: 2,
+      width: width,
+      decoration: BoxDecoration(color: faded ? Colors.white70 : Colors.white, borderRadius: BorderRadius.circular(1)),
     );
   }
 }

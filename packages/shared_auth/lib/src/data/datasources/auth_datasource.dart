@@ -1,7 +1,11 @@
 import 'package:shared_auth/src/domain/entities/auth_result.dart';
 import 'package:shared_core/src/errors/result.dart';
+import 'package:shared_core/src/models/auth_models.dart';
 
 abstract class AuthDatasource {
+  /// Validates the current JWT against the server and returns the caller's
+  /// unified profile (identity + role + staff/customer record).
+  Future<Result<MeResponse>> getMe();
   Future<Result<void>> sendOtp(String phone);
   Future<Result<AuthResult>> verifyOtp(String phone, String otp);
   Future<Result<void>> sendEmailOtp(String email);

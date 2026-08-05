@@ -11,6 +11,14 @@ class AuthRemoteDatasource implements AuthDatasource {
   AuthRemoteDatasource(this._client);
 
   @override
+  Future<Result<MeResponse>> getMe() async {
+    return _client.get<MeResponse>(
+      ApiEndpoints.me,
+      fromJson: (d) => MeResponse.fromJson(d as Map<String, dynamic>),
+    );
+  }
+
+  @override
   Future<Result<void>> sendOtp(String phone) async {
     return _client.post(
       ApiEndpoints.sendOtp,

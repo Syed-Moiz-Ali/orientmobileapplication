@@ -10,4 +10,7 @@ import java.util.Optional;
 public interface StaffMapper extends BaseMapper<Staff> {
     @Select("SELECT * FROM staff WHERE emp_id = #{empId} AND is_active = TRUE LIMIT 1")
     Optional<Staff> findByEmpId(@Param("empId") String empId);
+
+    @Select("SELECT * FROM staff WHERE user_id = #{userId} AND is_active = TRUE LIMIT 1")
+    Optional<Staff> findByUserId(@Param("userId") Long userId);
 }

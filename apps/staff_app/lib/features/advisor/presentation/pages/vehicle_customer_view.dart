@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
@@ -97,21 +98,6 @@ class _BodyState extends ConsumerState<_Body> {
             ),
           ),
 
-          // ── FAB (teal) ────────────────────────────────────────────────
-          Positioned(
-            bottom: 80,
-            right: 16,
-            child: FloatingActionButton(
-              backgroundColor: AppColors.primary,
-              onPressed: () {},
-              child: const Icon(
-                Icons.person_pin,
-                color: Colors.white,
-                size: 26,
-              ),
-            ),
-          ),
-
           // ── NEXT button ────────────────────────────────────────────────
           Positioned(
             bottom: 0,
@@ -158,13 +144,13 @@ class _BodyState extends ConsumerState<_Body> {
                   final queue = ref.read(syncQueueProvider);
                   await queue.enqueue(SyncOperation(
                     id: id,
-                    entityType: 'inspection',
+                    entityType: 'vehicle_customer',
                     entityId: id,
                     changeType: ChangeType.create,
                     payload: payload,
                     timestamp: DateTime.now().millisecondsSinceEpoch,
                   ));
-                  ref.read(syncEngineProvider).syncAll();
+                  await ref.read(syncEngineProvider).syncAll();
                   ref.read(advisorRefreshProvider.notifier).state++;
                   if (!context.mounted) return;
                   _showInspectionPrompt(context);
@@ -443,6 +429,15 @@ class _BodyState extends ConsumerState<_Body> {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SEARCH MODE SECTION (Image 1)
 // ─────────────────────────────────────────────────────────────────────────────
+void _showComingSoon(BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Document upload coming soon'),
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
 class _SearchModeSection extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
@@ -457,6 +452,20 @@ class _SearchModeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final matches = ref.watch(advisorVehicleMatchesProvider);
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+
+    void applyMatch(VehicleMatch m) {
+      notifier
+        ..setCustomerName(m.customerName)
+        ..setPhone(m.phoneNumber)
+        ..setEmail(m.email)
+        ..setRegistrationNumber(m.registrationNumber)
+        ..setVin(m.vin)
+        ..setMake(m.make)
+        ..setModel(m.model);
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -480,6 +489,35 @@ class _SearchModeSection extends StatelessWidget {
             onChanged: (v) =>
                 ref.read(vehicleCustomerFormProvider.notifier).setSearchMode(v),
           ),
+          if (state.searchMode == SearchMode.byVehicleReg) ...[
+            const SizedBox(height: 12),
+            TextField(
+              onChanged: (v) => ref
+                  .read(vehicleCustomerFormProvider.notifier)
+                  .setCustomerSearch(v),
+              decoration: InputDecoration(
+                hintText: 'Vehicle Reg No. / VIN',
+                hintStyle: const TextStyle(color: kHintColor, fontSize: 13),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: kHintColor,
+                  size: 18,
+                ),
+                filled: true,
+                fillColor: kFieldBg,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(AppDimensions.r10),
+                  ),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Text(
@@ -524,6 +562,68 @@ class _SearchModeSection extends StatelessWidget {
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 12,
+                ),
+              ),
+            ),
+          ],
+          if (matches.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ...matches.map(
+              (m) => InkWell(
+                onTap: () => applyMatch(m),
+                borderRadius: BorderRadius.circular(AppDimensions.r8),
+                child: Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: kTealLight,
+                    borderRadius: BorderRadius.circular(AppDimensions.r8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.person_search_outlined,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              m.customerName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: kTextColor,
+                              ),
+                            ),
+                            Text(
+                              '${m.registrationNumber} · ${m.phoneNumber}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.text3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.add_circle_outline,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -719,11 +819,11 @@ class _CustomerDetailsSection extends StatelessWidget {
           AdvisorTextField(
             hint: 'Phone number',
             keyboardType: TextInputType.phone,
-            prefix: const Padding(
-              padding: EdgeInsets.only(left: 12, right: 4),
+            prefix: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 4),
               child: Text(
-                '+91',
-                style: TextStyle(
+                PhoneInputField.countries.first.code,
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: kTextColor,
@@ -939,23 +1039,6 @@ class _VehicleDetailsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return SectionCard(
       title: 'Vehicle Details',
-      trailing: OutlinedButton.icon(
-        onPressed: () {},
-        icon: const Icon(Icons.history, size: 14, color: AppColors.primary),
-        label: const Text(
-          'View History',
-          style: TextStyle(fontSize: 12, color: AppColors.primary),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.primary),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
-          ),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1101,11 +1184,17 @@ class _VehicleDetailsSection extends StatelessWidget {
             kGap12,
 
             const FieldLabel('Registration Certificate'),
-            _ImageUploadButton(label: 'Images', onTap: () {}),
+            _ImageUploadButton(
+              label: 'Images',
+              onTap: () => _showComingSoon(context),
+            ),
             kGap12,
 
             const FieldLabel('Insurance'),
-            _ImageUploadButton(label: 'Images', onTap: () {}),
+            _ImageUploadButton(
+              label: 'Images',
+              onTap: () => _showComingSoon(context),
+            ),
           ],
 
           const SizedBox(height: 8),
@@ -1273,7 +1362,6 @@ class _ImageUploadButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   const _ImageUploadButton({required this.label, required this.onTap});
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

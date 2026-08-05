@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import com.orient.workshop.common.response.ApiResponse;
 import com.orient.workshop.core.model.entity.Branch;
+import com.orient.workshop.owner.model.dto.BranchRequest;
 import com.orient.workshop.owner.service.BranchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,13 +26,12 @@ public class BranchController {
     }
 
     @PostMapping
-    public ApiResponse<Branch> create(@Valid @RequestBody Branch req) {
+    public ApiResponse<Branch> create(@Valid @RequestBody BranchRequest req) {
         return ApiResponse.success(branchService.create(req));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<Branch> update(@PathVariable Long id, @RequestBody Branch req) {
+    public ApiResponse<Branch> update(@PathVariable Long id, @RequestBody BranchRequest req) {
         return ApiResponse.success(branchService.update(id, req));
     }
 }
-

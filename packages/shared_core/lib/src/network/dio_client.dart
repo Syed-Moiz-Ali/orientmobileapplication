@@ -20,7 +20,7 @@ Dio createDio() {
 
   dio.interceptors.add(EnvelopeInterceptor());
   dio.interceptors.add(LoggingInterceptor());
-  dio.interceptors.add(RetryInterceptor());
+  dio.interceptors.add(RetryInterceptor(dio: dio));
 
   return dio;
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/job_cards/domain/entities/job_card.dart';
 import 'package:owner_app/features/job_cards/presentation/providers/job_card_providers.dart';
@@ -19,7 +20,13 @@ class JobCardDetailView extends ConsumerWidget {
         backgroundColor: Colors.white, elevation: 0, centerTitle: true,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 18), onPressed: () => context.pop()),
         title: Text(jobCard.id, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
-        actions: [IconButton(icon: const Icon(Icons.more_vert, color: AppColors.textPrimary, size: 22), onPressed: () {})],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share, color: AppColors.textPrimary, size: 22),
+            tooltip: 'Share job card',
+            onPressed: () => _shareJobCard(jobCard),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -42,11 +49,25 @@ class JobCardDetailView extends ConsumerWidget {
             Text(_formatAmount(jobCard.amount), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
           ])),
           const SizedBox(height: 24),
-          _buildActions(context),
+          _buildActions(context, ref, jobCard),
           const SizedBox(height: 16),
         ]),
       ),
     );
+  }
+
+  Future<void> _shareJobCard(JobCard jc) async {
+    final summary = '''
+${jc.id}
+Customer: ${jc.customerName}
+Vehicle: ${jc.vehicleDisplay}
+Services: ${jc.services.join(', ')}
+Technician: ${jc.technician}
+Est. Completion: ${jc.estCompletion}
+Status: ${_statusLabel(jc.status)}
+Amount: ${_formatAmount(jc.amount)}
+''';
+    await Share.share(summary, subject: 'Job Card ${jc.id}');
   }
 
   Widget _buildHeaderCard(JobCard jc) {
@@ -79,20 +100,30 @@ class JobCardDetailView extends ConsumerWidget {
     );
   }
 
-  Widget _buildActions(BuildContext context) {
+  Widget _buildActions(BuildContext context, WidgetRef ref, JobCard jobCard) {
     return Column(children: [
-      SizedBox(width: double.infinity, child: ElevatedButton.icon(onPressed: () {}, icon: const Icon(Icons.check_circle_outline, size: 18),
+      SizedBox(width: double.infinity, child: ElevatedButton.icon(
+        onPressed: () {
+          ref.read(jobCardsProvider.notifier).markComplete(jobCard.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Job card marked as completed'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+        icon: const Icon(Icons.check_circle_outline, size: 18),
         label: const Text('Mark as Complete'), style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: AppDimensions.s14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)), elevation: 0,
           textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)))),
       const SizedBox(height: 10),
       Row(children: [
-        Expanded(child: OutlinedButton.icon(onPressed: () {}, icon: const Icon(Icons.print_outlined, size: 16), label: const Text('Print'),
+        Expanded(child: OutlinedButton.icon(onPressed: () => _shareJobCard(jobCard), icon: const Icon(Icons.print_outlined, size: 16), label: const Text('Print / Export'),
           style: OutlinedButton.styleFrom(foregroundColor: AppColors.primary, side: const BorderSide(color: AppColors.primary),
             padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
             textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)))),
         const SizedBox(width: 10),
-        Expanded(child: OutlinedButton.icon(onPressed: () {}, icon: const Icon(Icons.share_outlined, size: 16), label: const Text('Share'),
+        Expanded(child: OutlinedButton.icon(onPressed: () => _shareJobCard(jobCard), icon: const Icon(Icons.share_outlined, size: 16), label: const Text('Share'),
           style: OutlinedButton.styleFrom(foregroundColor: AppColors.text3, side: const BorderSide(color: AppColors.border),
             padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
             textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)))),
