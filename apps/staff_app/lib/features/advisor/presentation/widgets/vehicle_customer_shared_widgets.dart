@@ -43,22 +43,29 @@ class SectionCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
               children: [
-                Text('– ', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 15)),
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: kTextColor)),
+                Text(
+                  '– ',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: kTextColor,
+                  ),
+                ),
                 const Spacer(),
                 if (trailing != null) trailing!,
               ],
             ),
           ),
           Divider(height: 1, color: AppColors.surfaceAlt),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: child,
-          ),
+          Padding(padding: const EdgeInsets.all(16), child: child),
         ],
       ),
     );
@@ -77,11 +84,14 @@ class FieldLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: kLabelColor)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: kLabelColor,
+            ),
+          ),
           if (required)
             const Text(' *', style: TextStyle(color: Colors.red, fontSize: 13)),
         ],
@@ -143,8 +153,10 @@ class AdvisorTextField extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
           borderSide: const BorderSide(color: kBlue, width: 1.5),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
       ),
     );
   }
@@ -178,22 +190,30 @@ class AdvisorDropdown extends StatelessWidget {
         child: DropdownButton<String>(
           value: value?.isEmpty ?? true ? null : value,
           isExpanded: true,
-          hint: Text(hint,
-              style: const TextStyle(color: kHintColor, fontSize: 13)),
-          icon: const Icon(Icons.keyboard_arrow_down,
-              color: kHintColor, size: 20),
+          hint: Text(
+            hint,
+            style: const TextStyle(color: kHintColor, fontSize: 13),
+          ),
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            color: kHintColor,
+            size: 20,
+          ),
           style: TextStyle(
             fontSize: 13,
             color: kTextColor,
             fontWeight: filled ? FontWeight.w600 : FontWeight.normal,
           ),
           items: items
-              .map((i) => DropdownMenuItem(
-                    value: i,
-                    child: Text(i,
-                        style: const TextStyle(
-                            fontSize: 13, color: kTextColor)),
-                  ))
+              .map(
+                (i) => DropdownMenuItem(
+                  value: i,
+                  child: Text(
+                    i,
+                    style: const TextStyle(fontSize: 13, color: kTextColor),
+                  ),
+                ),
+              )
               .toList(),
           onChanged: onChanged,
         ),
@@ -206,8 +226,7 @@ class MoreLessLink extends StatelessWidget {
   final bool showMore;
   final VoidCallback onTap;
 
-  const MoreLessLink(
-      {super.key, required this.showMore, required this.onTap});
+  const MoreLessLink({super.key, required this.showMore, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -230,4 +249,3 @@ class MoreLessLink extends StatelessWidget {
 
 const Widget kGap12 = SizedBox(height: 12);
 const Widget kGap16 = SizedBox(height: 16);
-

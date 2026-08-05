@@ -68,7 +68,10 @@ class _AdvisorTabButtonState extends State<AdvisorTabButton> {
               if (widget.badge != null) ...[
                 const SizedBox(width: 5),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: on
                         ? widget.badgeColor
@@ -92,4 +95,3 @@ class _AdvisorTabButtonState extends State<AdvisorTabButton> {
     );
   }
 }
-

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_empty_fallbacks.dart';
 
 class CustomerApprovalsTab extends ConsumerWidget {
   const CustomerApprovalsTab({super.key});
@@ -184,14 +187,16 @@ class CustomerApprovalsTab extends ConsumerWidget {
           const SizedBox(height: 12),
           if (invoices.isEmpty)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: EmptyState(icon: Icons.receipt_outlined, message: 'No invoices yet'),
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: EmptyInvoicesCard(),
             )
           else
             ...invoices.map(
               (inv) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: AppCard(
+                child: GestureDetector(
+                  onTap: () => context.push(AppRoutes.customerInvoiceDetail, extra: inv),
+                  child: AppCard(
                   padding: const EdgeInsets.all(AppDimensions.s14),
                   child: Row(
                     children: [
@@ -232,6 +237,7 @@ class CustomerApprovalsTab extends ConsumerWidget {
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
             ),

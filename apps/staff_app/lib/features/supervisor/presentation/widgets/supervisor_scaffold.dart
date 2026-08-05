@@ -89,6 +89,7 @@ class SupervisorScaffold extends ConsumerWidget {
       bottomNavigationBar: _BottomNav(
         selectedIndex: state.selectedIndex,
         onTap: notifier.selectTab,
+        hasQueueBadge: notifier.bookings.isNotEmpty,
       ),
     );
   }
@@ -97,7 +98,12 @@ class SupervisorScaffold extends ConsumerWidget {
 class _BottomNav extends StatelessWidget {
   final int selectedIndex;
   final void Function(int) onTap;
-  const _BottomNav({required this.selectedIndex, required this.onTap});
+  final bool hasQueueBadge;
+  const _BottomNav({
+    required this.selectedIndex,
+    required this.onTap,
+    this.hasQueueBadge = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -147,12 +153,32 @@ class _BottomNav extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: sel ? AppColors.primaryBg : Colors.transparent,
-                          borderRadius: BorderRadius.circular(AppDimensions.r24),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r24,
+                          ),
                         ),
-                        child: Icon(
-                          sel ? items[i].$1 : items[i].$2,
-                          color: sel ? AppColors.accent : AppColors.text3,
-                          size: 26,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(
+                              sel ? items[i].$1 : items[i].$2,
+                              color: sel ? AppColors.accent : AppColors.text3,
+                              size: 26,
+                            ),
+                            if (i == 3 && hasQueueBadge)
+                              Positioned(
+                                top: -2,
+                                right: -2,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.danger,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 3),

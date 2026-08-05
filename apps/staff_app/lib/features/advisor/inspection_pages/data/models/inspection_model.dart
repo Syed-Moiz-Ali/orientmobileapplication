@@ -3,9 +3,12 @@ enum ItemStatus { good, fair, poor }
 extension ItemStatusExt on ItemStatus {
   String get label {
     switch (this) {
-      case ItemStatus.good: return 'Good';
-      case ItemStatus.fair: return 'Fair';
-      case ItemStatus.poor: return 'Poor';
+      case ItemStatus.good:
+        return 'Good';
+      case ItemStatus.fair:
+        return 'Fair';
+      case ItemStatus.poor:
+        return 'Poor';
     }
   }
 }
@@ -14,7 +17,11 @@ class InspectionSection {
   final String id;
   final String label;
   final List<String> items;
-  const InspectionSection({required this.id, required this.label, required this.items});
+  const InspectionSection({
+    required this.id,
+    required this.label,
+    required this.items,
+  });
 }
 
 const List<InspectionSection> kInspectionSections = [
@@ -63,10 +70,7 @@ const List<InspectionSection> kInspectionSections = [
   InspectionSection(
     id: 'battery',
     label: '04. BATTERY PERFORMANCE',
-    items: [
-      'Battery Terminal / Cables / Mounting',
-      'Storage Capacity Test',
-    ],
+    items: ['Battery Terminal / Cables / Mounting', 'Storage Capacity Test'],
   ),
 ];
 
@@ -110,4 +114,3 @@ const List<String> kPartList = [
   'Radiator cap',
   'Drive belt',
 ];
-

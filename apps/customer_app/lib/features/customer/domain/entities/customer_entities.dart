@@ -61,34 +61,7 @@ class CustomerVehicleEntity {
   String get displayName => '$brand $model';
   String get shortLabel => '$brand $model \u00b7 $plateNumber';
 
-  static const List<CustomerVehicleEntity> mock = [
-    CustomerVehicleEntity(
-      id: '1',
-      brand: 'BMW',
-      model: '3 Series',
-      plateNumber: 'AB19 XYZ',
-      vin: 'WBA8E9G58GNT44078',
-      color: 'Alpine White',
-      year: 2019,
-      mileage: '41,200 km',
-      lastService: '10 Nov 2025',
-      nextDue: '10 May 2026',
-      healthScore: 82,
-    ),
-    CustomerVehicleEntity(
-      id: '2',
-      brand: 'Ford',
-      model: 'Focus',
-      plateNumber: 'FO21 CUS',
-      vin: '1FADP3F29EL381234',
-      color: 'Ocean Blue',
-      year: 2021,
-      mileage: '28,500 km',
-      lastService: '22 Sep 2025',
-      nextDue: '22 Mar 2026',
-      healthScore: 64,
-    ),
-  ];
+  static const List<CustomerVehicleEntity> mock = [];
   Map<String, dynamic> toJson() => {'id': id, 'brand': brand, 'model': model, 'plateNumber': plateNumber, 'vin': vin, 'color': color, 'year': year, 'mileage': mileage, 'lastService': lastService, 'nextDue': nextDue, 'healthScore': healthScore};
   factory CustomerVehicleEntity.fromJson(Map<String, dynamic> j) => CustomerVehicleEntity(
     id: j['id'] as String? ?? '', brand: j['brand'] as String? ?? '', model: j['model'] as String? ?? '',
@@ -166,7 +139,7 @@ class CustomerServiceEntity {
   final List<ServiceStageEntity> stages;
 
   const CustomerServiceEntity({
-    this.hasActiveJob = true,
+    this.hasActiveJob = false,
     required this.jobCardId,
     required this.plateNumber,
     required this.vehicleName,
@@ -180,40 +153,17 @@ class CustomerServiceEntity {
   });
 
   static const mock = CustomerServiceEntity(
-    jobCardId: 'JC-2026-1245',
-    plateNumber: 'AB19 XYZ',
-    vehicleName: 'BMW 3 Series',
-    service: 'Full Inspection',
-    started: '09:00 AM',
-    estCompletion: '12:30 PM',
-    progressPercent: 65,
-    currentStage: 'Service Work',
-    technicianName: 'Khalid A.',
-    stages: [
-      ServiceStageEntity(
-        name: 'Vehicle Received',
-        time: '09:00 AM',
-        status: StageStatus.done,
-      ),
-      ServiceStageEntity(
-        name: 'Initial Inspection',
-        time: '09:20 AM',
-        status: StageStatus.done,
-      ),
-      ServiceStageEntity(
-        name: 'Parts Preparation',
-        time: '09:45 AM',
-        status: StageStatus.done,
-      ),
-      ServiceStageEntity(
-        name: 'Service Work',
-        time: '10:15 AM',
-        status: StageStatus.inProgress,
-      ),
-      ServiceStageEntity(name: 'Quality Check', status: StageStatus.pending),
-      ServiceStageEntity(name: 'Wash & Cleaning', status: StageStatus.pending),
-      ServiceStageEntity(name: 'Ready for Delivery', status: StageStatus.pending),
-    ],
+    hasActiveJob: false,
+    jobCardId: '',
+    plateNumber: '',
+    vehicleName: '',
+    service: '',
+    started: '',
+    estCompletion: '',
+    progressPercent: 0,
+    currentStage: '',
+    technicianName: '',
+    stages: [],
   );
   Map<String, dynamic> toJson() => {'jobCardId': jobCardId, 'plateNumber': plateNumber, 'vehicleName': vehicleName, 'service': service, 'started': started, 'estCompletion': estCompletion, 'progressPercent': progressPercent, 'currentStage': currentStage, 'technicianName': technicianName, 'stages': stages.map((s) => s.toJson()).toList()};
   factory CustomerServiceEntity.fromJson(Map<String, dynamic> j) => CustomerServiceEntity(

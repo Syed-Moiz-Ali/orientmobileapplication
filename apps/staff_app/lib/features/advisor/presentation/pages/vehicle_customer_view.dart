@@ -38,7 +38,9 @@ class _BodyState extends ConsumerState<_Body> {
   void initState() {
     super.initState();
     if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
-      Hive.box<dynamic>('inspections').put('intake_booking_id', widget.bookingId);
+      Hive.box<dynamic>(
+        'inspections',
+      ).put('intake_booking_id', widget.bookingId);
     }
   }
 
@@ -88,16 +90,25 @@ class _BodyState extends ConsumerState<_Body> {
                     decoration: BoxDecoration(
                       color: AppColors.primaryBg,
                       borderRadius: BorderRadius.circular(AppDimensions.r12),
-                      border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+                      border: Border.all(
+                        color: AppColors.accent.withValues(alpha: 0.4),
+                      ),
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.event_available_rounded, color: AppColors.accent, size: 18),
+                        Icon(
+                          Icons.event_available_rounded,
+                          color: AppColors.accent,
+                          size: 18,
+                        ),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Intake from assigned booking — the booking will be linked to this job card.',
-                            style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                       ],
@@ -176,14 +187,16 @@ class _BodyState extends ConsumerState<_Body> {
                   };
                   await local.save(id, payload);
                   final queue = ref.read(syncQueueProvider);
-                  await queue.enqueue(SyncOperation(
-                    id: id,
-                    entityType: 'vehicle_customer',
-                    entityId: id,
-                    changeType: ChangeType.create,
-                    payload: payload,
-                    timestamp: DateTime.now().millisecondsSinceEpoch,
-                  ));
+                  await queue.enqueue(
+                    SyncOperation(
+                      id: id,
+                      entityType: 'vehicle_customer',
+                      entityId: id,
+                      changeType: ChangeType.create,
+                      payload: payload,
+                      timestamp: DateTime.now().millisecondsSinceEpoch,
+                    ),
+                  );
                   await ref.read(syncEngineProvider).syncAll();
                   ref.read(advisorRefreshProvider.notifier).state++;
                   if (!context.mounted) return;
@@ -224,12 +237,20 @@ class _BodyState extends ConsumerState<_Body> {
     if (s.phoneNumber.trim().isEmpty) {
       errors.add(const MapEntry('Phone Number', 'Phone number is required'));
     } else if (s.phoneNumber.trim().length < 8) {
-      errors.add(const MapEntry(
-          'Phone Number', 'Enter a valid phone number (at least 8 digits)'));
+      errors.add(
+        const MapEntry(
+          'Phone Number',
+          'Enter a valid phone number (at least 8 digits)',
+        ),
+      );
     }
     if (s.registrationNumber.trim().isEmpty) {
       errors.add(
-          const MapEntry('Registration Number', 'Registration number is required'));
+        const MapEntry(
+          'Registration Number',
+          'Registration number is required',
+        ),
+      );
     }
     if (s.make.trim().isEmpty) {
       errors.add(const MapEntry('Make/Brand', 'Please select a vehicle brand'));
@@ -241,7 +262,9 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   void _showValidationErrors(
-      BuildContext context, List<MapEntry<String, String>> errors) {
+    BuildContext context,
+    List<MapEntry<String, String>> errors,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -258,8 +281,11 @@ class _BodyState extends ConsumerState<_Body> {
                 color: AppColors.dangerBg,
                 borderRadius: BorderRadius.circular(AppDimensions.r8),
               ),
-              child: const Icon(Icons.error_outline,
-                  color: AppColors.danger, size: 20),
+              child: const Icon(
+                Icons.error_outline,
+                color: AppColors.danger,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 10),
             const Text(
@@ -279,7 +305,10 @@ class _BodyState extends ConsumerState<_Body> {
             Text(
               'Please fix the following ${errors.length} issue(s):',
               style: const TextStyle(
-                  fontSize: 13, color: AppColors.text2, height: 1.5),
+                fontSize: 13,
+                color: AppColors.text2,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             ...errors.map(
@@ -302,11 +331,16 @@ class _BodyState extends ConsumerState<_Body> {
                       child: RichText(
                         text: TextSpan(
                           style: const TextStyle(
-                              fontSize: 13, height: 1.4, color: AppColors.textPrimary),
+                            fontSize: 13,
+                            height: 1.4,
+                            color: AppColors.textPrimary,
+                          ),
                           children: [
                             TextSpan(
                               text: '${e.key}: ',
-                              style: const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             TextSpan(text: e.value),
                           ],
@@ -330,13 +364,11 @@ class _BodyState extends ConsumerState<_Body> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.r10),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Text(
                 'OK, I\'ll Fix Them',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 14),
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
               ),
             ),
           ),
@@ -347,9 +379,7 @@ class _BodyState extends ConsumerState<_Body> {
 
   Future<void> _scanAndSetVin(BuildContext context, WidgetRef ref) async {
     final result = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (_) => const ScanVehicleView(scanMode: 'VIN'),
-      ),
+      MaterialPageRoute(builder: (_) => const ScanVehicleView(scanMode: 'VIN')),
     );
     if (result != null && mounted) {
       ref.read(vehicleCustomerFormProvider.notifier).setVin(result);
@@ -358,12 +388,12 @@ class _BodyState extends ConsumerState<_Body> {
 
   Future<void> _scanVehicleQr(BuildContext context, WidgetRef ref) async {
     final result = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (_) => const ScanVehicleView(scanMode: 'QR'),
-      ),
+      MaterialPageRoute(builder: (_) => const ScanVehicleView(scanMode: 'QR')),
     );
     if (result != null && mounted) {
-      ref.read(vehicleCustomerFormProvider.notifier).setRegistrationNumber(result);
+      ref
+          .read(vehicleCustomerFormProvider.notifier)
+          .setRegistrationNumber(result);
     }
   }
 
@@ -374,38 +404,59 @@ class _BodyState extends ConsumerState<_Body> {
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r28)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.r28),
+          ),
         ),
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(
-              color: AppColors.line, borderRadius: BorderRadius.circular(2),
-            )),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.line,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             const SizedBox(height: 20),
             Container(
-              width: 56, height: 56,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppDimensions.r16),
               ),
-              child: const Icon(Icons.search_outlined, color: AppColors.accent, size: 28),
+              child: const Icon(
+                Icons.search_outlined,
+                color: AppColors.accent,
+                size: 28,
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
               'Job Card Created!',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
               'Would you like to add an inspection?\nYou can add photos, videos, notes, and pricing.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.text2,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
             SizedBox(
-              width: double.infinity, height: 50,
+              width: double.infinity,
+              height: 50,
               child: ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(ctx);
@@ -419,27 +470,33 @@ class _BodyState extends ConsumerState<_Body> {
                       context.pop();
                     },
                     onPreview: () {
-                      context.push(AppRoutes.inspectionPreview, extra: {
-                        'onBack': () => context.pop(),
-                        'jobId': jobId,
-                      });
+                      context.push(
+                        AppRoutes.inspectionPreview,
+                        extra: {'onBack': () => context.pop(), 'jobId': jobId},
+                      );
                     },
                   );
                   context.push(AppRoutes.inspectionSheet, extra: callbacks);
                 },
                 icon: const Icon(Icons.search_outlined, size: 20),
-                label: const Text('Add Inspection', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                label: const Text(
+                  'Add Inspection',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r14),
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 10),
             SizedBox(
-              width: double.infinity, height: 50,
+              width: double.infinity,
+              height: 50,
               child: OutlinedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
@@ -448,9 +505,14 @@ class _BodyState extends ConsumerState<_Body> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.text3,
                   side: const BorderSide(color: AppColors.line),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r14),
+                  ),
                 ),
-                child: const Text('Skip', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Skip',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ],
@@ -674,7 +736,11 @@ class _SearchModeSection extends StatelessWidget {
             ),
           ),
           // SCAN VIN
-          _OutlineButton(icon: Icons.qr_code, label: 'SCAN VIN', onTap: onScanVin),
+          _OutlineButton(
+            icon: Icons.qr_code,
+            label: 'SCAN VIN',
+            onTap: onScanVin,
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Text(
@@ -1545,11 +1611,9 @@ class _FuelLevelSlider extends StatelessWidget {
                 value >= 8
                     ? Icons.local_gas_station
                     : value >= 4
-                        ? Icons.local_gas_station
-                        : Icons.local_gas_station_outlined,
-                color: value >= 4
-                    ? AppColors.warning
-                    : AppColors.danger,
+                    ? Icons.local_gas_station
+                    : Icons.local_gas_station_outlined,
+                color: value >= 4 ? AppColors.warning : AppColors.danger,
                 size: 22,
               ),
               Text(
@@ -1567,4 +1631,3 @@ class _FuelLevelSlider extends StatelessWidget {
     );
   }
 }
-

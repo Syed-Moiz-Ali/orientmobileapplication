@@ -10,6 +10,8 @@ import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_status_badge.dart';
+import 'package:staff_app/features/advisor/presentation/pages/advisor_assign_tasks_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/vehicle_delivery_view.dart';
 
 class _StatusStyle {
   final String label;
@@ -23,7 +25,8 @@ class AdvisorJobDetailView extends ConsumerStatefulWidget {
   const AdvisorJobDetailView({super.key, required this.jc});
 
   @override
-  ConsumerState<AdvisorJobDetailView> createState() => _AdvisorJobDetailViewState();
+  ConsumerState<AdvisorJobDetailView> createState() =>
+      _AdvisorJobDetailViewState();
 }
 
 class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
@@ -42,12 +45,17 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   void _loadHiveData() {
     try {
       final box = Hive.box<dynamic>('inspections');
-      final allData = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+      final allData = box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
 
       _hiveData = allData.cast<Map<String, dynamic>?>().firstWhere(
         (m) =>
             m?['type'] == 'vehicle_customer' &&
-            (m?['id'] == _jc.id || m?['registrationNumber'] == _jc.id || m?['vin'] == _jc.id),
+            (m?['id'] == _jc.id ||
+                m?['registrationNumber'] == _jc.id ||
+                m?['vin'] == _jc.id),
         orElse: () => null,
       );
 
@@ -60,12 +68,36 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   }
 
   _StatusStyle get _s => switch (_jc.status) {
-    JobCardStatus.inProgress => _StatusStyle('In Progress', AppColors.accent, AppColors.accent.withValues(alpha: 0.12)),
-    JobCardStatus.pendingApproval => _StatusStyle('Pending', AppColors.warning, AppColors.warningBg),
-    JobCardStatus.completed => _StatusStyle('Completed', AppColors.success, AppColors.successBg),
-    JobCardStatus.waitingParts => _StatusStyle('Waiting Parts', AppColors.danger, AppColors.dangerBg),
-    JobCardStatus.qualityCheck => _StatusStyle('QC Check', AppColors.info, AppColors.infoBg),
-    JobCardStatus.cancelled => _StatusStyle('Cancelled', AppColors.text3, AppColors.surfaceAlt),
+    JobCardStatus.inProgress => _StatusStyle(
+      'In Progress',
+      AppColors.accent,
+      AppColors.accent.withValues(alpha: 0.12),
+    ),
+    JobCardStatus.pendingApproval => _StatusStyle(
+      'Pending',
+      AppColors.warning,
+      AppColors.warningBg,
+    ),
+    JobCardStatus.completed => _StatusStyle(
+      'Completed',
+      AppColors.success,
+      AppColors.successBg,
+    ),
+    JobCardStatus.waitingParts => _StatusStyle(
+      'Waiting Parts',
+      AppColors.danger,
+      AppColors.dangerBg,
+    ),
+    JobCardStatus.qualityCheck => _StatusStyle(
+      'QC Check',
+      AppColors.info,
+      AppColors.infoBg,
+    ),
+    JobCardStatus.cancelled => _StatusStyle(
+      'Cancelled',
+      AppColors.text3,
+      AppColors.surfaceAlt,
+    ),
   };
 
   String _getVal(String key) => _hiveData?[key] as String? ?? '';
@@ -81,7 +113,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -100,40 +135,78 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           _headerCard(s, hasData),
           const SizedBox(height: 14),
           _section('Customer Details', [
-            _detailRow(Icons.person_outline_rounded, 'Name', hasData ? _getVal('customerName') : _jc.customerName),
+            _detailRow(
+              Icons.person_outline_rounded,
+              'Name',
+              hasData ? _getVal('customerName') : _jc.customerName,
+            ),
             _detailRow(Icons.phone_outlined, 'Phone', _getVal('phoneNumber')),
             _detailRow(Icons.email_outlined, 'Email', _getVal('email')),
             if (_getVal('customerGroup').isNotEmpty)
-              _detailRow(Icons.group_outlined, 'Group', _getVal('customerGroup')),
+              _detailRow(
+                Icons.group_outlined,
+                'Group',
+                _getVal('customerGroup'),
+              ),
           ]),
           const SizedBox(height: 14),
           _section('Vehicle Information', [
             _detailRow(
               Icons.directions_car_outlined,
               'Vehicle',
-              hasData ? '${_getVal('make')} ${_getVal('model')}' : _jc.vehicleInfo,
+              hasData
+                  ? '${_getVal('make')} ${_getVal('model')}'
+                  : _jc.vehicleInfo,
             ),
-            _detailRow(Icons.confirmation_number_outlined, 'Reg No', _getVal('registrationNumber')),
+            _detailRow(
+              Icons.confirmation_number_outlined,
+              'Reg No',
+              _getVal('registrationNumber'),
+            ),
             _detailRow(Icons.qr_code_rounded, 'VIN', _getVal('vin')),
-            if (_getVal('modelYear').isNotEmpty) _detailRow(Icons.calendar_today, 'Year', _getVal('modelYear')),
+            if (_getVal('modelYear').isNotEmpty)
+              _detailRow(Icons.calendar_today, 'Year', _getVal('modelYear')),
             if (_getVal('vehicleColor').isNotEmpty)
-              _detailRow(Icons.color_lens_outlined, 'Color', _getVal('vehicleColor')),
+              _detailRow(
+                Icons.color_lens_outlined,
+                'Color',
+                _getVal('vehicleColor'),
+              ),
             _detailRow(
               Icons.speed_rounded,
               'Odometer',
-              _getVal('odometerReading').isEmpty ? '--' : '${_getVal('odometerReading')} km',
+              _getVal('odometerReading').isEmpty
+                  ? '--'
+                  : '${_getVal('odometerReading')} km',
             ),
           ]),
           const SizedBox(height: 14),
           _section('Fuel Level', [_buildFuelLevelDisplay()]),
           const SizedBox(height: 14),
           _section('Service Details', [
-            _detailRow(Icons.build_outlined, 'Service Type', 'Vehicle Inspection'),
+            _detailRow(
+              Icons.build_outlined,
+              'Service Type',
+              'Vehicle Inspection',
+            ),
             _detailRow(Icons.person_outline, 'Advisor', '--'),
-            if (_assignedTech.isNotEmpty) _detailRow(Icons.engineering_outlined, 'Technician', _assignedTech),
+            if (_assignedTech.isNotEmpty)
+              _detailRow(
+                Icons.engineering_outlined,
+                'Technician',
+                _assignedTech,
+              ),
             _detailRow(Icons.engineering_outlined, 'Bay', '--'),
-            _detailRow(Icons.schedule_outlined, 'Created', _jc.createdDate.isNotEmpty ? _jc.createdDate : _jc.time),
-            _detailRow(Icons.update_rounded, 'Last Updated', _jc.lastUpdated.isNotEmpty ? _jc.lastUpdated : _jc.time),
+            _detailRow(
+              Icons.schedule_outlined,
+              'Created',
+              _jc.createdDate.isNotEmpty ? _jc.createdDate : _jc.time,
+            ),
+            _detailRow(
+              Icons.update_rounded,
+              'Last Updated',
+              _jc.lastUpdated.isNotEmpty ? _jc.lastUpdated : _jc.time,
+            ),
           ]),
           const SizedBox(height: 14),
           _buildWorkItemsSection(),
@@ -146,7 +219,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           _section('Job Timeline', [
             _timelineStep(
               'Job Created',
-              _jc.createdDate.isNotEmpty ? _jc.createdDate.substring(11, 16) : _jc.time,
+              _jc.createdDate.isNotEmpty
+                  ? _jc.createdDate.substring(11, 16)
+                  : _jc.time,
               true,
             ),
             _timelineStep(
@@ -159,9 +234,14 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             _timelineStep(
               'Service Work',
               '--:--',
-              _jc.status == JobCardStatus.completed || _jc.status == JobCardStatus.qualityCheck,
+              _jc.status == JobCardStatus.completed ||
+                  _jc.status == JobCardStatus.qualityCheck,
             ),
-            _timelineStep('Ready for Delivery', '--:--', _jc.status == JobCardStatus.completed),
+            _timelineStep(
+              'Ready for Delivery',
+              '--:--',
+              _jc.status == JobCardStatus.completed,
+            ),
           ]),
           const SizedBox(height: 24),
           Row(
@@ -179,10 +259,16 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               Expanded(
                 child: _actionButton(
                   context,
-                  'Assign Technician',
-                  Icons.person_add_outlined,
+                  'Assign Tasks',
+                  Icons.assignment_ind_outlined,
                   AppColors.success,
-                  () => _showAssignTechSheet(context),
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          AdvisorAssignTasksView(jobCardRef: _jc.id),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -198,6 +284,24 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               _callCustomer,
             ),
           ),
+          if (_jc.status == JobCardStatus.completed) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: _actionButton(
+                context,
+                'Deliver Vehicle',
+                Icons.check_circle_outline,
+                AppColors.success,
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VehicleDeliveryView(jobCardRef: _jc.id),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -208,7 +312,8 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     final itemsAsync = ref.watch(advisorWorkItemsProvider(_jc.id));
     final items = itemsAsync.value ?? const <WorkItemResponse>[];
     final techniciansAsync = ref.watch(advisorTechniciansProvider);
-    final technicians = techniciansAsync.value ?? const <AdvisorTechnicianResponse>[];
+    final technicians =
+        techniciansAsync.value ?? const <AdvisorTechnicianResponse>[];
 
     if (items.isEmpty) {
       return const SizedBox.shrink();
@@ -284,7 +389,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                           Text(
                             '${item.itemType == 'INSPECTION' ? 'Inspection' : 'Work'}'
                             '${item.empName.isNotEmpty ? ' · ${item.empName}' : ' · Unassigned'}',
-                            style: const TextStyle(color: AppColors.text3, fontSize: 11),
+                            style: const TextStyle(
+                              color: AppColors.text3,
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),
@@ -293,16 +401,25 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                       SizedBox(
                         height: 30,
                         child: OutlinedButton(
-                          onPressed: () => _assignWorkItem(context, item, technicians),
+                          onPressed: () =>
+                              _assignWorkItem(context, item, technicians),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.accent,
                             side: const BorderSide(color: AppColors.accent),
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppDimensions.r8),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r8,
+                              ),
                             ),
                           ),
-                          child: const Text('Assign', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                          child: const Text(
+                            'Assign',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       )
                     else
@@ -333,8 +450,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     );
   }
 
-  void _assignWorkItem(BuildContext context, WorkItemResponse item,
-      List<AdvisorTechnicianResponse> technicians) {
+  void _assignWorkItem(
+    BuildContext context,
+    WorkItemResponse item,
+    List<AdvisorTechnicianResponse> technicians,
+  ) {
     if (technicians.isEmpty) {
       _toast(context, 'No active technicians available');
       return;
@@ -348,7 +468,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         builder: (context, setSheetState) => Container(
           decoration: const BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r24)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppDimensions.r24),
+            ),
           ),
           padding: const EdgeInsets.all(AppDimensions.s16),
           child: Column(
@@ -368,7 +490,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               const SizedBox(height: 16),
               Text(
                 'Assign work item',
-                style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+                style: AppTextStyles.rajdhaniTitle(
+                  color: AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -392,7 +516,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                     value: t.empId,
                     child: Text(
                       t.name,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                      ),
                     ),
                   );
                 }).toList(),
@@ -432,10 +559,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
 
   void _toast(BuildContext context, String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -449,7 +573,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           const SizedBox(width: 9),
           const Text(
             'Level',
-            style: TextStyle(fontSize: 13, color: AppColors.text2, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.text2,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const Spacer(),
           Row(
@@ -469,7 +597,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           const SizedBox(width: 6),
           Text(
             '$fuelLevel/10',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
         ],
       ),
@@ -478,9 +610,14 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
 
   Widget _buildInspectionMediaSection() {
     final box = Hive.box<dynamic>('inspections');
-    final allData = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+    final allData = box.values
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
 
-    final inspectionData = allData.where((m) => m.containsKey('media') && m['jobCardId'] == _jc.id).toList();
+    final inspectionData = allData
+        .where((m) => m.containsKey('media') && m['jobCardId'] == _jc.id)
+        .toList();
 
     if (inspectionData.isEmpty) {
       return const SizedBox.shrink();
@@ -491,7 +628,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       widgets.add(_buildInspectionReport(insp));
     }
 
-    return widgets.isEmpty ? const SizedBox.shrink() : Column(children: widgets);
+    return widgets.isEmpty
+        ? const SizedBox.shrink()
+        : Column(children: widgets);
   }
 
   Widget _buildInspectionReport(Map<String, dynamic> insp) {
@@ -519,7 +658,13 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         final hasCondition = statusValue != null;
 
         if (hasCondition || hasMedia) {
-          sectionItems.add(_buildInspectionItemCard(itemName: itemName, status: statusValue, media: itemMedia));
+          sectionItems.add(
+            _buildInspectionItemCard(
+              itemName: itemName,
+              status: statusValue,
+              media: itemMedia,
+            ),
+          );
         }
       }
 
@@ -529,10 +674,17 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       }
     }
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: items);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: items,
+    );
   }
 
-  Widget _buildInspectionItemCard({required String itemName, String? status, Map<String, dynamic>? media}) {
+  Widget _buildInspectionItemCard({
+    required String itemName,
+    String? status,
+    Map<String, dynamic>? media,
+  }) {
     final hasPhotos = (media?['photoPaths'] as List?)?.isNotEmpty ?? false;
     final hasVideos = (media?['videoPaths'] as List?)?.isNotEmpty ?? false;
     final audioPath = media?['audioPath'] as String? ?? '';
@@ -557,12 +709,19 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               Expanded(
                 child: Text(
                   itemName,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
               if (status != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: status == 'good'
                         ? AppColors.successBg
@@ -643,10 +802,16 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           ],
           if (hasVideos) ...[
             const SizedBox(height: 6),
-            for (final vp in videoPaths.where((p) => p.isNotEmpty && localFileExists(p))) ...[
+            for (final vp in videoPaths.where(
+              (p) => p.isNotEmpty && localFileExists(p),
+            )) ...[
               GestureDetector(
                 onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => _VideoDetailPlayer(filePath: vp)));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => _VideoDetailPlayer(filePath: vp),
+                    ),
+                  );
                 },
                 child: Container(
                   padding: const EdgeInsets.all(8),
@@ -660,14 +825,25 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                       Container(
                         width: 32,
                         height: 32,
-                        decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                        child: const Icon(Icons.play_arrow, color: Colors.white, size: 18),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           vp.split('/').last,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -694,10 +870,21 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.notes_rounded, size: 14, color: AppColors.text3),
+                  const Icon(
+                    Icons.notes_rounded,
+                    size: 14,
+                    color: AppColors.text3,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(note, style: const TextStyle(fontSize: 12, color: AppColors.text2, height: 1.4)),
+                    child: Text(
+                      note,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.text2,
+                        height: 1.4,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -755,7 +942,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       {
         'id': 'battery',
         'label': 'BATTERY PERFORMANCE',
-        'items': ['Battery Terminal / Cables / Mounting', 'Storage Capacity Test'],
+        'items': [
+          'Battery Terminal / Cables / Mounting',
+          'Storage Capacity Test',
+        ],
       },
     ];
   }
@@ -833,7 +1023,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r28)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.r28),
+          ),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         child: Column(
@@ -842,7 +1034,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             Container(
               width: 36,
               height: 4,
-              decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(
+                color: AppColors.line,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             const SizedBox(height: 16),
             Row(
@@ -858,12 +1053,18 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                 const SizedBox(width: 10),
                 const Text(
                   'Update Status',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            ...statuses.where((s) => s != _jc.status).map((s) => _statusOption(ctx, s, labels[s]!, colors[s]!)),
+            ...statuses
+                .where((s) => s != _jc.status)
+                .map((s) => _statusOption(ctx, s, labels[s]!, colors[s]!)),
           ],
         ),
       ),
@@ -878,7 +1079,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r28)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.r28),
+          ),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         child: DraggableScrollableSheet(
@@ -894,7 +1097,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                 Container(
                   width: 36,
                   height: 4,
-                  decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(
+                    color: AppColors.line,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -910,7 +1116,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                     const SizedBox(width: 10),
                     const Text(
                       'Assign Technician',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ],
                 ),
@@ -930,12 +1140,17 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     Navigator.pop(ctx);
     final box = Hive.box<dynamic>('inspections');
-    final allData = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+    final allData = box.values
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
     final match = allData
         .where(
           (m) =>
               m['type'] == 'vehicle_customer' &&
-              (m['id'] == _jc.id || m['vin'] == _jc.id || m['registrationNumber'] == _jc.id),
+              (m['id'] == _jc.id ||
+                  m['vin'] == _jc.id ||
+                  m['registrationNumber'] == _jc.id),
         )
         .toList();
     for (final m in match) {
@@ -956,12 +1171,17 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     Navigator.pop(ctx);
     final box = Hive.box<dynamic>('inspections');
-    final allData = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+    final allData = box.values
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
     final match = allData
         .where(
           (m) =>
               m['type'] == 'vehicle_customer' &&
-              (m['id'] == _jc.id || m['vin'] == _jc.id || m['registrationNumber'] == _jc.id),
+              (m['id'] == _jc.id ||
+                  m['vin'] == _jc.id ||
+                  m['registrationNumber'] == _jc.id),
         )
         .toList();
     for (final m in match) {
@@ -972,13 +1192,21 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       if (key.isNotEmpty) box.put(key, m);
     }
     setState(() {
-      _jc = _jc.copyWith(status: JobCardStatus.inProgress, lastUpdated: updated);
+      _jc = _jc.copyWith(
+        status: JobCardStatus.inProgress,
+        lastUpdated: updated,
+      );
       _assignedTech = technician;
     });
     ref.read(advisorRefreshProvider.notifier).state++;
   }
 
-  Widget _statusOption(BuildContext ctx, JobCardStatus status, String label, Color color) {
+  Widget _statusOption(
+    BuildContext ctx,
+    JobCardStatus status,
+    String label,
+    Color color,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
@@ -1000,10 +1228,18 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               const SizedBox(width: 12),
               Text(
                 label,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               const Spacer(),
-              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.text3),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: AppColors.text3,
+              ),
             ],
           ),
         ),
@@ -1012,7 +1248,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   }
 
   Widget _techOption(BuildContext ctx, String name) {
-    final initials = name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').join();
+    final initials = name
+        .split(' ')
+        .map((n) => n.isNotEmpty ? n[0] : '')
+        .join();
     final isSelected = _assignedTech == name;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -1022,8 +1261,12 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.accent.withValues(alpha: 0.08) : AppColors.surfaceAlt,
-            border: isSelected ? Border.all(color: AppColors.accent.withValues(alpha: 0.3)) : null,
+            color: isSelected
+                ? AppColors.accent.withValues(alpha: 0.08)
+                : AppColors.surfaceAlt,
+            border: isSelected
+                ? Border.all(color: AppColors.accent.withValues(alpha: 0.3))
+                : null,
             borderRadius: BorderRadius.circular(AppDimensions.r12),
           ),
           child: Row(
@@ -1042,7 +1285,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                 child: Center(
                   child: Text(
                     initials,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),
@@ -1053,9 +1300,16 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    const Text('Technician', style: TextStyle(fontSize: 11, color: AppColors.text3)),
+                    const Text(
+                      'Technician',
+                      style: TextStyle(fontSize: 11, color: AppColors.text3),
+                    ),
                   ],
                 ),
               ),
@@ -1082,7 +1336,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         ),
         borderRadius: BorderRadius.circular(AppDimensions.r18),
         boxShadow: [
-          BoxShadow(color: AppColors.navy.withValues(alpha: 0.2), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: AppColors.navy.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -1095,7 +1353,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                 height: 44,
                 decoration: BoxDecoration(
                   color: s.color,
-                  borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r2)),
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(AppDimensions.r2),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1115,7 +1375,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                     const SizedBox(height: 2),
                     Text(
                       hasData ? _getVal('customerName') : _jc.customerName,
-                      style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7)),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
                     ),
                   ],
                 ),
@@ -1130,7 +1393,12 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             children: [
               _headerStat('\$--', 'Est. Amount'),
               const SizedBox(width: 24),
-              _headerStat(hasData ? _getVal('make') : _jc.vehicleInfo.split(' ').firstOrNull ?? '-', 'Brand'),
+              _headerStat(
+                hasData
+                    ? _getVal('make')
+                    : _jc.vehicleInfo.split(' ').firstOrNull ?? '-',
+                'Brand',
+              ),
               const SizedBox(width: 24),
               _headerStat('--', 'Bay'),
             ],
@@ -1146,12 +1414,21 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.3),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            letterSpacing: 0.3,
+          ),
         ),
         const SizedBox(height: 1),
         Text(
           label,
-          style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.white.withValues(alpha: 0.5),
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
@@ -1165,7 +1442,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         borderRadius: BorderRadius.circular(AppDimensions.r16),
         border: Border.all(color: AppColors.line),
         boxShadow: [
-          BoxShadow(color: AppColors.navy.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: AppColors.navy.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -1178,7 +1459,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                 height: 16,
                 decoration: BoxDecoration(
                   color: AppColors.accent,
-                  borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r2)),
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(AppDimensions.r2),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1211,7 +1494,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             width: 130,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 13, color: AppColors.text2, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.text2,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           Expanded(
@@ -1243,7 +1530,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               Container(
                 width: done ? 10 : 8,
                 height: done ? 10 : 8,
-                decoration: BoxDecoration(color: done ? AppColors.success : AppColors.text4, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: done ? AppColors.success : AppColors.text4,
+                  shape: BoxShape.circle,
+                ),
               ),
               Container(width: 1, height: 22, color: AppColors.line),
             ],
@@ -1277,15 +1567,29 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     );
   }
 
-  Widget _actionButton(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
+  Widget _actionButton(
+    BuildContext context,
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 13),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.8)]),
+          gradient: LinearGradient(
+            colors: [color, color.withValues(alpha: 0.8)],
+          ),
           borderRadius: BorderRadius.circular(AppDimensions.r12),
-          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 3))],
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1352,11 +1656,17 @@ class _VideoDetailPlayerState extends State<_VideoDetailPlayer> {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
-        title: Text(widget.filePath.split('/').last, style: const TextStyle(color: Colors.white, fontSize: 14)),
+        title: Text(
+          widget.filePath.split('/').last,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+        ),
       ),
       body: Center(
         child: _initialized
-            ? AspectRatio(aspectRatio: _controller.value.aspectRatio, child: VideoPlayer(_controller))
+            ? AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: VideoPlayer(_controller),
+              )
             : const CircularProgressIndicator(color: AppColors.primary),
       ),
       bottomNavigationBar: _initialized
@@ -1367,8 +1677,14 @@ class _VideoDetailPlayerState extends State<_VideoDetailPlayer> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   GestureDetector(
-                    onTap: () => _controller.seekTo(_controller.value.position - const Duration(seconds: 10)),
-                    child: const Icon(Icons.replay_10, color: Colors.white, size: 28),
+                    onTap: () => _controller.seekTo(
+                      _controller.value.position - const Duration(seconds: 10),
+                    ),
+                    child: const Icon(
+                      Icons.replay_10,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
                   const SizedBox(width: 24),
                   GestureDetector(
@@ -1383,9 +1699,14 @@ class _VideoDetailPlayerState extends State<_VideoDetailPlayer> {
                     child: Container(
                       width: 52,
                       height: 52,
-                      decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(
+                        color: Colors.white24,
+                        shape: BoxShape.circle,
+                      ),
                       child: Icon(
-                        _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                        _controller.value.isPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
                         color: Colors.white,
                         size: 32,
                       ),
@@ -1393,8 +1714,14 @@ class _VideoDetailPlayerState extends State<_VideoDetailPlayer> {
                   ),
                   const SizedBox(width: 24),
                   GestureDetector(
-                    onTap: () => _controller.seekTo(_controller.value.position + const Duration(seconds: 10)),
-                    child: const Icon(Icons.forward_10, color: Colors.white, size: 28),
+                    onTap: () => _controller.seekTo(
+                      _controller.value.position + const Duration(seconds: 10),
+                    ),
+                    child: const Icon(
+                      Icons.forward_10,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
                 ],
               ),
@@ -1461,7 +1788,11 @@ class _AudioDetailPlayerState extends State<_AudioDetailPlayer> {
                 color: _playing ? AppColors.warning : AppColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(_playing ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 18),
+              child: Icon(
+                _playing ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 8),
             Text(
@@ -1516,9 +1847,12 @@ class _PlayPauseButtonState extends State<_PlayPauseButton> {
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Could not play audio'), backgroundColor: AppColors.danger));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not play audio'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     }
   }
@@ -1530,8 +1864,15 @@ class _PlayPauseButtonState extends State<_PlayPauseButton> {
       child: Container(
         width: 36,
         height: 36,
-        decoration: BoxDecoration(color: _playing ? AppColors.warning : AppColors.primary, shape: BoxShape.circle),
-        child: Icon(_playing ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 20),
+        decoration: BoxDecoration(
+          color: _playing ? AppColors.warning : AppColors.primary,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          _playing ? Icons.pause : Icons.play_arrow,
+          color: Colors.white,
+          size: 20,
+        ),
       ),
     );
   }

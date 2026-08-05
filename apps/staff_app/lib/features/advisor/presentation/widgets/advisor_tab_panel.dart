@@ -86,9 +86,20 @@ class AdvisorTabPanel extends StatelessWidget {
             child: TabBarView(
               controller: tabCtrl,
               children: [
-                AdvisorJobCardsPage(jobCards: jobCards, onTap: onJobCard, onViewAll: () {}),
-                AdvisorApprovalsPage(approvals: approvals, onTap: onApproval, onViewAll: () {}),
-                AdvisorRemindersPage(reminders: reminders, onContact: onContact),
+                AdvisorJobCardsPage(
+                  jobCards: jobCards,
+                  onTap: onJobCard,
+                  onViewAll: () {},
+                ),
+                AdvisorApprovalsPage(
+                  approvals: approvals,
+                  onTap: onApproval,
+                  onViewAll: () {},
+                ),
+                AdvisorRemindersPage(
+                  reminders: reminders,
+                  onContact: onContact,
+                ),
               ],
             ),
           ),
@@ -97,4 +108,3 @@ class AdvisorTabPanel extends StatelessWidget {
     );
   }
 }
-

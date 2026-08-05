@@ -11,4 +11,3 @@ class AdvisorDivider extends StatelessWidget {
     margin: const EdgeInsets.symmetric(vertical: 4),
   );
 }
-

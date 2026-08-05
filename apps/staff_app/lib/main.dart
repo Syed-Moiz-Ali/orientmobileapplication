@@ -40,9 +40,7 @@ class _StaffAppState extends ConsumerState<StaffApp> {
   void initState() {
     super.initState();
     // Retry offline media uploads whenever connectivity returns.
-    _connectivitySub = Connectivity()
-        .onConnectivityChanged
-        .listen((results) {
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       final online = results.any((r) => r != ConnectivityResult.none);
       if (online) {
         flushPendingMediaUploads(ref);

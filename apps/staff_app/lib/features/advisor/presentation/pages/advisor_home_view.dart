@@ -223,9 +223,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
   }
 
   Future<void> _persistApproval(PendingApprovalEntity pa, String action) async {
-    final local = GenericLocalDataSource(
-      Hive.box<dynamic>('inspections'),
-    );
+    final local = GenericLocalDataSource(Hive.box<dynamic>('inspections'));
     await local.save('approval_${pa.estimateId}', {
       'estimateId': pa.estimateId,
       'customerName': pa.customerName,
@@ -309,36 +307,35 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
     );
 
     return DashboardShell(
-        body: _navIndex == 1
-            ? AdvisorJobsListView(onJobCard: _onJobCard)
-            : _navIndex == 2
-            ? const AdvisorReportsView()
-            : AdvisorBody(
-                tabCtrl: _tabCtrl,
-                onShowProfile: _showProfile,
-                onShowNotifications: _showNotifications,
-                onShowSearch: _showSearch,
-                onOpenScan: _openScan,
-                onNewJobCard: _openNewJobCard,
-                onOpenInspection: _openInspectionDirect,
-                onJobCard: _onJobCard,
-                onApproval: _onApproval,
-                onContact: _onContact,
-                onStat: _onStat,
-              ),
-        floatingActionButton: AdvisorFab(
-          onTap: () {
-            HapticFeedback.heavyImpact();
-            _openScan();
-          },
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: AdvisorBottomNav(
-          navIndex: _navIndex,
-          onNavChanged: (i) => setState(() => _navIndex = i),
-          onShowProfile: _showProfile,
-        ),
+      body: _navIndex == 1
+          ? AdvisorJobsListView(onJobCard: _onJobCard)
+          : _navIndex == 2
+          ? const AdvisorReportsView()
+          : AdvisorBody(
+              tabCtrl: _tabCtrl,
+              onShowProfile: _showProfile,
+              onShowNotifications: _showNotifications,
+              onShowSearch: _showSearch,
+              onOpenScan: _openScan,
+              onNewJobCard: _openNewJobCard,
+              onOpenInspection: _openInspectionDirect,
+              onJobCard: _onJobCard,
+              onApproval: _onApproval,
+              onContact: _onContact,
+              onStat: _onStat,
+            ),
+      floatingActionButton: AdvisorFab(
+        onTap: () {
+          HapticFeedback.heavyImpact();
+          _openScan();
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: AdvisorBottomNav(
+        navIndex: _navIndex,
+        onNavChanged: (i) => setState(() => _navIndex = i),
+        onShowProfile: _showProfile,
+      ),
     );
   }
 }
-

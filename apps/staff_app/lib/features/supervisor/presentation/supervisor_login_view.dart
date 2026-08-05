@@ -51,7 +51,11 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
       success: (auth) async {
         await ref
             .read(authNotifierProvider.notifier)
-            .authenticate(auth.role, auth.token, refreshToken: auth.refreshToken);
+            .authenticate(
+              auth.role,
+              auth.token,
+              refreshToken: auth.refreshToken,
+            );
       },
       failure: (e) {
         setState(() {
@@ -68,9 +72,7 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
       backgroundColor: AppColors.navy,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _GridPainter()),
-          ),
+          Positioned.fill(child: CustomPaint(painter: _GridPainter())),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -86,8 +88,11 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(AppDimensions.r18),
                       ),
-                      child: const Icon(Icons.build_circle_rounded,
-                          color: Colors.white, size: 30),
+                      child: const Icon(
+                        Icons.build_circle_rounded,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     const Text(
@@ -135,8 +140,7 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
                             controller: _usernameController,
                             hint: 'Enter your username',
                             prefixIcon: Icons.person_outline_rounded,
-                            onChanged: (_) =>
-                                setState(() => _error = null),
+                            onChanged: (_) => setState(() => _error = null),
                           ),
                           const SizedBox(height: 16),
                           _Label('PASSWORD'),
@@ -148,7 +152,8 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
                             obscureText: _obscurePassword,
                             suffixIcon: GestureDetector(
                               onTap: () => setState(
-                                  () => _obscurePassword = !_obscurePassword),
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
                               child: Icon(
                                 _obscurePassword
                                     ? Icons.visibility_off_outlined
@@ -157,15 +162,17 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
                                 size: 18,
                               ),
                             ),
-                            onChanged: (_) =>
-                                setState(() => _error = null),
+                            onChanged: (_) => setState(() => _error = null),
                           ),
                           if (_error != null) ...[
                             const SizedBox(height: 10),
-                            Text(_error!,
-                                style: const TextStyle(
-                                    color: AppColors.danger,
-                                    fontSize: 12)),
+                            Text(
+                              _error!,
+                              style: const TextStyle(
+                                color: AppColors.danger,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                           const SizedBox(height: 12),
                           Align(
@@ -193,7 +200,9 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.r10,
+                                  ),
                                 ),
                               ),
                               child: _isLoading
@@ -201,8 +210,9 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
                                       width: 20,
                                       height: 20,
                                       child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2.5),
+                                        color: Colors.white,
+                                        strokeWidth: 2.5,
+                                      ),
                                     )
                                   : const Text(
                                       'LOGIN',
@@ -281,29 +291,26 @@ class _DarkField extends StatelessWidget {
       style: const TextStyle(color: AppColors.surface, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            const TextStyle(color: AppColors.text2, fontSize: 13),
-        prefixIcon:
-            Icon(prefixIcon, color: AppColors.text3, size: 18),
+        hintStyle: const TextStyle(color: AppColors.text2, fontSize: 13),
+        prefixIcon: Icon(prefixIcon, color: AppColors.text3, size: 18),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: AppColors.navy,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
-          borderSide:
-              const BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
-          borderSide:
-              const BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
-          borderSide:
-              const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
       ),
     );
@@ -327,15 +334,16 @@ class _GridPainter extends CustomPainter {
     }
 
     final glowPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          AppColors.primary.withValues(alpha: 0.08),
-          Colors.transparent,
-        ],
-      ).createShader(
-          Rect.fromCircle(center: size.center(Offset.zero), radius: 280));
-    canvas.drawRect(
-        Rect.fromLTWH(0, 0, size.width, size.height), glowPaint);
+      ..shader =
+          RadialGradient(
+            colors: [
+              AppColors.primary.withValues(alpha: 0.08),
+              Colors.transparent,
+            ],
+          ).createShader(
+            Rect.fromCircle(center: size.center(Offset.zero), radius: 280),
+          );
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), glowPaint);
   }
 
   @override

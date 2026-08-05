@@ -51,20 +51,20 @@ class JobCardTile extends StatelessWidget {
                 SizedBox(width: AppDimensions.s6),
                 Text(
                   job.id,
-                  style: AppTextStyles.rajdhaniBody(
-                    color: AppColors.accent,
-                  ),
+                  style: AppTextStyles.rajdhaniBody(color: AppColors.accent),
                 ),
                 const Spacer(),
                 Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppDimensions.s8,
-                      vertical: AppDimensions.s4,
-                    ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s8,
+                    vertical: AppDimensions.s4,
+                  ),
                   decoration: BoxDecoration(
                     color: status.bgColor,
                     borderRadius: BorderRadius.circular(AppDimensions.r20),
-                    border: Border.all(color: status.color.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: status.color.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Text(
                     status.label,

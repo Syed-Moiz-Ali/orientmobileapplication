@@ -46,4 +46,3 @@ class AdvisorFab extends StatelessWidget {
     ),
   );
 }
-

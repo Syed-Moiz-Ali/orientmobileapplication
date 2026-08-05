@@ -14,10 +14,9 @@ class AudioRecorderService {
 
   Future<bool> startRecording(String path) async {
     try {
-      final result = await _channel.invokeMethod<bool>(
-        'startRecording',
-        {'path': path},
-      );
+      final result = await _channel.invokeMethod<bool>('startRecording', {
+        'path': path,
+      });
       return result ?? false;
     } catch (_) {
       return false;

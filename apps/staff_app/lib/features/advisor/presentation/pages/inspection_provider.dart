@@ -202,7 +202,9 @@ class InspectionNotifier extends Notifier<InspectionState> {
       return InspectionState.fromPersistableMap(draft);
     }
     // Seamless flow — intake from an assigned booking carries the booking id.
-    final intakeBookingId = Hive.box<dynamic>('inspections').get('intake_booking_id') as String? ?? '';
+    final intakeBookingId =
+        Hive.box<dynamic>('inspections').get('intake_booking_id') as String? ??
+        '';
     return InspectionState(bookingId: intakeBookingId);
   }
 
@@ -314,12 +316,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
   }
 
   void setMedia(String itemId, ItemMedia media) {
-    state = state.copyWith(
-      media: {
-        ...state.media,
-        itemId: media,
-      },
-    );
+    state = state.copyWith(media: {...state.media, itemId: media});
     _persistDraft();
   }
 
@@ -527,4 +524,3 @@ final inspectionProvider =
     NotifierProvider<InspectionNotifier, InspectionState>(
       InspectionNotifier.new,
     );
-

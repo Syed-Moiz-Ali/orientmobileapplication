@@ -12,7 +12,10 @@ class AdvisorAvatar extends StatelessWidget {
     decoration: BoxDecoration(
       color: Colors.white.withValues(alpha: 0.20),
       shape: BoxShape.circle,
-      border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+      border: Border.all(
+        color: Colors.white.withValues(alpha: 0.5),
+        width: 1.5,
+      ),
     ),
     child: Center(
       child: Text(
@@ -26,4 +29,3 @@ class AdvisorAvatar extends StatelessWidget {
     ),
   );
 }
-

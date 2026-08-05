@@ -91,6 +91,24 @@ public class RepairOrderService {
         return RepairOrderResponse.builder().id(ref).build();
     }
 
+    @Transactional
+    public void sendEstimate(Long id, com.orient.workshop.auth.filter.JwtUserPrincipal principal) {
+        RepairOrder ro = repairOrderMapper.selectById(id);
+        if (ro == null) {
+            throw new NotFoundException("Repair order not found");
+        }
+        
+        // Could update ro status to 'sent' if status field existed
+        
+        if (ro.getJobCardId() != null) {
+            JobCard jc = jobCardMapper.selectById(ro.getJobCardId());
+            if (jc != null) {
+                jc.setStatus("waitingCustomerApproval");
+                jobCardMapper.updateById(jc);
+            }
+        }
+    }
+
     private void createApproval(JobCard jc, String ref, RepairOrder ro) {
         Customer customer = jc.getCustomerId() != null ? customerMapper.selectById(jc.getCustomerId()) : null;
         String customerName = customer != null && customer.getCustomerName() != null

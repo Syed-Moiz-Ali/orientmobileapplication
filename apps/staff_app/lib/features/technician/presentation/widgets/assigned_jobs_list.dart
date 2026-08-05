@@ -42,7 +42,10 @@ class AssignedJobsList extends ConsumerWidget {
   }
 
   void _openDetail(
-      BuildContext context, WidgetRef ref, TechnicianJobEntity job) {
+    BuildContext context,
+    WidgetRef ref,
+    TechnicianJobEntity job,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

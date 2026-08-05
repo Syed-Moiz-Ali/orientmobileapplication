@@ -39,11 +39,19 @@ class InspectionSheetView extends ConsumerWidget {
           children: [
             const Text(
               'Vehicle Inspection',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             Text(
               '${state.completedCount} of ${state.totalItems} items completed',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -58,7 +66,11 @@ class InspectionSheetView extends ConsumerWidget {
               ),
               child: Text(
                 '${(pct * 100).round()}%',
-                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -70,7 +82,11 @@ class InspectionSheetView extends ConsumerWidget {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-              children: [...state.filteredSections.map((sec) => _SectionCard(section: sec))],
+              children: [
+                ...state.filteredSections.map(
+                  (sec) => _SectionCard(section: sec),
+                ),
+              ],
             ),
           ),
           _Footer(callbacks: callbacks),
@@ -119,14 +135,21 @@ class _ProgressHeader extends ConsumerWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryBg,
                   borderRadius: BorderRadius.circular(AppDimensions.rPill),
                 ),
                 child: Text(
                   '${state.completedCount}/${state.totalItems}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             ],
@@ -143,14 +166,20 @@ class _ProgressHeader extends ConsumerWidget {
                     value: pct,
                     minHeight: 5,
                     backgroundColor: const Color(0xFFE8ECF0),
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
               Text(
                 '${(pct * 100).round()}%',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
               ),
             ],
           ),
@@ -171,7 +200,11 @@ class _ProgressHeader extends ConsumerWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
         ),
       ),
     );
@@ -220,7 +253,11 @@ class _SectionCardState extends ConsumerState<_SectionCard> {
   }
 
   int _ratedCount(Map<String, ItemStatus> statuses, InspectionSection sec) {
-    return sec.items.asMap().entries.where((e) => statuses.containsKey('${sec.id}_${e.key}')).length;
+    return sec.items
+        .asMap()
+        .entries
+        .where((e) => statuses.containsKey('${sec.id}_${e.key}'))
+        .length;
   }
 
   @override
@@ -236,7 +273,13 @@ class _SectionCardState extends ConsumerState<_SectionCard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppDimensions.r14),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -250,7 +293,10 @@ class _SectionCardState extends ConsumerState<_SectionCard> {
                   Container(
                     width: 6,
                     height: 28,
-                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(3)),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -267,7 +313,10 @@ class _SectionCardState extends ConsumerState<_SectionCard> {
                         ),
                         Text(
                           '${sec.items.length} items · $rated rated',
-                          style: const TextStyle(fontSize: 11, color: AppColors.text3),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.text3,
+                          ),
                         ),
                       ],
                     ),
@@ -279,10 +328,15 @@ class _SectionCardState extends ConsumerState<_SectionCard> {
                       children: [
                         if (rated > 0)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.successBg,
-                              borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.rPill,
+                              ),
                             ),
                             child: Text(
                               '$rated/${sec.items.length}',
@@ -297,7 +351,11 @@ class _SectionCardState extends ConsumerState<_SectionCard> {
                         AnimatedRotation(
                           turns: isCollapsed ? -0.25 : 0,
                           duration: const Duration(milliseconds: 200),
-                          child: const Icon(Icons.keyboard_arrow_down, color: AppColors.text3, size: 20),
+                          child: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: AppColors.text3,
+                            size: 20,
+                          ),
                         ),
                       ],
                     ),
@@ -324,11 +382,21 @@ class _SectionCardState extends ConsumerState<_SectionCard> {
                         controller: _searchCtrl,
                         autofocus: true,
                         onChanged: (q) => notifier.setSectionSearch(sec.id, q),
-                        style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Search in section...',
-                          hintStyle: const TextStyle(fontSize: 12, color: AppColors.text3),
-                          prefixIcon: const Icon(Icons.search, size: 16, color: AppColors.text3),
+                          hintStyle: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.text3,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            size: 16,
+                            color: AppColors.text3,
+                          ),
                           suffixIcon: GestureDetector(
                             onTap: () {
                               setState(() {
@@ -337,11 +405,17 @@ class _SectionCardState extends ConsumerState<_SectionCard> {
                               });
                               notifier.setSectionSearch(sec.id, '');
                             },
-                            child: const Icon(Icons.close, size: 16, color: AppColors.text3),
+                            child: const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: AppColors.text3,
+                            ),
                           ),
                           isDense: true,
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                          ),
                         ),
                       ),
                     ),
@@ -356,7 +430,8 @@ class _SectionCardState extends ConsumerState<_SectionCard> {
                       itemName: itemName,
                       index: index,
                       total: sec.items.length,
-                      onSearchToggle: () => setState(() => _searching = !_searching),
+                      onSearchToggle: () =>
+                          setState(() => _searching = !_searching),
                     );
                   }),
                 ],
@@ -400,10 +475,14 @@ class _ItemRow extends ConsumerWidget {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: status != null ? const Color(0xFFFAFCFE) : const Color(0xFFF8F9FB),
+        color: status != null
+            ? const Color(0xFFFAFCFE)
+            : const Color(0xFFF8F9FB),
         borderRadius: BorderRadius.circular(AppDimensions.r12),
         border: Border.all(
-          color: status != null ? sc!.color.withValues(alpha: 0.15) : const Color(0xFFE8ECF0),
+          color: status != null
+              ? sc!.color.withValues(alpha: 0.15)
+              : const Color(0xFFE8ECF0),
           width: status != null ? 1.2 : 1,
         ),
       ),
@@ -418,12 +497,19 @@ class _ItemRow extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: sc?.bg ?? const Color(0xFFE8ECF0),
                   shape: BoxShape.circle,
-                  border: Border.all(color: sc?.color ?? const Color(0xFFCDD1DB), width: 1.5),
+                  border: Border.all(
+                    color: sc?.color ?? const Color(0xFFCDD1DB),
+                    width: 1.5,
+                  ),
                 ),
                 child: Center(
                   child: Text(
                     '${index + 1}',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: sc?.color ?? AppColors.text3),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: sc?.color ?? AppColors.text3,
+                    ),
                   ),
                 ),
               ),
@@ -434,13 +520,18 @@ class _ItemRow extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: status != null ? AppColors.textPrimary : AppColors.text2,
+                    color: status != null
+                        ? AppColors.textPrimary
+                        : AppColors.text2,
                   ),
                 ),
               ),
               if (sc != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: sc.bg,
                     borderRadius: BorderRadius.circular(AppDimensions.rPill),
@@ -452,12 +543,19 @@ class _ItemRow extends ConsumerWidget {
                       Container(
                         width: 6,
                         height: 6,
-                        decoration: BoxDecoration(color: sc.color, shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                          color: sc.color,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                       const SizedBox(width: 5),
                       Text(
                         sc.label,
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: sc.color),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: sc.color,
+                        ),
                       ),
                     ],
                   ),
@@ -504,12 +602,20 @@ class _ItemRow extends ConsumerWidget {
                 'Note',
                 hasNote,
                 AppColors.info,
-                () => _showNoteDialog(context, notifier, itemId, itemMedia?.note ?? ''),
+                () => _showNoteDialog(
+                  context,
+                  notifier,
+                  itemId,
+                  itemMedia?.note ?? '',
+                ),
               ),
               const Spacer(),
               if (hasMedia)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryBg,
                     borderRadius: BorderRadius.circular(AppDimensions.rPill),
@@ -519,7 +625,11 @@ class _ItemRow extends ConsumerWidget {
                     children: [
                       Text(
                         '${(itemMedia?.photoPaths.length ?? 0) + (itemMedia?.videoPaths.length ?? 0) + (itemMedia?.audioPath.isNotEmpty == true ? 1 : 0) + (itemMedia?.note.isNotEmpty == true ? 1 : 0)} files',
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.primary),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ],
                   ),
@@ -563,7 +673,10 @@ class _ItemRow extends ConsumerWidget {
                 GestureDetector(
                   onTap: () => notifier.setStatus(itemId, null),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.dangerBg,
                       borderRadius: BorderRadius.circular(AppDimensions.rPill),
@@ -575,7 +688,11 @@ class _ItemRow extends ConsumerWidget {
                         SizedBox(width: 3),
                         Text(
                           'Clear',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.danger),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.danger,
+                          ),
                         ),
                       ],
                     ),
@@ -599,7 +716,11 @@ class _ItemRow extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.attachment_rounded, size: 14, color: AppColors.text2),
+                      const Icon(
+                        Icons.attachment_rounded,
+                        size: 14,
+                        color: AppColors.text2,
+                      ),
                       const SizedBox(width: 6),
                       const Text(
                         'Attachments',
@@ -612,21 +733,39 @@ class _ItemRow extends ConsumerWidget {
                       ),
                       const Spacer(),
                       GestureDetector(
-                        onTap: () => _confirmClearAllMedia(context, notifier, itemId, itemMedia),
+                        onTap: () => _confirmClearAllMedia(
+                          context,
+                          notifier,
+                          itemId,
+                          itemMedia,
+                        ),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.dangerBg,
-                            borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.rPill,
+                            ),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.delete_sweep_outlined, size: 12, color: AppColors.danger),
+                              Icon(
+                                Icons.delete_sweep_outlined,
+                                size: 12,
+                                color: AppColors.danger,
+                              ),
                               SizedBox(width: 3),
                               Text(
                                 'Clear all',
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.danger),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.danger,
+                                ),
                               ),
                             ],
                           ),
@@ -638,7 +777,11 @@ class _ItemRow extends ConsumerWidget {
 
                   // ── Photos ──────────────────────────────────────────
                   if (itemMedia.photoPaths.isNotEmpty) ...[
-                    _mediaLabel(Icons.image_outlined, 'Photos', itemMedia.photoPaths.length),
+                    _mediaLabel(
+                      Icons.image_outlined,
+                      'Photos',
+                      itemMedia.photoPaths.length,
+                    ),
                     const SizedBox(height: 6),
                     SizedBox(
                       height: 72,
@@ -646,7 +789,11 @@ class _ItemRow extends ConsumerWidget {
                         scrollDirection: Axis.horizontal,
                         itemCount: itemMedia.photoPaths.length,
                         itemBuilder: (_, i) => GestureDetector(
-                          onTap: () => _showFullScreenMedia(context, itemMedia.photoPaths[i], isVideo: false),
+                          onTap: () => _showFullScreenMedia(
+                            context,
+                            itemMedia.photoPaths[i],
+                            isVideo: false,
+                          ),
                           child: Stack(
                             children: [
                               Container(
@@ -654,11 +801,17 @@ class _ItemRow extends ConsumerWidget {
                                 height: 72,
                                 margin: const EdgeInsets.only(right: 8),
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(AppDimensions.r8),
-                                  border: Border.all(color: const Color(0xFFE4E7EE)),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.r8,
+                                  ),
+                                  border: Border.all(
+                                    color: const Color(0xFFE4E7EE),
+                                  ),
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(AppDimensions.r7),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.r7,
+                                  ),
                                   child: localImage(
                                     itemMedia.photoPaths[i],
                                     fit: BoxFit.cover,
@@ -673,8 +826,15 @@ class _ItemRow extends ConsumerWidget {
                                   child: Container(
                                     width: 20,
                                     height: 20,
-                                    decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                    child: const Icon(Icons.close, color: Colors.white, size: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -688,7 +848,11 @@ class _ItemRow extends ConsumerWidget {
 
                   // ── Videos ──────────────────────────────────────────
                   if (itemMedia.videoPaths.isNotEmpty) ...[
-                    _mediaLabel(Icons.videocam_outlined, 'Videos', itemMedia.videoPaths.length),
+                    _mediaLabel(
+                      Icons.videocam_outlined,
+                      'Videos',
+                      itemMedia.videoPaths.length,
+                    ),
                     const SizedBox(height: 6),
                     ...itemMedia.videoPaths.asMap().entries.map((e) {
                       final vi = e.key;
@@ -699,16 +863,28 @@ class _ItemRow extends ConsumerWidget {
                         child: Row(
                           children: [
                             GestureDetector(
-                              onTap: () => _showFullScreenMedia(context, vp, isVideo: true),
+                              onTap: () => _showFullScreenMedia(
+                                context,
+                                vp,
+                                isVideo: true,
+                              ),
                               child: Container(
                                 width: 48,
                                 height: 48,
                                 decoration: BoxDecoration(
                                   color: AppColors.primaryBg,
-                                  borderRadius: BorderRadius.circular(AppDimensions.r8),
-                                  border: Border.all(color: const Color(0xFFE4E7EE)),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.r8,
+                                  ),
+                                  border: Border.all(
+                                    color: const Color(0xFFE4E7EE),
+                                  ),
                                 ),
-                                child: const Icon(Icons.play_circle_filled, color: AppColors.primary, size: 28),
+                                child: const Icon(
+                                  Icons.play_circle_filled,
+                                  color: AppColors.primary,
+                                  size: 28,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -727,7 +903,11 @@ class _ItemRow extends ConsumerWidget {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   GestureDetector(
-                                    onTap: () => _showFullScreenMedia(context, vp, isVideo: true),
+                                    onTap: () => _showFullScreenMedia(
+                                      context,
+                                      vp,
+                                      isVideo: true,
+                                    ),
                                     child: const Text(
                                       'Tap to play',
                                       style: TextStyle(
@@ -747,9 +927,15 @@ class _ItemRow extends ConsumerWidget {
                                 height: 32,
                                 decoration: BoxDecoration(
                                   color: AppColors.dangerBg,
-                                  borderRadius: BorderRadius.circular(AppDimensions.r8),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.r8,
+                                  ),
                                 ),
-                                child: const Icon(Icons.delete_outline, color: AppColors.danger, size: 16),
+                                child: const Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.danger,
+                                  size: 16,
+                                ),
                               ),
                             ),
                           ],
@@ -774,11 +960,19 @@ class _ItemRow extends ConsumerWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.delete_outline, size: 14, color: AppColors.text3),
+                            Icon(
+                              Icons.delete_outline,
+                              size: 14,
+                              color: AppColors.text3,
+                            ),
                             SizedBox(width: 4),
                             Text(
                               'Remove audio',
-                              style: TextStyle(fontSize: 11, color: AppColors.text3, fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.text3,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -805,18 +999,35 @@ class _ItemRow extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               itemMedia.note,
-                              style: const TextStyle(fontSize: 12, color: AppColors.text2, height: 1.4),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.text2,
+                                height: 1.4,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           GestureDetector(
-                            onTap: () => _showNoteDialog(context, notifier, itemId, itemMedia.note),
-                            child: const Icon(Icons.edit_outlined, size: 16, color: AppColors.text3),
+                            onTap: () => _showNoteDialog(
+                              context,
+                              notifier,
+                              itemId,
+                              itemMedia.note,
+                            ),
+                            child: const Icon(
+                              Icons.edit_outlined,
+                              size: 16,
+                              color: AppColors.text3,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           GestureDetector(
                             onTap: () => notifier.setNote(itemId, ''),
-                            child: const Icon(Icons.delete_outline, size: 16, color: AppColors.danger),
+                            child: const Icon(
+                              Icons.delete_outline,
+                              size: 16,
+                              color: AppColors.danger,
+                            ),
                           ),
                         ],
                       ),
@@ -838,15 +1049,25 @@ class _ItemRow extends ConsumerWidget {
         const SizedBox(width: 6),
         Text(
           count != null ? '$label ($count)' : label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.text2),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.text2,
+          ),
         ),
       ],
     );
   }
 
-  void _showFullScreenMedia(BuildContext context, String path, {required bool isVideo}) {
+  void _showFullScreenMedia(
+    BuildContext context,
+    String path, {
+    required bool isVideo,
+  }) {
     if (isVideo) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => _VideoPlayerPage(filePath: path)));
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => _VideoPlayerPage(filePath: path)),
+      );
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -868,15 +1089,26 @@ class _ItemRow extends ConsumerWidget {
     }
   }
 
-  void _confirmClearAllMedia(BuildContext context, InspectionNotifier notifier, String itemId, ItemMedia media) {
+  void _confirmClearAllMedia(
+    BuildContext context,
+    InspectionNotifier notifier,
+    String itemId,
+    ItemMedia media,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.r16),
+        ),
         title: const Text(
           'Clear all attachments?',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
         ),
         content: const Text(
           'This will remove all photos, videos, audio and notes for this item.',
@@ -887,14 +1119,19 @@ class _ItemRow extends ConsumerWidget {
             onPressed: () => Navigator.pop(ctx),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: AppColors.text3, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: AppColors.text3,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.r10),
+              ),
             ),
             onPressed: () {
               Navigator.pop(ctx);
@@ -909,14 +1146,23 @@ class _ItemRow extends ConsumerWidget {
               }
               notifier.setMedia(itemId, const ItemMedia());
             },
-            child: const Text('Clear All', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Clear All',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _mediaBtn(IconData icon, String tooltip, bool active, Color color, VoidCallback onTap) {
+  Widget _mediaBtn(
+    IconData icon,
+    String tooltip,
+    bool active,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return Tooltip(
       message: tooltip,
       child: Semantics(
@@ -930,9 +1176,18 @@ class _ItemRow extends ConsumerWidget {
             decoration: BoxDecoration(
               color: active ? color.withValues(alpha: 0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: active ? color.withValues(alpha: 0.3) : const Color(0xFFD4D9E6), width: 1.2),
+              border: Border.all(
+                color: active
+                    ? color.withValues(alpha: 0.3)
+                    : const Color(0xFFD4D9E6),
+                width: 1.2,
+              ),
             ),
-            child: Icon(icon, size: 18, color: active ? color : AppColors.text3),
+            child: Icon(
+              icon,
+              size: 18,
+              color: active ? color : AppColors.text3,
+            ),
           ),
         ),
       ),
@@ -960,15 +1215,25 @@ class _ItemRow extends ConsumerWidget {
         decoration: BoxDecoration(
           color: sel ? color : bg,
           borderRadius: BorderRadius.circular(AppDimensions.rPill),
-          border: Border.all(color: sel ? color : color.withValues(alpha: 0.2), width: sel ? 1.5 : 1),
+          border: Border.all(
+            color: sel ? color : color.withValues(alpha: 0.2),
+            width: sel ? 1.5 : 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (sel) ...[const Icon(Icons.check, size: 12, color: Colors.white), const SizedBox(width: 4)],
+            if (sel) ...[
+              const Icon(Icons.check, size: 12, color: Colors.white),
+              const SizedBox(width: 4),
+            ],
             Text(
               label,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: sel ? Colors.white : color),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: sel ? Colors.white : color,
+              ),
             ),
           ],
         ),
@@ -981,7 +1246,8 @@ class _ItemRow extends ConsumerWidget {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final ext = sourcePath.split('.').last;
-      final fileName = '${prefix}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final fileName =
+          '${prefix}_${DateTime.now().millisecondsSinceEpoch}.$ext';
       final destPath = '${dir.path}/$fileName';
       return await persistMediaFile(sourcePath, destPath);
     } catch (_) {
@@ -1010,7 +1276,9 @@ class _ItemRow extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not open ${fromCamera ? "camera" : "gallery"}: $e'),
+            content: Text(
+              'Could not open ${fromCamera ? "camera" : "gallery"}: $e',
+            ),
             backgroundColor: AppColors.danger,
           ),
         );
@@ -1018,7 +1286,11 @@ class _ItemRow extends ConsumerWidget {
     }
   }
 
-  Future<void> _pickVideo(BuildContext context, InspectionNotifier notifier, String itemId) async {
+  Future<void> _pickVideo(
+    BuildContext context,
+    InspectionNotifier notifier,
+    String itemId,
+  ) async {
     try {
       final picker = ImagePicker();
       final XFile? file = await picker.pickVideo(source: ImageSource.camera);
@@ -1028,14 +1300,22 @@ class _ItemRow extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not open camera: $e'), backgroundColor: AppColors.danger));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open camera: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     }
   }
 
-  void _showAudioDialog(BuildContext context, InspectionState state, InspectionNotifier notifier, String itemId) {
+  void _showAudioDialog(
+    BuildContext context,
+    InspectionState state,
+    InspectionNotifier notifier,
+    String itemId,
+  ) {
     showDialog(
       context: context,
       builder: (_) => _AudioDialog(
@@ -1046,13 +1326,20 @@ class _ItemRow extends ConsumerWidget {
     );
   }
 
-  void _showNoteDialog(BuildContext context, InspectionNotifier notifier, String itemId, String existing) {
+  void _showNoteDialog(
+    BuildContext context,
+    InspectionNotifier notifier,
+    String itemId,
+    String existing,
+  ) {
     final ctrl = TextEditingController(text: existing);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.r16),
+        ),
         title: Row(
           children: [
             Container(
@@ -1062,13 +1349,21 @@ class _ItemRow extends ConsumerWidget {
                 color: AppColors.primaryBg,
                 borderRadius: BorderRadius.circular(AppDimensions.r8),
               ),
-              child: const Icon(Icons.edit_outlined, color: AppColors.primary, size: 15),
+              child: const Icon(
+                Icons.edit_outlined,
+                color: AppColors.primary,
+                size: 15,
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 itemName,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
           ],
@@ -1077,7 +1372,11 @@ class _ItemRow extends ConsumerWidget {
           controller: ctrl,
           maxLines: 5,
           autofocus: true,
-          style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.5),
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textPrimary,
+            height: 1.5,
+          ),
           decoration: InputDecoration(
             hintText: 'Add a note about this item...',
             hintStyle: const TextStyle(color: AppColors.text3),
@@ -1089,7 +1388,10 @@ class _ItemRow extends ConsumerWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.r10),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+                width: 1.5,
+              ),
             ),
           ),
         ),
@@ -1098,13 +1400,18 @@ class _ItemRow extends ConsumerWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: AppColors.text3, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: AppColors.text3,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.r10),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
             onPressed: () {
@@ -1113,7 +1420,10 @@ class _ItemRow extends ConsumerWidget {
             },
             child: const Text(
               'Save Note',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -1180,7 +1490,11 @@ class _AudioPlayerRowState extends State<_AudioPlayerRow> {
                 color: _playing ? AppColors.warning : AppColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(_playing ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 20),
+              child: Icon(
+                _playing ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -1215,13 +1529,18 @@ class _AudioDialog extends StatefulWidget {
   final String itemId;
   final String existing;
   final void Function(String) onSave;
-  const _AudioDialog({required this.itemId, required this.existing, required this.onSave});
+  const _AudioDialog({
+    required this.itemId,
+    required this.existing,
+    required this.onSave,
+  });
 
   @override
   State<_AudioDialog> createState() => _AudioDialogState();
 }
 
-class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderStateMixin {
+class _AudioDialogState extends State<_AudioDialog>
+    with SingleTickerProviderStateMixin {
   bool _recording = false;
   int _seconds = 0;
   late final String _existingPath;
@@ -1237,7 +1556,10 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
   void initState() {
     super.initState();
     _existingPath = widget.existing;
-    _pulseCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))..repeat(reverse: true);
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
     _pulse = Tween<double>(
       begin: 0.95,
       end: 1.05,
@@ -1260,15 +1582,19 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
 
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final fileName = 'audio_${widget.itemId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final fileName =
+          'audio_${widget.itemId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
       _recordedPath = '${dir.path}/$fileName';
 
       final started = await _recorder.startRecording(_recordedPath!);
       if (!started) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Could not start recording'), backgroundColor: AppColors.danger));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not start recording'),
+              backgroundColor: AppColors.danger,
+            ),
+          );
         }
         return;
       }
@@ -1290,9 +1616,12 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not start recording: $e'), backgroundColor: AppColors.danger));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not start recording: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     }
   }
@@ -1307,15 +1636,21 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
         Navigator.pop(context);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Recording was empty, please try again'), backgroundColor: AppColors.danger),
+          const SnackBar(
+            content: Text('Recording was empty, please try again'),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     } catch (e) {
       setState(() => _recording = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error stopping recording: $e'), backgroundColor: AppColors.danger));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error stopping recording: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     }
   }
@@ -1342,14 +1677,20 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.r16),
+      ),
       title: const Row(
         children: [
           Icon(Icons.mic_outlined, color: AppColors.primary, size: 22),
           SizedBox(width: 10),
           Text(
             'Audio Note',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
         ],
       ),
@@ -1370,7 +1711,11 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
                   Expanded(
                     child: Text(
                       'Microphone permission denied. Please enable in settings.',
-                      style: TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: AppColors.danger,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -1387,12 +1732,20 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.audio_file, color: AppColors.primary, size: 18),
+                  const Icon(
+                    Icons.audio_file,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
                       'Audio recording saved',
-                      style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   GestureDetector(
@@ -1400,14 +1753,25 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
                     child: Container(
                       width: 32,
                       height: 32,
-                      decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),
                   GestureDetector(
                     onTap: _deleteExisting,
-                    child: const Icon(Icons.delete_outline, color: AppColors.danger, size: 18),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: AppColors.danger,
+                      size: 18,
+                    ),
                   ),
                 ],
               ),
@@ -1415,7 +1779,9 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
             const SizedBox(height: 16),
           ],
           Text(
-            _recording ? 'Recording... tap stop when done' : 'Tap the microphone to start recording',
+            _recording
+                ? 'Recording... tap stop when done'
+                : 'Tap the microphone to start recording',
             style: const TextStyle(fontSize: 13, color: AppColors.text2),
           ),
           const SizedBox(height: 20),
@@ -1438,13 +1804,18 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: (_recording ? AppColors.danger : AppColors.primary).withValues(alpha: 0.3),
+                      color: (_recording ? AppColors.danger : AppColors.primary)
+                          .withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: Icon(_recording ? Icons.stop : Icons.mic, color: Colors.white, size: 30),
+                child: Icon(
+                  _recording ? Icons.stop : Icons.mic,
+                  color: Colors.white,
+                  size: 30,
+                ),
               ),
             ),
           ),
@@ -1458,7 +1829,11 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
               ),
               child: Text(
                 '$_seconds s',
-                style: const TextStyle(fontSize: 14, color: AppColors.danger, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.danger,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -1474,7 +1849,10 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
           },
           child: const Text(
             'Cancel',
-            style: TextStyle(color: AppColors.text3, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: AppColors.text3,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -1528,14 +1906,23 @@ class _VideoPlayerPageState extends State<_VideoPlayerPage> {
         elevation: 0,
         title: Text(
           widget.filePath.split('/').last,
-          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: Center(
         child: _initialized
             ? Column(
                 mainAxisSize: MainAxisSize.min,
-                children: [AspectRatio(aspectRatio: _controller.value.aspectRatio, child: VideoPlayer(_controller))],
+                children: [
+                  AspectRatio(
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: VideoPlayer(_controller),
+                  ),
+                ],
               )
             : const CircularProgressIndicator(color: AppColors.primary),
       ),
@@ -1548,9 +1935,16 @@ class _VideoPlayerPageState extends State<_VideoPlayerPage> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      _controller.seekTo(_controller.value.position - const Duration(seconds: 10));
+                      _controller.seekTo(
+                        _controller.value.position -
+                            const Duration(seconds: 10),
+                      );
                     },
-                    child: const Icon(Icons.replay_10, color: Colors.white, size: 28),
+                    child: const Icon(
+                      Icons.replay_10,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
                   const SizedBox(width: 24),
                   GestureDetector(
@@ -1565,9 +1959,14 @@ class _VideoPlayerPageState extends State<_VideoPlayerPage> {
                     child: Container(
                       width: 52,
                       height: 52,
-                      decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(
+                        color: Colors.white24,
+                        shape: BoxShape.circle,
+                      ),
                       child: Icon(
-                        _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                        _controller.value.isPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
                         color: Colors.white,
                         size: 32,
                       ),
@@ -1576,9 +1975,16 @@ class _VideoPlayerPageState extends State<_VideoPlayerPage> {
                   const SizedBox(width: 24),
                   GestureDetector(
                     onTap: () {
-                      _controller.seekTo(_controller.value.position + const Duration(seconds: 10));
+                      _controller.seekTo(
+                        _controller.value.position +
+                            const Duration(seconds: 10),
+                      );
                     },
-                    child: const Icon(Icons.forward_10, color: Colors.white, size: 28),
+                    child: const Icon(
+                      Icons.forward_10,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
                 ],
               ),
@@ -1606,9 +2012,15 @@ class _Footer extends ConsumerWidget {
           final hasStatus = state.statuses.containsKey(itemId);
           final hasMedia =
               m != null &&
-              (m.photoPaths.isNotEmpty || m.videoPaths.isNotEmpty || m.audioPath.isNotEmpty || m.note.isNotEmpty);
+              (m.photoPaths.isNotEmpty ||
+                  m.videoPaths.isNotEmpty ||
+                  m.audioPath.isNotEmpty ||
+                  m.note.isNotEmpty);
           if (hasMedia && !hasStatus) {
-            violations[sec.items[i]] = sec.label.replaceFirst(RegExp(r'^\d+\.\s*'), '');
+            violations[sec.items[i]] = sec.label.replaceFirst(
+              RegExp(r'^\d+\.\s*'),
+              '',
+            );
           }
         }
       }
@@ -1617,15 +2029,25 @@ class _Footer extends ConsumerWidget {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.r16),
+            ),
             title: const Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 22),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppColors.danger,
+                  size: 22,
+                ),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Conditions Required',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ],
@@ -1638,7 +2060,11 @@ class _Footer extends ConsumerWidget {
                 children: [
                   const Text(
                     'Items with attachments must have a condition (Good/Fair/Poor):',
-                    style: TextStyle(fontSize: 13, color: AppColors.text2, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.text2,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   ...violations.entries.map(
@@ -1651,21 +2077,33 @@ class _Footer extends ConsumerWidget {
                             margin: const EdgeInsets.only(top: 3),
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
+                            decoration: const BoxDecoration(
+                              color: AppColors.danger,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: RichText(
                               text: TextSpan(
-                                style: const TextStyle(fontSize: 12, height: 1.4, color: AppColors.textPrimary),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.4,
+                                  color: AppColors.textPrimary,
+                                ),
                                 children: [
                                   TextSpan(
                                     text: e.key,
-                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                   TextSpan(
                                     text: '  -  ${e.value}',
-                                    style: const TextStyle(fontSize: 11, color: AppColors.text3),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.text3,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1686,7 +2124,9 @@ class _Footer extends ConsumerWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimensions.r10),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: const Text(
@@ -1711,7 +2151,13 @@ class _Footer extends ConsumerWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Color(0xFFE4E7EE))),
-        boxShadow: [BoxShadow(color: Color(0x08000000), blurRadius: 8, offset: Offset(0, -2))],
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
       ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
@@ -1726,19 +2172,27 @@ class _Footer extends ConsumerWidget {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: state.notifyOwner ? AppColors.primaryBg : const Color(0xFFF5F7FA),
+                      color: state.notifyOwner
+                          ? AppColors.primaryBg
+                          : const Color(0xFFF5F7FA),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.notifications_outlined,
                       size: 16,
-                      color: state.notifyOwner ? AppColors.primary : AppColors.text3,
+                      color: state.notifyOwner
+                          ? AppColors.primary
+                          : AppColors.text3,
                     ),
                   ),
                   const SizedBox(width: 10),
                   const Text(
                     'Notify Owner',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -1750,14 +2204,21 @@ class _Footer extends ConsumerWidget {
                   height: 24,
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: state.notifyOwner ? AppColors.primary : const Color(0xFFD4D9E6),
+                    color: state.notifyOwner
+                        ? AppColors.primary
+                        : const Color(0xFFD4D9E6),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  alignment: state.notifyOwner ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: state.notifyOwner
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     width: 18,
                     height: 18,
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
               ),
@@ -1772,10 +2233,15 @@ class _Footer extends ConsumerWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.text2,
                     side: const BorderSide(color: Color(0xFFD4D9E6)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimensions.r12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text('Save Draft', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  child: const Text(
+                    'Save Draft',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1785,12 +2251,18 @@ class _Footer extends ConsumerWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimensions.r12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: const Text(
                     'Preview',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ),

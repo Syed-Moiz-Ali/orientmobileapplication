@@ -29,11 +29,15 @@ class SupervisorQueueTab extends ConsumerWidget {
       isScrollControlled: true,
       builder: (_) => StatefulBuilder(
         builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
           child: Container(
             decoration: const BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r24)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppDimensions.r24),
+              ),
             ),
             padding: const EdgeInsets.all(AppDimensions.s16),
             child: Column(
@@ -52,8 +56,12 @@ class SupervisorQueueTab extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  isBooking ? 'Assign booking to advisor' : 'Dispatch breakdown to advisor',
-                  style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+                  isBooking
+                      ? 'Assign booking to advisor'
+                      : 'Dispatch breakdown to advisor',
+                  style: AppTextStyles.rajdhaniTitle(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -77,11 +85,15 @@ class SupervisorQueueTab extends ConsumerWidget {
                       value: a.id,
                       child: Text(
                         a.name,
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                        ),
                       ),
                     );
                   }).toList(),
-                  onChanged: (v) => setSheetState(() => selectedId = v ?? selectedId),
+                  onChanged: (v) =>
+                      setSheetState(() => selectedId = v ?? selectedId),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -111,7 +123,10 @@ class SupervisorQueueTab extends ConsumerWidget {
                     },
                     child: Text(
                       isBooking ? 'Assign' : 'Dispatch',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ),
@@ -148,7 +163,9 @@ class SupervisorQueueTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 'Bookings & Breakdowns',
-                style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+                style: AppTextStyles.rajdhaniTitle(
+                  color: AppColors.textPrimary,
+                ),
               ),
               const Spacer(),
               if (isLoading)
@@ -160,7 +177,11 @@ class SupervisorQueueTab extends ConsumerWidget {
               else
                 IconButton(
                   onPressed: notifier.refreshQueue,
-                  icon: const Icon(Icons.refresh_rounded, color: AppColors.text3, size: 20),
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    color: AppColors.text3,
+                    size: 20,
+                  ),
                 ),
             ],
           ),
@@ -176,7 +197,10 @@ class SupervisorQueueTab extends ConsumerWidget {
           if (bookings.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
-              child: EmptyState(icon: Icons.event_available_outlined, message: 'No unassigned bookings'),
+              child: EmptyState(
+                icon: Icons.event_available_outlined,
+                message: 'No unassigned bookings',
+              ),
             )
           else
             ...bookings.map(
@@ -184,9 +208,18 @@ class SupervisorQueueTab extends ConsumerWidget {
                 icon: Icons.event_rounded,
                 iconColor: const Color(0xFF1F6FEB),
                 title: '${b.serviceType} · ${b.vehicleName}',
-                subtitle: '${b.customerName} · ${b.plateNumber}\n${b.bookingDate}',
+                subtitle:
+                    '${b.customerName} · ${b.plateNumber}\n${b.bookingDate}',
                 trailingLabel: b.status,
-                onAssign: () => _assign(context, ref, id: b.id, isBooking: true, label: b.serviceType),
+                bookingDateStr: b.bookingDate,
+                isNew: b.status.toLowerCase() == 'pending',
+                onAssign: () => _assign(
+                  context,
+                  ref,
+                  id: b.id,
+                  isBooking: true,
+                  label: b.serviceType,
+                ),
               ),
             ),
 
@@ -196,7 +229,10 @@ class SupervisorQueueTab extends ConsumerWidget {
           if (breakdowns.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
-              child: EmptyState(icon: Icons.emergency_outlined, message: 'No unassigned breakdowns'),
+              child: EmptyState(
+                icon: Icons.emergency_outlined,
+                message: 'No unassigned breakdowns',
+              ),
             )
           else
             ...breakdowns.map(
@@ -204,9 +240,18 @@ class SupervisorQueueTab extends ConsumerWidget {
                 icon: Icons.emergency_rounded,
                 iconColor: const Color(0xFFDA3633),
                 title: b.issue,
-                subtitle: '${b.customerName} · ${b.vehicleName} ${b.vehiclePlate}\n${b.location}',
+                subtitle:
+                    '${b.customerName} · ${b.vehicleName} ${b.vehiclePlate}\n${b.location}',
                 trailingLabel: b.status,
-                onAssign: () => _assign(context, ref, id: b.id, isBooking: false, label: b.issue),
+                bookingDateStr: '',
+                isNew: b.status.toLowerCase() == 'pending',
+                onAssign: () => _assign(
+                  context,
+                  ref,
+                  id: b.id,
+                  isBooking: false,
+                  label: b.issue,
+                ),
               ),
             ),
           const SizedBox(height: 24),
@@ -235,7 +280,11 @@ class SupervisorQueueTab extends ConsumerWidget {
           ),
           child: Text(
             '$count',
-            style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w800, fontSize: 12),
+            style: const TextStyle(
+              color: AppColors.accent,
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+            ),
           ),
         ),
       ],
@@ -250,6 +299,8 @@ class _QueueCard extends StatelessWidget {
   final String subtitle;
   final String trailingLabel;
   final VoidCallback onAssign;
+  final String? bookingDateStr; // Added for SLA timer
+  final bool isNew; // Added for unread indicator
 
   const _QueueCard({
     required this.icon,
@@ -258,25 +309,85 @@ class _QueueCard extends StatelessWidget {
     required this.subtitle,
     required this.trailingLabel,
     required this.onAssign,
+    this.bookingDateStr,
+    this.isNew = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget iconWidget = Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: iconColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppDimensions.r12),
+      ),
+      child: Icon(icon, color: iconColor, size: 22),
+    );
+
+    if (isNew) {
+      iconWidget = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          iconWidget,
+          Positioned(
+            top: -2,
+            right: -2,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1F6FEB),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.surface, width: 2),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    Widget slaWidget = const SizedBox.shrink();
+    if (bookingDateStr != null) {
+      final date = DateTime.tryParse(bookingDateStr!) ?? DateTime.now();
+      final diff = DateTime.now().difference(date);
+      final hours = diff.inHours;
+      final minutes = diff.inMinutes.remainder(60);
+
+      Color slaColor = AppColors.success;
+      if (hours >= 3) {
+        slaColor = AppColors.danger;
+      } else if (hours >= 1) {
+        slaColor = AppColors.warning;
+      }
+
+      slaWidget = Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.timer_outlined, size: 10, color: slaColor),
+            const SizedBox(width: 4),
+            Text(
+              'Waiting ${hours}h ${minutes}m',
+              style: TextStyle(
+                color: slaColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: AppCard(
         padding: const EdgeInsets.all(AppDimensions.s16),
         child: Row(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-              ),
-              child: Icon(icon, color: iconColor, size: 22),
-            ),
+            iconWidget,
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -295,7 +406,11 @@ class _QueueCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: AppColors.text3, fontSize: 12, height: 1.35),
+                    style: const TextStyle(
+                      color: AppColors.text3,
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
                   ),
                 ],
               ),
@@ -305,6 +420,7 @@ class _QueueCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 StatusPill(label: trailingLabel),
+                if (bookingDateStr != null) slaWidget,
                 const SizedBox(height: 8),
                 SizedBox(
                   height: 32,
@@ -318,7 +434,13 @@ class _QueueCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppDimensions.r10),
                       ),
                     ),
-                    child: const Text('Assign', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                    child: const Text(
+                      'Assign',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ],

@@ -18,28 +18,59 @@ class SupervisorScheduleTab extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Container(width: 4, height: 20, decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(2))),
+              Container(
+                width: 4,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
               const SizedBox(width: 10),
-              Text('Today\'s Schedule', style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary)),
+              Text(
+                'Today\'s Schedule',
+                style: AppTextStyles.rajdhaniTitle(
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
-          Text('${jobs.length} jobs scheduled', style: const TextStyle(fontSize: 13, color: AppColors.text3)),
+          Text(
+            '${jobs.length} jobs scheduled',
+            style: const TextStyle(fontSize: 13, color: AppColors.text3),
+          ),
           const SizedBox(height: 16),
           ...jobs.map((j) {
             final isCompleted = j.status == 'Completed';
             final isInProgress = j.status == 'In Progress';
-            final clr = isCompleted ? AppColors.success : isInProgress ? AppColors.accent : AppColors.warning;
-            final bg = isCompleted ? AppColors.successBg : isInProgress ? AppColors.accent.withValues(alpha: 0.12) : AppColors.warningBg;
+            final clr = isCompleted
+                ? AppColors.success
+                : isInProgress
+                ? AppColors.accent
+                : AppColors.warning;
+            final bg = isCompleted
+                ? AppColors.successBg
+                : isInProgress
+                ? AppColors.accent.withValues(alpha: 0.12)
+                : AppColors.warningBg;
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
               child: Row(
                 children: [
                   Container(
-                    width: 4, height: 48,
-                    decoration: BoxDecoration(color: clr, borderRadius: BorderRadius.circular(2)),
+                    width: 4,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: clr,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -48,21 +79,51 @@ class SupervisorScheduleTab extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Text(j.jobCard, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                            Text(
+                              j.jobCard,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
-                              child: Text(j.status, style: TextStyle(color: clr, fontSize: 9, fontWeight: FontWeight.w700)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: bg,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                j.status,
+                                style: TextStyle(
+                                  color: clr,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text('${j.customer}  \u00b7  ${j.vehicle}', style: const TextStyle(fontSize: 12, color: AppColors.text3)),
+                        Text(
+                          '${j.customer}  \u00b7  ${j.vehicle}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.text3,
+                          ),
+                        ),
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.linear_scale_rounded, size: 12, color: AppColors.text3),
+                            Icon(
+                              Icons.linear_scale_rounded,
+                              size: 12,
+                              color: AppColors.text3,
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: ClipRRect(
@@ -76,7 +137,14 @@ class SupervisorScheduleTab extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Text('${j.done}/${j.total}', style: TextStyle(fontSize: 11, color: clr, fontWeight: FontWeight.w700)),
+                            Text(
+                              '${j.done}/${j.total}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: clr,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ],
                         ),
                       ],

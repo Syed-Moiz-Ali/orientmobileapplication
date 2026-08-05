@@ -2,95 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/qc_checklist_sheet.dart';
 
 class SupervisorReviewTab extends ConsumerWidget {
   const SupervisorReviewTab({super.key});
 
-  Future<void> _approve(BuildContext context, WidgetRef ref, int jobCardId, String refLabel) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Approve completion?', style: TextStyle(color: AppColors.textPrimary)),
-        content: Text(
-          'Approve $refLabel — the invoice will be raised automatically.',
-          style: const TextStyle(color: AppColors.text3),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Approve', style: TextStyle(color: AppColors.success)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    final msg = await ref.read(supervisorDashboardProvider.notifier).approveCompletion(jobCardId);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
-      );
-    }
-  }
-
-  Future<void> _reject(BuildContext context, WidgetRef ref, int jobCardId, String refLabel) async {
-    final reasonCtrl = TextEditingController();
-    final confirmed = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Send back for revision', style: TextStyle(color: AppColors.textPrimary)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'All completed items of $refLabel will be reset to pending with this reason.',
-              style: const TextStyle(color: AppColors.text3, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: reasonCtrl,
-              decoration: const InputDecoration(
-                hintText: 'Reason (e.g. re-check headlight alignment)',
-                hintStyle: TextStyle(color: AppColors.text4),
-                filled: true,
-                fillColor: AppColors.primaryBg,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, null),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(
-              context,
-              reasonCtrl.text.trim().isEmpty ? 'Work needs revision' : reasonCtrl.text.trim(),
-            ),
-            child: const Text('Send back', style: TextStyle(color: AppColors.danger)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == null) return;
-    final msg = await ref.read(supervisorDashboardProvider.notifier).rejectCompletion(jobCardId, confirmed);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
-      );
-    }
-  }
+  // The _approve and _reject methods are no longer needed here as they've moved to QcChecklistSheet
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -116,7 +33,9 @@ class SupervisorReviewTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 'Completion Review',
-                style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+                style: AppTextStyles.rajdhaniTitle(
+                  color: AppColors.textPrimary,
+                ),
               ),
               const Spacer(),
               if (state.isReviewLoading)
@@ -128,7 +47,11 @@ class SupervisorReviewTab extends ConsumerWidget {
               else
                 IconButton(
                   onPressed: notifier.refreshReview,
-                  icon: const Icon(Icons.refresh_rounded, color: AppColors.text3, size: 20),
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    color: AppColors.text3,
+                    size: 20,
+                  ),
                 ),
             ],
           ),
@@ -167,23 +90,36 @@ class SupervisorReviewTab extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          StatusPill(label: '${job.done}/${job.total} done', bg: AppColors.primaryBg, fg: AppColors.primary),
+                          StatusPill(
+                            label: '${job.done}/${job.total} done',
+                            bg: AppColors.primaryBg,
+                            fg: AppColors.primary,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${job.customerName} · ${job.vehicleInfo}',
-                        style: const TextStyle(color: AppColors.text3, fontSize: 13),
+                        style: const TextStyle(
+                          color: AppColors.text3,
+                          fontSize: 13,
+                        ),
                       ),
                       if (job.technician.isNotEmpty)
                         Text(
                           'Technician: ${job.technician}',
-                          style: const TextStyle(color: AppColors.text3, fontSize: 12),
+                          style: const TextStyle(
+                            color: AppColors.text3,
+                            fontSize: 12,
+                          ),
                         ),
                       const SizedBox(height: 4),
                       Text(
                         'Updated ${job.updatedAt}',
-                        style: const TextStyle(color: AppColors.text4, fontSize: 11),
+                        style: const TextStyle(
+                          color: AppColors.text4,
+                          fontSize: 11,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       ClipRRect(
@@ -224,55 +160,62 @@ class SupervisorReviewTab extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                item.itemType == 'INSPECTION' ? 'Inspection' : 'Work',
-                                style: const TextStyle(color: AppColors.text4, fontSize: 10),
+                                item.itemType == 'INSPECTION'
+                                    ? 'Inspection'
+                                    : 'Work',
+                                style: const TextStyle(
+                                  color: AppColors.text4,
+                                  fontSize: 10,
+                                ),
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 item.empName,
-                                style: const TextStyle(color: AppColors.text3, fontSize: 11),
+                                style: const TextStyle(
+                                  color: AppColors.text3,
+                                  fontSize: 11,
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 40,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.success,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(AppDimensions.r10),
-                                  ),
-                                ),
-                                onPressed: () => _approve(context, ref, job.jobCardId, job.jobCardRef),
-                                child: const Text('Approve', style: TextStyle(fontWeight: FontWeight.w700)),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1F6FEB),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r10,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: SizedBox(
-                              height: 40,
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.danger,
-                                  side: const BorderSide(color: AppColors.danger),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(AppDimensions.r10),
-                                  ),
-                                ),
-                                onPressed: () => _reject(context, ref, job.jobCardId, job.jobCardRef),
-                                child: const Text('Send back', style: TextStyle(fontWeight: FontWeight.w700)),
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => QcChecklistSheet(
+                                jobCardId: job.jobCardId,
+                                jobCardRef: job.jobCardRef,
+                                customerName: job.customerName,
+                                vehicleInfo: job.vehicleInfo,
                               ),
+                            );
+                          },
+                          icon: const Icon(Icons.fact_check_rounded, size: 18),
+                          label: const Text(
+                            'Start QC Review',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),

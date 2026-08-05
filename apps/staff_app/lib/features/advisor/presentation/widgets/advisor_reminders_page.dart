@@ -21,9 +21,16 @@ class AdvisorRemindersPage extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.notifications_outlined, size: 40, color: AppColors.text4.withValues(alpha: 0.4)),
+            Icon(
+              Icons.notifications_outlined,
+              size: 40,
+              color: AppColors.text4.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: 12),
-            const Text('No reminders', style: TextStyle(fontSize: 14, color: AppColors.text3)),
+            const Text(
+              'No reminders',
+              style: TextStyle(fontSize: 14, color: AppColors.text3),
+            ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => _showNewReminderSheet(context, ref),
@@ -33,7 +40,9 @@ class AdvisorRemindersPage extends ConsumerWidget {
                 backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -79,28 +88,74 @@ class AdvisorRemindersPage extends ConsumerWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) => Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              MediaQuery.of(ctx).viewInsets.bottom + 20,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Container(width: 4, height: 20, decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(2))),
+                    Container(
+                      width: 4,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    const Text('New Reminder', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                    const Text(
+                      'New Reminder',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 18),
-                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Customer Name', filled: true, fillColor: AppColors.canvas, border: OutlineInputBorder())),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Customer Name',
+                    filled: true,
+                    fillColor: AppColors.canvas,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 const SizedBox(height: 12),
-                TextField(controller: taskCtrl, decoration: const InputDecoration(labelText: 'Task', filled: true, fillColor: AppColors.canvas, border: OutlineInputBorder())),
+                TextField(
+                  controller: taskCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Task',
+                    filled: true,
+                    fillColor: AppColors.canvas,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 const SizedBox(height: 12),
-                TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Due Date (e.g. Today, 2:00 PM)', filled: true, fillColor: AppColors.canvas, border: OutlineInputBorder())),
+                TextField(
+                  controller: dateCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Due Date (e.g. Today, 2:00 PM)',
+                    filled: true,
+                    fillColor: AppColors.canvas,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Text('Priority: ', style: TextStyle(fontSize: 13, color: AppColors.text2)),
+                    const Text(
+                      'Priority: ',
+                      style: TextStyle(fontSize: 13, color: AppColors.text2),
+                    ),
                     const SizedBox(width: 8),
                     ...ReminderPriority.values.map((p) {
                       final sel = priority == p;
@@ -109,14 +164,21 @@ class AdvisorRemindersPage extends ConsumerWidget {
                         child: GestureDetector(
                           onTap: () => setSheetState(() => priority = p),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: sel ? AppColors.accent : AppColors.canvas,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               p.name[0].toUpperCase() + p.name.substring(1),
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : AppColors.text2),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: sel ? Colors.white : AppColors.text2,
+                              ),
                             ),
                           ),
                         ),
@@ -129,16 +191,21 @@ class AdvisorRemindersPage extends ConsumerWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      if (nameCtrl.text.isEmpty || taskCtrl.text.isEmpty) return;
-                      ref.read(advisorFollowupRemindersProvider.notifier).addReminder(
-                        FollowupReminderEntity(
-                          customerName: nameCtrl.text,
-                          vehicleId: '',
-                          task: taskCtrl.text,
-                          dueDate: dateCtrl.text.isEmpty ? 'Today' : dateCtrl.text,
-                          priority: priority,
-                        ),
-                      );
+                      if (nameCtrl.text.isEmpty || taskCtrl.text.isEmpty)
+                        return;
+                      ref
+                          .read(advisorFollowupRemindersProvider.notifier)
+                          .addReminder(
+                            FollowupReminderEntity(
+                              customerName: nameCtrl.text,
+                              vehicleId: '',
+                              task: taskCtrl.text,
+                              dueDate: dateCtrl.text.isEmpty
+                                  ? 'Today'
+                                  : dateCtrl.text,
+                              priority: priority,
+                            ),
+                          );
                       Navigator.pop(ctx);
                     },
                     style: ElevatedButton.styleFrom(
@@ -146,9 +213,14 @@ class AdvisorRemindersPage extends ConsumerWidget {
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Add Reminder', style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: const Text(
+                      'Add Reminder',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
               ],
@@ -159,4 +231,3 @@ class AdvisorRemindersPage extends ConsumerWidget {
     );
   }
 }
-

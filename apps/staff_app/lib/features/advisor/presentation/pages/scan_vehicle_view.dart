@@ -34,9 +34,10 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-    _scanLine = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _scanLineCtrl, curve: Curves.easeInOut),
-    );
+    _scanLine = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _scanLineCtrl, curve: Curves.easeInOut));
     _initCamera();
   }
 
@@ -154,7 +155,11 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (!_cameraReady) ...[
-                      const Icon(Icons.camera_alt, color: Colors.white38, size: 48),
+                      const Icon(
+                        Icons.camera_alt,
+                        color: Colors.white38,
+                        size: 48,
+                      ),
                       const SizedBox(height: 12),
                       const Text(
                         'Camera permission required',
@@ -202,8 +207,11 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
                               Radius.circular(AppDimensions.r10),
                             ),
                           ),
-                          child: const Icon(Icons.arrow_back_ios_new,
-                              color: Colors.white, size: 18),
+                          child: const Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -262,8 +270,7 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
                             }),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
                               decoration: BoxDecoration(
                                 color: isActive
                                     ? AppColors.primary
@@ -298,18 +305,13 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
                   _scanMode == 'PLATE'
                       ? 'Point camera at license plate'
                       : _scanMode == 'VIN'
-                          ? 'Scan the VIN barcode on dashboard'
-                          : 'Scan the vehicle QR code',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                  ),
+                      ? 'Scan the VIN barcode on dashboard'
+                      : 'Scan the vehicle QR code',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 16),
 
-                Expanded(
-                  child: Center(child: _buildScannerFrame()),
-                ),
+                Expanded(child: Center(child: _buildScannerFrame())),
 
                 _buildManualEntry(),
                 const SizedBox(height: 20),
@@ -327,8 +329,7 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
                     color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.check,
-                      color: Colors.white, size: 48),
+                  child: const Icon(Icons.check, color: Colors.white, size: 48),
                 ),
               ),
             ),
@@ -351,8 +352,7 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
           AnimatedBuilder(
             animation: _scanLine,
             builder: (_, __) {
-              final h =
-                  _scanMode == 'PLATE' ? frameSize * 0.55 : frameSize;
+              final h = _scanMode == 'PLATE' ? frameSize * 0.55 : frameSize;
               return Positioned(
                 top: _scanLine.value * (h - 4),
                 left: 0,
@@ -429,8 +429,8 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
                   _scanMode == 'QR'
                       ? Icons.qr_code_scanner
                       : _scanMode == 'VIN'
-                          ? Icons.view_week_outlined
-                          : Icons.credit_card,
+                      ? Icons.view_week_outlined
+                      : Icons.credit_card,
                   color: Colors.white24,
                   size: 48,
                 ),
@@ -489,17 +489,17 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
                   ),
                   child: TextField(
                     controller: _manualCtrl,
-                    style: const TextStyle(
-                        color: Colors.white, fontSize: 14),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
                     textCapitalization: TextCapitalization.characters,
                     onSubmitted: (_) => _manualSearch(),
                     decoration: const InputDecoration(
                       hintText: 'Plate / VIN / Customer name...',
-                      hintStyle: TextStyle(
-                          color: Colors.white38, fontSize: 13),
+                      hintStyle: TextStyle(color: Colors.white38, fontSize: 13),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -516,8 +516,11 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
                       Radius.circular(AppDimensions.r12),
                     ),
                   ),
-                  child: const Icon(Icons.search,
-                      color: Colors.white, size: 24),
+                  child: const Icon(
+                    Icons.search,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
               ),
             ],

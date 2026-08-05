@@ -51,7 +51,10 @@ class AuthNotifier extends Notifier<AuthState> {
       state = const AuthUnauthenticated();
       return;
     }
-    state = const AuthLoading();
+    state = AuthAuthenticated(
+      role: _roleFromName(roleName),
+      token: token,
+    );
     final valid = await validateSession();
     if (!valid && state is! AuthAuthenticated) {
       state = const AuthUnauthenticated();

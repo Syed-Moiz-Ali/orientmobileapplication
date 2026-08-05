@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
+import 'package:staff_app/features/technician/presentation/widgets/parts_request_sheet.dart';
+import 'package:staff_app/features/technician/presentation/widgets/escalation_sheet.dart';
 
 class JobDetailSheet extends ConsumerStatefulWidget {
   final TechnicianJobEntity job;
@@ -364,116 +366,198 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                   ),
                   child: SafeArea(
                     top: false,
-                    child: Row(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.text2,
-                            side: BorderSide(color: AppColors.border),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s20,
-                              vertical: AppDimensions.s14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r12,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            'Close',
-                            style: AppTextStyles.rajdhaniBodySmall(
-                              color: AppColors.text2,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        OutlinedButton.icon(
-                          onPressed: state.isSaving
-                              ? null
-                              : () => notifier.saveChanges(job),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.accent,
-                            side: BorderSide(
-                              color: AppColors.accent,
-                              width: 1.5,
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s14,
-                              vertical: AppDimensions.s14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r12,
-                              ),
-                            ),
-                          ),
-                          icon: state.isSaving
-                              ? SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.accent,
-                                  ),
-                                )
-                              : const Icon(Icons.save_rounded, size: 16),
-                          label: Text(
-                            'Save',
-                            style: AppTextStyles.rajdhaniBodySmall(),
-                          ),
-                        ),
-                        SizedBox(width: AppDimensions.s8),
-                        GestureDetector(
-                          onTap: state.isSaving
-                              ? null
-                              : () async {
-                                  await notifier.completeJob(job);
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                  }
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => PartsRequestSheet(
+                                      jobCardRef: job.jobCardNo,
+                                      technicianEmpId: notifier.profile.empId,
+                                    ),
+                                  );
                                 },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s14,
-                              vertical: AppDimensions.s14,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppColors.navy, AppColors.accent],
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r12,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.accent.withValues(
-                                    alpha: 0.30,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.warning,
+                                  side: const BorderSide(
+                                    color: AppColors.warning,
                                   ),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppDimensions.r12,
+                                    ),
+                                  ),
                                 ),
-                              ],
+                                icon: const Icon(Icons.build_rounded, size: 16),
+                                label: const Text(
+                                  'Request Part',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check_circle_outline_rounded,
-                                  color: Colors.white,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => EscalationSheet(
+                                      jobCardRef: job.jobCardNo,
+                                      technicianEmpId: notifier.profile.empId,
+                                    ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.danger,
+                                  side: const BorderSide(
+                                    color: AppColors.danger,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppDimensions.r12,
+                                    ),
+                                  ),
+                                ),
+                                icon: const Icon(
+                                  Icons.warning_rounded,
                                   size: 16,
                                 ),
-                                SizedBox(width: AppDimensions.s6),
-                                Text(
-                                  'Complete Job',
-                                  style: AppTextStyles.rajdhaniBodySmall(
-                                    color: Colors.white,
+                                label: const Text(
+                                  'Flag Issue',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.text2,
+                                side: const BorderSide(color: AppColors.border),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppDimensions.s20,
+                                  vertical: AppDimensions.s14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.r12,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                'Close',
+                                style: AppTextStyles.rajdhaniBodySmall(
+                                  color: AppColors.text2,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            OutlinedButton.icon(
+                              onPressed: state.isSaving
+                                  ? null
+                                  : () => notifier.saveChanges(job),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.accent,
+                                side: BorderSide(
+                                  color: AppColors.accent,
+                                  width: 1.5,
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppDimensions.s14,
+                                  vertical: AppDimensions.s14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.r12,
+                                  ),
+                                ),
+                              ),
+                              icon: state.isSaving
+                                  ? SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.accent,
+                                      ),
+                                    )
+                                  : const Icon(Icons.save_rounded, size: 16),
+                              label: Text(
+                                'Save',
+                                style: AppTextStyles.rajdhaniBodySmall(),
+                              ),
+                            ),
+                            SizedBox(width: AppDimensions.s8),
+                            GestureDetector(
+                              onTap: state.isSaving
+                                  ? null
+                                  : () async {
+                                      await notifier.completeJob(job);
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                      }
+                                    },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppDimensions.s14,
+                                  vertical: AppDimensions.s14,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [AppColors.navy, AppColors.accent],
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.r12,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.accent.withValues(
+                                        alpha: 0.30,
+                                      ),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle_outline_rounded,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: AppDimensions.s6),
+                                    Text(
+                                      'Complete Job',
+                                      style: AppTextStyles.rajdhaniBodySmall(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

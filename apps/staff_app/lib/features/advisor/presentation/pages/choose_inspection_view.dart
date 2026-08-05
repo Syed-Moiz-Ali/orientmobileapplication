@@ -157,4 +157,3 @@ class ChooseInspectionView extends ConsumerWidget {
     );
   }
 }
-

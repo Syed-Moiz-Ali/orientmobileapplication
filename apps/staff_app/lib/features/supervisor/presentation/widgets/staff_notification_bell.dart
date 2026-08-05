@@ -33,7 +33,11 @@ class StaffNotificationBell extends ConsumerWidget {
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(AppDimensions.r10),
             ),
-            child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
+            child: const Icon(
+              Icons.notifications_none_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
         ),
         if (unread > 0)
@@ -76,7 +80,9 @@ class _StaffNotificationsSheet extends ConsumerWidget {
       builder: (_, ctrl) => Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r28)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.r28),
+          ),
         ),
         child: Column(
           children: [
@@ -108,7 +114,9 @@ class _StaffNotificationsSheet extends ConsumerWidget {
                   const SizedBox(width: 10),
                   Text(
                     'Notifications',
-                    style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+                    style: AppTextStyles.rajdhaniTitle(
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const Spacer(),
                   TextButton(
@@ -145,7 +153,9 @@ class _StaffNotificationsSheet extends ConsumerWidget {
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: n.isRead ? AppColors.surfaceAlt : AppColors.primaryBg,
+                                color: n.isRead
+                                    ? AppColors.surfaceAlt
+                                    : AppColors.primaryBg,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -156,18 +166,23 @@ class _StaffNotificationsSheet extends ConsumerWidget {
                                         ? Icons.notifications_none_rounded
                                         : Icons.notifications_active_rounded,
                                     size: 18,
-                                    color: n.isRead ? AppColors.text4 : AppColors.accent,
+                                    color: n.isRead
+                                        ? AppColors.text4
+                                        : AppColors.accent,
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           n.title,
                                           style: TextStyle(
                                             color: AppColors.textPrimary,
-                                            fontWeight: n.isRead ? FontWeight.w600 : FontWeight.w800,
+                                            fontWeight: n.isRead
+                                                ? FontWeight.w600
+                                                : FontWeight.w800,
                                             fontSize: 13.5,
                                           ),
                                         ),
@@ -175,13 +190,19 @@ class _StaffNotificationsSheet extends ConsumerWidget {
                                           const SizedBox(height: 3),
                                           Text(
                                             n.body,
-                                            style: const TextStyle(color: AppColors.text3, fontSize: 12.5),
+                                            style: const TextStyle(
+                                              color: AppColors.text3,
+                                              fontSize: 12.5,
+                                            ),
                                           ),
                                         ],
                                         const SizedBox(height: 4),
                                         Text(
                                           n.time,
-                                          style: const TextStyle(color: AppColors.text4, fontSize: 11),
+                                          style: const TextStyle(
+                                            color: AppColors.text4,
+                                            fontSize: 11,
+                                          ),
                                         ),
                                       ],
                                     ),

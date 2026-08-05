@@ -11,4 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class IdResponse {
     private String id;
+    private String bookingRef;
 }

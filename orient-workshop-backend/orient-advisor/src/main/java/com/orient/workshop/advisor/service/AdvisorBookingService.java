@@ -9,6 +9,13 @@ import com.orient.workshop.core.model.entity.Staff;
 import com.orient.workshop.core.repository.BookingMapper;
 import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.StaffMapper;
+import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.repository.JobCardMapper;
+import com.orient.workshop.advisor.model.dto.CheckInRequest;
+import com.orient.workshop.advisor.model.dto.CheckInResponse;
+import com.orient.workshop.common.exception.NotFoundException;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +35,7 @@ public class AdvisorBookingService {
     private final BookingMapper bookingMapper;
     private final CustomerMapper customerMapper;
     private final StaffMapper staffMapper;
+    private final JobCardMapper jobCardMapper;
 
     public List<AdvisorBookingResponse> getAssignedBookings(JwtUserPrincipal principal) {
         Staff me = resolveAdvisor(principal);
@@ -61,5 +69,39 @@ public class AdvisorBookingService {
         }
         return staffMapper.findByUserId(principal.getUserId())
                 .orElseThrow(() -> new ForbiddenException("No staff record linked to the authenticated user"));
+    }
+
+    @Transactional
+    public CheckInResponse checkIn(Long bookingId, CheckInRequest request, JwtUserPrincipal principal) {
+        Booking booking = bookingMapper.selectById(bookingId);
+        if (booking == null) {
+            throw new NotFoundException("Booking not found");
+        }
+
+        JobCard jobCard = JobCard.builder()
+                .customerId(booking.getCustomerId())
+                .vehicleId(booking.getVehicleId())
+                .branchId(booking.getBranchId())
+                .status("vehicleReceived")
+                .tag(booking.getServiceType())
+                .notes(request.getNotes())
+                .createdDate(LocalDateTime.now())
+                .build();
+        
+        jobCardMapper.insert(jobCard);
+        
+        String ref = "JC-" + LocalDateTime.now().getYear() + "-" + jobCard.getId();
+        jobCard.setJobCardRef(ref);
+        jobCardMapper.updateById(jobCard);
+
+        booking.setStatus("vehicle_received");
+        booking.setJobCardId(jobCard.getId());
+        bookingMapper.updateById(booking);
+
+        return CheckInResponse.builder()
+                .jobCardId(jobCard.getId())
+                .jobCardRef(jobCard.getJobCardRef())
+                .status(jobCard.getStatus())
+                .build();
     }
 }

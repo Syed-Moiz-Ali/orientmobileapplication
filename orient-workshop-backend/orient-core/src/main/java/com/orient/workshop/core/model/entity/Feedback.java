@@ -12,7 +12,13 @@ public class Feedback {
     private Long jobCardId;
     private Long customerId;
     private Long branchId;
-    private Integer rating;
+    private Integer rating; // Overall rating alias
+    private Integer overallRating;
+    private Integer workQuality;
+    private Integer communication;
+    private Integer timeliness;
+    private Integer valueForMoney;
+    private Boolean wouldRecommend;
     private String comment;
     @Builder.Default private Boolean isPublic = true;
     @TableField(exist = false) @Builder.Default private Boolean isModerated = false;

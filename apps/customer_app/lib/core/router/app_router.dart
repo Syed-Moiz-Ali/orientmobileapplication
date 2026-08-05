@@ -8,7 +8,12 @@ import 'package:customer_app/features/customer/presentation/customer_breakdown_h
 import 'package:customer_app/features/customer/presentation/customer_booking_detail_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_breakdown_detail_view.dart';
 import 'package:customer_app/features/customer/presentation/add_vehicle_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_booking_success_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_invoice_detail_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_feedback_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_service_status_view.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:shared_core/shared_core.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -23,6 +28,10 @@ class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String customerAddVehicle = '/add-vehicle';
   static String customerEditVehicle(String id) => '/edit-vehicle/$id';
+  static const String customerBookingSuccess = '/booking-success';
+  static const String customerInvoiceDetail = '/invoice-detail';
+  static const String customerFeedback = '/feedback';
+  static const String customerServiceStatus = '/customer_service_status_view';
 }
 
 final _routerRefreshNotifier = ValueNotifier<int>(0);
@@ -41,26 +50,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       return switch (authState) {
         AuthUnauthenticated() =>
-          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
-              ? null
-              : AppRoutes.login,
-        AuthLoading() =>
-          matched == AppRoutes.startup ? null : AppRoutes.startup,
-        AuthError() =>
-          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
-              ? null
-              : AppRoutes.login,
+          matched == AppRoutes.login || matched == AppRoutes.forgotPassword ? null : AppRoutes.login,
+        AuthLoading() => matched == AppRoutes.startup ? null : AppRoutes.startup,
+        AuthError() => matched == AppRoutes.login || matched == AppRoutes.forgotPassword ? null : AppRoutes.login,
         AuthAuthenticated() =>
-          matched == AppRoutes.login || matched == AppRoutes.startup
-              ? AppRoutes.customerDashboard
-              : null,
+          matched == AppRoutes.login || matched == AppRoutes.startup ? AppRoutes.customerDashboard : null,
       };
     },
     routes: [
-      GoRoute(
-        path: AppRoutes.startup,
-        builder: (context, state) => const AuthLoadingView(),
-      ),
+      GoRoute(path: AppRoutes.startup, builder: (context, state) => const AuthLoadingView()),
       GoRoute(
         path: AppRoutes.login,
         name: AppRoutes.login,
@@ -73,8 +71,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) =>
-            ForgotPasswordView(onBackToLogin: () => context.pop()),
+        builder: (context, state) => ForgotPasswordView(onBackToLogin: () => context.pop()),
       ),
       GoRoute(
         path: AppRoutes.customerDashboard,
@@ -99,8 +96,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/edit-vehicle/:id',
         name: 'edit-vehicle',
-        builder: (context, state) =>
-            AddVehicleView(vehicleId: state.pathParameters['id']),
+        builder: (context, state) => AddVehicleView(vehicleId: state.pathParameters['id']),
       ),
       GoRoute(
         path: AppRoutes.customerBookingDetail,
@@ -117,6 +113,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final breakdown = state.extra as Map<String, dynamic>;
           return CustomerBreakdownDetailView(breakdown: breakdown);
         },
+      ),
+      GoRoute(
+        path: AppRoutes.customerBookingSuccess,
+        name: AppRoutes.customerBookingSuccess,
+        builder: (context, state) {
+          final args = state.extra as Map<String, dynamic>;
+          return CustomerBookingSuccessView(
+            bookingRef: args['ref'] as String?,
+            service: args['service'] as String,
+            date: args['date'] as String,
+            time: args['time'] as String,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.customerInvoiceDetail,
+        name: AppRoutes.customerInvoiceDetail,
+        builder: (context, state) {
+          final invoice = state.extra as InvoiceResponse;
+          return CustomerInvoiceDetailView(invoice: invoice);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.customerFeedback,
+        name: AppRoutes.customerFeedback,
+        builder: (context, state) => const CustomerFeedbackView(),
+      ),
+      GoRoute(
+        path: AppRoutes.customerServiceStatus,
+        name: AppRoutes.customerServiceStatus,
+        builder: (context, state) => const CustomerServiceStatusView(),
       ),
     ],
   );

@@ -29,7 +29,9 @@ class ProductivitySection extends ConsumerWidget {
                       value: p.efficiency / 100,
                       strokeWidth: 8,
                       backgroundColor: AppColors.accent.withValues(alpha: 0.12),
-                      valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+                      valueColor: const AlwaysStoppedAnimation(
+                        AppColors.accent,
+                      ),
                     ),
                     Center(
                       child: Column(
@@ -107,9 +109,7 @@ class ProductivitySection extends ConsumerWidget {
                 SizedBox(width: AppDimensions.s10),
                 Text(
                   'Total Hours Worked:',
-                  style: AppTextStyles.rajdhaniBody(
-                    color: AppColors.text2,
-                  ),
+                  style: AppTextStyles.rajdhaniBody(color: AppColors.text2),
                 ),
                 const Spacer(),
                 Text(

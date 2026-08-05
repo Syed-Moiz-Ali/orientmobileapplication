@@ -265,7 +265,9 @@ class AdvisorHeader extends StatelessWidget {
                         width: 42,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(AppDimensions.r11),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r11,
+                          ),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.25),
                           ),
@@ -324,4 +326,3 @@ class AdvisorHeader extends StatelessWidget {
     );
   }
 }
-

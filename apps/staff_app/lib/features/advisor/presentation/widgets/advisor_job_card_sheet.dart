@@ -19,15 +19,43 @@ class _StatusStyle {
 class AdvisorJobCardSheet extends StatelessWidget {
   final JobCardEntity jc;
   final VoidCallback onOpen;
-  const AdvisorJobCardSheet({super.key, required this.jc, required this.onOpen});
+  const AdvisorJobCardSheet({
+    super.key,
+    required this.jc,
+    required this.onOpen,
+  });
 
   _StatusStyle get _s => switch (jc.status) {
-    JobCardStatus.inProgress => _StatusStyle('In Progress', AppColors.accent, AppColors.accent.withValues(alpha: 0.12)),
-    JobCardStatus.pendingApproval => _StatusStyle('Pending', AppColors.warning, AppColors.warningBg),
-    JobCardStatus.completed => _StatusStyle('Completed', AppColors.success, AppColors.successBg),
-    JobCardStatus.waitingParts => _StatusStyle('Waiting Parts', AppColors.danger, AppColors.dangerBg),
-    JobCardStatus.qualityCheck => _StatusStyle('QC Check', AppColors.info, AppColors.infoBg),
-    JobCardStatus.cancelled => _StatusStyle('Cancelled', AppColors.text3, AppColors.surfaceAlt),
+    JobCardStatus.inProgress => _StatusStyle(
+      'In Progress',
+      AppColors.accent,
+      AppColors.accent.withValues(alpha: 0.12),
+    ),
+    JobCardStatus.pendingApproval => _StatusStyle(
+      'Pending',
+      AppColors.warning,
+      AppColors.warningBg,
+    ),
+    JobCardStatus.completed => _StatusStyle(
+      'Completed',
+      AppColors.success,
+      AppColors.successBg,
+    ),
+    JobCardStatus.waitingParts => _StatusStyle(
+      'Waiting Parts',
+      AppColors.danger,
+      AppColors.dangerBg,
+    ),
+    JobCardStatus.qualityCheck => _StatusStyle(
+      'QC Check',
+      AppColors.info,
+      AppColors.infoBg,
+    ),
+    JobCardStatus.cancelled => _StatusStyle(
+      'Cancelled',
+      AppColors.text3,
+      AppColors.surfaceAlt,
+    ),
   };
 
   @override
@@ -46,7 +74,9 @@ class AdvisorJobCardSheet extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: s.color,
-                  borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r2)),
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(AppDimensions.r2),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -65,7 +95,10 @@ class AdvisorJobCardSheet extends StatelessWidget {
                     ),
                     Text(
                       jc.customerName,
-                      style: const TextStyle(fontSize: 13, color: AppColors.text2),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.text2,
+                      ),
                     ),
                   ],
                 ),
@@ -76,10 +109,26 @@ class AdvisorJobCardSheet extends StatelessWidget {
           const SizedBox(height: 18),
           const AdvisorDivider(),
           const SizedBox(height: 12),
-          AdvisorDetailLine(icon: Icons.directions_car_outlined, label: 'Vehicle', value: jc.vehicleInfo),
-          AdvisorDetailLine(icon: Icons.schedule_outlined, label: 'Created', value: jc.time),
-          AdvisorDetailLine(icon: Icons.person_outline_rounded, label: 'Advisor', value: 'Ali Rahman'),
-          AdvisorDetailLine(icon: Icons.build_outlined, label: 'Bay', value: 'Bay 03'),
+          AdvisorDetailLine(
+            icon: Icons.directions_car_outlined,
+            label: 'Vehicle',
+            value: jc.vehicleInfo,
+          ),
+          AdvisorDetailLine(
+            icon: Icons.schedule_outlined,
+            label: 'Created',
+            value: jc.time,
+          ),
+          AdvisorDetailLine(
+            icon: Icons.person_outline_rounded,
+            label: 'Advisor',
+            value: 'Ali Rahman',
+          ),
+          AdvisorDetailLine(
+            icon: Icons.build_outlined,
+            label: 'Bay',
+            value: 'Bay 03',
+          ),
           const SizedBox(height: 18),
           Row(
             children: [
@@ -108,4 +157,3 @@ class AdvisorJobCardSheet extends StatelessWidget {
     );
   }
 }
-

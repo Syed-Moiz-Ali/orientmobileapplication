@@ -48,7 +48,10 @@ class AdvisorLocalDataSource implements LocalRepository<void> {
 
   @override
   Future<List<Map<String, dynamic>>> getAll() async {
-    return _box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+    return _box.values
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
   }
 
   @override
@@ -61,4 +64,3 @@ class AdvisorLocalDataSource implements LocalRepository<void> {
     await _box.clear();
   }
 }
-

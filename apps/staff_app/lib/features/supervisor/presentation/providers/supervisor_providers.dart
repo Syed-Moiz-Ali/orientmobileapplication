@@ -7,9 +7,11 @@ import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/supervisor/data/datasources/supervisor_remote_datasource.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
 
-final supervisorRemoteDataSourceProvider = Provider<SupervisorRemoteDataSource>((ref) {
-  return SupervisorRemoteDataSource(ref.read(apiClientProvider));
-});
+final supervisorRemoteDataSourceProvider = Provider<SupervisorRemoteDataSource>(
+  (ref) {
+    return SupervisorRemoteDataSource(ref.read(apiClientProvider));
+  },
+);
 
 class SupervisorDashboardState {
   final int selectedIndex;
@@ -110,8 +112,10 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   List<StaffNotificationResponse> get notifications => _notifications;
   int get unreadNotifications => _notifications.where((n) => !n.isRead).length;
   int get totalAssigned => _allJobs.length;
-  int get inProgressCount => _allJobs.where((j) => j.status == 'In Progress').length;
-  int get completedCount => _allJobs.where((j) => j.status == 'Completed').length;
+  int get inProgressCount =>
+      _allJobs.where((j) => j.status == 'In Progress').length;
+  int get completedCount =>
+      _allJobs.where((j) => j.status == 'Completed').length;
 
   void selectTab(int index) {
     if (state.selectedIndex == index) return;
@@ -119,18 +123,24 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   }
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateJobCardSearch(String value) => state = state.copyWith(jobCardSearch: value);
+  void updateJobCardSearch(String value) =>
+      state = state.copyWith(jobCardSearch: value);
 
   void addAssignmentRow() {
     state = state.copyWith(
-      assignmentRows: [...state.assignmentRows, WorkAssignmentEntity(id: state.nextRowId)],
+      assignmentRows: [
+        ...state.assignmentRows,
+        WorkAssignmentEntity(id: state.nextRowId),
+      ],
       nextRowId: state.nextRowId + 1,
     );
   }
 
   void removeAssignmentRow(int id) {
     if (state.assignmentRows.length <= 1) return;
-    state = state.copyWith(assignmentRows: state.assignmentRows.where((r) => r.id != id).toList());
+    state = state.copyWith(
+      assignmentRows: state.assignmentRows.where((r) => r.id != id).toList(),
+    );
   }
 
   void updateAssignmentRow(int id, WorkAssignmentEntity updated) {
@@ -143,9 +153,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
 
   Future<void> saveAndAssign() async {
     final rows = state.assignmentRows
-        .where(
-          (r) => r.description.isNotEmpty || r.technicianName.isNotEmpty,
-        )
+        .where((r) => r.description.isNotEmpty || r.technicianName.isNotEmpty)
         .toList();
     if (rows.isEmpty) {
       state = state.copyWith(
@@ -224,51 +232,138 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   Future<void> _loadRemoteData() async {
     final r = _remote;
     if (r == null) return;
-    final kpiColors = [const Color(0xFF1F6FEB), const Color(0xFF238636), const Color(0xFF8957E5), const Color(0xFFFF7B00), const Color(0xFFDA3633)];
-    final kpiIcons = [Icons.description_outlined, Icons.calendar_month_outlined, Icons.groups_2_outlined, Icons.engineering_outlined, Icons.assignment_outlined];
-    final revenueIcons = [Icons.trending_up_rounded, Icons.store_rounded, Icons.build_rounded, Icons.people_rounded, Icons.attach_money_rounded];
-    final statusColors = [const Color(0xFFE3B341), const Color(0xFF238636), const Color(0xFFDA3633), const Color(0xFF8957E5)];
-    final statusIcons = [Icons.access_time_rounded, Icons.check_circle_outline_rounded, Icons.search_rounded, Icons.thumb_up_outlined];
-    final jobColors = [const Color(0xFF1F6FEB), const Color(0xFF238636), const Color(0xFFE3B341)];
+    final kpiColors = [
+      const Color(0xFF1F6FEB),
+      const Color(0xFF238636),
+      const Color(0xFF8957E5),
+      const Color(0xFFFF7B00),
+      const Color(0xFFDA3633),
+    ];
+    final kpiIcons = [
+      Icons.description_outlined,
+      Icons.calendar_month_outlined,
+      Icons.groups_2_outlined,
+      Icons.engineering_outlined,
+      Icons.assignment_outlined,
+    ];
+    final revenueIcons = [
+      Icons.trending_up_rounded,
+      Icons.store_rounded,
+      Icons.build_rounded,
+      Icons.people_rounded,
+      Icons.attach_money_rounded,
+    ];
+    final statusColors = [
+      const Color(0xFFE3B341),
+      const Color(0xFF238636),
+      const Color(0xFFDA3633),
+      const Color(0xFF8957E5),
+    ];
+    final statusIcons = [
+      Icons.access_time_rounded,
+      Icons.check_circle_outline_rounded,
+      Icons.search_rounded,
+      Icons.thumb_up_outlined,
+    ];
+    final jobColors = [
+      const Color(0xFF1F6FEB),
+      const Color(0xFF238636),
+      const Color(0xFFE3B341),
+    ];
 
     final results = await Future.wait([
-      r.getKpis(), r.getAdvisorJobs(), r.getJobTypes(), r.getRevenueMetrics(),
-      r.getPendingStatuses(), r.getDepartments(), r.getTechnicians(), r.getAssignedJobs(),
+      r.getKpis(),
+      r.getAdvisorJobs(),
+      r.getJobTypes(),
+      r.getRevenueMetrics(),
+      r.getPendingStatuses(),
+      r.getDepartments(),
+      r.getTechnicians(),
+      r.getAssignedJobs(),
     ]);
 
-    _kpis = (results[0] as List).asMap().entries.map((e) => SupervisorKpiEntity(
-      icon: kpiIcons[e.key < kpiIcons.length ? e.key : 0], color: kpiColors[e.key < kpiColors.length ? e.key : 0],
-      value: (e.value as KpiResponse).value, label: (e.value as KpiResponse).label, sub: (e.value as KpiResponse).sub,
-    )).toList();
+    _kpis = (results[0] as List)
+        .asMap()
+        .entries
+        .map(
+          (e) => SupervisorKpiEntity(
+            icon: kpiIcons[e.key < kpiIcons.length ? e.key : 0],
+            color: kpiColors[e.key < kpiColors.length ? e.key : 0],
+            value: (e.value as KpiResponse).value,
+            label: (e.value as KpiResponse).label,
+            sub: (e.value as KpiResponse).sub,
+          ),
+        )
+        .toList();
 
-    _advisorJobData = (results[1] as List).map((e) => AdvisorJobEntity(name: (e as AdvisorJobCountResponse).name, count: e.count.toDouble())).toList();
+    _advisorJobData = (results[1] as List)
+        .map(
+          (e) => AdvisorJobEntity(
+            name: (e as AdvisorJobCountResponse).name,
+            count: e.count.toDouble(),
+          ),
+        )
+        .toList();
 
-    _jobTypes = (results[2] as List).asMap().entries.map((e) => JobTypeEntity(
-      label: (e.value as JobTypeResponse).label, count: (e.value as JobTypeResponse).count,
-      color: jobColors[e.key < jobColors.length ? e.key : 0],
-    )).toList();
+    _jobTypes = (results[2] as List)
+        .asMap()
+        .entries
+        .map(
+          (e) => JobTypeEntity(
+            label: (e.value as JobTypeResponse).label,
+            count: (e.value as JobTypeResponse).count,
+            color: jobColors[e.key < jobColors.length ? e.key : 0],
+          ),
+        )
+        .toList();
 
-    _revenueMetrics = (results[3] as List).asMap().entries.map((e) => RevenueMetricEntity(
-      icon: revenueIcons[e.key < revenueIcons.length ? e.key : 0],
-      amount: (e.value as RevenueMetricResponse).amount, label: (e.value as RevenueMetricResponse).label,
-      change: (e.value as RevenueMetricResponse).change,
-    )).toList();
+    _revenueMetrics = (results[3] as List)
+        .asMap()
+        .entries
+        .map(
+          (e) => RevenueMetricEntity(
+            icon: revenueIcons[e.key < revenueIcons.length ? e.key : 0],
+            amount: (e.value as RevenueMetricResponse).amount,
+            label: (e.value as RevenueMetricResponse).label,
+            change: (e.value as RevenueMetricResponse).change,
+          ),
+        )
+        .toList();
 
-    _pendingStatuses = (results[4] as List).asMap().entries.map((e) => PendingStatusEntity(
-      icon: statusIcons[e.key < statusIcons.length ? e.key : 0], color: statusColors[e.key < statusColors.length ? e.key : 0],
-      count: (e.value as PendingStatusResponse).count, label: (e.value as PendingStatusResponse).label,
-    )).toList();
+    _pendingStatuses = (results[4] as List)
+        .asMap()
+        .entries
+        .map(
+          (e) => PendingStatusEntity(
+            icon: statusIcons[e.key < statusIcons.length ? e.key : 0],
+            color: statusColors[e.key < statusColors.length ? e.key : 0],
+            count: (e.value as PendingStatusResponse).count,
+            label: (e.value as PendingStatusResponse).label,
+          ),
+        )
+        .toList();
 
     _departments = (results[5] as List).cast<String>();
     _technicians = (results[6] as List).cast<String>();
     _allJobs.clear();
-    _allJobs.addAll((results[7] as List).map((e) => AssignedJobEntity(
-      jobCard: (e as SupervisorAssignedJob).jobCard, customer: e.customer, vehicle: e.vehicle,
-      dateAssigned: e.dateAssigned, done: e.done, total: e.total, status: e.status,
-    )));
+    _allJobs.addAll(
+      (results[7] as List).map(
+        (e) => AssignedJobEntity(
+          jobCard: (e as SupervisorAssignedJob).jobCard,
+          customer: e.customer,
+          vehicle: e.vehicle,
+          dateAssigned: e.dateAssigned,
+          done: e.done,
+          total: e.total,
+          status: e.status,
+        ),
+      ),
+    );
 
     final queueResults = await Future.wait([
-      r.getBookingQueue(), r.getBreakdownQueue(), r.getAssignableAdvisors(),
+      r.getBookingQueue(),
+      r.getBreakdownQueue(),
+      r.getAssignableAdvisors(),
       r.getAwaitingCompletions(),
     ]);
     _bookings = (queueResults[0] as List).cast<BookingQueueResponse>();
@@ -285,13 +380,17 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
     state = state.copyWith(isQueueLoading: true);
     try {
       final results = await Future.wait([
-        r.getBookingQueue(), r.getBreakdownQueue(), r.getAssignableAdvisors(),
+        r.getBookingQueue(),
+        r.getBreakdownQueue(),
+        r.getAssignableAdvisors(),
       ]);
       _bookings = (results[0] as List).cast<BookingQueueResponse>();
       _breakdowns = (results[1] as List).cast<BreakdownQueueResponse>();
       _advisors = (results[2] as List).cast<AssignableStaffResponse>();
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to refresh supervisor queue', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e('Failed to refresh supervisor queue', error: e, stackTrace: st);
     }
     state = state.copyWith(isQueueLoading: false);
   }
@@ -325,7 +424,9 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
     try {
       _awaiting = await r.getAwaitingCompletions();
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to refresh completion review', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e('Failed to refresh completion review', error: e, stackTrace: st);
     }
     state = state.copyWith(isReviewLoading: false);
   }
@@ -359,7 +460,9 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
       _notifications = await r.getStaffNotifications();
       state = state.copyWith();
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to load staff notifications', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e('Failed to load staff notifications', error: e, stackTrace: st);
     }
   }
 
@@ -384,27 +487,51 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   void _loadAssignmentsFromHive() {
     try {
       final box = Hive.box<dynamic>('supervisor_assignments');
-      final savedAssignments = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m))
+      final savedAssignments = box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
           .where((v) => v['id'] != null && v['description'] != null)
-          .map((v) => WorkAssignmentEntity.fromMap(v)).toList();
-      if (savedAssignments.isNotEmpty) state = state.copyWith(assignmentRows: savedAssignments);
-      final savedJobs = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m))
-          .where((v) => v['jobCard'] != null && v['jobCard'].toString().startsWith('ASN-'))
-          .map((v) => AssignedJobEntity(
-            jobCard: v['jobCard'] as String? ?? '', customer: v['customer'] as String? ?? '',
-            vehicle: v['vehicle'] as String? ?? '', dateAssigned: v['dateAssigned'] as String? ?? '',
-            done: v['done'] as int? ?? 0, total: v['total'] as int? ?? 10, status: v['status'] as String? ?? 'Pending',
-          )).toList();
+          .map((v) => WorkAssignmentEntity.fromMap(v))
+          .toList();
+      if (savedAssignments.isNotEmpty)
+        state = state.copyWith(assignmentRows: savedAssignments);
+      final savedJobs = box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .where(
+            (v) =>
+                v['jobCard'] != null &&
+                v['jobCard'].toString().startsWith('ASN-'),
+          )
+          .map(
+            (v) => AssignedJobEntity(
+              jobCard: v['jobCard'] as String? ?? '',
+              customer: v['customer'] as String? ?? '',
+              vehicle: v['vehicle'] as String? ?? '',
+              dateAssigned: v['dateAssigned'] as String? ?? '',
+              done: v['done'] as int? ?? 0,
+              total: v['total'] as int? ?? 10,
+              status: v['status'] as String? ?? 'Pending',
+            ),
+          )
+          .toList();
       if (savedJobs.isNotEmpty) {
         _allJobs.removeWhere((j) => j.jobCard.startsWith('ASN-'));
         _allJobs.addAll(savedJobs);
       }
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to load supervisor jobs from Hive', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e(
+            'Failed to load supervisor jobs from Hive',
+            error: e,
+            stackTrace: st,
+          );
     }
   }
 }
 
-final supervisorDashboardProvider = NotifierProvider<SupervisorDashboardNotifier, SupervisorDashboardState>(
-  SupervisorDashboardNotifier.new,
-);
+final supervisorDashboardProvider =
+    NotifierProvider<SupervisorDashboardNotifier, SupervisorDashboardState>(
+      SupervisorDashboardNotifier.new,
+    );

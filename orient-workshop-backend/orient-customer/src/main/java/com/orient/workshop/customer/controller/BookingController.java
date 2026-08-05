@@ -1,5 +1,6 @@
 package com.orient.workshop.customer.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.orient.workshop.customer.model.dto.BookingAvailabilityResponse;
 
 
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
@@ -35,6 +36,21 @@ public class BookingController {
                                                    @Valid @RequestBody CreateBookingRequest request) {
         IdResponse response = bookingService.createBooking(principal, request);
         return ApiResponse.success(response);
+    }
+
+    @GetMapping("/bookings/availability")
+    public ApiResponse<BookingAvailabilityResponse> getAvailability(
+            @RequestParam String date,
+            @RequestParam(required = false) String serviceType) {
+        return ApiResponse.success(bookingService.getAvailability(date, serviceType));
+    }
+
+    @PutMapping("/customers/bookings/{bookingId}/status")
+    public ApiResponse<BookingResponse> updateBookingStatus(
+            @PathVariable Long bookingId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(bookingService.updateStatus(bookingId, body.get("status"), principal));
     }
 }
 

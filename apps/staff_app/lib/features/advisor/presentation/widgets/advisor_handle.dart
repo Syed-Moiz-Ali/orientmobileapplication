@@ -17,4 +17,3 @@ class AdvisorHandle extends StatelessWidget {
     ),
   );
 }
-

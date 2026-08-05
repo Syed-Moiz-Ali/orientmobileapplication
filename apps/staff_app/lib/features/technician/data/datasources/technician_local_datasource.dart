@@ -43,13 +43,15 @@ class TechnicianLocalDatasource {
       'status': job.status.name,
       'notes': job.notes,
       'tasks': job.tasks
-          .map((t) => {
-                'id': t.id,
-                'description': t.description,
-                'status': t.status.name,
-                'startTime': t.startTime,
-                'endTime': t.endTime,
-              })
+          .map(
+            (t) => {
+              'id': t.id,
+              'description': t.description,
+              'status': t.status.name,
+              'startTime': t.startTime,
+              'endTime': t.endTime,
+            },
+          )
           .toList(),
     };
     final local = GenericLocalDataSource(_box);

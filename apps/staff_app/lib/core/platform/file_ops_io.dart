@@ -32,11 +32,8 @@ Widget localImage(String path, {BoxFit fit = BoxFit.cover}) {
   return Image.file(
     File(path),
     fit: fit,
-    errorBuilder: (_, __, ___) => const Icon(
-      Icons.broken_image,
-      color: Color(0xFF94A3B8),
-      size: 20,
-    ),
+    errorBuilder: (_, __, ___) =>
+        const Icon(Icons.broken_image, color: Color(0xFF94A3B8), size: 20),
   );
 }
 

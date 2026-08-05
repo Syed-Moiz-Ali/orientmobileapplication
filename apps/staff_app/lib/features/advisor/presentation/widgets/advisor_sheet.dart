@@ -9,10 +9,11 @@ class AdvisorSheet extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r28)),
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(AppDimensions.r28),
+      ),
     ),
     padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
     child: child,
   );
 }
-

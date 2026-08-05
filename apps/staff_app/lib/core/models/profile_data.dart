@@ -24,5 +24,6 @@ class ProfileData {
     this.completedJobs = 0,
     this.pendingJobs = 0,
   }) : avatarInitials =
-            avatarInitials ?? name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').join();
+           avatarInitials ??
+           name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').join();
 }

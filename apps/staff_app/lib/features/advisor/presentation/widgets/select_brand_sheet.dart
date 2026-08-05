@@ -38,15 +38,20 @@ class _SelectBrandSheetState extends State<SelectBrandSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
             ),
             child: Row(
               children: [
-                const Text('Select Brand',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16)),
+                const Text(
+                  'Select Brand',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
@@ -62,15 +67,23 @@ class _SelectBrandSheetState extends State<SelectBrandSheet> {
               decoration: InputDecoration(
                 hintText: 'Search',
                 hintStyle: const TextStyle(color: kHintColor, fontSize: 13),
-                prefixIcon: const Icon(Icons.search, color: kHintColor, size: 18),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: kHintColor,
+                  size: 18,
+                ),
                 filled: true,
                 fillColor: kFieldBg,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(AppDimensions.r10),
+                  ),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
               ),
             ),
           ),
@@ -85,17 +98,26 @@ class _SelectBrandSheetState extends State<SelectBrandSheet> {
                 return ListTile(
                   leading: Icon(
                     isSelected ? Icons.star : Icons.star_border,
-                    color: isSelected ? AppColors.primary : const Color(0xFFCDD2D8),
+                    color: isSelected
+                        ? AppColors.primary
+                        : const Color(0xFFCDD2D8),
                     size: 20,
                   ),
-                  title: Text(brand,
-                      style: const TextStyle(
-                          fontSize: 14, color: kTextColor)),
+                  title: Text(
+                    brand,
+                    style: const TextStyle(fontSize: 14, color: kTextColor),
+                  ),
                   trailing: isSelected
-                      ? const Icon(Icons.check_circle,
-                          color: AppColors.primary, size: 20)
-                      : const Icon(Icons.radio_button_unchecked,
-                          color: Color(0xFFCDD2D8), size: 20),
+                      ? const Icon(
+                          Icons.check_circle,
+                          color: AppColors.primary,
+                          size: 20,
+                        )
+                      : const Icon(
+                          Icons.radio_button_unchecked,
+                          color: Color(0xFFCDD2D8),
+                          size: 20,
+                        ),
                   onTap: () => Navigator.of(context).pop(brand),
                 );
               },
@@ -111,8 +133,7 @@ class SelectModelSheet extends StatefulWidget {
   final String brand;
   final String? selected;
 
-  const SelectModelSheet(
-      {super.key, required this.brand, this.selected});
+  const SelectModelSheet({super.key, required this.brand, this.selected});
 
   @override
   State<SelectModelSheet> createState() => _SelectModelSheetState();
@@ -147,15 +168,20 @@ class _SelectModelSheetState extends State<SelectModelSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
             ),
             child: Row(
               children: [
-                const Text('Models',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16)),
+                const Text(
+                  'Models',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
@@ -171,15 +197,23 @@ class _SelectModelSheetState extends State<SelectModelSheet> {
               decoration: InputDecoration(
                 hintText: 'Search',
                 hintStyle: const TextStyle(color: kHintColor, fontSize: 13),
-                prefixIcon: const Icon(Icons.search, color: kHintColor, size: 18),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: kHintColor,
+                  size: 18,
+                ),
                 filled: true,
                 fillColor: kFieldBg,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(AppDimensions.r10),
+                  ),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
               ),
             ),
           ),
@@ -194,17 +228,26 @@ class _SelectModelSheetState extends State<SelectModelSheet> {
                 return ListTile(
                   leading: Icon(
                     isSelected ? Icons.star : Icons.star_border,
-                    color: isSelected ? AppColors.primary : const Color(0xFFCDD2D8),
+                    color: isSelected
+                        ? AppColors.primary
+                        : const Color(0xFFCDD2D8),
                     size: 20,
                   ),
-                  title: Text(model,
-                      style: const TextStyle(
-                          fontSize: 14, color: kTextColor)),
+                  title: Text(
+                    model,
+                    style: const TextStyle(fontSize: 14, color: kTextColor),
+                  ),
                   trailing: isSelected
-                      ? const Icon(Icons.check_circle,
-                          color: AppColors.primary, size: 20)
-                      : const Icon(Icons.radio_button_unchecked,
-                          color: Color(0xFFCDD2D8), size: 20),
+                      ? const Icon(
+                          Icons.check_circle,
+                          color: AppColors.primary,
+                          size: 20,
+                        )
+                      : const Icon(
+                          Icons.radio_button_unchecked,
+                          color: Color(0xFFCDD2D8),
+                          size: 20,
+                        ),
                   onTap: () => Navigator.of(context).pop(model),
                 );
               },
@@ -246,11 +289,14 @@ class _CustomerTagSheetState extends State<CustomerTagSheet> {
         children: [
           Row(
             children: [
-              const Text('Select Customer Tag',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: kTextColor)),
+              const Text(
+                'Select Customer Tag',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: kTextColor,
+                ),
+              ),
               const Spacer(),
               GestureDetector(
                 onTap: () => Navigator.of(context).pop(_selected),
@@ -267,16 +313,23 @@ class _CustomerTagSheetState extends State<CustomerTagSheet> {
                   contentPadding: EdgeInsets.zero,
                   title: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: tag.color),
-                      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r6)),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r6),
+                      ),
                     ),
-                    child: Text(tag.label,
-                        style: TextStyle(
-                            color: tag.color,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13)),
+                    child: Text(
+                      tag.label,
+                      style: TextStyle(
+                        color: tag.color,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                   trailing: GestureDetector(
                     onTap: () {
@@ -292,7 +345,9 @@ class _CustomerTagSheetState extends State<CustomerTagSheet> {
                       isSelected
                           ? Icons.check_circle
                           : Icons.radio_button_unchecked,
-                      color: isSelected ? AppColors.primary : const Color(0xFFCDD2D8),
+                      color: isSelected
+                          ? AppColors.primary
+                          : const Color(0xFFCDD2D8),
                     ),
                   ),
                 ),
@@ -308,7 +363,9 @@ class _CustomerTagSheetState extends State<CustomerTagSheet> {
 }
 
 Future<String?> showModelYearDialog(
-    BuildContext context, String? current) async {
+  BuildContext context,
+  String? current,
+) async {
   String? selected = current;
   return showDialog<String>(
     context: context,
@@ -316,13 +373,19 @@ Future<String?> showModelYearDialog(
       return StatefulBuilder(
         builder: (ctx, setState) {
           return AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r12))),
-            title: const Text('Select Model Year',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: kTextColor)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(
+                Radius.circular(AppDimensions.r12),
+              ),
+            ),
+            title: const Text(
+              'Select Model Year',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: kTextColor,
+              ),
+            ),
             content: SizedBox(
               width: 280,
               height: 280,
@@ -334,9 +397,10 @@ Future<String?> showModelYearDialog(
                     return RadioListTile<String>(
                       value: y,
                       activeColor: AppColors.primary,
-                      title: Text(y,
-                          style: const TextStyle(
-                              fontSize: 14, color: kTextColor)),
+                      title: Text(
+                        y,
+                        style: const TextStyle(fontSize: 14, color: kTextColor),
+                      ),
                     );
                   }).toList(),
                 ),
@@ -345,15 +409,23 @@ Future<String?> showModelYearDialog(
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('CANCEL',
-                    style: TextStyle(
-                        color: AppColors.primary, fontWeight: FontWeight.w700)),
+                child: const Text(
+                  'CANCEL',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(selected),
-                child: const Text('OK',
-                    style: TextStyle(
-                        color: AppColors.primary, fontWeight: FontWeight.w700)),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           );
@@ -362,4 +434,3 @@ Future<String?> showModelYearDialog(
     },
   );
 }
-

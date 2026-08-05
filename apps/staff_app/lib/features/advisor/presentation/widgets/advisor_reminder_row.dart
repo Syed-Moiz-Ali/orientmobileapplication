@@ -144,4 +144,3 @@ class AdvisorReminderRow extends StatelessWidget {
     );
   }
 }
-

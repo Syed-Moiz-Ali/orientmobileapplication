@@ -21,11 +21,11 @@ class AdvisorApprovalsPage extends StatelessWidget {
         child: ListView.builder(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
           itemCount: approvals.length,
-          itemBuilder: (_, i) => AdvisorApprovalRow(pa: approvals[i], onTap: onTap),
+          itemBuilder: (_, i) =>
+              AdvisorApprovalRow(pa: approvals[i], onTap: onTap),
         ),
       ),
       AdvisorSeeAllButton('View all approvals', onViewAll),
     ],
   );
 }
-

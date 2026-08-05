@@ -16,7 +16,9 @@ class AdvisorStatDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Dialog(
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r20)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppDimensions.r20),
+    ),
     backgroundColor: AppColors.surface,
     elevation: 0,
     child: Padding(
@@ -85,4 +87,3 @@ class AdvisorStatDialog extends StatelessWidget {
     ),
   );
 }
-

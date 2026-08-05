@@ -32,4 +32,3 @@ class AdvisorMetaPill extends StatelessWidget {
     ),
   );
 }
-

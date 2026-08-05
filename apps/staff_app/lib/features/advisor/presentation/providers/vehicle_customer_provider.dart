@@ -278,4 +278,3 @@ final vehicleCustomerFormProvider =
     NotifierProvider<VehicleCustomerFormNotifier, VehicleCustomerFormState>(
       VehicleCustomerFormNotifier.new,
     );
-

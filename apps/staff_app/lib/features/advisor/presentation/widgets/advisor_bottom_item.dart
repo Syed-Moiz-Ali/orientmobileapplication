@@ -27,10 +27,16 @@ class AdvisorBottomItem extends StatelessWidget {
             curve: Curves.easeOutCubic,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
             decoration: BoxDecoration(
-              color: active ? AppColors.accent.withValues(alpha: 0.12) : Colors.transparent,
+              color: active
+                  ? AppColors.accent.withValues(alpha: 0.12)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(AppDimensions.r24),
             ),
-            child: Icon(icon, color: active ? AppColors.accent : AppColors.text3, size: 22),
+            child: Icon(
+              icon,
+              color: active ? AppColors.accent : AppColors.text3,
+              size: 22,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
@@ -47,4 +53,3 @@ class AdvisorBottomItem extends StatelessWidget {
     ),
   );
 }
-

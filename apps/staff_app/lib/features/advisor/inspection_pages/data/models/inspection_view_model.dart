@@ -87,13 +87,14 @@ class ServiceLineItem {
     'discountAmount': discountAmount,
   };
 
-  factory ServiceLineItem.fromJson(Map<String, dynamic> json) => ServiceLineItem(
-    name: json['name'] as String? ?? '',
-    qty: json['qty'] as int? ?? 1,
-    rate: (json['rate'] as num?)?.toDouble() ?? 0,
-    discountPercent: (json['discountPercent'] as num?)?.toDouble() ?? 0,
-    discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0,
-  );
+  factory ServiceLineItem.fromJson(Map<String, dynamic> json) =>
+      ServiceLineItem(
+        name: json['name'] as String? ?? '',
+        qty: json['qty'] as int? ?? 1,
+        rate: (json['rate'] as num?)?.toDouble() ?? 0,
+        discountPercent: (json['discountPercent'] as num?)?.toDouble() ?? 0,
+        discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0,
+      );
 }
 
 class PartLineItem {

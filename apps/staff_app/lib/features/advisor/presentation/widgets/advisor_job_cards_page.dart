@@ -21,11 +21,11 @@ class AdvisorJobCardsPage extends StatelessWidget {
         child: ListView.builder(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
           itemCount: jobCards.length,
-          itemBuilder: (_, i) => AdvisorJobCardRow(jc: jobCards[i], onTap: onTap),
+          itemBuilder: (_, i) =>
+              AdvisorJobCardRow(jc: jobCards[i], onTap: onTap),
         ),
       ),
       AdvisorSeeAllButton('View all job cards', onViewAll),
     ],
   );
 }
-

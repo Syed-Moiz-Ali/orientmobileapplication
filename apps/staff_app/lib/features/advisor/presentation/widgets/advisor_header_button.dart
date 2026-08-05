@@ -20,7 +20,9 @@ class AdvisorHeaderButton extends StatelessWidget {
     child: Container(
       height: 44,
       decoration: BoxDecoration(
-        color: isPrimary ? AppColors.surface : Colors.white.withValues(alpha: 0.13),
+        color: isPrimary
+            ? AppColors.surface
+            : Colors.white.withValues(alpha: 0.13),
         borderRadius: BorderRadius.circular(AppDimensions.r14),
         border: isPrimary
             ? null
@@ -40,7 +42,11 @@ class AdvisorHeaderButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, color: isPrimary ? AppColors.navy : Colors.white, size: 15),
+              Icon(
+                icon,
+                color: isPrimary ? AppColors.navy : Colors.white,
+                size: 15,
+              ),
               const SizedBox(width: 6),
             ],
             Text(
@@ -55,4 +61,3 @@ class AdvisorHeaderButton extends StatelessWidget {
     ),
   );
 }
-

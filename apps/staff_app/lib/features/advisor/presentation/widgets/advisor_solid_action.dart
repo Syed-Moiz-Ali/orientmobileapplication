@@ -49,4 +49,3 @@ class AdvisorSolidAction extends StatelessWidget {
     ),
   );
 }
-

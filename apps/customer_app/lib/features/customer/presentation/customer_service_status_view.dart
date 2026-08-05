@@ -1,14 +1,74 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_empty_fallbacks.dart';
+import 'package:customer_app/features/customer/presentation/widgets/advisor_contact_card.dart';
 
-class CustomerServiceStatusView extends ConsumerWidget {
+class CustomerServiceStatusView extends ConsumerStatefulWidget {
   const CustomerServiceStatusView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final svc = CustomerServiceEntity.mock;
+  ConsumerState<CustomerServiceStatusView> createState() => _CustomerServiceStatusViewState();
+}
+
+class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatusView> {
+  Timer? _timer;
+  DateTime _lastUpdated = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) {
+        ref.read(customerDashboardProvider.notifier).refresh();
+        setState(() {
+          _lastUpdated = DateTime.now();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(customerDashboardProvider);
+    final svc = state.activeService;
+
+    if (svc == null || !svc.hasActiveJob) {
+      return Scaffold(
+        backgroundColor: AppColors.bg,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              const AppTopBar(title: 'Job Tracker'),
+              const Divider(height: 1),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimensions.s20),
+                  child: Center(
+                    child: IdleServiceCard(
+                      onBook: () => ref.read(customerDashboardProvider.notifier).selectTab(2),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final diffMinutes = DateTime.now().difference(_lastUpdated).inMinutes;
+    final lastUpdatedStr = diffMinutes == 0 ? 'Just now' : '$diffMinutes minutes ago';
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -16,7 +76,7 @@ class CustomerServiceStatusView extends ConsumerWidget {
         bottom: false,
         child: Column(
           children: [
-            AppTopBar(
+            const AppTopBar(
               title: 'Job Tracker',
               trailing: StatusPill(
                 label: '\u25cf Live',
@@ -125,6 +185,10 @@ class CustomerServiceStatusView extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppDimensions.s14),
+                    AdvisorContactCard(
+                      advisorName: svc.technicianName.isNotEmpty ? svc.technicianName : 'Ahmed Hassan',
+                    ),
+                    const SizedBox(height: AppDimensions.s14),
 
                     AppCard(
                       child: Column(
@@ -194,7 +258,7 @@ class CustomerServiceStatusView extends ConsumerWidget {
                           Container(
                             width: 44,
                             height: 44,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: AppColors.infoBg,
                               shape: BoxShape.circle,
                             ),
@@ -305,7 +369,7 @@ class CustomerServiceStatusView extends ConsumerWidget {
                           SizedBox(width: AppDimensions.s10),
                           Expanded(
                             child: Text(
-                              'Auto-refreshes every 2 minutes. SMS alerts for major milestones.',
+                              'Auto-refreshes every minute. SMS alerts for major milestones.',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.success,
@@ -314,6 +378,13 @@ class CustomerServiceStatusView extends ConsumerWidget {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s12),
+                    Center(
+                      child: Text(
+                        'Last updated $lastUpdatedStr',
+                        style: const TextStyle(fontSize: 11, color: AppColors.text4),
                       ),
                     ),
                   ],
@@ -461,9 +532,9 @@ class _StageItem extends StatelessWidget {
                     ),
                   ),
                   if (stage.status == StageStatus.inProgress)
-                    StatusPill(label: 'Active')
+                    const StatusPill(label: 'Active')
                   else if (stage.status == StageStatus.done)
-                    StatusPill(
+                    const StatusPill(
                       label: 'Done',
                       bg: AppColors.successBg,
                       fg: AppColors.success,

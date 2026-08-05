@@ -9,9 +9,13 @@ import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.common.response.PageResponse;
 import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.model.entity.TechnicianTask;
 import com.orient.workshop.core.model.entity.Vehicle;
 import com.orient.workshop.core.repository.CustomerMapper;
+import com.orient.workshop.core.repository.TechnicianTaskMapper;
 import com.orient.workshop.core.repository.VehicleMapper;
+import com.orient.workshop.advisor.model.dto.BatchTaskRequest;
+import com.orient.workshop.advisor.model.dto.DeliveryRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +36,7 @@ public class JobCardService {
     private final JobCardMapper jobCardMapper;
     private final CustomerMapper customerMapper;
     private final VehicleMapper vehicleMapper;
+    private final TechnicianTaskMapper technicianTaskMapper;
 
     public PageResponse<JobCardResponse> listJobCards(String status, String search, int page, int limit,
                                                       JwtUserPrincipal principal) {
@@ -99,6 +104,41 @@ public class JobCardService {
             throw new NotFoundException("Job card not found");
         }
         card.setTechnician(technician);
+        jobCardMapper.updateById(card);
+    }
+
+    @Transactional
+    public void assignTasks(String jobCardRef, BatchTaskRequest request, JwtUserPrincipal principal) {
+        JobCard card = jobCardMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<JobCard>().eq("job_card_ref", jobCardRef));
+        if (card == null || !inScope(card, principal)) {
+            throw new NotFoundException("Job card not found");
+        }
+        
+        if (request.getTasks() != null) {
+            for (BatchTaskRequest.TaskItem task : request.getTasks()) {
+                TechnicianTask tTask = TechnicianTask.builder()
+                        .jobCardNo(jobCardRef)
+                        .description(task.getDescription())
+                        .empId(task.getTechnicianEmpId())
+                        .status("pending")
+                        .build();
+                technicianTaskMapper.insert(tTask);
+            }
+        }
+        
+        card.setStatus("inProgress");
+        jobCardMapper.updateById(card);
+    }
+
+    @Transactional
+    public void deliver(String jobCardRef, DeliveryRequest request, JwtUserPrincipal principal) {
+        JobCard card = jobCardMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<JobCard>().eq("job_card_ref", jobCardRef));
+        if (card == null || !inScope(card, principal)) {
+            throw new NotFoundException("Job card not found");
+        }
+        
+        card.setStatus("delivered");
+        card.setUpdatedAt(java.time.LocalDateTime.now());
         jobCardMapper.updateById(card);
     }
 

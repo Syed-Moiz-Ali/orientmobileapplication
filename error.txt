@@ -1,10 +1,22 @@
 
-I/flutter ( 8550): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-I/flutter ( 8550): │ #0   DioMixin.request (package:dio/src/dio_mixin.dart:364:36)
-I/flutter ( 8550): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-I/flutter ( 8550): │ 404 /customers/services/active: This exception was thrown because the response has a status code of 404 and RequestOptions.validateStatus was configured to throw for this status code.
-I/flutter ( 8550): │ The status code of 404 has the following meaning: "Client error - the request contains bad syntax or cannot be fulfilled"
-I/flutter ( 8550): │ Read more about status codes at https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-I/flutter ( 8550): │ In order to resolve this exception you typically have either to verify and fix your request code or you have to fix the server code.
-I/flutter ( 8550): │
-I/flutter ( 8550): └─
+Restarted application in 2,642ms.
+I/flutter (24667): Hive initialized: inspections=0, repairOrders=0, technicianJobs=0, assignments=0, bookings=6, breakdowns=2, ownerMessages=0, ownerActivity=0, queue=6, failed=0
+I/flutter (24667): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (24667): │ #0   LoggingInterceptor.onRequest (package:shared_core/src/network/logging_interceptor.dart:33:13)
+I/flutter (24667): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+I/flutter (24667): │ GET /auth/me
+I/flutter (24667): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (24667): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (24667): │ #0   LoggingInterceptor.onRequest (package:shared_core/src/network/logging_interceptor.dart:42:15)
+I/flutter (24667): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+I/flutter (24667): │ Headers: {Content-Type: application/json, Accept: application/json}
+I/flutter (24667): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (24667): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (24667): │ #0   DioMixin.request (package:dio/src/dio_mixin.dart:364:36)
+I/flutter (24667): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+I/flutter (24667): │ 401 /auth/me: This exception was thrown because the response has a status code of 401 and RequestOptions.validateStatus was configured to throw for this status code.
+I/flutter (24667): │ The status code of 401 has the following meaning: "Client error - the request contains bad syntax or cannot be fulfilled"
+I/flutter (24667): │ Read more about status codes at https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+I/flutter (24667): │ In order to resolve this exception you typically have either to verify and fix your request code or you have to fix the server code.
+I/flutter (24667): │
+I/flutter (24667): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

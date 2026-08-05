@@ -8,6 +8,8 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicle_card.dart';
 
+import 'package:customer_app/features/customer/presentation/widgets/customer_empty_fallbacks.dart';
+
 class CustomerVehiclesTab extends ConsumerWidget {
   const CustomerVehiclesTab({super.key});
 
@@ -17,45 +19,51 @@ class CustomerVehiclesTab extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: ListView.builder(
+      body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-        itemCount: vehicles.length + 1,
-        itemBuilder: (_, i) {
-          if (i == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Row(
-                children: [
-                  Text('My Vehicles', style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary)),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => context.push(AppRoutes.customerAddVehicle),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.add_rounded, size: 16, color: AppColors.accent),
-                          SizedBox(width: 4),
-                          Text('Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.accent)),
-                        ],
-                      ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              children: [
+                Text('My Vehicles', style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => context.push(AppRoutes.customerAddVehicle),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_rounded, size: 16, color: AppColors.accent),
+                        SizedBox(width: 4),
+                        Text('Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.accent)),
+                      ],
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          if (vehicles.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: EmptyVehiclesCard(
+                onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
               ),
-            );
-          }
-          final v = vehicles[i - 1];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _VehicleCardWithActions(vehicle: v, ref: ref),
-          );
-        },
+            )
+          else
+            ...vehicles.map(
+              (v) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _VehicleCardWithActions(vehicle: v, ref: ref),
+              ),
+            ),
+        ],
       ),
     );
   }

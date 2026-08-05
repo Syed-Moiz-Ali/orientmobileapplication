@@ -379,11 +379,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     } catch (e, st) {
       ref
           .read(loggerProvider)
-          .e(
-            'Failed to enqueue $entityType sync op',
-            error: e,
-            stackTrace: st,
-          );
+          .e('Failed to enqueue $entityType sync op', error: e, stackTrace: st);
     }
   }
 
@@ -414,7 +410,10 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     await _enqueueSync('attendance', payload);
   }
 
-  Future<void> updateAssignedJobStatus(String id, AssignedJobStatus status) async {
+  Future<void> updateAssignedJobStatus(
+    String id,
+    AssignedJobStatus status,
+  ) async {
     final jobs = List<AssignedJobEntity>.from(state.assignedJobs);
     final idx = jobs.indexWhere((j) => j.id == id);
     if (idx == -1) return;
@@ -510,12 +509,9 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
     _persistJob(updatedJob);
     state = state.copyWith(selectedJob: updatedJob);
-    _pushTaskAction(
-      job.jobCardNo,
-      task.ref,
-      'status',
-      {'status': newStatus.name},
-    );
+    _pushTaskAction(job.jobCardNo, task.ref, 'status', {
+      'status': newStatus.name,
+    });
   }
 
   /// Pushes a per-task action to the backend (which advances the item and
@@ -532,27 +528,51 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     try {
       switch (action) {
         case 'start':
-          await remote.startTask(jobCardNo, taskId, payload['startTime'] as String? ?? '');
+          await remote.startTask(
+            jobCardNo,
+            taskId,
+            payload['startTime'] as String? ?? '',
+          );
           break;
         case 'complete':
-          await remote.completeTask(jobCardNo, taskId, payload['endTime'] as String? ?? '');
+          await remote.completeTask(
+            jobCardNo,
+            taskId,
+            payload['endTime'] as String? ?? '',
+          );
           break;
         default:
-          await remote.updateTaskStatus(jobCardNo, taskId, payload['status'] as String? ?? 'inProgress');
+          await remote.updateTaskStatus(
+            jobCardNo,
+            taskId,
+            payload['status'] as String? ?? 'inProgress',
+          );
       }
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to push task action $action for $taskId',
-          error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e(
+            'Failed to push task action $action for $taskId',
+            error: e,
+            stackTrace: st,
+          );
       final queue = ref.read(syncQueueProvider);
       final id = await IdGenerator.nextId('WT');
-      await queue.enqueue(SyncOperation(
-        id: id,
-        entityType: 'work_item',
-        entityId: '$jobCardNo|$taskId|$action',
-        changeType: ChangeType.update,
-        payload: {'jobCardNo': jobCardNo, 'taskId': taskId, 'action': action, ...payload},
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-      ));
+      await queue.enqueue(
+        SyncOperation(
+          id: id,
+          entityType: 'work_item',
+          entityId: '$jobCardNo|$taskId|$action',
+          changeType: ChangeType.update,
+          payload: {
+            'jobCardNo': jobCardNo,
+            'taskId': taskId,
+            'action': action,
+            ...payload,
+          },
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
     }
   }
 

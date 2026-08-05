@@ -13,7 +13,13 @@ class CustomerRemoteDataSource {
   }
 
   Future<List<VehicleResponse>> getVehicles() async {
-    final result = await _client.get<List<dynamic>>(ApiEndpoints.customerVehicles, fromJson: (d) => d as List<dynamic>);
+    final result = await _client.get<List<dynamic>>(
+      ApiEndpoints.customerVehicles,
+      fromJson: (d) {
+        final raw = (d is Map && d.containsKey('data')) ? d['data'] : d;
+        return (raw as List<dynamic>?) ?? [];
+      },
+    );
     return result.when(
       success: (list) => list.map((e) => VehicleResponse.fromJson(e as Map<String, dynamic>)).toList(),
       failure: (_) => [],
@@ -21,19 +27,27 @@ class CustomerRemoteDataSource {
   }
 
   Future<VehicleResponse> addVehicle(Map<String, dynamic> data) async {
+    final payload = Map<String, dynamic>.from(data)..remove('id');
     final result = await _client.post<VehicleResponse>(
       ApiEndpoints.customerVehicles,
-      data: data,
-      fromJson: (d) => VehicleResponse.fromJson(d as Map<String, dynamic>),
+      data: payload,
+      fromJson: (d) {
+        final raw = (d is Map && d.containsKey('data')) ? d['data'] : d;
+        return VehicleResponse.fromJson(raw as Map<String, dynamic>);
+      },
     );
     return result.when(success: (r) => r, failure: (_) => const VehicleResponse());
   }
 
   Future<VehicleResponse> updateVehicle(String id, Map<String, dynamic> data) async {
+    final payload = Map<String, dynamic>.from(data)..remove('id');
     final result = await _client.put<VehicleResponse>(
       ApiEndpoints.customerVehicle(id),
-      data: data,
-      fromJson: (d) => VehicleResponse.fromJson(d as Map<String, dynamic>),
+      data: payload,
+      fromJson: (d) {
+        final raw = (d is Map && d.containsKey('data')) ? d['data'] : d;
+        return VehicleResponse.fromJson(raw as Map<String, dynamic>);
+      },
     );
     return result.when(success: (r) => r, failure: (_) => const VehicleResponse());
   }
@@ -141,5 +155,13 @@ class CustomerRemoteDataSource {
       success: (list) => list.map((e) => InvoiceResponse.fromJson(e as Map<String, dynamic>)).toList(),
       failure: (_) => [],
     );
+  }
+
+  Future<bool> submitFeedback(Map<String, dynamic> data) async {
+    final result = await _client.post(
+      ApiEndpoints.feedback,
+      data: data,
+    );
+    return result is Success;
   }
 }

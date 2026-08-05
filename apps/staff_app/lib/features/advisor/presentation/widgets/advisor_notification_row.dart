@@ -51,9 +51,11 @@ class AdvisorNotificationRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text(n.time, style: const TextStyle(fontSize: 10, color: AppColors.text3)),
+        Text(
+          n.time,
+          style: const TextStyle(fontSize: 10, color: AppColors.text3),
+        ),
       ],
     ),
   );
 }
-

@@ -18,13 +18,15 @@ class AdvisorNotificationSheet extends ConsumerWidget {
           .whereType<Map>()
           .map((m) => Map<String, dynamic>.from(m))
           .where((m) => m['type'] == 'notification')
-          .map((m) => AdvisorNotificationData(
-                m['title'] as String? ?? '',
-                m['message'] as String? ?? '',
-                Icons.notifications_outlined,
-                AppColors.accent,
-                m['timeAgo'] as String? ?? '',
-              ))
+          .map(
+            (m) => AdvisorNotificationData(
+              m['title'] as String? ?? '',
+              m['message'] as String? ?? '',
+              Icons.notifications_outlined,
+              AppColors.accent,
+              m['timeAgo'] as String? ?? '',
+            ),
+          )
           .toList();
       if (items.isNotEmpty) return items;
     } catch (_) {}
@@ -35,15 +37,20 @@ class AdvisorNotificationSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final localItems = _loadNotifications();
     final remoteAsync = ref.watch(advisorNotificationsProvider);
-    final remoteItems = (remoteAsync.value ?? const <StaffNotificationResponse>[])
-        .map((n) => AdvisorNotificationData(
-              n.title,
-              n.body,
-              n.isRead ? Icons.notifications_outlined : Icons.notifications_active_rounded,
-              n.isRead ? AppColors.text3 : AppColors.accent,
-              n.time,
-            ))
-        .toList();
+    final remoteItems =
+        (remoteAsync.value ?? const <StaffNotificationResponse>[])
+            .map(
+              (n) => AdvisorNotificationData(
+                n.title,
+                n.body,
+                n.isRead
+                    ? Icons.notifications_outlined
+                    : Icons.notifications_active_rounded,
+                n.isRead ? AppColors.text3 : AppColors.accent,
+                n.time,
+              ),
+            )
+            .toList();
     final items = [...remoteItems, ...localItems];
     return AdvisorSheet(
       child: Column(
@@ -79,12 +86,15 @@ class AdvisorNotificationSheet extends ConsumerWidget {
                     Navigator.pop(context);
                   },
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.accent.withValues(alpha: 0.12),
-                      borderRadius:
-                          BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r8),
+                      ),
                     ),
                     child: Text(
                       'Clear all',

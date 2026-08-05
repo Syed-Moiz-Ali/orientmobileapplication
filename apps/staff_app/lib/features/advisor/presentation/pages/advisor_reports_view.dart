@@ -573,4 +573,3 @@ class AdvisorReportsView extends ConsumerWidget {
     }
   }
 }
-

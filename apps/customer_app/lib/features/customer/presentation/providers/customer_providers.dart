@@ -107,13 +107,14 @@ class CustomerDashboardState {
   final List<CustomerNotificationEntity> notifications;
   final CustomerServiceEntity? activeService;
   final CustomerEntity? profile;
+  final int unpaidInvoices;
 
   const CustomerDashboardState({
     required this.selectedIndex, required this.isLoading,
     required this.selectedVehicle, required this.selectedServiceType,
     this.bookingDate, required this.bookingNotes, this.bookingError,
     required this.vehicles, required this.notifications,
-    this.activeService, this.profile,
+    this.activeService, this.profile, this.unpaidInvoices = 0,
   });
 
   CustomerDashboardState copyWith({
@@ -122,6 +123,7 @@ class CustomerDashboardState {
     String? bookingError, List<CustomerVehicleEntity>? vehicles,
     List<CustomerNotificationEntity>? notifications,
     CustomerServiceEntity? activeService, CustomerEntity? profile,
+    int? unpaidInvoices,
     bool clearActiveService = false, bool clearProfile = false,
   }) => CustomerDashboardState(
     selectedIndex: selectedIndex ?? this.selectedIndex,
@@ -135,6 +137,7 @@ class CustomerDashboardState {
     notifications: notifications ?? this.notifications,
     activeService: clearActiveService ? null : (activeService ?? this.activeService),
     profile: clearProfile ? null : (profile ?? this.profile),
+    unpaidInvoices: unpaidInvoices ?? this.unpaidInvoices,
   );
 
   int get unreadCount => notifications.where((n) => !n.isRead).length;
@@ -145,7 +148,6 @@ class CustomerDashboardState {
           .where((v) => v['status'] == 'completed').length;
     } catch (_) { return 0; }
   }
-  int get unpaidInvoices => 1;
   String formatAmount(double amount) => '\u00a3${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';
 }
 
@@ -161,16 +163,20 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
 
   Future<void> _loadData() async {
     final repo = ref.read(customerRepositoryProvider);
+    final remote = ref.read(customerRemoteDataSourceProvider);
     final results = await Future.wait([
       repo.getVehicles(), repo.getNotifications(),
       repo.getActiveService(), repo.getCustomerProfile(),
+      remote.getInvoices(),
     ]);
+    final invoices = results[4] as List<InvoiceResponse>;
     state = state.copyWith(
       isLoading: false,
       vehicles: results[0] as List<CustomerVehicleEntity>,
       notifications: results[1] as List<CustomerNotificationEntity>,
       activeService: results[2] as CustomerServiceEntity,
       profile: results[3] as CustomerEntity,
+      unpaidInvoices: invoices.where((i) => i.status == 'unpaid').length,
     );
   }
 

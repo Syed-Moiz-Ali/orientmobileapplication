@@ -98,13 +98,16 @@ class AdvisorProfileSheet extends ConsumerWidget {
             label: 'My Profile',
             onTap: () {
               Navigator.pop(context);
-              context.push(AppRoutes.profile, extra: ProfileData(
-                name: info.name,
-                id: info.id,
-                role: 'Service Advisor',
-                branch: info.branch,
-                shift: info.shift,
-              ));
+              context.push(
+                AppRoutes.profile,
+                extra: ProfileData(
+                  name: info.name,
+                  id: info.id,
+                  role: 'Service Advisor',
+                  branch: info.branch,
+                  shift: info.shift,
+                ),
+              );
             },
           ),
           AdvisorMenuItem(
@@ -112,13 +115,23 @@ class AdvisorProfileSheet extends ConsumerWidget {
             label: 'Switch Branch',
             onTap: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: const Text('Branch switching coming soon', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                backgroundColor: AppColors.accent,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
-                margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              ));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    'Branch switching coming soon',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  backgroundColor: AppColors.accent,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+                  ),
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                ),
+              );
             },
           ),
           const AdvisorDivider(),
@@ -139,7 +152,11 @@ class AdvisorProfileSheet extends ConsumerWidget {
                 icon: const Icon(Icons.logout_rounded, size: 18),
                 label: const Text(
                   'Logout',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.danger),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.danger,
+                  ),
                 ),
               ),
             ),
@@ -150,4 +167,3 @@ class AdvisorProfileSheet extends ConsumerWidget {
     );
   }
 }
-

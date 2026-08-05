@@ -58,8 +58,16 @@ class AdvisorApprovalSheet extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        AdvisorDetailLine(icon: Icons.directions_car_outlined, label: 'Vehicle', value: pa.vehicleId),
-        AdvisorDetailLine(icon: Icons.receipt_long_outlined, label: 'Estimate', value: pa.estimateId),
+        AdvisorDetailLine(
+          icon: Icons.directions_car_outlined,
+          label: 'Vehicle',
+          value: pa.vehicleId,
+        ),
+        AdvisorDetailLine(
+          icon: Icons.receipt_long_outlined,
+          label: 'Estimate',
+          value: pa.estimateId,
+        ),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -87,4 +95,3 @@ class AdvisorApprovalSheet extends StatelessWidget {
     ),
   );
 }
-

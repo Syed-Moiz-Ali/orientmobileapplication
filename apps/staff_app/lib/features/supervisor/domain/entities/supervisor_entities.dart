@@ -20,10 +20,7 @@ class AdvisorJobEntity {
   final String name;
   final double count;
 
-  const AdvisorJobEntity({
-    required this.name,
-    required this.count,
-  });
+  const AdvisorJobEntity({required this.name, required this.count});
 }
 
 class JobTypeEntity {

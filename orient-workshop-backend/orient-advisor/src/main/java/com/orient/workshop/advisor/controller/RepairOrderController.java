@@ -21,5 +21,11 @@ public class RepairOrderController {
     public ApiResponse<RepairOrderResponse> createRepairOrder(@Valid @RequestBody RepairOrderRequest req) {
         return ApiResponse.success(repairOrderService.createRepairOrder(req));
     }
+
+    @PostMapping("/repair-orders/{id}/send")
+    public ApiResponse<Void> sendEstimate(@PathVariable Long id, @org.springframework.security.core.annotation.AuthenticationPrincipal com.orient.workshop.auth.filter.JwtUserPrincipal principal) {
+        repairOrderService.sendEstimate(id, principal);
+        return ApiResponse.success(null);
+    }
 }
 

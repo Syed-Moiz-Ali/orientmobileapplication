@@ -27,10 +27,13 @@ class AdvisorSeeAllButton extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 5),
-          const Icon(Icons.arrow_forward_rounded, color: AppColors.accent, size: 13),
+          const Icon(
+            Icons.arrow_forward_rounded,
+            color: AppColors.accent,
+            size: 13,
+          ),
         ],
       ),
     ),
   );
 }
-

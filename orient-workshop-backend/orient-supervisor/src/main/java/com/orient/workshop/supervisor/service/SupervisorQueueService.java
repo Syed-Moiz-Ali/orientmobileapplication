@@ -227,6 +227,24 @@ public class SupervisorQueueService {
         }
     }
 
+    @Transactional
+    public void qcReview(String jobCardRef, QcReviewRequest req) {
+        JobCard card = jobCardMapper.selectOne(new LambdaQueryWrapper<JobCard>().eq(JobCard::getJobCardRef, jobCardRef));
+        if (card == null) {
+            throw new NotFoundException("Job card not found");
+        }
+        
+        if ("approve".equalsIgnoreCase(req.getAction())) {
+            card.setStatus("qualityCheckPassed");
+        } else if ("reject".equalsIgnoreCase(req.getAction())) {
+            card.setStatus("inProgress");
+        } else {
+            throw new BadRequestException("Invalid action. Must be 'approve' or 'reject'.");
+        }
+        
+        jobCardMapper.updateById(card);
+    }
+
     // ---------- helpers ----------
 
     public List<AssignableStaffResponse> getAssignableAdvisors() {

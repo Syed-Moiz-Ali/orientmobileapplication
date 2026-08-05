@@ -15,5 +15,6 @@ public class CreateBookingRequest {
     private String plateNumber;
     private String serviceType;
     private String bookingDate;
+    private String bookingTime;
     private String notes;
 }

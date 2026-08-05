@@ -64,6 +64,12 @@ public class SupervisorQueueController {
         return ApiResponse.success(null);
     }
 
+    @PostMapping("/supervisor/job-cards/{jobCardRef}/qc-review")
+    public ApiResponse<Void> qcReview(@PathVariable String jobCardRef, @RequestBody QcReviewRequest req) {
+        queueService.qcReview(jobCardRef, req);
+        return ApiResponse.success(null);
+    }
+
     // ---------- Reference ----------
 
     @GetMapping("/supervisor/assignable-advisors")

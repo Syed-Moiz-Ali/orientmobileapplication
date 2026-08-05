@@ -78,4 +78,3 @@ class AdvisorStatTile extends StatelessWidget {
     );
   }
 }
-

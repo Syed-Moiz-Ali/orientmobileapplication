@@ -29,7 +29,11 @@ class AdvisorApprovalRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppDimensions.r10),
                 border: Border.all(color: AppColors.warningBorder),
               ),
-              child: const Icon(Icons.receipt_long_outlined, color: AppColors.warning, size: 18),
+              child: const Icon(
+                Icons.receipt_long_outlined,
+                color: AppColors.warning,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 11),
             Expanded(
@@ -48,12 +52,18 @@ class AdvisorApprovalRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '${pa.customerName} · ${pa.vehicleId}',
-                    style: const TextStyle(fontSize: 12, color: AppColors.text2),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.text2,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     pa.timeAgo,
-                    style: const TextStyle(fontSize: 10, color: AppColors.text3),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.text3,
+                    ),
                   ),
                 ],
               ),
@@ -71,7 +81,11 @@ class AdvisorApprovalRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Icon(Icons.chevron_right_rounded, color: AppColors.stroke, size: 14),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.stroke,
+                  size: 14,
+                ),
               ],
             ),
           ],
@@ -80,4 +94,3 @@ class AdvisorApprovalRow extends StatelessWidget {
     );
   }
 }
-

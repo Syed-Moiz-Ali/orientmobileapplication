@@ -1,10 +1,10 @@
 package com.orient.workshop.supervisor.controller;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.response.ApiResponse;
 import com.orient.workshop.supervisor.model.dto.AssignedJobResponse;
+import com.orient.workshop.supervisor.model.dto.AvailableTechnicianResponse;
 import com.orient.workshop.supervisor.model.dto.WorkAssignmentRequest;
 import com.orient.workshop.supervisor.model.dto.WorkAssignmentResponse;
 import com.orient.workshop.supervisor.service.WorkAssignmentService;
@@ -32,5 +32,9 @@ public class WorkAssignmentController {
     public ApiResponse<List<AssignedJobResponse>> getAssignedJobs() {
         return ApiResponse.success(workAssignmentService.getAssignedJobs());
     }
-}
 
+    @GetMapping("/supervisor/technicians/available")
+    public ApiResponse<List<AvailableTechnicianResponse>> getAvailableTechnicians() {
+        return ApiResponse.success(workAssignmentService.getAvailableTechnicians());
+    }
+}

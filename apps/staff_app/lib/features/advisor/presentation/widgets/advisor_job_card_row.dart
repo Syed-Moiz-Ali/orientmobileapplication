@@ -16,12 +16,36 @@ class AdvisorJobCardRow extends StatelessWidget {
   const AdvisorJobCardRow({super.key, required this.jc, required this.onTap});
 
   _StatusStyle get _s => switch (jc.status) {
-    JobCardStatus.inProgress => _StatusStyle('In Progress', AppColors.accent, AppColors.accent.withValues(alpha: 0.12)),
-    JobCardStatus.pendingApproval => _StatusStyle('Pending', AppColors.warning, AppColors.warningBg),
-    JobCardStatus.completed => _StatusStyle('Completed', AppColors.success, AppColors.successBg),
-    JobCardStatus.waitingParts => _StatusStyle('Waiting Parts', AppColors.danger, AppColors.dangerBg),
-    JobCardStatus.qualityCheck => _StatusStyle('QC Check', AppColors.info, AppColors.infoBg),
-    JobCardStatus.cancelled => _StatusStyle('Cancelled', AppColors.text3, AppColors.surfaceAlt),
+    JobCardStatus.inProgress => _StatusStyle(
+      'In Progress',
+      AppColors.accent,
+      AppColors.accent.withValues(alpha: 0.12),
+    ),
+    JobCardStatus.pendingApproval => _StatusStyle(
+      'Pending',
+      AppColors.warning,
+      AppColors.warningBg,
+    ),
+    JobCardStatus.completed => _StatusStyle(
+      'Completed',
+      AppColors.success,
+      AppColors.successBg,
+    ),
+    JobCardStatus.waitingParts => _StatusStyle(
+      'Waiting Parts',
+      AppColors.danger,
+      AppColors.dangerBg,
+    ),
+    JobCardStatus.qualityCheck => _StatusStyle(
+      'QC Check',
+      AppColors.info,
+      AppColors.infoBg,
+    ),
+    JobCardStatus.cancelled => _StatusStyle(
+      'Cancelled',
+      AppColors.text3,
+      AppColors.surfaceAlt,
+    ),
   };
 
   @override
@@ -51,7 +75,9 @@ class AdvisorJobCardRow extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 color: s.color,
-                borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r2)),
+                borderRadius: BorderRadius.all(
+                  Radius.circular(AppDimensions.r2),
+                ),
               ),
             ),
             const SizedBox(width: 11),
@@ -86,18 +112,28 @@ class AdvisorJobCardRow extends StatelessWidget {
                   const SizedBox(height: 5),
                   Row(
                     children: [
-                      Icon(Icons.directions_car_outlined, size: 11, color: AppColors.text3),
+                      Icon(
+                        Icons.directions_car_outlined,
+                        size: 11,
+                        color: AppColors.text3,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           jc.vehicleInfo,
-                          style: const TextStyle(fontSize: 11, color: AppColors.text3),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.text3,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
                         jc.time,
-                        style: const TextStyle(fontSize: 10, color: AppColors.text3),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.text3,
+                        ),
                       ),
                     ],
                   ),
@@ -105,11 +141,14 @@ class AdvisorJobCardRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right_rounded, color: AppColors.stroke, size: 16),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.stroke,
+              size: 16,
+            ),
           ],
         ),
       ),
     );
   }
 }
-

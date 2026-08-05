@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_empty_fallbacks.dart';
 import 'package:customer_app/core/router/app_router.dart';
 
 class CustomerBookingsTab extends ConsumerStatefulWidget {
@@ -61,31 +62,12 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
         const Divider(height: 1),
         Expanded(
           child: filtered.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.calendar_month_rounded, size: 48, color: AppColors.text4.withValues(alpha: 0.4)),
-                      const SizedBox(height: AppDimensions.s12),
-                      const Text(
-                        'No bookings yet',
-                        style: TextStyle(fontSize: 16, color: AppColors.text3),
-                      ),
-                      const SizedBox(height: AppDimensions.s24),
-                      ElevatedButton.icon(
-                        onPressed: () => context.push(AppRoutes.customerBookService),
-                        icon: const Icon(Icons.add_rounded, size: 18),
-                        label: const Text('Book a Service'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.accent,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppDimensions.r12),
-                          ),
-                        ),
-                      ),
-                    ],
+              ? Padding(
+                  padding: const EdgeInsets.all(AppDimensions.s16),
+                  child: Center(
+                    child: EmptyBookingsCard(
+                      onBookService: () => context.push(AppRoutes.customerBookService),
+                    ),
                   ),
                 )
               : ListView.separated(

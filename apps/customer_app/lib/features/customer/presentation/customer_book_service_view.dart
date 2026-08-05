@@ -24,6 +24,10 @@ class _CustomerBookServiceViewState
   CustomerVehicleEntity? _selectedVehicle;
   final _notesCtrl = TextEditingController();
 
+  List<ServiceTypeResponse> _serviceTypes = [];
+  bool _isLoadingTypes = true;
+  String? _selectedServiceTypeId;
+
   static const _months = [
     '',
     'January',
@@ -40,6 +44,22 @@ class _CustomerBookServiceViewState
     'December',
   ];
   static const _wd = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadServiceTypes();
+  }
+
+  Future<void> _loadServiceTypes() async {
+    final types = await ref.read(customerRemoteDataSourceProvider).getServiceTypes();
+    if (mounted) {
+      setState(() {
+        _serviceTypes = types;
+        _isLoadingTypes = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -70,6 +90,19 @@ class _CustomerBookServiceViewState
   List<CustomerVehicleEntity> get _vehicles =>
       ref.watch(customerDashboardProvider).vehicles;
 
+  IconData _getServiceIcon(String name) {
+    switch (name) {
+      case 'Full Service': return Icons.build_rounded;
+      case 'Oil Change': return Icons.opacity_rounded;
+      case 'Brakes': return Icons.disc_full_rounded;
+      case 'Tyres': return Icons.radio_button_checked_rounded;
+      case 'MOT': return Icons.fact_check_rounded;
+      case 'Battery': return Icons.battery_charging_full_rounded;
+      case 'Diagnostics': return Icons.analytics_rounded;
+      default: return Icons.miscellaneous_services_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,15 +131,35 @@ class _CustomerBookServiceViewState
                   AppDimensions.s18,
                   AppDimensions.s20,
                 ),
-                child: [_buildStep0, _buildStep1][_step](context),
+                child: [_buildStep0, _buildStep1, _buildStep2][_step](context),
               ),
             ),
             _BottomBar(
-              label: _step == 1 ? 'Confirm Booking' : 'Continue',
+              label: _step == 2 ? 'Confirm Booking' : 'Continue',
               onTap: () async {
-                if (_step < 1) {
+                if (_step == 0) {
+                  if (_selectedServiceTypeId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please select a service type')),
+                    );
+                    return;
+                  }
+                  setState(() => _step++);
+                } else if (_step == 1) {
+                  if (_selectedDate == null || _selectedTime == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please select a date and time')),
+                    );
+                    return;
+                  }
                   setState(() => _step++);
                 } else {
+                  if (_selectedVehicle == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please select a vehicle')),
+                    );
+                    return;
+                  }
                   await _showConfirmSheet(context);
                 }
               },
@@ -118,6 +171,93 @@ class _CustomerBookServiceViewState
   }
 
   Widget _buildStep0(BuildContext ctx) {
+    if (_isLoadingTypes) {
+      return const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Select Service',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s4),
+        const Text(
+          'What does your vehicle need today?',
+          style: TextStyle(fontSize: 13, color: AppColors.text3),
+        ),
+        const SizedBox(height: AppDimensions.s18),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: AppDimensions.s10,
+            mainAxisSpacing: AppDimensions.s10,
+            childAspectRatio: 0.85,
+          ),
+          itemCount: _serviceTypes.length,
+          itemBuilder: (context, index) {
+            final type = _serviceTypes[index];
+            final isSelected = _selectedServiceTypeId == type.id;
+
+            return GestureDetector(
+              onTap: () => setState(() => _selectedServiceTypeId = type.id),
+              child: AppCard(
+                color: isSelected ? AppColors.primaryBg : AppColors.surface,
+                borderColor: isSelected ? AppColors.primary : AppColors.border,
+                padding: const EdgeInsets.all(AppDimensions.s14),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _getServiceIcon(type.name),
+                      size: 32,
+                      color: isSelected ? AppColors.primary : AppColors.text2,
+                    ),
+                    const SizedBox(height: AppDimensions.s12),
+                    Text(
+                      type.name,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s6),
+                    Text(
+                      type.price,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s4),
+                    Text(
+                      type.duration,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.text3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep1(BuildContext ctx) {
     final today = DateTime.now();
     final calDays = _calDays();
     return Column(
@@ -133,7 +273,7 @@ class _CustomerBookServiceViewState
         ),
         const SizedBox(height: AppDimensions.s4),
         const Text(
-          'Pick a date & time — the workshop advisor will confirm the service needed',
+          'Pick a date & time \u2014 the workshop advisor will confirm the service needed',
           style: TextStyle(fontSize: 13, color: AppColors.text3),
         ),
         const SizedBox(height: AppDimensions.s18),
@@ -305,180 +445,188 @@ class _CustomerBookServiceViewState
     );
   }
 
-  Widget _buildStep1(BuildContext ctx) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Almost done!',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
+  Widget _buildStep2(BuildContext ctx) {
+    final selService = _serviceTypes.firstWhere((t) => t.id == _selectedServiceTypeId, orElse: () => const ServiceTypeResponse(name: 'Appointment'));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Almost done!',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
         ),
-      ),
-      const SizedBox(height: AppDimensions.s4),
-      const Text(
-        'Choose your vehicle and review',
-        style: TextStyle(fontSize: 13, color: AppColors.text3),
-      ),
-      const SizedBox(height: AppDimensions.s18),
+        const SizedBox(height: AppDimensions.s4),
+        const Text(
+          'Choose your vehicle and review',
+          style: TextStyle(fontSize: 13, color: AppColors.text3),
+        ),
+        const SizedBox(height: AppDimensions.s18),
 
-      if (_vehicles.isEmpty)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Column(
-            children: [
-              const Icon(Icons.directions_car_outlined, size: 48, color: AppColors.text4),
-              const SizedBox(height: 12),
-              const Text(
-                'No vehicles yet — add your vehicle first',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.text3),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () => ctx.push(AppRoutes.customerAddVehicle),
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add Vehicle'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+        if (_vehicles.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Column(
+              children: [
+                const Icon(Icons.directions_car_outlined, size: 48, color: AppColors.text4),
+                const SizedBox(height: 12),
+                const Text(
+                  'No vehicles yet \u2014 add your vehicle first',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: AppColors.text3),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => ctx.push(AppRoutes.customerAddVehicle),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add Vehicle'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimensions.r12),
+                    ),
                   ),
                 ),
+              ],
+            ),
+          )
+        else
+          ..._vehicles.map((v) {
+          final isSel = _selectedVehicle?.id == v.id;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedVehicle = v),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 130),
+              margin: const EdgeInsets.only(bottom: AppDimensions.s10),
+              padding: const EdgeInsets.all(AppDimensions.s14),
+              decoration: BoxDecoration(
+                color: isSel ? AppColors.primaryBg : AppColors.surface,
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+                border: Border.all(
+                  color: isSel ? AppColors.primary : AppColors.border,
+                  width: isSel ? 1.5 : 0.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isSel ? AppColors.primaryBg : AppColors.bg,
+                      borderRadius: BorderRadius.circular(AppDimensions.r10),
+                    ),
+                    child: Icon(
+                      Icons.directions_car_rounded,
+                      color: isSel ? AppColors.primary : AppColors.text3,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          v.displayName,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: isSel
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: AppDimensions.s4),
+                        Text(
+                          '${v.plateNumber}  \u00b7  ${v.year}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.text3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isSel)
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                ],
+              ),
+            ),
+          );
+        }),
+        const SizedBox(height: AppDimensions.s8),
+
+        AppCard(
+          padding: EdgeInsets.zero,
+          child: TextField(
+            controller: _notesCtrl,
+            maxLines: 3,
+            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+            decoration: const InputDecoration(
+              hintText: 'Additional notes (optional)\u2026',
+              hintStyle: TextStyle(color: AppColors.text4, fontSize: 13),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.all(AppDimensions.s14),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s18),
+
+        AppCard(
+          color: AppColors.primaryBg,
+          borderColor: AppColors.primaryBorder,
+          child: Column(
+            children: [
+              _SumRow(
+                icon: Icons.build_rounded,
+                label: 'Service',
+                value: selService.name,
+              ),
+              const Divider(height: 18, color: AppColors.primaryBorder),
+              _SumRow(
+                icon: Icons.calendar_month_rounded,
+                label: 'Date',
+                value: _summaryDate,
+              ),
+              const Divider(height: 18, color: AppColors.primaryBorder),
+              _SumRow(
+                icon: Icons.access_time_rounded,
+                label: 'Time',
+                value: _selectedTime ?? '\u2014',
+              ),
+              const Divider(height: 18, color: AppColors.primaryBorder),
+              _SumRow(
+                icon: Icons.directions_car_rounded,
+                label: 'Vehicle',
+                value: _selectedVehicle?.displayName ?? '\u2014',
               ),
             ],
           ),
-        )
-      else
-        ..._vehicles.map((v) {
-        final isSel = _selectedVehicle?.id == v.id;
-        return GestureDetector(
-          onTap: () => setState(() => _selectedVehicle = v),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 130),
-            margin: const EdgeInsets.only(bottom: AppDimensions.s10),
-            padding: const EdgeInsets.all(AppDimensions.s14),
-            decoration: BoxDecoration(
-              color: isSel ? AppColors.primaryBg : AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.r12),
-              border: Border.all(
-                color: isSel ? AppColors.primary : AppColors.border,
-                width: isSel ? 1.5 : 0.8,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isSel ? AppColors.primaryBg : AppColors.bg,
-                    borderRadius: BorderRadius.circular(AppDimensions.r10),
-                  ),
-                  child: Icon(
-                    Icons.directions_car_rounded,
-                    color: isSel ? AppColors.primary : AppColors.text3,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        v.displayName,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: isSel
-                              ? AppColors.primary
-                              : AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: AppDimensions.s4),
-                      Text(
-                        '${v.plateNumber}  \u00b7  ${v.year}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.text3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isSel)
-                  const Icon(
-                    Icons.check_circle_rounded,
-                    color: AppColors.primary,
-                    size: 22,
-                  ),
-              ],
-            ),
-          ),
-        );
-      }),
-      const SizedBox(height: AppDimensions.s8),
-
-      AppCard(
-        padding: EdgeInsets.zero,
-        child: TextField(
-          controller: _notesCtrl,
-          maxLines: 3,
-          style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-          decoration: const InputDecoration(
-            hintText: 'Additional notes (optional)\u2026',
-            hintStyle: TextStyle(color: AppColors.text4, fontSize: 13),
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.all(AppDimensions.s14),
-          ),
         ),
-      ),
-      const SizedBox(height: AppDimensions.s18),
-
-      AppCard(
-        color: AppColors.primaryBg,
-        borderColor: AppColors.primaryBorder,
-        child: Column(
-          children: [
-            _SumRow(
-              icon: Icons.calendar_month_rounded,
-              label: 'Date',
-              value: _summaryDate,
-            ),
-            const Divider(height: 18, color: AppColors.primaryBorder),
-            _SumRow(
-              icon: Icons.access_time_rounded,
-              label: 'Time',
-              value: _selectedTime ?? '\u2014',
-            ),
-            const Divider(height: 18, color: AppColors.primaryBorder),
-            _SumRow(
-              icon: Icons.directions_car_rounded,
-              label: 'Vehicle',
-              value: _selectedVehicle?.displayName ?? '\u2014',
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: AppDimensions.s20),
-    ],
-  );
+        const SizedBox(height: AppDimensions.s20),
+      ],
+    );
+  }
 
   Future<void> _showConfirmSheet(BuildContext context) async {
     final now = DateTime.now();
 
-    // Backend-shaped payload: POST /bookings (CreateBookingRequest).
     final selected = _selectedDate ?? DateTime.now();
     final bookingDate = _selectedTime == null
         ? selected.toIso8601String()
@@ -486,13 +634,14 @@ class _CustomerBookServiceViewState
             '${selected.month.toString().padLeft(2, '0')}-'
             '${selected.day.toString().padLeft(2, '0')}T'
             '$_selectedTime:00';
+            
+    final selService = _serviceTypes.firstWhere((t) => t.id == _selectedServiceTypeId, orElse: () => const ServiceTypeResponse(name: 'Appointment'));
+
     final payload = {
       'vehicleId': _selectedVehicle?.id ?? '',
       'vehicleName': _selectedVehicle?.displayName ?? '',
       'plateNumber': _selectedVehicle?.plateNumber ?? '',
-      // The advisor decides the actual service at intake; the booking is
-      // just an appointment request.
-      'serviceType': 'Appointment',
+      'serviceType': selService.name,
       'bookingDate': bookingDate,
       'notes': _notesCtrl.text,
     };
@@ -502,11 +651,10 @@ class _CustomerBookServiceViewState
     var synced = true;
     final remote = ref.read(customerRemoteDataSourceProvider);
     try {
-      // Real API hit so the supervisor sees the appointment immediately.
       final resp = await remote.createBooking(payload);
       bookingRef = resp.id;
     } catch (e, st) {
-      ref.read(loggerProvider).e('Booking API failed — queueing offline',
+      ref.read(loggerProvider).e('Booking API failed \u2014 queueing offline',
           error: e, stackTrace: st);
       synced = false;
     }
@@ -514,7 +662,7 @@ class _CustomerBookServiceViewState
     final id = bookingRef.isNotEmpty ? bookingRef : await IdGenerator.nextId('BK');
     local.save(id, {
       'id': id,
-      'serviceType': 'Appointment',
+      'serviceType': selService.name,
       'vehicleName': _selectedVehicle?.displayName ?? '',
       'plateNumber': _selectedVehicle?.plateNumber ?? '',
       'date': _summaryDate,
@@ -538,85 +686,15 @@ class _CustomerBookServiceViewState
     }
     ref.invalidate(customerBookingsProvider);
     if (!context.mounted) return;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.r22),
-        ),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(AppDimensions.s28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.successBg,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                color: AppColors.success,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            const Text(
-              'Booking Confirmed!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s8),
-            Text(
-              '$_summaryDate \u00b7 ${_selectedTime ?? '--'}',
-              style: const TextStyle(fontSize: 14, color: AppColors.text3),
-            ),
-            const SizedBox(height: AppDimensions.s12),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.s16,
-                vertical: AppDimensions.s8,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryBg,
-                borderRadius: BorderRadius.circular(AppDimensions.r10),
-              ),
-              child: Text(
-                'Ref: $id',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppDimensions.s14,
-                  ),
-                ),
-                child: const Text('Back to Home'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    
+    // Instead of showing sheet, navigate to success screen
+    Navigator.pop(context); // pop the book service view
+    context.push(AppRoutes.customerBookingSuccess, extra: {
+      'ref': id,
+      'service': selService.name,
+      'date': _summaryDate,
+      'time': _selectedTime ?? '--',
+    });
   }
 }
 
@@ -685,9 +763,11 @@ class _StepBar extends StatelessWidget {
     ),
     child: Row(
       children: [
-        _Node(n: 0, step: step, label: 'Schedule'),
+        _Node(n: 0, step: step, label: 'Service'),
         _Line(done: step > 0),
-        _Node(n: 1, step: step, label: 'Confirm'),
+        _Node(n: 1, step: step, label: 'Schedule'),
+        _Line(done: step > 1),
+        _Node(n: 2, step: step, label: 'Confirm'),
       ],
     ),
   );
@@ -798,15 +878,19 @@ class _TopBar extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: AppDimensions.s12),
-        Text(
-          ['Date & Time', 'Review & Confirm'][step],
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+        const Expanded(
+          child: Center(
+            child: Text(
+              'Book Service',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
         ),
+        const SizedBox(width: 34),
       ],
     ),
   );
@@ -819,24 +903,33 @@ class _BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.fromLTRB(
+    color: AppColors.surface,
+    padding: const EdgeInsets.fromLTRB(
       AppDimensions.s18,
-      AppDimensions.s12,
+      AppDimensions.s14,
       AppDimensions.s18,
-      MediaQuery.of(context).padding.bottom + AppDimensions.s12,
+      AppDimensions.s24,
     ),
-    decoration: const BoxDecoration(
-      color: AppColors.surface,
-      border: Border(top: BorderSide(color: AppColors.border)),
-    ),
-    child: SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.s16),
+    child: SafeArea(
+      top: false,
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: onTap,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: AppDimensions.s14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.r12),
+            ),
+            elevation: 0,
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
         ),
-        child: Text(label),
       ),
     ),
   );

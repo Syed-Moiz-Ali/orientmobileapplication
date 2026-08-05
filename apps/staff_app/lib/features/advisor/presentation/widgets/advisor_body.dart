@@ -181,4 +181,3 @@ const _emptyStats = AdvisorStatsEntity(
   readyForDelivery: 0,
   totalOpenJobCards: 0,
 );
-

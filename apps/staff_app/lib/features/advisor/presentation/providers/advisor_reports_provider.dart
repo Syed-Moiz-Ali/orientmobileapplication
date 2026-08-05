@@ -36,11 +36,15 @@ class AdvisorReportData {
   });
 }
 
-final advisorReportRangeProvider = StateProvider<ReportRange>((ref) => ReportRange.week);
+final advisorReportRangeProvider = StateProvider<ReportRange>(
+  (ref) => ReportRange.week,
+);
 
 /// Report data loaded from the backend (ReportResponse). Falls back to empty
 /// data on failure — never fabricated numbers.
-final advisorReportDataProvider = FutureProvider<AdvisorReportData>((ref) async {
+final advisorReportDataProvider = FutureProvider<AdvisorReportData>((
+  ref,
+) async {
   ref.watch(advisorRefreshProvider);
   ref.watch(advisorReportRangeProvider);
   final range = ref.watch(advisorReportRangeProvider);
@@ -50,7 +54,8 @@ final advisorReportDataProvider = FutureProvider<AdvisorReportData>((ref) async 
     return AdvisorReportData(
       totalJobs: r.totalJobs,
       completedJobs: r.completedJobs,
-      pendingJobs: r.totalJobs - r.completedJobs - r.inProgressJobs - r.cancelledJobs,
+      pendingJobs:
+          r.totalJobs - r.completedJobs - r.inProgressJobs - r.cancelledJobs,
       inProgressJobs: r.inProgressJobs,
       cancelledJobs: r.cancelledJobs,
       statusBreakdown: [

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/core/router/app_router.dart';
 
 class CustomerVehicleCard extends StatelessWidget {
   final CustomerVehicleEntity vehicle;
@@ -12,27 +14,15 @@ class CustomerVehicleCard extends StatelessWidget {
     this.compact = false,
   });
 
-  Color get _scoreColor => vehicle.healthScore >= 80
-      ? AppColors.success
-      : vehicle.healthScore >= 60
-      ? AppColors.warning
-      : AppColors.danger;
-
-  Color get _scoreBg => vehicle.healthScore >= 80
-      ? AppColors.successBg
-      : vehicle.healthScore >= 60
-      ? AppColors.warningBg
-      : AppColors.dangerBg;
-
   @override
   Widget build(BuildContext context) {
     if (compact) {
-      return _buildCompact();
+      return _buildCompact(context);
     }
-    return _buildFull();
+    return _buildFull(context);
   }
 
-  Widget _buildCompact() {
+  Widget _buildCompact(BuildContext context) {
     return Container(
       width: 200,
       padding: const EdgeInsets.all(AppDimensions.s14),
@@ -73,15 +63,15 @@ class CustomerVehicleCard extends StatelessWidget {
                   vertical: AppDimensions.s4,
                 ),
                 decoration: BoxDecoration(
-                  color: _scoreBg,
+                  color: AppColors.cyanLight,
                   borderRadius: BorderRadius.circular(AppDimensions.rPill),
                 ),
-                child: Text(
-                  '${vehicle.healthScore}%',
+                child: const Text(
+                  'ACTIVE',
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: _scoreColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.accent,
                   ),
                 ),
               ),
@@ -95,33 +85,42 @@ class CustomerVehicleCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppDimensions.s4),
-          Text(
-            vehicle.plateNumber,
-            style: const TextStyle(fontSize: 11, color: AppColors.text3),
-          ),
-          const SizedBox(height: AppDimensions.s4),
-          Text(
-            vehicle.mileage,
-            style: const TextStyle(fontSize: 10, color: AppColors.text3),
+          // Styled plate badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFACC15),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.black54, width: 1),
+            ),
+            child: Text(
+              vehicle.plateNumber.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: Colors.black,
+                fontFamily: 'monospace',
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFull() {
+  Widget _buildFull(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.s16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r14)),
+        borderRadius: BorderRadius.circular(AppDimensions.r16),
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: AppColors.navy.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -138,42 +137,104 @@ class CustomerVehicleCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppDimensions.r12),
                 ),
                 child: const Icon(
-                  Icons.directions_car_rounded,
+                  Icons.directions_car_filled_rounded,
                   color: AppColors.accent,
                   size: 24,
                 ),
               ),
-              const SizedBox(width: AppDimensions.s14),
+              const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       vehicle.displayName,
-                      style: AppTextStyles.rajdhaniTitle(
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.s4),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text(
-                          vehicle.plateNumber,
-                          style: AppTextStyles.rajdhaniLabel(
-                            color: AppColors.text2,
+                        // Yellow UK Plate Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFACC15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.black, width: 1),
+                          ),
+                          child: Text(
+                            vehicle.plateNumber.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                              fontFamily: 'monospace',
+                              letterSpacing: 0.8,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: AppDimensions.s8),
-                        Text(
-                          '${vehicle.year}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.text3,
+                        if (vehicle.year > 0) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            'Year ${vehicle.year}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.text3,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => context.push(AppRoutes.customerEditVehicle(vehicle.id)),
+                icon: const Icon(Icons.edit_rounded, size: 20, color: AppColors.text3),
+                tooltip: 'Edit Vehicle',
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s14),
+          const Divider(height: 1),
+          const SizedBox(height: AppDimensions.s12),
+          Row(
+            children: [
+              if (vehicle.color.isNotEmpty) ...[
+                const Icon(Icons.palette_outlined, size: 14, color: AppColors.text3),
+                const SizedBox(width: 4),
+                Text(
+                  vehicle.color,
+                  style: const TextStyle(fontSize: 12, color: AppColors.text3),
+                ),
+                const SizedBox(width: 14),
+              ],
+              if (vehicle.mileage.isNotEmpty) ...[
+                const Icon(Icons.speed_outlined, size: 14, color: AppColors.text3),
+                const SizedBox(width: 4),
+                Text(
+                  vehicle.mileage,
+                  style: const TextStyle(fontSize: 12, color: AppColors.text3),
+                ),
+              ],
+              const Spacer(),
+              ElevatedButton.icon(
+                onPressed: () => context.push(AppRoutes.customerBookService),
+                icon: const Icon(Icons.calendar_month_rounded, size: 14),
+                label: const Text('Book Service'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r8),
+                  ),
                 ),
               ),
             ],

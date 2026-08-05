@@ -7,6 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_service_card.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_stat_card.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicle_card.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_empty_fallbacks.dart';
+import 'package:customer_app/features/customer/presentation/widgets/garage_info_card.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_shimmer_skeletons.dart';
+import 'package:customer_app/features/customer/presentation/widgets/smart_symptom_booking_card.dart';
+import 'package:customer_app/features/customer/presentation/widgets/service_estimator_card.dart';
 import 'package:customer_app/core/router/app_router.dart';
 
 const Color _navy = AppColors.darkNavy;
@@ -21,12 +26,7 @@ class CustomerHomeTab extends ConsumerWidget {
     final notifier = ref.read(customerDashboardProvider.notifier);
 
     if (state.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: AppColors.accent,
-          strokeWidth: 2.5,
-        ),
-      );
+      return const HomeSkeletonLoading();
     }
 
     return RefreshIndicator(
@@ -48,13 +48,21 @@ class CustomerHomeTab extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SmartSymptomBookingCard(),
+                  const SizedBox(height: AppDimensions.s20),
+                  EmergencyBreakdownBanner(
+                    onTap: () => context.push(AppRoutes.customerBreakdownHelp),
+                  ),
+                  const SizedBox(height: AppDimensions.s20),
+                  const ServiceEstimatorCard(),
+                  const SizedBox(height: AppDimensions.s20),
                   state.activeService != null && state.activeService!.jobCardId.isNotEmpty
                       ? CustomerActiveServiceCard(
                           svc: state.activeService!,
                           onTap: () => notifier.selectTab(1),
                         )
                       : const SizedBox.shrink(),
-                  const SizedBox(height: AppDimensions.s24),
+                  const SizedBox(height: AppDimensions.s20),
                   _sectionLabel('Overview'),
                   const SizedBox(height: AppDimensions.s12),
                   CustomerStatGrid(state: state),
@@ -65,13 +73,21 @@ class CustomerHomeTab extends ConsumerWidget {
                   const SizedBox(height: AppDimensions.s28),
                   _sectionLabel('My Vehicles'),
                   const SizedBox(height: AppDimensions.s12),
-                  _VehicleScrollRow(vehicles: state.vehicles),
+                  _VehicleScrollRow(
+                    vehicles: state.vehicles,
+                    onAdd: () => context.push(AppRoutes.customerAddVehicle),
+                  ),
                   const SizedBox(height: AppDimensions.s28),
                   _sectionLabel('Recent Bookings'),
                   const SizedBox(height: AppDimensions.s12),
                   _RecentBookingsList(
                     bookings: ref.watch(customerBookingsProvider).value ?? const <CustomerBookingEntity>[],
+                    onBook: () => context.push(AppRoutes.customerBookService),
                   ),
+                  const SizedBox(height: AppDimensions.s28),
+                  _sectionLabel('Workshop Info & Location'),
+                  const SizedBox(height: AppDimensions.s12),
+                  const GarageInfoCard(),
                   const SizedBox(height: AppDimensions.s28),
                   _sectionLabel('Breakdown History'),
                   const SizedBox(height: AppDimensions.s12),
@@ -334,10 +350,14 @@ class _QAction {
 
 class _VehicleScrollRow extends StatelessWidget {
   final List<CustomerVehicleEntity> vehicles;
-  const _VehicleScrollRow({required this.vehicles});
+  final VoidCallback onAdd;
+  const _VehicleScrollRow({required this.vehicles, required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
+    if (vehicles.isEmpty) {
+      return EmptyVehiclesCard(onAddVehicle: onAdd);
+    }
     return SizedBox(
       height: 128,
       child: ListView.builder(
@@ -358,7 +378,8 @@ class _VehicleScrollRow extends StatelessWidget {
 
 class _RecentBookingsList extends StatelessWidget {
   final List<CustomerBookingEntity> bookings;
-  const _RecentBookingsList({required this.bookings});
+  final VoidCallback onBook;
+  const _RecentBookingsList({required this.bookings, required this.onBook});
 
   (Color, Color) _statusColors(BookingStatus s) {
     switch (s) {
@@ -375,6 +396,9 @@ class _RecentBookingsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (bookings.isEmpty) {
+      return EmptyBookingsCard(onBookService: onBook);
+    }
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),

@@ -48,7 +48,10 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
   void _loadCustomerData() {
     try {
       final box = Hive.box<dynamic>('inspections');
-      final all = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+      final all = box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
       final state = ref.read(inspectionProvider);
       final jid = state.jobCardId;
       _customerData = all.cast<Map<String, dynamic>?>().firstWhere(
@@ -1787,7 +1790,8 @@ class RepairOrderPreviewView extends ConsumerStatefulWidget {
       _RepairOrderPreviewViewState();
 }
 
-class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView> {
+class _RepairOrderPreviewViewState
+    extends ConsumerState<RepairOrderPreviewView> {
   Map<String, dynamic>? _customerData;
   Uint8List? _signatureBytes;
 
@@ -2542,4 +2546,3 @@ class _SummaryRow extends StatelessWidget {
     ),
   );
 }
-

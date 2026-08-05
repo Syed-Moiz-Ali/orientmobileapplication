@@ -694,8 +694,6 @@ class _PendingCard extends StatelessWidget {
   }
 }
 
-
-
 class _CardTitle extends StatelessWidget {
   final String text;
   const _CardTitle(this.text);

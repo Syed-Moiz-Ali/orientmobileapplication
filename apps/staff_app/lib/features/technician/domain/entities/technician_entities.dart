@@ -363,8 +363,11 @@ class TechnicianJobEntity {
         (e) => e.name == json['status'],
         orElse: () => TechJobStatus.pending,
       ),
-      tasks: (json['tasks'] as List<dynamic>?)
-              ?.map((t) => WorkTaskEntity.fromJson(Map<String, dynamic>.from(t)))
+      tasks:
+          (json['tasks'] as List<dynamic>?)
+              ?.map(
+                (t) => WorkTaskEntity.fromJson(Map<String, dynamic>.from(t)),
+              )
               .toList() ??
           [],
       notes: (json['notes'] as String?) ?? '',

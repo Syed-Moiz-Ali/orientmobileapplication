@@ -25,4 +25,3 @@ class AdvisorStatusBadge extends StatelessWidget {
     ),
   );
 }
-

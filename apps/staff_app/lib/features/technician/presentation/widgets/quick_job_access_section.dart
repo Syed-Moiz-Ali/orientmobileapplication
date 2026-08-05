@@ -103,18 +103,21 @@ class QuickJobAccessSection extends ConsumerWidget {
                             vertical: AppDimensions.s12,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.r12),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r12,
+                            ),
                             borderSide: BorderSide(color: AppColors.border),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.r12),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r12,
+                            ),
                             borderSide: BorderSide(color: AppColors.border),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.r12),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r12,
+                            ),
                             borderSide: BorderSide(
                               color: AppColors.accent,
                               width: 1.5,
@@ -138,8 +141,9 @@ class QuickJobAccessSection extends ConsumerWidget {
                           gradient: const LinearGradient(
                             colors: [AppColors.navy, AppColors.accent],
                           ),
-                          borderRadius:
-                              BorderRadius.circular(AppDimensions.r12),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r12,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.accent.withValues(alpha: 0.30),

@@ -30,7 +30,9 @@ class AttendanceSection extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: status.bgColor,
                   borderRadius: BorderRadius.circular(AppDimensions.r20),
-                  border: Border.all(color: status.color.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: status.color.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -172,10 +174,7 @@ class _AttBtn extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 14),
             SizedBox(width: AppDimensions.s4),
-            Text(
-              label,
-              style: AppTextStyles.rajdhaniBody(color: color),
-            ),
+            Text(label, style: AppTextStyles.rajdhaniBody(color: color)),
           ],
         ),
       ),

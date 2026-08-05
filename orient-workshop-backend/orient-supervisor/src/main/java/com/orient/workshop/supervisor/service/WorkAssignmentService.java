@@ -1,12 +1,18 @@
 package com.orient.workshop.supervisor.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.util.DateParse;
 import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.model.entity.Staff;
+import com.orient.workshop.core.model.entity.TechnicianTask;
 import com.orient.workshop.core.repository.JobCardMapper;
+import com.orient.workshop.core.repository.StaffMapper;
+import com.orient.workshop.core.repository.TechnicianTaskMapper;
 import com.orient.workshop.supervisor.model.dto.AssignedJobResponse;
+import com.orient.workshop.supervisor.model.dto.AvailableTechnicianResponse;
 import com.orient.workshop.supervisor.model.dto.WorkAssignmentRequest;
 import com.orient.workshop.supervisor.model.dto.WorkAssignmentResponse;
 import com.orient.workshop.supervisor.model.entity.WorkAssignment;
@@ -16,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +32,8 @@ public class WorkAssignmentService {
 
     private final WorkAssignmentMapper workAssignmentMapper;
     private final JobCardMapper jobCardMapper;
+    private final StaffMapper staffMapper;
+    private final TechnicianTaskMapper taskMapper;
 
     @Transactional
     public WorkAssignmentResponse createAssignments(JwtUserPrincipal principal, WorkAssignmentRequest req) {
@@ -94,5 +103,27 @@ public class WorkAssignmentService {
             throw new BadRequestException("Job card " + id + " belongs to a different branch");
         }
         return card;
+    }
+
+    public List<AvailableTechnicianResponse> getAvailableTechnicians() {
+        List<Staff> technicians = staffMapper.selectList(
+                new LambdaQueryWrapper<Staff>()
+                        .in(Staff::getRole, Arrays.asList("technician", "TECHNICIAN"))
+                        .eq(Staff::getIsActive, true)
+        );
+
+        return technicians.stream().map(tech -> {
+            Long inProgressCount = taskMapper.selectCount(
+                    new LambdaQueryWrapper<TechnicianTask>()
+                            .eq(TechnicianTask::getEmpId, tech.getEmpId())
+                            .eq(TechnicianTask::getStatus, "inProgress")
+            );
+            return AvailableTechnicianResponse.builder()
+                    .id(tech.getId())
+                    .name(tech.getName())
+                    .empId(tech.getEmpId())
+                    .currentJobs(inProgressCount != null ? inProgressCount.intValue() : 0)
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

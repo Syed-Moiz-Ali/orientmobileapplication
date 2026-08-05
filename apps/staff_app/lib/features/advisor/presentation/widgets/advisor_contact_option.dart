@@ -41,4 +41,3 @@ class AdvisorContactOption extends StatelessWidget {
     ),
   );
 }
-

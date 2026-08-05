@@ -3,6 +3,7 @@ package com.orient.workshop.customer.service;
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.util.DateParse;
 import com.orient.workshop.common.util.IdGenerator;
+import com.orient.workshop.customer.model.dto.BookingAvailabilityResponse;
 import com.orient.workshop.customer.model.dto.BookingResponse;
 import com.orient.workshop.customer.model.dto.CreateBookingRequest;
 import com.orient.workshop.customer.model.dto.IdResponse;
@@ -14,8 +15,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,7 +68,61 @@ public class BookingService {
                 "Your booking " + ref + " for " + req.getServiceType()
                         + " has been received. We'll confirm shortly.");
 
-        return IdResponse.builder().id(ref).build();
+        return IdResponse.builder().id(String.valueOf(booking.getId())).bookingRef(ref).build();
+    }
+
+    public BookingAvailabilityResponse getAvailability(String dateStr, String serviceType) {
+        LocalDate date = LocalDate.parse(dateStr);
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+
+        List<Booking> bookings = bookingMapper.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Booking>()
+                        .between("booking_date", startOfDay, endOfDay)
+                        .ne("status", "cancelled")
+        );
+
+        List<String> bookedSlots = new ArrayList<>();
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
+        for (Booking b : bookings) {
+            if (b.getBookingDate() != null) {
+                bookedSlots.add(b.getBookingDate().format(timeFmt));
+            }
+        }
+
+        List<String> allSlots = new ArrayList<>();
+        for (int h = 9; h <= 17; h++) {
+            allSlots.add(String.format("%02d:00", h));
+        }
+
+        List<String> availableSlots = new ArrayList<>(allSlots);
+        availableSlots.removeAll(bookedSlots);
+
+        return BookingAvailabilityResponse.builder()
+                .date(dateStr)
+                .serviceType(serviceType)
+                .availableSlots(availableSlots)
+                .bookedSlots(bookedSlots)
+                .workshopCapacity(8)
+                .bookedCount(bookings.size())
+                .build();
+    }
+
+    @Transactional
+    public BookingResponse updateStatus(Long bookingId, String status, JwtUserPrincipal principal) {
+        Booking booking = bookingMapper.selectById(bookingId);
+        if (booking == null) {
+            throw new com.orient.workshop.common.exception.NotFoundException("Booking not found");
+        }
+        
+        List<String> validStatuses = List.of("confirmed", "vehicle_received", "in_service", "completed", "cancelled");
+        if (!validStatuses.contains(status)) {
+            throw new com.orient.workshop.common.exception.BadRequestException("Invalid status: " + status);
+        }
+        
+        booking.setStatus(status);
+        bookingMapper.updateById(booking);
+        return toResponse(booking);
     }
 
     private BookingResponse toResponse(Booking b) {

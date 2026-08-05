@@ -3,6 +3,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 
 import com.orient.workshop.advisor.model.dto.AssignTechnicianRequest;
+import com.orient.workshop.advisor.model.dto.BatchTaskRequest;
+import com.orient.workshop.advisor.model.dto.DeliveryRequest;
 import com.orient.workshop.advisor.model.dto.JobCardDetailResponse;
 import com.orient.workshop.advisor.model.dto.JobCardResponse;
 import com.orient.workshop.advisor.model.dto.UpdateStatusRequest;
@@ -51,6 +53,18 @@ public class JobCardController {
     public ApiResponse<Void> assignTechnician(@AuthenticationPrincipal JwtUserPrincipal principal,
                                               @PathVariable Long id, @Valid @RequestBody AssignTechnicianRequest req) {
         jobCardService.assignTechnician(id, req.getTechnician(), principal);
+        return ApiResponse.success(null);
+    }
+
+    @PostMapping("/{jobCardRef}/tasks")
+    public ApiResponse<Void> assignTasks(@PathVariable String jobCardRef, @RequestBody BatchTaskRequest request, @AuthenticationPrincipal JwtUserPrincipal principal) {
+        jobCardService.assignTasks(jobCardRef, request, principal);
+        return ApiResponse.success(null);
+    }
+
+    @PostMapping("/{jobCardRef}/deliver")
+    public ApiResponse<Void> deliver(@PathVariable String jobCardRef, @RequestBody DeliveryRequest request, @AuthenticationPrincipal JwtUserPrincipal principal) {
+        jobCardService.deliver(jobCardRef, request, principal);
         return ApiResponse.success(null);
     }
 }

@@ -41,4 +41,3 @@ class AdvisorDetailLine extends StatelessWidget {
     ),
   );
 }
-

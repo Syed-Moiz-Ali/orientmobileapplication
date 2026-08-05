@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_core/src/errors/logger_provider.dart';
+import 'package:shared_core/src/local/storage/token_storage.dart';
 
 class AuthInterceptor extends Interceptor {
   final Ref _ref;
@@ -11,10 +12,16 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._ref, this._dio);
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     final authState = _ref.read(authNotifierProvider);
     if (authState case AuthAuthenticated(:final token)) {
       options.headers['Authorization'] = 'Bearer $token';
+    } else {
+      final storage = _ref.read(tokenStorageProvider);
+      final storedToken = await storage.getToken();
+      if (storedToken != null && storedToken.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $storedToken';
+      }
     }
     handler.next(options);
   }
@@ -33,10 +40,12 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
+    final storage = _ref.read(tokenStorageProvider);
+    final currentToken = await storage.getToken();
     final authState = _ref.read(authNotifierProvider);
-    if (authState case AuthAuthenticated(:final token)) {
-      // baseUrl must be carried over: a manually constructed RequestOptions
-      // does not inherit the Dio instance's baseUrl.
+    final token = authState is AuthAuthenticated ? authState.token : currentToken;
+
+    if (token != null && token.isNotEmpty) {
       final options = RequestOptions(
         method: err.requestOptions.method,
         baseUrl: _dio.options.baseUrl,
@@ -54,8 +63,6 @@ class AuthInterceptor extends Interceptor {
       options.headers['Authorization'] = 'Bearer $token';
       options.headers['X-Retry'] = 'true';
       try {
-        // Re-dispatch through the SAME Dio instance so the envelope
-        // interceptor still unwraps the retried response.
         final response = await _dio.fetch(options);
         handler.resolve(response);
         return;

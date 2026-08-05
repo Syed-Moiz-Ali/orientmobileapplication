@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
@@ -26,7 +26,9 @@ const _emptyStats = AdvisorStatsEntity(
 
 /// Loads advisor stats from the backend. Falls back to empty data (never
 /// fabricated numbers) when the request fails or the app is offline.
-final advisorDashboardProvider = FutureProvider<AdvisorStatsEntity>((ref) async {
+final advisorDashboardProvider = FutureProvider<AdvisorStatsEntity>((
+  ref,
+) async {
   ref.watch(advisorRefreshProvider);
   final remote = ref.read(advisorRemoteDataSourceProvider);
   try {
@@ -40,12 +42,16 @@ final advisorDashboardProvider = FutureProvider<AdvisorStatsEntity>((ref) async 
       totalOpenJobCards: s.totalOpenJobCards,
     );
   } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load advisor stats', error: e, stackTrace: st);
+    ref
+        .read(loggerProvider)
+        .e('Failed to load advisor stats', error: e, stackTrace: st);
     return _emptyStats;
   }
 });
 
-final advisorRecentJobCardsProvider = FutureProvider<List<JobCardEntity>>((ref) async {
+final advisorRecentJobCardsProvider = FutureProvider<List<JobCardEntity>>((
+  ref,
+) async {
   ref.watch(advisorRefreshProvider);
   final remote = ref.read(advisorRemoteDataSourceProvider);
   try {
@@ -68,30 +74,35 @@ final advisorRecentJobCardsProvider = FutureProvider<List<JobCardEntity>>((ref) 
     }).toList();
     return parsed;
   } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load advisor job cards', error: e, stackTrace: st);
+    ref
+        .read(loggerProvider)
+        .e('Failed to load advisor job cards', error: e, stackTrace: st);
     return const [];
   }
 });
 
-final advisorPendingApprovalsProvider = FutureProvider<List<PendingApprovalEntity>>((ref) async {
-  ref.watch(advisorRefreshProvider);
-  final remote = ref.read(advisorRemoteDataSourceProvider);
-  try {
-    final approvals = await remote.getPendingApprovals();
-    return approvals.map((a) {
-      return PendingApprovalEntity(
-        estimateId: a.estimateId,
-        customerName: a.customerName,
-        vehicleId: a.vehicleId,
-        amount: a.amount,
-        timeAgo: a.timeAgo,
-      );
-    }).toList();
-  } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load pending approvals', error: e, stackTrace: st);
-    return const [];
-  }
-});
+final advisorPendingApprovalsProvider =
+    FutureProvider<List<PendingApprovalEntity>>((ref) async {
+      ref.watch(advisorRefreshProvider);
+      final remote = ref.read(advisorRemoteDataSourceProvider);
+      try {
+        final approvals = await remote.getPendingApprovals();
+        return approvals.map((a) {
+          return PendingApprovalEntity(
+            estimateId: a.estimateId,
+            customerName: a.customerName,
+            vehicleId: a.vehicleId,
+            amount: a.amount,
+            timeAgo: a.timeAgo,
+          );
+        }).toList();
+      } catch (e, st) {
+        ref
+            .read(loggerProvider)
+            .e('Failed to load pending approvals', error: e, stackTrace: st);
+        return const [];
+      }
+    });
 
 class ReminderNotifier extends Notifier<List<FollowupReminderEntity>> {
   @override
@@ -108,16 +119,18 @@ class ReminderNotifier extends Notifier<List<FollowupReminderEntity>> {
           .whereType<Map>()
           .map((m) => Map<String, dynamic>.from(m))
           .where((m) => m['type'] == 'reminder')
-          .map((m) => FollowupReminderEntity(
-                customerName: m['customerName'] as String? ?? '',
-                vehicleId: m['vehicleId'] as String? ?? '',
-                task: m['task'] as String? ?? '',
-                dueDate: m['dueDate'] as String? ?? '',
-                priority: ReminderPriority.values.firstWhere(
-                  (e) => e.name == m['priority'],
-                  orElse: () => ReminderPriority.medium,
-                ),
-              ))
+          .map(
+            (m) => FollowupReminderEntity(
+              customerName: m['customerName'] as String? ?? '',
+              vehicleId: m['vehicleId'] as String? ?? '',
+              task: m['task'] as String? ?? '',
+              dueDate: m['dueDate'] as String? ?? '',
+              priority: ReminderPriority.values.firstWhere(
+                (e) => e.name == m['priority'],
+                orElse: () => ReminderPriority.medium,
+              ),
+            ),
+          )
           .toList();
     } catch (_) {
       return [];
@@ -142,7 +155,9 @@ class ReminderNotifier extends Notifier<List<FollowupReminderEntity>> {
         );
       }).toList();
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to load reminders', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e('Failed to load reminders', error: e, stackTrace: st);
     }
   }
 
@@ -183,13 +198,13 @@ class ReminderNotifier extends Notifier<List<FollowupReminderEntity>> {
   Future<void> dismissReminder(int index) async {
     final box = Hive.box<dynamic>('inspections');
     final reminder = state[index];
-    final key = box.keys.firstWhere(
-      (k) {
-        final v = box.get(k);
-        return v is Map && v['type'] == 'reminder' && v['task'] == reminder.task && v['customerName'] == reminder.customerName;
-      },
-      orElse: () => '',
-    );
+    final key = box.keys.firstWhere((k) {
+      final v = box.get(k);
+      return v is Map &&
+          v['type'] == 'reminder' &&
+          v['task'] == reminder.task &&
+          v['customerName'] == reminder.customerName;
+    }, orElse: () => '');
     if (key != '') {
       await box.delete(key);
     }
@@ -198,9 +213,10 @@ class ReminderNotifier extends Notifier<List<FollowupReminderEntity>> {
   }
 }
 
-final advisorFollowupRemindersProvider = NotifierProvider<ReminderNotifier, List<FollowupReminderEntity>>(
-  ReminderNotifier.new,
-);
+final advisorFollowupRemindersProvider =
+    NotifierProvider<ReminderNotifier, List<FollowupReminderEntity>>(
+      ReminderNotifier.new,
+    );
 
 final advisorInfoProvider = Provider<AdvisorInfo>((ref) {
   try {
@@ -245,43 +261,63 @@ class AdvisorInfo {
 }
 
 /// Seamless flow — bookings assigned to this advisor by the supervisor.
-final advisorAssignedBookingsProvider = FutureProvider<List<AdvisorBookingResponse>>((ref) async {
-  ref.watch(advisorRefreshProvider);
-  final remote = ref.read(advisorRemoteDataSourceProvider);
-  try {
-    return await remote.getAssignedBookings();
-  } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load assigned bookings', error: e, stackTrace: st);
-    return const [];
-  }
-});
+final advisorAssignedBookingsProvider =
+    FutureProvider<List<AdvisorBookingResponse>>((ref) async {
+      ref.watch(advisorRefreshProvider);
+      final remote = ref.read(advisorRemoteDataSourceProvider);
+      try {
+        return await remote.getAssignedBookings();
+      } catch (e, st) {
+        ref
+            .read(loggerProvider)
+            .e('Failed to load assigned bookings', error: e, stackTrace: st);
+        return const [];
+      }
+    });
 
 /// Seamless flow — technicians available for per-item work assignment.
-final advisorTechniciansProvider = FutureProvider<List<AdvisorTechnicianResponse>>((ref) async {
-  final remote = ref.read(advisorRemoteDataSourceProvider);
-  try {
-    return await remote.getTechnicians();
-  } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load technicians', error: e, stackTrace: st);
-    return const [];
-  }
-});
+final advisorTechniciansProvider =
+    FutureProvider<List<AdvisorTechnicianResponse>>((ref) async {
+      final remote = ref.read(advisorRemoteDataSourceProvider);
+      try {
+        return await remote.getTechnicians();
+      } catch (e, st) {
+        ref
+            .read(loggerProvider)
+            .e('Failed to load technicians', error: e, stackTrace: st);
+        return const [];
+      }
+    });
 
 /// Seamless flow — work items (inspection + work) for a job card.
-final advisorWorkItemsProvider = FutureProvider.family<List<WorkItemResponse>, String>((ref, jobCardRef) async {
-  final remote = ref.read(advisorRemoteDataSourceProvider);
-  try {
-    return await remote.getWorkItems(jobCardRef);
-  } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load work items for $jobCardRef', error: e, stackTrace: st);
-    return const [];
-  }
-});
+final advisorWorkItemsProvider =
+    FutureProvider.family<List<WorkItemResponse>, String>((
+      ref,
+      jobCardRef,
+    ) async {
+      final remote = ref.read(advisorRemoteDataSourceProvider);
+      try {
+        return await remote.getWorkItems(jobCardRef);
+      } catch (e, st) {
+        ref
+            .read(loggerProvider)
+            .e(
+              'Failed to load work items for $jobCardRef',
+              error: e,
+              stackTrace: st,
+            );
+        return const [];
+      }
+    });
 
 final advisorWorkItemsRefreshProvider = StateProvider<int>((ref) => 0);
 
 /// Assigns a technician to a single work item; refreshes the item list.
-Future<void> advisorAssignWorkItem(WidgetRef ref, int taskId, String empId) async {
+Future<void> advisorAssignWorkItem(
+  WidgetRef ref,
+  int taskId,
+  String empId,
+) async {
   final remote = ref.read(advisorRemoteDataSourceProvider);
   final ok = await remote.assignWorkItem(taskId, empId);
   if (ok) {
@@ -290,13 +326,16 @@ Future<void> advisorAssignWorkItem(WidgetRef ref, int taskId, String empId) asyn
 }
 
 /// Phase 6 — staff notification feed for the advisor.
-final advisorNotificationsProvider = FutureProvider<List<StaffNotificationResponse>>((ref) async {
-  ref.watch(advisorRefreshProvider);
-  final remote = ref.read(advisorRemoteDataSourceProvider);
-  try {
-    return await remote.getStaffNotifications();
-  } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load staff notifications', error: e, stackTrace: st);
-    return const [];
-  }
-});
+final advisorNotificationsProvider =
+    FutureProvider<List<StaffNotificationResponse>>((ref) async {
+      ref.watch(advisorRefreshProvider);
+      final remote = ref.read(advisorRemoteDataSourceProvider);
+      try {
+        return await remote.getStaffNotifications();
+      } catch (e, st) {
+        ref
+            .read(loggerProvider)
+            .e('Failed to load staff notifications', error: e, stackTrace: st);
+        return const [];
+      }
+    });

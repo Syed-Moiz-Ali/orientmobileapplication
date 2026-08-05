@@ -84,11 +84,20 @@ class ProfilePage extends StatelessWidget {
             _row(Icons.email_outlined, 'Email', profile.email),
           if (profile.phone.isNotEmpty)
             _row(Icons.phone_outlined, 'Phone', profile.phone),
-          if (profile.totalJobs > 0) _row(Icons.work_outline, 'Total Jobs', '${profile.totalJobs}'),
+          if (profile.totalJobs > 0)
+            _row(Icons.work_outline, 'Total Jobs', '${profile.totalJobs}'),
           if (profile.completedJobs > 0)
-            _row(Icons.verified_outlined, 'Completed Jobs', '${profile.completedJobs}'),
+            _row(
+              Icons.verified_outlined,
+              'Completed Jobs',
+              '${profile.completedJobs}',
+            ),
           if (profile.pendingJobs > 0)
-            _row(Icons.hourglass_empty, 'Pending Jobs', '${profile.pendingJobs}'),
+            _row(
+              Icons.hourglass_empty,
+              'Pending Jobs',
+              '${profile.pendingJobs}',
+            ),
         ],
       ),
     );

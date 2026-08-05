@@ -34,7 +34,10 @@ class AdvisorContactSheet extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.accent.withValues(alpha: 0.2), width: 1.5),
+                border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
               ),
               child: Center(
                 child: Text(
@@ -63,7 +66,10 @@ class AdvisorContactSheet extends StatelessWidget {
                   ),
                   Text(
                     '${r.vehicleId} · ${r.task}',
-                    style: const TextStyle(fontSize: 13, color: AppColors.text2),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.text2,
+                    ),
                   ),
                 ],
               ),
@@ -76,9 +82,24 @@ class AdvisorContactSheet extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            AdvisorContactOption(icon: Icons.phone_rounded, label: 'Call', color: AppColors.accent, onTap: onCall),
-            AdvisorContactOption(icon: Icons.chat_rounded, label: 'WhatsApp', color: const Color(0xFF25D366), onTap: onWhatsApp),
-            AdvisorContactOption(icon: Icons.sms_outlined, label: 'SMS', color: AppColors.info, onTap: onSms),
+            AdvisorContactOption(
+              icon: Icons.phone_rounded,
+              label: 'Call',
+              color: AppColors.accent,
+              onTap: onCall,
+            ),
+            AdvisorContactOption(
+              icon: Icons.chat_rounded,
+              label: 'WhatsApp',
+              color: const Color(0xFF25D366),
+              onTap: onWhatsApp,
+            ),
+            AdvisorContactOption(
+              icon: Icons.sms_outlined,
+              label: 'SMS',
+              color: AppColors.info,
+              onTap: onSms,
+            ),
           ],
         ),
         const SizedBox(height: 18),
@@ -93,4 +114,3 @@ class AdvisorContactSheet extends StatelessWidget {
     ),
   );
 }
-
