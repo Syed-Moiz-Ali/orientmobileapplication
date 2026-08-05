@@ -12,6 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ActiveServiceResponse {
+    @Builder.Default
+    private boolean hasActiveJob = true;
     private String jobCardId;
     private String plateNumber;
     private String vehicleName;

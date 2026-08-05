@@ -38,8 +38,11 @@ class RetryInterceptor extends Interceptor {
       try {
         // Re-dispatch through the SAME Dio instance so the envelope /
         // auth interceptors still unwrap and authenticate the retry.
+        // baseUrl must be carried over: a manually constructed RequestOptions
+        // does not inherit the Dio instance's baseUrl.
         final options = RequestOptions(
           method: err.requestOptions.method,
+          baseUrl: _dio.options.baseUrl,
           path: err.requestOptions.path,
           data: err.requestOptions.data,
           queryParameters: err.requestOptions.queryParameters,

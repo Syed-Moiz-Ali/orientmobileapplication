@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_job_card_row.dart';
@@ -119,6 +121,10 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
 
   Widget _buildJobList(List<JobCardEntity> allCards, String filter) {
     final query = ref.watch(_jobsSearchProvider).toLowerCase();
+    final bookingsAsync = ref.watch(advisorAssignedBookingsProvider);
+    final bookings = bookingsAsync.value ?? const <AdvisorBookingResponse>[];
+    final showBookings = query.isEmpty && filter == 'All' && bookings.isNotEmpty;
+
     final filtered = allCards.where((jc) {
       final matchesFilter = filter == 'All' || _statusLabel(jc.status) == filter;
       final matchesSearch = query.isEmpty ||
@@ -128,7 +134,7 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
       return matchesFilter && matchesSearch;
     }).toList();
 
-    if (filtered.isEmpty) {
+    if (filtered.isEmpty && !showBookings) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -151,8 +157,110 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
-      itemCount: filtered.length,
-      itemBuilder: (_, i) => AdvisorJobCardRow(jc: filtered[i], onTap: widget.onJobCard),
+      itemCount: filtered.length + (showBookings ? bookings.length + 1 : 0),
+      itemBuilder: (_, i) {
+        if (showBookings && i == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: AppCard(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.event_available_rounded, size: 18, color: AppColors.accent),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Assigned Bookings',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${bookings.length}',
+                          style: const TextStyle(
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Tap to start intake when the customer arrives',
+                    style: TextStyle(fontSize: 12, color: AppColors.text3),
+                  ),
+                  const SizedBox(height: 10),
+                  ...bookings.take(4).map((b) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {
+                            context.push(
+                              AppRoutes.vehicleCustomer,
+                              extra: {'bookingId': '${b.id}'},
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryBg,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.directions_car_rounded, size: 18, color: AppColors.primary),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${b.serviceType} · ${b.vehicleName}',
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${b.customerName} · ${b.bookingDate}',
+                                        style: const TextStyle(color: AppColors.text3, fontSize: 11.5),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.text3),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )),
+                ],
+              ),
+            ),
+          );
+        }
+        final index = showBookings ? i - 1 - bookings.length : i;
+        if (index < 0 || index >= filtered.length) {
+          return const SizedBox.shrink();
+        }
+        return AdvisorJobCardRow(jc: filtered[index], onTap: widget.onJobCard);
+      },
     );
   }
 

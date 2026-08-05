@@ -3,16 +3,28 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/router/app_router.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/staff_notification_bell.dart';
 
 class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedIndex;
   const SupervisorAppBar({super.key, required this.selectedIndex});
 
-  static const _titles = ['Dashboard', 'Assign Work', 'Work List', 'Staff', 'Schedule', 'Reports'];
+  static const _titles = [
+    'Dashboard',
+    'Assign Work',
+    'Work List',
+    'Queue',
+    'Review',
+    'Staff',
+    'Schedule',
+    'Reports',
+  ];
   static const _subtitles = [
     'Overview & Analytics',
     'Assign Tasks to Technicians',
     'All Job Assignments',
+    'Route bookings & breakdowns',
+    'Approve completed work',
     'Team Overview',
     'Today\'s Jobs',
     'Job Statistics',
@@ -65,7 +77,7 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        const NotificationBell(),
+        const StaffNotificationBell(),
         Padding(
           padding: const EdgeInsets.only(right: 14),
           child: UserAvatar(

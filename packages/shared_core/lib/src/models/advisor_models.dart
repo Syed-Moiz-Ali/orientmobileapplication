@@ -1,12 +1,16 @@
 class AdvisorStatsResponse {
   final int newJobCardsToday;final int inspectionsToday;final int pendingApprovals;
   final int vehiclesWaiting;final int readyForDelivery;final int totalOpenJobCards;
+  final int newAssignedBookings;final int newBreakdowns;
   const AdvisorStatsResponse({this.newJobCardsToday=0,this.inspectionsToday=0,this.pendingApprovals=0,
-    this.vehiclesWaiting=0,this.readyForDelivery=0,this.totalOpenJobCards=0});
+    this.vehiclesWaiting=0,this.readyForDelivery=0,this.totalOpenJobCards=0,
+    this.newAssignedBookings=0,this.newBreakdowns=0});
   factory AdvisorStatsResponse.fromJson(Map<String,dynamic> j) => AdvisorStatsResponse(
     newJobCardsToday: j['newJobCardsToday']as int? ?? 0,inspectionsToday: j['inspectionsToday']as int? ?? 0,
     pendingApprovals: j['pendingApprovals']as int? ?? 0,vehiclesWaiting: j['vehiclesWaiting']as int? ?? 0,
-    readyForDelivery: j['readyForDelivery']as int? ?? 0,totalOpenJobCards: j['totalOpenJobCards']as int? ?? 0);
+    readyForDelivery: j['readyForDelivery']as int? ?? 0,totalOpenJobCards: j['totalOpenJobCards']as int? ?? 0,
+    newAssignedBookings: j['newAssignedBookings']as int? ?? 0,
+    newBreakdowns: j['newBreakdowns']as int? ?? 0);
 }
 
 class JobCardResponse {

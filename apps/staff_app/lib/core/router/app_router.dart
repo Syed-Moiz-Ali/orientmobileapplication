@@ -129,7 +129,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.vehicleCustomer,
         name: AppRoutes.vehicleCustomer,
-        builder: (context, state) => const VehicleCustomerView(),
+        builder: (context, state) {
+          final extra = state.extra;
+          return VehicleCustomerView(
+            bookingId: extra is Map ? (extra['bookingId'] as String?) : null,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.chooseInspection,

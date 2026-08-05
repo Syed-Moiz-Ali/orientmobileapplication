@@ -97,7 +97,7 @@ class CustomerBookingDetailView extends ConsumerWidget {
                           ),
                           const SizedBox(height: AppDimensions.s12),
                           Text(
-                            booking.service,
+                            'Appointment',
                             style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
                             textAlign: TextAlign.center,
                           ),

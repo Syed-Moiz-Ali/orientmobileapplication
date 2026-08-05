@@ -211,6 +211,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       tasks.add(
         WorkTaskEntity(
           id: int.tryParse(t.id) ?? i + 1,
+          ref: t.id,
           description: t.description,
           status: TaskStatus.values.firstWhere(
             (e) => e.name == t.status,
@@ -474,6 +475,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
     _persistJob(updatedJob);
     state = state.copyWith(selectedJob: updatedJob);
+    _pushTaskAction(job.jobCardNo, task.ref, 'start', {'startTime': now});
   }
 
   void completeTask(TechnicianJobEntity job, WorkTaskEntity task) {
@@ -488,6 +490,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
     _persistJob(updatedJob);
     state = state.copyWith(selectedJob: updatedJob);
+    _pushTaskAction(job.jobCardNo, task.ref, 'complete', {'endTime': now});
   }
 
   void updateTaskStatus(
@@ -507,6 +510,50 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
     _persistJob(updatedJob);
     state = state.copyWith(selectedJob: updatedJob);
+    _pushTaskAction(
+      job.jobCardNo,
+      task.ref,
+      'status',
+      {'status': newStatus.name},
+    );
+  }
+
+  /// Pushes a per-task action to the backend (which advances the item and
+  /// triggers the supervisor review gate when ALL items are done). Falls back
+  /// to the offline sync queue when the request fails.
+  Future<void> _pushTaskAction(
+    String jobCardNo,
+    String taskId,
+    String action,
+    Map<String, dynamic> payload,
+  ) async {
+    if (taskId.isEmpty) return;
+    final remote = ref.read(technicianRemoteDataSourceProvider);
+    try {
+      switch (action) {
+        case 'start':
+          await remote.startTask(jobCardNo, taskId, payload['startTime'] as String? ?? '');
+          break;
+        case 'complete':
+          await remote.completeTask(jobCardNo, taskId, payload['endTime'] as String? ?? '');
+          break;
+        default:
+          await remote.updateTaskStatus(jobCardNo, taskId, payload['status'] as String? ?? 'inProgress');
+      }
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to push task action $action for $taskId',
+          error: e, stackTrace: st);
+      final queue = ref.read(syncQueueProvider);
+      final id = await IdGenerator.nextId('WT');
+      await queue.enqueue(SyncOperation(
+        id: id,
+        entityType: 'work_item',
+        entityId: '$jobCardNo|$taskId|$action',
+        changeType: ChangeType.update,
+        payload: {'jobCardNo': jobCardNo, 'taskId': taskId, 'action': action, ...payload},
+        timestamp: DateTime.now().millisecondsSinceEpoch,
+      ));
+    }
   }
 
   TechnicianJobEntity _syncJobStatus(TechnicianJobEntity job) {

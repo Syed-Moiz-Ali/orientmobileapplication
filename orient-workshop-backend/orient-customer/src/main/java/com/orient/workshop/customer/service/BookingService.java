@@ -9,6 +9,7 @@ import com.orient.workshop.customer.model.dto.IdResponse;
 import com.orient.workshop.core.model.entity.Booking;
 import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.repository.BookingMapper;
+import com.orient.workshop.core.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class BookingService {
 
     private final BookingMapper bookingMapper;
     private final CustomerService customerService;
+    private final NotificationService notificationService;
 
     public List<BookingResponse> getBookings(JwtUserPrincipal principal) {
         Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
@@ -56,6 +58,11 @@ public class BookingService {
                 .status("pending")
                 .build();
         bookingMapper.insert(booking);
+
+        notificationService.emit(principal.getUserId(), principal.getBranchId(),
+                "bookingReceived", "Booking received",
+                "Your booking " + ref + " for " + req.getServiceType()
+                        + " has been received. We'll confirm shortly.");
 
         return IdResponse.builder().id(ref).build();
     }

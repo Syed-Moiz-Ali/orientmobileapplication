@@ -16,4 +16,13 @@ public interface BookingMapper extends BaseMapper<Booking> {
 
     @Select("SELECT * FROM bookings WHERE customer_id = #{customerId} AND branch_id = #{branchId} ORDER BY created_at DESC")
     List<Booking> findByCustomerIdAndBranch(@Param("customerId") Long customerId, @Param("branchId") Long branchId);
+
+    @Select("SELECT * FROM bookings WHERE advisor_id IS NULL ORDER BY created_at DESC")
+    List<Booking> findUnassigned();
+
+    @Select("SELECT * FROM bookings WHERE advisor_id = #{advisorId} ORDER BY created_at DESC")
+    List<Booking> findByAdvisorId(@Param("advisorId") Long advisorId);
+
+    @Select("SELECT * FROM bookings WHERE advisor_id = #{advisorId} AND job_card_id IS NULL ORDER BY booking_date ASC")
+    List<Booking> findOpenByAdvisorId(@Param("advisorId") Long advisorId);
 }

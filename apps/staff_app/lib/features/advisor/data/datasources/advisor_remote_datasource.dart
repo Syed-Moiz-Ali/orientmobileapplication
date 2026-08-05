@@ -71,4 +71,32 @@ class AdvisorRemoteDataSource {
   Future<List<VehicleSearchResponse>> searchVehicles(String q) async => (await _client.get<List<dynamic>>(
     ApiEndpoints.vehicleSearch,queryParams: {'q': q},fromJson: (d) => d as List<dynamic>)).when(
     success: (l) => l.map((e) => VehicleSearchResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  // ---------- Seamless flows ----------
+
+  Future<List<AdvisorBookingResponse>> getAssignedBookings() async => (await _client.get<List<dynamic>>(
+    ApiEndpoints.advisorBookings,fromJson: (d) => d as List<dynamic>)).when(
+    success: (l) => l.map((e) => AdvisorBookingResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  Future<List<WorkItemResponse>> getWorkItems(String jobCardRef) async => (await _client.get<List<dynamic>>(
+    ApiEndpoints.advisorWorkItems(jobCardRef),fromJson: (d) => d as List<dynamic>)).when(
+    success: (l) => l.map((e) => WorkItemResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  Future<bool> assignWorkItem(int taskId, String empId) async {
+    final r = await _client.put(ApiEndpoints.advisorWorkItemAssign(taskId), data: {'empId': empId});
+    return r is Success;
+  }
+
+  Future<List<AdvisorTechnicianResponse>> getTechnicians() async => (await _client.get<List<dynamic>>(
+    ApiEndpoints.advisorTechnicians,fromJson: (d) => d as List<dynamic>)).when(
+    success: (l) => l.map((e) => AdvisorTechnicianResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  Future<List<StaffNotificationResponse>> getStaffNotifications() async => (await _client.get<List<dynamic>>(
+    ApiEndpoints.staffNotifications,fromJson: (d) => d as List<dynamic>)).when(
+    success: (l) => l.map((e) => StaffNotificationResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  Future<bool> markStaffNotificationRead(String id) async {
+    final r = await _client.put(ApiEndpoints.staffNotificationRead(id));
+    return r is Success;
+  }
 }

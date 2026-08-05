@@ -15,6 +15,7 @@ extension TaskStatusX on TaskStatus {
 
 class WorkTaskEntity {
   final int id;
+  final String ref;
   final String description;
   final TaskStatus status;
   final String? startTime;
@@ -22,6 +23,7 @@ class WorkTaskEntity {
 
   const WorkTaskEntity({
     required this.id,
+    this.ref = '',
     required this.description,
     this.status = TaskStatus.pending,
     this.startTime,
@@ -30,6 +32,7 @@ class WorkTaskEntity {
 
   WorkTaskEntity copyWith({
     int? id,
+    String? ref,
     String? description,
     TaskStatus? status,
     String? startTime,
@@ -39,6 +42,7 @@ class WorkTaskEntity {
   }) {
     return WorkTaskEntity(
       id: id ?? this.id,
+      ref: ref ?? this.ref,
       description: description ?? this.description,
       status: status ?? this.status,
       startTime: clearStartTime ? null : (startTime ?? this.startTime),
@@ -49,6 +53,7 @@ class WorkTaskEntity {
   factory WorkTaskEntity.fromJson(Map<String, dynamic> json) {
     return WorkTaskEntity(
       id: json['id'] as int,
+      ref: json['ref'] as String? ?? '',
       description: json['description'] as String,
       status: TaskStatus.values.firstWhere(
         (e) => e.name == json['status'],
@@ -61,6 +66,7 @@ class WorkTaskEntity {
 
   Map<String, dynamic> toJson() => {
     'id': id,
+    'ref': ref,
     'description': description,
     'status': status.name,
     'startTime': startTime,

@@ -16,6 +16,8 @@ class SupervisorDashboardState {
   final bool isDashboardLoading;
   final bool isAssignWorkLoading;
   final bool isWorkListLoading;
+  final bool isQueueLoading;
+  final bool isReviewLoading;
   final String searchQuery;
   final String jobCardSearch;
   final String assignWorkError;
@@ -28,6 +30,8 @@ class SupervisorDashboardState {
     this.isDashboardLoading = false,
     this.isAssignWorkLoading = false,
     this.isWorkListLoading = false,
+    this.isQueueLoading = false,
+    this.isReviewLoading = false,
     this.searchQuery = '',
     this.jobCardSearch = '',
     this.assignWorkError = '',
@@ -41,6 +45,8 @@ class SupervisorDashboardState {
     bool? isDashboardLoading,
     bool? isAssignWorkLoading,
     bool? isWorkListLoading,
+    bool? isQueueLoading,
+    bool? isReviewLoading,
     String? searchQuery,
     String? jobCardSearch,
     String? assignWorkError,
@@ -53,6 +59,8 @@ class SupervisorDashboardState {
       isDashboardLoading: isDashboardLoading ?? this.isDashboardLoading,
       isAssignWorkLoading: isAssignWorkLoading ?? this.isAssignWorkLoading,
       isWorkListLoading: isWorkListLoading ?? this.isWorkListLoading,
+      isQueueLoading: isQueueLoading ?? this.isQueueLoading,
+      isReviewLoading: isReviewLoading ?? this.isReviewLoading,
       searchQuery: searchQuery ?? this.searchQuery,
       jobCardSearch: jobCardSearch ?? this.jobCardSearch,
       assignWorkError: assignWorkError ?? this.assignWorkError,
@@ -73,6 +81,11 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   List<String> _departments = [];
   List<String> _technicians = [];
   final List<AssignedJobEntity> _allJobs = [];
+  List<BookingQueueResponse> _bookings = [];
+  List<BreakdownQueueResponse> _breakdowns = [];
+  List<AssignableStaffResponse> _advisors = [];
+  List<AwaitingCompletionResponse> _awaiting = [];
+  List<StaffNotificationResponse> _notifications = [];
 
   @override
   SupervisorDashboardState build() {
@@ -90,6 +103,12 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   List<String> get departments => _departments;
   List<String> get technicians => _technicians;
   List<AssignedJobEntity> get jobs => _allJobs;
+  List<BookingQueueResponse> get bookings => _bookings;
+  List<BreakdownQueueResponse> get breakdowns => _breakdowns;
+  List<AssignableStaffResponse> get advisors => _advisors;
+  List<AwaitingCompletionResponse> get awaitingCompletions => _awaiting;
+  List<StaffNotificationResponse> get notifications => _notifications;
+  int get unreadNotifications => _notifications.where((n) => !n.isRead).length;
   int get totalAssigned => _allJobs.length;
   int get inProgressCount => _allJobs.where((j) => j.status == 'In Progress').length;
   int get completedCount => _allJobs.where((j) => j.status == 'Completed').length;
@@ -247,6 +266,119 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
       jobCard: (e as SupervisorAssignedJob).jobCard, customer: e.customer, vehicle: e.vehicle,
       dateAssigned: e.dateAssigned, done: e.done, total: e.total, status: e.status,
     )));
+
+    final queueResults = await Future.wait([
+      r.getBookingQueue(), r.getBreakdownQueue(), r.getAssignableAdvisors(),
+      r.getAwaitingCompletions(),
+    ]);
+    _bookings = (queueResults[0] as List).cast<BookingQueueResponse>();
+    _breakdowns = (queueResults[1] as List).cast<BreakdownQueueResponse>();
+    _advisors = (queueResults[2] as List).cast<AssignableStaffResponse>();
+    _awaiting = (queueResults[3] as List).cast<AwaitingCompletionResponse>();
+  }
+
+  // ---------- Seamless flows: booking/breakdown routing ----------
+
+  Future<void> refreshQueue() async {
+    final r = _remote;
+    if (r == null) return;
+    state = state.copyWith(isQueueLoading: true);
+    try {
+      final results = await Future.wait([
+        r.getBookingQueue(), r.getBreakdownQueue(), r.getAssignableAdvisors(),
+      ]);
+      _bookings = (results[0] as List).cast<BookingQueueResponse>();
+      _breakdowns = (results[1] as List).cast<BreakdownQueueResponse>();
+      _advisors = (results[2] as List).cast<AssignableStaffResponse>();
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to refresh supervisor queue', error: e, stackTrace: st);
+    }
+    state = state.copyWith(isQueueLoading: false);
+  }
+
+  Future<String> assignBooking(int id, int advisorId) async {
+    final ok = await _remote?.assignBooking(id, advisorId) ?? false;
+    if (ok) {
+      _bookings.removeWhere((b) => b.id == id);
+      state = state.copyWith();
+      return 'Booking assigned';
+    }
+    return 'Could not assign booking. Try again.';
+  }
+
+  Future<String> assignBreakdown(int id, int advisorId) async {
+    final ok = await _remote?.assignBreakdown(id, advisorId) ?? false;
+    if (ok) {
+      _breakdowns.removeWhere((b) => b.id == id);
+      state = state.copyWith();
+      return 'Breakdown dispatched';
+    }
+    return 'Could not assign breakdown. Try again.';
+  }
+
+  // ---------- Seamless flows: completion review ----------
+
+  Future<void> refreshReview() async {
+    final r = _remote;
+    if (r == null) return;
+    state = state.copyWith(isReviewLoading: true);
+    try {
+      _awaiting = await r.getAwaitingCompletions();
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to refresh completion review', error: e, stackTrace: st);
+    }
+    state = state.copyWith(isReviewLoading: false);
+  }
+
+  Future<String> approveCompletion(int jobCardId) async {
+    final ok = await _remote?.approveCompletion(jobCardId) ?? false;
+    if (ok) {
+      _awaiting.removeWhere((j) => j.jobCardId == jobCardId);
+      state = state.copyWith();
+      return 'Completion approved — invoice raised';
+    }
+    return 'Could not approve. Try again.';
+  }
+
+  Future<String> rejectCompletion(int jobCardId, String reason) async {
+    final ok = await _remote?.rejectCompletion(jobCardId, reason) ?? false;
+    if (ok) {
+      _awaiting.removeWhere((j) => j.jobCardId == jobCardId);
+      state = state.copyWith();
+      return 'Sent back — items reset for revision';
+    }
+    return 'Could not send back. Try again.';
+  }
+
+  // ---------- Seamless flows: staff notifications ----------
+
+  Future<void> loadNotifications() async {
+    final r = _remote;
+    if (r == null) return;
+    try {
+      _notifications = await r.getStaffNotifications();
+      state = state.copyWith();
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to load staff notifications', error: e, stackTrace: st);
+    }
+  }
+
+  Future<void> markNotificationRead(String id) async {
+    await _remote?.markStaffNotificationRead(id);
+    final index = _notifications.indexWhere((n) => n.id == id);
+    if (index != -1) {
+      final updated = [..._notifications];
+      updated[index] = StaffNotificationResponse(
+        id: updated[index].id,
+        title: updated[index].title,
+        body: updated[index].body,
+        time: updated[index].time,
+        type: updated[index].type,
+        isRead: true,
+      );
+      _notifications = updated;
+      state = state.copyWith();
+    }
   }
 
   void _loadAssignmentsFromHive() {

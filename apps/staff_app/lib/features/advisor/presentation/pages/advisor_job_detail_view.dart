@@ -136,6 +136,8 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             _detailRow(Icons.update_rounded, 'Last Updated', _jc.lastUpdated.isNotEmpty ? _jc.lastUpdated : _jc.time),
           ]),
           const SizedBox(height: 14),
+          _buildWorkItemsSection(),
+          const SizedBox(height: 14),
 
           // Inspection media section
           if (hasData) ...[_buildInspectionMediaSection()],
@@ -197,6 +199,242 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWorkItemsSection() {
+    ref.watch(advisorWorkItemsRefreshProvider);
+    final itemsAsync = ref.watch(advisorWorkItemsProvider(_jc.id));
+    final items = itemsAsync.value ?? const <WorkItemResponse>[];
+    final techniciansAsync = ref.watch(advisorTechniciansProvider);
+    final technicians = techniciansAsync.value ?? const <AdvisorTechnicianResponse>[];
+
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 4,
+              height: 18,
+              decoration: BoxDecoration(
+                color: AppColors.accent,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Work Items',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${items.where((i) => i.status == 'completed').length}/${items.length} done',
+              style: const TextStyle(color: AppColors.text3, fontSize: 12),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        AppCard(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: items.map((item) {
+              final done = item.status == 'completed';
+              final inProgress = item.status == 'inProgress';
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(
+                  children: [
+                    Icon(
+                      done
+                          ? Icons.check_circle_rounded
+                          : inProgress
+                          ? Icons.play_circle_fill_rounded
+                          : Icons.radio_button_unchecked_rounded,
+                      size: 18,
+                      color: done
+                          ? AppColors.success
+                          : inProgress
+                          ? AppColors.warning
+                          : AppColors.text4,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.description,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${item.itemType == 'INSPECTION' ? 'Inspection' : 'Work'}'
+                            '${item.empName.isNotEmpty ? ' · ${item.empName}' : ' · Unassigned'}',
+                            style: const TextStyle(color: AppColors.text3, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (item.status == 'pending' && item.empId.isEmpty)
+                      SizedBox(
+                        height: 30,
+                        child: OutlinedButton(
+                          onPressed: () => _assignWorkItem(context, item, technicians),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.accent,
+                            side: const BorderSide(color: AppColors.accent),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppDimensions.r8),
+                            ),
+                          ),
+                          child: const Text('Assign', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                        ),
+                      )
+                    else
+                      StatusPill(
+                        label: done
+                            ? 'Completed'
+                            : inProgress
+                            ? 'In Progress'
+                            : 'Pending',
+                        bg: done
+                            ? AppColors.successBg
+                            : inProgress
+                            ? AppColors.warningBg
+                            : AppColors.primaryBg,
+                        fg: done
+                            ? AppColors.success
+                            : inProgress
+                            ? AppColors.warning
+                            : AppColors.primary,
+                      ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _assignWorkItem(BuildContext context, WorkItemResponse item,
+      List<AdvisorTechnicianResponse> technicians) {
+    if (technicians.isEmpty) {
+      _toast(context, 'No active technicians available');
+      return;
+    }
+    String empId = technicians.first.empId;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r24)),
+          ),
+          padding: const EdgeInsets.all(AppDimensions.s16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Assign work item',
+                style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                item.description,
+                style: const TextStyle(fontSize: 13, color: AppColors.text3),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: empId,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.primaryBg,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+                    borderSide: BorderSide.none,
+                  ),
+                  labelText: 'Technician',
+                ),
+                items: technicians.map((t) {
+                  return DropdownMenuItem<String>(
+                    value: t.empId,
+                    child: Text(
+                      t.name,
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (v) => setSheetState(() => empId = v ?? empId),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimensions.r12),
+                    ),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await advisorAssignWorkItem(ref, item.id, empId);
+                    if (context.mounted) {
+                      _toast(context, 'Technician assigned');
+                    }
+                  },
+                  child: const Text(
+                    'Assign Technician',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _toast(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

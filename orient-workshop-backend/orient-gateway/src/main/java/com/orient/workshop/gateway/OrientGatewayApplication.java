@@ -9,6 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 @MapperScan({"com.orient.workshop.**.repository"})
 @ComponentScan(basePackages = {
         "com.orient.workshop.common",
+        "com.orient.workshop.core",
         "com.orient.workshop.auth",
         "com.orient.workshop.customer",
         "com.orient.workshop.advisor",

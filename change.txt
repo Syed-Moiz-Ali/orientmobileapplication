@@ -1,0 +1,570 @@
+You are a Principal Software Architect, Enterprise Solution Architect, Automotive Domain Expert, CTO, Product Architect, UX Architect, DevOps Architect, Security Architect, and Technical Auditor.
+
+Your task is NOT to build a new Auto Garage application.
+
+I already have a production-scale Flutter Melos monorepo consisting of three applications:
+
+1. Customer App
+2. Staff App (Role-Based)
+   - Service Advisor
+   - Workshop Supervisor
+   - Technician
+3. Owner App
+
+The backend already exists.
+
+Your task is to deeply audit my entire project and determine whether it is truly enterprise-grade and production-ready.
+
+DO NOT assume anything.
+
+Read every folder, every file, every screen, every service, every model, every provider, every API, every route, every workflow, every state management implementation, every database interaction, every notification flow, every business logic, and every communication between the three applications.
+
+I want an extremely deep architecture review.
+
+====================================================
+
+YOUR ROLE
+
+Think like you are reviewing software before companies like Bosch, Toyota, BMW, Mercedes-Benz, Mahindra, Tata Motors, Hyundai, or GoMechanic decide to deploy it across hundreds of workshops.
+
+Be brutally honest.
+
+Do not try to be nice.
+
+Identify every weakness.
+
+Explain why it is a weakness.
+
+Explain how enterprise systems solve it.
+
+====================================================
+
+APPLICATION STRUCTURE
+
+The project contains:
+
+• Flutter Melos Monorepo
+• Customer App
+• Staff App
+• Owner App
+• Shared Packages
+• Backend APIs
+
+Understand the complete architecture first before giving recommendations.
+
+====================================================
+
+FIRST TASK
+
+Analyze the entire project architecture.
+
+Explain:
+
+• Folder structure
+• Package structure
+• Shared modules
+• Dependency management
+• Feature organization
+• Layered architecture
+• Clean Architecture
+• MVVM / MVC / Feature-first
+• State Management
+• Navigation
+• Routing
+• API layer
+• Repository layer
+• Service layer
+• Local database
+• Cache
+• Offline support
+• Authentication
+• Authorization
+• Shared widgets
+• Shared themes
+• Shared models
+
+Identify architectural issues.
+
+====================================================
+
+SECOND TASK
+
+Trace the complete communication between all three applications.
+
+I want a complete end-to-end workflow.
+
+Example:
+
+Customer books appointment
+
+↓
+
+Backend
+
+↓
+
+Advisor receives booking
+
+↓
+
+Advisor accepts
+
+↓
+
+Supervisor notified
+
+↓
+
+Supervisor assigns technician
+
+↓
+
+Technician accepts
+
+↓
+
+Repair starts
+
+↓
+
+Owner dashboard updates
+
+↓
+
+Customer receives progress
+
+↓
+
+Customer approves estimate
+
+↓
+
+Repair completed
+
+↓
+
+QC
+
+↓
+
+Invoice
+
+↓
+
+Payment
+
+↓
+
+Delivery
+
+↓
+
+Feedback
+
+↓
+
+Analytics
+
+Now verify whether MY implementation supports this correctly.
+
+If something is missing, identify it.
+
+If something is wrong, explain it.
+
+If there is a better enterprise workflow, redesign it.
+
+====================================================
+
+THIRD TASK
+
+Audit every application separately.
+
+Customer App
+
+Review:
+
+Authentication
+
+Vehicle Management
+
+Booking
+
+Tracking
+
+Timeline
+
+Payments
+
+Notifications
+
+Documents
+
+Profile
+
+Settings
+
+Support
+
+Communication
+
+Performance
+
+Offline
+
+Security
+
+UX
+
+Everything.
+
+====================================================
+
+Staff App
+
+Review every role separately.
+
+Service Advisor
+
+Workshop Supervisor
+
+Technician
+
+Verify:
+
+Permissions
+
+Navigation
+
+Responsibilities
+
+Communication
+
+Notifications
+
+State transitions
+
+Workflows
+
+Business rules
+
+Dashboard
+
+Performance
+
+Security
+
+====================================================
+
+Owner App
+
+Review:
+
+Business Dashboard
+
+Analytics
+
+Reports
+
+Revenue
+
+Expenses
+
+Workshop utilization
+
+Technician productivity
+
+Advisor productivity
+
+Customer satisfaction
+
+Inventory
+
+Employee Management
+
+Attendance
+
+Payroll
+
+Settings
+
+Permissions
+
+AI Insights
+
+Everything.
+
+====================================================
+
+FOURTH TASK
+
+Analyze communication between applications.
+
+Customer App
+
+↓
+
+Staff App
+
+↓
+
+Owner App
+
+↓
+
+Customer App
+
+Verify:
+
+Real-time updates
+
+Notifications
+
+Approval chains
+
+Role transitions
+
+Status synchronization
+
+API consistency
+
+Data synchronization
+
+Conflict handling
+
+Retry mechanisms
+
+Offline synchronization
+
+====================================================
+
+FIFTH TASK
+
+Review all workflows.
+
+Appointment Workflow
+
+Repair Workflow
+
+Inspection Workflow
+
+Estimate Workflow
+
+Approval Workflow
+
+Inventory Workflow
+
+Invoice Workflow
+
+Payment Workflow
+
+Delivery Workflow
+
+Feedback Workflow
+
+Complaint Workflow
+
+Warranty Workflow
+
+Loyalty Workflow
+
+Everything.
+
+====================================================
+
+SIXTH TASK
+
+Review all status transitions.
+
+Appointment
+
+Vehicle
+
+Inspection
+
+Repair
+
+Technician
+
+Advisor
+
+Supervisor
+
+Invoice
+
+Payment
+
+QC
+
+Customer
+
+Identify missing states.
+
+Identify invalid transitions.
+
+Suggest enterprise state machines.
+
+====================================================
+
+SEVENTH TASK
+
+Audit production readiness.
+
+Evaluate:
+
+Architecture
+
+Code Quality
+
+Scalability
+
+Maintainability
+
+Performance
+
+Security
+
+Offline Support
+
+Caching
+
+API Design
+
+Concurrency
+
+Real-time updates
+
+Error Handling
+
+Logging
+
+Monitoring
+
+Crash Recovery
+
+Accessibility
+
+Localization
+
+Analytics
+
+CI/CD Readiness
+
+Testing
+
+Deployment
+
+Observability
+
+Rate each category from 1–10.
+
+====================================================
+
+EIGHTH TASK
+
+Identify everything that is missing for an enterprise-grade product.
+
+Examples:
+
+Missing workflows
+
+Missing dashboards
+
+Missing reports
+
+Missing permissions
+
+Missing notifications
+
+Missing security
+
+Missing automation
+
+Missing integrations
+
+Missing business rules
+
+Missing edge cases
+
+Missing validations
+
+Missing audit logs
+
+Missing approval chains
+
+Missing analytics
+
+Missing AI opportunities
+
+Missing operational features
+
+====================================================
+
+NINTH TASK
+
+Review the UX of every screen.
+
+Determine whether it follows 2026 enterprise UX principles.
+
+Review:
+
+Navigation
+
+Information hierarchy
+
+Accessibility
+
+Consistency
+
+Touch targets
+
+Forms
+
+Loading states
+
+Empty states
+
+Error states
+
+Micro-interactions
+
+Animations
+
+Visual hierarchy
+
+Enterprise usability
+
+====================================================
+
+TENTH TASK
+
+Produce a final Enterprise Readiness Report.
+
+Include:
+
+1. Executive Summary
+2. Strengths
+3. Weaknesses
+4. Critical Issues
+5. Medium Issues
+6. Low Priority Issues
+7. Missing Features
+8. Missing Workflows
+9. Architecture Improvements
+10. Security Improvements
+11. Performance Improvements
+12. UX Improvements
+13. Backend Improvements
+14. Communication Improvements
+15. Production Readiness Score
+16. Enterprise Readiness Score
+17. Investor Readiness Score
+18. Scalability Score
+19. Technical Debt Score
+20. A prioritized roadmap with Phase 1 (Critical), Phase 2 (Important), and Phase 3 (Enhancements)
+
+IMPORTANT:
+- Do not stop at surface-level observations.
+- Challenge every architectural decision.
+- Compare my implementation against enterprise automotive platforms.
+- Explain not only what is wrong, but why it is wrong, how it impacts scalability or operations, and how it should be improved.
+- Treat this as a formal architecture audit for a product that is about to be deployed to thousands of workshops.

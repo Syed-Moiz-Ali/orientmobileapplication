@@ -1,7 +1,6 @@
 package com.orient.workshop.customer.service;
 
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
-import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.customer.model.dto.ActiveServiceResponse;
 import com.orient.workshop.customer.model.dto.ServiceStageDto;
 import com.orient.workshop.customer.model.dto.ServiceTypeResponse;
@@ -43,7 +42,15 @@ public class ServiceTrackingService {
         Customer customer = customerService.findOrCreateCustomer(principal.getUserId());
 
         JobCard jobCard = jobCardMapper.findActiveByCustomerId(customer.getId())
-                .orElseThrow(() -> new NotFoundException("No active service found"));
+                .orElse(null);
+        if (jobCard == null) {
+            // 200 with an explicit flag instead of 404 — the app treats
+            // "no active job" as a normal state, not an error.
+            return ActiveServiceResponse.builder()
+                    .hasActiveJob(false)
+                    .currentStage("No Active Job")
+                    .build();
+        }
 
         String status = jobCard.getStatus() != null ? jobCard.getStatus() : "pending";
         int currentIndex = STAGE_ORDER.indexOf(status);

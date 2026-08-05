@@ -136,6 +136,7 @@ public class JobCardService {
         }
         return JobCardResponse.builder()
                 .id(c.getJobCardRef())
+                .dbId(c.getId())
                 .customerName(custName)
                 .vehicleInfo(vehicleInfo)
                 .time(c.getCreatedAt() != null ? c.getCreatedAt().format(DateTimeFormatter.ofPattern("hh:mm a")) : "")

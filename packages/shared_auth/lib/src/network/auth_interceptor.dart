@@ -35,8 +35,11 @@ class AuthInterceptor extends Interceptor {
 
     final authState = _ref.read(authNotifierProvider);
     if (authState case AuthAuthenticated(:final token)) {
+      // baseUrl must be carried over: a manually constructed RequestOptions
+      // does not inherit the Dio instance's baseUrl.
       final options = RequestOptions(
         method: err.requestOptions.method,
+        baseUrl: _dio.options.baseUrl,
         path: err.requestOptions.path,
         data: err.requestOptions.data,
         queryParameters: err.requestOptions.queryParameters,

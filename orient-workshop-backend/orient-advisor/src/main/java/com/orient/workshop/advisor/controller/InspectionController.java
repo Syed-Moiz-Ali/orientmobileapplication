@@ -28,6 +28,13 @@ public class InspectionController {
         return ApiResponse.success(response);
     }
 
+    @PutMapping("/{id}")
+    public ApiResponse<Void> updateInspection(@AuthenticationPrincipal JwtUserPrincipal principal,
+                                              @PathVariable Long id, @RequestBody InspectionRequest req) {
+        inspectionService.updateInspection(principal, id, req);
+        return ApiResponse.success(null);
+    }
+
     @GetMapping("/{id}/draft")
     public ApiResponse<InspectionDraftResponse> getDraft(@AuthenticationPrincipal JwtUserPrincipal principal,
                                                           @PathVariable Long id) {

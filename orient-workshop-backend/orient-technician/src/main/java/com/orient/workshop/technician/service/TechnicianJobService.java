@@ -74,7 +74,13 @@ public class TechnicianJobService {
         }
         q.orderByDesc(JobCard::getCreatedAt).last("LIMIT 100");
         List<JobCard> cards = jobCardMapper.selectList(q);
-        return cards.stream().map(this::toJobResponse).collect(Collectors.toList());
+        return cards.stream()
+                .map(c -> toJobResponse(c, taskMapper.findByJobCardNo(c.getJobCardRef()).stream()
+                        // Per-item assignment: show only the logged-in tech's items.
+                        .filter(t -> t.getEmpId() == null || t.getEmpId().isBlank()
+                                || staff.getEmpId().equals(t.getEmpId()))
+                        .collect(Collectors.toList())))
+                .collect(Collectors.toList());
     }
 
     public TechnicianJobResponse searchJob(JwtUserPrincipal principal, String q) {
@@ -178,7 +184,10 @@ public class TechnicianJobService {
     }
 
     private TechnicianJobResponse toJobResponse(JobCard c) {
-        List<TechnicianTask> tasks = taskMapper.findByJobCardNo(c.getJobCardRef());
+        return toJobResponse(c, taskMapper.findByJobCardNo(c.getJobCardRef()));
+    }
+
+    private TechnicianJobResponse toJobResponse(JobCard c, List<TechnicianTask> tasks) {
         List<TaskResponse> taskResponses = tasks.stream()
                 .map(t -> TaskResponse.builder()
                         .id(t.getTaskRef())

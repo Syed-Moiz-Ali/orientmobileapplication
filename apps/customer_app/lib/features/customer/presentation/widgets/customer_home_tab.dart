@@ -70,7 +70,7 @@ class CustomerHomeTab extends ConsumerWidget {
                   _sectionLabel('Recent Bookings'),
                   const SizedBox(height: AppDimensions.s12),
                   _RecentBookingsList(
-                    bookings: ref.watch(customerBookingsProvider),
+                    bookings: ref.watch(customerBookingsProvider).value ?? const <CustomerBookingEntity>[],
                   ),
                   const SizedBox(height: AppDimensions.s28),
                   _sectionLabel('Breakdown History'),
@@ -431,7 +431,7 @@ class _RecentBookingsList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        b.service,
+                        'Appointment',
                         style: AppTextStyles.rajdhaniLabel(
                           color: AppColors.textPrimary,
                         ),

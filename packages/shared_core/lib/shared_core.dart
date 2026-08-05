@@ -64,6 +64,7 @@ export 'src/models/technician_models.dart';
 export 'src/models/supervisor_models.dart';
 export 'src/models/owner_models.dart';
 export 'src/models/crm_models.dart';
+export 'src/models/seamless_models.dart';
 export 'src/domain/job_card_status.dart';
 export 'src/presentation/list_state.dart';
 export 'src/presentation/async_state.dart';

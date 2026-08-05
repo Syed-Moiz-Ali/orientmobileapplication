@@ -39,12 +39,13 @@ class NotificationResponse {
 }
 
 class ActiveServiceResponse {
-  final String jobCardId; final String plateNumber; final String vehicleName; final String service;
+  final bool hasActiveJob; final String jobCardId; final String plateNumber; final String vehicleName; final String service;
   final String started; final String estCompletion; final int progressPercent; final String currentStage;
   final String technicianName; final List<ServiceStageDto> stages;
-  const ActiveServiceResponse({this.jobCardId='',this.plateNumber='',this.vehicleName='',this.service='',
+  const ActiveServiceResponse({this.hasActiveJob=true,this.jobCardId='',this.plateNumber='',this.vehicleName='',this.service='',
     this.started='',this.estCompletion='',this.progressPercent=0,this.currentStage='',this.technicianName='',this.stages=const[]});
   factory ActiveServiceResponse.fromJson(Map<String,dynamic> j) => ActiveServiceResponse(
+    hasActiveJob: j['hasActiveJob']as bool? ?? true,
     jobCardId: j['jobCardId']as String? ?? '',plateNumber: j['plateNumber']as String? ?? '',
     vehicleName: j['vehicleName']as String? ?? '',service: j['service']as String? ?? '',
     started: j['started']as String? ?? '',estCompletion: j['estCompletion']as String? ?? '',

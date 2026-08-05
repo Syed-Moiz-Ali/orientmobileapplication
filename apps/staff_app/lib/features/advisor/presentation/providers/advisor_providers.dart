@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
@@ -243,3 +243,60 @@ class AdvisorInfo {
         .toUpperCase();
   }
 }
+
+/// Seamless flow — bookings assigned to this advisor by the supervisor.
+final advisorAssignedBookingsProvider = FutureProvider<List<AdvisorBookingResponse>>((ref) async {
+  ref.watch(advisorRefreshProvider);
+  final remote = ref.read(advisorRemoteDataSourceProvider);
+  try {
+    return await remote.getAssignedBookings();
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load assigned bookings', error: e, stackTrace: st);
+    return const [];
+  }
+});
+
+/// Seamless flow — technicians available for per-item work assignment.
+final advisorTechniciansProvider = FutureProvider<List<AdvisorTechnicianResponse>>((ref) async {
+  final remote = ref.read(advisorRemoteDataSourceProvider);
+  try {
+    return await remote.getTechnicians();
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load technicians', error: e, stackTrace: st);
+    return const [];
+  }
+});
+
+/// Seamless flow — work items (inspection + work) for a job card.
+final advisorWorkItemsProvider = FutureProvider.family<List<WorkItemResponse>, String>((ref, jobCardRef) async {
+  final remote = ref.read(advisorRemoteDataSourceProvider);
+  try {
+    return await remote.getWorkItems(jobCardRef);
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load work items for $jobCardRef', error: e, stackTrace: st);
+    return const [];
+  }
+});
+
+final advisorWorkItemsRefreshProvider = StateProvider<int>((ref) => 0);
+
+/// Assigns a technician to a single work item; refreshes the item list.
+Future<void> advisorAssignWorkItem(WidgetRef ref, int taskId, String empId) async {
+  final remote = ref.read(advisorRemoteDataSourceProvider);
+  final ok = await remote.assignWorkItem(taskId, empId);
+  if (ok) {
+    ref.read(advisorWorkItemsRefreshProvider.notifier).state++;
+  }
+}
+
+/// Phase 6 — staff notification feed for the advisor.
+final advisorNotificationsProvider = FutureProvider<List<StaffNotificationResponse>>((ref) async {
+  ref.watch(advisorRefreshProvider);
+  final remote = ref.read(advisorRemoteDataSourceProvider);
+  try {
+    return await remote.getStaffNotifications();
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load staff notifications', error: e, stackTrace: st);
+    return const [];
+  }
+});

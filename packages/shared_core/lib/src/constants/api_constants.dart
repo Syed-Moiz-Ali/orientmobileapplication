@@ -62,6 +62,41 @@ class ApiEndpoints {
   static const String workAssignments = '/work-assignments';
   static const String supervisorAssignedJobs = '/supervisor/assigned-jobs';
 
+  // Seamless flows — supervisor routing & review
+  static const String supervisorBookings = '/supervisor/bookings';
+  static const String supervisorBreakdowns = '/supervisor/breakdowns';
+  static const String supervisorAwaiting = '/supervisor/jobs/awaiting';
+  static const String supervisorAssignableAdvisors = '/supervisor/assignable-advisors';
+  static String supervisorBookingAssign(int id) => '/supervisor/bookings/$id/assign';
+  static String supervisorBreakdownAssign(int id) => '/supervisor/breakdowns/$id/assign';
+  static String supervisorApproveCompletion(int jobCardId) =>
+      '/supervisor/jobs/$jobCardId/approve-completion';
+  static String supervisorRejectCompletion(int jobCardId) =>
+      '/supervisor/jobs/$jobCardId/reject-completion';
+
+  // Seamless flows — advisor
+  static const String advisorBookings = '/advisor/bookings';
+  static String advisorWorkItems(String jobCardRef) =>
+      '/advisor/job-cards/$jobCardRef/work-items';
+  static String advisorWorkItemAssign(int taskId) => '/advisor/work-items/$taskId/assign';
+  static const String advisorWorkItemsAssign = '/advisor/work-items/assign';
+  static const String advisorTechnicians = '/advisor/technicians';
+
+  // Seamless flows — technician per-item tracking
+  static const String technicianWorkItems = '/technicians/work-items';
+  static String technicianWorkItem(String taskId, String action) =>
+      '/technicians/work-items/$taskId/$action';
+
+  // Seamless flows — customer approvals & invoices
+  static const String customerApprovalsPending = '/customers/approvals/pending';
+  static String customerApproval(String estimateId) => '/customers/approvals/$estimateId';
+  static const String customerInvoices = '/customers/invoices';
+
+  // Seamless flows — staff notifications
+  static const String staffNotifications = '/staff/notifications';
+  static String staffNotificationRead(String id) => '/staff/notifications/$id/read';
+  static const String staffNotificationReadAll = '/staff/notifications/read-all';
+
   // Technician
   static const String technicianProfile = '/technicians/profile';
   static const String attendancePunchIn = '/technicians/attendance/punch-in';

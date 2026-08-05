@@ -20,6 +20,7 @@ class CustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
     'Customer Portal',
     'Service Status',
     'Book a Service',
+    'Estimates & Invoices',
     'My Vehicles',
   ];
 
@@ -27,6 +28,7 @@ class CustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
     'Welcome back',
     'Live Job Tracker',
     'Schedule an Appointment',
+    'Approve Workshop Estimates',
     'Registered Vehicles',
   ];
 

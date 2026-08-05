@@ -13,10 +13,16 @@ public class TechnicianTask {
     private String jobCardNo;
     private String taskRef;
     private String description;
+    private String itemType;
+    private Integer qty;
+    private Double rate;
     private String status;
     private String empId;
+    private Long advisorId;
+    private String rejectReason;
     private String startTime;
     private String endTime;
+    private String photoRefs;
     @TableField(fill = FieldFill.INSERT) private LocalDateTime createdAt;
     @TableField(fill = FieldFill.INSERT_UPDATE) private LocalDateTime updatedAt;
 }

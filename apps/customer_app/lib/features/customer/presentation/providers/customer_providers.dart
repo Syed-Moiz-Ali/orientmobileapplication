@@ -20,7 +20,45 @@ final customerDashboardProvider =
       CustomerDashboardNotifier.new,
     );
 
-final customerBookingsProvider = Provider<List<CustomerBookingEntity>>((ref) {
+final customerBookingsProvider =
+    FutureProvider<List<CustomerBookingEntity>>((ref) async {
+  final local = _bookingsFromHive();
+  try {
+    final remote = await ref
+        .read(customerRemoteDataSourceProvider)
+        .getBookings();
+    final remoteEntities = remote
+        .map((b) => CustomerBookingEntity(
+              service: b.service,
+              vehicleName: b.vehicleName,
+              plateNumber: b.plateNumber,
+              date: b.date,
+              time: b.time,
+              status: BookingStatus.values.firstWhere(
+                (e) => e.name == b.status,
+                orElse: () => BookingStatus.pending,
+              ),
+            ))
+        .toList();
+    final remoteKeys = remoteEntities
+        .map((b) => '${b.vehicleName}|${b.plateNumber}|${b.date}')
+        .toSet();
+    final merged = [
+      ...remoteEntities,
+      ...local.where(
+        (b) => !remoteKeys.contains('${b.vehicleName}|${b.plateNumber}|${b.date}'),
+      ),
+    ];
+    return merged;
+  } catch (e, st) {
+    ref
+        .read(loggerProvider)
+        .e('Failed to load bookings from API — using local', error: e, stackTrace: st);
+    return local;
+  }
+});
+
+List<CustomerBookingEntity> _bookingsFromHive() {
   try {
     final box = Hive.box<dynamic>('customer_bookings');
     final saved = box.values
@@ -38,11 +76,10 @@ final customerBookingsProvider = Provider<List<CustomerBookingEntity>>((ref) {
         ))
         .toList();
     return saved;
-  } catch (e, st) {
-    ref.read(loggerProvider).e('Failed to load customer bookings from Hive', error: e, stackTrace: st);
+  } catch (_) {
     return [];
   }
-});
+}
 
 final customerBreakdownsProvider = Provider<List<Map<String, dynamic>>>((ref) {
   try {
@@ -202,4 +239,38 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
     'Tyre Replacement', 'MOT Check', 'Air Conditioning Service',
     'Battery Replacement', 'Diagnostic Check', 'Wheel Alignment', 'Clutch Repair',
   ];
+}
+
+// ---------- Seamless flows: estimate approvals & invoices ----------
+
+final customerApprovalsRefreshProvider = StateProvider<int>((ref) => 0);
+
+final customerApprovalsProvider = FutureProvider<List<CustomerApprovalSummaryResponse>>((ref) async {
+  ref.watch(customerApprovalsRefreshProvider);
+  final remote = ref.read(customerRemoteDataSourceProvider);
+  try {
+    return await remote.getPendingApprovals();
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load pending approvals', error: e, stackTrace: st);
+    return const [];
+  }
+});
+
+final customerInvoicesProvider = FutureProvider<List<InvoiceResponse>>((ref) async {
+  final remote = ref.read(customerRemoteDataSourceProvider);
+  try {
+    return await remote.getInvoices();
+  } catch (e, st) {
+    ref.read(loggerProvider).e('Failed to load invoices', error: e, stackTrace: st);
+    return const [];
+  }
+});
+
+Future<bool> customerProcessApproval(WidgetRef ref, String estimateId, String action) async {
+  final remote = ref.read(customerRemoteDataSourceProvider);
+  final ok = await remote.processApproval(estimateId, action);
+  if (ok) {
+    ref.read(customerApprovalsRefreshProvider.notifier).state++;
+  }
+  return ok;
 }

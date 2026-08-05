@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class JobCardResponse {
     private String id;
+    private Long dbId;
     private String customerName;
     private String vehicleInfo;
     private String time;

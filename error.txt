@@ -1,25 +1,10 @@
-2026-07-31T17:50:17.492+05:30  INFO 25296 --- [orient-workshop-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-07-31T17:50:17.625+05:30  INFO 25296 --- [orient-workshop-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2e93108a
-2026-07-31T17:50:17.627+05:30  INFO 25296 --- [orient-workshop-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-07-31T17:50:17.666+05:30  INFO 25296 --- [orient-workshop-backend] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mysql://localhost:3306/orient_workshop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8 (MySQL 8.0)
-2026-07-31T17:50:17.723+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.033s)
-2026-07-31T17:50:17.741+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema `orient_workshop`: 2
-2026-07-31T17:50:17.744+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.f.core.internal.command.DbMigrate      : Schema `orient_workshop` is up to date. No migration necessary.
-2026-07-31T17:50:17.895+05:30 ERROR 25296 --- [orient-workshop-backend] [           main] c.b.m.core.MybatisConfiguration          : mapper[com.orient.workshop.sync.repository.IdempotencyKeyMapper.findByKeyWithinTtl] is ignored, because it exists, maybe from xml file
-2026-07-31T17:50:17.986+05:30 DEBUG 25296 --- [orient-workshop-backend] [           main] c.o.w.a.filter.JwtAuthenticationFilter   : Filter 'jwtAuthenticationFilter' configured for use
-2026-07-31T17:50:18.932+05:30  WARN 25296 --- [orient-workshop-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration :
 
-Using generated security password: ea50f888-a9b5-47e8-becc-a8d2379735ba
-
-This generated password is for development use only. Your security configuration must be updated before running your application in production.
-
-2026-07-31T17:50:18.953+05:30  INFO 25296 --- [orient-workshop-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2026-07-31T17:50:19.254+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
-2026-07-31T17:50:19.704+05:30  INFO 25296 --- [orient-workshop-backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/api/v1'
-2026-07-31T17:50:19.720+05:30  INFO 25296 --- [orient-workshop-backend] [           main] c.o.w.gateway.OrientGatewayApplication   : Started OrientGatewayApplication in 5.575 seconds (process running for 5.96)
-2026-07-31T17:50:19.746+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-2] c.o.w.a.r.OtpRecordMapper.deleteExpired  : ==>  Preparing: DELETE FROM otp_records WHERE expires_at < NOW()
-2026-07-31T17:50:19.755+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-2] c.o.w.a.r.OtpRecordMapper.deleteExpired  : ==> Parameters:
-2026-07-31T17:50:19.756+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-2] c.o.w.a.r.OtpRecordMapper.deleteExpired  : <==    Updates: 0
-2026-07-31T17:50:19.783+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-1] c.o.w.c.r.C.selectList                   : ==>  Preparing: SELECT id,name,connected,credentials,last_sync_at,sync_status FROM crm_integrations WHERE (name = ?)
-2026-07-31T17:50:19.784+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-1] c.o.w.c.r.C.selectList                   : ==> Parameters: META(String)
-2026-07-31T17:50:19.792+05:30 DEBUG 25296 --- [orient-workshop-backend] [ent-scheduler-1] c.o.w.c.r.C.selectList                   : <==      Total: 1
+I/flutter ( 8550): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter ( 8550): │ #0   DioMixin.request (package:dio/src/dio_mixin.dart:364:36)
+I/flutter ( 8550): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+I/flutter ( 8550): │ 404 /customers/services/active: This exception was thrown because the response has a status code of 404 and RequestOptions.validateStatus was configured to throw for this status code.
+I/flutter ( 8550): │ The status code of 404 has the following meaning: "Client error - the request contains bad syntax or cannot be fulfilled"
+I/flutter ( 8550): │ Read more about status codes at https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+I/flutter ( 8550): │ In order to resolve this exception you typically have either to verify and fix your request code or you have to fix the server code.
+I/flutter ( 8550): │
+I/flutter ( 8550): └─

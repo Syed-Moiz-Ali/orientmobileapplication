@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'advisor_sheet.dart';
 import 'advisor_handle.dart';
 import 'advisor_notification_data.dart';
 import 'advisor_notification_row.dart';
 
-class AdvisorNotificationSheet extends StatelessWidget {
+class AdvisorNotificationSheet extends ConsumerWidget {
   const AdvisorNotificationSheet({super.key});
 
   List<AdvisorNotificationData> _loadNotifications() {
@@ -30,8 +32,19 @@ class AdvisorNotificationSheet extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final items = _loadNotifications();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final localItems = _loadNotifications();
+    final remoteAsync = ref.watch(advisorNotificationsProvider);
+    final remoteItems = (remoteAsync.value ?? const <StaffNotificationResponse>[])
+        .map((n) => AdvisorNotificationData(
+              n.title,
+              n.body,
+              n.isRead ? Icons.notifications_outlined : Icons.notifications_active_rounded,
+              n.isRead ? AppColors.text3 : AppColors.accent,
+              n.time,
+            ))
+        .toList();
+    final items = [...remoteItems, ...localItems];
     return AdvisorSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,

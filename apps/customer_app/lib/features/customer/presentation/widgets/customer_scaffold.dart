@@ -8,6 +8,7 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_hom
 import 'package:customer_app/features/customer/presentation/widgets/customer_bookings_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_service_status_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicles_tab.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_approvals_tab.dart';
 
 class CustomerScaffold extends ConsumerStatefulWidget {
   const CustomerScaffold({super.key});
@@ -21,6 +22,7 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
     CustomerHomeTab(),
     CustomerServiceStatusTab(),
     CustomerBookingsTab(),
+    CustomerApprovalsTab(),
     CustomerVehiclesTab(),
   ];
 
@@ -58,6 +60,7 @@ class _BottomNav extends StatelessWidget {
       (Icons.home_rounded, Icons.home_outlined, 'Home'),
       (Icons.track_changes_rounded, Icons.track_changes_outlined, 'Status'),
       (Icons.calendar_month_rounded, Icons.calendar_month_outlined, 'Bookings'),
+      (Icons.fact_check_rounded, Icons.fact_check_outlined, 'Approvals'),
       (Icons.directions_car_rounded, Icons.directions_car_outlined, 'Vehicles'),
     ];
 

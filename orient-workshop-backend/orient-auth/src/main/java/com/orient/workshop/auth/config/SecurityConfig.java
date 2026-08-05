@@ -98,6 +98,10 @@ public class SecurityConfig {
                         .requestMatchers("/advisor/**")
                         .hasAnyRole(role(RoleConstants.ADVISOR), role(RoleConstants.SUPERVISOR),
                                 role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
+                        .requestMatchers("/staff/**")
+                        .hasAnyRole(role(RoleConstants.ADVISOR), role(RoleConstants.SUPERVISOR),
+                                role(RoleConstants.TECHNICIAN), role(RoleConstants.OWNER),
+                                role(RoleConstants.ADMIN))
                         .requestMatchers("/crm/**")
                         .hasAnyRole(role(RoleConstants.CRM_DASHBOARD), role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
                         .requestMatchers("/customer/**")

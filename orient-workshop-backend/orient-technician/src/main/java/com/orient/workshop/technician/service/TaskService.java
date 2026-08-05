@@ -12,6 +12,7 @@ import com.orient.workshop.core.model.entity.TechnicianTask;
 import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.core.repository.StaffMapper;
 import com.orient.workshop.core.repository.TechnicianTaskMapper;
+import com.orient.workshop.core.service.WorkItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class TaskService {
     private final TechnicianTaskMapper taskMapper;
     private final StaffMapper staffMapper;
     private final JobCardMapper jobCardMapper;
+    private final WorkItemService workItemService;
 
     @Transactional
     public void startTask(JwtUserPrincipal principal, String jobCardNo, String taskRef, TaskActionRequest req) {
@@ -44,6 +46,9 @@ public class TaskService {
         task.setStatus("completed");
         task.setEndTime(req.getEndTime() != null ? req.getEndTime() : "");
         taskMapper.updateById(task);
+        // Seamless flow — when all work items are done the job moves to the
+        // supervisor completion-review queue.
+        workItemService.checkJobCompletionAfterUpdate(jobCardNo);
     }
 
     @Transactional
@@ -53,6 +58,9 @@ public class TaskService {
         TechnicianTask task = findTask(jobCardNo, taskRef);
         task.setStatus(req.getStatus() != null ? req.getStatus() : task.getStatus());
         taskMapper.updateById(task);
+        if ("completed".equals(task.getStatus())) {
+            workItemService.checkJobCompletionAfterUpdate(jobCardNo);
+        }
     }
 
     @Transactional

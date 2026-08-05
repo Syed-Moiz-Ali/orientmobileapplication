@@ -35,4 +35,56 @@ class SupervisorRemoteDataSource {
   Future<List<SupervisorAssignedJob>> getAssignedJobs() async => (await _client.get<List<dynamic>>(
     ApiEndpoints.supervisorAssignedJobs,fromJson: (d) => d as List<dynamic>)).when(
     success: (l) => l.map((e) => SupervisorAssignedJob.fromJson(e)).toList(), failure: (_) => []);
+
+  // ---------- Seamless flows: booking / breakdown routing ----------
+
+  Future<List<BookingQueueResponse>> getBookingQueue() async => (await _client.get<List<dynamic>>(
+    ApiEndpoints.supervisorBookings,fromJson: (d) => d as List<dynamic>)).when(
+    success: (l) => l.map((e) => BookingQueueResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  Future<List<BreakdownQueueResponse>> getBreakdownQueue() async => (await _client.get<List<dynamic>>(
+    ApiEndpoints.supervisorBreakdowns,fromJson: (d) => d as List<dynamic>)).when(
+    success: (l) => l.map((e) => BreakdownQueueResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  Future<List<AssignableStaffResponse>> getAssignableAdvisors() async => (await _client.get<List<dynamic>>(
+    ApiEndpoints.supervisorAssignableAdvisors,fromJson: (d) => d as List<dynamic>)).when(
+    success: (l) => l.map((e) => AssignableStaffResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  Future<bool> assignBooking(int id, int advisorId) async {
+    final r = await _client.put(ApiEndpoints.supervisorBookingAssign(id), data: {'advisorId': advisorId});
+    return r is Success;
+  }
+
+  Future<bool> assignBreakdown(int id, int advisorId) async {
+    final r = await _client.put(ApiEndpoints.supervisorBreakdownAssign(id), data: {'advisorId': advisorId});
+    return r is Success;
+  }
+
+  // ---------- Seamless flows: completion review ----------
+
+  Future<List<AwaitingCompletionResponse>> getAwaitingCompletions() async => (await _client.get<List<dynamic>>(
+    ApiEndpoints.supervisorAwaiting,fromJson: (d) => d as List<dynamic>)).when(
+    success: (l) => l.map((e) => AwaitingCompletionResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  Future<bool> approveCompletion(int jobCardId) async {
+    final r = await _client.put(ApiEndpoints.supervisorApproveCompletion(jobCardId));
+    return r is Success;
+  }
+
+  Future<bool> rejectCompletion(int jobCardId, String reason) async {
+    final r = await _client.put(ApiEndpoints.supervisorRejectCompletion(jobCardId),
+        data: {'reason': reason});
+    return r is Success;
+  }
+
+  // ---------- Seamless flows: staff notifications ----------
+
+  Future<List<StaffNotificationResponse>> getStaffNotifications() async => (await _client.get<List<dynamic>>(
+    ApiEndpoints.staffNotifications,fromJson: (d) => d as List<dynamic>)).when(
+    success: (l) => l.map((e) => StaffNotificationResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  Future<bool> markStaffNotificationRead(String id) async {
+    final r = await _client.put(ApiEndpoints.staffNotificationRead(id));
+    return r is Success;
+  }
 }

@@ -18,7 +18,7 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final bookings = ref.watch(customerBookingsProvider);
+    final bookings = ref.watch(customerBookingsProvider).value ?? const <CustomerBookingEntity>[];
 
     final filtered = _filter == null
         ? bookings
@@ -178,7 +178,7 @@ class _BookingCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    booking.service,
+                    'Appointment',
                     style: AppTextStyles.rajdhaniLabel(color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: AppDimensions.s4),

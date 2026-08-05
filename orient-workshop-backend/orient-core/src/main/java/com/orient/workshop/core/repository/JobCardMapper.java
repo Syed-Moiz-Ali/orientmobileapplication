@@ -65,4 +65,10 @@ public interface JobCardMapper extends BaseMapper<JobCard> {
 
     @Select("SELECT COUNT(*) FROM job_cards WHERE status = 'cancelled'")
     int countCancelled();
+
+    @Select("SELECT * FROM job_cards WHERE status = 'awaitingSupervisor' ORDER BY updated_at DESC")
+    List<JobCard> findAwaitingSupervisor();
+
+    @Select("SELECT * FROM job_cards WHERE status = 'awaitingSupervisor' AND branch_id = #{branchId} ORDER BY updated_at DESC")
+    List<JobCard> findAwaitingSupervisorByBranch(@Param("branchId") Long branchId);
 }

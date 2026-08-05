@@ -24,7 +24,7 @@ class CustomerServiceStatusTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bookings = ref.watch(customerBookingsProvider);
+    final bookings = ref.watch(customerBookingsProvider).value ?? const <CustomerBookingEntity>[];
     final breakdowns = ref.watch(customerBreakdownsProvider);
     final dash = ref.watch(customerDashboardProvider);
     final activeService = dash.activeService;
@@ -124,7 +124,7 @@ class CustomerServiceStatusTab extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(b.service, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                              Text('Appointment', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                               Text('${b.vehicleName}  \u00b7  ${b.date}', style: const TextStyle(fontSize: 11, color: AppColors.text3)),
                             ],
                           ),
@@ -441,7 +441,7 @@ class _ActiveServiceCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(booking.service, style: AppTextStyles.rajdhaniLabel(color: AppColors.textPrimary)),
+                      Text('Appointment', style: AppTextStyles.rajdhaniLabel(color: AppColors.textPrimary)),
                       const SizedBox(height: 4),
                       Text('${booking.vehicleName}  \u00b7  ${booking.plateNumber}', style: const TextStyle(fontSize: 12, color: AppColors.text3)),
                     ],

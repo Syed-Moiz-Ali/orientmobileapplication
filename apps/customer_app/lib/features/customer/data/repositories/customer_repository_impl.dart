@@ -77,6 +77,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
     try {
       final r = await remoteDataSource.getActiveService();
       final entity = CustomerServiceEntity(
+        hasActiveJob: r.hasActiveJob,
         jobCardId: r.jobCardId, plateNumber: r.plateNumber,
         vehicleName: r.vehicleName, service: r.service,
         started: r.started, estCompletion: r.estCompletion,

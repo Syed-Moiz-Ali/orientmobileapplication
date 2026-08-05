@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:customer_app/core/local/sync_providers.dart';
+import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
 class CustomerBookServiceView extends ConsumerStatefulWidget {
   const CustomerBookServiceView({super.key});
@@ -14,7 +18,6 @@ class CustomerBookServiceView extends ConsumerStatefulWidget {
 class _CustomerBookServiceViewState
     extends ConsumerState<CustomerBookServiceView> {
   int _step = 0;
-  ServiceTypeEntity? _selectedService;
   DateTime _focusedMonth = DateTime(2026, 4);
   DateTime? _selectedDate;
   String? _selectedTime;
@@ -64,6 +67,9 @@ class _CustomerBookServiceViewState
       ? '\u2014'
       : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}';
 
+  List<CustomerVehicleEntity> get _vehicles =>
+      ref.watch(customerDashboardProvider).vehicles;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,13 +98,13 @@ class _CustomerBookServiceViewState
                   AppDimensions.s18,
                   AppDimensions.s20,
                 ),
-                child: [_buildStep0, _buildStep1, _buildStep2][_step](context),
+                child: [_buildStep0, _buildStep1][_step](context),
               ),
             ),
             _BottomBar(
-              label: _step == 2 ? 'Confirm Booking' : 'Continue',
+              label: _step == 1 ? 'Confirm Booking' : 'Continue',
               onTap: () async {
-                if (_step < 2) {
+                if (_step < 1) {
                   setState(() => _step++);
                 } else {
                   await _showConfirmSheet(context);
@@ -111,127 +117,24 @@ class _CustomerBookServiceViewState
     );
   }
 
-  Widget _buildStep0(BuildContext ctx) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'What do you need?',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-        ),
-      ),
-      const SizedBox(height: AppDimensions.s4),
-      const Text(
-        'Choose a service to continue',
-        style: TextStyle(fontSize: 13, color: AppColors.text3),
-      ),
-      const SizedBox(height: AppDimensions.s18),
-      ...ServiceTypeEntity.list.map((s) {
-        final sel = _selectedService?.id == s.id;
-        return GestureDetector(
-          onTap: () => setState(() => _selectedService = s),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            margin: const EdgeInsets.only(bottom: AppDimensions.s10),
-            padding: const EdgeInsets.all(AppDimensions.s16),
-            decoration: BoxDecoration(
-              color: sel ? AppColors.primaryBg : AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.r13),
-              border: Border.all(
-                color: sel ? AppColors.primary : AppColors.border,
-                width: sel ? 1.5 : 0.8,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: sel
-                        ? AppColors.primary.withValues(alpha: .12)
-                        : AppColors.primaryBg,
-                    borderRadius: BorderRadius.circular(AppDimensions.r11),
-                  ),
-                  child: Icon(
-                    _serviceIcon(s.id),
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.s14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.name,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: sel
-                              ? AppColors.primary
-                              : AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: AppDimensions.s4),
-                      Text(
-                        s.duration,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.text3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  s.price,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: sel ? AppColors.primary : AppColors.text3,
-                  ),
-                ),
-                if (sel) ...[
-                  const SizedBox(width: AppDimensions.s8),
-                  const Icon(
-                    Icons.check_circle_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        );
-      }),
-      const SizedBox(height: AppDimensions.s20),
-    ],
-  );
-
-  Widget _buildStep1(BuildContext ctx) {
+  Widget _buildStep0(BuildContext ctx) {
     final today = DateTime.now();
     final calDays = _calDays();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Pick a date & time',
+          'Book an appointment',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
+        ),
+        const SizedBox(height: AppDimensions.s4),
+        const Text(
+          'Pick a date & time — the workshop advisor will confirm the service needed',
+          style: TextStyle(fontSize: 13, color: AppColors.text3),
         ),
         const SizedBox(height: AppDimensions.s18),
         AppCard(
@@ -402,7 +305,7 @@ class _CustomerBookServiceViewState
     );
   }
 
-  Widget _buildStep2(BuildContext ctx) => Column(
+  Widget _buildStep1(BuildContext ctx) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       const Text(
@@ -420,7 +323,37 @@ class _CustomerBookServiceViewState
       ),
       const SizedBox(height: AppDimensions.s18),
 
-      ...CustomerVehicleEntity.mock.map((v) {
+      if (_vehicles.isEmpty)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            children: [
+              const Icon(Icons.directions_car_outlined, size: 48, color: AppColors.text4),
+              const SizedBox(height: 12),
+              const Text(
+                'No vehicles yet — add your vehicle first',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: AppColors.text3),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => ctx.push(AppRoutes.customerAddVehicle),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Add Vehicle'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        )
+      else
+        ..._vehicles.map((v) {
         final isSel = _selectedVehicle?.id == v.id;
         return GestureDetector(
           onTap: () => setState(() => _selectedVehicle = v),
@@ -519,12 +452,6 @@ class _CustomerBookServiceViewState
         child: Column(
           children: [
             _SumRow(
-              icon: Icons.build_rounded,
-              label: 'Service',
-              value: _selectedService?.name ?? '\u2014',
-            ),
-            const Divider(height: 18, color: AppColors.primaryBorder),
-            _SumRow(
               icon: Icons.calendar_month_rounded,
               label: 'Date',
               value: _summaryDate,
@@ -541,15 +468,6 @@ class _CustomerBookServiceViewState
               label: 'Vehicle',
               value: _selectedVehicle?.displayName ?? '\u2014',
             ),
-            if (_selectedService != null) ...[
-              const Divider(height: 18, color: AppColors.primaryBorder),
-              _SumRow(
-                icon: Icons.attach_money_rounded,
-                label: 'Est. cost',
-                value: _selectedService!.price,
-                valueColor: AppColors.primary,
-              ),
-            ],
           ],
         ),
       ),
@@ -558,35 +476,67 @@ class _CustomerBookServiceViewState
   );
 
   Future<void> _showConfirmSheet(BuildContext context) async {
-    final id = await IdGenerator.nextId('BK');
     final now = DateTime.now();
+
+    // Backend-shaped payload: POST /bookings (CreateBookingRequest).
+    final selected = _selectedDate ?? DateTime.now();
+    final bookingDate = _selectedTime == null
+        ? selected.toIso8601String()
+        : '${selected.year.toString().padLeft(4, '0')}-'
+            '${selected.month.toString().padLeft(2, '0')}-'
+            '${selected.day.toString().padLeft(2, '0')}T'
+            '$_selectedTime:00';
     final payload = {
-      'id': id,
-      'serviceId': _selectedService?.id ?? '',
-      'serviceName': _selectedService?.name ?? '',
-      'servicePrice': _selectedService?.price ?? '',
-      'date': _summaryDate,
-      'time': _selectedTime ?? '',
       'vehicleId': _selectedVehicle?.id ?? '',
       'vehicleName': _selectedVehicle?.displayName ?? '',
-      'vehiclePlate': _selectedVehicle?.plateNumber ?? '',
+      'plateNumber': _selectedVehicle?.plateNumber ?? '',
+      // The advisor decides the actual service at intake; the booking is
+      // just an appointment request.
+      'serviceType': 'Appointment',
+      'bookingDate': bookingDate,
       'notes': _notesCtrl.text,
-      'status': 'confirmed',
-      'createdAt': now.toIso8601String(),
     };
 
     final local = GenericLocalDataSource(Hive.box<dynamic>('customer_bookings'));
-    local.save(id, payload);
+    var bookingRef = '';
+    var synced = true;
+    final remote = ref.read(customerRemoteDataSourceProvider);
+    try {
+      // Real API hit so the supervisor sees the appointment immediately.
+      final resp = await remote.createBooking(payload);
+      bookingRef = resp.id;
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Booking API failed — queueing offline',
+          error: e, stackTrace: st);
+      synced = false;
+    }
 
-    final queue = ref.read(syncQueueProvider);
-    queue.enqueue(SyncOperation(
-      id: id,
-      entityType: 'booking',
-      entityId: id,
-      changeType: ChangeType.create,
-      payload: payload,
-      timestamp: now.millisecondsSinceEpoch,
-    ));
+    final id = bookingRef.isNotEmpty ? bookingRef : await IdGenerator.nextId('BK');
+    local.save(id, {
+      'id': id,
+      'serviceType': 'Appointment',
+      'vehicleName': _selectedVehicle?.displayName ?? '',
+      'plateNumber': _selectedVehicle?.plateNumber ?? '',
+      'date': _summaryDate,
+      'time': _selectedTime ?? '',
+      'notes': _notesCtrl.text,
+      'status': 'pending',
+      'createdAt': now.toIso8601String(),
+    });
+
+    if (!synced) {
+      final queue = ref.read(syncQueueProvider);
+      await queue.enqueue(SyncOperation(
+        id: id,
+        entityType: 'booking',
+        entityId: id,
+        changeType: ChangeType.create,
+        payload: payload,
+        timestamp: now.millisecondsSinceEpoch,
+      ));
+      await ref.read(syncEngineProvider).syncAll();
+    }
+    ref.invalidate(customerBookingsProvider);
     if (!context.mounted) return;
     showModalBottomSheet(
       context: context,
@@ -639,7 +589,7 @@ class _CustomerBookServiceViewState
                 borderRadius: BorderRadius.circular(AppDimensions.r10),
               ),
               child: Text(
-                'Ref: BK-$id',
+                'Ref: $id',
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
@@ -668,17 +618,6 @@ class _CustomerBookServiceViewState
       ),
     );
   }
-
-  IconData _serviceIcon(String id) =>
-      const {
-        '1': Icons.oil_barrel_outlined,
-        '2': Icons.tire_repair_outlined,
-        '3': Icons.search_rounded,
-        '4': Icons.build_outlined,
-        '5': Icons.verified_outlined,
-        '6': Icons.settings_rounded,
-      }[id] ??
-      Icons.build_outlined;
 }
 
 class _NavBtn extends StatelessWidget {
@@ -706,12 +645,10 @@ class _SumRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final Color? valueColor;
   const _SumRow({
     required this.icon,
     required this.label,
     required this.value,
-    this.valueColor,
   });
 
   @override
@@ -723,10 +660,10 @@ class _SumRow extends StatelessWidget {
       const Spacer(),
       Text(
         value,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: valueColor ?? AppColors.textPrimary,
+          color: AppColors.textPrimary,
         ),
       ),
     ],
@@ -748,11 +685,9 @@ class _StepBar extends StatelessWidget {
     ),
     child: Row(
       children: [
-        _Node(n: 0, step: step, label: 'Service'),
+        _Node(n: 0, step: step, label: 'Schedule'),
         _Line(done: step > 0),
-        _Node(n: 1, step: step, label: 'Schedule'),
-        _Line(done: step > 1),
-        _Node(n: 2, step: step, label: 'Confirm'),
+        _Node(n: 1, step: step, label: 'Confirm'),
       ],
     ),
   );
@@ -865,7 +800,7 @@ class _TopBar extends StatelessWidget {
         ),
         const SizedBox(width: AppDimensions.s12),
         Text(
-          ['Select Service', 'Date & Time', 'Review & Confirm'][step],
+          ['Date & Time', 'Review & Confirm'][step],
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w700,

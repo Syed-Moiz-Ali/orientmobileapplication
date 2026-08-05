@@ -15,22 +15,32 @@ import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.da
 import 'scan_vehicle_view.dart';
 
 class VehicleCustomerView extends ConsumerWidget {
-  const VehicleCustomerView({super.key});
+  final String? bookingId;
+  const VehicleCustomerView({super.key, this.bookingId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const _Body();
+    return _Body(bookingId: bookingId);
   }
 }
 
 class _Body extends ConsumerStatefulWidget {
-  const _Body();
+  final String? bookingId;
+  const _Body({this.bookingId});
   @override
   ConsumerState<_Body> createState() => _BodyState();
 }
 
 class _BodyState extends ConsumerState<_Body> {
   String? _savedJobId;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
+      Hive.box<dynamic>('inspections').put('intake_booking_id', widget.bookingId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +81,29 @@ class _BodyState extends ConsumerState<_Body> {
                     height: 1.5,
                   ),
                 ),
+                if (widget.bookingId != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryBg,
+                      borderRadius: BorderRadius.circular(AppDimensions.r12),
+                      border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.event_available_rounded, color: AppColors.accent, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Intake from assigned booking — the booking will be linked to this job card.',
+                            style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
 
                 // ── Search mode (Image 1) ────────────────────────────────
@@ -125,6 +158,7 @@ class _BodyState extends ConsumerState<_Body> {
                   final payload = {
                     'id': id,
                     'type': 'vehicle_customer',
+                    'bookingId': widget.bookingId ?? '',
                     'customerName': formState.customerName,
                     'phoneNumber': formState.phoneNumber,
                     'email': formState.email,

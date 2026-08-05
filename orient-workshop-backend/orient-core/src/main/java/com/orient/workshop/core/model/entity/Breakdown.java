@@ -24,6 +24,8 @@ public class Breakdown {
     private String vehiclePlate;
     private String location;
     private String status;
+    private Long advisorId;
+    private Long jobCardId;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
     @TableField(fill = FieldFill.INSERT_UPDATE)

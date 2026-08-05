@@ -153,6 +153,7 @@ class ServiceStageEntity {
 }
 
 class CustomerServiceEntity {
+  final bool hasActiveJob;
   final String jobCardId;
   final String plateNumber;
   final String vehicleName;
@@ -165,6 +166,7 @@ class CustomerServiceEntity {
   final List<ServiceStageEntity> stages;
 
   const CustomerServiceEntity({
+    this.hasActiveJob = true,
     required this.jobCardId,
     required this.plateNumber,
     required this.vehicleName,

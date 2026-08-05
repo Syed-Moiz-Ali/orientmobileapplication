@@ -27,6 +27,7 @@ class InspectionState {
   final bool notifyOwnerSmsEmail;
   final String tag;
   final String jobCardId;
+  final String bookingId;
 
   const InspectionState({
     this.statuses = const {},
@@ -47,6 +48,7 @@ class InspectionState {
     this.notifyOwnerSmsEmail = false,
     this.tag = '',
     this.jobCardId = '',
+    this.bookingId = '',
   });
 
   InspectionState copyWith({
@@ -68,6 +70,7 @@ class InspectionState {
     bool? notifyOwnerSmsEmail,
     String? tag,
     String? jobCardId,
+    String? bookingId,
   }) {
     return InspectionState(
       statuses: statuses ?? this.statuses,
@@ -89,6 +92,7 @@ class InspectionState {
       notifyOwnerSmsEmail: notifyOwnerSmsEmail ?? this.notifyOwnerSmsEmail,
       tag: tag ?? this.tag,
       jobCardId: jobCardId ?? this.jobCardId,
+      bookingId: bookingId ?? this.bookingId,
     );
   }
 
@@ -107,6 +111,7 @@ class InspectionState {
     'notifyOwnerSmsEmail': notifyOwnerSmsEmail,
     'tag': tag,
     'jobCardId': jobCardId,
+    'bookingId': bookingId,
   };
 
   factory InspectionState.fromPersistableMap(Map<String, dynamic> map) {
@@ -156,6 +161,7 @@ class InspectionState {
       notifyOwner: map['notifyOwner'] as bool? ?? false,
       tag: map['tag'] as String? ?? '',
       jobCardId: map['jobCardId'] as String? ?? '',
+      bookingId: map['bookingId'] as String? ?? '',
     );
   }
 
@@ -192,9 +198,12 @@ class InspectionNotifier extends Notifier<InspectionState> {
   InspectionState build() {
     final local = ref.read(advisorLocalDataSourceProvider);
     final draft = local.getDraft();
-    return draft != null
-        ? InspectionState.fromPersistableMap(draft)
-        : const InspectionState();
+    if (draft != null) {
+      return InspectionState.fromPersistableMap(draft);
+    }
+    // Seamless flow — intake from an assigned booking carries the booking id.
+    final intakeBookingId = Hive.box<dynamic>('inspections').get('intake_booking_id') as String? ?? '';
+    return InspectionState(bookingId: intakeBookingId);
   }
 
   void _persistDraft() {
@@ -458,6 +467,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
     await ref.read(syncEngineProvider).syncAll();
 
     await local.deleteDraft();
+    Hive.box<dynamic>('inspections').delete('intake_booking_id');
     state = const InspectionState();
 
     return const Success(null);

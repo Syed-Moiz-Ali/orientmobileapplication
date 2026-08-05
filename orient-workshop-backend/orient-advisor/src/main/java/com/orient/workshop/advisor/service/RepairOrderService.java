@@ -2,9 +2,11 @@ package com.orient.workshop.advisor.service;
 
 import com.orient.workshop.advisor.model.dto.RepairOrderRequest;
 import com.orient.workshop.advisor.model.dto.RepairOrderResponse;
+import com.orient.workshop.advisor.model.entity.Approval;
 import com.orient.workshop.advisor.model.entity.RepairOrder;
 import com.orient.workshop.advisor.model.entity.RepairOrderPartItem;
 import com.orient.workshop.advisor.model.entity.RepairOrderServiceItem;
+import com.orient.workshop.advisor.repository.ApprovalMapper;
 import com.orient.workshop.advisor.repository.RepairOrderMapper;
 import com.orient.workshop.advisor.repository.RepairOrderPartMapper;
 import com.orient.workshop.advisor.repository.RepairOrderServiceMapper;
@@ -12,8 +14,11 @@ import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.common.util.DateParse;
 import com.orient.workshop.common.util.IdGenerator;
+import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.JobCardMapper;
+import com.orient.workshop.core.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +35,10 @@ public class RepairOrderService {
     private final RepairOrderServiceMapper serviceMapper;
     private final RepairOrderPartMapper partMapper;
     private final JobCardMapper jobCardMapper;
+    private final CustomerMapper customerMapper;
+    private final ApprovalMapper approvalMapper;
+    private final NotificationService notificationService;
+    private final TaskGeneratorService taskGeneratorService;
 
     @Transactional
     public RepairOrderResponse createRepairOrder(RepairOrderRequest req) {
@@ -73,7 +82,39 @@ public class RepairOrderService {
 
         log.info("Repair order {} created for jobCardId={}, grandTotal={}", ref, jobCardId, ro.getGrandTotal());
 
+        // Phase 2 — every work list line item becomes a tracked technician work item
+        taskGeneratorService.generateForJobCard(jobCardId);
+
+        // Phase 2 — estimate approval row is auto-created for the customer to approve
+        createApproval(jc, ref, ro);
+
         return RepairOrderResponse.builder().id(ref).build();
+    }
+
+    private void createApproval(JobCard jc, String ref, RepairOrder ro) {
+        Customer customer = jc.getCustomerId() != null ? customerMapper.selectById(jc.getCustomerId()) : null;
+        String customerName = customer != null && customer.getCustomerName() != null
+                ? customer.getCustomerName() : "";
+        approvalMapper.insert(Approval.builder()
+                .estimateId(ref)
+                .customerId(jc.getCustomerId())
+                .customerName(customerName)
+                .vehicleId(jc.getVehicleId() != null ? String.valueOf(jc.getVehicleId()) : "")
+                .amount(ro.getGrandTotal())
+                .action("pending")
+                .build());
+
+        if (jc.getStatus() == null || !"awaitingSupervisor".equals(jc.getStatus())) {
+            jc.setStatus("pendingApproval");
+            jobCardMapper.updateById(jc);
+        }
+
+        if (customer != null && customer.getUserId() != null) {
+            notificationService.emit(customer.getUserId(), jc.getBranchId(),
+                    "approvalNeeded", "Approve your estimate",
+                    "Estimate " + ref + " · " + String.format("%.2f", ro.getGrandTotal())
+                            + " · review the work and approve to start.");
+        }
     }
 
     private double persistServices(Long repairOrderId, List<RepairOrderRequest.LineItem> items) {

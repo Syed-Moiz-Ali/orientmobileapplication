@@ -13,4 +13,6 @@ public class AdvisorStatsResponse {
     private int vehiclesWaiting;
     private int readyForDelivery;
     private int totalOpenJobCards;
+    private int newAssignedBookings;
+    private int newBreakdowns;
 }

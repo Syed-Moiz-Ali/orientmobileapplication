@@ -32,6 +32,24 @@ public class CustomerService {
             String name = (user != null && user.getName() != null && !user.getName().isBlank())
                     ? user.getName() : "Customer";
             String phone = user != null ? user.getPhone() : "";
+
+            // Phase 2 — walk-in merge: the intake advisor already created this
+            // customer (with a phone, no user_id). Bind that record to the user
+            // instead of creating a duplicate, so history + approvals appear.
+            if (phone != null && !phone.isBlank()) {
+                var existing = customerMapper.findByPhone(phone);
+                if (existing.isPresent()) {
+                    Customer c = existing.get();
+                    if (c.getUserId() == null) {
+                        c.setUserId(userId);
+                        if (branchId != null && c.getBranchId() == null) c.setBranchId(branchId);
+                        customerMapper.updateById(c);
+                        log.info("Merged walk-in Customer record id={} to userId={}", c.getId(), userId);
+                        return c;
+                    }
+                }
+            }
+
             Customer c = Customer.builder()
                     .userId(userId)
                     .branchId(branchId)

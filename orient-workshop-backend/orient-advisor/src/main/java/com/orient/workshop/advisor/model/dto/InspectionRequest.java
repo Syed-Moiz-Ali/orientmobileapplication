@@ -11,6 +11,7 @@ import java.util.Map;
 public class InspectionRequest {
     private String type;
     private String status;
+    private String bookingId;
     private String createdDate;
     private String lastUpdated;
     private String technician;

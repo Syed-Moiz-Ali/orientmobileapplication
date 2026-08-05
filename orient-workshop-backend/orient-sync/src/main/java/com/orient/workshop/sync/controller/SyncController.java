@@ -5,7 +5,9 @@ import com.orient.workshop.advisor.model.entity.Inspection;
 import com.orient.workshop.advisor.repository.InspectionMapper;
 import com.orient.workshop.common.response.ApiResponse;
 import com.orient.workshop.common.util.IdGenerator;
+import com.orient.workshop.core.model.entity.Booking;
 import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.repository.BookingMapper;
 import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.sync.model.entity.SyncLog;
 import com.orient.workshop.sync.repository.SyncLogMapper;
@@ -30,6 +32,7 @@ public class SyncController {
     private final JobCardMapper jobCardMapper;
     private final SyncLogMapper syncLogMapper;
     private final InspectionMapper inspectionMapper;
+    private final BookingMapper bookingMapper;
     private final ObjectMapper objectMapper;
 
     @PostMapping("/inspections/{id}")
@@ -157,8 +160,26 @@ public class SyncController {
                 inspectionMapper.updateById(inspection);
                 log.info("sync inspections/{}: updated inspection {} for job card {}", id, inspection.getId(), jobCardId);
             }
+            linkBookingFromPayload(body, jobCardId);
         } catch (Exception e) {
             log.warn("sync inspections/{}: could not apply inspection payload (stored anyway): {}", id, e.getMessage());
+        }
+    }
+
+    private void linkBookingFromPayload(Map<String, Object> body, Long jobCardId) {
+        try {
+            Object bookingIdValue = body.get("bookingId");
+            if (bookingIdValue == null || bookingIdValue.toString().isBlank()) return;
+            long bookingId = Long.parseLong(bookingIdValue.toString());
+            Booking booking = bookingMapper.selectById(bookingId);
+            if (booking != null && booking.getJobCardId() == null) {
+                booking.setJobCardId(jobCardId);
+                booking.setStatus("confirmed");
+                bookingMapper.updateById(booking);
+                log.info("sync: linked booking {} to job card {}", bookingId, jobCardId);
+            }
+        } catch (Exception e) {
+            log.warn("sync: could not link booking from payload: {}", e.getMessage());
         }
     }
 

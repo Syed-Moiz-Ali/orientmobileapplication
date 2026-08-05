@@ -88,7 +88,7 @@ class DioSyncHandler extends SyncHandler {
   }
 
   String _methodFor(String entityType) {
-    if (entityType == 'technician_job') return 'PUT';
+    if (entityType == 'technician_job' || entityType == 'work_item') return 'PUT';
     return 'POST';
   }
 
@@ -151,6 +151,45 @@ class DioSyncHandler extends SyncHandler {
           if (payload['empId'] != null) 'empId': payload['empId'],
           'status': payload['status'] ?? 'inProgress',
         };
+      case 'vehicle_customer':
+        // Flat intake form -> InspectionRequest shape:
+        // { type, status, bookingId, customer{...}, vehicle{...}, additional{...} }
+        return <String, dynamic>{
+          'type': 'vehicle_customer',
+          if (payload['status'] != null) 'status': payload['status'],
+          if (payload['bookingId'] != null) 'bookingId': payload['bookingId'],
+          'customer': <String, dynamic>{
+            if (payload['customerName'] != null) 'customerName': payload['customerName'],
+            if (payload['phoneNumber'] != null) 'phoneNumber': payload['phoneNumber'],
+            if (payload['email'] != null) 'email': payload['email'],
+          },
+          'vehicle': <String, dynamic>{
+            if (payload['registrationNumber'] != null)
+              'registrationNumber': payload['registrationNumber'],
+            if (payload['vin'] != null) 'vin': payload['vin'],
+            if (payload['make'] != null) 'make': payload['make'],
+            if (payload['model'] != null) 'model': payload['model'],
+            if (payload['modelYear'] != null) 'modelYear': payload['modelYear'],
+          },
+          'additional': <String, dynamic>{
+            if (payload['odometerReading'] != null)
+              'odometerReading': payload['odometerReading'],
+            if (payload['fuelLevel'] != null) 'fuelLevel': payload['fuelLevel'],
+            if (payload['customerConsent'] != null)
+              'customerConsent': payload['customerConsent'],
+          },
+        };
+      case 'work_item':
+        // WorkItemActionRequest replay: { status | startTime | endTime }
+        final action = payload['action'] ?? 'status';
+        return <String, dynamic>{
+          if (action == 'start' || action == 'status')
+            if (payload['startTime'] != null) 'startTime': payload['startTime'],
+          if (action == 'complete' || action == 'status')
+            if (payload['endTime'] != null) 'endTime': payload['endTime'],
+          if (action == 'status')
+            if (payload['status'] != null) 'status': payload['status'],
+        };
       default:
         return payload;
     }
@@ -168,8 +207,12 @@ class DioSyncHandler extends SyncHandler {
         return ApiEndpoints.workAssignments;
       case 'booking':
         return ApiEndpoints.createBooking;
+      case 'breakdown':
+        return ApiEndpoints.customerBreakdowns;
       case 'vehicle_customer':
-        return ApiEndpoints.customerVehicles;
+        // Advisor intake: creates a real job card server-side (customer,
+        // vehicle, inspection tasks + booking link all happen in one call).
+        return ApiEndpoints.inspections;
       case 'approval':
         return ApiEndpoints.approvalAction(op.entityId);
       case 'reminder':
@@ -178,6 +221,12 @@ class DioSyncHandler extends SyncHandler {
         return ApiEndpoints.attendancePunchIn;
       case 'technician_job':
         return ApiEndpoints.technicianAssignedJobStatus(op.entityId);
+      case 'work_item':
+        // Offline replay of a per-item action on the legacy task endpoint,
+        // which the backend routes through the same completion gate.
+        final parts = op.entityId.split('|');
+        if (parts.length < 3) return null;
+        return ApiEndpoints.technicianTask(parts[0], parts[1], parts[2]);
       case 'attachment':
         // Attachments are uploaded through the multipart media endpoint when a
         // local file is available; otherwise they are left in the failed box.

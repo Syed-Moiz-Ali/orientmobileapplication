@@ -28,6 +28,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orient.workshop.core.repository.JobCardMapper;
+import com.orient.workshop.core.repository.BookingMapper;
+import com.orient.workshop.core.model.entity.Booking;
+import com.orient.workshop.core.service.NotificationService;
 
 @Slf4j
 @Service
@@ -38,6 +41,9 @@ public class InspectionService {
     private final JobCardMapper jobCardMapper;
     private final CustomerMapper customerMapper;
     private final VehicleMapper vehicleMapper;
+    private final BookingMapper bookingMapper;
+    private final NotificationService notificationService;
+    private final TaskGeneratorService taskGeneratorService;
     private final ObjectMapper objectMapper;
 
     private final Map<Long, Long> draftOwners = new ConcurrentHashMap<>();
@@ -97,7 +103,65 @@ public class InspectionService {
                 .build();
         inspectionMapper.insert(inspection);
 
+        // Phase 1 — link to booking if intake started from an assigned booking
+        if (req.getBookingId() != null && !req.getBookingId().isBlank()) {
+            linkBooking(req.getBookingId(), jobCard.getId(), principal);
+        }
+
+        // Phase 3 — inspection items marked fair/poor become tracked work items
+        taskGeneratorService.generateForJobCard(jobCard.getId());
+
         return InspectionResponse.builder().id(insRef).build();
+    }
+
+    private void linkBooking(String bookingId, Long jobCardId, JwtUserPrincipal principal) {
+        try {
+            Long id = Long.parseLong(bookingId);
+            Booking booking = bookingMapper.selectById(id);
+            if (booking == null) return;
+            if (principal != null && principal.getBranchId() != null
+                    && booking.getBranchId() != null && !principal.getBranchId().equals(booking.getBranchId())) {
+                return;
+            }
+            booking.setJobCardId(jobCardId);
+            booking.setStatus("confirmed");
+            bookingMapper.updateById(booking);
+            if (principal != null && principal.getUserId() != null) {
+                notificationService.emit(principal.getUserId(), booking.getBranchId(),
+                        "bookingConfirmed", "Intake started",
+                        "Job card created from booking " + booking.getBookingRef() + ".");
+            }
+        } catch (NumberFormatException e) {
+            log.warn("Invalid bookingId '{}' ignored", bookingId);
+        }
+    }
+
+    @Transactional
+    public void updateInspection(JwtUserPrincipal principal, Long id, InspectionRequest req) {
+        Inspection inspection = inspectionMapper.selectById(id);
+        if (inspection == null) throw new NotFoundException("Inspection not found");
+
+        if (req.getSections() != null) {
+            inspection.setSections(toJson(req.getSections()));
+        }
+        if (req.getCustomerRequests() != null) inspection.setCustomerRequests(req.getCustomerRequests());
+        if (req.getGarageRecommendations() != null) inspection.setGarageRecommendations(req.getGarageRecommendations());
+        if (req.getReferenceNumber() != null) inspection.setReferenceNumber(req.getReferenceNumber());
+        if (req.getPlaceOfSupply() != null) inspection.setPlaceOfSupply(req.getPlaceOfSupply());
+        if (req.getEstimatedDelivery() != null) {
+            inspection.setEstimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"));
+        }
+        if (req.getNotifyOwnerSmsEmail() != null) inspection.setNotifyOwnerSmsEmail(req.getNotifyOwnerSmsEmail());
+        if (req.getTag() != null) inspection.setTag(req.getTag());
+        if (inspection.getIsDraft() != null && inspection.getIsDraft()) {
+            inspection.setIsDraft(false);
+        }
+        inspectionMapper.updateById(inspection);
+
+        // Newly flagged fair/poor items become trackable work items
+        if (inspection.getJobCardId() != null) {
+            taskGeneratorService.generateForJobCard(inspection.getJobCardId());
+        }
     }
 
     public InspectionDraftResponse getDraft(JwtUserPrincipal principal, Long id) {
@@ -148,6 +212,22 @@ public class InspectionService {
             return customer;
         }
         if (req.getCustomer() != null) {
+            String phone = req.getCustomer().getPhoneNumber();
+            // Seamless flow — reuse the existing customer (e.g. the one linked
+            // to the booking / customer-app account) by phone instead of
+            // creating a duplicate row. Otherwise approvals and job history
+            // would never surface in the customer app.
+            if (phone != null && !phone.isBlank()) {
+                var existing = customerMapper.findByPhone(phone);
+                if (existing.isPresent()) {
+                    Customer existingCustomer = existing.get();
+                    if (existingCustomer.getBranchId() == null && principal != null) {
+                        existingCustomer.setBranchId(principal.getBranchId());
+                        customerMapper.updateById(existingCustomer);
+                    }
+                    return existingCustomer;
+                }
+            }
             Customer customer = Customer.builder()
                     .branchId(principal != null ? principal.getBranchId() : null)
                     .customerName(req.getCustomer().getCustomerName())

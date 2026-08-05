@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:customer_app/core/local/sync_providers.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
@@ -18,6 +19,9 @@ class _CustomerBreakdownHelpViewState
   String? _selectedIssue;
   final _locationCtrl = TextEditingController();
   bool _isSaving = false;
+
+  List<CustomerVehicleEntity> get _vehicles =>
+      ref.watch(customerDashboardProvider).vehicles;
 
   static const _issues = [
     ('\u{1f50b}', 'Battery Dead'),
@@ -220,20 +224,22 @@ class _CustomerBreakdownHelpViewState
                                   Icons.keyboard_arrow_down_rounded,
                                   color: AppColors.text4,
                                 ),
-                                items: CustomerVehicleEntity.mock
-                                    .map(
-                                      (v) => DropdownMenuItem(
-                                        value: v,
-                                        child: Text(
-                                          v.shortLabel,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: AppColors.textPrimary,
+                                items: _vehicles.isEmpty
+                                    ? null
+                                    : _vehicles
+                                        .map(
+                                          (v) => DropdownMenuItem(
+                                            value: v,
+                                            child: Text(
+                                              v.shortLabel,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: AppColors.textPrimary,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
+                                        )
+                                        .toList(),
                                 onChanged: (v) =>
                                     setState(() => _selectedVehicle = v),
                               ),
@@ -338,20 +344,54 @@ class _CustomerBreakdownHelpViewState
                                     ? null
                                     : () async {
                                         setState(() => _isSaving = true);
-                                        final id = await IdGenerator.nextId('BD');
+                                        final local = GenericLocalDataSource(
+                                          Hive.box<dynamic>('customer_breakdowns'),
+                                        );
                                         final payload = {
-                                          'id': id,
                                           'issue': _selectedIssue ?? '',
                                           'vehicleId': _selectedVehicle?.id ?? '',
                                           'vehicleName': _selectedVehicle?.displayName ?? '',
                                           'vehiclePlate': _selectedVehicle?.plateNumber ?? '',
                                           'location': _locationCtrl.text,
+                                        };
+                                        var refId = '';
+                                        var synced = true;
+                                        final remote = ref.read(
+                                          customerRemoteDataSourceProvider,
+                                        );
+                                        try {
+                                          // Real API hit so the supervisor
+                                          // sees the breakdown immediately.
+                                          final resp = await remote.createBreakdown(payload);
+                                          refId = resp.id;
+                                        } catch (e, st) {
+                                          ref
+                                              .read(loggerProvider)
+                                              .e('Breakdown API failed — queueing offline',
+                                                  error: e, stackTrace: st);
+                                          synced = false;
+                                        }
+                                        final id = refId.isNotEmpty
+                                            ? refId
+                                            : await IdGenerator.nextId('BD');
+                                        await local.save(id, {
+                                          ...payload,
+                                          'id': id,
                                           'status': 'pending',
                                           'createdAt': DateTime.now().toIso8601String(),
-                                        };
-                                        await GenericLocalDataSource(
-                                          Hive.box<dynamic>('customer_breakdowns'),
-                                        ).save(id, payload);
+                                        });
+                                        if (!synced) {
+                                          final queue = ref.read(syncQueueProvider);
+                                          await queue.enqueue(SyncOperation(
+                                            id: id,
+                                            entityType: 'breakdown',
+                                            entityId: id,
+                                            changeType: ChangeType.create,
+                                            payload: payload,
+                                            timestamp: DateTime.now().millisecondsSinceEpoch,
+                                          ));
+                                          await ref.read(syncEngineProvider).syncAll();
+                                        }
                                         ref.invalidate(customerBreakdownsProvider);
                                         if (!context.mounted) return;
                                         Navigator.pop(context);

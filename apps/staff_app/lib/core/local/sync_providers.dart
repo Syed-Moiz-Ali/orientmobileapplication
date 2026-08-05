@@ -16,6 +16,7 @@ const kSyncEntityTypes = [
   'reminder',
   'attendance',
   'technician_job',
+  'work_item',
   'attachment',
 ];
 

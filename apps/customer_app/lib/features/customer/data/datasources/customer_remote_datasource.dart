@@ -102,4 +102,44 @@ class CustomerRemoteDataSource {
   Future<void> markAllNotificationsRead() async {
     await _client.put(ApiEndpoints.notificationReadAll);
   }
+
+  // ---------- Seamless flows: estimate approvals & invoices ----------
+
+  Future<List<CustomerApprovalSummaryResponse>> getPendingApprovals() async {
+    final result = await _client.get<List<dynamic>>(
+      ApiEndpoints.customerApprovalsPending,
+      fromJson: (d) => d as List<dynamic>,
+    );
+    return result.when(
+      success: (list) => list.map((e) => CustomerApprovalSummaryResponse.fromJson(e as Map<String, dynamic>)).toList(),
+      failure: (_) => [],
+    );
+  }
+
+  Future<CustomerApprovalDetailResponse> getApprovalDetail(String estimateId) async {
+    final result = await _client.get<CustomerApprovalDetailResponse>(
+      ApiEndpoints.customerApproval(estimateId),
+      fromJson: (d) => CustomerApprovalDetailResponse.fromJson(d as Map<String, dynamic>),
+    );
+    return result.when(success: (r) => r, failure: (_) => const CustomerApprovalDetailResponse());
+  }
+
+  Future<bool> processApproval(String estimateId, String action) async {
+    final result = await _client.put(
+      ApiEndpoints.customerApproval(estimateId),
+      data: {'action': action},
+    );
+    return result is Success;
+  }
+
+  Future<List<InvoiceResponse>> getInvoices() async {
+    final result = await _client.get<List<dynamic>>(
+      ApiEndpoints.customerInvoices,
+      fromJson: (d) => d as List<dynamic>,
+    );
+    return result.when(
+      success: (list) => list.map((e) => InvoiceResponse.fromJson(e as Map<String, dynamic>)).toList(),
+      failure: (_) => [],
+    );
+  }
 }
