@@ -8,6 +8,7 @@ import com.orient.workshop.common.util.PhoneUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class OtpService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final OtpRecordMapper otpRecordMapper;
+    private final Environment environment;
 
     @Value("${app.otp.expiry-minutes:5}")
     private int otpExpiryMinutes;
@@ -33,6 +35,9 @@ public class OtpService {
      * M-15: dev-only fixed OTP. When set (application-dev.yml sets it to "123456"
      * so development/demo logins keep working), generateOtp returns this value.
      * When blank (default), a SecureRandom 6-digit code is generated.
+     * S-3: the fixed value is honoured ONLY when the 'dev' profile is active;
+     * any other profile with app.otp.fixed-value set falls back to SecureRandom
+     * and logs a warning (fail-safe, never a silent fixed code in prod).
      */
     @Value("${app.otp.fixed-value:}")
     private String fixedOtpValue;
@@ -46,11 +51,13 @@ public class OtpService {
         });
 
         String otpCode = generateOtp();
-        log.info("SMS OTP for {}: {}", PhoneUtil.mask(phone), otpCode);
+        // S-6: never log the OTP itself — only a masked confirmation.
+        log.info("SMS OTP sent to {}", PhoneUtil.mask(phone));
 
         OtpRecord record = OtpRecord.builder()
                 .phone(phone)
-                .otpCode(otpCode)
+                // P1: store only a SHA-256 digest — a DB leak no longer yields codes.
+                .otpCode(hashOtp(otpCode))
                 .expiresAt(LocalDateTime.now().plusMinutes(otpExpiryMinutes))
                 .build();
         otpRecordMapper.insert(record);
@@ -65,11 +72,12 @@ public class OtpService {
         });
 
         String otpCode = generateOtp();
-        log.info("Email OTP for {}: {}", email, otpCode);
+        // S-6: never log the OTP itself.
+        log.info("Email OTP sent to {}", maskEmail(email));
 
         OtpRecord record = OtpRecord.builder()
                 .email(email)
-                .otpCode(otpCode)
+                .otpCode(hashOtp(otpCode))
                 .expiresAt(LocalDateTime.now().plusMinutes(otpExpiryMinutes))
                 .build();
         otpRecordMapper.insert(record);
@@ -79,7 +87,13 @@ public class OtpService {
         OtpRecord record = otpRecordMapper.findValidByPhone(phone)
                 .orElseThrow(() -> new BadRequestException("OTP not found or expired"));
 
-        if (!record.getOtpCode().equals(otpCode)) {
+        // S-6: cap verification attempts too (previously only the send path was capped).
+        if (record.getAttempts() >= maxAttempts) {
+            throw new TooManyRequestsException("Too many OTP attempts. Please try later.");
+        }
+
+        // S-6 + P1: constant-time comparison against the stored digest.
+        if (!constantTimeEquals(record.getOtpCode(), hashOtp(otpCode))) {
             record.setAttempts(record.getAttempts() + 1);
             otpRecordMapper.updateById(record);
             throw new BadRequestException("Invalid OTP");
@@ -92,7 +106,12 @@ public class OtpService {
         OtpRecord record = otpRecordMapper.findValidByEmail(email)
                 .orElseThrow(() -> new BadRequestException("OTP not found or expired"));
 
-        if (!record.getOtpCode().equals(otpCode)) {
+        // S-6: cap verification attempts.
+        if (record.getAttempts() >= maxAttempts) {
+            throw new TooManyRequestsException("Too many OTP attempts. Please try later.");
+        }
+
+        if (!constantTimeEquals(record.getOtpCode(), hashOtp(otpCode))) {
             record.setAttempts(record.getAttempts() + 1);
             otpRecordMapper.updateById(record);
             throw new BadRequestException("Invalid OTP");
@@ -101,9 +120,49 @@ public class OtpService {
         otpRecordMapper.markUsed(record.getId());
     }
 
+    /**
+     * P1: OTPs are never stored in plaintext — SHA-256 digest at rest.
+     */
+    private static String hashOtp(String otpCode) {
+        if (otpCode == null) return null;
+        try {
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(otpCode.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                sb.append(Character.forDigit((b >> 4) & 0xF, 16));
+                sb.append(Character.forDigit(b & 0xF, 16));
+            }
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
+    }
+
+    private static boolean constantTimeEquals(String a, String b) {
+        if (a == null || b == null) return false;
+        byte[] ba = a.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] bb = b.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return java.security.MessageDigest.isEqual(ba, bb);
+    }
+
+    private static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return "***";
+        String local = email.substring(0, email.indexOf('@'));
+        String domain = email.substring(email.indexOf('@'));
+        String maskedLocal = local.length() <= 2 ? "*".repeat(local.length()) : local.substring(0, 1) + "***" + local.substring(local.length() - 1);
+        return maskedLocal + domain;
+    }
+
     private String generateOtp() {
         if (fixedOtpValue != null && !fixedOtpValue.isBlank()) {
-            return fixedOtpValue;
+            boolean devActive = environment != null
+                    && java.util.Arrays.asList(environment.getActiveProfiles()).contains("dev");
+            if (devActive) {
+                return fixedOtpValue;
+            }
+            // S-3: fixed OTP configured outside the dev profile — refuse silently.
+            log.warn("app.otp.fixed-value is set but the 'dev' profile is NOT active; ignoring fixed OTP");
         }
         return String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
     }

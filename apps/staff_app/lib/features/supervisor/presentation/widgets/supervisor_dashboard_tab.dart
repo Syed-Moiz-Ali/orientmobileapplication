@@ -1,6 +1,5 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
@@ -86,11 +85,20 @@ Widget _SectionLabel(String text) => Row(
   ],
 );
 
-class _HeaderBanner extends StatelessWidget {
+class _HeaderBanner extends ConsumerWidget {
   const _HeaderBanner();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(supervisorDashboardProvider.notifier);
+    // FIX (audit P0): '24 Pending / 8 Delivery' were fabricated constants —
+    // the pills now show real KPI values from the backend.
+    String pending = '0';
+    String delivery = '0';
+    for (final k in notifier.kpis) {
+      if (k.label.contains('Pending')) pending = k.value;
+      if (k.label.contains('Delivery')) delivery = k.value;
+    }
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 26),
@@ -147,13 +155,13 @@ class _HeaderBanner extends StatelessWidget {
                   children: [
                     _pill(
                       Icons.pending_actions_rounded,
-                      '24 Pending',
+                      '$pending Pending',
                       AppColors.warningBorder,
                     ),
                     const SizedBox(width: 8),
                     _pill(
                       Icons.check_circle_outline_rounded,
-                      '8 Delivery',
+                      '$delivery Delivery',
                       AppColors.accent,
                     ),
                   ],
@@ -216,6 +224,26 @@ class _AdvisorBarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FIX (audit P0): crash guard — reduce() on an empty list crashed the
+    // dashboard on first launch or when the advisor-jobs API returned [].
+    if (data.isEmpty) {
+      return AppCard.surface(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _CardTitle('Job Cards \u2014 Advisor Wise'),
+              const SizedBox(height: 8),
+              const Text(
+                'No advisor job data yet',
+                style: TextStyle(color: AppColors.text2, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final maxVal = data.map((d) => d.count).reduce((a, b) => a > b ? a : b);
 
     return AppCard.surface(
@@ -489,123 +517,29 @@ class _RevenueTrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FIX (audit P0): this card previously rendered a HARDCODED line chart
+    // presented as "This Year" revenue. No daily revenue endpoint exists yet,
+    // so we show an honest placeholder instead of invented numbers.
     return AppCard.surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              _CardTitle('Revenue Trend'),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBg,
-                  borderRadius: BorderRadius.circular(AppDimensions.r20),
-                ),
-                child: const Text(
-                  'This Year',
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _CardTitle('Revenue Trend'),
           const SizedBox(height: 18),
-          SizedBox(
+          const SizedBox(
             height: 120,
-            child: CustomPaint(size: ui.Size.infinite, painter: _LinePainter()),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
-                .map(
-                  (m) => Text(
-                    m,
-                    style: const TextStyle(
-                      color: AppColors.text3,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )
-                .toList(),
+            child: Center(
+              child: Text(
+                'Daily revenue chart appears once revenue data is available',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.text3, fontSize: 12.5),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
-}
-
-class _LinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const pts = [0.65, 0.55, 0.60, 0.40, 0.48, 0.30, 0.35];
-
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        colors: [
-          AppColors.accent.withValues(alpha: 0.22),
-          AppColors.accent.withValues(alpha: 0.0),
-        ],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..style = PaintingStyle.fill;
-
-    final linePaint = Paint()
-      ..color = AppColors.accent
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final path = Path();
-    final fill = Path();
-
-    for (var i = 0; i < pts.length; i++) {
-      final x = size.width * i / (pts.length - 1);
-      final y = size.height * pts[i];
-      if (i == 0) {
-        path.moveTo(x, y);
-        fill.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-        fill.lineTo(x, y);
-      }
-    }
-    fill
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-
-    canvas.drawPath(fill, fillPaint);
-    canvas.drawPath(path, linePaint);
-
-    final dotPaint = Paint()
-      ..color = AppColors.accent
-      ..style = PaintingStyle.fill;
-    final ringPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    for (var i = 0; i < pts.length; i++) {
-      final x = size.width * i / (pts.length - 1);
-      final y = size.height * pts[i];
-      canvas.drawCircle(Offset(x, y), 5, dotPaint);
-      canvas.drawCircle(Offset(x, y), 2.5, ringPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
 }
 
 class _PendingGrid extends StatelessWidget {

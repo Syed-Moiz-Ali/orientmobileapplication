@@ -88,7 +88,9 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
       mileage: _mileageCtrl.text.trim().isEmpty ? '0 km' : _mileageCtrl.text.trim(),
       lastService: _isEditing ? _lastService() : 'N/A',
       nextDue: 'N/A',
-      healthScore: 90,
+      // FIX (audit P0): healthScore 90 was fabricated — the backend has no
+      // health-score engine, so report 0 ("no score yet") honestly.
+      healthScore: 0,
     );
 
     try {
@@ -130,8 +132,17 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
       }
     } catch (_) {
       // offline fallback
-      final local = GenericLocalDataSource(Hive.box<dynamic>('customer_cache'));
+      final box = Hive.box<dynamic>('customer_cache');
+      final local = GenericLocalDataSource(box);
       await local.save('vehicle_$id', vehicle.toJson());
+      // FIX (audit P0): the dashboard only reads the 'cached_vehicles' list —
+      // vehicles saved offline vanished until re-sync. Merge into the list.
+      final cached = List<Map<String, dynamic>>.from(
+        (box.get('cached_vehicles') as List?)?.cast() ?? const [],
+      );
+      cached.removeWhere((m) => m['id'] == id);
+      cached.add(vehicle.toJson());
+      await box.put('cached_vehicles', cached);
       final queue = ref.read(syncQueueProvider);
       await queue.enqueue(SyncOperation(
         id: id,

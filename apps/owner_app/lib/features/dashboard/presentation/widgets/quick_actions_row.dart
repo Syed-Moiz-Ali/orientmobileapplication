@@ -90,6 +90,37 @@ class QuickActionsRow extends ConsumerWidget {
                 onTap: () => context.push('/job-cards'),
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ActionButton(
+                icon: Icons.inventory_2_outlined,
+                label: 'Inventory',
+                gradient: const [Color(0xFF7C3AED), Color(0xFFA78BFA)],
+                onTap: () => context.push('/inventory'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: ActionButton(
+                icon: Icons.rate_review_outlined,
+                label: 'Review Moderation',
+                gradient: const [Color(0xFFB45309), Color(0xFFF59E0B)],
+                onTap: () => context.push('/feedback-moderation'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ActionButton(
+                icon: Icons.groups_outlined,
+                label: 'Team & Roles',
+                gradient: const [Color(0xFF0F766E), Color(0xFF14B8A6)],
+                onTap: () => context.push('/team'),
+              ),
+            ),
           ],
         ),
       ],

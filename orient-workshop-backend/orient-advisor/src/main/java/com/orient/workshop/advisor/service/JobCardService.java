@@ -31,12 +31,14 @@ public class JobCardService {
 
     private static final Set<String> VALID_STATUSES = Set.of(
             "inProgress", "pendingApproval", "qualityCheck", "completed",
-            "cancelled", "waitingParts", "pending");
+            "cancelled", "waitingParts", "pending", "awaitingSupervisor",
+            "vehicleReceived", "waitingCustomerApproval", "delivered", "qualityCheckPassed");
 
     private final JobCardMapper jobCardMapper;
     private final CustomerMapper customerMapper;
     private final VehicleMapper vehicleMapper;
     private final TechnicianTaskMapper technicianTaskMapper;
+    private final com.orient.workshop.core.service.ActivityService activityService;
 
     public PageResponse<JobCardResponse> listJobCards(String status, String search, int page, int limit,
                                                       JwtUserPrincipal principal) {
@@ -84,12 +86,12 @@ public class JobCardService {
     }
 
     @Transactional
-    public void updateStatus(Long id, String status, JwtUserPrincipal principal) {
+    public void updateStatus(String id, String status, JwtUserPrincipal principal) {
         if (status == null || !VALID_STATUSES.contains(status)) {
             throw new BadRequestException("Invalid status '" + status + "'. Allowed values: "
                     + String.join(", ", VALID_STATUSES));
         }
-        JobCard card = jobCardMapper.selectById(id);
+        JobCard card = findByIdOrRef(id);
         if (card == null || !inScope(card, principal)) {
             throw new NotFoundException("Job card not found");
         }
@@ -98,13 +100,25 @@ public class JobCardService {
     }
 
     @Transactional
-    public void assignTechnician(Long id, String technician, JwtUserPrincipal principal) {
-        JobCard card = jobCardMapper.selectById(id);
+    public void assignTechnician(String id, String technician, JwtUserPrincipal principal) {
+        JobCard card = findByIdOrRef(id);
         if (card == null || !inScope(card, principal)) {
             throw new NotFoundException("Job card not found");
         }
         card.setTechnician(technician);
+        if (!List.of("completed", "delivered", "cancelled").contains(card.getStatus())) {
+            card.setStatus("inProgress");
+        }
         jobCardMapper.updateById(card);
+    }
+
+    private JobCard findByIdOrRef(String id) {
+        if (id == null || id.isBlank()) return null;
+        if (id.matches("\\d+")) {
+            JobCard byId = jobCardMapper.selectById(Long.valueOf(id));
+            if (byId != null) return byId;
+        }
+        return jobCardMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<JobCard>().eq("job_card_ref", id));
     }
 
     @Transactional
@@ -136,10 +150,22 @@ public class JobCardService {
         if (card == null || !inScope(card, principal)) {
             throw new NotFoundException("Job card not found");
         }
-        
+
+        // Fix: 'delivered' was missing from the job_cards.status ENUM (V6 adds
+        // it). Only a job that passed completion/QC may be delivered.
+        String current = card.getStatus();
+        if (!List.of("completed", "qualityCheckPassed", "awaitingSupervisor").contains(current)) {
+            throw new BadRequestException("Job card must be completed or QC-passed before delivery (current: " + current + ")");
+        }
+
         card.setStatus("delivered");
         card.setUpdatedAt(java.time.LocalDateTime.now());
         jobCardMapper.updateById(card);
+
+        // P1: activity feed writer.
+        activityService.log("job_card", "Vehicle delivered",
+                "Job " + card.getJobCardRef() + " marked delivered",
+                principal != null ? principal.getUserId() : null);
     }
 
     private List<JobCardResponse> toResponses(List<JobCard> cards) {

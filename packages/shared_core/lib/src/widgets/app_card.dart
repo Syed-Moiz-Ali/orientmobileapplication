@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 class AppCard extends StatelessWidget {
@@ -8,7 +7,8 @@ class AppCard extends StatelessWidget {
   final Color? color;
   final Color? borderColor;
   final double borderRadius;
-  final Color shadowColor;
+  final List<BoxShadow>? boxShadow;
+  final VoidCallback? onTap;
 
   const AppCard({
     super.key,
@@ -17,37 +17,68 @@ class AppCard extends StatelessWidget {
     this.color,
     this.borderColor,
     this.borderRadius = AppDimensions.r14,
-    this.shadowColor = const Color(0x0A000000),
+    this.boxShadow,
+    this.onTap,
   });
 
   const AppCard.surface({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(AppDimensions.s16),
-    this.color = AppColors.surface,
-    this.borderColor = AppColors.border,
+    this.color,
+    this.borderColor,
     this.borderRadius = AppDimensions.r18,
-    this.shadowColor = const Color(0x0D0F172A),
+    this.boxShadow,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // Resolves colors strictly from Theme.of(context)
+    final effectiveBackgroundColor = color ?? colorScheme.surface;
+    final effectiveBorderColor = borderColor ?? colorScheme.outline.withValues(alpha: 0.12);
+
+    // Hyper-minimalist ambient shadow using the theme's shadow/onSurface tone
+    final defaultShadow = [
+      BoxShadow(
+        color: colorScheme.shadow.withValues(alpha: 0.04),
+        blurRadius: 16,
+        spreadRadius: 0,
+        offset: const Offset(0, 4),
+      ),
+    ];
+
+    final cardContent = AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
       width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(16),
+      padding: padding ?? const EdgeInsets.all(AppDimensions.s16),
       decoration: BoxDecoration(
-        color: color ?? AppColors.surface,
+        color: effectiveBackgroundColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: borderColor ?? AppColors.border, width: 0.9),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor,
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: effectiveBorderColor, width: 1.0),
+        boxShadow: boxShadow ?? defaultShadow,
       ),
       child: child,
     );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(borderRadius),
+          splashColor: colorScheme.primary.withValues(alpha: 0.05),
+          highlightColor: colorScheme.primary.withValues(alpha: 0.02),
+          child: cardContent,
+        ),
+      );
+    }
+
+    return cardContent;
   }
 }

@@ -17,6 +17,8 @@ class DualLinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // FIX (audit P0/P1): empty data crashed the dashboard (reduce on []).
+    if (primaryData.isEmpty && secondaryData.isEmpty) return;
     final allValues = [
       ...primaryData.map((d) => d.value),
       ...secondaryData.map((d) => d.value),
@@ -26,6 +28,7 @@ class DualLinePainter extends CustomPainter {
     final range = maxVal - minVal == 0 ? 1.0 : maxVal - minVal;
 
     void drawLine(List<SalesTrendPoint> data, Color color) {
+      if (data.length < 2) return; // a single point cannot form a line
       final path = Path();
       final fill = Path();
 
@@ -79,5 +82,9 @@ class DualLinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_) => false;
+  bool shouldRepaint(DualLinePainter oldDelegate) =>
+      oldDelegate.primaryData != primaryData ||
+      oldDelegate.secondaryData != secondaryData ||
+      oldDelegate.primaryColor != primaryColor ||
+      oldDelegate.secondaryColor != secondaryColor;
 }

@@ -18,8 +18,12 @@ public class NotificationService {
 
     private final NotificationMapper notificationMapper;
 
-    public List<NotificationResponse> getNotifications(JwtUserPrincipal principal) {
-        List<Notification> notifications = notificationMapper.findByUserId(principal.getUserId());
+    public List<NotificationResponse> getNotifications(JwtUserPrincipal principal, int page, int size) {
+        // P1 (audit): pagination params were accepted by the controller but
+        // ignored — the full history was returned on every call.
+        int limit = Math.min(Math.max(size, 1), 100);
+        int offset = Math.max(page - 1, 0) * limit;
+        List<Notification> notifications = notificationMapper.findByUserIdPaged(principal.getUserId(), limit, offset);
         return notifications.stream().map(this::toResponse).collect(Collectors.toList());
     }
 

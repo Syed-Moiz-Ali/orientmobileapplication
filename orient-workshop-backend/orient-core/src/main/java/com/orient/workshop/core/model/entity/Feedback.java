@@ -21,6 +21,8 @@ public class Feedback {
     private Boolean wouldRecommend;
     private String comment;
     @Builder.Default private Boolean isPublic = true;
-    @TableField(exist = false) @Builder.Default private Boolean isModerated = false;
+    // Fixed: is_moderated is a real column (V2) — it was previously
+    // @TableField(exist=false), so moderation could never be persisted.
+    @Builder.Default private Boolean isModerated = false;
     @TableField(fill = FieldFill.INSERT) private LocalDateTime createdAt;
 }

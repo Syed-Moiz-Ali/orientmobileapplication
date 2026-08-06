@@ -133,9 +133,15 @@ public class LeadService {
             existing.setSource(req.getSource());
             existing.setLastActivity(req.getLastActivity());
             if (req.getAssignedTo() != null) existing.setAssignedTo(req.getAssignedTo());
+            // P2 (audit): the update path previously never refreshed these.
+            if (req.getStatus() != null) existing.setStatus(req.getStatus());
+            if (req.getLeadValue() != null) existing.setLeadValue(req.getLeadValue());
+            if (req.getFollowUpDate() != null) existing.setFollowUpDate(req.getFollowUpDate());
             leadMapper.updateById(existing);
             return existing;
         }
+        // P2 (audit): race-safe upsert — the unique index on external_id
+        // (V9) makes concurrent syncs insert-on-duplicate instead of 500ing.
         Lead lead = Lead.builder()
                 .leadNumber(req.getLeadNumber() != null ? req.getLeadNumber() : generateLeadNumber())
                 .customerName(req.getCustomerName())
@@ -150,9 +156,23 @@ public class LeadService {
                 .followUpDate("")
                 .externalId(externalId)
                 .build();
-        leadMapper.insert(lead);
-        recordActivity(lead.getId(), "IMPORTED", "Lead imported from " + lead.getSource());
-        return lead;
+        try {
+            leadMapper.insert(lead);
+            recordActivity(lead.getId(), "IMPORTED", "Lead imported from " + lead.getSource());
+            return lead;
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // Lost the race — another sync inserted it; fetch and update.
+            Lead winner = leadMapper.findByExternalId(externalId);
+            if (winner != null) {
+                winner.setCustomerName(req.getCustomerName());
+                winner.setPhone(req.getPhone());
+                winner.setEmail(req.getEmail());
+                winner.setLastActivity(req.getLastActivity());
+                leadMapper.updateById(winner);
+                return winner;
+            }
+            throw e;
+        }
     }
 
     public long countBySource(String source) {

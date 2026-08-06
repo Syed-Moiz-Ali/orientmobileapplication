@@ -33,7 +33,13 @@ public class JwtUtil {
                 .subject(String.valueOf(userId))
                 .claim("phone", phone)
                 .claim("role", role)
-                .claim("branchId", branchId != null ? branchId : 0)
+                // FIX (audit): branchId was encoded as 0 when null — a phantom
+                // "branch 0" tenant polluted media folders and FK writes.
+                .claim("branchId", branchId)
+                // P1 (audit): jti — tokens are unique even within the same
+                // second (previously two logins in one second minted the same
+                // refresh token and hit the UNIQUE constraint → 409).
+                .id(java.util.UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + accessTokenExpiry))
                 .signWith(secretKey)
@@ -45,6 +51,9 @@ public class JwtUtil {
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("type", "refresh")
+                // P1 (audit): jti — uniqueness + future revocation/token-family
+                // tracking keyed on this claim.
+                .id(java.util.UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + refreshTokenExpiry))
                 .signWith(secretKey)

@@ -233,8 +233,9 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                       style: TextStyle(fontSize: 11, color: IC.text3),
                     ),
                     SizedBox(width: 8),
+                    // FIX (audit P0): 'swami' was a hardcoded developer name.
                     Text(
-                      'swami',
+                      'You',
                       style: TextStyle(fontSize: 12, color: IC.text1),
                     ),
                     SizedBox(width: 4),

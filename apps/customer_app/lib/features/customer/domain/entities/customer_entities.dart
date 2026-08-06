@@ -24,7 +24,6 @@ class CustomerEntity {
     required this.memberId,
   });
 
-  static const mock = CustomerEntity(name: 'Ahmed Hassan', firstName: 'Ahmed', avatarInitials: 'AH', memberId: 'CUST-001');
   Map<String, dynamic> toJson() => {'name': name, 'firstName': firstName, 'avatarInitials': avatarInitials, 'memberId': memberId};
   factory CustomerEntity.fromJson(Map<String, dynamic> j) => CustomerEntity(
     name: j['name'] as String? ?? '', firstName: j['firstName'] as String? ?? '',
@@ -61,7 +60,6 @@ class CustomerVehicleEntity {
   String get displayName => '$brand $model';
   String get shortLabel => '$brand $model \u00b7 $plateNumber';
 
-  static const List<CustomerVehicleEntity> mock = [];
   Map<String, dynamic> toJson() => {'id': id, 'brand': brand, 'model': model, 'plateNumber': plateNumber, 'vin': vin, 'color': color, 'year': year, 'mileage': mileage, 'lastService': lastService, 'nextDue': nextDue, 'healthScore': healthScore};
   factory CustomerVehicleEntity.fromJson(Map<String, dynamic> j) => CustomerVehicleEntity(
     id: j['id'] as String? ?? '', brand: j['brand'] as String? ?? '', model: j['model'] as String? ?? '',
@@ -101,10 +99,8 @@ class CustomerBookingEntity {
     }
   }
 
-  static const List<CustomerBookingEntity> mock = [
-    CustomerBookingEntity(service: 'Oil Change & Filter', vehicleName: 'BMW 3 Series', plateNumber: 'AB19 XYZ', date: '5 Apr 2026', time: '10:00 AM', status: BookingStatus.confirmed),
-    CustomerBookingEntity(service: 'Brake Inspection', vehicleName: 'Ford Focus', plateNumber: 'FO21 CUS', date: '20 Mar 2026', time: '2:00 PM', status: BookingStatus.completed),
-  ];
+  // FIX (audit P0): UK-flavoured mock bookings removed — data comes from the API.
+
   Map<String, dynamic> toJson() => {'service': service, 'vehicleName': vehicleName, 'plateNumber': plateNumber, 'date': date, 'time': time, 'status': status.name};
   factory CustomerBookingEntity.fromJson(Map<String, dynamic> j) => CustomerBookingEntity(
     service: j['service'] as String? ?? '', vehicleName: j['vehicleName'] as String? ?? '',
@@ -152,19 +148,8 @@ class CustomerServiceEntity {
     required this.stages,
   });
 
-  static const mock = CustomerServiceEntity(
-    hasActiveJob: false,
-    jobCardId: '',
-    plateNumber: '',
-    vehicleName: '',
-    service: '',
-    started: '',
-    estCompletion: '',
-    progressPercent: 0,
-    currentStage: '',
-    technicianName: '',
-    stages: [],
-  );
+  // FIX (audit P0): empty-state mock removed; real service state comes from
+  // the /customers/services/active API.
   Map<String, dynamic> toJson() => {'jobCardId': jobCardId, 'plateNumber': plateNumber, 'vehicleName': vehicleName, 'service': service, 'started': started, 'estCompletion': estCompletion, 'progressPercent': progressPercent, 'currentStage': currentStage, 'technicianName': technicianName, 'stages': stages.map((s) => s.toJson()).toList()};
   factory CustomerServiceEntity.fromJson(Map<String, dynamic> j) => CustomerServiceEntity(
     jobCardId: j['jobCardId'] as String? ?? '', plateNumber: j['plateNumber'] as String? ?? '',
@@ -203,38 +188,8 @@ class CustomerNotificationEntity {
     );
   }
 
-  static List<CustomerNotificationEntity> get mock => [
-    const CustomerNotificationEntity(
-      id: 'n1',
-      type: NotifType.carReady,
-      title: 'Your car is ready!',
-      body: 'BMW 3 Series has completed its Full Inspection.',
-      time: '26 Mar \u00b7 16:30',
-    ),
-    const CustomerNotificationEntity(
-      id: 'n2',
-      type: NotifType.bookingConfirmed,
-      title: 'Booking confirmed',
-      body: 'Full Inspection on 25 Mar 2026 at 09:00 confirmed.',
-      time: '24 Mar \u00b7 14:00',
-    ),
-    const CustomerNotificationEntity(
-      id: 'n3',
-      type: NotifType.invoiceReady,
-      title: 'Invoice ready',
-      body: 'Invoice INV-2026-0003 for \u00a3380.00 is now available.',
-      time: '26 Mar \u00b7 19:00',
-      isRead: true,
-    ),
-    const CustomerNotificationEntity(
-      id: 'n4',
-      type: NotifType.approvalNeeded,
-      title: 'Approval needed',
-      body: 'Worn brake pads & low coolant found.',
-      time: '26 Mar \u00b7 10:34',
-      isRead: true,
-    ),
-  ];
+  // FIX (audit P0): UK-flavoured mock notifications (incl. a £ invoice)
+  // removed — notifications come from the API.
   Map<String, dynamic> toJson() => {'id': id, 'title': title, 'body': body, 'time': time, 'type': type.name, 'isRead': isRead};
   factory CustomerNotificationEntity.fromJson(Map<String, dynamic> j) => CustomerNotificationEntity(
     id: j['id'] as String? ?? '', title: j['title'] as String? ?? '', body: j['body'] as String? ?? '',
@@ -255,44 +210,10 @@ class ServiceTypeEntity {
     required this.duration,
   });
 
-  static const List<ServiceTypeEntity> list = [
-    ServiceTypeEntity(
-      id: '1',
-      name: 'Oil Change',
-      price: 'From \u00a365',
-      duration: '~1 hr',
-    ),
-    ServiceTypeEntity(
-      id: '2',
-      name: 'Tyre Rotation',
-      price: 'From \u00a355',
-      duration: '~45 min',
-    ),
-    ServiceTypeEntity(
-      id: '3',
-      name: 'Full Inspection',
-      price: 'From \u00a3120',
-      duration: '~2 hrs',
-    ),
-    ServiceTypeEntity(
-      id: '4',
-      name: 'General Repair',
-      price: 'POA',
-      duration: 'Varies',
-    ),
-    ServiceTypeEntity(
-      id: '5',
-      name: 'MOT Test',
-      price: 'From \u00a354.85',
-      duration: '~1 hr',
-    ),
-    ServiceTypeEntity(
-      id: '6',
-      name: 'Full Service',
-      price: 'From \u00a3280',
-      duration: '~3 hrs',
-    ),
-  ];
+  // FIX (audit P0): the hardcoded GBP ("From £65") service catalogue is
+  // removed — services and prices must come from the /services/types API so
+  // the workshop controls pricing and currency.
+  static const List<ServiceTypeEntity> list = [];
 }
 
 const List<String> kTimeSlots = [

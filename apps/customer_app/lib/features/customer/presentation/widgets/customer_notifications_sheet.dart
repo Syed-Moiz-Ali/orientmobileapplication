@@ -11,107 +11,70 @@ class CustomerNotificationsSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
-    final unread = state.unreadCount;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
-        bottom: false,
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.r24)),
+        ),
         child: Column(
           children: [
+            const SizedBox(height: AppDimensions.s12),
             Container(
-              color: AppColors.surface,
-              height: 60,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.s18,
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.outline.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s24, vertical: AppDimensions.s16),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.bg,
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 14,
-                        color: AppColors.text3,
-                      ),
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Notifications', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                      if (state.unreadCount > 0)
+                        Text(
+                          '${state.unreadCount} unread',
+                          style: textTheme.bodySmall?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w600),
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: AppDimensions.s12),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Notifications',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        if (unread > 0)
-                          Text(
-                            '$unread unread',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (unread > 0)
-                    GestureDetector(
-                      onTap: () => notifier.markAllRead(),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.s12,
-                          vertical: AppDimensions.s6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryBg,
-                          borderRadius: BorderRadius.circular(AppDimensions.r8),
-                        ),
-                        child: const Text(
-                          'Mark all read',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                  const Spacer(),
+                  if (state.unreadCount > 0)
+                    TextButton(
+                      onPressed: () => notifier.markAllRead(),
+                      child: Text('Mark all read', style: textTheme.labelLarge?.copyWith(color: colorScheme.primary)),
                     ),
                 ],
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.08)),
             Expanded(
               child: state.notifications.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'No notifications',
-                        style: TextStyle(color: AppColors.text3),
+                        style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppDimensions.s8,
-                      ),
+                      controller: scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s24, vertical: AppDimensions.s12),
                       itemCount: state.notifications.length,
                       itemBuilder: (_, i) => _NotifCard(
                         notif: state.notifications[i],
-                        onTap: () =>
-                            notifier.markRead(state.notifications[i].id),
+                        onTap: () => notifier.markRead(state.notifications[i].id),
                       ),
                     ),
             ),
@@ -125,65 +88,47 @@ class CustomerNotificationsSheet extends ConsumerWidget {
 class _NotifCard extends StatelessWidget {
   final CustomerNotificationEntity notif;
   final VoidCallback onTap;
+
   const _NotifCard({required this.notif, required this.onTap});
 
-  (Color, Color, IconData) get _style {
+  (Color, IconData) _style(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (notif.type) {
       case NotifType.carReady:
-        return (
-          AppColors.success,
-          AppColors.successBg,
-          Icons.check_circle_rounded,
-        );
+        return (colorScheme.tertiary, Icons.check_circle_rounded);
       case NotifType.bookingConfirmed:
-        return (
-          AppColors.primary,
-          AppColors.primaryBg,
-          Icons.calendar_month_rounded,
-        );
+        return (colorScheme.primary, Icons.calendar_month_rounded);
       case NotifType.invoiceReady:
-        return (
-          AppColors.warning,
-          AppColors.warningBg,
-          Icons.receipt_long_rounded,
-        );
       case NotifType.approvalNeeded:
-        return (AppColors.warning, AppColors.warningBg, Icons.warning_rounded);
+        return (colorScheme.secondary, Icons.receipt_long_rounded);
       case NotifType.workInProgress:
-        return (AppColors.primary, AppColors.primaryBg, Icons.build_rounded);
+        return (colorScheme.primary, Icons.build_rounded);
       case NotifType.reminder:
-        return (AppColors.info, AppColors.infoBg, Icons.notifications_rounded);
+        return (colorScheme.primary, Icons.notifications_rounded);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final (color, bg, icon) = _style;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final (color, icon) = _style(context);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.fromLTRB(
-          AppDimensions.s16,
-          0,
-          AppDimensions.s16,
-          AppDimensions.s8,
-        ),
-        padding: const EdgeInsets.all(AppDimensions.s14),
+        margin: const EdgeInsets.only(bottom: AppDimensions.s12),
+        padding: const EdgeInsets.all(AppDimensions.s16),
         decoration: BoxDecoration(
-          color: notif.isRead ? AppColors.surface : color.withValues(alpha: .05),
-          borderRadius: BorderRadius.circular(AppDimensions.r14),
+          color: notif.isRead ? colorScheme.surface : color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(AppDimensions.r16),
           border: Border.all(
-            color: notif.isRead ? AppColors.border : color.withValues(alpha: .3),
-            width: notif.isRead ? 0.8 : 1.5,
+            color: notif.isRead ? colorScheme.outline.withValues(alpha: 0.08) : color.withValues(alpha: 0.2),
+            width: notif.isRead ? 1.0 : 1.5,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,8 +136,8 @@ class _NotifCard extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-              child: Icon(icon, color: color, size: 19),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: AppDimensions.s12),
             Expanded(
@@ -201,29 +146,26 @@ class _NotifCard extends StatelessWidget {
                 children: [
                   Text(
                     notif.title,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: notif.isRead
-                          ? FontWeight.w500
-                          : FontWeight.w700,
-                      color: AppColors.textPrimary,
+                    style: textTheme.labelLarge?.copyWith(
+                      fontWeight: notif.isRead ? FontWeight.w500 : FontWeight.w700,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: AppDimensions.s4),
                   Text(
                     notif.body,
-                    style: const TextStyle(
+                    style: textTheme.bodyMedium?.copyWith(
                       fontSize: 12,
-                      color: AppColors.text3,
-                      height: 1.45,
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.4,
                     ),
                   ),
                   const SizedBox(height: AppDimensions.s6),
                   Text(
                     notif.time,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.text4,
+                    style: textTheme.bodySmall?.copyWith(
+                      fontSize: 10,
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                     ),
                   ),
                 ],

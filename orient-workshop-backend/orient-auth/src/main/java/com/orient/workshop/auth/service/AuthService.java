@@ -246,7 +246,11 @@ public class AuthService {
                 String normalizedPhone = PhoneUtil.normalize(phone);
                 otpService.verifySmsOtp(normalizedPhone, otp);
                 user = userMapper.findByPhone(normalizedPhone)
-                        .orElseThrow(() -> new BadRequestException("User not found with phone: " + PhoneUtil.mask(normalizedPhone)));
+                        .orElseThrow(() -> {
+                            // S-14: generic message — never confirm account existence.
+                            log.info("reset-password: no account for masked phone {}", PhoneUtil.mask(normalizedPhone));
+                            return new BadRequestException("If an account exists, a reset code was sent");
+                        });
             }
             case "email" -> {
                 if (email == null || email.isBlank())
@@ -254,7 +258,11 @@ public class AuthService {
                 String normalizedEmail = email.trim().toLowerCase();
                 otpService.verifyEmailOtp(normalizedEmail, otp);
                 user = userMapper.findByEmail(normalizedEmail)
-                        .orElseThrow(() -> new BadRequestException("User not found with email: " + normalizedEmail));
+                        .orElseThrow(() -> {
+                            // S-14: generic message — never confirm account existence.
+                            log.info("reset-password: no account for email {}", maskEmail(normalizedEmail));
+                            return new BadRequestException("If an account exists, a reset code was sent");
+                        });
             }
             default -> throw new BadRequestException("Invalid type. Use 'sms' or 'email'");
         }
@@ -276,10 +284,13 @@ public class AuthService {
     private User findOrCreateUserByPhone(String phone) {
         return userMapper.findByPhone(phone)
                 .orElseGet(() -> {
+                    // S-2: OTP self-service accounts are ALWAYS customers.
+                    // Privileged roles (advisor/supervisor/technician/owner/crm)
+                    // require an existing staff record provisioned by an admin flow.
                     User newUser = User.builder()
                             .phone(phone)
                             .name("")
-                            .role(resolveDefaultRole(phone))
+                            .role(RoleConstants.CUSTOMER)
                             .build();
                     userMapper.insert(newUser);
                     return newUser;
@@ -299,21 +310,8 @@ public class AuthService {
                 });
     }
 
-    private String resolveDefaultRole(String phone) {
-        String cleaned = phone.replaceAll("[^0-9]", "");
-        String suffix = cleaned.length() >= 3
-                ? cleaned.substring(cleaned.length() - 3)
-                : cleaned;
-        return switch (suffix) {
-            case "001" -> "advisor";
-            case "002" -> "supervisor";
-            case "003" -> "technician";
-            case "004" -> "customer";
-            case "005" -> "owner";
-            case "006" -> "crmDashboard";
-            default -> "customer";
-        };
-    }
+    // S-2 (resolved): new OTP users are always customers; privileged roles
+    // require an admin-provisioned staff record (see findOrCreateUserByPhone).
 
     // ========== LOGIN FAILURE BACKOFF ==========
 
@@ -328,6 +326,14 @@ public class AuthService {
             return "phone:" + PhoneUtil.mask(identifier.substring("phone:".length()));
         }
         return identifier;
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return "***";
+        String local = email.substring(0, email.indexOf('@'));
+        String domain = email.substring(email.indexOf('@'));
+        String maskedLocal = local.length() <= 2 ? "*".repeat(local.length()) : local.substring(0, 1) + "***" + local.substring(local.length() - 1);
+        return maskedLocal + domain;
     }
 
     private void evictExpiredAttempts(long now) {

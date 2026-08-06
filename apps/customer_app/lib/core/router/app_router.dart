@@ -76,7 +76,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.customerDashboard,
         name: AppRoutes.customerDashboard,
-        builder: (context, state) => const CustomerDashboardView(),
+        // FIX (audit P0/P1): 'Track Booking' pushes extra {'tab': 1} which was
+        // silently ignored — the user landed on Home. Pass it through.
+        builder: (context, state) {
+          final extra = state.extra;
+          int initialTab = 0;
+          if (extra is Map<String, dynamic> && extra['tab'] is int) {
+            initialTab = extra['tab'] as int;
+          }
+          return CustomerDashboardView(initialTab: initialTab);
+        },
       ),
       GoRoute(
         path: AppRoutes.customerBookService,

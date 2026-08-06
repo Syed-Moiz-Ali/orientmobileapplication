@@ -4,10 +4,11 @@ class TechnicianRemoteDataSource {
   final ApiClient _client;
   TechnicianRemoteDataSource(this._client);
 
+  // FIX (audit P0): identity is resolved from the JWT principal server-side;
+  // empId is no longer a query parameter (was an IDOR + default EMP-001 bug).
   Future<TechnicianProfileResponse> getProfile(String empId) async =>
       (await _client.get<TechnicianProfileResponse>(
         ApiEndpoints.technicianProfile,
-        queryParams: {'empId': empId},
         fromJson: (d) => TechnicianProfileResponse.fromJson(d),
       )).when(
         success: (v) => v,

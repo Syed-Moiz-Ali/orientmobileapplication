@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,11 +19,10 @@ public class ReminderService {
 
     private final ReminderMapper reminderMapper;
 
-    private final Set<Long> softDeletedIds = ConcurrentHashMap.newKeySet();
-
     public List<ReminderResponse> getReminders() {
+        // Fix: soft-delete persisted via the `deleted` column (V2) — the old
+        // in-memory set resurrected deleted reminders on every restart.
         return reminderMapper.findActive().stream()
-                .filter(r -> !softDeletedIds.contains(r.getId()))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -50,10 +47,12 @@ public class ReminderService {
     public void deleteReminder(Long id) {
         Reminder r = reminderMapper.selectById(id);
         if (r == null) throw new NotFoundException("Reminder not found");
-        if (r.getIsCompleted() != null && r.getIsCompleted()) {
+        if (Boolean.TRUE.equals(r.getIsCompleted())) {
             throw new NotFoundException("Reminder not found");
         }
-        softDeletedIds.add(id);
+        // Fix: persisted soft delete.
+        r.setDeleted(true);
+        reminderMapper.updateById(r);
     }
 
     private ReminderResponse toResponse(Reminder r) {

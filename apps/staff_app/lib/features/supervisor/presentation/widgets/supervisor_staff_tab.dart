@@ -98,8 +98,10 @@ class SupervisorStaffTab extends ConsumerWidget {
                       color: AppColors.successBg,
                       borderRadius: BorderRadius.circular(20),
                     ),
+                    // FIX (audit P0): 'Online' was a fabricated badge — no
+                    // presence API exists. Show the real staff role instead.
                     child: const Text(
-                      'Online',
+                      'Advisor',
                       style: TextStyle(
                         color: AppColors.success,
                         fontSize: 10,
@@ -181,8 +183,9 @@ class SupervisorStaffTab extends ConsumerWidget {
                       color: AppColors.successBg,
                       borderRadius: BorderRadius.circular(20),
                     ),
+                    // FIX (audit P0): 'Online' was a fabricated badge.
                     child: const Text(
-                      'Online',
+                      'Technician',
                       style: TextStyle(
                         color: AppColors.success,
                         fontSize: 10,

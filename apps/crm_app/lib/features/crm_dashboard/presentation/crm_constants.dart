@@ -18,6 +18,8 @@ class CrmColors {
   static const Color amberBg = Color(0xFFFFF8EC);
   static const Color red = Color(0xFFB91C1C);
   static const Color redBg = Color(0xFFFEECEC);
+  static const Color blue = Color(0xFF2563EB);
+  static const Color blueBg = Color(0xFFEFF6FF);
   static const Color purple = Color(0xFF6D28D9);
   static const Color purpleBg = AppColors.purpleSoft;
   static const Color liveDot = AppColors.cyan;

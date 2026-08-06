@@ -40,4 +40,28 @@ public class FeedbackController {
     public ApiResponse<Map<String, Object>> stats(@RequestParam(required = false) Long branchId) {
         return ApiResponse.success(feedbackService.getStats(branchId));
     }
+
+    /**
+     * Moderation: staff may approve/reject public visibility of a review.
+     * Path-level RBAC: /feedback/** allows staff + customer; this specific
+     * action is additionally gated to staff roles by method security.
+     */
+    @PutMapping("/feedback/{id}/moderation")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADVISOR','SUPERVISOR','OWNER','ADMIN')")
+    public ApiResponse<Map<String, Boolean>> moderate(@PathVariable Long id,
+                                                      @RequestParam(defaultValue = "true") boolean isPublic) {
+        feedbackService.moderate(id, isPublic);
+        return ApiResponse.success(Map.of("moderated", true));
+    }
+
+    /**
+     * P2 (audit): moderation inbox (staff-only).
+     */
+    @GetMapping("/feedback/pending")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADVISOR','SUPERVISOR','OWNER','ADMIN')")
+    public ApiResponse<List<Feedback>> pending(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return ApiResponse.success(feedbackService.getPendingModeration(page, size));
+    }
 }

@@ -46,21 +46,17 @@ public class OwnerDashboardService {
         BigDecimal partsRevenue = ownerStatsMapper.sumPartsTotal();
         BigDecimal labourRevenue = ownerStatsMapper.sumServicesTotal();
 
+        // FIX (audit P0): removed 7 hardcoded "0" KPIs (purchases, payables,
+        // profit, cash, bank, inventory, commission) and the duplicated
+        // "Total Sales" card. Every card shown is now computed from real data;
+        // unbacked metrics are simply absent until their tables exist.
         return List.of(
             kpi("Active Jobs", String.valueOf(activeJobs), "Open job cards"),
             kpi("New Jobs", String.valueOf(newToday), "Today"),
             kpi("Cancelled Jobs", String.valueOf(cancelled), "Total"),
             kpi("Total Jobs", String.valueOf(totalJobs), "All time"),
-            kpi("Total Sales", formatCurrency(invoiceRevenue), "Invoiced"),
-            kpi("Total Purchases", "0", "No purchase data"),
-            kpi("Receivables", formatCurrency(receivables), "Unpaid"),
-            kpi("Payables", "0", "No payable data"),
-            kpi("Total Profit", "0", "No cost data"),
-            kpi("Total Cash", "0", "No cash data"),
-            kpi("Total Bank", "0", "No bank data"),
-            kpi("Inventory Value", "0", "No stock data"),
-            kpi("Commission", "0", "No commission data"),
             kpi("Invoice Revenue", formatCurrency(invoiceRevenue), "All time"),
+            kpi("Receivables", formatCurrency(receivables), "Unpaid"),
             kpi("Parts Revenue", formatCurrency(partsRevenue), "Repair orders"),
             kpi("Labour Revenue", formatCurrency(labourRevenue), "Repair orders")
         );
@@ -76,16 +72,24 @@ public class OwnerDashboardService {
         return dailyTrend(lastDays(7), day -> byDay.getOrDefault(day, BigDecimal.ZERO).longValue());
     }
 
+    /**
+     * FIX (audit P0): this endpoint previously returned completed-JOB COUNTS
+     * mislabeled as profit — a materially misleading chart. Without a cost
+     * ledger there is no true profit; return daily invoice revenue instead
+     * (real, computed data).
+     */
     public List<TrendPointResponse> getProfitTrend() {
-        List<JobCard> cards = jobCardMapper.selectList(null);
-        return dailyTrend(lastDays(7), day -> cards.stream()
-                .filter(c -> c.getCreatedAt() != null
-                        && c.getCreatedAt().toLocalDate().equals(day)
-                        && "completed".equals(c.getStatus()))
-                .count());
+        Map<LocalDate, BigDecimal> byDay = new HashMap<>();
+        for (Invoice inv : invoiceMapper.selectList(null)) {
+            if (inv.getCreatedAt() == null || inv.getAmount() == null) continue;
+            LocalDate day = inv.getCreatedAt().toLocalDate();
+            byDay.merge(day, inv.getAmount(), BigDecimal::add);
+        }
+        return dailyTrend(lastDays(7), day -> byDay.getOrDefault(day, BigDecimal.ZERO).longValue());
     }
 
     public List<TrendPointResponse> getExpensesTrend() {
+        // No cost/expense ledger exists yet — an honest all-zero series.
         return dailyTrend(lastDays(7), day -> 0L);
     }
 
@@ -133,10 +137,9 @@ public class OwnerDashboardService {
                 topSales("Customer Wise", byCustomer),
                 topSales("Brand/Model Wise", byBrand),
                 topSales("Advisor Wise", byAdvisor),
-                topSales("Profit Wise", List.of()),
                 topSales("Sales Value Wise", bySalesValue),
-                topSales("Spare Parts Profit Wise", byParts),
-                topSales("Labour Profit Wise", byLabour),
+                topSales("Spare Parts Revenue Wise", byParts),
+                topSales("Labour Revenue Wise", byLabour),
                 topSales("Department Wise", byDepartment)
         );
     }

@@ -41,8 +41,9 @@ public class BookingController {
     @GetMapping("/bookings/availability")
     public ApiResponse<BookingAvailabilityResponse> getAvailability(
             @RequestParam String date,
-            @RequestParam(required = false) String serviceType) {
-        return ApiResponse.success(bookingService.getAvailability(date, serviceType));
+            @RequestParam(required = false) String serviceType,
+            @RequestParam(required = false) Long branchId) {
+        return ApiResponse.success(bookingService.getAvailability(date, serviceType, branchId));
     }
 
     @PutMapping("/customers/bookings/{bookingId}/status")

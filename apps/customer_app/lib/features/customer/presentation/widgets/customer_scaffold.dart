@@ -11,7 +11,8 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_veh
 import 'package:customer_app/features/customer/presentation/widgets/customer_approvals_tab.dart';
 
 class CustomerScaffold extends ConsumerStatefulWidget {
-  const CustomerScaffold({super.key});
+  final int initialTab;
+  const CustomerScaffold({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<CustomerScaffold> createState() => _CustomerScaffoldState();
@@ -27,24 +28,36 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // FIX (audit): apply the requested initial tab once (deep-link/extra).
+    if (widget.initialTab > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(customerDashboardProvider.notifier).selectTab(widget.initialTab);
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
+    final colorScheme = Theme.of(context).colorScheme;
 
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
+      SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+        statusBarIconBrightness: Theme.of(context).brightness == Brightness.dark ? Brightness.light : Brightness.dark,
       ),
     );
 
-    return DashboardShell(
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: CustomerAppBar(state: state, notifier: notifier),
       body: IndexedStack(index: state.selectedIndex, children: _pages),
-      bottomNavigationBar: _BottomNav(
-        selectedIndex: state.selectedIndex,
-        onTap: (index) => notifier.selectTab(index),
-      ),
+      bottomNavigationBar: _BottomNav(selectedIndex: state.selectedIndex, onTap: (index) => notifier.selectTab(index)),
     );
   }
 }
@@ -52,10 +65,15 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
 class _BottomNav extends StatelessWidget {
   final int selectedIndex;
   final void Function(int) onTap;
+
   const _BottomNav({required this.selectedIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     const items = [
       (Icons.home_rounded, Icons.home_outlined, 'Home'),
       (Icons.track_changes_rounded, Icons.track_changes_outlined, 'Status'),
@@ -66,20 +84,13 @@ class _BottomNav extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: const Border(top: BorderSide(color: AppColors.border)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.07),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12))),
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 74,
+          height: 68,
           child: Row(
             children: List.generate(items.length, (i) {
               final sel = selectedIndex == i;
@@ -91,32 +102,26 @@ class _BottomNav extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
+                        duration: const Duration(milliseconds: 200),
                         curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 6,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         decoration: BoxDecoration(
-                          color: sel
-                              ? AppColors.cyanLight
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r24)),
+                          color: sel ? colorScheme.primary.withValues(alpha: 0.12) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(100),
                         ),
                         child: Icon(
                           sel ? items[i].$1 : items[i].$2,
-                          color: sel ? AppColors.accent : AppColors.text3,
-                          size: 26,
+                          color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                          size: 22,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 4),
                       Text(
                         items[i].$3,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: sel ? AppColors.accent : AppColors.text3,
-                          fontWeight: sel ? FontWeight.w800 : FontWeight.w500,
-                          letterSpacing: sel ? 0.2 : 0,
+                        style: textTheme.labelSmall?.copyWith(
+                          fontSize: 10,
+                          color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                          fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                         ),
                       ),
                     ],

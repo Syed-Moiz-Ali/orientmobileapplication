@@ -39,8 +39,7 @@ public class SupervisorKpiService {
             kpi(String.valueOf(pending), "Total Job Cards Pending", "Open job cards"),
             kpi(String.valueOf(completedToday), "Today Delivery Job Cards", "Completed today"),
             kpi(String.valueOf(advisors), "Total Advisors Present", "Active advisors"),
-            kpi(String.valueOf(idleTechnicians), "Total Idle Technicians", "No open assignment"),
-            kpi("0", "Waiting to Assign Stock", "No stock data")
+            kpi(String.valueOf(idleTechnicians), "Total Idle Technicians", "No open assignment")
         );
     }
 
@@ -68,12 +67,12 @@ public class SupervisorKpiService {
         BigDecimal total = statsMapper.sumRepairGrand();
         BigDecimal service = statsMapper.sumRepairServices();
         BigDecimal parts = statsMapper.sumRepairParts();
+        // FIX (audit P0): removed the two fabricated "$0" revenue cards
+        // ("Labour Revenue" / "Other Revenue") — no separate data source exists.
         return List.of(
             revenue(formatCurrency(total), "Total Revenue", ""),
             revenue(formatCurrency(service), "Service Revenue", ""),
-            revenue(formatCurrency(parts), "Parts Revenue", ""),
-            revenue("$0", "Labour Revenue", "No separate data"),
-            revenue("$0", "Other Revenue", "No separate data")
+            revenue(formatCurrency(parts), "Parts Revenue", "")
         );
     }
 
@@ -110,7 +109,7 @@ public class SupervisorKpiService {
 
     private String formatCurrency(BigDecimal v) {
         BigDecimal value = v != null ? v : BigDecimal.ZERO;
-        return "$" + NumberFormat.getNumberInstance(Locale.US)
+        return "AED " + NumberFormat.getNumberInstance(Locale.US)
                 .format(value.setScale(2, RoundingMode.HALF_UP));
     }
 }

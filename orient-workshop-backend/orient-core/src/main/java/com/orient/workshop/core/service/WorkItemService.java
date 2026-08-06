@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,12 +40,29 @@ public class WorkItemService {
     // ---------- Listing ----------
 
     public List<WorkItemResponse> listForJobCard(String jobCardRef) {
-        return taskMapper.findByJobCardNo(jobCardRef).stream().map(this::toResponse).collect(Collectors.toList());
+        // P1 (audit): batched staff lookup — empName() ran one query per task.
+        List<TechnicianTask> tasks = taskMapper.findByJobCardNo(jobCardRef);
+        return toResponses(tasks);
     }
 
     public List<WorkItemResponse> listMyItems(String empId) {
         if (empId == null || empId.isBlank()) return List.of();
-        return taskMapper.findByEmpId(empId).stream().map(this::toResponse).collect(Collectors.toList());
+        return toResponses(taskMapper.findByEmpId(empId));
+    }
+
+    private List<WorkItemResponse> toResponses(List<TechnicianTask> tasks) {
+        if (tasks.isEmpty()) return List.of();
+        List<String> empIds = tasks.stream()
+                .map(TechnicianTask::getEmpId)
+                .filter(e -> e != null && !e.isBlank())
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> names = empIds.isEmpty() ? Map.of()
+                : staffMapper.findByEmpIds(empIds).stream()
+                        .collect(Collectors.toMap(Staff::getEmpId,
+                                s -> s.getName() != null ? s.getName() : "",
+                                (a, b) -> a));
+        return tasks.stream().map(t -> toResponse(t, names)).collect(Collectors.toList());
     }
 
     // ---------- Assignment (advisor) ----------
@@ -196,7 +214,7 @@ public class WorkItemService {
         }
     }
 
-    private WorkItemResponse toResponse(TechnicianTask t) {
+    private WorkItemResponse toResponse(TechnicianTask t, Map<String, String> empNames) {
         return WorkItemResponse.builder()
                 .id(t.getId())
                 .taskRef(t.getTaskRef())
@@ -205,17 +223,12 @@ public class WorkItemService {
                 .itemType(t.getItemType() != null ? t.getItemType() : "WORK")
                 .status(t.getStatus() != null ? t.getStatus() : "pending")
                 .empId(t.getEmpId() != null ? t.getEmpId() : "")
-                .empName(empName(t.getEmpId()))
+                .empName(t.getEmpId() != null ? empNames.getOrDefault(t.getEmpId(), "") : "")
                 .startTime(t.getStartTime() != null ? t.getStartTime() : "")
                 .endTime(t.getEndTime() != null ? t.getEndTime() : "")
                 .qty(t.getQty() != null ? t.getQty() : 1)
                 .rate(t.getRate() != null ? t.getRate() : 0)
                 .rejectReason(t.getRejectReason() != null ? t.getRejectReason() : "")
                 .build();
-    }
-
-    private String empName(String empId) {
-        if (empId == null || empId.isBlank()) return "";
-        return staffMapper.findByEmpId(empId).map(Staff::getName).orElse("");
     }
 }

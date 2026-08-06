@@ -3,6 +3,7 @@ package com.orient.workshop.customer.service;
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.ForbiddenException;
+import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.model.entity.Feedback;
 import com.orient.workshop.core.model.entity.JobCard;
@@ -36,6 +37,12 @@ public class FeedbackService {
         if (rating == null || rating < 1 || rating > 5) {
             throw new BadRequestException("rating must be between 1 and 5");
         }
+        // validate every dimension, not just `rating`
+        validateDimension("overallRating", req.getOverallRating());
+        validateDimension("workQuality", req.getWorkQuality());
+        validateDimension("communication", req.getCommunication());
+        validateDimension("timeliness", req.getTimeliness());
+        validateDimension("valueForMoney", req.getValueForMoney());
         if (req.getJobCardId() != null && jobCardMapper.selectById(req.getJobCardId()) == null) {
             throw new BadRequestException("Job card not found with id: " + req.getJobCardId());
         }
@@ -52,25 +59,36 @@ public class FeedbackService {
                 .valueForMoney(req.getValueForMoney())
                 .wouldRecommend(req.getWouldRecommend())
                 .comment(req.getComment())
-                .isPublic(req.getIsPublic() != null ? req.getIsPublic() : true)
+                // fixed: new feedback is NOT public until moderated
+                .isPublic(false)
                 .isModerated(false)
                 .build();
         feedbackMapper.insert(fb);
         return IdResponse.builder().id(String.valueOf(fb.getId())).build();
     }
 
+    private void validateDimension(String field, Integer value) {
+        if (value != null && (value < 1 || value > 5)) {
+            throw new BadRequestException(field + " must be between 1 and 5");
+        }
+    }
+
+    /**
+     * Public reads only return moderated + public feedback (fixed: previously
+     * served every row regardless of is_public / is_moderated).
+     */
     public List<Feedback> getAll(Long branchId, int page, int size) {
         int offset = Math.max(page - 1, 0) * size;
         if (branchId != null) {
-            return feedbackMapper.findByBranchPaged(branchId, size, offset);
+            return feedbackMapper.findPublicByBranchPaged(branchId, size, offset);
         }
-        return feedbackMapper.findAllPaged(size, offset);
+        return feedbackMapper.findPublicPaged(size, offset);
     }
 
     public Map<String, Object> getStats(Long branchId) {
         List<Feedback> all = branchId != null
-                ? feedbackMapper.findByBranchPaged(branchId, Integer.MAX_VALUE, 0)
-                : feedbackMapper.findAllPaged(Integer.MAX_VALUE, 0);
+                ? feedbackMapper.findPublicByBranchPaged(branchId, Integer.MAX_VALUE, 0)
+                : feedbackMapper.findPublicPaged(Integer.MAX_VALUE, 0);
         double avg = all.stream().mapToInt(Feedback::getRating).average().orElse(0);
         long total = all.size();
         Map<String, Object> stats = new HashMap<>();
@@ -84,6 +102,29 @@ public class FeedbackService {
             "1", all.stream().filter(f -> f.getRating() == 1).count()
         ));
         return stats;
+    }
+
+    /**
+     * Moderation: staff may approve/reject public visibility.
+     */
+    @Transactional
+    public void moderate(Long feedbackId, boolean isPublic) {
+        Feedback fb = feedbackMapper.selectById(feedbackId);
+        if (fb == null) {
+            throw new NotFoundException("Feedback not found with id: " + feedbackId);
+        }
+        fb.setIsPublic(isPublic);
+        fb.setIsModerated(true);
+        feedbackMapper.updateById(fb);
+    }
+
+    /**
+     * P2 (audit): moderation inbox — pending (unmoderated) feedback for staff.
+     */
+    public List<Feedback> getPendingModeration(int page, int size) {
+        int limit = Math.min(Math.max(size, 1), 100);
+        int offset = Math.max(page - 1, 0) * limit;
+        return feedbackMapper.findUnmoderatedPaged(limit, offset);
     }
 
     private Customer resolveCustomer(JwtUserPrincipal principal) {

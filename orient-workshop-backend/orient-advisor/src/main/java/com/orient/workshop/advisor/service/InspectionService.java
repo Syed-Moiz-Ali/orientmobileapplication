@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.core.repository.BookingMapper;
@@ -46,7 +45,10 @@ public class InspectionService {
     private final TaskGeneratorService taskGeneratorService;
     private final ObjectMapper objectMapper;
 
-    private final Map<Long, Long> draftOwners = new ConcurrentHashMap<>();
+    private static final Set<String> VALID_JOB_CARD_STATUSES = Set.of(
+            "inProgress", "pendingApproval", "qualityCheck", "completed",
+            "cancelled", "waitingParts", "pending", "awaitingSupervisor",
+            "vehicleReceived", "waitingCustomerApproval", "delivered", "qualityCheckPassed");
 
     @Transactional
     public InspectionResponse createInspection(JwtUserPrincipal principal, InspectionRequest req) {
@@ -54,21 +56,38 @@ public class InspectionService {
         Vehicle vehicle = null;
 
         if (req.getVehicle() != null && customer != null) {
-            vehicle = Vehicle.builder()
-                    .customerId(customer.getId())
-                    .branchId(principal != null ? principal.getBranchId() : null)
-                    .registrationNumber(req.getVehicle().getRegistrationNumber())
-                    .vin(req.getVehicle().getVin())
-                    .make(req.getVehicle().getMake())
-                    .model(req.getVehicle().getModel())
-                    .modelYear(req.getVehicle().getModelYear())
-                    .vehicleColor(req.getVehicle().getVehicleColor())
-                    .engineNumber(req.getVehicle().getEngineNumber())
-                    .engineCapacity(req.getVehicle().getEngineCapacity())
-                    .insuranceProvider(req.getVehicle().getInsuranceProvider())
-                    .policyNumber(req.getVehicle().getPolicyNumber())
-                    .build();
-            vehicleMapper.insert(vehicle);
+            // Fix: reuse an existing vehicle by plate/VIN instead of creating
+            // a duplicate row on every intake.
+            String reg = req.getVehicle().getRegistrationNumber();
+            String vin = req.getVehicle().getVin();
+            vehicle = vehicleMapper.findByRegOrVin(reg, vin).orElse(null);
+            if (vehicle == null) {
+                vehicle = Vehicle.builder()
+                        .customerId(customer.getId())
+                        .branchId(principal != null ? principal.getBranchId() : null)
+                        .registrationNumber(reg)
+                        .vin(vin)
+                        .make(req.getVehicle().getMake())
+                        .model(req.getVehicle().getModel())
+                        .modelYear(req.getVehicle().getModelYear())
+                        .vehicleColor(req.getVehicle().getVehicleColor())
+                        .engineNumber(req.getVehicle().getEngineNumber())
+                        .engineCapacity(req.getVehicle().getEngineCapacity())
+                        .insuranceProvider(req.getVehicle().getInsuranceProvider())
+                        .policyNumber(req.getVehicle().getPolicyNumber())
+                        .build();
+                vehicleMapper.insert(vehicle);
+            } else if (vehicle.getCustomerId() == null) {
+                vehicle.setCustomerId(customer.getId());
+                vehicleMapper.updateById(vehicle);
+            }
+        }
+
+        // Fix: reject unknown statuses before they hit the ENUM column (409).
+        String status = req.getStatus() != null ? req.getStatus() : "pending";
+        if (!VALID_JOB_CARD_STATUSES.contains(status)) {
+            throw new BadRequestException("Invalid status: " + status
+                    + ". Allowed: " + String.join(", ", VALID_JOB_CARD_STATUSES));
         }
 
         String jcRef = IdGenerator.shortRef("JC");
@@ -77,7 +96,7 @@ public class InspectionService {
                 .customerId(customer.getId())
                 .branchId(principal != null ? principal.getBranchId() : null)
                 .vehicleId(vehicle != null ? vehicle.getId() : null)
-                .status(req.getStatus() != null ? req.getStatus() : "pending")
+                .status(status)
                 .technician(req.getTechnician())
                 .tag(req.getTag())
                 .customerRequests(req.getCustomerRequests())
@@ -100,6 +119,7 @@ public class InspectionService {
                 .notifyOwnerSmsEmail(req.getNotifyOwnerSmsEmail())
                 .tag(req.getTag())
                 .sections(sectionsJson)
+                .advisorId(principal != null ? principal.getUserId() : null)
                 .build();
         inspectionMapper.insert(inspection);
 
@@ -140,6 +160,7 @@ public class InspectionService {
     public void updateInspection(JwtUserPrincipal principal, Long id, InspectionRequest req) {
         Inspection inspection = inspectionMapper.selectById(id);
         if (inspection == null) throw new NotFoundException("Inspection not found");
+        verifyDraftOwnership(principal, id);
 
         if (req.getSections() != null) {
             inspection.setSections(toJson(req.getSections()));
@@ -184,7 +205,9 @@ public class InspectionService {
         inspection.setIsDraft(true);
         inspectionMapper.updateById(inspection);
         if (principal != null && principal.getUserId() != null) {
-            draftOwners.put(id, principal.getUserId());
+            // Persisted draft ownership (was an in-memory map).
+            inspection.setAdvisorId(principal.getUserId());
+            inspectionMapper.updateById(inspection);
         }
     }
 
@@ -194,7 +217,6 @@ public class InspectionService {
         Inspection draft = inspectionMapper.findDraftById(id)
                 .orElseThrow(() -> new NotFoundException("Draft not found"));
         inspectionMapper.deleteById(draft.getId());
-        draftOwners.remove(id);
     }
 
     private Customer resolveCustomer(JwtUserPrincipal principal, InspectionRequest req) {
@@ -249,13 +271,20 @@ public class InspectionService {
                 "Provide customerId or customer details in the request");
     }
 
+    /**
+     * Persisted ownership check (was an in-memory map that emptied on restart,
+     * after which ANY advisor could read/delete ANY draft).
+     */
     private void verifyDraftOwnership(JwtUserPrincipal principal, Long id) {
         if (principal == null || principal.getUserId() == null) {
             throw new ForbiddenException("Authenticated user not found");
         }
-        Long owner = draftOwners.get(id);
-        if (owner != null && !owner.equals(principal.getUserId())) {
-            throw new ForbiddenException("Draft does not belong to the current user");
+        Inspection draft = inspectionMapper.selectById(id);
+        if (draft == null) {
+            throw new NotFoundException("Inspection not found with id: " + id);
+        }
+        if (draft.getAdvisorId() != null && !draft.getAdvisorId().equals(principal.getUserId())) {
+            throw new ForbiddenException("Inspection does not belong to the current user");
         }
     }
 

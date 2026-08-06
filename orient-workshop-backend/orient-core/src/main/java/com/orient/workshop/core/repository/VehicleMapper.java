@@ -20,4 +20,8 @@ public interface VehicleMapper extends BaseMapper<Vehicle> {
     @Select("SELECT * FROM vehicles WHERE registration_number LIKE CONCAT('%',#{q},'%') " +
             "OR vin LIKE CONCAT('%',#{q},'%') OR plate_number LIKE CONCAT('%',#{q},'%') LIMIT 20")
     List<Vehicle> search(@Param("q") String q);
+
+    @Select("SELECT * FROM vehicles WHERE (registration_number = #{reg} AND #{reg} != '') " +
+            "OR (vin = #{vin} AND #{vin} != '') LIMIT 1")
+    java.util.Optional<Vehicle> findByRegOrVin(@Param("reg") String reg, @Param("vin") String vin);
 }

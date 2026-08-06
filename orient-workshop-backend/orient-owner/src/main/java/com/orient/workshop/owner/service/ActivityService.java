@@ -32,4 +32,26 @@ public class ActivityService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+    /**
+     * P2 (audit): CSV export of the activity feed — first real data export.
+     */
+    public String exportCsv() {
+        StringBuilder sb = new StringBuilder("id,type,title,description,timestamp\n");
+        for (ActivityLog a : activityLogMapper.selectList(
+                new QueryWrapper<ActivityLog>().orderByDesc("created_at").last("LIMIT 500"))) {
+            sb.append(esc(String.valueOf(a.getId()))).append(',')
+                    .append(esc(a.getType() != null ? a.getType() : "")).append(',')
+                    .append(esc(a.getTitle() != null ? a.getTitle() : "")).append(',')
+                    .append(esc(a.getDescription() != null ? a.getDescription() : "")).append(',')
+                    .append(esc(a.getCreatedAt() != null ? a.getCreatedAt().toString() : ""))
+                    .append('\n');
+        }
+        return sb.toString();
+    }
+
+    private static String esc(String s) {
+        if (s == null) return "";
+        return "\"" + s.replace("\"", "\"\"") + "\"";
+    }
 }

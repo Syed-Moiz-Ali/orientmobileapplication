@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EnvironmentConfig {
@@ -29,9 +30,35 @@ class EnvironmentConfig {
   }
 
   static String get baseUrl {
-    if (_defineBaseUrl.isNotEmpty) return _defineBaseUrl;
+    if (_defineBaseUrl.isNotEmpty) {
+      // FIX (audit P0): release builds must never fall back to a devtunnel or
+      // localhost endpoint — fail loudly instead of silently misrouting.
+      if (kReleaseMode && !_isValidReleaseUrl(_defineBaseUrl)) {
+        throw StateError(
+          'BASE_URL is invalid for release: $_defineBaseUrl. '
+          'Pass a valid https URL via --dart-define=BASE_URL.',
+        );
+      }
+      return _defineBaseUrl;
+    }
+    if (kReleaseMode) {
+      throw StateError(
+        'BASE_URL is not set. Release builds require '
+        '--dart-define=BASE_URL=https://api.example.com',
+      );
+    }
     final fromEnv = dotenv.get('BASE_URL', fallback: '');
     return fromEnv.isNotEmpty ? fromEnv : _defaultBaseUrl;
+  }
+
+  static bool _isValidReleaseUrl(String url) {
+    final lower = url.toLowerCase();
+    return lower.startsWith('https://') &&
+        !lower.contains('devtunnels') &&
+        !lower.contains('localhost') &&
+        !lower.contains('192.168.') &&
+        !lower.contains('10.0.') &&
+        !lower.contains('127.0.0.1');
   }
 
   static String get appEnv {

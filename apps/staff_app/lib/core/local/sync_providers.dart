@@ -18,6 +18,9 @@ const kSyncEntityTypes = [
   'technician_job',
   'work_item',
   'attachment',
+  'assigned_job',
+  'job_card',
+  'job_card_technician',
 ];
 
 final syncEngineProvider = Provider<SyncEngine>((ref) {

@@ -37,6 +37,12 @@ class AuthError extends AuthState {
 }
 
 class AuthNotifier extends Notifier<AuthState> {
+  /// P1 (audit): sessions validated offline keep working indefinitely after
+  /// revocation. A hard cap: beyond this TTL, a non-401 (offline/5xx) failure
+  /// no longer extends the session — the user must re-authenticate.
+  static const Duration _sessionTtl = Duration(minutes: 30);
+  static const String _validatedAtKey = 'validated_at';
+
   @override
   AuthState build() {
     _restoreSession();
@@ -51,10 +57,15 @@ class AuthNotifier extends Notifier<AuthState> {
       state = const AuthUnauthenticated();
       return;
     }
-    state = AuthAuthenticated(
-      role: _roleFromName(roleName),
-      token: token,
-    );
+    final role = _tryRoleFromName(roleName);
+    if (role == null) {
+      // FIX (audit P0): an unknown/renamed role must fail closed — it
+      // previously defaulted to OWNER (privilege escalation on corrupt data).
+      await storage.clearAll();
+      state = const AuthUnauthenticated();
+      return;
+    }
+    state = AuthAuthenticated(role: role, token: token);
     final valid = await validateSession();
     if (!valid && state is! AuthAuthenticated) {
       state = const AuthUnauthenticated();
@@ -77,11 +88,14 @@ class AuthNotifier extends Notifier<AuthState> {
 
     final first = await datasource.getMe();
     if (first case Success(:final data)) {
-      state = AuthAuthenticated(
-        role: _roleFromName(data.role.isNotEmpty ? data.role : roleName ?? ''),
-        token: token,
-        profile: data,
-      );
+      final role = _tryRoleFromName(data.role.isNotEmpty ? data.role : roleName ?? '');
+      if (role == null) {
+        await storage.clearAll();
+        state = const AuthUnauthenticated();
+        return false;
+      }
+      await storage.setMetadata(_validatedAtKey, DateTime.now().millisecondsSinceEpoch.toString());
+      state = AuthAuthenticated(role: role, token: token, profile: data);
       return true;
     }
     final error = (first as Failure).error;
@@ -92,11 +106,12 @@ class AuthNotifier extends Notifier<AuthState> {
       final retry = await datasource.getMe();
       return retry.when(
         success: (me) {
-          state = AuthAuthenticated(
-            role: _roleFromName(me.role),
-            token: retryToken,
-            profile: me,
-          );
+          final role = _tryRoleFromName(me.role);
+          if (role == null) {
+            state = const AuthUnauthenticated();
+            return false;
+          }
+          state = AuthAuthenticated(role: role, token: retryToken, profile: me);
           return true;
         },
         failure: (_) {
@@ -105,11 +120,18 @@ class AuthNotifier extends Notifier<AuthState> {
         },
       );
     }
-    // Network failure / offline: proceed with the locally stored session.
-    state = AuthAuthenticated(
-      role: _roleFromName(roleName ?? ''),
-      token: token,
-    );
+    // Network failure / offline: proceed with the locally stored session ONLY
+    // within the freshness TTL — a revoked user must not stay in forever.
+    final validatedAt = await storage.getMetadata(_validatedAtKey);
+    final fresh = validatedAt != null &&
+        DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(int.tryParse(validatedAt) ?? 0)) <
+            _sessionTtl;
+    final role = _tryRoleFromName(roleName ?? '');
+    if (!fresh || role == null) {
+      state = const AuthUnauthenticated();
+      return false;
+    }
+    state = AuthAuthenticated(role: role, token: token);
     return true;
   }
 
@@ -169,11 +191,13 @@ class AuthNotifier extends Notifier<AuthState> {
     state = const AuthUnauthenticated();
   }
 
-  UserRole _roleFromName(String roleName) {
-    return UserRole.values.firstWhere(
-      (r) => r.name == roleName,
-      orElse: () => UserRole.owner,
-    );
+  /// FIX (audit P0): unknown role strings fail closed (null) instead of
+  /// silently escalating to OWNER.
+  UserRole? _tryRoleFromName(String roleName) {
+    for (final r in UserRole.values) {
+      if (r.name == roleName) return r;
+    }
+    return null;
   }
 }
 

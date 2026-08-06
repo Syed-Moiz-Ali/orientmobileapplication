@@ -122,7 +122,7 @@ class AdvisorJobCardSheet extends StatelessWidget {
           AdvisorDetailLine(
             icon: Icons.person_outline_rounded,
             label: 'Advisor',
-            value: 'Ali Rahman',
+            value: '',
           ),
           AdvisorDetailLine(
             icon: Icons.build_outlined,

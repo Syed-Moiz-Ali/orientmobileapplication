@@ -10,6 +10,7 @@ class CrmHeaderBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final leads = ref.watch(crmLeadProvider);
+    final wonLeads = leads.where((l) => l.status == 'WON').length;
     return GradientBanner(
       title: 'CRM Dashboard',
       liveDotColor: CrmColors.liveDot,
@@ -20,7 +21,9 @@ class CrmHeaderBanner extends ConsumerWidget {
       ),
       pills: [
         GradientBannerPill(icon: Icons.person_search_rounded, label: '${leads.length} Leads', accent: CrmColors.amberPill),
-        const GradientBannerPill(icon: Icons.chat_bubble_outline_rounded, label: '1,247 Messages', accent: CrmColors.liveDot),
+        // FIX (audit P0): '1,247 Messages' was a fabricated constant — no
+        // conversation data exists yet; show the real won-lead count instead.
+        GradientBannerPill(icon: Icons.task_alt_rounded, label: '$wonLeads Won', accent: CrmColors.liveDot),
       ],
       icon: Icons.hub_rounded,
     );

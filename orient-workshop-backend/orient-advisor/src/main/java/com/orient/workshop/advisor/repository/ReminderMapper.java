@@ -8,6 +8,6 @@ import java.util.List;
 
 @Mapper
 public interface ReminderMapper extends BaseMapper<Reminder> {
-    @Select("SELECT * FROM reminders WHERE is_completed = FALSE ORDER BY created_at DESC")
+    @Select("SELECT * FROM reminders WHERE is_completed = FALSE AND deleted = FALSE ORDER BY created_at DESC")
     List<Reminder> findActive();
 }

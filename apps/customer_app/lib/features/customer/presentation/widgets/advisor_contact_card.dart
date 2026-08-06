@@ -8,9 +8,10 @@ class AdvisorContactCard extends StatelessWidget {
 
   const AdvisorContactCard({
     super.key,
-    this.advisorName = 'Ahmed Hassan',
-    this.advisorRole = 'Senior Service Advisor',
-    this.phone = '+1 800 555 0199',
+    // FIX (audit P0): fake identity + US phone number removed.
+    this.advisorName = 'Service Advisor',
+    this.advisorRole = 'Workshop Team',
+    this.phone = '',
   });
 
   @override

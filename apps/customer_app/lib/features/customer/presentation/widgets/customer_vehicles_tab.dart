@@ -131,8 +131,16 @@ class _VehicleCardWithActions extends StatelessWidget {
       final remote = ref.read(customerRemoteDataSourceProvider);
       await remote.deleteVehicle(v.id);
     } catch (_) {
-      final local = GenericLocalDataSource(Hive.box<dynamic>('customer_cache'));
+      final box = Hive.box<dynamic>('customer_cache');
+      final local = GenericLocalDataSource(box);
       await local.save('vehicle_${v.id}_deleted', {'id': v.id, 'deleted': true});
+      // FIX (audit P0): also drop the vehicle from the cached list so an
+      // offline refresh does not resurrect it.
+      final cached = List<Map<String, dynamic>>.from(
+        (box.get('cached_vehicles') as List?)?.cast() ?? const [],
+      );
+      cached.removeWhere((m) => m['id'] == v.id);
+      await box.put('cached_vehicles', cached);
       final queue = ref.read(syncQueueProvider);
       await queue.enqueue(SyncOperation(
         id: v.id, entityType: 'vehicle', entityId: v.id,

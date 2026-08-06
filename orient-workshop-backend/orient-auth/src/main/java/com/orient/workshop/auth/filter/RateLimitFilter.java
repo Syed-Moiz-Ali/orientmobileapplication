@@ -38,6 +38,9 @@ public class RateLimitFilter implements Filter {
 
     private static final long IDLE_EVICTION_NANOS = Duration.ofMinutes(10).toNanos();
     private static final long MAX_BUCKETS = 100_000;
+    // P1: the full-map eviction scan is time-gated to once per minute so a
+    // large bucket map cannot turn every request into an O(n) scan.
+    private static final long EVICTION_INTERVAL_NANOS = Duration.ofMinutes(1).toNanos();
 
     private final int capacity;
     private final int refillPeriodMinutes;
@@ -45,6 +48,7 @@ public class RateLimitFilter implements Filter {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final ConcurrentHashMap<String, BucketState> buckets = new ConcurrentHashMap<>();
+    private volatile long lastEvictionNanos = 0L;
 
     public RateLimitFilter(
             @Value("${app.rate-limit.capacity:100}") int capacity,
@@ -66,14 +70,12 @@ public class RateLimitFilter implements Filter {
         HttpServletRequest httpReq = (HttpServletRequest) request;
         HttpServletResponse httpRes = (HttpServletResponse) response;
 
-        // X-Username header wins (cheap); otherwise for /auth/** JSON bodies the
-        // request is buffered once and re-served downstream, and the parsed
-        // identifier is used as part of the bucket key.
+        // P1: the client-supplied X-Username header is REMOVED from the bucket
+        // key — an attacker could rotate it per request for a fresh bucket and
+        // bypass the auth budget entirely. Identity comes from the IP and, for
+        // /auth/** JSON bodies, the parsed phone/email.
         String key = httpReq.getRemoteAddr();
-        String headerUser = httpReq.getHeader("X-Username");
-        if (headerUser != null && !headerUser.isBlank()) {
-            key = key + ":" + headerUser.trim().toLowerCase();
-        } else if (shouldParseBody(httpReq)) {
+        if (shouldParseBody(httpReq)) {
             RepeatableReadRequestWrapper wrapper;
             try {
                 wrapper = new RepeatableReadRequestWrapper(httpReq);
@@ -145,8 +147,15 @@ public class RateLimitFilter implements Filter {
         return Math.max(1, refillPeriodMinutes * 60L);
     }
 
+    /**
+     * P1: only scan the whole map when the interval has elapsed (max once per
+     * minute) — the previous per-request full scan was a CPU DoS vector at
+     * ~100k buckets.
+     */
     private void evictIdle(long now) {
         if (buckets.isEmpty()) return;
+        if (now - lastEvictionNanos < EVICTION_INTERVAL_NANOS) return;
+        lastEvictionNanos = now;
         for (Map.Entry<String, BucketState> entry : buckets.entrySet()) {
             if (now - entry.getValue().lastAccessNanos.get() > IDLE_EVICTION_NANOS) {
                 buckets.remove(entry.getKey());

@@ -44,14 +44,14 @@ public class JobCardController {
 
     @PutMapping("/{id}/status")
     public ApiResponse<Void> updateStatus(@AuthenticationPrincipal JwtUserPrincipal principal,
-                                          @PathVariable Long id, @Valid @RequestBody UpdateStatusRequest req) {
+                                          @PathVariable String id, @Valid @RequestBody UpdateStatusRequest req) {
         jobCardService.updateStatus(id, req.getStatus(), principal);
         return ApiResponse.success(null);
     }
 
     @PutMapping("/{id}/technician")
     public ApiResponse<Void> assignTechnician(@AuthenticationPrincipal JwtUserPrincipal principal,
-                                              @PathVariable Long id, @Valid @RequestBody AssignTechnicianRequest req) {
+                                              @PathVariable String id, @Valid @RequestBody AssignTechnicianRequest req) {
         jobCardService.assignTechnician(id, req.getTechnician(), principal);
         return ApiResponse.success(null);
     }

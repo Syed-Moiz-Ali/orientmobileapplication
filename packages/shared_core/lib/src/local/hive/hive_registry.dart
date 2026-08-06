@@ -24,6 +24,9 @@ class HiveRegistry {
     await Hive.openBox<dynamic>('owner_activity');
     await Hive.openBox<SyncOperation>('sync_queue');
     await Hive.openBox<SyncOperation>('sync_failed');
+    // FIX (audit P0): the offline media upload queue crashed at runtime with
+    // "box not opened" because this box was never registered.
+    await Hive.openBox<dynamic>('pending_media');
     await Hive.openBox<int>('id_counters');
 
     _initialized = true;

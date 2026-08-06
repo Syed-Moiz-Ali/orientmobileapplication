@@ -125,7 +125,7 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
               _ActiveServiceTimelineCard(service: activeService),
               const SizedBox(height: AppDimensions.s14),
               AdvisorContactCard(
-                advisorName: activeService.technicianName.isNotEmpty ? activeService.technicianName : 'Ahmed Hassan',
+                advisorName: activeService.technicianName.isNotEmpty ? activeService.technicianName : 'Service Advisor',
               ),
               const SizedBox(height: AppDimensions.s24),
             ] else if (activeBookings.isNotEmpty) ...[

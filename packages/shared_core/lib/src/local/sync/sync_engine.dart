@@ -42,11 +42,48 @@ class SyncEngine {
     _connectivitySub = _connectivity.onConnectivityChanged.listen((results) {
       if (_disposed) return;
       final online = results.any((r) => r != ConnectivityResult.none);
-      if (online && !_isOnline && _queue.length > 0) {
-        syncAll();
+      if (online && !_isOnline) {
+        // FIX (audit P0): retry the failed box on reconnect too, not just the
+        // active queue — previously failed ops were never retried at all.
+        if (_queue.length > 0) syncAll();
+        if (_failedBox.length > 0) retryFailed();
       }
       _isOnline = online;
     });
+  }
+
+  /// Re-attempts every operation in the failed box (previously never retried).
+  Future<void> retryFailed() async {
+    if (_disposed || _status == SyncStatus.syncing) return;
+    final failed = _failedBox.values
+        .whereType<SyncOperation>()
+        .toList();
+    if (failed.isEmpty) return;
+
+    _notify(SyncStatus.syncing);
+    for (final op in failed) {
+      try {
+        final result = await _executeOperation(op);
+        if (result) {
+          await _failedBox.delete(op.id);
+        }
+      } on ConflictException {
+        await _failedBox.delete(op.id); // server already has the state
+      } catch (e, st) {
+        _logger.e(
+          'Retry failed for operation ${op.id} (${op.entityType})',
+          error: e,
+          stackTrace: st,
+        );
+        op.retryCount++;
+        if (op.retryCount >= 3) {
+          await _failedBox.delete(op.id); // give up after 3 retries
+        } else {
+          await _failedBox.put(op.id, op);
+        }
+      }
+    }
+    _notify(SyncStatus.idle);
   }
 
   void dispose() {
@@ -96,6 +133,16 @@ class SyncEngine {
         if (result) {
           await _queue.remove(op.id);
         } else {
+          // FIX (audit P0): a handler returning false (e.g. HTTP 500) never
+          // incremented retryCount → the op was replayed on EVERY connectivity
+          // toggle with no backoff, forever. Treat false like a failure.
+          op.retryCount++;
+          if (op.retryCount >= 3) {
+            await _moveToFailed(op);
+            await _queue.remove(op.id);
+          } else {
+            await _queue.updateRetry(op);
+          }
           hasFailure = true;
         }
       } on ConflictException {

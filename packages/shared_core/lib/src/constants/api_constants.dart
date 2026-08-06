@@ -143,6 +143,16 @@ class ApiEndpoints {
   static const String crmLeads = '/crm/leads';
   static const String crmTasks = '/crm/tasks';
 
+  // Inventory (P2)
+  static const String ownerInventoryItems = '/owner/inventory/items';
+  static const String ownerInventorySuppliers = '/owner/inventory/suppliers';
+  static const String ownerInventoryPurchaseOrders = '/owner/inventory/purchase-orders';
+  static const String ownerTeam = '/owner/team';
+  static String ownerTeamById(String id) => '/owner/team/' + id;
+  static String ownerTeamDeactivate(String id) => '/owner/team/$id/deactivate';
+  static const String feedbackPending = '/feedback/pending';
+  static String feedbackModeration(String id) => '/feedback/$id/moderation';
+
   // Branches / WhatsApp
   static const String branches = '/branches';
   static const String whatsappSend = '/whatsapp/send';

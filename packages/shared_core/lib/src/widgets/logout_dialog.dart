@@ -7,8 +7,10 @@ Future<bool?> showLogoutDialog(
   BuildContext context, {
   VoidCallback? onLogout,
 }) async {
+  // FIX (audit P0): pending sync no longer blocks logout forever — the user
+  // can force-logout (pending ops are cleared with the local data).
   if (HiveCleaner.hasPendingSync()) {
-    showDialog(
+    final force = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
@@ -34,14 +36,25 @@ Future<bool?> showLogoutDialog(
           ],
         ),
         content: const Text(
-          'You have pending sync operations.\nPlease wait for sync to complete before logging out.',
+          'You have pending sync operations that could not be sent.\n\n'
+          'Wait and retry, or log out anyway — unsent changes will be cleared.',
           style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
         ),
         actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.text3,
+              ),
+            ),
+          ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.warning,
+              backgroundColor: AppColors.danger,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.r10),
@@ -49,14 +62,17 @@ Future<bool?> showLogoutDialog(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             child: const Text(
-              'OK',
+              'Logout Anyway',
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ],
       ),
     );
-    return null;
+    if (force != true) return false;
+    await HiveCleaner.clearAll();
+    onLogout?.call();
+    return true;
   }
   final confirmed = await showDialog<bool>(
     context: context,

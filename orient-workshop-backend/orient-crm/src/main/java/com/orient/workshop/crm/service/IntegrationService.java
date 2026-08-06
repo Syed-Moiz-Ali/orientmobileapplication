@@ -92,10 +92,20 @@ public class IntegrationService {
         integration.setSyncStatus("SYNCING");
         integrationMapper.updateById(integration);
         try {
-            metaLeadFetcher.sync(name);
-            integration = findByName(name);
-            integration.setSyncStatus("SUCCESS");
-            integration.setLastSyncAt(LocalDateTime.now());
+            // P2 (audit): Zoho/Google-Sheets were routed to the META fetcher and
+            // ALWAYS errored. Only META has a fetcher today; other providers
+            // report an honest "UNSUPPORTED" status instead of a fake ERROR.
+            if ("META".equalsIgnoreCase(name)) {
+                metaLeadFetcher.sync(name);
+                integration = findByName(name);
+                integration.setSyncStatus("SUCCESS");
+                integration.setLastSyncAt(LocalDateTime.now());
+            } else {
+                integration = findByName(name);
+                integration.setSyncStatus("UNSUPPORTED");
+                integration.setLastSyncAt(LocalDateTime.now());
+                log.info("Integration {} connected but has no fetcher yet — status UNSUPPORTED", name);
+            }
             integrationMapper.updateById(integration);
         } catch (Exception e) {
             log.error("Sync failed for integration {}", name, e);

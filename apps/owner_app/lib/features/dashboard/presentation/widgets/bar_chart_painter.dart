@@ -11,12 +11,15 @@ class BarChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // FIX (audit P0/P1): reduce() on empty data crashed the owner dashboard.
+    if (salesData.isEmpty || expenseData.isEmpty) return;
     final allValues = [
       ...salesData.map((d) => d.value),
       ...expenseData.map((d) => d.value),
     ];
     final maxVal = allValues.reduce(math.max);
     final count = salesData.length;
+    if (count == 0 || maxVal <= 0) return;
     final groupW = size.width / count;
     final barW = groupW * 0.33;
     const gap = 4.0;
@@ -68,5 +71,6 @@ class BarChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_) => false;
+  bool shouldRepaint(BarChartPainter oldDelegate) =>
+      oldDelegate.salesData != salesData || oldDelegate.expenseData != expenseData;
 }

@@ -24,7 +24,7 @@ JWT_SECRET=CHANGE_ME
 ENCRYPTION_KEY=CHANGE_ME
 REDIS_HOST=localhost
 REDIS_PORT=6379
-SPRING_PROFILES_ACTIVE=mysql
+SPRING_PROFILES_ACTIVE=prod
 EOF
     chmod 600 "$ENV_FILE"
     chown root:orient "$ENV_FILE" 2>/dev/null || true
@@ -36,11 +36,16 @@ fi
 
 # Build the application
 echo "Building application..."
-./mvnw clean package -pl orient-gateway -am -DskipTests
+if [ -x ./mvnw ]; then
+    ./mvnw clean package -pl orient-gateway -am -DskipTests
+else
+    mvn clean package -pl orient-gateway -am -DskipTests
+fi
 
 # Copy JAR
 echo "Copying JAR..."
-cp orient-gateway/target/orient-gateway-*.jar deploy/orient-gateway.jar
+mkdir -p /opt/orient-api
+cp orient-gateway/target/orient-gateway-*.jar /opt/orient-api/orient-gateway.jar
 
 # Setup systemd service (requires sudo)
 if [ "$EUID" -eq 0 ]; then
@@ -53,7 +58,7 @@ if [ "$EUID" -eq 0 ]; then
     echo "Verify health: curl http://localhost:8080/api/v1/health"
 else
     echo "Run as root to install systemd service."
-    echo "Or run manually: java -jar deploy/orient-gateway.jar --spring.profiles.active=mysql"
+    echo "Or run manually: java -jar /opt/orient-api/orient-gateway.jar --spring.profiles.active=prod"
 fi
 
 echo "=== Done ==="

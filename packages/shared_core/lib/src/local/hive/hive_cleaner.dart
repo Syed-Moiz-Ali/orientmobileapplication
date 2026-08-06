@@ -9,10 +9,14 @@ class HiveCleaner {
     await Hive.box<dynamic>('supervisor_assignments').clear();
     await Hive.box<dynamic>('customer_bookings').clear();
     await Hive.box<dynamic>('customer_breakdowns').clear();
+    // FIX (audit P0): customer PII cache and ID counters survived logout.
+    await Hive.box<dynamic>('customer_cache').clear();
     await Hive.box<dynamic>('owner_messages').clear();
     await Hive.box<dynamic>('owner_activity').clear();
+    await Hive.box<dynamic>('pending_media').clear();
     await Hive.box<SyncOperation>('sync_queue').clear();
     await Hive.box<SyncOperation>('sync_failed').clear();
+    await Hive.box<int>('id_counters').clear();
   }
 
   static bool hasPendingSync() {

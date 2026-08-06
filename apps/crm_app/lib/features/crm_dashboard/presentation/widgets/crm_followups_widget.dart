@@ -47,10 +47,12 @@ class FollowUpsWidget extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           ...followUps.take(5).map((f) {
+            // FIX (audit P2): overdue follow-ups now surface visually.
+            final overdue = _isOverdue(f.followUpDate);
             final (color, bg) = switch (f.status.toUpperCase()) {
               'WON' => (CrmColors.green, CrmColors.greenBg),
               'LOST' => (CrmColors.red, CrmColors.redBg),
-              'UNANSWERED' => (CrmColors.amber, CrmColors.amberBg),
+              'UNANSWERED' || 'NO_RESPONSE' => (CrmColors.amber, CrmColors.amberBg),
               _ => (CrmColors.accent, CrmColors.accentLight),
             };
             return Padding(
@@ -64,7 +66,11 @@ class FollowUpsWidget extends StatelessWidget {
                       color: bg,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.event_rounded, size: 17, color: CrmColors.accent),
+                    child: Icon(
+                      overdue ? Icons.warning_amber_rounded : Icons.event_rounded,
+                      size: 17,
+                      color: overdue ? CrmColors.red : CrmColors.accent,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -82,7 +88,11 @@ class FollowUpsWidget extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           '${f.followUpDate}  \u00b7  ${f.source}',
-                          style: const TextStyle(color: CrmColors.textM, fontSize: 11),
+                          style: TextStyle(
+                            color: overdue ? CrmColors.red : CrmColors.textM,
+                            fontSize: 11,
+                            fontWeight: overdue ? FontWeight.w700 : FontWeight.w400,
+                          ),
                         ),
                       ],
                     ),
@@ -94,7 +104,7 @@ class FollowUpsWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      f.status,
+                      overdue ? 'OVERDUE' : f.status,
                       style: TextStyle(
                         color: color,
                         fontSize: 9,
@@ -109,5 +119,14 @@ class FollowUpsWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _isOverdue(String followUpDate) {
+    final parsed = DateTime.tryParse(followUpDate);
+    if (parsed == null) return false;
+    final today = DateTime.now();
+    return parsed.year < today.year ||
+        (parsed.year == today.year && parsed.month < today.month) ||
+        (parsed.year == today.year && parsed.month == today.month && parsed.day < today.day);
   }
 }

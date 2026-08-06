@@ -29,6 +29,42 @@ class CustomerHomeTab extends ConsumerWidget {
       return const HomeSkeletonLoading();
     }
 
+    // FIX (audit P1): failed loads previously left the app on a skeleton
+    // forever (or an empty home) with no error or retry.
+    if (state.loadError.isNotEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off_rounded, size: 44, color: AppColors.text3),
+              const SizedBox(height: 12),
+              const Text(
+                'Could not load your data',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                state.loadError,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, color: AppColors.text2),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => notifier.refresh(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: () => notifier.refresh(),
       color: AppColors.accent,
@@ -276,7 +312,8 @@ class _QuickActionsGrid extends StatelessWidget {
         'My\nVehicles',
         AppColors.success,
         AppColors.successBg,
-        () => notifier.selectTab(3),
+        // FIX (audit P1): index 3 was Approvals — vehicles is tab 4.
+        () => notifier.selectTab(4),
       ),
       _QAction(
         Icons.track_changes_rounded,

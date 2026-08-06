@@ -30,20 +30,29 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * /version                        permitAll (API version metadata)
  * OPTIONS /**                     permitAll (CORS preflight)
  * GET|POST /whatsapp/webhook      permitAll (Meta webhook; signature verified by handler)
+ * /customers/search, /vehicles/search  ADVISOR, SUPERVISOR, OWNER, ADMIN (PII search)
+ * /customers/**                   CUSTOMER, ADVISOR, SUPERVISOR, OWNER, ADMIN
+ * /technician/** (singular)       TECHNICIAN, SUPERVISOR, OWNER, ADMIN
+ * /branches/**                    OWNER, ADMIN
+ * /inspections/**, /repair-orders/**  ADVISOR, SUPERVISOR, OWNER, ADMIN
+ * /bookings/**, /services/types, /feedback/**  CUSTOMER + staff
+ * /work-assignments, /jobs/complete, /departments  TECHNICIAN, SUPERVISOR, OWNER, ADMIN
+ * /sync/**                        ADVISOR, SUPERVISOR, TECHNICIAN, OWNER, ADMIN (staff only)
+ * /whatsapp/send, /whatsapp/messages  ADVISOR, SUPERVISOR, OWNER, ADMIN
  * /owner/**                       OWNER, ADMIN
  * /supervisor/**                  SUPERVISOR, OWNER, ADMIN
  * /technicians/**                 TECHNICIAN, SUPERVISOR, OWNER, ADMIN
  * /advisor/**                     ADVISOR, SUPERVISOR, OWNER, ADMIN
+ * /staff/**                       all staff roles
  * /crm/**                         CRM_DASHBOARD, OWNER, ADMIN
- * /customer/**                    CUSTOMER, ADVISOR, OWNER, ADMIN
- * /sync/**                        any authenticated user
- * /media/**                       any authenticated user
+ * /customer/** (singular legacy)  CUSTOMER, ADVISOR, OWNER, ADMIN
+ * /media/**, /notifications/**    any authenticated user
  * everything else                 any authenticated user
  * </pre>
  *
- * The remaining role-gated prefixes (e.g. /branches, /inspections, /repair-orders,
- * /bookings, /feedback) are owned by other modules; per-module ownership enforcement
- * can be layered on top with {@code @PreAuthorize} (method security is enabled below).
+ * S-1: this matrix is the primary authorization gate. Method security is
+ * enabled so per-controller {@code @PreAuthorize} can be layered on top for
+ * object-level rules (e.g. feedback moderation).
  */
 @Configuration
 @EnableWebSecurity
@@ -83,11 +92,57 @@ public class SecurityConfig {
                         }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        // FIX (audit): the container error dispatch must not be
+                        // re-authorized — previously a denied request's error page
+                        // request itself hit anyRequest().authenticated() and the
+                        // client saw 401 instead of the real 403.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/health", "/actuator/health", "/version").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/whatsapp/webhook").permitAll()
                         .requestMatchers(HttpMethod.POST, "/whatsapp/webhook").permitAll()
+                        // S-1: customer/vehicle PII search is staff-only (advisor intake,
+                        // supervisor dispatch, owner lookup). Must precede the broad rules.
+                        .requestMatchers("/customers/search", "/vehicles/search")
+                        .hasAnyRole(role(RoleConstants.ADVISOR), role(RoleConstants.SUPERVISOR),
+                                role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
+                        // S-1: plural /customers/** (all customer controllers) and singular
+                        // /technician/** (parts requests / escalations) previously fell through
+                        // to "any authenticated" because the matrix only listed singular
+                        // /customer/** and plural /technicians/**.
+                        .requestMatchers("/customers/**")
+                        .hasAnyRole(role(RoleConstants.CUSTOMER), role(RoleConstants.ADVISOR),
+                                role(RoleConstants.SUPERVISOR), role(RoleConstants.OWNER),
+                                role(RoleConstants.ADMIN))
+                        .requestMatchers("/technician/**")
+                        .hasAnyRole(role(RoleConstants.TECHNICIAN), role(RoleConstants.SUPERVISOR),
+                                role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
+                        // S-4: branch (org topology) management is OWNER/ADMIN only.
+                        .requestMatchers("/branches/**")
+                        .hasAnyRole(role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
+                        // S-1: core workshop workflow surfaces are staff-only.
+                        .requestMatchers("/inspections/**", "/repair-orders/**")
+                        .hasAnyRole(role(RoleConstants.ADVISOR), role(RoleConstants.SUPERVISOR),
+                                role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
+                        .requestMatchers("/bookings/**", "/services/types", "/feedback/**")
+                        .hasAnyRole(role(RoleConstants.CUSTOMER), role(RoleConstants.ADVISOR),
+                                role(RoleConstants.SUPERVISOR), role(RoleConstants.OWNER),
+                                role(RoleConstants.ADMIN))
+                        .requestMatchers("/work-assignments", "/jobs/complete", "/departments")
+                        .hasAnyRole(role(RoleConstants.TECHNICIAN), role(RoleConstants.SUPERVISOR),
+                                role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
+                        // S-5: /sync/** mutates job cards and inspections — staff only,
+                        // never customers (was any-authenticated).
+                        .requestMatchers("/sync/**")
+                        .hasAnyRole(role(RoleConstants.ADVISOR), role(RoleConstants.SUPERVISOR),
+                                role(RoleConstants.TECHNICIAN), role(RoleConstants.OWNER),
+                                role(RoleConstants.ADMIN))
+                        // WhatsApp business-initiated sends and history are staff-only;
+                        // the signature-verified webhook remains permitAll (handled above).
+                        .requestMatchers("/whatsapp/send", "/whatsapp/messages")
+                        .hasAnyRole(role(RoleConstants.ADVISOR), role(RoleConstants.SUPERVISOR),
+                                role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
                         .requestMatchers("/owner/**")
                         .hasAnyRole(role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
                         .requestMatchers("/supervisor/**")
@@ -107,7 +162,7 @@ public class SecurityConfig {
                         .requestMatchers("/customer/**")
                         .hasAnyRole(role(RoleConstants.CUSTOMER), role(RoleConstants.ADVISOR),
                                 role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
-                        .requestMatchers("/sync/**", "/media/**").authenticated()
+                        .requestMatchers("/media/**", "/notifications/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

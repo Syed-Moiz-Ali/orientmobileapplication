@@ -25,12 +25,14 @@ public class ArService {
 
     private final InvoiceMapper invoiceMapper;
     private final CustomerMapper customerMapper;
+    private final PaymentService paymentService;
 
     public ArSummaryResponse getSummary() {
         long d0to30 = 0, d31to60 = 0, d61to90 = 0, d90plus = 0;
         long totalOutstanding = 0;
         for (Invoice inv : outstandingInvoices()) {
-            long outstanding = Math.round(inv.getAmount() != null ? inv.getAmount().doubleValue() : 0.0);
+            // P1: outstanding is now amount − payments, not the full amount.
+            long outstanding = Math.round(paymentService.outstanding(inv).doubleValue());
             String bucket = agingBucket(inv);
             switch (bucket) {
                 case "days0to30" -> d0to30 += outstanding;
@@ -63,7 +65,8 @@ public class ArService {
                             .invoiceDate(inv.getIssuedDate() != null ? inv.getIssuedDate().format(DATE_FMT) : "")
                             .dueDate(inv.getDueDate() != null ? inv.getDueDate().format(DATE_FMT) : "")
                             .amount(inv.getAmount() != null ? inv.getAmount().doubleValue() : 0.0)
-                            .outstanding(inv.getAmount() != null ? inv.getAmount().doubleValue() : 0.0)
+                            // P1: outstanding reflects recorded payments.
+                            .outstanding(paymentService.outstanding(inv).doubleValue())
                             .aging(agingBucket(inv))
                             .contactPerson(name)
                             .phone(customer != null && customer.getPhoneNumber() != null ? customer.getPhoneNumber() : "")

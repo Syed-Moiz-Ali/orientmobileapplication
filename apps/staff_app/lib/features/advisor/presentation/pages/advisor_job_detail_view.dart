@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import 'package:staff_app/core/platform/file_ops.dart';
+import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_status_badge.dart';
@@ -986,19 +987,6 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     );
   }
 
-  List<String> get _technicians => const [
-    'Mohammed Hassan',
-    'Ali Ahmed',
-    'Ravi Kumar',
-    'Hassan Ibrahim',
-    'Omar Khalid',
-    'Yousef Ali',
-    'Bilal Khan',
-    'David Osei',
-    'James Patel',
-    'Mohammed Salim',
-  ];
-
   void _showStatusSheet(BuildContext context) {
     final statuses = JobCardStatus.values;
     final labels = {
@@ -1071,69 +1059,6 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     );
   }
 
-  void _showAssignTechSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.r28),
-          ),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.55,
-          minChildSize: 0.4,
-          maxChildSize: 0.8,
-          expand: false,
-          builder: (_, scrollCtrl) => SingleChildScrollView(
-            controller: scrollCtrl,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.line,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(AppDimensions.r2),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Assign Technician',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                ..._technicians.map((t) => _techOption(ctx, t)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _updateStatus(JobCardStatus status, BuildContext ctx) {
     final now = DateTime.now();
     final updated =
@@ -1163,42 +1088,30 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       _jc = _jc.copyWith(status: status, lastUpdated: updated);
     });
     ref.read(advisorRefreshProvider.notifier).state++;
+    // FIX (audit P0): status changes were Hive-only — the backend never saw
+    // them. Enqueue + sync so owner dashboards and invoicing see the change.
+    _enqueueJobCardSync({'status': status.name}, entityType: 'job_card');
   }
 
-  void _assignTechnician(String technician, BuildContext ctx) {
-    final now = DateTime.now();
-    final updated =
-        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    Navigator.pop(ctx);
-    final box = Hive.box<dynamic>('inspections');
-    final allData = box.values
-        .whereType<Map>()
-        .map((m) => Map<String, dynamic>.from(m))
-        .toList();
-    final match = allData
-        .where(
-          (m) =>
-              m['type'] == 'vehicle_customer' &&
-              (m['id'] == _jc.id ||
-                  m['vin'] == _jc.id ||
-                  m['registrationNumber'] == _jc.id),
-        )
-        .toList();
-    for (final m in match) {
-      m['technician'] = technician;
-      m['status'] = JobCardStatus.inProgress.name;
-      m['lastUpdated'] = updated;
-      final key = (m['id'] ?? m['vin'] ?? m['registrationNumber']).toString();
-      if (key.isNotEmpty) box.put(key, m);
-    }
-    setState(() {
-      _jc = _jc.copyWith(
-        status: JobCardStatus.inProgress,
-        lastUpdated: updated,
+  void _enqueueJobCardSync(Map<String, dynamic> payload,
+      {required String entityType}) async {
+    try {
+      final queue = ref.read(syncQueueProvider);
+      final id = await IdGenerator.nextId('JC');
+      await queue.enqueue(
+        SyncOperation(
+          id: id,
+          entityType: entityType,
+          entityId: _jc.id,
+          changeType: ChangeType.update,
+          payload: payload,
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ),
       );
-      _assignedTech = technician;
-    });
-    ref.read(advisorRefreshProvider.notifier).state++;
+      ref.read(syncEngineProvider).syncAll();
+    } catch (e) {
+      ref.read(loggerProvider).e('Failed to enqueue $entityType sync', error: e);
+    }
   }
 
   Widget _statusOption(
@@ -1239,84 +1152,6 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                 Icons.arrow_forward_ios_rounded,
                 size: 14,
                 color: AppColors.text3,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _techOption(BuildContext ctx, String name) {
-    final initials = name
-        .split(' ')
-        .map((n) => n.isNotEmpty ? n[0] : '')
-        .join();
-    final isSelected = _assignedTech == name;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: InkWell(
-        onTap: () => _assignTechnician(name, ctx),
-        borderRadius: BorderRadius.circular(AppDimensions.r12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.accent.withValues(alpha: 0.08)
-                : AppColors.surfaceAlt,
-            border: isSelected
-                ? Border.all(color: AppColors.accent.withValues(alpha: 0.3))
-                : null,
-            borderRadius: BorderRadius.circular(AppDimensions.r12),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.navy, AppColors.accent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const Text(
-                      'Technician',
-                      style: TextStyle(fontSize: 11, color: AppColors.text3),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                isSelected ? Icons.check_circle : Icons.add_circle_outline,
-                size: 20,
-                color: isSelected ? AppColors.accent : AppColors.text3,
               ),
             ],
           ),

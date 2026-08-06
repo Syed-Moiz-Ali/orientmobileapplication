@@ -46,6 +46,9 @@ class TechnicianLocalDatasource {
           .map(
             (t) => {
               'id': t.id,
+              // FIX (audit P0): task `ref` was never persisted — after an
+              // offline restart every task action was silently dropped.
+              'ref': t.ref,
               'description': t.description,
               'status': t.status.name,
               'startTime': t.startTime,

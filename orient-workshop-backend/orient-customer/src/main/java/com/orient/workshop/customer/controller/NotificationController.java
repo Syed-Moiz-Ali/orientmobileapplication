@@ -24,7 +24,7 @@ public class NotificationController {
     public ApiResponse<List<NotificationResponse>> getNotifications(@AuthenticationPrincipal JwtUserPrincipal principal,
                                                                       @RequestParam(defaultValue = "1") int page,
                                                                       @RequestParam(defaultValue = "20") int size) {
-        List<NotificationResponse> notifications = notificationService.getNotifications(principal);
+        List<NotificationResponse> notifications = notificationService.getNotifications(principal, page, size);
         return ApiResponse.success(notifications);
     }
 

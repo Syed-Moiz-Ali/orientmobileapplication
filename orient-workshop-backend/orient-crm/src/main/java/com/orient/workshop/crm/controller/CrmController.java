@@ -149,7 +149,7 @@ public class CrmController {
     public ApiResponse<List<CrmTaskResponse>> getTasks(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(taskService.getTasks());
+        return ApiResponse.success(taskService.getTasks(page, size));
     }
 
     @PostMapping("/tasks")

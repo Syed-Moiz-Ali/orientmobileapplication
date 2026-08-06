@@ -18,6 +18,11 @@ class DioSyncHandler extends SyncHandler {
     if (operation.entityType == 'attachment') {
       return _executeAttachment(operation);
     }
+    // FIX (audit P0): deletes were POSTed to the create endpoint — an offline
+    // vehicle delete would re-CREATE the vehicle. Route deletes to DELETE.
+    if (operation.changeType == ChangeType.delete) {
+      return _executeDelete(operation);
+    }
     final endpoint = _getEndpoint(operation);
     if (endpoint == null) {
       return false;
@@ -48,6 +53,32 @@ class DioSyncHandler extends SyncHandler {
       if (e.response?.statusCode == 409) {
         throw ConflictException('Conflict on ${operation.entityType} ${operation.entityId}');
       }
+      rethrow;
+    }
+  }
+
+  /// Deletes are routed to the entity's DELETE endpoint (only 'vehicle' is
+  /// delete-capable today — add mappings here as deletes become supported).
+  Future<bool> _executeDelete(SyncOperation operation) async {
+    final String? endpoint = switch (operation.entityType) {
+      'vehicle' => ApiEndpoints.customerVehicle(operation.entityId),
+      _ => null,
+    };
+    if (endpoint == null) return false;
+    final url = '${EnvironmentConfig.baseUrl}$endpoint';
+    try {
+      final response = await _dio.request(
+        url,
+        options: Options(
+          method: 'DELETE',
+          headers: {'Idempotency-Key': operation.id},
+        ),
+      );
+      return response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return true; // already gone
       rethrow;
     }
   }
@@ -88,7 +119,13 @@ class DioSyncHandler extends SyncHandler {
   }
 
   String _methodFor(String entityType) {
-    if (entityType == 'technician_job' || entityType == 'work_item') return 'PUT';
+    if (entityType == 'technician_job' ||
+        entityType == 'work_item' ||
+        entityType == 'assigned_job' ||
+        entityType == 'job_card' ||
+        entityType == 'job_card_technician') {
+      return 'PUT';
+    }
     return 'POST';
   }
 
@@ -138,13 +175,37 @@ class DioSyncHandler extends SyncHandler {
           if (payload['priority'] != null) 'priority': payload['priority'],
         };
       case 'attendance':
-        // PunchInRequest: empId, status, punchIn, date
+        // FIX (audit P0): forward EVERY field and route to the correct
+        // endpoint per action — previously all 4 actions POSTed to punch-in
+        // and punchOut/breakTime/workHours were dropped, corrupting hours.
         return <String, dynamic>{
           if (payload['empId'] != null) 'empId': payload['empId'],
           if (payload['status'] != null) 'status': payload['status'],
           if (payload['punchIn'] != null) 'punchIn': payload['punchIn'],
+          if (payload['punchOut'] != null) 'punchOut': payload['punchOut'],
+          if (payload['breakTime'] != null) 'breakTime': payload['breakTime'],
+          if (payload['workHours'] != null) 'workHours': payload['workHours'],
           if (payload['date'] != null) 'date': payload['date'],
         };
+      case 'assigned_job':
+        // FIX (audit P0): entity type was unregistered — offline job status
+        // updates failed into sync_failed forever.
+        return <String, dynamic>{
+          if (payload['empId'] != null) 'empId': payload['empId'],
+          'status': payload['status'] ?? 'inProgress',
+        };
+      case 'job_card':
+        return <String, dynamic>{
+          'status': payload['status'] ?? 'inProgress',
+        };
+      case 'job_card_technician':
+        return <String, dynamic>{
+          if (payload['technician'] != null) 'technician': payload['technician'],
+        };
+      case 'vehicle':
+        // Customer app vehicle payload already matches AddVehicleRequest
+        // (brand/model/plateNumber/vin/color/year/mileage/lastService/nextDue).
+        return payload;
       case 'technician_job':
         // UpdateAssignedJobStatusRequest: empId, status
         return <String, dynamic>{
@@ -218,9 +279,25 @@ class DioSyncHandler extends SyncHandler {
       case 'reminder':
         return ApiEndpoints.reminderCreate;
       case 'attendance':
-        return ApiEndpoints.attendancePunchIn;
+        // FIX (audit P0): route by action — punch-in/out and break start/end
+        // have distinct endpoints that were never used by the handler.
+        final action = op.payload['action'] ?? 'punchIn';
+        return switch (action) {
+          'punchOut' => ApiEndpoints.attendancePunchOut,
+          'breakStart' => ApiEndpoints.attendanceBreakStart,
+          'breakEnd' => ApiEndpoints.attendanceBreakEnd,
+          _ => ApiEndpoints.attendancePunchIn,
+        };
       case 'technician_job':
         return ApiEndpoints.technicianAssignedJobStatus(op.entityId);
+      case 'assigned_job':
+        return ApiEndpoints.technicianAssignedJobStatus(op.entityId);
+      case 'job_card':
+        return ApiEndpoints.advisorJobCardStatus(op.entityId);
+      case 'job_card_technician':
+        return ApiEndpoints.advisorJobCardTechnician(op.entityId);
+      case 'vehicle':
+        return ApiEndpoints.customerVehicles;
       case 'work_item':
         // Offline replay of a per-item action on the legacy task endpoint,
         // which the backend routes through the same completion gate.

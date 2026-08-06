@@ -61,6 +61,23 @@ public class OwnerDashboardController {
         return ApiResponse.success(jobCardService.getJobCards());
     }
 
+    @GetMapping("/job-cards/export")
+    public ApiResponse<String> exportJobCards() {
+        return ApiResponse.success(jobCardService.exportCsv());
+    }
+
+    /**
+     * P1 (audit): real status update — the owner app previously faked
+     * "Mark as Complete" locally because no backend endpoint existed.
+     */
+    @PutMapping("/job-cards/{id}/status")
+    public ApiResponse<Void> updateJobCardStatus(
+            @PathVariable String id,
+            @RequestParam(required = false) String status) {
+        jobCardService.updateStatus(id, status != null ? status : "completed");
+        return ApiResponse.success(null);
+    }
+
     @GetMapping("/documents/expiry")
     public ApiResponse<List<DocumentExpiryResponse>> getDocumentExpiry() {
         return ApiResponse.success(documentService.getExpiringDocuments());
@@ -113,6 +130,11 @@ public class OwnerDashboardController {
     @PostMapping("/messages")
     public ApiResponse<MessageResponse> sendMessage(@Valid @RequestBody MessageRequest req) {
         return ApiResponse.success(messageService.sendMessage(req));
+    }
+
+    @GetMapping("/activity/export")
+    public ApiResponse<String> exportActivity() {
+        return ApiResponse.success(activityService.exportCsv());
     }
 
     @GetMapping("/activity")

@@ -30,6 +30,11 @@ public class BookingService {
     private final BookingMapper bookingMapper;
     private final CustomerService customerService;
     private final NotificationService notificationService;
+    private final com.orient.workshop.core.service.ActivityService activityService;
+
+    // P3: per-workshop capacity is configurable (was hardcoded 8).
+    @org.springframework.beans.factory.annotation.Value("${app.booking.workshop-capacity:8}")
+    private int workshopCapacity;
 
     public List<BookingResponse> getBookings(JwtUserPrincipal principal) {
         Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
@@ -68,19 +73,38 @@ public class BookingService {
                 "Your booking " + ref + " for " + req.getServiceType()
                         + " has been received. We'll confirm shortly.");
 
+        // P1: activity feed writer (was empty — nothing ever logged).
+        activityService.log("job_card", "Booking received",
+                "Booking " + ref + " for " + req.getServiceType()
+                        + (req.getPlateNumber() != null && !req.getPlateNumber().isBlank()
+                        ? " (" + req.getPlateNumber() + ")" : ""),
+                principal != null ? principal.getUserId() : null);
+
         return IdResponse.builder().id(String.valueOf(booking.getId())).bookingRef(ref).build();
     }
 
-    public BookingAvailabilityResponse getAvailability(String dateStr, String serviceType) {
+    public BookingAvailabilityResponse getAvailability(String dateStr, String serviceType, Long branchId) {
         LocalDate date = LocalDate.parse(dateStr);
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
-        List<Booking> bookings = bookingMapper.selectList(
-                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Booking>()
-                        .between("booking_date", startOfDay, endOfDay)
-                        .ne("status", "cancelled")
-        );
+        // P3 (audit): availability was branch-blind — multi-branch workshops
+        // double-booked bays across branches. Filter by the requested branch.
+        List<Booking> bookings;
+        if (branchId != null && branchId > 0) {
+            bookings = bookingMapper.selectList(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Booking>()
+                            .eq("branch_id", branchId)
+                            .between("booking_date", startOfDay, endOfDay)
+                            .ne("status", "cancelled")
+            );
+        } else {
+            bookings = bookingMapper.selectList(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Booking>()
+                            .between("booking_date", startOfDay, endOfDay)
+                            .ne("status", "cancelled")
+            );
+        }
 
         List<String> bookedSlots = new ArrayList<>();
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
@@ -103,7 +127,7 @@ public class BookingService {
                 .serviceType(serviceType)
                 .availableSlots(availableSlots)
                 .bookedSlots(bookedSlots)
-                .workshopCapacity(8)
+                .workshopCapacity(workshopCapacity)
                 .bookedCount(bookings.size())
                 .build();
     }
@@ -114,12 +138,19 @@ public class BookingService {
         if (booking == null) {
             throw new com.orient.workshop.common.exception.NotFoundException("Booking not found");
         }
-        
+
+        // S-4: IDOR fix — only the booking's owner (resolved customer) may change
+        // its status. Previously any authenticated user could mutate any booking.
+        Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
+        if (booking.getCustomerId() == null || !customer.getId().equals(booking.getCustomerId())) {
+            throw new com.orient.workshop.common.exception.ForbiddenException("Booking does not belong to this customer");
+        }
+
         List<String> validStatuses = List.of("confirmed", "vehicle_received", "in_service", "completed", "cancelled");
         if (!validStatuses.contains(status)) {
             throw new com.orient.workshop.common.exception.BadRequestException("Invalid status: " + status);
         }
-        
+
         booking.setStatus(status);
         bookingMapper.updateById(booking);
         return toResponse(booking);

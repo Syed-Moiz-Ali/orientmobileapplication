@@ -19,8 +19,12 @@ public class CrmTaskService {
 
     private final CrmTaskMapper taskMapper;
 
-    public List<CrmTaskResponse> getTasks() {
-        return taskMapper.selectList(null).stream().map(this::toResponse).collect(Collectors.toList());
+    public List<CrmTaskResponse> getTasks(int page, int size) {
+        // P1 (audit): page/size were accepted by the controller but ignored —
+        // every call returned the entire task table.
+        int limit = Math.min(Math.max(size, 1), 100);
+        int offset = Math.max(page - 1, 0) * limit;
+        return taskMapper.findPaged(limit, offset).stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Transactional

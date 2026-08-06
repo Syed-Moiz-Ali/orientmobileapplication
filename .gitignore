@@ -22,7 +22,6 @@ migrate_working_dir/
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
 #.vscode/
-
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
@@ -30,8 +29,11 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
-/coverage/
+# FIX (audit P0): root-anchored patterns missed nested build dirs — 36 build
+# artifacts (packages/*/build/**, apps/*/build/**) were tracked.
+**/build/
+**/coverage/
+**/ephemeral/
 
 # Symbolication related
 app.*.symbols
@@ -40,9 +42,20 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
 
-# Environment files.env.env.*
+# Environment files (the shared_core/assets/.env template is tracked by design;
+# anything else with secrets must never be)
+.env
+.env.*
+*.p12
+*.jks
+*.keystore
 
+# Scratch / agent files
+error.txt
+javaerror.txt
+promt.txt
+change.txt

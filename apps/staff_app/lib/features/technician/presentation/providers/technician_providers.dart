@@ -137,11 +137,14 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final logger = ref.read(loggerProvider);
 
     try {
-      final profileResponse = await remote.getProfile(_defaultEmpId);
+      // FIX (audit P0): identity comes from the authenticated session.
+      // The backend /technicians/profile endpoint now resolves the staff
+      // record from the JWT principal — empId is never a query parameter.
+      final profileResponse = await remote.getProfile('');
       profile = TechnicianProfileEntity(
         name: profileResponse.name,
         empId: profileResponse.empId.isEmpty
-            ? _defaultEmpId
+            ? profile.empId
             : profileResponse.empId,
         role: profileResponse.role.isEmpty
             ? 'Technician'
@@ -152,21 +155,28 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
             ? _initials(profileResponse.name)
             : profileResponse.avatarInitials,
       );
+      // Persist the resolved identity so offline Hive keys are user-correct.
+      try {
+        Hive.box<dynamic>('technician_jobs')
+            .put('technician_profile', profile.toJson());
+      } catch (_) {}
 
-      final jobs = await remote.getJobs(_defaultEmpId);
+      final empId = profile.empId;
+
+      final jobs = await remote.getJobs(empId);
       if (jobs.isNotEmpty) {
         _allJobs.clear();
         _allJobs.addAll(jobs.map(_jobFromResponse));
       }
 
-      final assigned = await remote.getAssignedJobs(_defaultEmpId);
+      final assigned = await remote.getAssignedJobs(empId);
       if (assigned.isNotEmpty) {
         state = state.copyWith(
           assignedJobs: assigned.map(_assignedFromResponse).toList(),
         );
       }
 
-      final att = await remote.getAttendance(_defaultEmpId);
+      final att = await remote.getAttendance(empId);
       if (att.status.isNotEmpty && att.status != 'notPunchedIn') {
         state = state.copyWith(
           attendanceStatus: AttendanceStatus.values.firstWhere(
@@ -182,7 +192,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         );
       }
 
-      final prod = await remote.getProductivity(_defaultEmpId);
+      final prod = await remote.getProductivity(empId);
       if (prod.assignedJobs > 0 || prod.totalHoursWorked.isNotEmpty) {
         productivity = TechnicianStatsEntity(
           assignedJobs: prod.assignedJobs,
@@ -263,7 +273,18 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   void _loadFromHive() {
     try {
       final box = Hive.box<dynamic>('technician_jobs');
-      final att = box.get('attendance');
+      // FIX (audit P0): restore the previously resolved identity so offline
+      // Hive keys and displays are user-correct on shared tablets.
+      final savedProfile = box.get('technician_profile');
+      if (savedProfile != null) {
+        try {
+          profile = TechnicianProfileEntity.fromJson(
+            Map<String, dynamic>.from(savedProfile),
+          );
+        } catch (_) {}
+      }
+      final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final att = box.get('attendance_${profile.empId}_$today');
       if (att != null) {
         state = state.copyWith(
           attendanceStatus: AttendanceStatus.values.firstWhere(
@@ -320,7 +341,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       attendanceStatus: AttendanceStatus.working,
       attendanceSummary: AttendanceSummaryEntity(punchIn: _fmt(now)),
     );
-    await _persistAttendance();
+    await _persistAttendance(action: 'punchIn');
     await ref.read(syncEngineProvider).syncAll();
   }
 
@@ -339,21 +360,21 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         workHours: state.attendanceSummary.workHours,
       ),
     );
-    await _persistAttendance();
+    await _persistAttendance(action: 'punchOut');
     await ref.read(syncEngineProvider).syncAll();
   }
 
   Future<void> startBreak() async {
     if (state.attendanceStatus != AttendanceStatus.working) return;
     state = state.copyWith(attendanceStatus: AttendanceStatus.onBreak);
-    await _persistAttendance();
+    await _persistAttendance(action: 'breakStart');
     await ref.read(syncEngineProvider).syncAll();
   }
 
   Future<void> endBreak() async {
     if (state.attendanceStatus != AttendanceStatus.onBreak) return;
     state = state.copyWith(attendanceStatus: AttendanceStatus.working);
-    await _persistAttendance();
+    await _persistAttendance(action: 'breakEnd');
     await ref.read(syncEngineProvider).syncAll();
   }
 
@@ -395,8 +416,9 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     return IdGenerator.nextId(prefix);
   }
 
-  Future<void> _persistAttendance() async {
+  Future<void> _persistAttendance({String action = 'punchIn'}) async {
     final payload = {
+      'action': action,
       'empId': profile.empId,
       'status': state.attendanceStatus.name,
       'punchIn': state.attendanceSummary.punchIn,
@@ -405,9 +427,12 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       'workHours': state.attendanceSummary.workHours,
       'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
     };
+    // FIX (audit P0): attendance was persisted under a single global key —
+    // on shared tablets the next user saw (and overwrote) the previous user's
+    // punch state. Key by empId + date.
     final box = Hive.box<dynamic>('technician_jobs');
-    box.put('attendance', payload);
-    await _enqueueSync('attendance', payload);
+    box.put('attendance_${profile.empId}_${payload['date']}', payload);
+    await _enqueueSync('attendance_${profile.empId}_${payload['date']}', payload);
   }
 
   Future<void> updateAssignedJobStatus(
@@ -604,6 +629,9 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
           .map(
             (t) => {
               'id': t.id,
+              // FIX (audit P0): persist task `ref` so offline actions survive
+              // a restart (previously dropped on reload).
+              'ref': t.ref,
               'description': t.description,
               'status': t.status.name,
               'startTime': t.startTime,

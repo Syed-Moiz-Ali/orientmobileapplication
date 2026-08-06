@@ -19,11 +19,11 @@ class CustomerInvoiceDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (statusColor, statusBg) = _getStatusColors();
-    
-    // Mocking some data that is not in InvoiceResponse
-    final subtotal = invoice.amount * 0.8;
-    final vat = invoice.amount * 0.2;
-    
+
+    // FIX (audit P0): subtotal/VAT/line items were FABRICATED from the total
+    // (80% subtotal, 20% VAT — UAE VAT is 5%) with a literal "Mocked" label.
+    // Only the server-provided amount is shown; the breakdown appears once the
+    // backend exposes line items.
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -76,7 +76,7 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppDimensions.s32),
-                    
+
                     AppCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +101,7 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                           ),
                           const SizedBox(height: AppDimensions.s4),
                           const Text(
-                            'Customer Vehicle (Mocked)',
+                            '—',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -126,7 +126,7 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppDimensions.s16),
-                    
+
                     AppCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,50 +140,42 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: AppDimensions.s16),
-                          _buildLineItem('Service Labour', 1, subtotal * 0.6),
-                          const Divider(height: 24, color: AppColors.border),
-                          _buildLineItem('Parts', 2, subtotal * 0.4 / 2),
+                          const Text(
+                            'Itemised breakdown is not available yet',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.text3,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: AppDimensions.s16),
-                    
+
                     AppCard(
                       color: AppColors.surface,
-                      child: Column(
+                      child: Row(
                         children: [
-                          _buildSummaryRow('Subtotal', subtotal),
-                          const SizedBox(height: AppDimensions.s8),
-                          _buildSummaryRow('VAT (20%)', vat),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Divider(height: 1, color: AppColors.border),
+                          const Text(
+                            'Total',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.text2,
+                            ),
                           ),
-                          Row(
-                            children: [
-                              const Text(
-                                'Grand Total',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                '\u00a3${invoice.amount.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.accent,
-                                ),
-                              ),
-                            ],
+                          const Spacer(),
+                          Text(
+                            'AED ${invoice.amount.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.accent,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.s32),
                   ],
                 ),
@@ -248,73 +240,6 @@ class CustomerInvoiceDetailView extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-  
-  Widget _buildLineItem(String description, int qty, double rate) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 5,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '$qty x \u00a3${rate.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.text3,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text(
-            '\u00a3${(qty * rate).toStringAsFixed(2)}',
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSummaryRow(String label, double value) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.text2,
-          ),
-        ),
-        const Spacer(),
-        Text(
-          '\u00a3${value.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
     );
   }
 }

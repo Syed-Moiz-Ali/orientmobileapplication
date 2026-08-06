@@ -97,14 +97,24 @@ public class RepairOrderService {
         if (ro == null) {
             throw new NotFoundException("Repair order not found");
         }
-        
-        // Could update ro status to 'sent' if status field existed
-        
+
+        // Fix: 'waitingCustomerApproval' was missing from the job_cards ENUM
+        // (every sendEstimate crashed with 409). The customer approval row is
+        // already auto-created in createRepairOrder — re-emit the notification.
         if (ro.getJobCardId() != null) {
             JobCard jc = jobCardMapper.selectById(ro.getJobCardId());
             if (jc != null) {
                 jc.setStatus("waitingCustomerApproval");
                 jobCardMapper.updateById(jc);
+                Customer customer = jc.getCustomerId() != null
+                        ? customerMapper.selectById(jc.getCustomerId()) : null;
+                if (customer != null && customer.getUserId() != null) {
+                    notificationService.emit(customer.getUserId(), jc.getBranchId(),
+                            "approvalNeeded", "Approve your estimate",
+                            "Estimate " + ro.getRepairOrderRef() + " · "
+                                    + String.format("%.2f", ro.getGrandTotal())
+                                    + " · review the work and approve to start.");
+                }
             }
         }
     }

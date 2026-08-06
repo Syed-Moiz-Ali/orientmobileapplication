@@ -24,6 +24,14 @@ class TokenStorage {
 
   Future<String?> getRole() async => _storage.read(key: _roleKey);
 
+  /// P1 (audit): lightweight metadata (e.g. 'validated_at') used for session
+  /// freshness enforcement without a schema change.
+  Future<void> setMetadata(String key, String value) async {
+    await _storage.write(key: 'meta_$key', value: value);
+  }
+
+  Future<String?> getMetadata(String key) async => _storage.read(key: 'meta_$key');
+
   Future<void> updateToken(String token) async {
     await _storage.write(key: _tokenKey, value: token);
   }

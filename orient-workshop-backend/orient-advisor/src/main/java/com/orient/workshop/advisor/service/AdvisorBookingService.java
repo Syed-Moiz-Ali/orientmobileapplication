@@ -14,6 +14,7 @@ import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.advisor.model.dto.CheckInRequest;
 import com.orient.workshop.advisor.model.dto.CheckInResponse;
 import com.orient.workshop.common.exception.NotFoundException;
+import com.orient.workshop.common.util.IdGenerator;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +79,17 @@ public class AdvisorBookingService {
             throw new NotFoundException("Booking not found");
         }
 
+        // Fix: only the booking's assigned advisor may check it in.
+        Staff me = resolveAdvisor(principal);
+        if (booking.getAdvisorId() != null && !booking.getAdvisorId().equals(me.getId())) {
+            throw new ForbiddenException("Booking is assigned to another advisor");
+        }
+
+        // Fix: job_card_ref is NOT NULL UNIQUE — generate it BEFORE insert
+        // (previously the insert failed on every check-in).
+        String ref = IdGenerator.shortRef("JC");
         JobCard jobCard = JobCard.builder()
+                .jobCardRef(ref)
                 .customerId(booking.getCustomerId())
                 .vehicleId(booking.getVehicleId())
                 .branchId(booking.getBranchId())
@@ -87,12 +98,8 @@ public class AdvisorBookingService {
                 .notes(request.getNotes())
                 .createdDate(LocalDateTime.now())
                 .build();
-        
+
         jobCardMapper.insert(jobCard);
-        
-        String ref = "JC-" + LocalDateTime.now().getYear() + "-" + jobCard.getId();
-        jobCard.setJobCardRef(ref);
-        jobCardMapper.updateById(jobCard);
 
         booking.setStatus("vehicle_received");
         booking.setJobCardId(jobCard.getId());

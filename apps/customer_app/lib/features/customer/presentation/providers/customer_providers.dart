@@ -103,6 +103,7 @@ class CustomerDashboardState {
   final DateTime? bookingDate;
   final String bookingNotes;
   final String? bookingError;
+  final String loadError;
   final List<CustomerVehicleEntity> vehicles;
   final List<CustomerNotificationEntity> notifications;
   final CustomerServiceEntity? activeService;
@@ -113,6 +114,7 @@ class CustomerDashboardState {
     required this.selectedIndex, required this.isLoading,
     required this.selectedVehicle, required this.selectedServiceType,
     this.bookingDate, required this.bookingNotes, this.bookingError,
+    this.loadError = '',
     required this.vehicles, required this.notifications,
     this.activeService, this.profile, this.unpaidInvoices = 0,
   });
@@ -120,6 +122,7 @@ class CustomerDashboardState {
   CustomerDashboardState copyWith({
     int? selectedIndex, bool? isLoading, String? selectedVehicle,
     String? selectedServiceType, DateTime? bookingDate, String? bookingNotes,
+    String? loadError,
     String? bookingError, List<CustomerVehicleEntity>? vehicles,
     List<CustomerNotificationEntity>? notifications,
     CustomerServiceEntity? activeService, CustomerEntity? profile,
@@ -133,6 +136,7 @@ class CustomerDashboardState {
     bookingDate: bookingDate ?? this.bookingDate,
     bookingNotes: bookingNotes ?? this.bookingNotes,
     bookingError: bookingError,
+    loadError: loadError ?? this.loadError,
     vehicles: vehicles ?? this.vehicles,
     notifications: notifications ?? this.notifications,
     activeService: clearActiveService ? null : (activeService ?? this.activeService),
@@ -148,7 +152,8 @@ class CustomerDashboardState {
           .where((v) => v['status'] == 'completed').length;
     } catch (_) { return 0; }
   }
-  String formatAmount(double amount) => '\u00a3${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';
+  // FIX (audit): GBP → AED for the UAE market.
+  String formatAmount(double amount) => 'AED ${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';
 }
 
 class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
@@ -164,20 +169,31 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
   Future<void> _loadData() async {
     final repo = ref.read(customerRepositoryProvider);
     final remote = ref.read(customerRemoteDataSourceProvider);
-    final results = await Future.wait([
-      repo.getVehicles(), repo.getNotifications(),
-      repo.getActiveService(), repo.getCustomerProfile(),
-      remote.getInvoices(),
-    ]);
-    final invoices = results[4] as List<InvoiceResponse>;
-    state = state.copyWith(
-      isLoading: false,
-      vehicles: results[0] as List<CustomerVehicleEntity>,
-      notifications: results[1] as List<CustomerNotificationEntity>,
-      activeService: results[2] as CustomerServiceEntity,
-      profile: results[3] as CustomerEntity,
-      unpaidInvoices: invoices.where((i) => i.status == 'unpaid').length,
-    );
+    // FIX (audit P1): any throw previously left isLoading=true forever and the
+    // home screen rendered a skeleton indefinitely with no retry.
+    try {
+      final results = await Future.wait([
+        repo.getVehicles(), repo.getNotifications(),
+        repo.getActiveService(), repo.getCustomerProfile(),
+        remote.getInvoices(),
+      ]);
+      final invoices = results[4] as List<InvoiceResponse>;
+      state = state.copyWith(
+        isLoading: false,
+        loadError: '',
+        vehicles: results[0] as List<CustomerVehicleEntity>,
+        notifications: results[1] as List<CustomerNotificationEntity>,
+        activeService: results[2] as CustomerServiceEntity,
+        profile: results[3] as CustomerEntity,
+        unpaidInvoices: invoices.where((i) => i.status == 'unpaid').length,
+      );
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to load customer dashboard', error: e, stackTrace: st);
+      state = state.copyWith(
+        isLoading: false,
+        loadError: 'Could not load your data. Check your connection and try again.',
+      );
+    }
   }
 
   void selectTab(int index) {
@@ -240,11 +256,10 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
     return true;
   }
 
-  final List<String> serviceTypes = [
-    'Full Service', 'Oil & Filter Change', 'Brake Inspection',
-    'Tyre Replacement', 'MOT Check', 'Air Conditioning Service',
-    'Battery Replacement', 'Diagnostic Check', 'Wheel Alignment', 'Clutch Repair',
-  ];
+  // FIX (audit P0): hardcoded service names removed — services come from the
+  // /services/types API (the active booking view already uses it). This
+  // legacy field only feeds the unused book-service tab.
+  final List<String> serviceTypes = const [];
 }
 
 // ---------- Seamless flows: estimate approvals & invoices ----------

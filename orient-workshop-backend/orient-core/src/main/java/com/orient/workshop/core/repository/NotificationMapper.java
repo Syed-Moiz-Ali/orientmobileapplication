@@ -15,6 +15,9 @@ public interface NotificationMapper extends BaseMapper<Notification> {
     @Select("SELECT * FROM notifications WHERE user_id = #{userId} ORDER BY created_at DESC")
     List<Notification> findByUserId(@Param("userId") Long userId);
 
-    @Update("UPDATE notifications SET is_read = TRUE WHERE user_id = #{userId} AND is_read = FALSE")
-    int markAllRead(@Param("userId") Long userId);
+    @Select("SELECT * FROM notifications WHERE user_id = #{userId} ORDER BY created_at DESC LIMIT #{limit} OFFSET #{offset}")
+    List<Notification> findByUserIdPaged(@Param("userId") Long userId, @Param("limit") int limit, @Param("offset") int offset);
+
+    @Update("UPDATE notifications SET is_read = TRUE WHERE user_id = #{userId}")
+    void markAllRead(@Param("userId") Long userId);
 }

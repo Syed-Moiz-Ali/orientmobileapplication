@@ -7,6 +7,16 @@ on:
     branches: [main]
 
 jobs:
+  # FIX (audit P0): secret scanning — committed secrets (keystore, .env, dev
+  # properties) would have been caught on push.
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   analyze:
     runs-on: ubuntu-latest
     steps:
@@ -53,6 +63,8 @@ jobs:
           cache: maven
       - name: Backend tests (Maven)
         run: mvn -B -ntp test
+      - name: Verify Linux maven wrapper exists
+        run: test -x mvnw && echo "mvnw present" || (echo "mvnw missing" && exit 1)
 
   build-apks:
     runs-on: ubuntu-latest
@@ -68,10 +80,16 @@ jobs:
         run: |
           dart pub global activate melos
           melos bootstrap
+      # FIX (audit P0): only staff + owner were built — customer and crm were
+      # never compiled in CI, so regressions there shipped silently.
       - name: Build staff_app release APK
         run: melos run build:staff
       - name: Build owner_app release APK
         run: melos run build:owner
+      - name: Build customer_app release APK
+        run: melos run build:customer
+      - name: Build crm_app release APK
+        run: melos run build:crm
       - name: Upload staff APK
         uses: actions/upload-artifact@v4
         with:
@@ -82,3 +100,13 @@ jobs:
         with:
           name: owner-app-apk
           path: apps/owner_app/build/app/outputs/flutter-apk/app-release.apk
+      - name: Upload customer APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: customer-app-apk
+          path: apps/customer_app/build/app/outputs/flutter-apk/app-release.apk
+      - name: Upload crm APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: crm-app-apk
+          path: apps/crm_app/build/app/outputs/flutter-apk/app-release.apk

@@ -1,0 +1,76 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+# ----------------------------------------------------------------------------
+#
+# FIX (audit P0): the Linux Maven wrapper was missing — only mvnw.cmd was
+# committed, so deploy.sh (`./mvnw`) failed on every Linux deploy.
+
+# ----------------------------------------------------------------------------
+# Apache Maven Wrapper startup batch script, version 3.3.2
+# ----------------------------------------------------------------------------
+
+# Resolve links: $0 may be a link
+PRG="$0"
+while [ -h "$PRG" ]; do
+  ls=$(ls -ld "$PRG")
+  link=$(expr "$ls" : '.*-> \(.*\)$')
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=$(dirname "$PRG")/"$link"
+  fi
+done
+
+MAVEN_PROJECTBASEDIR=${MAVEN_BASEDIR:-$(cd "$(dirname "$PRG")/" >/dev/null && pwd)}
+
+case "`uname`" in
+  CYGWIN*|MINGW*|MSYS*) cygwin=true ;;
+  *) cygwin=false ;;
+esac
+
+MAVEN_CMD_LINE_ARGS="$MAVEN_OPTS"
+
+# Provide a "verbose jar" target
+BASE_DIR=$(cd "$(dirname "$PRG")/" >/dev/null && pwd)
+
+WRAPPER_JAR="$BASE_DIR/.mvn/wrapper/maven-wrapper.jar"
+
+# Find maven
+if [ -x "$MAVEN_HOME/bin/mvn" ]; then
+  MVN_CMD="$MAVEN_HOME/bin/mvn"
+elif command -v mvn >/dev/null 2>&1; then
+  MVN_CMD=$(command -v mvn)
+else
+  # Download the wrapper jar if missing
+  if [ ! -f "$WRAPPER_JAR" ]; then
+    echo "Downloading Maven Wrapper jar..."
+    WRAPPER_URL="https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.3.2/maven-wrapper-3.3.2.jar"
+    if command -v curl >/dev/null 2>&1; then
+      curl -fsSL "$WRAPPER_URL" -o "$WRAPPER_JAR"
+    elif command -v wget >/dev/null 2>&1; then
+      wget -q "$WRAPPER_URL" -O "$WRAPPER_JAR"
+    else
+      echo "ERROR: cannot download Maven (no curl/wget) and no local Maven found." >&2
+      exit 1
+    fi
+  fi
+  exec java -classpath "$WRAPPER_JAR" org.apache.maven.wrapper.MavenWrapperMain "$@"
+fi
+
+exec "$MVN_CMD" "$@"

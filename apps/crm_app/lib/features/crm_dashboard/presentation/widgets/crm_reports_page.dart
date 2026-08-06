@@ -360,6 +360,8 @@ class _CrmConversionTrendPainter extends CustomPainter {
     final maxVal = allVals.reduce(math.max);
 
     void drawLine(List<double> values, Color color) {
+      // FIX (audit P1): a single data point divided by (length - 1) = NaN.
+      if (values.length < 2) return;
       final path = Path();
       final fill = Path();
       for (var i = 0; i < values.length; i++) {

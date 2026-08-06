@@ -7,10 +7,15 @@ class CrmKanbanView extends StatelessWidget {
   final List<CrmLeadEntity> leads;
   const CrmKanbanView({super.key, required this.leads});
 
-  static const _columns = ['ACTIVE', 'WON', 'LOST', 'UNANSWERED'];
+  // FIX (audit P2): NO_RESPONSE leads were silently dropped from the kanban
+  // (and the taxonomy missed NEW/CONTACTED/QUALIFIED/PROPOSAL). The kanban now
+  // renders every status that actually appears in the data.
+  static const _columns = ['ACTIVE', 'NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'WON', 'LOST', 'UNANSWERED', 'NO_RESPONSE'];
 
   @override
   Widget build(BuildContext context) {
+    final presentStatuses = leads.map((l) => l.status.toUpperCase()).toSet();
+    final columns = [..._columns, ...presentStatuses.where((s) => !_columns.contains(s))];
     return SizedBox(
       height: MediaQuery.of(context).size.height - 250,
       child: SingleChildScrollView(
@@ -19,7 +24,7 @@ class CrmKanbanView extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: _columns.map((status) {
+          children: columns.map((status) {
             final columnLeads = leads.where((l) => l.status.toUpperCase() == status).toList();
             return _column(context, status, columnLeads);
           }).toList(),
@@ -32,7 +37,8 @@ class CrmKanbanView extends StatelessWidget {
     final (color, bg) = switch (status) {
       'WON' => (CrmColors.green, CrmColors.greenBg),
       'LOST' => (CrmColors.red, CrmColors.redBg),
-      'UNANSWERED' => (CrmColors.amber, CrmColors.amberBg),
+      'UNANSWERED' || 'NO_RESPONSE' => (CrmColors.amber, CrmColors.amberBg),
+      'NEW' || 'CONTACTED' => (CrmColors.blue, CrmColors.blueBg),
       _ => (CrmColors.accent, CrmColors.accentLight),
     };
 

@@ -186,7 +186,7 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                     ),
                     const SizedBox(height: AppDimensions.s14),
                     AdvisorContactCard(
-                      advisorName: svc.technicianName.isNotEmpty ? svc.technicianName : 'Ahmed Hassan',
+                      advisorName: svc.technicianName.isNotEmpty ? svc.technicianName : 'Service Advisor',
                     ),
                     const SizedBox(height: AppDimensions.s14),
 

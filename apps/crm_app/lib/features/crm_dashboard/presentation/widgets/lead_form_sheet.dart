@@ -38,7 +38,7 @@ class _LeadFormSheetState extends ConsumerState<LeadFormSheet> {
   bool _busy = false;
   String? _error;
 
-  static const _statuses = ['ACTIVE', 'WON', 'LOST', 'UNANSWERED'];
+  static const _statuses = ['ACTIVE', 'WON', 'LOST', 'UNANSWERED', 'NO_RESPONSE'];
   static const _sources = ['META', 'ZOHO', 'WhatsApp', 'Instagram', 'Google Ads', 'Website', 'Referral', 'Manual'];
 
   @override
@@ -110,7 +110,10 @@ class _LeadFormSheetState extends ConsumerState<LeadFormSheet> {
             const SizedBox(height: 12),
             _field('Lead Value (AED)', _valueCtrl, Icons.payments_outlined, keyboard: TextInputType.number),
             const SizedBox(height: 12),
-            _field('Follow-up Date', _followUpCtrl, Icons.event_outlined),
+            // FIX (audit P2): follow-up date was free text ("tomorrow",
+            // "12/25") — no picker, no sortable/overdue logic. Now a real
+            // date picker writing ISO-8601.
+            _followUpField(),
             const SizedBox(height: 12),
             _notesField(),
             _statusLabel('Status'),
@@ -307,6 +310,60 @@ class _LeadFormSheetState extends ConsumerState<LeadFormSheet> {
               ),
             );
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _followUpField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Follow-up Date', style: TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: () async {
+            final now = DateTime.now();
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: DateTime.tryParse(_followUpCtrl.text) ?? now.add(const Duration(days: 7)),
+              firstDate: now,
+              lastDate: now.add(const Duration(days: 365 * 2)),
+            );
+            if (picked != null) {
+              setState(() {
+                _followUpCtrl.text = picked.toIso8601String().substring(0, 10);
+              });
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: CrmColors.border),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.event_outlined, size: 18, color: CrmColors.textM),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _followUpCtrl.text.isEmpty ? 'Select a date' : _followUpCtrl.text,
+                    style: TextStyle(
+                      color: _followUpCtrl.text.isEmpty ? CrmColors.textM : CrmColors.textH,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                if (_followUpCtrl.text.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => setState(() => _followUpCtrl.clear()),
+                    child: const Icon(Icons.close_rounded, size: 16, color: CrmColors.textM),
+                  ),
+              ],
+            ),
+          ),
         ),
       ],
     );

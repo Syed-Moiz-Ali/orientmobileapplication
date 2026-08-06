@@ -167,14 +167,24 @@ class TechnicianProfileEntity {
     required this.avatarInitials,
   });
 
-  static const mock = TechnicianProfileEntity(
-    name: 'Mohammed Hassan',
-    empId: 'EMP-001',
-    role: 'Technician',
-    branch: 'Main Dubai',
-    shift: '8:00 AM - 6:00 PM',
-    avatarInitials: 'MH',
-  );
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'empId': empId,
+        'role': role,
+        'branch': branch,
+        'shift': shift,
+        'avatarInitials': avatarInitials,
+      };
+
+  factory TechnicianProfileEntity.fromJson(Map<String, dynamic> json) =>
+      TechnicianProfileEntity(
+        name: json['name'] as String? ?? '',
+        empId: json['empId'] as String? ?? '',
+        role: json['role'] as String? ?? 'Technician',
+        branch: json['branch'] as String? ?? '',
+        shift: json['shift'] as String? ?? '',
+        avatarInitials: json['avatarInitials'] as String? ?? 'T',
+      );
 }
 
 class AttendanceSummaryEntity {
@@ -261,41 +271,6 @@ class AssignedJobEntity {
       status: status ?? this.status,
     );
   }
-
-  static List<AssignedJobEntity> get mockData => [
-    const AssignedJobEntity(
-      id: 'JC-2024-1245',
-      customerName: 'Ahmed Al Mansouri',
-      vehicle: 'Toyota Camry - AA-12345',
-      service: 'Engine Diagnostics',
-      amount: 1.2,
-      status: AssignedJobStatus.inProgress,
-    ),
-    const AssignedJobEntity(
-      id: 'JC-2024-1246',
-      customerName: 'Fatima Ali',
-      vehicle: 'Honda Accord - BB-67890',
-      service: 'Brake Pad Replacement',
-      amount: 0,
-      status: AssignedJobStatus.pending,
-    ),
-    const AssignedJobEntity(
-      id: 'JC-2024-1247',
-      customerName: 'Khalid Rashid',
-      vehicle: 'Nissan Patrol - CC-11223',
-      service: 'AC Repair',
-      amount: 0,
-      status: AssignedJobStatus.waitingParts,
-    ),
-    const AssignedJobEntity(
-      id: 'JC-2024-1248',
-      customerName: 'Mariam Salem',
-      vehicle: 'BMW X5 - DD-44556',
-      service: 'Full Service',
-      amount: 0,
-      status: AssignedJobStatus.completed,
-    ),
-  ];
 }
 
 class TechnicianJobEntity {

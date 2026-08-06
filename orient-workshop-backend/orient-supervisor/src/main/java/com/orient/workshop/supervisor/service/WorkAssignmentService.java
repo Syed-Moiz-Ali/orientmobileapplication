@@ -5,12 +5,16 @@ import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.util.DateParse;
 import com.orient.workshop.common.util.IdGenerator;
+import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.model.entity.JobCard;
 import com.orient.workshop.core.model.entity.Staff;
 import com.orient.workshop.core.model.entity.TechnicianTask;
+import com.orient.workshop.core.model.entity.Vehicle;
+import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.core.repository.StaffMapper;
 import com.orient.workshop.core.repository.TechnicianTaskMapper;
+import com.orient.workshop.core.repository.VehicleMapper;
 import com.orient.workshop.supervisor.model.dto.AssignedJobResponse;
 import com.orient.workshop.supervisor.model.dto.AvailableTechnicianResponse;
 import com.orient.workshop.supervisor.model.dto.WorkAssignmentRequest;
@@ -24,6 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +41,8 @@ public class WorkAssignmentService {
     private final JobCardMapper jobCardMapper;
     private final StaffMapper staffMapper;
     private final TechnicianTaskMapper taskMapper;
+    private final CustomerMapper customerMapper;
+    private final VehicleMapper vehicleMapper;
 
     @Transactional
     public WorkAssignmentResponse createAssignments(JwtUserPrincipal principal, WorkAssignmentRequest req) {
@@ -70,18 +79,69 @@ public class WorkAssignmentService {
         return WorkAssignmentResponse.builder().results(results).build();
     }
 
+    /**
+     * FIX (audit P0): this list returned a fabricated payload (empty customer/
+     * vehicle, done=0/total=1). Now joins job cards → customers/vehicles and
+     * counts real completed work items per technician task.
+     */
     public List<AssignedJobResponse> getAssignedJobs() {
-        return workAssignmentMapper.findAll().stream()
-                .map(wa -> AssignedJobResponse.builder()
-                        .jobCard(wa.getAssignmentRef())
-                        .customer("")
-                        .vehicle("")
-                        .dateAssigned(wa.getCreatedAt() != null ? wa.getCreatedAt().toLocalDate().toString() : "")
-                        .done(0)
-                        .total(1)
-                        .status(wa.getStatus())
-                        .build())
+        List<WorkAssignment> assignments = workAssignmentMapper.findAll();
+        if (assignments.isEmpty()) return List.of();
+
+        List<Long> jobCardIds = assignments.stream()
+                .map(WorkAssignment::getJobCardId)
+                .filter(Objects::nonNull)
+                .distinct()
                 .collect(Collectors.toList());
+        List<JobCard> cards = jobCardIds.isEmpty() ? List.of()
+                : jobCardMapper.selectBatchIds(jobCardIds);
+        Map<Long, JobCard> cardsById = cards.stream()
+                .collect(Collectors.toMap(JobCard::getId, Function.identity()));
+
+        List<Long> customerIds = cards.stream()
+                .map(JobCard::getCustomerId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, Customer> customers = customerIds.isEmpty() ? Map.of()
+                : customerMapper.selectBatchIds(customerIds).stream()
+                        .collect(Collectors.toMap(Customer::getId, Function.identity()));
+
+        List<Long> vehicleIds = cards.stream()
+                .map(JobCard::getVehicleId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, Vehicle> vehicles = vehicleIds.isEmpty() ? Map.of()
+                : vehicleMapper.selectBatchIds(vehicleIds).stream()
+                        .collect(Collectors.toMap(Vehicle::getId, Function.identity()));
+
+        return assignments.stream().map(wa -> {
+            JobCard card = cardsById.get(wa.getJobCardId());
+            Customer customer = card != null && card.getCustomerId() != null
+                    ? customers.get(card.getCustomerId()) : null;
+            Vehicle vehicle = card != null && card.getVehicleId() != null
+                    ? vehicles.get(card.getVehicleId()) : null;
+            long done = taskMapper.selectCount(
+                    new LambdaQueryWrapper<TechnicianTask>()
+                            .eq(TechnicianTask::getJobCardNo, card != null ? card.getJobCardRef() : "")
+                            .eq(TechnicianTask::getStatus, "completed"));
+            long total = taskMapper.selectCount(
+                    new LambdaQueryWrapper<TechnicianTask>()
+                            .eq(TechnicianTask::getJobCardNo, card != null ? card.getJobCardRef() : ""));
+            return AssignedJobResponse.builder()
+                    .jobCard(card != null ? card.getJobCardRef() : wa.getAssignmentRef())
+                    .customer(customer != null && customer.getCustomerName() != null ? customer.getCustomerName() : "")
+                    .vehicle(vehicle != null
+                            ? ((vehicle.getMake() != null ? vehicle.getMake() : "")
+                                    + " " + (vehicle.getModel() != null ? vehicle.getModel() : "")).trim()
+                            : "")
+                    .dateAssigned(wa.getCreatedAt() != null ? wa.getCreatedAt().toLocalDate().toString() : "")
+                    .done((int) done)
+                    .total((int) total)
+                    .status(wa.getStatus())
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     private JobCard resolveJobCard(String jobCardId, JwtUserPrincipal principal) {

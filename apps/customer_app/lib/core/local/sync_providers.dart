@@ -12,6 +12,9 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   engine.registerHandler(DioSyncHandler('booking', dio));
   engine.registerHandler(DioSyncHandler('breakdown', dio));
   engine.registerHandler(DioSyncHandler('vehicle_customer', dio));
+  // FIX (audit P0): offline vehicle create/update/delete used entityType
+  // 'vehicle', which had NO registered handler — ops were silently dropped.
+  engine.registerHandler(DioSyncHandler('vehicle', dio));
   ref.onDispose(engine.dispose);
   return engine;
 });

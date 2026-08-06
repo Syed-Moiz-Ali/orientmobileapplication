@@ -5,8 +5,11 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:owner_app/features/dashboard/presentation/dashboard_view.dart';
 import 'package:owner_app/features/dashboard/presentation/pages/accounts_receivable_view.dart';
 import 'package:owner_app/features/dashboard/presentation/pages/document_expiry_view.dart';
+import 'package:owner_app/features/dashboard/presentation/pages/feedback_moderation_view.dart';
+import 'package:owner_app/features/dashboard/presentation/pages/inventory_view.dart';
 import 'package:owner_app/features/dashboard/presentation/pages/job_status_view.dart';
 import 'package:owner_app/features/dashboard/presentation/pages/pending_approvals_view.dart';
+import 'package:owner_app/features/dashboard/presentation/pages/team_view.dart';
 import 'package:owner_app/features/job_cards/presentation/pages/job_card_detail_view.dart';
 import 'package:owner_app/features/job_cards/presentation/pages/job_cards_list_view.dart';
 
@@ -23,6 +26,9 @@ class AppRoutes {
   static const String pendingApprovals = '/pending-approvals';
   static const String jobCards = '/job-cards';
   static const String jobCardDetail = '/job-cards/detail';
+  static const String inventory = '/inventory';
+  static const String feedbackModeration = '/feedback-moderation';
+  static const String team = '/team';
 }
 
 final _routerRefreshNotifier = ValueNotifier<int>(0);
@@ -109,6 +115,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.jobCardDetail,
         name: AppRoutes.jobCardDetail,
         builder: (context, state) => const JobCardDetailView(),
+      ),
+      GoRoute(
+        path: AppRoutes.inventory,
+        name: AppRoutes.inventory,
+        builder: (context, state) => const InventoryView(),
+      ),
+      GoRoute(
+        path: AppRoutes.feedbackModeration,
+        name: AppRoutes.feedbackModeration,
+        builder: (context, state) => const FeedbackModerationView(),
+      ),
+      GoRoute(
+        path: AppRoutes.team,
+        name: AppRoutes.team,
+        builder: (context, state) => const TeamView(),
       ),
     ],
   );

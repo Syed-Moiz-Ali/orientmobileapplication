@@ -39,6 +39,7 @@ public class SupervisorQueueService {
     private final TechnicianTaskMapper taskMapper;
     private final NotificationService notificationService;
     private final InvoiceService invoiceService;
+    private final com.orient.workshop.core.service.ActivityService activityService;
 
     // ---------- Booking queue ----------
 
@@ -201,6 +202,10 @@ public class SupervisorQueueService {
 
         // Phase 4 — invoice is raised automatically from the repair order totals.
         invoiceService.createFromJobCard(jobCardId);
+
+        // P1: activity feed writer.
+        activityService.log("invoice", "Invoice raised",
+                "Invoice for completed job " + card.getJobCardRef(), null);
     }
 
     @Transactional
@@ -233,7 +238,13 @@ public class SupervisorQueueService {
         if (card == null) {
             throw new NotFoundException("Job card not found");
         }
-        
+
+        // Fix: 'qualityCheckPassed' is now a valid ENUM value (V6) — the QC
+        // approve action previously crashed with 409 on every call.
+        if (!List.of("awaitingSupervisor", "qualityCheck").contains(card.getStatus())) {
+            throw new BadRequestException("QC review requires a job awaiting completion (current: " + card.getStatus() + ")");
+        }
+
         if ("approve".equalsIgnoreCase(req.getAction())) {
             card.setStatus("qualityCheckPassed");
         } else if ("reject".equalsIgnoreCase(req.getAction())) {
@@ -241,7 +252,7 @@ public class SupervisorQueueService {
         } else {
             throw new BadRequestException("Invalid action. Must be 'approve' or 'reject'.");
         }
-        
+
         jobCardMapper.updateById(card);
     }
 
