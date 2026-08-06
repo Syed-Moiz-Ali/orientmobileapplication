@@ -66,6 +66,54 @@ jobs:
       - name: Verify Linux maven wrapper exists
         run: test -x mvnw && echo "mvnw present" || (echo "mvnw missing" && exit 1)
 
+  # FE-FIX (frontend pass): the full seamless-flow harness now runs in CI.
+  # Needs MySQL (service container) + mysql client + PowerShell (pwsh).
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: orient_workshop
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Install mysql client + PowerShell
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+          sudo snap install powershell --classic
+      - name: Build gateway jar
+        run: mvn -B -ntp -pl orient-gateway -am -DskipTests package
+        working-directory: orient-workshop-backend
+      - name: Boot gateway (dev profile)
+        run: |
+          nohup java -jar orient-workshop-backend/orient-gateway/target/orient-gateway-1.0.0-SNAPSHOT.jar --spring.profiles.active=dev > boot.log 2>&1 &
+          for i in $(seq 1 60); do
+            if grep -q "Started OrientGatewayApplication" boot.log; then echo "BOOTED"; break; fi
+            sleep 5
+          done
+          grep -q "Started OrientGatewayApplication" boot.log || (echo "BOOT FAILED"; tail -40 boot.log; exit 1)
+      - name: Run seamless-flow E2E harness (28 checks)
+        run: pwsh -File scripts/test_seamless_flow.ps1 -RunTag ci-${{ github.run_number }}
+        env:
+          ORIENT_MYSQL_CLI: mysql
+      - name: Always stop the app
+        if: always()
+        run: pkill -f orient-gateway || true
+
   build-apks:
     runs-on: ubuntu-latest
     needs: [analyze, test]
@@ -80,6 +128,25 @@ jobs:
         run: |
           dart pub global activate melos
           melos bootstrap
+      # FE-FIX (frontend pass): when the release keystore is provided as a
+      # GitHub secret (base64 of the .jks + the key.properties contents),
+      # CI builds are properly release-signed. Otherwise they fall back to
+      # debug signing (visible on the apksigner check).
+      - name: Restore release keystore from secrets
+        run: |
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEY_PROPERTIES" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > /tmp/orient-workshop-release.jks
+            echo "$KEY_PROPERTIES" | sed "s|__KEYSTORE__|/tmp/orient-workshop-release.jks|" > apps/staff_app/android/key.properties
+            cp apps/staff_app/android/key.properties apps/owner_app/android/key.properties
+            cp apps/staff_app/android/key.properties apps/customer_app/android/key.properties
+            cp apps/staff_app/android/key.properties apps/crm_app/android/key.properties
+            echo "Release keystore restored"
+          else
+            echo "No keystore secrets — CI will build debug-signed (set KEYSTORE_B64 + KEY_PROPERTIES to sign)"
+          fi
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
       # FIX (audit P0): only staff + owner were built — customer and crm were
       # never compiled in CI, so regressions there shipped silently.
       - name: Build staff_app release APK

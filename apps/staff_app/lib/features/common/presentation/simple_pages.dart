@@ -259,16 +259,6 @@ class SettingsPage extends StatelessWidget {
             'Sync',
             HiveCleaner.hasPendingSync() ? 'Pending operations' : 'Up to date',
           ),
-          // FE-FIX (frontend pass): language/RTL picker.
-          Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.r14),
-              border: Border.all(color: AppColors.line),
-            ),
-            child: const LanguageSwitcherTile(),
-          ),
         ],
       ),
     );

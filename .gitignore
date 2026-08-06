@@ -63,3 +63,6 @@ change.txt
 # Release signing secrets (never commit)
 android_keystore/
 **/android/key.properties
+
+# Build artifacts (accidentally committed in an earlier pass)
+**/build/

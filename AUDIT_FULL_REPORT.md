@@ -1303,14 +1303,35 @@ Every card in every app now renders server data or an explicit empty/error state
 
 - The tab was a flat "Today's Schedule" showing every assigned job regardless of date. Now: 7-day strip with per-day booking counts, day-scoped bookings (grouped by the new backend `dateKey` ISO field added to `BookingQueueResponse`), assigned-work list for the selected day, pull-to-refresh, honest empty states
 
-## 37.3 Locale / RTL infrastructure — READY (strings not yet translated)
+## 37.3 Locale / RTL — REVERTED (owner decision 2026-08-06)
 
-- `flutter_localizations` + `GlobalMaterialLocalizations.delegates` + `supportedLocales [en, ar]` wired into all 4 apps; `AppLocales` + `appLocaleProvider` (Hive-persisted) in shared_core
-- **Language picker** (English / العربية) on every profile sheet (customer, owner, CRM share it) + the staff Settings page — switching to Arabic flips the entire app to RTL and localizes system widgets
-- Honest scope: infrastructure + direction flip are live; the ~2,000 in-app English strings are NOT translated yet (separate translation pass)
+The en/ar localization + language picker was implemented and then **fully removed on the owner's request — the apps are English-only by decision**. No localization code, dependency, or test remains in the tree.
 
 ## 37.4 FINAL STATE
 
 Fourteen passes, ~230 files. Everything verified: backend tests, 28 widget tests, 0 analyze errors, E2E 28/28 live, 4 signed release APKs. Every screen renders server data or an explicit empty/error state. Every role's frontend drives the seamless flow.
 
 Remaining (external): Arabic string translation, Zoho/Sheets OAuth, OCR, Docker CI + k6, Linux mvnw check.
+
+
+# 38. FINAL POLISH PASS (2026-08-06 fifteenth pass)
+
+> Verified: 4 apps analyze 0 errors + 0 warnings · Flutter tests now **72 total** (shared_core 20, staff 9, owner 9, customer 12, crm 3, auth 7) · mvn test BUILD SUCCESS.
+
+## 38.1 CI now runs the E2E harness (was "needs GitHub Actions")
+
+.github/workflows/ci.yml gained an e2e job: MySQL 8 service container → build the gateway jar → boot with the dev profile → run scripts/test_seamless_flow.ps1 (28 checks) via pwsh with the mysql client. The uild-apks job now restores the release keystore from GitHub Secrets (KEYSTORE_B64 + KEY_PROPERTIES) when present, falling back to debug signing otherwise.
+
+## 38.2 New regression-guard widget tests
+
+- shared_core: AppLocales removed; 20 tests unchanged
+- customer_app (+5): health gauge renders the REAL score bands (GOOD/ATTENTION/CRITICAL) and rejects fabricated data; pending bookings show the Cancel action + confirmation dialog; cancelled bookings hide it
+- staff_app: language picker tests removed with the feature
+
+## 38.3 Localization removed by owner decision
+
+English-only. All locale code, dependencies, pickers, and tests removed from the tree.
+
+## 38.4 Remaining (external only)
+
+Zoho/Sheets OAuth (needs credentials) · OCR (needs ML/API key) · k6 run (needs k6 installed; scripts/loadtest.js ready) · Docker-based Testcontainers (needs Docker) · Linux mvnw run (covered by CI backend job).

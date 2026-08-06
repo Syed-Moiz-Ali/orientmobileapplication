@@ -4,7 +4,6 @@ export 'src/theme/app_text_styles.dart';
 export 'src/theme/app_fonts.dart';
 export 'src/theme/app_theme.dart';
 export 'src/branding/brand_config.dart';
-export 'src/l10n/app_locale.dart';
 
 export 'src/widgets/app_card.dart';
 export 'src/widgets/app_text_field.dart';
@@ -18,7 +17,6 @@ export 'src/widgets/gradient_banner.dart';
 export 'src/widgets/loading_indicator.dart';
 export 'src/widgets/logout_dialog.dart';
 export 'src/widgets/notification_bell.dart';
-export 'src/widgets/language_switcher_tile.dart';
 export 'src/widgets/primary_button.dart';
 export 'src/widgets/profile_sheet.dart';
 export 'src/widgets/section_header.dart';

@@ -1,8 +1,7 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_core/shared_core.dart';
@@ -64,10 +63,6 @@ class _StaffAppState extends ConsumerState<StaffApp> {
       routerConfig: router,
       title: brand.appName,
       theme: AppTheme.light(brand),
-      // FE-FIX (frontend pass): locale/RTL infrastructure (en + ar).
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      supportedLocales: AppLocales.supported,
-      locale: ref.watch(appLocaleProvider),
     );
   }
 }
