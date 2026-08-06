@@ -20,6 +20,7 @@ class ApiEndpoints {
   static const String customerServicesActive = '/customers/services/active';
   static const String customerBreakdowns = '/customers/breakdowns';
   static const String serviceTypes = '/services/types';
+  static String bookingsAvailability(String date) => '/bookings/availability?date=$date';
   static const String createBooking = '/bookings';
   static const String notificationReadAll = '/customers/notifications/read-all';
   static String notificationRead(String id) => '/customers/notifications/$id/read';
@@ -73,6 +74,8 @@ class ApiEndpoints {
       '/supervisor/jobs/$jobCardId/approve-completion';
   static String supervisorRejectCompletion(int jobCardId) =>
       '/supervisor/jobs/$jobCardId/reject-completion';
+  static String supervisorQcReview(String jobCardRef) =>
+      '/supervisor/job-cards/$jobCardRef/qc-review';
 
   // Seamless flows — advisor
   static const String advisorBookings = '/advisor/bookings';
@@ -147,9 +150,11 @@ class ApiEndpoints {
   static const String ownerInventoryItems = '/owner/inventory/items';
   static const String ownerInventorySuppliers = '/owner/inventory/suppliers';
   static const String ownerInventoryPurchaseOrders = '/owner/inventory/purchase-orders';
+  static const String ownerSubscription = '/owner/subscription';
   static const String ownerTeam = '/owner/team';
   static String ownerTeamById(String id) => '/owner/team/' + id;
   static String ownerTeamDeactivate(String id) => '/owner/team/$id/deactivate';
+  static const String autoPrice = '/advisor/auto-price';
   static const String feedbackPending = '/feedback/pending';
   static String feedbackModeration(String id) => '/feedback/$id/moderation';
 

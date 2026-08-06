@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
+import 'package:staff_app/features/advisor/presentation/pages/advisor_job_detail_view.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'advisor_sheet.dart';
 import 'advisor_handle.dart';
@@ -196,7 +195,14 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
                       '${j.vehicleInfo}  \u00b7  ${j.id}',
                       () {
                         Navigator.pop(context);
-                        context.push(AppRoutes.advisorDashboard);
+                        // FE-FIX (audit P1): this pushed a DUPLICATE dashboard
+                        // on top of itself — the search could never open a job.
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AdvisorJobDetailView(jc: j),
+                          ),
+                        );
                       },
                     ),
                   ),

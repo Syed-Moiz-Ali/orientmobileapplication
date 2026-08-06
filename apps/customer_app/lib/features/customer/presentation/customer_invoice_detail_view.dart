@@ -154,23 +154,67 @@ class CustomerInvoiceDetailView extends StatelessWidget {
 
                     AppCard(
                       color: AppColors.surface,
-                      child: Row(
+                      child: Column(
                         children: [
-                          const Text(
-                            'Total',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.text2,
-                            ),
+                          // P3: honest VAT breakdown — server-computed (was
+                          // fabricated at 20% before the audit fix).
+                          Row(
+                            children: [
+                              const Text(
+                                'Subtotal',
+                                style: TextStyle(fontSize: 14, color: AppColors.text2),
+                              ),
+                              const Spacer(),
+                              Text(
+                                'AED ${invoice.amount.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
                           ),
-                          const Spacer(),
-                          Text(
-                            'AED ${invoice.amount.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.accent,
+                          if (invoice.taxAmount > 0) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Text(
+                                  'VAT (${(invoice.taxRate * 100).toStringAsFixed(0)}%)',
+                                  style: const TextStyle(fontSize: 14, color: AppColors.text2),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  'AED ${invoice.taxAmount.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
                             ),
+                          ],
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Divider(height: 1, color: AppColors.border),
+                          ),
+                          Row(
+                            children: [
+                              const Text(
+                                'Total',
+                                style: TextStyle(fontSize: 14, color: AppColors.text2),
+                              ),
+                              const Spacer(),
+                              Text(
+                                'AED ${(invoice.grandTotal > 0 ? invoice.grandTotal : invoice.amount).toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

@@ -103,14 +103,23 @@ Amount: ${_formatAmount(jc.amount)}
   Widget _buildActions(BuildContext context, WidgetRef ref, JobCard jobCard) {
     return Column(children: [
       SizedBox(width: double.infinity, child: ElevatedButton.icon(
-        onPressed: () {
-          ref.read(jobCardsProvider.notifier).markComplete(jobCard.id);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Job card marked as completed'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+        onPressed: () async {
+          // FE-FIX (audit P1): completion now persists server-side; the
+          // snackbar only claims success when the backend accepted it.
+          final ok = await ref
+              .read(jobCardsProvider.notifier)
+              .markComplete(jobCard.id);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(ok
+                    ? 'Job card marked as completed'
+                    : 'Could not complete the job card. Try again.'),
+                backgroundColor: ok ? null : AppColors.danger,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         },
         icon: const Icon(Icons.check_circle_outline, size: 18),
         label: const Text('Mark as Complete'), style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, foregroundColor: Colors.white,

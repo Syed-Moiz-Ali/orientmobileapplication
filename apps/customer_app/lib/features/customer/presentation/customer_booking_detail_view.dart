@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
 class CustomerBookingDetailView extends ConsumerWidget {
   final CustomerBookingEntity booking;
@@ -153,6 +154,31 @@ class CustomerBookingDetailView extends ConsumerWidget {
                           ),
                         ),
                       ),
+                    // FE-FIX (frontend pass): the cancel endpoint existed with
+                    // ownership checks but the app never surfaced it.
+                    if (booking.status == BookingStatus.pending ||
+                        booking.status == BookingStatus.confirmed) ...[
+                      const SizedBox(height: AppDimensions.s20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _confirmCancel(context, ref),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.danger,
+                            side: const BorderSide(color: AppColors.dangerBorder),
+                            padding: const EdgeInsets.symmetric(vertical: AppDimensions.s14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppDimensions.r12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.cancel_outlined, size: 18),
+                          label: const Text(
+                            'Cancel Booking',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -163,11 +189,60 @@ class CustomerBookingDetailView extends ConsumerWidget {
     );
   }
 
+  Future<void> _confirmCancel(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Cancel this booking?',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        ),
+        content: const Text(
+          'The workshop will be notified. This can be undone by booking again.',
+          style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Booking'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Cancel Booking'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final id = booking.id.isEmpty ? null : int.tryParse(booking.id);
+    final ok = id != null &&
+        await ref.read(customerRemoteDataSourceProvider).cancelBooking(id);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok
+            ? 'Booking cancelled'
+            : 'Could not cancel the booking. Try again.'),
+        backgroundColor: ok ? null : AppColors.danger,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    if (ok) {
+      ref.invalidate(customerBookingsProvider);
+      Navigator.pop(context);
+    }
+  }
+
   Widget _detailRow(IconData icon, String label, String value) {
     return Row(
       children: [
         Container(
-          width: 38, height: 38,
+          width: 44, height: 44,
           decoration: BoxDecoration(color: AppColors.cyanLight, borderRadius: BorderRadius.circular(AppDimensions.r10)),
           child: Icon(icon, color: AppColors.accent, size: 18),
         ),
@@ -230,7 +305,7 @@ class _StatusTimeline extends StatelessWidget {
                   child: Column(
                     children: [
                       Container(
-                        width: 28, height: 28,
+                        width: 44, height: 44,
                         decoration: BoxDecoration(
                           color: step.completed ? AppColors.success : step.active ? fg : AppColors.surfaceAlt,
                           shape: BoxShape.circle,

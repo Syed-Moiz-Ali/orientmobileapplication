@@ -39,9 +39,14 @@ class OwnerBottomNav extends StatelessWidget {
             children: List.generate(items.length, (i) {
               final sel = selectedIndex == i;
               return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onTap(i),
+                // P3 (audit): accessibility — labelled nav item.
+                child: Semantics(
+                  button: true,
+                  selected: sel,
+                  label: items[i].$3,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onTap(i),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -77,6 +82,7 @@ class OwnerBottomNav extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               );

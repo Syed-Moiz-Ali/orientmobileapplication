@@ -18,6 +18,10 @@ public class Invoice {
     private Long jobCardId;
     private Long branchId;
     private BigDecimal amount;
+    // P3 (audit): UAE VAT 5% — server-computed, never client-supplied.
+    private BigDecimal taxRate;
+    private BigDecimal taxAmount;
+    private BigDecimal grandTotal;
     private String status;
     private LocalDate dueDate;
     private LocalDate issuedDate;

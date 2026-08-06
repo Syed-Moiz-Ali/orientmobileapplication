@@ -76,4 +76,12 @@ class OwnerRemoteDataSource {
   Future<List<OwnerJobCardResponse>> getOwnerJobCards() async => (await _client.get<List<dynamic>>(
     ApiEndpoints.ownerJobCards,fromJson: (d) => d as List<dynamic>)).when(
     success: (l) => l.map((e) => OwnerJobCardResponse.fromJson(e)).toList(), failure: (_) => []);
+
+  // FE-FIX (audit P1): owner job-card status updates (Mark as Complete).
+  Future<bool> updateJobCardStatus(String id, String status) async {
+    final r = await _client.put(
+      '${ApiEndpoints.ownerJobCards}/$id/status?status=$status',
+    );
+    return r is Success;
+  }
 }

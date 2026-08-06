@@ -93,12 +93,36 @@ class PendingJobResponse {
 }
 
 class InvoiceResponse {
-  final String id;final String customerName;final String date;final double amount;final String status;
-  const InvoiceResponse({this.id='',this.customerName='',this.date='',this.amount=0,this.status='unpaid'});
-  factory InvoiceResponse.fromJson(Map<String,dynamic> j) => InvoiceResponse(
-    id: j['id']as String? ?? '',customerName: j['customerName']as String? ?? '',
-    date: j['date']as String? ?? '',amount: (j['amount']as num?)?.toDouble()??0,
-    status: j['status']as String? ?? 'unpaid');
+  final String id;
+  final String customerName;
+  final String date;
+  final double amount;
+  // P3: UAE VAT 5% — server-computed fields.
+  final double taxRate;
+  final double taxAmount;
+  final double grandTotal;
+  final String status;
+
+  const InvoiceResponse({
+    this.id = '',
+    this.customerName = '',
+    this.date = '',
+    this.amount = 0,
+    this.taxRate = 0,
+    this.taxAmount = 0,
+    this.grandTotal = 0,
+    this.status = 'unpaid',
+  });
+
+  factory InvoiceResponse.fromJson(Map<String, dynamic> j) => InvoiceResponse(
+        id: j['id'] as String? ?? '',
+        customerName: j['customerName'] as String? ?? '',
+        date: j['date'] as String? ?? '',
+        amount: (j['amount'] as num?)?.toDouble() ?? 0,
+        taxRate: (j['taxRate'] as num?)?.toDouble() ?? 0,
+        taxAmount: (j['taxAmount'] as num?)?.toDouble() ?? 0,
+        grandTotal: (j['grandTotal'] as num?)?.toDouble() ?? 0,
+        status: j['status'] as String? ?? 'unpaid');
 }
 
 class ArSummaryResponse {

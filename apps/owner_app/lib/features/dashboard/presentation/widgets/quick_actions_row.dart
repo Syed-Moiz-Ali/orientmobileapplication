@@ -123,6 +123,19 @@ class QuickActionsRow extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: ActionButton(
+                icon: Icons.workspace_premium_outlined,
+                label: 'Subscription',
+                gradient: const [Color(0xFF7C3AED), Color(0xFFA78BFA)],
+                onTap: () => context.push('/subscription'),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

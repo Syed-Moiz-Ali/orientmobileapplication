@@ -93,4 +93,8 @@ class CrmRepositoryImpl implements CrmRepository {
   @override
   Future<IntegrationEntity> syncIntegration(String name) =>
       _dataSource.syncIntegration(name);
+
+  // FE-FIX (audit): refresh() was a fake — now the whole dashboard reloads.
+  @override
+  Future<void> loadAll() => _dataSource.loadAll();
 }

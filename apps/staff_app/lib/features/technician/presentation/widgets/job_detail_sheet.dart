@@ -474,7 +474,13 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                             OutlinedButton.icon(
                               onPressed: state.isSaving
                                   ? null
-                                  : () => notifier.saveChanges(job),
+                                  : () => notifier.saveChanges(
+                                        // FE-FIX (audit P1): the captured
+                                        // widget.job was saved — typed notes
+                                        // reverted on Save. Persist the LIVE
+                                        // entity from state instead.
+                                        state.selectedJob ?? job,
+                                      ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.accent,
                                 side: BorderSide(
@@ -511,7 +517,52 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                               onTap: state.isSaving
                                   ? null
                                   : () async {
-                                      await notifier.completeJob(job);
+                                      // FE-FIX (audit P1): completing a job
+                                      // closes it for invoicing — never without
+                                      // confirmation, and always with the LIVE
+                                      // entity.
+                                      final live = state.selectedJob ?? job;
+                                      final confirmed = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          backgroundColor: AppColors.surface,
+                                          title: const Text(
+                                            'Complete Job?',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          content: Text(
+                                            'Complete ${live.jobCardNo}? All remaining tasks will be marked done and the job moves to supervisor review.',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: AppColors.text2,
+                                              height: 1.5,
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(ctx, false),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(ctx, true),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    AppColors.success,
+                                                foregroundColor: Colors.white,
+                                              ),
+                                              child: const Text('Complete'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (confirmed != true) return;
+                                      await notifier.completeJob(live);
                                       if (context.mounted) {
                                         Navigator.pop(context);
                                       }

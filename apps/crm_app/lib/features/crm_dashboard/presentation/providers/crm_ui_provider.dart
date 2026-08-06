@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/data/datasources/crm_remote_adapter.dart';
 import 'package:crm_app/features/crm_dashboard/data/datasources/crm_remote_datasource.dart';
 import 'package:crm_app/features/crm_dashboard/data/repositories/crm_repository_impl.dart';
@@ -104,8 +105,13 @@ class CrmUiNotifier extends Notifier<CrmUiState> {
   void updateSearch(String q) => state = state.copyWith(searchQuery: q);
 
   Future<void> refresh() async {
+    // FE-FIX (audit): this was a 900ms fake — the CRM never actually reloaded.
     state = state.copyWith(isLoading: true);
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      await _repository.loadAll();
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to refresh CRM', error: e, stackTrace: st);
+    }
     state = state.copyWith(isLoading: false);
   }
 

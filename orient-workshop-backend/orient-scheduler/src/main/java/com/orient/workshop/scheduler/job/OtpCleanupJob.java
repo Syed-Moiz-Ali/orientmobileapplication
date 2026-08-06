@@ -3,6 +3,7 @@ package com.orient.workshop.scheduler.job;
 import com.orient.workshop.auth.repository.OtpRecordMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ public class OtpCleanupJob {
     private final OtpRecordMapper otpRecordMapper;
 
     @Scheduled(fixedRate = 900000)
+    @SchedulerLock(name = "OtpCleanup", lockAtMostFor = "15m", lockAtLeastFor = "5s")
     public void cleanup() {
         try {
             otpRecordMapper.deleteExpired();

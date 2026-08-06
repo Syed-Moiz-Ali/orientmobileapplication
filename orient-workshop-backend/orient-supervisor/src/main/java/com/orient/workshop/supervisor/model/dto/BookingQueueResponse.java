@@ -15,6 +15,8 @@ public class BookingQueueResponse {
     private String plateNumber;
     private String serviceType;
     private String bookingDate;
+    // FE-FIX (frontend pass): machine-readable ISO date for the schedule view.
+    private String dateKey;
     private String notes;
     private String status;
 }

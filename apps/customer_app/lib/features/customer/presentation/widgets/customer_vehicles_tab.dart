@@ -160,15 +160,20 @@ class _ActionBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32, height: 32,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        // P3 (audit): touch target raised 32px → 44px (WCAG 2.5.5).
+        child: Container(
+          width: 44, height: 44,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: color),
         ),
-        child: Icon(icon, size: 16, color: color),
       ),
     );
   }

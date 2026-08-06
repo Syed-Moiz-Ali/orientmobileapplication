@@ -13,4 +13,9 @@ public interface RepairOrderServiceMapper extends BaseMapper<RepairOrderServiceI
 
     @Select("SELECT * FROM repair_order_services WHERE repair_order_id = #{repairOrderId} ORDER BY id ASC")
     List<RepairOrderServiceItem> findByRepairOrderId(@Param("repairOrderId") Long repairOrderId);
+
+    // P3 (audit): auto-pricing — average historical rate for a service name.
+    @Select("SELECT AVG(rate) AS avg_rate, COUNT(*) AS cnt FROM repair_order_services " +
+            "WHERE LOWER(name) LIKE CONCAT('%', LOWER(#{name}), '%')")
+    java.util.Map<String, Object> avgRateForName(@Param("name") String name);
 }

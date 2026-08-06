@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/card_title.dart';
+import 'package:owner_app/features/job_cards/presentation/pages/job_cards_list_view.dart';
 
 class JobCardRegisterCard extends StatelessWidget {
   final List<JobCardRegisterItem> items;
@@ -59,50 +60,60 @@ class JobCardRegisterCard extends StatelessWidget {
           ...items.asMap().entries.map((e) {
             final i = e.key;
             final item = e.value;
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: i.isEven ? AppColors.surfaceAlt : AppColors.surface,
-                borderRadius: BorderRadius.circular(AppDimensions.r8),
+            // FE-FIX (frontend pass): rows were dead UI — tapping now drills
+            // into the full job-card register list.
+            return InkWell(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const JobCardsListView()),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      item.label,
-                      style: const TextStyle(
-                        color: AppColors.text2,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+              borderRadius: BorderRadius.circular(AppDimensions.r8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: i.isEven ? AppColors.surfaceAlt : AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppDimensions.r8),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        item.label,
+                        style: const TextStyle(
+                          color: AppColors.text2,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '${item.open}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.accent,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        '${item.open}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.accent,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '${item.total}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        '${item.total}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.text3),
+                  ],
+                ),
               ),
             );
           }),

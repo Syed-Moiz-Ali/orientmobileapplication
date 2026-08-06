@@ -1243,16 +1243,22 @@ class _TaskActionButton extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final inProg = task.status == TaskStatus.inProgress;
-    return GestureDetector(
-      onTap: inProg ? onComplete : onStart,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppDimensions.s8,
-          vertical: AppDimensions.s4,
-        ),
-        decoration: BoxDecoration(
-          color: inProg
-              ? AppColors.successBg
+    // P3 (audit): labelled control with a WCAG-compliant touch target.
+    return Semantics(
+      button: true,
+      label: inProg ? 'Complete task' : 'Start task',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: inProg ? onComplete : onStart,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppDimensions.s8,
+            vertical: AppDimensions.s4,
+          ),
+          decoration: BoxDecoration(
+            color: inProg
+                ? AppColors.successBg
               : AppColors.accent.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(AppDimensions.r8),
           border: Border.all(
@@ -1277,6 +1283,7 @@ class _TaskActionButton extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

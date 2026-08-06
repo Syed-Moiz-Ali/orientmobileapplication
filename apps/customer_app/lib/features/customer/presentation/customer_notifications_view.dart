@@ -28,7 +28,7 @@ class CustomerNotificationsView extends ConsumerWidget {
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 34, height: 34,
+                      width: 44, height: 44,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.bg,

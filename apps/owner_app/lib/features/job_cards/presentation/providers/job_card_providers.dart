@@ -34,7 +34,9 @@ class JobCardsState {
     return JobCardsState(
       isLoading: isLoading ?? this.isLoading,
       searchQuery: searchQuery ?? this.searchQuery,
-      activeFilter: activeFilter,
+      // FE-FIX (audit P1): the raw parameter clobbered the active filter to
+      // null on every copyWith (e.g. pull-to-refresh cleared the filter).
+      activeFilter: activeFilter ?? this.activeFilter,
       all: all ?? this.all,
       filtered: filtered ?? this.filtered,
     );
@@ -66,19 +68,29 @@ class JobCardsNotifier extends Notifier<JobCardsState> {
     state = state.copyWith(activeFilter: status, filtered: _applyFilters(state.all, state.searchQuery, status));
   }
 
-  /// Marks a job card as completed locally (no backend write endpoint exists).
-  void markComplete(String id) {
-    final updated = state.all
-        .map((jc) => jc.id == id ? jc.copyWith(status: JobCardStatus.completed) : jc)
-        .toList();
-    state = state.copyWith(
-      all: updated,
-      filtered: _applyFilters(updated, state.searchQuery, state.activeFilter),
-    );
-    final selected = ref.read(selectedJobCardProvider);
-    if (selected != null && selected.id == id) {
-      ref.read(selectedJobCardProvider.notifier).state =
-          selected.copyWith(status: JobCardStatus.completed);
+  /// Marks a job card as completed — FE-FIX (audit P1): previously local-only
+  /// with a success snackbar while the status silently reverted on reload.
+  /// The backend endpoint (PUT /owner/job-cards/{id}/status) now exists.
+  Future<bool> markComplete(String id) async {
+    try {
+      final remote = ref.read(jobCardDatasourceProvider);
+      final ok = await remote.updateJobCardStatus(id, 'completed');
+      if (!ok) return false;
+      final updated = state.all
+          .map((jc) => jc.id == id ? jc.copyWith(status: JobCardStatus.completed) : jc)
+          .toList();
+      state = state.copyWith(
+        all: updated,
+        filtered: _applyFilters(updated, state.searchQuery, state.activeFilter),
+      );
+      final selected = ref.read(selectedJobCardProvider);
+      if (selected != null && selected.id == id) {
+        ref.read(selectedJobCardProvider.notifier).state =
+            selected.copyWith(status: JobCardStatus.completed);
+      }
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

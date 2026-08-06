@@ -21,6 +21,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +32,7 @@ public class BookingService {
     private final CustomerService customerService;
     private final NotificationService notificationService;
     private final com.orient.workshop.core.service.ActivityService activityService;
+    private final com.orient.workshop.core.service.WebhookService webhookService;
 
     // P3: per-workshop capacity is configurable (was hardcoded 8).
     @org.springframework.beans.factory.annotation.Value("${app.booking.workshop-capacity:8}")
@@ -79,6 +81,13 @@ public class BookingService {
                         + (req.getPlateNumber() != null && !req.getPlateNumber().isBlank()
                         ? " (" + req.getPlateNumber() + ")" : ""),
                 principal != null ? principal.getUserId() : null);
+
+        // P3: outbound webhook (booking.created).
+        webhookService.dispatch("booking.created", Map.of(
+                "bookingRef", ref,
+                "serviceType", req.getServiceType(),
+                "plateNumber", req.getPlateNumber() != null ? req.getPlateNumber() : "",
+                "bookingDate", bookingDate != null ? bookingDate.toString() : ""));
 
         return IdResponse.builder().id(String.valueOf(booking.getId())).bookingRef(ref).build();
     }
@@ -160,6 +169,7 @@ public class BookingService {
         DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("d MMM yyyy");
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("hh:mm a");
         return BookingResponse.builder()
+                .id(b.getId())
                 .service(b.getServiceType())
                 .vehicleName(b.getVehicleName())
                 .plateNumber(b.getPlateNumber())

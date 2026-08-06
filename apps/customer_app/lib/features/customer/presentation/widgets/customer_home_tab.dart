@@ -12,6 +12,7 @@ import 'package:customer_app/features/customer/presentation/widgets/garage_info_
 import 'package:customer_app/features/customer/presentation/widgets/customer_shimmer_skeletons.dart';
 import 'package:customer_app/features/customer/presentation/widgets/smart_symptom_booking_card.dart';
 import 'package:customer_app/features/customer/presentation/widgets/service_estimator_card.dart';
+import 'package:customer_app/features/customer/presentation/widgets/vehicle_health_gauge_card.dart';
 import 'package:customer_app/core/router/app_router.dart';
 
 const Color _navy = AppColors.darkNavy;
@@ -113,6 +114,10 @@ class CustomerHomeTab extends ConsumerWidget {
                     vehicles: state.vehicles,
                     onAdd: () => context.push(AppRoutes.customerAddVehicle),
                   ),
+                  const SizedBox(height: AppDimensions.s20),
+                  _sectionLabel('Vehicle Health'),
+                  const SizedBox(height: AppDimensions.s12),
+                  _HealthRow(vehicles: state.vehicles),
                   const SizedBox(height: AppDimensions.s28),
                   _sectionLabel('Recent Bookings'),
                   const SizedBox(height: AppDimensions.s12),
@@ -406,6 +411,53 @@ class _VehicleScrollRow extends StatelessWidget {
             width: 200,
             margin: EdgeInsets.only(right: i < vehicles.length - 1 ? 12 : 0),
             child: CustomerVehicleCard(vehicle: v, compact: true),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HealthRow extends StatelessWidget {
+  final List<CustomerVehicleEntity> vehicles;
+  const _HealthRow({required this.vehicles});
+
+  @override
+  Widget build(BuildContext context) {
+    if (vehicles.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r14)),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Center(
+          child: Text(
+            'Add a vehicle to see its health score',
+            style: TextStyle(fontSize: 13, color: AppColors.text3),
+          ),
+        ),
+      );
+    }
+    return SizedBox(
+      height: 170,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: vehicles.length,
+        itemBuilder: (_, i) {
+          final v = vehicles[i];
+          return Container(
+            width: 250,
+            margin: EdgeInsets.only(right: i < vehicles.length - 1 ? 12 : 0),
+            child: VehicleHealthGaugeCard(
+              vehicleName: '${v.brand} ${v.model}',
+              plateNumber: v.plateNumber,
+              mileage: v.mileage,
+              healthScore: v.healthScore,
+              nextServiceDue: v.nextDue,
+            ),
           );
         },
       ),

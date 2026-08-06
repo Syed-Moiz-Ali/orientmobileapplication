@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/form_label.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/message_tile.dart';
@@ -27,6 +28,33 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
       text: ref.read(dashboardUiProvider).messageText,
     );
     _msgController.addListener(_onMessageChanged);
+    _loadServerHistory();
+  }
+
+  Future<void> _loadServerHistory() async {
+    // FE-FIX (audit): getMessages() existed but was never called — the tab
+    // only showed locally-sent notes. Merge server history on open.
+    try {
+      final remote = ref.read(ownerRemoteDataSourceProvider);
+      final history = await remote.getMessages();
+      final notifier = ref.read(dashboardUiProvider.notifier);
+      final existing = notifier.sentMessages;
+      final ids = existing.map((m) => m.id).toSet();
+      final server = history
+          .where((h) => !ids.contains(h.id))
+          .map((h) => Message(
+                id: h.id,
+                recipient: h.recipient,
+                message: h.message,
+                time: h.time,
+              ))
+          .toList();
+      if (server.isNotEmpty) {
+        ref.read(dashboardUiProvider.notifier).mergeMessages(server);
+      }
+    } catch (_) {
+      // offline — local notes still shown
+    }
   }
 
   void _onMessageChanged() {

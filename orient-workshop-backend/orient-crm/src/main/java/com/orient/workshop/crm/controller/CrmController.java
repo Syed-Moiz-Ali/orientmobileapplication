@@ -24,6 +24,7 @@ public class CrmController {
     private final LeadService leadService;
     private final CrmTaskService taskService;
     private final MetaLeadFetcher metaLeadFetcher;
+    private final LeadScoringService leadScoringService;
     private final TeamService teamService;
     private final LeadAnalyticsService analyticsService;
 
@@ -166,6 +167,14 @@ public class CrmController {
     public ApiResponse<Void> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
         return ApiResponse.success(null);
+    }
+
+    /**
+     * P3 (audit): AI-lite lead scoring with explainable factors.
+     */
+    @GetMapping("/leads/{id}/score")
+    public ApiResponse<java.util.Map<String, Object>> scoreLead(@PathVariable Long id) {
+        return ApiResponse.success(leadScoringService.score(id));
     }
 }
 

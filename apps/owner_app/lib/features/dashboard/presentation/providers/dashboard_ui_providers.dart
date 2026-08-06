@@ -13,7 +13,7 @@ final dashboardDataSourceProvider = Provider<DashboardDataSource>((ref) {
   return adapter;
 });
 
-final _ownerRemoteProvider = Provider<OwnerRemoteDataSource>(
+final ownerRemoteDataSourceProvider = Provider<OwnerRemoteDataSource>(
   (ref) => OwnerRemoteDataSource(ref.read(apiClientProvider)),
 );
 
@@ -90,18 +90,32 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
   List<SalesTrendPoint> get expensesTrend => _dataSource.expensesTrend;
   List<TopSalesCategory> get topSalesCategories => _dataSource.topSalesCategories;
   Set<int> get expandedCategoryIndices => _expandedIndices;
+  List<Message> get sentMessages => state.sentMessages;
 
   void selectTab(int i) => state = state.copyWith(selectedIndex: i);
   void setPeriod(String p) => state = state.copyWith(period: p);
 
   Future<void> refresh() async {
+    // FE-FIX (audit P1): this was a 900ms fake with zero network activity.
     state = state.copyWith(isLoading: true);
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      await (_dataSource as DashboardUIRemoteAdapter).loadAll();
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Failed to refresh dashboard', error: e, stackTrace: st);
+    }
     state = state.copyWith(isLoading: false);
   }
 
   void selectUser(String user) => state = state.copyWith(selectedUser: user);
   void updateMessage(String text) => state = state.copyWith(messageText: text);
+
+  // FE-FIX (audit): server-sent messages merged into the visible list.
+  void mergeMessages(List<Message> server) {
+    final ids = state.sentMessages.map((m) => m.id).toSet();
+    final fresh = server.where((m) => !ids.contains(m.id)).toList();
+    if (fresh.isEmpty) return;
+    state = state.copyWith(sentMessages: [...fresh, ...state.sentMessages]);
+  }
 
   Future<void> sendMessage() async {
     if (state.selectedUser.isEmpty || state.messageText.trim().isEmpty) return;
@@ -117,7 +131,7 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
     );
     // Send through the backend; keep a local copy for offline resilience.
     try {
-      final remote = ref.read(_ownerRemoteProvider);
+      final remote = ref.read(ownerRemoteDataSourceProvider);
       final response = await remote.sendMessage(msg.recipient, msg.message);
       final delivered = response.recipient.isNotEmpty;
       final payload = {
@@ -153,11 +167,18 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
   }
 
   void toggleCategory(int index) {
-    if (_expandedIndices.contains(index)) {
-      _expandedIndices.remove(index);
+    // FE-FIX (audit P1): the expanded set lived outside state — the UI never
+    // rebuilt, so the only drill-down in the app was a no-op.
+    final next = Set<int>.from(_expandedIndices);
+    if (next.contains(index)) {
+      next.remove(index);
     } else {
-      _expandedIndices.add(index);
+      next.add(index);
     }
+    _expandedIndices
+      ..clear()
+      ..addAll(next);
+    state = state.copyWith();
   }
 }
 

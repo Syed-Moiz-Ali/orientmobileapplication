@@ -16,9 +16,14 @@ class AdvisorBottomItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Expanded(
-    child: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
+    // P3 (audit): accessibility — labelled, selectable nav item.
+    child: Semantics(
+      button: true,
+      selected: active,
+      label: label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -49,6 +54,7 @@ class AdvisorBottomItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     ),
   );

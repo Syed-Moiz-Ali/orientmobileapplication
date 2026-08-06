@@ -24,12 +24,13 @@ class SupervisorDashboardState {
   final String jobCardSearch;
   final String assignWorkError;
   final String assignWorkSuccess;
+  final String dashboardError;
   final List<WorkAssignmentEntity> assignmentRows;
   final int nextRowId;
 
   SupervisorDashboardState({
     this.selectedIndex = 0,
-    this.isDashboardLoading = false,
+    this.isDashboardLoading = true,
     this.isAssignWorkLoading = false,
     this.isWorkListLoading = false,
     this.isQueueLoading = false,
@@ -38,6 +39,7 @@ class SupervisorDashboardState {
     this.jobCardSearch = '',
     this.assignWorkError = '',
     this.assignWorkSuccess = '',
+    this.dashboardError = '',
     List<WorkAssignmentEntity>? assignmentRows,
     this.nextRowId = 2,
   }) : assignmentRows = assignmentRows ?? [WorkAssignmentEntity(id: 1)];
@@ -53,6 +55,7 @@ class SupervisorDashboardState {
     String? jobCardSearch,
     String? assignWorkError,
     String? assignWorkSuccess,
+    String? dashboardError,
     List<WorkAssignmentEntity>? assignmentRows,
     int? nextRowId,
   }) {
@@ -67,6 +70,7 @@ class SupervisorDashboardState {
       jobCardSearch: jobCardSearch ?? this.jobCardSearch,
       assignWorkError: assignWorkError ?? this.assignWorkError,
       assignWorkSuccess: assignWorkSuccess ?? this.assignWorkSuccess,
+      dashboardError: dashboardError ?? this.dashboardError,
       assignmentRows: assignmentRows ?? this.assignmentRows,
       nextRowId: nextRowId ?? this.nextRowId,
     );
@@ -94,6 +98,9 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
     _remote = ref.read(supervisorRemoteDataSourceProvider);
     _loadAssignmentsFromHive();
     _loadRemoteData();
+    // FE-FIX (audit P1): the unread badge was always 0 because notifications
+    // only loaded when the bell was tapped.
+    loadNotifications();
     return SupervisorDashboardState();
   }
 
@@ -231,7 +238,28 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
 
   Future<void> _loadRemoteData() async {
     final r = _remote;
-    if (r == null) return;
+    if (r == null) {
+      state = state.copyWith(isDashboardLoading: false);
+      return;
+    }
+    try {
+      // FE-FIX (audit P1): the whole load previously never called copyWith —
+      // the dashboard stayed on its initial state (empty/spinner) until a
+      // pull-to-refresh or tab switch.
+      await _loadAll(r);
+      state = state.copyWith(isDashboardLoading: false, dashboardError: '');
+    } catch (e, st) {
+      ref
+          .read(loggerProvider)
+          .e('Failed to load supervisor dashboard', error: e, stackTrace: st);
+      state = state.copyWith(
+        isDashboardLoading: false,
+        dashboardError: 'Could not load the dashboard. Pull to refresh.',
+      );
+    }
+  }
+
+  Future<void> _loadAll(SupervisorRemoteDataSource r) async {
     final kpiColors = [
       const Color(0xFF1F6FEB),
       const Color(0xFF238636),
@@ -449,6 +477,23 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
       return 'Sent back — items reset for revision';
     }
     return 'Could not send back. Try again.';
+  }
+
+  // FE-FLOW (seamless-flow integration): the QC gate. Approve moves the job to
+  // qualityCheckPassed; reject sends it back to inProgress with a reason.
+  Future<String> qcReview(String jobCardRef, String action,
+      {bool checklistPassed = true, String notes = '', String rejectReason = ''}) async {
+    final ok = await _remote?.qcReview(jobCardRef, action,
+            checklistPassed: checklistPassed, notes: notes, rejectReason: rejectReason) ??
+        false;
+    if (ok) {
+      if (action == 'reject') {
+        _awaiting.removeWhere((j) => j.jobCardRef == jobCardRef);
+      }
+      state = state.copyWith();
+      return action == 'approve' ? 'QC passed — job approved' : 'Sent back for revision';
+    }
+    return 'Could not complete QC review. Try again.';
   }
 
   // ---------- Seamless flows: staff notifications ----------

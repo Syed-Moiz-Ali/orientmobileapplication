@@ -19,7 +19,10 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final bookings = ref.watch(customerBookingsProvider).value ?? const <CustomerBookingEntity>[];
+    // FE-FIX (audit P3): the bookings list showed a blank screen while
+    // loading and hid failures — now with explicit states.
+    final bookingsAsync = ref.watch(customerBookingsProvider);
+    final bookings = bookingsAsync.value ?? const <CustomerBookingEntity>[];
 
     final filtered = _filter == null
         ? bookings
@@ -61,21 +64,45 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
         ),
         const Divider(height: 1),
         Expanded(
-          child: filtered.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.all(AppDimensions.s16),
-                  child: Center(
-                    child: EmptyBookingsCard(
-                      onBookService: () => context.push(AppRoutes.customerBookService),
-                    ),
-                  ),
+          child: bookingsAsync.isLoading && bookings.isEmpty
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(AppDimensions.s16),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: AppDimensions.s12),
-                  itemBuilder: (_, i) => _BookingCard(booking: filtered[i]),
-                ),
+              : bookingsAsync.hasError && bookings.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.cloud_off_rounded, size: 40, color: AppColors.text3),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Could not load bookings',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: () => ref.invalidate(customerBookingsProvider),
+                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : filtered.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(AppDimensions.s16),
+                          child: Center(
+                            child: EmptyBookingsCard(
+                              onBookService: () => context.push(AppRoutes.customerBookService),
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(AppDimensions.s16),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: AppDimensions.s12),
+                          itemBuilder: (_, i) => _BookingCard(booking: filtered[i]),
+                        ),
         ),
       ],
     );

@@ -11,5 +11,9 @@ public class InvoiceResponse {
     private String customerName;
     private String date;
     private double amount;
+    // P3: UAE VAT (server-computed).
+    private double taxRate;
+    private double taxAmount;
+    private double grandTotal;
     private String status;
 }

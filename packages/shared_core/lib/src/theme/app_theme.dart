@@ -182,6 +182,27 @@ abstract final class AppTheme {
         hintStyle: AppTextStyles.rajdhaniLabel(color: AppColors.text4),
       ),
 
+      // P3 (audit): dark() was missing the component themes light() defines —
+      // dark-mode screens rendered default M3 widgets that clashed with the
+      // brand. These were added for parity.
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: brand.buttonColor,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          textStyle: AppTextStyles.rajdhaniButton(color: brand.buttonColor),
+        ),
+      ),
+
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: brand.buttonColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+
       dividerTheme: const DividerThemeData(color: darkBorder, thickness: 1, space: 1),
 
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -189,6 +210,8 @@ abstract final class AppTheme {
         elevation: 0,
         selectedItemColor: brand.buttonColor,
         unselectedItemColor: AppColors.text4,
+        type: BottomNavigationBarType.fixed,
+        showUnselectedLabels: true,
       ),
 
       tabBarTheme: TabBarThemeData(

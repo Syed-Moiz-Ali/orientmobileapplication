@@ -95,9 +95,13 @@ class _BottomNav extends StatelessWidget {
             children: List.generate(items.length, (i) {
               final sel = selectedIndex == i;
               return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onTap(i),
+                child: Semantics(
+                  button: true,
+                  selected: sel,
+                  label: items[i].$3,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onTap(i),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -125,6 +129,7 @@ class _BottomNav extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               );

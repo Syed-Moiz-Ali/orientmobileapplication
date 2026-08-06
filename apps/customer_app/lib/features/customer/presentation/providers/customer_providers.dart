@@ -29,6 +29,7 @@ final customerBookingsProvider =
         .getBookings();
     final remoteEntities = remote
         .map((b) => CustomerBookingEntity(
+              id: b.id,
               service: b.service,
               vehicleName: b.vehicleName,
               plateNumber: b.plateNumber,

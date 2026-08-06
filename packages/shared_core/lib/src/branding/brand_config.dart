@@ -29,6 +29,14 @@ class BrandConfig {
   );
 }
 
+/// P3 (audit): per-client white-labeling. Apps/whitelabel builds can override
+/// the brand at startup with `overrideBrandConfigProvider.overrideWithValue(...)`
+/// (or provide their own Provider) — previously the brand was a hardcoded
+/// singleton and could never differ per client.
+final overrideBrandConfigProvider = Provider<BrandConfig?>((ref) => null);
+
 final brandConfigProvider = Provider<BrandConfig>((ref) {
+  final override = ref.watch(overrideBrandConfigProvider);
+  if (override != null) return override;
   return BrandConfig.orient;
 });

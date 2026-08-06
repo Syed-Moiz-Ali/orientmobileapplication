@@ -9,12 +9,17 @@ class QcChecklistSheet extends ConsumerStatefulWidget {
   final String customerName;
   final String vehicleInfo;
 
+  // FE-FLOW (seamless-flow integration): the checklist now reflects the
+  // ACTUAL completed work items instead of a hardcoded generic template.
+  final List<String> workItems;
+
   const QcChecklistSheet({
     super.key,
     required this.jobCardId,
     required this.jobCardRef,
     required this.customerName,
     required this.vehicleInfo,
+    this.workItems = const [],
   });
 
   @override
@@ -22,7 +27,7 @@ class QcChecklistSheet extends ConsumerStatefulWidget {
 }
 
 class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
-  final List<String> _items = [
+  static const _fallbackItems = [
     'Oil/fluid levels verified',
     'Tyre pressures set correctly',
     'Warning lights cleared',
@@ -32,6 +37,8 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
     'Completed work checked against estimate',
   ];
 
+  late final List<String> _items;
+
   late final List<bool> _checked;
   final _notesCtrl = TextEditingController();
   bool _isLoading = false;
@@ -39,6 +46,7 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
   @override
   void initState() {
     super.initState();
+    _items = widget.workItems.isNotEmpty ? widget.workItems : _fallbackItems;
     _checked = List.filled(_items.length, false);
   }
 
@@ -51,25 +59,43 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
   int get _checkedCount => _checked.where((c) => c).length;
   bool get _allChecked => _checkedCount == _items.length;
 
+  // FE-FLOW: two-step approval — QC review gate FIRST (qualityCheckPassed),
+  // then completion approval (completed + invoice).
   Future<void> _approve() async {
     setState(() => _isLoading = true);
-    final msg = await ref
-        .read(supervisorDashboardProvider.notifier)
-        .approveCompletion(widget.jobCardId);
+    final notifier = ref.read(supervisorDashboardProvider.notifier);
+    final qcMsg = await notifier.qcReview(widget.jobCardRef, 'approve',
+        checklistPassed: _allChecked, notes: _notesCtrl.text.trim());
+    if (qcMsg.startsWith('Could not')) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(qcMsg)));
+      }
+      return;
+    }
+    final msg = await notifier.approveCompletion(widget.jobCardId);
     if (mounted) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$qcMsg · $msg')));
     }
   }
 
   Future<void> _reject() async {
-    final reason = _notesCtrl.text.trim().isEmpty
-        ? 'Failed QC Check'
-        : _notesCtrl.text.trim();
+    final reason = _notesCtrl.text.trim();
+    if (reason.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Enter a reason to send the job back')),
+        );
+      }
+      return;
+    }
     setState(() => _isLoading = true);
     final msg = await ref
         .read(supervisorDashboardProvider.notifier)
-        .rejectCompletion(widget.jobCardId, reason);
+        .qcReview(widget.jobCardRef, 'reject',
+            checklistPassed: false, notes: reason, rejectReason: reason);
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));

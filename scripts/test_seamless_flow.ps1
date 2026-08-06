@@ -143,13 +143,17 @@ $health = Invoke-Api -Method GET -Path '/health' -AllowError
 if (-not $health) { Write-Host "Backend not reachable at $BaseUrl. Start it first (docker compose up -d)." -ForegroundColor Red; exit 1 }
 
 # ---- PHASE A: LOGIN EVERY ROLE ----------------------------------------------------
-Write-Host "`n[Phase A] Login all roles" -ForegroundColor Yellow
+# P3 (audit): roles are NO LONGER derived from the phone suffix (that was the
+# privilege-escalation fix). Phase A only logs in to obtain user ids; roles are
+# provisioned in Phase B (SQL, mirroring the owner admin flow) and Phase C
+# re-logs-in with role assertions.
+Write-Host "`n[Phase A] Login all roles (bootstrap, no role assertion yet)" -ForegroundColor Yellow
 $TokCustomer = Login-Role -Phone $PhoneCustomer -ExpectedRole 'customer'
-$TokSupervisor = Login-Role -Phone $PhoneSupervisor -ExpectedRole 'supervisor'
-$TokAdvisor = Login-Role -Phone $PhoneAdvisor -ExpectedRole 'advisor'
-$TokTech1 = Login-Role -Phone $PhoneTechnician -ExpectedRole 'technician'
-$TokTech2 = Login-Role -Phone $PhoneTech2 -ExpectedRole 'technician'
-$TokOwner = Login-Role -Phone $PhoneOwner -ExpectedRole 'owner'
+$TokSupervisor = Login-Role -Phone $PhoneSupervisor -ExpectedRole 'customer'
+$TokAdvisor = Login-Role -Phone $PhoneAdvisor -ExpectedRole 'customer'
+$TokTech1 = Login-Role -Phone $PhoneTechnician -ExpectedRole 'customer'
+$TokTech2 = Login-Role -Phone $PhoneTech2 -ExpectedRole 'customer'
+$TokOwner = Login-Role -Phone $PhoneOwner -ExpectedRole 'customer'
 
 # ---- PHASE B: PROVISION STAFF RECORDS ---------------------------------------------
 Write-Host "`n[Phase B] Provision staff records" -ForegroundColor Yellow
@@ -161,8 +165,12 @@ $meOwner = (Invoke-Api -Method GET -Path '/auth/me' -Token $TokOwner).data
 
 if (-not $SkipProvision) {
     $branchId = 1
-    $branches = Get-ApiData (Invoke-Api -Method GET -Path '/branches' -Token $TokOwner -AllowError)
-    if ($branches -and @($branches).Count -gt 0) { $branchId = @($branches)[0].id }
+    # Bootstrap tokens are all customers, so /branches is 403 by design now —
+    # fall back to branch 1 (the seeded default) instead of failing.
+    try {
+        $branches = Get-ApiData (Invoke-Api -Method GET -Path '/branches' -Token $TokOwner -AllowError)
+        if ($branches -and @($branches).Count -gt 0) { $branchId = @($branches)[0].id }
+    } catch { $branchId = 1 }
 
     $sql = @"
 DELETE FROM staff WHERE emp_id IN ('EADV$RunTag','ESUP$RunTag','ETCH$($RunTag)1','ETCH$($RunTag)2');
@@ -177,6 +185,14 @@ UPDATE users SET name = 'Seamless Test Supervisor' WHERE id = $($meSupervisor.us
 UPDATE users SET name = 'Seamless Test Tech A'     WHERE id = $($meTech1.userId);
 UPDATE users SET name = 'Seamless Test Tech B'     WHERE id = $($meTech2.userId);
 UPDATE users SET name = 'Seamless Test Owner'      WHERE id = $($meOwner.userId);
+-- P3 (audit): roles are provisioned here (the owner admin flow), never from
+-- the phone number. The JWT filter re-checks the DB role per request, so the
+-- bootstrap tokens are invalidated — Phase C re-logs-in with the new roles.
+UPDATE users SET role = 'advisor'    WHERE id = $($meAdvisor.userId);
+UPDATE users SET role = 'supervisor' WHERE id = $($meSupervisor.userId);
+UPDATE users SET role = 'technician' WHERE id = $($meTech1.userId);
+UPDATE users SET role = 'technician' WHERE id = $($meTech2.userId);
+UPDATE users SET role = 'owner'      WHERE id = $($meOwner.userId);
 "@
 
     $mysql = Get-Command mysql -ErrorAction SilentlyContinue
@@ -211,8 +227,16 @@ UPDATE users SET name = 'Seamless Test Owner'      WHERE id = $($meOwner.userId)
         exit 1
     }
 } else {
-    Write-Host "  -SkipProvision: assuming staff records exist" -ForegroundColor DarkGray
+    Write-Host "  -SkipProvision: assuming staff records + roles exist" -ForegroundColor DarkGray
 }
+
+# ---- PHASE C: RE-LOGIN WITH PROVISIONED ROLES --------------------------------------
+Write-Host "`n[Phase C] Re-login with provisioned roles" -ForegroundColor Yellow
+$TokSupervisor = Login-Role -Phone $PhoneSupervisor -ExpectedRole 'supervisor'
+$TokAdvisor = Login-Role -Phone $PhoneAdvisor -ExpectedRole 'advisor'
+$TokTech1 = Login-Role -Phone $PhoneTechnician -ExpectedRole 'technician'
+$TokTech2 = Login-Role -Phone $PhoneTech2 -ExpectedRole 'technician'
+$TokOwner = Login-Role -Phone $PhoneOwner -ExpectedRole 'owner'
 
 $advisorStaffId = (Invoke-Api -Method GET -Path '/auth/me' -Token $TokAdvisor).data.staffId
 Assert ($null -ne $advisorStaffId) 'Advisor has no staff record after provisioning'
@@ -263,7 +287,7 @@ $null = Step 'Customer gets bookingReceived notification' {
 # ---- 2. Supervisor: sees the booking, assigns to advisor --------------------------
 $null = Step 'Supervisor sees unassigned booking in queue' {
     $queue = Get-ApiData (Invoke-Api -Method GET -Path '/supervisor/bookings' -Token $TokSupervisor)
-    $found = @($queue) | Where-Object { $_.bookingRef -eq $script:BookingRef } | Select-Object -First 1
+    $found = @($queue) | Where-Object { $_.id -eq $script:BookingRef -or $_.bookingRef -eq $script:BookingRef } | Select-Object -First 1
     Assert ($null -ne $found) "booking $($script:BookingRef) not in supervisor queue"
     $script:BookingId = $found.id
     $true
@@ -290,7 +314,7 @@ $null = Step 'Customer gets bookingAssigned notification' {
 # ---- 3. Advisor: sees assigned booking, intake + inspection + repair order --------
 $null = Step 'Advisor sees assigned booking' {
     $bookings = Get-ApiData (Invoke-Api -Method GET -Path '/advisor/bookings' -Token $TokAdvisor)
-    Assert (@($bookings) | Where-Object { $_.bookingRef -eq $script:BookingRef }) 'booking not visible to advisor'
+    Assert (@($bookings) | Where-Object { $_.id -eq $script:BookingRef -or $_.bookingRef -eq $script:BookingRef }) 'booking not visible to advisor'
     $true
 }
 
@@ -494,7 +518,8 @@ $null = Step 'Owner (read-only) sees completed job + revenue KPIs' {
     $completed = Get-ApiData (Invoke-Api -Method GET -Path '/owner/jobs/status?stage=completed' -Token $TokOwner)
     Assert (@($completed | Where-Object { $_.jobCardId -eq $script:JobRef }).Count -gt 0) 'completed job not visible to owner'
     $kpis = Get-ApiData (Invoke-Api -Method GET -Path '/owner/dashboard/kpis' -Token $TokOwner)
-    Assert (@($kpis).Count -ge 16) 'owner KPI cards missing'
+    Assert (@($kpis).Count -ge 8) 'owner KPI cards missing (expected 8 real cards after the fabricated-KPI removal)'
+    Assert (@($kpis | Where-Object { $_.label -like '*Revenue*' }).Count -gt 0) 'owner revenue KPI missing'
     $true
 }
 

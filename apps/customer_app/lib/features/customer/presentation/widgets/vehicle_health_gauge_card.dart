@@ -1,20 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
+// FE-FIX (frontend pass): this card was 100% hardcoded (static 92% score and
+// invented part metrics). Now it renders the REAL healthScore the backend
+// computes per vehicle, with an honest empty state when unavailable.
 class VehicleHealthGaugeCard extends StatelessWidget {
   final String vehicleName;
   final String plateNumber;
-  final int odometerKm;
+  final String mileage;
+  final int healthScore;
+  final String nextServiceDue;
 
   const VehicleHealthGaugeCard({
     super.key,
     required this.vehicleName,
     required this.plateNumber,
-    this.odometerKm = 42500,
+    required this.healthScore,
+    this.mileage = '',
+    this.nextServiceDue = '',
   });
 
   @override
   Widget build(BuildContext context) {
+    final score = healthScore.clamp(0, 100);
+    final (color, label) = score >= 80
+        ? (AppColors.success, 'GOOD')
+        : score >= 50
+            ? (AppColors.warning, 'ATTENTION')
+            : (AppColors.danger, 'CRITICAL');
+
     return AppCard(
       padding: const EdgeInsets.all(AppDimensions.s16),
       child: Column(
@@ -25,12 +39,12 @@ class VehicleHealthGaugeCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.successBg,
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppDimensions.r10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.health_and_safety_rounded,
-                  color: AppColors.success,
+                  color: color,
                   size: 20,
                 ),
               ),
@@ -49,7 +63,9 @@ class VehicleHealthGaugeCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Odometer: ${odometerKm.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} km',
+                      mileage.isEmpty
+                          ? plateNumber
+                          : '$plateNumber · $mileage km',
                       style: const TextStyle(fontSize: 11, color: AppColors.text3),
                     ),
                   ],
@@ -58,12 +74,12 @@ class VehicleHealthGaugeCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.success,
+                  color: color,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  '92% GOOD',
-                  style: TextStyle(
+                child: Text(
+                  '$score% $label',
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -72,110 +88,39 @@ class VehicleHealthGaugeCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.s16),
-          const Divider(height: 1),
           const SizedBox(height: AppDimensions.s14),
-          const _HealthMetricRow(
-            label: 'Engine Oil',
-            status: 'OK',
-            percent: 0.85,
-            color: AppColors.success,
-            detail: 'Next change in 3,500 km',
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: score / 100,
+              minHeight: 8,
+              backgroundColor: AppColors.bg,
+              color: color,
+            ),
           ),
           const SizedBox(height: AppDimensions.s10),
-          const _HealthMetricRow(
-            label: 'Brake Pads',
-            status: 'GOOD',
-            percent: 0.70,
-            color: AppColors.success,
-            detail: 'Front 7mm / Rear 6mm',
-          ),
-          const SizedBox(height: AppDimensions.s10),
-          const _HealthMetricRow(
-            label: 'Battery Health',
-            status: 'ATTENTION',
-            percent: 0.45,
-            color: AppColors.warning,
-            detail: 'Charge at 12.2V — re-test soon',
-          ),
-          const SizedBox(height: AppDimensions.s10),
-          const _HealthMetricRow(
-            label: 'Tyre Tread',
-            status: 'GOOD',
-            percent: 0.80,
-            color: AppColors.success,
-            detail: 'Avg 5.5mm depth',
+          Row(
+            children: [
+              Icon(
+                nextServiceDue.isEmpty
+                    ? Icons.info_outline_rounded
+                    : Icons.event_available_rounded,
+                size: 14,
+                color: AppColors.text3,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  nextServiceDue.isEmpty
+                      ? 'No service due date on record'
+                      : 'Next service due $nextServiceDue',
+                  style: const TextStyle(fontSize: 11, color: AppColors.text3),
+                ),
+              ),
+            ],
           ),
         ],
       ),
-    );
-  }
-}
-
-class _HealthMetricRow extends StatelessWidget {
-  final String label;
-  final String status;
-  final double percent;
-  final Color color;
-  final String detail;
-
-  const _HealthMetricRow({
-    required this.label,
-    required this.status,
-    required this.percent,
-    required this.color,
-    required this.detail,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              detail,
-              style: const TextStyle(fontSize: 11, color: AppColors.text3),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  color: color,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: LinearProgressIndicator(
-            value: percent,
-            minHeight: 5,
-            backgroundColor: AppColors.bg,
-            color: color,
-          ),
-        ),
-      ],
     );
   }
 }

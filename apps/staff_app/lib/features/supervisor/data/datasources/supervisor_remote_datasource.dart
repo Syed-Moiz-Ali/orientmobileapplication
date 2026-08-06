@@ -154,6 +154,22 @@ class SupervisorRemoteDataSource {
     return r is Success;
   }
 
+  // FE-FLOW (seamless-flow integration): the QC review gate — previously the
+  // frontend had NO call to this endpoint (it was "entirely UI-less").
+  Future<bool> qcReview(String jobCardRef, String action,
+      {bool checklistPassed = true, String notes = '', String rejectReason = ''}) async {
+    final r = await _client.post(
+      ApiEndpoints.supervisorQcReview(jobCardRef),
+      data: {
+        'action': action,
+        'checklistPassed': checklistPassed,
+        'notes': notes,
+        if (rejectReason.isNotEmpty) 'rejectReason': rejectReason,
+      },
+    );
+    return r is Success;
+  }
+
   // ---------- Seamless flows: staff notifications ----------
 
   Future<List<StaffNotificationResponse>> getStaffNotifications() async =>

@@ -59,3 +59,7 @@ error.txt
 javaerror.txt
 promt.txt
 change.txt
+
+# Release signing secrets (never commit)
+android_keystore/
+**/android/key.properties

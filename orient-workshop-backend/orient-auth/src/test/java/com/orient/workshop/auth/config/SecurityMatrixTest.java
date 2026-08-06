@@ -1,9 +1,11 @@
 package com.orient.workshop.auth.config;
 
+import com.orient.workshop.auth.filter.ApiKeyFilter;
 import com.orient.workshop.auth.filter.JwtAuthenticationFilter;
 import com.orient.workshop.auth.filter.RateLimitFilter;
 import com.orient.workshop.auth.repository.UserMapper;
 import com.orient.workshop.auth.util.JwtUtil;
+import com.orient.workshop.core.repository.ApiKeyMapper;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,10 @@ class SecurityMatrixTest {
     // a mocked filter would swallow the chain and return empty 200s.
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+    @MockBean
+    private ApiKeyFilter apiKeyFilter;
+    @MockBean
+    private ApiKeyMapper apiKeyMapper;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -62,6 +68,11 @@ class SecurityMatrixTest {
                     .doFilter(invocation.getArgument(0), invocation.getArgument(1));
             return null;
         }).when(jwtAuthenticationFilter).doFilter(any(), any(), any());
+        doAnswer(invocation -> {
+            invocation.getArgument(2, FilterChain.class)
+                    .doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(apiKeyFilter).doFilter(any(), any(), any());
     }
 
     // ---------- permitAll ----------

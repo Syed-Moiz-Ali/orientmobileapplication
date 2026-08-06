@@ -2,6 +2,7 @@ package com.orient.workshop.scheduler.job;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ public class InvoiceOverdueJob {
     private final DataSource dataSource;
 
     @Scheduled(cron = "0 0 0 * * *")
+    @SchedulerLock(name = "InvoiceOverdue", lockAtMostFor = "15m", lockAtLeastFor = "5s")
     public void updateOverdueInvoices() {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {

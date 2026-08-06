@@ -70,6 +70,7 @@ class CustomerVehicleEntity {
 }
 
 class CustomerBookingEntity {
+  final String id;
   final String service;
   final String vehicleName;
   final String plateNumber;
@@ -78,6 +79,7 @@ class CustomerBookingEntity {
   final BookingStatus status;
 
   const CustomerBookingEntity({
+    this.id = '',
     required this.service,
     required this.vehicleName,
     required this.plateNumber,
@@ -101,9 +103,9 @@ class CustomerBookingEntity {
 
   // FIX (audit P0): UK-flavoured mock bookings removed — data comes from the API.
 
-  Map<String, dynamic> toJson() => {'service': service, 'vehicleName': vehicleName, 'plateNumber': plateNumber, 'date': date, 'time': time, 'status': status.name};
+  Map<String, dynamic> toJson() => {'id': id, 'service': service, 'vehicleName': vehicleName, 'plateNumber': plateNumber, 'date': date, 'time': time, 'status': status.name};
   factory CustomerBookingEntity.fromJson(Map<String, dynamic> j) => CustomerBookingEntity(
-    service: j['service'] as String? ?? '', vehicleName: j['vehicleName'] as String? ?? '',
+    id: (j['id'] ?? '').toString(), service: j['service'] as String? ?? '', vehicleName: j['vehicleName'] as String? ?? '',
     plateNumber: j['plateNumber'] as String? ?? '', date: j['date'] as String? ?? '',
     time: j['time'] as String? ?? '',
     status: BookingStatus.values.firstWhere((e) => e.name == j['status'], orElse: () => BookingStatus.pending));

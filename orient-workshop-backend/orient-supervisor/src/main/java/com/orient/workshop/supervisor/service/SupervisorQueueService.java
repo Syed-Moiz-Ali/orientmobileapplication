@@ -40,6 +40,7 @@ public class SupervisorQueueService {
     private final NotificationService notificationService;
     private final InvoiceService invoiceService;
     private final com.orient.workshop.core.service.ActivityService activityService;
+    private final com.orient.workshop.core.service.WebhookService webhookService;
 
     // ---------- Booking queue ----------
 
@@ -59,6 +60,7 @@ public class SupervisorQueueService {
                     .plateNumber(b.getPlateNumber() != null ? b.getPlateNumber() : "")
                     .serviceType(b.getServiceType() != null ? b.getServiceType() : "")
                     .bookingDate(b.getBookingDate() != null ? b.getBookingDate().format(DATE_TIME_FMT) : "")
+                    .dateKey(b.getBookingDate() != null ? b.getBookingDate().toLocalDate().toString() : "")
                     .notes(b.getNotes())
                     .status(b.getStatus())
                     .build();
@@ -206,6 +208,9 @@ public class SupervisorQueueService {
         // P1: activity feed writer.
         activityService.log("invoice", "Invoice raised",
                 "Invoice for completed job " + card.getJobCardRef(), null);
+
+        // P3: outbound webhook (job.completed).
+        webhookService.dispatch("job.completed", Map.of("jobCardRef", card.getJobCardRef()));
     }
 
     @Transactional

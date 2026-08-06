@@ -21,11 +21,11 @@ class VehicleResponse {
 }
 
 class BookingResponse {
-  final String service; final String vehicleName; final String plateNumber;
+  final String id; final String service; final String vehicleName; final String plateNumber;
   final String date; final String time; final String status;
-  const BookingResponse({this.service='',this.vehicleName='',this.plateNumber='',this.date='',this.time='',this.status='pending'});
+  const BookingResponse({this.id='',this.service='',this.vehicleName='',this.plateNumber='',this.date='',this.time='',this.status='pending'});
   factory BookingResponse.fromJson(Map<String,dynamic> j) => BookingResponse(
-    service: j['service']as String? ?? '',vehicleName: j['vehicleName']as String? ?? '',
+    id: (j['id']??'').toString(),service: j['service']as String? ?? '',vehicleName: j['vehicleName']as String? ?? '',
     plateNumber: j['plateNumber']as String? ?? '',date: j['date']as String? ?? '',
     time: j['time']as String? ?? '',status: j['status']as String? ?? 'pending');
 }

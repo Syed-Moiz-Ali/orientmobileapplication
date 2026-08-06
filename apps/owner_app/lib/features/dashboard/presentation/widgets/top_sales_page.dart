@@ -9,6 +9,9 @@ class TopSalesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // FE-FIX (audit P1): watch the provider so toggling a category rebuilds
+    // the page (was read-only — the expand/collapse did nothing).
+    ref.watch(dashboardUiProvider);
     final notifier = ref.read(dashboardUiProvider.notifier);
     final categories = notifier.topSalesCategories;
     final expandedSet = notifier.expandedCategoryIndices;

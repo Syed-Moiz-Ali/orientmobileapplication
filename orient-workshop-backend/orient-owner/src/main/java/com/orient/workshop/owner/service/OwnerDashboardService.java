@@ -93,6 +93,40 @@ public class OwnerDashboardService {
         return dailyTrend(lastDays(7), day -> 0L);
     }
 
+    /**
+     * P3 (audit): AI-lite revenue forecast — a transparent 7-day moving
+     * average of invoice revenue projected 30 days forward. Clearly labelled
+     * as an estimate, not a promise.
+     */
+    public Map<String, Object> getForecast() {
+        Map<LocalDate, BigDecimal> byDay = new HashMap<>();
+        for (Invoice inv : invoiceMapper.selectList(null)) {
+            if (inv.getCreatedAt() == null || inv.getAmount() == null) continue;
+            byDay.merge(inv.getCreatedAt().toLocalDate(), inv.getAmount(), BigDecimal::add);
+        }
+        LocalDate today = LocalDate.now();
+        BigDecimal sevenDayTotal = BigDecimal.ZERO;
+        int daysWithData = 0;
+        for (int i = 6; i >= 0; i--) {
+            BigDecimal v = byDay.getOrDefault(today.minusDays(i), BigDecimal.ZERO);
+            sevenDayTotal = sevenDayTotal.add(v);
+            if (v.compareTo(BigDecimal.ZERO) > 0) daysWithData++;
+        }
+        if (daysWithData == 0) {
+            return Map.of("method", "7-day moving average", "daysWithData", 0,
+                    "dailyAverage", "0.00", "forecast30Days", "0.00", "note", "no revenue data yet");
+        }
+        BigDecimal dailyAverage = sevenDayTotal.divide(BigDecimal.valueOf(7), 2, RoundingMode.HALF_UP);
+        BigDecimal forecast = dailyAverage.multiply(BigDecimal.valueOf(30)).setScale(2, RoundingMode.HALF_UP);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("method", "7-day moving average of invoice revenue");
+        result.put("daysWithData", daysWithData);
+        result.put("dailyAverage", dailyAverage.toPlainString());
+        result.put("forecast30Days", forecast.toPlainString());
+        result.put("note", "Estimate — replace with a model when more history exists");
+        return result;
+    }
+
     public List<JobCardRegisterResponse> getJobCardRegister() {
         List<JobCard> cards = jobCardMapper.findRecent(50, 0);
         if (cards.isEmpty()) return List.of();

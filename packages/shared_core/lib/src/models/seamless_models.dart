@@ -69,6 +69,7 @@ class BookingQueueResponse {
   final String plateNumber;
   final String serviceType;
   final String bookingDate;
+  final String dateKey;
   final String notes;
   final String status;
 
@@ -81,6 +82,7 @@ class BookingQueueResponse {
     this.plateNumber = '',
     this.serviceType = '',
     this.bookingDate = '',
+    this.dateKey = '',
     this.notes = '',
     this.status = 'pending',
   });
@@ -95,6 +97,7 @@ class BookingQueueResponse {
         plateNumber: j['plateNumber'] as String? ?? '',
         serviceType: j['serviceType'] as String? ?? '',
         bookingDate: j['bookingDate'] as String? ?? '',
+        dateKey: j['dateKey'] as String? ?? '',
         notes: j['notes'] as String? ?? '',
         status: j['status'] as String? ?? 'pending',
       );

@@ -2,6 +2,7 @@ package com.orient.workshop.scheduler.job;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class DocumentExpiryCheckJob {
     private final DataSource dataSource;
 
     @Scheduled(cron = "0 0 9 * * *")
+    @SchedulerLock(name = "DocumentExpiryCheck", lockAtMostFor = "15m", lockAtLeastFor = "5s")
     public void checkDocumentExpiry() {
         List<Object[]> expiring = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();

@@ -29,4 +29,6 @@ abstract class CrmRepository {
   Future<LeadStatsEntity> getLeadStats();
   Future<List<FollowUpEntity>> getFollowUps();
   Future<List<ActivityFeedEntity>> getActivityFeed();
+  // FE-FIX (audit): refresh() was a fake; the dashboard reloads through this.
+  Future<void> loadAll();
 }

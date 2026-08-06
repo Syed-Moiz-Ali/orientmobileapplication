@@ -204,6 +204,12 @@ class SupervisorReviewTab extends ConsumerWidget {
                                 jobCardRef: job.jobCardRef,
                                 customerName: job.customerName,
                                 vehicleInfo: job.vehicleInfo,
+                                // FE-FLOW: checklist driven by the actual
+                                // completed work items (was hardcoded).
+                                workItems: job.items
+                                    .map((e) => e.description)
+                                    .where((d) => d.isNotEmpty)
+                                    .toList(),
                               ),
                             );
                           },

@@ -56,6 +56,15 @@ class CustomerRemoteDataSource {
     await _client.delete(ApiEndpoints.customerVehicle(id));
   }
 
+  // FE-FIX: the backend's PUT /customers/bookings/{id}/status supports
+  // "cancelled" with ownership checks — the frontend never used it.
+  Future<bool> cancelBooking(int bookingId) async {
+    final r = await _client.put<dynamic>(
+      '${ApiEndpoints.customerBookings}/$bookingId/status?status=cancelled',
+    );
+    return r is Success;
+  }
+
   Future<List<BookingResponse>> getBookings() async {
     final result = await _client.get<List<dynamic>>(ApiEndpoints.customerBookings, fromJson: (d) => d as List<dynamic>);
     return result.when(
@@ -86,6 +95,18 @@ class CustomerRemoteDataSource {
     return result.when(
       success: (list) => list.map((e) => ServiceTypeResponse.fromJson(e as Map<String, dynamic>)).toList(),
       failure: (_) => [],
+    );
+  }
+
+  // FE-FLOW (seamless-flow integration): real slot availability per date.
+  Future<List<String>> getAvailability(String date) async {
+    final result = await _client.get<Map<String, dynamic>>(
+      ApiEndpoints.bookingsAvailability(date),
+      fromJson: (d) => d as Map<String, dynamic>,
+    );
+    return result.when(
+      success: (data) => List<String>.from(data['availableSlots'] as List? ?? const []),
+      failure: (_) => const [],
     );
   }
 

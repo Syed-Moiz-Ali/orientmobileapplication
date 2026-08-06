@@ -43,7 +43,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
     try {
       final list = await remoteDataSource.getBookings();
       final entities = list.map((b) => CustomerBookingEntity(
-        service: b.service, vehicleName: b.vehicleName,
+        id: b.id, service: b.service, vehicleName: b.vehicleName,
         plateNumber: b.plateNumber, date: b.date, time: b.time,
         status: BookingStatus.values.firstWhere(
             (s) => s.name == b.status, orElse: () => BookingStatus.pending),

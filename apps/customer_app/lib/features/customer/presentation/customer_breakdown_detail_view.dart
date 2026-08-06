@@ -150,7 +150,7 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
     return Row(
       children: [
         Container(
-          width: 38, height: 38,
+          width: 44, height: 44,
           decoration: BoxDecoration(color: AppColors.dangerBg, borderRadius: BorderRadius.circular(AppDimensions.r10)),
           child: Icon(icon, color: AppColors.danger, size: 18),
         ),

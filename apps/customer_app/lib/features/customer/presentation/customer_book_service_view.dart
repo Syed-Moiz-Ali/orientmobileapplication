@@ -18,7 +18,8 @@ class CustomerBookServiceView extends ConsumerStatefulWidget {
 class _CustomerBookServiceViewState
     extends ConsumerState<CustomerBookServiceView> {
   int _step = 0;
-  DateTime _focusedMonth = DateTime(2026, 4);
+  // FIX (audit P0): the calendar opened on a hardcoded April 2026.
+  DateTime _focusedMonth = DateTime(DateTime.now().year, DateTime.now().month);
   DateTime? _selectedDate;
   String? _selectedTime;
   CustomerVehicleEntity? _selectedVehicle;
@@ -27,6 +28,10 @@ class _CustomerBookServiceViewState
   List<ServiceTypeResponse> _serviceTypes = [];
   bool _isLoadingTypes = true;
   String? _selectedServiceTypeId;
+
+  // FE-FLOW: real availability slots for the selected date.
+  List<String> _availableSlots = [];
+  bool _isLoadingSlots = false;
 
   static const _months = [
     '',
@@ -57,6 +62,22 @@ class _CustomerBookServiceViewState
       setState(() {
         _serviceTypes = types;
         _isLoadingTypes = false;
+      });
+    }
+  }
+
+  // FE-FLOW: fetch real slot availability for the selected date (was a
+  // hardcoded 09:00-16:00 list with no workshop awareness).
+  Future<void> _loadAvailability(DateTime date) async {
+    setState(() => _isLoadingSlots = true);
+    final slots = await ref
+        .read(customerRemoteDataSourceProvider)
+        .getAvailability(
+            '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}');
+    if (mounted) {
+      setState(() {
+        _availableSlots = slots;
+        _isLoadingSlots = false;
       });
     }
   }
@@ -358,7 +379,14 @@ class _CustomerBookServiceViewState
                   return GestureDetector(
                     onTap: isPast
                         ? null
-                        : () => setState(() => _selectedDate = d),
+                        : () {
+                            setState(() {
+                              _selectedDate = d;
+                              _selectedTime = null;
+                              _availableSlots = [];
+                            });
+                            _loadAvailability(d);
+                          },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 120),
                       margin: const EdgeInsets.all(2),
@@ -413,32 +441,62 @@ class _CustomerBookServiceViewState
           crossAxisSpacing: 9,
           mainAxisSpacing: 9,
           childAspectRatio: 2.2,
-          children: kTimeSlots.map((t) {
-            final isSel = _selectedTime == t;
-            return GestureDetector(
-              onTap: () => setState(() => _selectedTime = t),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                decoration: BoxDecoration(
-                  color: isSel ? AppColors.primary : AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.r9),
-                  border: Border.all(
-                    color: isSel ? AppColors.primary : AppColors.border,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    t,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isSel ? Colors.white : AppColors.text2,
+          children: _isLoadingSlots
+              ? const [
+                  Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+                  )
+                ]
+              : (_availableSlots.isEmpty
+                  ? [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppDimensions.r9),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Text(
+                          'No slots available for this date yet',
+                          style: TextStyle(fontSize: 12, color: AppColors.text3),
+                        ),
+                      )
+                    ]
+                  : _availableSlots.map((t) {
+                      final isSel = _selectedTime == t;
+                      return Semantics(
+                        button: true,
+                        selected: isSel,
+                        label: 'Book at $t',
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedTime = t),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 120),
+                            decoration: BoxDecoration(
+                              color: isSel ? AppColors.primary : AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppDimensions.r9),
+                              border: Border.all(
+                                color: isSel ? AppColors.primary : AppColors.border,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                t,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSel ? Colors.white : AppColors.text2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList()),
         ),
         const SizedBox(height: AppDimensions.s20),
       ],

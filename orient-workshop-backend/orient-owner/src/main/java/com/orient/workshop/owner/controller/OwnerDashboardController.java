@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Owner Dashboard")
 @RestController
@@ -44,6 +45,11 @@ public class OwnerDashboardController {
     @GetMapping("/dashboard/expenses-trend")
     public ApiResponse<List<TrendPointResponse>> getExpensesTrend() {
         return ApiResponse.success(dashboardService.getExpensesTrend());
+    }
+
+    @GetMapping("/dashboard/forecast")
+    public ApiResponse<Map<String, Object>> getForecast() {
+        return ApiResponse.success(dashboardService.getForecast());
     }
 
     @GetMapping("/dashboard/job-card-register")

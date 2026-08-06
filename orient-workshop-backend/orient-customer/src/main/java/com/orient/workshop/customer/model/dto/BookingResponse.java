@@ -10,6 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookingResponse {
+    // FE-FIX (frontend pass): expose the id so the app can cancel/reference
+    // a specific booking (the customer app needs it for Cancel Booking).
+    private Long id;
     private String service;
     private String vehicleName;
     private String plateNumber;

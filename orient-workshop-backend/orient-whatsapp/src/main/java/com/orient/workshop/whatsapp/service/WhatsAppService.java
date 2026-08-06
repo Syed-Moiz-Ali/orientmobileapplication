@@ -212,6 +212,22 @@ public class WhatsAppService {
                         .status("open")
                         .build());
             }
+
+            // P3 (audit): booking-bot — detect booking/status intents on
+            // inbound messages. The reply uses an approved template when
+            // configured (send() falls back to log-only without credentials);
+            // the bot is deliberately conservative: it never charges or books,
+            // it surfaces the intent for the advisor.
+            if (body != null) {
+                String lower = body.toLowerCase();
+                if (lower.contains("book") || lower.contains("booking") || lower.contains("appointment")) {
+                    log.info("WhatsApp bot: booking intent from {} — advisor follow-up required", customerName);
+                    send(null, customerName, "", "Thank you for your interest. Our team will confirm your booking shortly.");
+                } else if (lower.contains("status") || lower.contains("ready")) {
+                    log.info("WhatsApp bot: status intent from {} — advisor follow-up required", customerName);
+                    send(null, customerName, "", "Our team will update you on your vehicle status shortly.");
+                }
+            }
             return 1;
         } catch (Exception e) {
             log.warn("Could not upsert inbound conversation: {}", e.getMessage());

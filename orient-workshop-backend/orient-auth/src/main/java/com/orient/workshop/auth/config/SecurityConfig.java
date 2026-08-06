@@ -1,5 +1,6 @@
 package com.orient.workshop.auth.config;
 
+import com.orient.workshop.auth.filter.ApiKeyFilter;
 import com.orient.workshop.auth.filter.JwtAuthenticationFilter;
 import com.orient.workshop.auth.filter.RateLimitFilter;
 import com.orient.workshop.common.constant.RoleConstants;
@@ -61,6 +62,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ApiKeyFilter apiKeyFilter;
 
     /**
      * H-2: RateLimitFilter is deliberately NOT a {@code @Component} (avoids double
@@ -173,6 +175,7 @@ public class SecurityConfig {
                                 response.sendError(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN))
                 )
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

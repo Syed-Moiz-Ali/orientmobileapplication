@@ -13,7 +13,7 @@ abstract class PendingJobCardsDatasource { Future<List<PendingJobCard>> getJobCa
 abstract class ActiveJobCardsDatasource { Future<List<ActiveJobCard>> getJobCards(); }
 abstract class SalesInvoicesDatasource { Future<List<SalesInvoice>> getInvoices(); }
 abstract class ARDatasource { Future<ARSummary> getSummary(); Future<List<ARRecord>> getRecords(); }
-abstract class JobCardDatasource { Future<List<JobCard>> getJobCards(); }
+abstract class JobCardDatasource { Future<List<JobCard>> getJobCards(); Future<bool> updateJobCardStatus(String id, String status); }
 abstract class DashboardDataSource {
   List<OwnerKpi> get kpis;
   List<JobCardRegisterItem> get registerItems;
@@ -152,6 +152,11 @@ class JobCardRemoteDatasource implements JobCardDatasource {
   }
   JobCardStatus _parseJobCardStatus(String? s) => JobCardStatus.values.firstWhere((e) => e.name == s, orElse: () => JobCardStatus.inProgress);
   List<String> _parseServices(String? s) => (s ?? '').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+
+  // FE-FIX (audit P1): "Mark as Complete" was local-only — now persisted.
+  @override
+  Future<bool> updateJobCardStatus(String id, String status) =>
+      _r.updateJobCardStatus(id, status);
 }
 
 // ============ DashboardUI ============

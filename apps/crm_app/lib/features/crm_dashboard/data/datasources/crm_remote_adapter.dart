@@ -4,6 +4,8 @@ import 'package:crm_app/features/crm_dashboard/data/datasources/crm_remote_datas
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 
 abstract class CrmDataSource {
+  // FE-FIX (audit): full reload for the (previously fake) refresh action.
+  Future<void> loadAll();
   List<CrmKpiEntity> get kpis;
   List<CrmChannelEntity> get channels;
   List<CrmTrendPoint> get conversionTrend;

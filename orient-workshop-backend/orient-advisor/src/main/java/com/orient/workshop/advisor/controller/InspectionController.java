@@ -6,12 +6,15 @@ import com.orient.workshop.advisor.model.dto.InspectionDraftResponse;
 import com.orient.workshop.advisor.model.dto.InspectionRequest;
 import com.orient.workshop.advisor.model.dto.InspectionResponse;
 import com.orient.workshop.advisor.service.InspectionService;
+import com.orient.workshop.advisor.service.InspectionSummaryService;
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @Tag(name = "Advisor")
 @RestController
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class InspectionController {
 
     private final InspectionService inspectionService;
+    private final InspectionSummaryService inspectionSummaryService;
 
     @PostMapping
     public ApiResponse<InspectionResponse> createInspection(@AuthenticationPrincipal JwtUserPrincipal principal,
@@ -53,5 +57,14 @@ public class InspectionController {
                                          @PathVariable Long id) {
         inspectionService.deleteDraft(principal, id);
         return ApiResponse.success(null);
+    }
+
+    /**
+     * P3 (audit): AI-lite inspection summary — transparent template-based
+     * narrative from the stored sections.
+     */
+    @GetMapping("/{id}/summary")
+    public ApiResponse<Map<String, Object>> summary(@PathVariable Long id) {
+        return ApiResponse.success(inspectionSummaryService.summarize(id));
     }
 }

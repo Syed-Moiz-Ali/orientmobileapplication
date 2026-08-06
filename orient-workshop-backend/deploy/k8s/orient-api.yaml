@@ -1,0 +1,108 @@
+# Orient Workshop API — Kubernetes manifests (P3, audit).
+# Assumes MySQL/Redis run in-cluster or via a managed service (adjust envs).
+# Apply order: secret -> configmap -> deployment -> service -> hpa
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orient-api
+  labels:
+    app: orient-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: orient-api
+  template:
+    metadata:
+      labels:
+        app: orient-api
+    spec:
+      containers:
+        - name: orient-api
+          image: orient-api:1.0.0   # replace with your registry image
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: orient-api-config
+            - secretRef:
+                name: orient-api-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /api/v1/actuator/health
+              port: 8080
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orient-api
+spec:
+  selector:
+    app: orient-api
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orient-api-config
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  DB_HOST: "mysql"
+  DB_PORT: "3306"
+  DB_NAME: "orient_workshop"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: orient-api-secrets
+type: Opaque
+stringData:
+  # kubectl create secret generic orient-api-secrets \
+  #   --from-literal=DB_USERNAME=orient \
+  #   --from-literal=DB_PASSWORD='REPLACE_ME' \
+  #   --from-literal=JWT_SECRET='REPLACE_ME_32+chars' \
+  #   --from-literal=ENCRYPTION_KEY='REPLACE_ME_16+chars'
+  DB_USERNAME: "REPLACE_ME"
+  DB_PASSWORD: "REPLACE_ME"
+  JWT_SECRET: "REPLACE_ME"
+  ENCRYPTION_KEY: "REPLACE_ME"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: orient-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: orient-api
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

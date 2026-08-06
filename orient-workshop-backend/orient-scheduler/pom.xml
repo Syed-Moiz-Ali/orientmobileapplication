@@ -8,6 +8,9 @@
     <dependencies>
         <dependency><groupId>com.orient.workshop</groupId><artifactId>orient-core</artifactId></dependency>
         <dependency><groupId>com.orient.workshop</groupId><artifactId>orient-auth</artifactId></dependency>
+        <!-- P3: ShedLock — distributed scheduler locks (multi-replica safe) -->
+        <dependency><groupId>net.javacrumbs.shedlock</groupId><artifactId>shedlock-spring</artifactId><version>6.1.0</version></dependency>
+        <dependency><groupId>net.javacrumbs.shedlock</groupId><artifactId>shedlock-provider-jdbc-template</artifactId><version>6.1.0</version></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>
         <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>

@@ -39,6 +39,7 @@ public class JobCardService {
     private final VehicleMapper vehicleMapper;
     private final TechnicianTaskMapper technicianTaskMapper;
     private final com.orient.workshop.core.service.ActivityService activityService;
+    private final com.orient.workshop.core.service.WebhookService webhookService;
 
     public PageResponse<JobCardResponse> listJobCards(String status, String search, int page, int limit,
                                                       JwtUserPrincipal principal) {
@@ -166,6 +167,9 @@ public class JobCardService {
         activityService.log("job_card", "Vehicle delivered",
                 "Job " + card.getJobCardRef() + " marked delivered",
                 principal != null ? principal.getUserId() : null);
+
+        // P3: outbound webhook (job.delivered).
+        webhookService.dispatch("job.delivered", Map.of("jobCardRef", card.getJobCardRef()));
     }
 
     private List<JobCardResponse> toResponses(List<JobCard> cards) {
