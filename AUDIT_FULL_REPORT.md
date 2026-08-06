@@ -1335,3 +1335,27 @@ English-only. All locale code, dependencies, pickers, and tests removed from the
 ## 38.4 Remaining (external only)
 
 Zoho/Sheets OAuth (needs credentials) · OCR (needs ML/API key) · k6 run (needs k6 installed; scripts/loadtest.js ready) · Docker-based Testcontainers (needs Docker) · Linux mvnw run (covered by CI backend job).
+
+# 39. LOAD TEST RUN + ROADMAP TRIAGE (2026-08-07 sixteenth pass)
+
+## 39.1 Load test — DONE and PASSING (was "needs k6 installed")
+
+k6 v2.1.0 installed; scripts/loadtest.js updated for k6 v2 (login moved to the setup stage — HTTP in the init context is not allowed) and for the API's single-role security model (one login per role: owner/advisor/supervisor/crmDashboard/customer). scripts/provision_loadtest.ps1 provisions the 5 users by **user id** (never by phone — the auth service normalizes 050→97150 prefixes) and inserts staff records for advisor/supervisor, mirroring the E2E harness.
+
+**Result (live run, 2 minutes, 50 VUs, relaxed rate-limit flags):**
+- 13,077 requests · **0 failures (0.00%)** · checks 100%
+- **p(95) = 120ms** (threshold 500ms — 4x headroom)
+- 108 req/s sustained · k6 exit 0
+
+Two findings surfaced by the run, both verified as BY DESIGN:
+- **429s during early runs** = the H-2 rate limiter (100 req/min per IP) doing its job — a single-machine test cannot exceed it without the documented --app.rate-limit.* overrides. With headroom flags the endpoints sustain 108 req/s clean.
+- **Init-context HTTP** is rejected by k6 v2 — the script now uses setup() correctly.
+
+## 39.2 Roadmap triage (owner decisions 2026-08-07)
+
+- **OCR — DROPPED** (owner: not needed)
+- **Zoho/Sheets OAuth — DROPPED** (owner: not needed)
+- **Docker/Testcontainers — DROPPED** (owner: no docker)
+- **k6 — DONE** (this pass; script + provisioning + documented run)
+
+Remaining backlog is now empty of code-completable items. The repo ships: full audit remediation, E2E-verified seamless flow (28/28), complete frontends, signed release APKs, CI with E2E + secrets-based signing, and a passing load test.
