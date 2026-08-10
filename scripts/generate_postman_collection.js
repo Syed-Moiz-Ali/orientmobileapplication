@@ -337,7 +337,7 @@ function stringSample(name) {
   if (n.includes('channel')) return 'whatsapp';
   if (n.includes('action')) return 'approve';
   if (n.includes('detail')) return 'Brake pads at 3mm — replace recommended';
-  if (n.includes('external') || n.includes('ext')) return 'EXT-1001';
+  if (n.includes('external') || n.startsWith('ext')) return 'EXT-1001';
   if (n.includes('recommend')) return 'Replace brake pads and rotate tyres';
   if (n.includes('data')) return 'payload';
   if (n.includes('started')) return '2026-08-10T09:00:00';
@@ -404,7 +404,8 @@ function numberSample(type, name) {
   }
   if (/Long|long/.test(t)) return 1;
   if (/BigDecimal|Double|double|Float|float/.test(t)) {
-    if (n.includes('amount') || n.includes('price') || n.includes('total') || n.includes('cost') || n.includes('rate') || n.includes('balance') || n.includes('due') || n.includes('value')) return 125.5;
+    if (n.includes('taxrate') || n.includes('tax_rate') || n === 'rate') return 0.05;
+    if (n.includes('amount') || n.includes('price') || n.includes('total') || n.includes('cost') || n.includes('balance') || n.includes('due') || n.includes('value')) return 125.5;
     return 1.5;
   }
   return 0;
@@ -412,8 +413,9 @@ function numberSample(type, name) {
 
 function sampleFor(type, name, depth) {
   const t = type.replace(/^[\w.]+\s*\./, '');
-  // ids are short alphanumeric strings (backend ref style) regardless of type
-  if (name === 'id') return shortHex(8);
+  // ids match the SQL format: every table is `id BIGINT AUTO_INCREMENT` —
+  // numeric values (1, 2, 3...), not hashes.
+  if (name === 'id') return 1;
   if (/String/.test(t)) return stringSample(name);
   if (/Integer|int|Long|long|BigDecimal|Double|double|Float|float/.test(t)) return numberSample(t, name);
   if (/Boolean/.test(t)) return true;

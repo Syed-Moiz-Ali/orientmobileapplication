@@ -203,7 +203,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"97610dcb\",\n      \"name\": \"Moiz Ali\",\n      \"address\": \"Al Barsha 1, Dubai, UAE\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"timezone\": \"10:00 AM\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"address\": \"Al Barsha 1, Dubai, UAE\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"timezone\": \"10:00 AM\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -253,7 +253,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"6bfced4b\",\n    \"name\": \"Moiz Ali\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"timezone\": \"10:00 AM\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Moiz Ali\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"timezone\": \"10:00 AM\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -304,7 +304,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"5e6b9eed\",\n    \"name\": \"Moiz Ali\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"timezone\": \"10:00 AM\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Moiz Ali\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"timezone\": \"10:00 AM\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -453,7 +453,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-53c638\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-7287d4\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ],
@@ -520,7 +520,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-ef5174\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-7f8e81\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -571,7 +571,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-fd2968\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-1be234\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -622,7 +622,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-0c9957\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-8d34b7\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -915,7 +915,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"975b175b\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -958,7 +958,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"23d40924\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1000,7 +1000,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"009183c2\",\n      \"bookingRef\": \"BK-8651c9\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"serviceType\": \"Full Service\",\n      \"bookingDate\": \"10 Aug 2026\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"bookingRef\": \"BK-4db525\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"serviceType\": \"Full Service\",\n      \"bookingDate\": \"10 Aug 2026\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1044,7 +1044,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"303ca865\",\n      \"taskRef\": \"Change engine oil and filter\",\n      \"jobCardRef\": \"JC-ee0ac073\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 125.5,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"taskRef\": \"Change engine oil and filter\",\n      \"jobCardRef\": \"JC-ee0ac073\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 0.05,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1173,7 +1173,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"f7a1aa3f\",\n      \"name\": \"Moiz Ali\",\n      \"empId\": \"EMP-a1b2c3d4\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"empId\": \"EMP-a1b2c3d4\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1402,7 +1402,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"estimateId\": \"EST-a1b2c3\",\n    \"customerName\": \"Moiz Ali\",\n    \"vehicleInfo\": \"Toyota Camry\",\n    \"servicesTotal\": 125.5,\n    \"partsTotal\": 125.5,\n    \"grandTotal\": 125.5,\n    \"status\": \"confirmed\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"services\": [\n      {}\n    ],\n    \"parts\": [\n      {}\n    ],\n    \"name\": \"Moiz Ali\",\n    \"qty\": 1,\n    \"rate\": 125.5,\n    \"discountPercent\": 1.5,\n    \"discountAmount\": 125.5\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"estimateId\": \"EST-a1b2c3\",\n    \"customerName\": \"Moiz Ali\",\n    \"vehicleInfo\": \"Toyota Camry\",\n    \"servicesTotal\": 125.5,\n    \"partsTotal\": 125.5,\n    \"grandTotal\": 125.5,\n    \"status\": \"confirmed\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"services\": [\n      {}\n    ],\n    \"parts\": [\n      {}\n    ],\n    \"name\": \"Moiz Ali\",\n    \"qty\": 1,\n    \"rate\": 0.05,\n    \"discountPercent\": 1.5,\n    \"discountAmount\": 125.5\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1504,7 +1504,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"4de6fbfa\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1598,7 +1598,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"11058cfd\",\n    \"jobCardId\": \"JC-ee0ac073\",\n    \"referenceNumber\": \"REF-3d1c59\",\n    \"placeOfSupply\": \"DUBAI\",\n    \"customerRequests\": \"Moiz Ali\",\n    \"garageRecommendations\": \"Replace brake pads and rotate tyres\",\n    \"estimatedDelivery\": \"2026-08-15T09:00:00\",\n    \"notifyOwnerSmsEmail\": true,\n    \"tag\": \"VIP\",\n    \"isDraft\": true\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"jobCardId\": \"JC-ee0ac073\",\n    \"referenceNumber\": \"REF-aa082a\",\n    \"placeOfSupply\": \"DUBAI\",\n    \"customerRequests\": \"Moiz Ali\",\n    \"garageRecommendations\": \"Replace brake pads and rotate tyres\",\n    \"estimatedDelivery\": \"2026-08-15T09:00:00\",\n    \"notifyOwnerSmsEmail\": true,\n    \"tag\": \"VIP\",\n    \"isDraft\": true\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1788,7 +1788,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": \"fb358976\",\n        \"dbId\": 1,\n        \"customerName\": \"Moiz Ali\",\n        \"vehicleInfo\": \"Toyota Camry\",\n        \"time\": \"10:00 AM\",\n        \"createdDate\": \"10 Aug 2026\",\n        \"lastUpdated\": \"10 Aug 2026\",\n        \"status\": \"confirmed\",\n        \"technician\": \"Mohammed Ali\"\n      }\n    ],\n    \"page\": 0,\n    \"size\": 20,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1,\n        \"dbId\": 1,\n        \"customerName\": \"Moiz Ali\",\n        \"vehicleInfo\": \"Toyota Camry\",\n        \"time\": \"10:00 AM\",\n        \"createdDate\": \"10 Aug 2026\",\n        \"lastUpdated\": \"10 Aug 2026\",\n        \"status\": \"confirmed\",\n        \"technician\": \"Mohammed Ali\"\n      }\n    ],\n    \"page\": 0,\n    \"size\": 20,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1831,7 +1831,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"4a02ac6a\",\n    \"customerName\": \"Moiz Ali\",\n    \"vehicleInfo\": \"Toyota Camry\",\n    \"time\": \"10:00 AM\",\n    \"createdDate\": \"10 Aug 2026\",\n    \"lastUpdated\": \"10 Aug 2026\",\n    \"status\": \"confirmed\",\n    \"technician\": \"Mohammed Ali\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"tag\": \"VIP\",\n    \"customerRequests\": \"Moiz Ali\",\n    \"garageRecommendations\": \"Replace brake pads and rotate tyres\",\n    \"estimatedDelivery\": \"2026-08-15T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"customerName\": \"Moiz Ali\",\n    \"vehicleInfo\": \"Toyota Camry\",\n    \"time\": \"10:00 AM\",\n    \"createdDate\": \"10 Aug 2026\",\n    \"lastUpdated\": \"10 Aug 2026\",\n    \"status\": \"confirmed\",\n    \"technician\": \"Mohammed Ali\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"tag\": \"VIP\",\n    \"customerRequests\": \"Moiz Ali\",\n    \"garageRecommendations\": \"Replace brake pads and rotate tyres\",\n    \"estimatedDelivery\": \"2026-08-15T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2085,7 +2085,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"fcfc7d87\",\n      \"customerName\": \"Moiz Ali\",\n      \"vehicleId\": \"Toyota Camry\",\n      \"task\": \"Change engine oil and filter\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"priority\": \"high\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customerName\": \"Moiz Ali\",\n      \"vehicleId\": \"Toyota Camry\",\n      \"task\": \"Change engine oil and filter\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"priority\": \"high\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2136,7 +2136,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"db0b7c2d\",\n    \"customerName\": \"Moiz Ali\",\n    \"vehicleId\": \"Toyota Camry\",\n    \"task\": \"Change engine oil and filter\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"customerName\": \"Moiz Ali\",\n    \"vehicleId\": \"Toyota Camry\",\n    \"task\": \"Change engine oil and filter\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2229,7 +2229,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"bb5f966c\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2410,7 +2410,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"regNo\": \"REF-aff243\",\n      \"vin\": \"JTDBT123456789012\",\n      \"make\": \"Toyota\",\n      \"model\": \"Camry\",\n      \"plateNumber\": \"DUBAI 12345\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"regNo\": \"REF-529bf8\",\n      \"vin\": \"JTDBT123456789012\",\n      \"make\": \"Toyota\",\n      \"model\": \"Camry\",\n      \"plateNumber\": \"DUBAI 12345\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2457,7 +2457,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"1dec6ee4\",\n      \"service\": \"Full Service\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"date\": \"10 Aug 2026\",\n      \"time\": \"10:00 AM\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"service\": \"Full Service\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"date\": \"10 Aug 2026\",\n      \"time\": \"10:00 AM\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2507,7 +2507,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"904686e8\",\n    \"bookingRef\": \"BK-4190d5\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-ad78f5\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2607,7 +2607,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"931623af\",\n    \"service\": \"Full Service\",\n    \"vehicleName\": \"Toyota Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"date\": \"10 Aug 2026\",\n    \"time\": \"10:00 AM\",\n    \"status\": \"confirmed\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"service\": \"Full Service\",\n    \"vehicleName\": \"Toyota Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"date\": \"10 Aug 2026\",\n    \"time\": \"10:00 AM\",\n    \"status\": \"confirmed\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2658,7 +2658,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"de77c418\",\n    \"bookingRef\": \"BK-efae33\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-f0e0f0\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2742,7 +2742,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"5242ca77\",\n      \"ticketRef\": \"TK-3870f0\",\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"subject\": \"Open job cards\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"priority\": \"high\",\n      \"status\": \"confirmed\",\n      \"assignedStaffId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ticketRef\": \"TK-2e9551\",\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"subject\": \"Open job cards\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"priority\": \"high\",\n      \"status\": \"confirmed\",\n      \"assignedStaffId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2970,7 +2970,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"097f64d7\",\n    \"bookingRef\": \"BK-3540e0\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-b034a6\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3017,7 +3017,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"56c93173\",\n      \"jobCardId\": 1,\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"rating\": 1,\n      \"overallRating\": 1,\n      \"workQuality\": 1,\n      \"communication\": 1,\n      \"timeliness\": 1,\n      \"valueForMoney\": 1,\n      \"wouldRecommend\": true,\n      \"comment\": \"Customer requested AC check as well\",\n      \"isPublic\": true,\n      \"isModerated\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"jobCardId\": 1,\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"rating\": 1,\n      \"overallRating\": 1,\n      \"workQuality\": 1,\n      \"communication\": 1,\n      \"timeliness\": 1,\n      \"valueForMoney\": 1,\n      \"wouldRecommend\": true,\n      \"comment\": \"Customer requested AC check as well\",\n      \"isPublic\": true,\n      \"isModerated\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3150,7 +3150,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"ddc7cc3a\",\n      \"jobCardId\": 1,\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"rating\": 1,\n      \"overallRating\": 1,\n      \"workQuality\": 1,\n      \"communication\": 1,\n      \"timeliness\": 1,\n      \"valueForMoney\": 1,\n      \"wouldRecommend\": true,\n      \"comment\": \"Customer requested AC check as well\",\n      \"isPublic\": true,\n      \"isModerated\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"jobCardId\": 1,\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"rating\": 1,\n      \"overallRating\": 1,\n      \"workQuality\": 1,\n      \"communication\": 1,\n      \"timeliness\": 1,\n      \"valueForMoney\": 1,\n      \"wouldRecommend\": true,\n      \"comment\": \"Customer requested AC check as well\",\n      \"isPublic\": true,\n      \"isModerated\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3192,7 +3192,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"6b59ac89\",\n      \"title\": \"Car makes noise when turning\",\n      \"body\": \"Your car is ready for collection\",\n      \"time\": \"10:00 AM\",\n      \"type\": \"sms\",\n      \"isRead\": {}\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"title\": \"Car makes noise when turning\",\n      \"body\": \"Your car is ready for collection\",\n      \"time\": \"10:00 AM\",\n      \"type\": \"sms\",\n      \"isRead\": {}\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3364,7 +3364,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"a0c230d2\",\n      \"name\": \"Moiz Ali\",\n      \"price\": \"120.00\",\n      \"duration\": \"1.5 hours\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"price\": \"120.00\",\n      \"duration\": \"1.5 hours\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3406,7 +3406,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"001331bf\",\n      \"brand\": \"Toyota\",\n      \"model\": \"Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"vin\": \"JTDBT123456789012\",\n      \"color\": \"White\",\n      \"year\": 2021,\n      \"mileage\": \"42500\",\n      \"lastService\": \"Full Service\",\n      \"nextDue\": \"EXT-1001\",\n      \"healthScore\": 92\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"brand\": \"Toyota\",\n      \"model\": \"Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"vin\": \"JTDBT123456789012\",\n      \"color\": \"White\",\n      \"year\": 2021,\n      \"mileage\": \"42500\",\n      \"lastService\": \"Full Service\",\n      \"nextDue\": \"2026-08-10T09:00:00\",\n      \"healthScore\": 92\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3457,7 +3457,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"14c39717\",\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vin\": \"JTDBT123456789012\",\n    \"color\": \"White\",\n    \"year\": 2021,\n    \"mileage\": \"42500\",\n    \"lastService\": \"Full Service\",\n    \"nextDue\": \"EXT-1001\",\n    \"healthScore\": 92\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vin\": \"JTDBT123456789012\",\n    \"color\": \"White\",\n    \"year\": 2021,\n    \"mileage\": \"42500\",\n    \"lastService\": \"Full Service\",\n    \"nextDue\": \"2026-08-10T09:00:00\",\n    \"healthScore\": 92\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3509,7 +3509,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"a4876b86\",\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vin\": \"JTDBT123456789012\",\n    \"color\": \"White\",\n    \"year\": 2021,\n    \"mileage\": \"42500\",\n    \"lastService\": \"Full Service\",\n    \"nextDue\": \"EXT-1001\",\n    \"healthScore\": 92\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vin\": \"JTDBT123456789012\",\n    \"color\": \"White\",\n    \"year\": 2021,\n    \"mileage\": \"42500\",\n    \"lastService\": \"Full Service\",\n    \"nextDue\": \"2026-08-10T09:00:00\",\n    \"healthScore\": 92\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3594,7 +3594,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"c59738b5\",\n      \"customerName\": \"Moiz Ali\",\n      \"date\": \"10 Aug 2026\",\n      \"amount\": 125.5,\n      \"taxRate\": 125.5,\n      \"taxAmount\": 125.5,\n      \"grandTotal\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customerName\": \"Moiz Ali\",\n      \"date\": \"10 Aug 2026\",\n      \"amount\": 125.5,\n      \"taxRate\": 0.05,\n      \"taxAmount\": 125.5,\n      \"grandTotal\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3723,7 +3723,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"c62c9265\",\n      \"title\": \"Car makes noise when turning\",\n      \"body\": \"Your car is ready for collection\",\n      \"time\": \"10:00 AM\",\n      \"type\": \"sms\",\n      \"isRead\": true\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"title\": \"Car makes noise when turning\",\n      \"body\": \"Your car is ready for collection\",\n      \"time\": \"10:00 AM\",\n      \"type\": \"sms\",\n      \"isRead\": true\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4062,7 +4062,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"1b3ff893\",\n      \"bookingRef\": \"BK-9beb26\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"serviceType\": \"Full Service\",\n      \"bookingDate\": \"10 Aug 2026\",\n      \"dateKey\": \"2026-08-10\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"bookingRef\": \"BK-8ca709\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"serviceType\": \"Full Service\",\n      \"bookingDate\": \"10 Aug 2026\",\n      \"dateKey\": \"2026-08-10\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4157,7 +4157,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"a2a42adb\",\n      \"breakdownRef\": \"REF-16a407\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"issue\": \"Clicking sound from the front left when turning\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"vehiclePlate\": \"DUBAI 12345\",\n      \"location\": \"Al Quoz Industrial 3, Dubai\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"breakdownRef\": \"REF-cfb82c\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"issue\": \"Clicking sound from the front left when turning\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"vehiclePlate\": \"DUBAI 12345\",\n      \"location\": \"Al Quoz Industrial 3, Dubai\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4253,7 +4253,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"jobCardId\": 1,\n      \"jobCardRef\": \"JC-ee0ac073\",\n      \"customerName\": \"Moiz Ali\",\n      \"vehicleInfo\": \"Toyota Camry\",\n      \"technician\": \"Mohammed Ali\",\n      \"done\": 1,\n      \"total\": 1,\n      \"updatedAt\": \"10 Aug 2026\",\n      \"items\": [\n        {}\n      ],\n      \"id\": \"4b57a6dd\",\n      \"taskRef\": \"Change engine oil and filter\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 125.5,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"jobCardId\": 1,\n      \"jobCardRef\": \"JC-ee0ac073\",\n      \"customerName\": \"Moiz Ali\",\n      \"vehicleInfo\": \"Toyota Camry\",\n      \"technician\": \"Mohammed Ali\",\n      \"done\": 1,\n      \"total\": 1,\n      \"updatedAt\": \"10 Aug 2026\",\n      \"items\": [\n        {}\n      ],\n      \"id\": 1,\n      \"taskRef\": \"Change engine oil and filter\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 0.05,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4436,7 +4436,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"ed4b2f4d\",\n      \"name\": \"Moiz Ali\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"role\": \"advisor\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"role\": \"advisor\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4486,7 +4486,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"results\": [\n      {}\n    ],\n    \"id\": \"1ddc8bc9\",\n    \"jobCard\": \"JC-ee0ac073\",\n    \"status\": \"confirmed\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"results\": [\n      {}\n    ],\n    \"id\": 1,\n    \"jobCard\": \"JC-ee0ac073\",\n    \"status\": \"confirmed\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4571,7 +4571,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"7fb67312\",\n      \"name\": \"Moiz Ali\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"currentJobs\": 1\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"currentJobs\": 1\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5253,7 +5253,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"jobCardNo\": \"JC-ee0ac073\",\n      \"dateOfWork\": \"10 Aug 2026\",\n      \"startTime\": \"10:00 AM\",\n      \"vehicleBrand\": \"Toyota Camry\",\n      \"vehicleModel\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"status\": \"confirmed\",\n      \"tasks\": [\n        {\n          \"id\": \"d030e2c0\",\n          \"description\": \"Clicking sound from the front left when turning\",\n          \"status\": \"confirmed\",\n          \"startTime\": \"10:00 AM\",\n          \"endTime\": \"10:00 AM\"\n        }\n      ],\n      \"notes\": \"Customer requested AC check as well\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"jobCardNo\": \"JC-ee0ac073\",\n      \"dateOfWork\": \"10 Aug 2026\",\n      \"startTime\": \"10:00 AM\",\n      \"vehicleBrand\": \"Toyota Camry\",\n      \"vehicleModel\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"status\": \"confirmed\",\n      \"tasks\": [\n        {\n          \"id\": 1,\n          \"description\": \"Clicking sound from the front left when turning\",\n          \"status\": \"confirmed\",\n          \"startTime\": \"10:00 AM\",\n          \"endTime\": \"10:00 AM\"\n        }\n      ],\n      \"notes\": \"Customer requested AC check as well\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5302,7 +5302,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"jobCardNo\": \"JC-ee0ac073\",\n    \"dateOfWork\": \"10 Aug 2026\",\n    \"startTime\": \"10:00 AM\",\n    \"vehicleBrand\": \"Toyota Camry\",\n    \"vehicleModel\": \"Toyota Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"status\": \"confirmed\",\n    \"tasks\": [\n      {\n        \"id\": \"b9f94eba\",\n        \"description\": \"Clicking sound from the front left when turning\",\n        \"status\": \"confirmed\",\n        \"startTime\": \"10:00 AM\",\n        \"endTime\": \"10:00 AM\"\n      }\n    ],\n    \"notes\": \"Customer requested AC check as well\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"jobCardNo\": \"JC-ee0ac073\",\n    \"dateOfWork\": \"10 Aug 2026\",\n    \"startTime\": \"10:00 AM\",\n    \"vehicleBrand\": \"Toyota Camry\",\n    \"vehicleModel\": \"Toyota Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"status\": \"confirmed\",\n    \"tasks\": [\n      {\n        \"id\": 1,\n        \"description\": \"Clicking sound from the front left when turning\",\n        \"status\": \"confirmed\",\n        \"startTime\": \"10:00 AM\",\n        \"endTime\": \"10:00 AM\"\n      }\n    ],\n    \"notes\": \"Customer requested AC check as well\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5541,7 +5541,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"10396849\",\n      \"taskRef\": \"Change engine oil and filter\",\n      \"jobCardRef\": \"JC-ee0ac073\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 125.5,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"taskRef\": \"Change engine oil and filter\",\n      \"jobCardRef\": \"JC-ee0ac073\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 0.05,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5764,7 +5764,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"724124d5\",\n      \"name\": \"Moiz Ali\",\n      \"keyHash\": \"bf6c4e5a0628e1a9\",\n      \"keyPrefix\": \"4a536d4e5a85c357\",\n      \"role\": \"advisor\",\n      \"isActive\": true,\n      \"createdBy\": 1,\n      \"lastUsedAt\": \"2026-08-10T09:00:00\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"keyHash\": \"2dfe4a590e3bbaaf\",\n      \"keyPrefix\": \"bd9b96234e6e73fd\",\n      \"role\": \"advisor\",\n      \"isActive\": true,\n      \"createdBy\": 1,\n      \"lastUsedAt\": \"2026-08-10T09:00:00\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5898,7 +5898,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"586650a2\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5948,7 +5948,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"0d16728d\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5992,7 +5992,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"7c33a49d\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6044,7 +6044,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"dbef50af\",\n    \"sku\": \"SKU-1001\",\n    \"name\": \"Moiz Ali\",\n    \"category\": \"service_quality\",\n    \"branchId\": 1,\n    \"costPrice\": 125.5,\n    \"sellingPrice\": 125.5,\n    \"qtyOnHand\": 1,\n    \"reorderLevel\": 1,\n    \"supplierId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sku\": \"SKU-1001\",\n    \"name\": \"Moiz Ali\",\n    \"category\": \"service_quality\",\n    \"branchId\": 1,\n    \"costPrice\": 125.5,\n    \"sellingPrice\": 125.5,\n    \"qtyOnHand\": 1,\n    \"reorderLevel\": 1,\n    \"supplierId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6095,7 +6095,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"e5bb5db5\",\n    \"sku\": \"SKU-1001\",\n    \"name\": \"Moiz Ali\",\n    \"category\": \"service_quality\",\n    \"branchId\": 1,\n    \"costPrice\": 125.5,\n    \"sellingPrice\": 125.5,\n    \"qtyOnHand\": 1,\n    \"reorderLevel\": 1,\n    \"supplierId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sku\": \"SKU-1001\",\n    \"name\": \"Moiz Ali\",\n    \"category\": \"service_quality\",\n    \"branchId\": 1,\n    \"costPrice\": 125.5,\n    \"sellingPrice\": 125.5,\n    \"qtyOnHand\": 1,\n    \"reorderLevel\": 1,\n    \"supplierId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6138,7 +6138,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"02cef8cd\",\n      \"name\": \"Moiz Ali\",\n      \"contactName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"address\": \"Al Barsha 1, Dubai, UAE\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"contactName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"address\": \"Al Barsha 1, Dubai, UAE\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6181,7 +6181,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"52934d5a\",\n    \"name\": \"Moiz Ali\",\n    \"contactName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Moiz Ali\",\n    \"contactName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6224,7 +6224,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"7e439896\",\n      \"poRef\": \"PO-4505e6\",\n      \"supplierId\": 1,\n      \"branchId\": 1,\n      \"status\": \"confirmed\",\n      \"total\": 125.5,\n      \"orderedAt\": \"2026-08-10T09:00:00\",\n      \"receivedAt\": \"2026-08-10T09:00:00\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"poRef\": \"PO-f7b876\",\n      \"supplierId\": 1,\n      \"branchId\": 1,\n      \"status\": \"confirmed\",\n      \"total\": 125.5,\n      \"orderedAt\": \"2026-08-10T09:00:00\",\n      \"receivedAt\": \"2026-08-10T09:00:00\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6276,7 +6276,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"741422b3\",\n    \"poRef\": \"PO-ec9467\",\n    \"supplierId\": 1,\n    \"branchId\": 1,\n    \"status\": \"confirmed\",\n    \"total\": 125.5,\n    \"orderedAt\": \"2026-08-10T09:00:00\",\n    \"receivedAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"poRef\": \"PO-2b2969\",\n    \"supplierId\": 1,\n    \"branchId\": 1,\n    \"status\": \"confirmed\",\n    \"total\": 125.5,\n    \"orderedAt\": \"2026-08-10T09:00:00\",\n    \"receivedAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6708,7 +6708,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"dee7ab20\",\n      \"customerName\": \"Moiz Ali\",\n      \"vehicle\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"services\": \"Full Service\",\n      \"technician\": \"Mohammed Ali\",\n      \"estCompletion\": \"2026-08-10T15:00:00\",\n      \"amount\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customerName\": \"Moiz Ali\",\n      \"vehicle\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"services\": \"Full Service\",\n      \"technician\": \"Mohammed Ali\",\n      \"estCompletion\": \"2026-08-10T15:00:00\",\n      \"amount\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7026,7 +7026,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"9c32d34e\",\n      \"customerName\": \"Moiz Ali\",\n      \"vehicle\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"services\": \"Full Service\",\n      \"technician\": \"Mohammed Ali\",\n      \"estCompletion\": \"2026-08-10T15:00:00\",\n      \"amount\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customerName\": \"Moiz Ali\",\n      \"vehicle\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"services\": \"Full Service\",\n      \"technician\": \"Mohammed Ali\",\n      \"estCompletion\": \"2026-08-10T15:00:00\",\n      \"amount\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7074,7 +7074,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"75388c42\",\n      \"customerName\": \"Moiz Ali\",\n      \"date\": \"10 Aug 2026\",\n      \"amount\": 125.5,\n      \"taxRate\": 125.5,\n      \"taxAmount\": 125.5,\n      \"grandTotal\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customerName\": \"Moiz Ali\",\n      \"date\": \"10 Aug 2026\",\n      \"amount\": 125.5,\n      \"taxRate\": 0.05,\n      \"taxAmount\": 125.5,\n      \"grandTotal\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7160,7 +7160,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"arId\": \"27629175\",\n      \"customer\": \"Moiz Ali\",\n      \"invoiceDate\": \"10 Aug 2026\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"amount\": 125.5,\n      \"outstanding\": 1.5,\n      \"aging\": \"15 days\",\n      \"contactPerson\": \"Moiz Ali\",\n      \"phone\": \"971501234567\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"arId\": \"1a6f4094\",\n      \"customer\": \"Moiz Ali\",\n      \"invoiceDate\": \"10 Aug 2026\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"amount\": 125.5,\n      \"outstanding\": 1.5,\n      \"aging\": \"15 days\",\n      \"contactPerson\": \"Moiz Ali\",\n      \"phone\": \"971501234567\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7202,7 +7202,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"dee168e2\",\n      \"recipient\": \"Moiz Ali\",\n      \"message\": \"Customer requested AC check as well\",\n      \"time\": \"10:00 AM\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"recipient\": \"Moiz Ali\",\n      \"message\": \"Customer requested AC check as well\",\n      \"time\": \"10:00 AM\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7253,7 +7253,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"6354dbb6\",\n    \"recipient\": \"Moiz Ali\",\n    \"message\": \"Customer requested AC check as well\",\n    \"time\": \"10:00 AM\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"recipient\": \"Moiz Ali\",\n    \"message\": \"Customer requested AC check as well\",\n    \"time\": \"10:00 AM\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7338,7 +7338,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"d982e8a0\",\n      \"type\": \"sms\",\n      \"title\": \"Car makes noise when turning\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"timestamp\": \"10:00 AM\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"type\": \"sms\",\n      \"title\": \"Car makes noise when turning\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"timestamp\": \"10:00 AM\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7386,7 +7386,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"2c551877\",\n      \"ticketRef\": \"TK-313f36\",\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"subject\": \"Open job cards\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"priority\": \"high\",\n      \"status\": \"confirmed\",\n      \"assignedStaffId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ticketRef\": \"TK-d76475\",\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"subject\": \"Open job cards\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"priority\": \"high\",\n      \"status\": \"confirmed\",\n      \"assignedStaffId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7478,7 +7478,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"46f56014\",\n    \"ticketRef\": \"TK-780310\",\n    \"customerId\": 1,\n    \"branchId\": 1,\n    \"subject\": \"Open job cards\",\n    \"description\": \"Clicking sound from the front left when turning\",\n    \"priority\": \"high\",\n    \"status\": \"confirmed\",\n    \"assignedStaffId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ticketRef\": \"TK-36d6fc\",\n    \"customerId\": 1,\n    \"branchId\": 1,\n    \"subject\": \"Open job cards\",\n    \"description\": \"Clicking sound from the front left when turning\",\n    \"priority\": \"high\",\n    \"status\": \"confirmed\",\n    \"assignedStaffId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7573,7 +7573,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"a4457b9f\",\n      \"paymentRef\": \"PAY-49fdd5\",\n      \"invoiceId\": 1,\n      \"branchId\": 1,\n      \"amount\": 125.5,\n      \"method\": \"card\",\n      \"reference\": \"REF-5864aa\",\n      \"paidAt\": \"2026-08-10T09:00:00\",\n      \"recordedBy\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"paymentRef\": \"PAY-65b7de\",\n      \"invoiceId\": 1,\n      \"branchId\": 1,\n      \"amount\": 125.5,\n      \"method\": \"card\",\n      \"reference\": \"REF-225885\",\n      \"paidAt\": \"2026-08-10T09:00:00\",\n      \"recordedBy\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7615,7 +7615,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"65dd307e\",\n    \"branchId\": 1,\n    \"plan\": \"pro\",\n    \"status\": \"confirmed\",\n    \"startedAt\": \"2026-08-10T09:00:00\",\n    \"renewsAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"branchId\": 1,\n    \"plan\": \"pro\",\n    \"status\": \"confirmed\",\n    \"startedAt\": \"2026-08-10T09:00:00\",\n    \"renewsAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7663,7 +7663,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"055f9c72\",\n    \"branchId\": 1,\n    \"plan\": \"pro\",\n    \"status\": \"confirmed\",\n    \"startedAt\": \"2026-08-10T09:00:00\",\n    \"renewsAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"branchId\": 1,\n    \"plan\": \"pro\",\n    \"status\": \"confirmed\",\n    \"startedAt\": \"2026-08-10T09:00:00\",\n    \"renewsAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7705,7 +7705,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"cc1b842f\",\n      \"userId\": 1,\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"name\": \"Moiz Ali\",\n      \"role\": \"advisor\",\n      \"branchId\": 1,\n      \"branch\": \"Main Branch - Dubai\",\n      \"shift\": \"Morning\",\n      \"designation\": \"Service Advisor\",\n      \"department\": \"Workshop\",\n      \"avatarInitials\": \"MA\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"userId\": 1,\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"name\": \"Moiz Ali\",\n      \"role\": \"advisor\",\n      \"branchId\": 1,\n      \"branch\": \"Main Branch - Dubai\",\n      \"shift\": \"Morning\",\n      \"designation\": \"Service Advisor\",\n      \"department\": \"Workshop\",\n      \"avatarInitials\": \"MA\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7756,7 +7756,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"6eb58eac\",\n    \"userId\": 1,\n    \"empId\": \"EMP-a1b2c3d4\",\n    \"name\": \"Moiz Ali\",\n    \"role\": \"advisor\",\n    \"branchId\": 1,\n    \"branch\": \"Main Branch - Dubai\",\n    \"shift\": \"Morning\",\n    \"designation\": \"Service Advisor\",\n    \"department\": \"Workshop\",\n    \"avatarInitials\": \"MA\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"empId\": \"EMP-a1b2c3d4\",\n    \"name\": \"Moiz Ali\",\n    \"role\": \"advisor\",\n    \"branchId\": 1,\n    \"branch\": \"Main Branch - Dubai\",\n    \"shift\": \"Morning\",\n    \"designation\": \"Service Advisor\",\n    \"department\": \"Workshop\",\n    \"avatarInitials\": \"MA\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7808,7 +7808,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"48675000\",\n    \"userId\": 1,\n    \"empId\": \"EMP-a1b2c3d4\",\n    \"name\": \"Moiz Ali\",\n    \"role\": \"advisor\",\n    \"branchId\": 1,\n    \"branch\": \"Main Branch - Dubai\",\n    \"shift\": \"Morning\",\n    \"designation\": \"Service Advisor\",\n    \"department\": \"Workshop\",\n    \"avatarInitials\": \"MA\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"empId\": \"EMP-a1b2c3d4\",\n    \"name\": \"Moiz Ali\",\n    \"role\": \"advisor\",\n    \"branchId\": 1,\n    \"branch\": \"Main Branch - Dubai\",\n    \"shift\": \"Morning\",\n    \"designation\": \"Service Advisor\",\n    \"department\": \"Workshop\",\n    \"avatarInitials\": \"MA\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7900,7 +7900,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"b23d10a5\",\n      \"vehicleId\": 1,\n      \"warrantyRef\": \"WR-ffe625\",\n      \"type\": \"sms\",\n      \"startDate\": \"2026-08-10T09:00:00\",\n      \"endDate\": \"2026-08-10T09:00:00\",\n      \"terms\": \"Net 30 days\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"vehicleId\": 1,\n      \"warrantyRef\": \"WR-2d373e\",\n      \"type\": \"sms\",\n      \"startDate\": \"2026-08-10T09:00:00\",\n      \"endDate\": \"2026-08-10T09:00:00\",\n      \"terms\": \"Net 30 days\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7942,7 +7942,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"59bdee61\",\n    \"vehicleId\": 1,\n    \"warrantyRef\": \"WR-7d7e66\",\n    \"type\": \"sms\",\n    \"startDate\": \"2026-08-10T09:00:00\",\n    \"endDate\": \"2026-08-10T09:00:00\",\n    \"terms\": \"Net 30 days\",\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"vehicleId\": 1,\n    \"warrantyRef\": \"WR-0e0370\",\n    \"type\": \"sms\",\n    \"startDate\": \"2026-08-10T09:00:00\",\n    \"endDate\": \"2026-08-10T09:00:00\",\n    \"terms\": \"Net 30 days\",\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7984,7 +7984,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"a6298717\",\n      \"eventType\": \"sms\",\n      \"url\": \"https://cdn.orientworkshop.ae/files/jc-ee0ac073.pdf\",\n      \"secret\": \"whsec_5a580422221ac8d5\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"eventType\": \"sms\",\n      \"url\": \"https://cdn.orientworkshop.ae/files/jc-ee0ac073.pdf\",\n      \"secret\": \"whsec_d7faa8bbf4fa013b\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8026,7 +8026,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"ec0a0ba7\",\n    \"eventType\": \"sms\",\n    \"url\": \"https://cdn.orientworkshop.ae/files/jc-ee0ac073.pdf\",\n    \"secret\": \"whsec_b8ec44875d24d697\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"eventType\": \"sms\",\n    \"url\": \"https://cdn.orientworkshop.ae/files/jc-ee0ac073.pdf\",\n    \"secret\": \"whsec_631870cdb51a058b\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8369,7 +8369,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"winRate\": 125.5,\n    \"avgResponseTime\": \"10:00 AM\",\n    \"satisfaction\": 1.5,\n    \"roi\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"winRate\": 1.5,\n    \"avgResponseTime\": \"10:00 AM\",\n    \"satisfaction\": 1.5,\n    \"roi\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8453,7 +8453,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"name\": \"Moiz Ali\",\n      \"role\": \"advisor\",\n      \"leadsHandled\": 1,\n      \"wonDeals\": 1,\n      \"revenue\": \"1250.00\",\n      \"winRate\": 125.5\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"name\": \"Moiz Ali\",\n      \"role\": \"advisor\",\n      \"leadsHandled\": 1,\n      \"wonDeals\": 1,\n      \"revenue\": \"1250.00\",\n      \"winRate\": 1.5\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8495,7 +8495,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"b4a60229\",\n      \"customerName\": \"Moiz Ali\",\n      \"lastMessage\": \"Customer requested AC check as well\",\n      \"time\": \"10:00 AM\",\n      \"channel\": \"whatsapp\",\n      \"unread\": 1,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customerName\": \"Moiz Ali\",\n      \"lastMessage\": \"Customer requested AC check as well\",\n      \"time\": \"10:00 AM\",\n      \"channel\": \"whatsapp\",\n      \"unread\": 1,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8547,7 +8547,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"b84e835c\",\n      \"sno\": 1,\n      \"leadNumber\": \"LD-7c429a\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"source\": \"whatsapp\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"status\": \"confirmed\",\n      \"lastActivity\": \"2026-08-10T09:00:00\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"leadValue\": 125.5,\n      \"followUpDate\": \"10 Aug 2026\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sno\": 1,\n      \"leadNumber\": \"LD-109523\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"source\": \"whatsapp\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"status\": \"confirmed\",\n      \"lastActivity\": \"2026-08-10T09:00:00\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"leadValue\": 125.5,\n      \"followUpDate\": \"10 Aug 2026\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8598,7 +8598,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"ba010f25\",\n    \"sno\": 1,\n    \"leadNumber\": \"LD-10b649\",\n    \"customerName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"source\": \"whatsapp\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"status\": \"confirmed\",\n    \"lastActivity\": \"2026-08-10T09:00:00\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"leadValue\": 125.5,\n    \"followUpDate\": \"10 Aug 2026\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sno\": 1,\n    \"leadNumber\": \"LD-1ad1c6\",\n    \"customerName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"source\": \"whatsapp\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"status\": \"confirmed\",\n    \"lastActivity\": \"2026-08-10T09:00:00\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"leadValue\": 125.5,\n    \"followUpDate\": \"10 Aug 2026\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8650,7 +8650,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"3d9acaa6\",\n    \"sno\": 1,\n    \"leadNumber\": \"LD-0291f5\",\n    \"customerName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"source\": \"whatsapp\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"status\": \"confirmed\",\n    \"lastActivity\": \"2026-08-10T09:00:00\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"leadValue\": 125.5,\n    \"followUpDate\": \"10 Aug 2026\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sno\": 1,\n    \"leadNumber\": \"LD-0e5f51\",\n    \"customerName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"source\": \"whatsapp\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"status\": \"confirmed\",\n    \"lastActivity\": \"2026-08-10T09:00:00\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"leadValue\": 125.5,\n    \"followUpDate\": \"10 Aug 2026\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8737,7 +8737,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"baaebccb\",\n      \"action\": \"approve\",\n      \"detail\": \"Brake pads at 3mm — replace recommended\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"action\": \"approve\",\n      \"detail\": \"Brake pads at 3mm — replace recommended\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8822,7 +8822,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"total\": 1,\n    \"active\": 1,\n    \"won\": 1,\n    \"lost\": 1,\n    \"unanswered\": 1,\n    \"totalValue\": 125.5,\n    \"wonValue\": 125.5,\n    \"conversionRate\": 125.5,\n    \"pipeline\": [\n      {}\n    ],\n    \"status\": \"confirmed\",\n    \"count\": 1,\n    \"value\": 125.5\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"total\": 1,\n    \"active\": 1,\n    \"won\": 1,\n    \"lost\": 1,\n    \"unanswered\": 1,\n    \"totalValue\": 125.5,\n    \"wonValue\": 125.5,\n    \"conversionRate\": 1.5,\n    \"pipeline\": [\n      {}\n    ],\n    \"status\": \"confirmed\",\n    \"count\": 1,\n    \"value\": 125.5\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8865,7 +8865,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"leadId\": \"8f4aef6a\",\n      \"leadNumber\": \"LD-c6fa73\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"source\": \"whatsapp\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"status\": \"confirmed\",\n      \"followUpDate\": \"10 Aug 2026\",\n      \"leadValue\": \"125.50\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"leadId\": \"b419ae65\",\n      \"leadNumber\": \"LD-ec2fa4\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"source\": \"whatsapp\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"status\": \"confirmed\",\n      \"followUpDate\": \"10 Aug 2026\",\n      \"leadValue\": \"125.50\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8907,7 +8907,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"b14f4a77\",\n      \"leadId\": \"745db079\",\n      \"customerName\": \"Moiz Ali\",\n      \"action\": \"approve\",\n      \"detail\": \"Brake pads at 3mm — replace recommended\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"leadId\": \"f6ee6fa0\",\n      \"customerName\": \"Moiz Ali\",\n      \"action\": \"approve\",\n      \"detail\": \"Brake pads at 3mm — replace recommended\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -9081,7 +9081,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"a667f2ec\",\n      \"title\": \"Car makes noise when turning\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"priority\": \"high\",\n      \"isDone\": {}\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"title\": \"Car makes noise when turning\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"priority\": \"high\",\n      \"isDone\": {}\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -9132,7 +9132,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"e7fa5037\",\n    \"title\": \"Car makes noise when turning\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\",\n    \"isDone\": {}\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"Car makes noise when turning\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\",\n    \"isDone\": {}\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -9184,7 +9184,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": \"86d173c9\",\n    \"title\": \"Car makes noise when turning\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\",\n    \"isDone\": {}\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"Car makes noise when turning\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\",\n    \"isDone\": {}\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -9722,7 +9722,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": \"82f44e87\",\n      \"branchId\": 1,\n      \"customerPhone\": \"971501234567\",\n      \"templateName\": \"EMP-a1b2c3d4\",\n      \"messageBody\": \"Your car is ready for collection\",\n      \"status\": \"confirmed\",\n      \"messageType\": \"sms\",\n      \"externalId\": \"EXT-1001\",\n      \"sentAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"branchId\": 1,\n      \"customerPhone\": \"971501234567\",\n      \"templateName\": \"EMP-a1b2c3d4\",\n      \"messageBody\": \"Your car is ready for collection\",\n      \"status\": \"confirmed\",\n      \"messageType\": \"sms\",\n      \"externalId\": \"EXT-1001\",\n      \"sentAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
