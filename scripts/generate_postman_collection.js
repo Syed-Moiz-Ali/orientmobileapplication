@@ -761,19 +761,17 @@ for (const f of files) {
   for (const ep of parsed.endpoints) {
     total++;
     const body = bodyFor(ep);
-    const example = buildExample(ep, ep.verb);
     const sqlNote = ep.sqlTable
-      ? '**SQL table:** `' + ep.sqlTable + '` — columns: `' + tableColumns(ep.sqlTable).map(c => c.col).join('`, `') + '`'
+      ? 'SQL table: `' + ep.sqlTable + '`'
       : null;
-    const dtoNote = ep.dtoName ? '**Model source:** `' + ep.dtoName + '` (Java DTO/entity — fields below are the exact model to mirror in Flutter).' : null;
+    const dtoNote = ep.dtoName ? 'Model: `' + ep.dtoName + '`' : null;
     const desc = [
-      '**Method:** ' + ep.methodName + '()',
-      '**Requires auth:** Bearer token (roles apply)',
-      '**Body:** ' + (body ? '```json\n' + body + '\n```' : 'none'),
-      '**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.',
+      'Method: ' + ep.methodName + '()',
+      'Auth: Bearer token (roles apply)',
+      body ? 'Body:\n```json\n' + body + '\n```' : null,
       dtoNote,
       sqlNote,
-    ].filter(Boolean).join('\n\n');
+    ].filter(Boolean).join('\n');
     const item = {
       name: `${ep.verb} ${ep.postmanPath}`,
       request: {
@@ -782,14 +780,6 @@ for (const f of files) {
         url: { raw: `{{baseUrl}}${ep.postmanPath}`, host: ['{{baseUrl}}'], path: ep.postmanPath.split('/').filter(Boolean) },
         description: desc,
       },
-      response: [{
-        name: 'Example response (realistic values, exact entity fields)',
-        originalRequest: { method: ep.verb, url: `{{baseUrl}}${ep.postmanPath}` },
-        status: 'OK', code: 200,
-        header: [{ key: 'Content-Type', value: 'application/json' }],
-        body: example,
-        _postman_previewlanguage: 'json',
-      }],
     };
     if (body) item.request.body = { mode: 'raw', raw: body, options: { raw: { language: 'json' } } };
     for (const p of ep.params) {
