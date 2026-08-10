@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/src/widgets/exit_confirmation_dialog.dart';
+import 'package:shared_core/src/widgets/offline_banner.dart';
 
 class DashboardShell extends ConsumerWidget {
   final PreferredSizeWidget? appBar;
@@ -25,7 +26,14 @@ class DashboardShell extends ConsumerWidget {
     return ExitConfirmationWrapper(
       child: Scaffold(
         appBar: appBar,
-        body: body,
+        // FE-FIX (pre-deployment): honest offline indicator — offline writes
+        // are queued, so users must know they will sync later.
+        body: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(child: body),
+          ],
+        ),
         bottomNavigationBar: bottomNavigationBar,
         drawer: drawer,
         floatingActionButton: floatingActionButton,

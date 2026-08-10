@@ -1359,3 +1359,25 @@ Two findings surfaced by the run, both verified as BY DESIGN:
 - **k6 — DONE** (this pass; script + provisioning + documented run)
 
 Remaining backlog is now empty of code-completable items. The repo ships: full audit remediation, E2E-verified seamless flow (28/28), complete frontends, signed release APKs, CI with E2E + secrets-based signing, and a passing load test.
+
+# 40. PRE-DEPLOYMENT CONNECTIVITY HARDENING PASS (2026-08-07 seventeenth pass)
+
+> Verified: mvn test BUILD SUCCESS · 4 apps analyze 0 errors/warnings · 72 Flutter tests · **E2E live 28/28** with the backend changes.
+
+## 40.1 What was done (the full P0+P1+P2 batch)
+
+| # | Item | Fix |
+|---|---|---|
+| P0-1 | **CI release APKs were dead on arrival** — built without a BASE_URL while release builds hard-fail at startup | `build-apks` now runs `flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}` for all 4 apps (GitHub Actions variable) |
+| P0-2 | Customer booking offline resilience | **Verified already complete** — submit catches API failure, enqueues a `booking` SyncOperation, syncs via DioSyncHandler('booking'), server idempotency prevents duplicates; bookings list merges local+remote |
+| P1-3 | **Bells were stale/decorative** — customer/owner/crm bells had no badge, no destination; supervisor bell only loaded on tap | Customer bell now shows the **live unread badge** (from unreadCount) and opens the notifications view; supervisor StaffNotificationBell **polls every 30s** (TickerMode-gated) |
+| P1-4 | **Cross-app changes were invisible until manual refresh** | New shared ResumeRefreshScope (lifecycle observer) wired into all 4 apps: customer (dashboard+bookings+approvals), staff (queue+review+notifications+advisor tick), owner (dashboard+job cards), CRM (full reload) — approve in one app, it appears in the other on resume |
+| P1-5 | **Timers polled while hidden** — tracking/status tabs ran every 60s in background via IndexedStack | Both customer tracking views now skip polls when hidden (TickerMode) or when no service is active |
+| P1-6 | **Prod required Redis that nothing uses** — `application-prod.properties` demanded REDIS_HOST/PORT/PASSWORD, blocking boot | Redis autoconfig excluded in prod + mysql profiles (same as dev); deploy needs only MySQL + secrets |
+| P2-7 | No offline indicator anywhere | Shared OfflineBanner (connectivity_plus stream) rendered in DashboardShell + customer scaffold — all apps show "Offline — your actions will sync" |
+| P2-8 | **Status vocabulary was mixed** — "in_service"/"inProgress"/"In Progress" across screens | New shared AppStatusLabels canonical map; applied to customer booking statuses + breakdown labels; enum-driven labels elsewhere already canonical |
+| P2-9 | **No payment confirmation notification** | PaymentService.recordPayment now emits paymentReceived to the customer (with amount + fully-paid wording) — PaymentService gained CustomerMapper + NotificationService |
+
+## 40.2 Deployment checklist (now accurate)
+
+Code-completable: **done**. Deploy-phase (your inputs): API domain → GitHub API_BASE_URL variable → CI produces usable signed APKs · SMS/email provider + FCM creds (delivery infra) · real TLS cert + SSL_KEY_PASSWORD · regenerate release keystore with company identity (optional but recommended) · hosting/backups/monitoring (no Docker chosen).

@@ -18,7 +18,7 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
   }
 
   String _statusLabel(String s) =>
-      s == 'resolved' ? 'Resolved' : s == 'inProgress' ? 'In Progress' : 'Pending';
+      AppStatusLabels.breakdown(s);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

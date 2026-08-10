@@ -7,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/core/router/app_router.dart';
+import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,11 +60,25 @@ class _StaffAppState extends ConsumerState<StaffApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     final brand = ref.watch(brandConfigProvider);
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
-      title: brand.appName,
-      theme: AppTheme.light(brand),
+    // FE-FIX (pre-deployment): on resume, refresh each role's live data so a
+    // booking assigned by the supervisor appears immediately for the advisor
+    // and a completed job shows up in the supervisor's review tab.
+    return ResumeRefreshScope(
+      onResumed: () async {
+        final sup = ref.read(supervisorDashboardProvider.notifier);
+        await sup.refreshQueue();
+        await sup.refreshReview();
+        await sup.loadNotifications();
+        // advisorRefreshProvider is a tick counter — bumping it reloads the
+        // advisor dashboard/jobs on resume.
+        ref.read(advisorRefreshProvider.notifier).state++;
+      },
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        routerConfig: router,
+        title: brand.appName,
+        theme: AppTheme.light(brand),
+      ),
     );
   }
 }

@@ -17,6 +17,8 @@ export 'src/widgets/gradient_banner.dart';
 export 'src/widgets/loading_indicator.dart';
 export 'src/widgets/logout_dialog.dart';
 export 'src/widgets/notification_bell.dart';
+export 'src/widgets/resume_refresh_scope.dart';
+export 'src/widgets/offline_banner.dart';
 export 'src/widgets/primary_button.dart';
 export 'src/widgets/profile_sheet.dart';
 export 'src/widgets/section_header.dart';
@@ -56,6 +58,7 @@ export 'src/errors/app_error_handler.dart';
 export 'src/errors/logger_provider.dart';
 
 export 'src/constants/api_constants.dart';
+export 'src/constants/status_labels.dart';
 export 'src/models/common_models.dart';
 export 'src/models/auth_models.dart';
 export 'src/models/customer_models.dart';

@@ -1,14 +1,43 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 
 /// Phase 6 — in-app notification feed for staff (supervisor/advisor/tech).
-class StaffNotificationBell extends ConsumerWidget {
+class StaffNotificationBell extends ConsumerStatefulWidget {
   const StaffNotificationBell({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StaffNotificationBell> createState() =>
+      _StaffNotificationBellState();
+}
+
+class _StaffNotificationBellState extends ConsumerState<StaffNotificationBell> {
+  Timer? _poll;
+
+  @override
+  void initState() {
+    super.initState();
+    // FE-FIX (pre-deployment): poll for new notifications so the unread badge
+    // and the queue stay live without manual refreshes. The timer only ticks
+    // while the bell is actually visible (TickerMode is disabled for hidden
+    // IndexedStack tabs).
+    _poll = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!TickerMode.of(context)) return;
+      ref.read(supervisorDashboardProvider.notifier).loadNotifications();
+    });
+  }
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final unread = notifier.unreadNotifications;
 

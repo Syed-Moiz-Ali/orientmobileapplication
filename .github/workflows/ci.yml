@@ -147,16 +147,21 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
-      # FIX (audit P0): only staff + owner were built — customer and crm were
-      # never compiled in CI, so regressions there shipped silently.
+      # FE-FIX (P0, pre-deployment): release APKs fail at startup without a
+      # valid https BASE_URL — inject it from a GitHub Actions variable
+      # (Settings > Variables > API_BASE_URL). CI artifacts are otherwise dead.
       - name: Build staff_app release APK
-        run: melos run build:staff
+        run: flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}
+        working-directory: apps/staff_app
       - name: Build owner_app release APK
-        run: melos run build:owner
+        run: flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}
+        working-directory: apps/owner_app
       - name: Build customer_app release APK
-        run: melos run build:customer
+        run: flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}
+        working-directory: apps/customer_app
       - name: Build crm_app release APK
-        run: melos run build:crm
+        run: flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}
+        working-directory: apps/crm_app
       - name: Upload staff APK
         uses: actions/upload-artifact@v4
         with:

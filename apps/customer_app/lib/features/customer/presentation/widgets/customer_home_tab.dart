@@ -637,7 +637,7 @@ class _RecentBreakdownsList extends StatelessWidget {
           final isLast = e.key == breakdowns.length - 1 || e.key == 2;
           final status = b['status'] as String? ?? 'pending';
           final (bg, fg) = _statusColors(status);
-          final statusLabel = status == 'resolved' ? 'Resolved' : status == 'inProgress' ? 'In Progress' : 'Pending';
+          final statusLabel = AppStatusLabels.breakdown(status);
 
           return Container(
             padding: EdgeInsets.fromLTRB(

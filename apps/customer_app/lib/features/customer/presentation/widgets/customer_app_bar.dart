@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/models/profile_data.dart';
+import 'package:customer_app/features/customer/presentation/customer_notifications_view.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
 const Color _navy = AppColors.darkNavy;
@@ -88,7 +89,18 @@ class CustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        const NotificationBell(),
+        // FE-FIX (pre-deployment): the bell was decorative â€” no badge, no
+        // destination, while the backend delivered real notifications.
+        NotificationBell(
+          showBadge: state.unreadCount > 0,
+          badgeCount: state.unreadCount > 99 ? null : state.unreadCount,
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CustomerNotificationsView(),
+            ),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 14),
           child: UserAvatar(

@@ -1,3 +1,5 @@
+import 'package:shared_core/shared_core.dart';
+
 enum BookingStatus { confirmed, completed, pending, cancelled }
 
 enum StageStatus { done, inProgress, pending }
@@ -89,16 +91,8 @@ class CustomerBookingEntity {
   });
 
   String get statusLabel {
-    switch (status) {
-      case BookingStatus.confirmed:
-        return 'Confirmed';
-      case BookingStatus.completed:
-        return 'Completed';
-      case BookingStatus.pending:
-        return 'Pending';
-      case BookingStatus.cancelled:
-        return 'Cancelled';
-    }
+    // FE-FIX (pre-deployment, P2-8): one canonical vocabulary across apps.
+    return AppStatusLabels.booking(status.name);
   }
 
   // FIX (audit P0): UK-flavoured mock bookings removed — data comes from the API.

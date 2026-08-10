@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_app_bar.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
@@ -55,7 +56,15 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: CustomerAppBar(state: state, notifier: notifier),
-      body: IndexedStack(index: state.selectedIndex, children: _pages),
+      // FE-FIX (pre-deployment): offline indicator on the customer app too.
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: IndexedStack(index: state.selectedIndex, children: _pages),
+          ),
+        ],
+      ),
       bottomNavigationBar: _BottomNav(selectedIndex: state.selectedIndex, onTap: (index) => notifier.selectTab(index)),
     );
   }

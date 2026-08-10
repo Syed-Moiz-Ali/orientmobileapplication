@@ -22,12 +22,16 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      if (mounted) {
-        ref.read(customerDashboardProvider.notifier).refresh();
-        setState(() {
-          _lastUpdated = DateTime.now();
-        });
-      }
+      // FE-FIX (pre-deployment): skip the poll while this screen is hidden
+      // (IndexedStack keeps tabs alive) or the service is no longer active —
+      // no background battery/network burn.
+      if (!mounted || !TickerMode.of(context)) return;
+      final svc = ref.read(customerDashboardProvider).activeService;
+      if (svc == null || !svc.hasActiveJob) return;
+      ref.read(customerDashboardProvider.notifier).refresh();
+      setState(() {
+        _lastUpdated = DateTime.now();
+      });
     });
   }
 

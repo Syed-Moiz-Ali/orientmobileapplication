@@ -23,8 +23,14 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
   @override
   void initState() {
     super.initState();
-    // Auto-refresh active service tracking every 60 seconds
+    // Auto-refresh active service tracking every 60 seconds.
+    // FE-FIX (pre-deployment): skip while hidden (IndexedStack) or when no
+    // service is active — no background polls.
     _refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (!mounted || !TickerMode.of(context)) return;
+      final dash = ref.read(customerDashboardProvider);
+      final svc = dash.activeService;
+      if (svc == null || !svc.hasActiveJob || svc.jobCardId.isEmpty) return;
       ref.read(customerDashboardProvider.notifier).refresh();
     });
   }
@@ -220,7 +226,7 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
                 final isResolved = status == 'resolved';
                 final clr = isResolved ? AppColors.success : AppColors.warning;
                 final bgColor = isResolved ? AppColors.successBg : AppColors.warningBg;
-                final statusLabel = isResolved ? 'Resolved' : status == 'inProgress' ? 'In Progress' : 'Pending';
+                final statusLabel = AppStatusLabels.breakdown(status);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AppDimensions.s10),
                   child: GestureDetector(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/core/router/app_router.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,11 +25,16 @@ class CrmApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final brand = ref.watch(brandConfigProvider);
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
-      title: brand.appName,
-      theme: AppTheme.light(brand),
+    // FE-FIX (pre-deployment): reload CRM data on resume so new leads /
+    // WhatsApp conversations appear without a manual refresh.
+    return ResumeRefreshScope(
+      onResumed: () => ref.read(crmUiProvider.notifier).refresh(),
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        routerConfig: router,
+        title: brand.appName,
+        theme: AppTheme.light(brand),
+      ),
     );
   }
 }

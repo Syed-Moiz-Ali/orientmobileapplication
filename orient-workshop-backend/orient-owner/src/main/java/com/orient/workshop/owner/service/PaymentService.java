@@ -4,6 +4,9 @@ import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.common.util.IdGenerator;
+import com.orient.workshop.core.model.entity.Customer;
+import com.orient.workshop.core.repository.CustomerMapper;
+import com.orient.workshop.core.service.NotificationService;
 import com.orient.workshop.owner.model.dto.RecordPaymentRequest;
 import com.orient.workshop.owner.model.entity.Invoice;
 import com.orient.workshop.owner.model.entity.Payment;
@@ -13,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -34,6 +36,8 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
     private final InvoiceMapper invoiceMapper;
     private final com.orient.workshop.core.service.ActivityService activityService;
+    private final CustomerMapper customerMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     public PaymentRecordResult recordPayment(JwtUserPrincipal principal, RecordPaymentRequest req) {
@@ -86,6 +90,24 @@ public class PaymentService {
                         + payment.getAmount().toPlainString() + " for invoice "
                         + invoice.getInvoiceRef(),
                 principal != null ? principal.getUserId() : null);
+
+        // FE-FIX (pre-deployment, P2-9): the customer was never told their
+        // payment was recorded — only the invoice silently flipped to paid.
+        if (invoice.getCustomerId() != null) {
+            try {
+                Customer customer = customerMapper.selectById(invoice.getCustomerId());
+                if (customer != null && customer.getUserId() != null) {
+                    notificationService.emit(customer.getUserId(), invoice.getBranchId(),
+                            "paymentReceived", "Payment received",
+                            "Payment " + payment.getPaymentRef() + " of AED "
+                                    + payment.getAmount().setScale(2, RoundingMode.HALF_UP)
+                                    + " recorded for invoice " + invoice.getInvoiceRef()
+                                    + (remaining.compareTo(ZERO) <= 0 ? " — fully paid." : "."));
+                }
+            } catch (Exception e) {
+                log.warn("Could not notify customer of payment {}: {}", payment.getPaymentRef(), e.getMessage());
+            }
+        }
 
         return new PaymentRecordResult(payment.getPaymentRef(), remaining.setScale(2, RoundingMode.HALF_UP));
     }
