@@ -273,33 +273,121 @@ function modelFields(typeName) {
   return fields.length ? fields : null;
 }
 
-// realistic string samples by field name (so models/docs read naturally)
+// REALISTIC values by field name — the backend generates short alphanumeric
+// refs (e.g. "JC-ee0ac073"), so samples mirror that style.
+const HEX = '0123456789abcdef';
+function shortHex(n) { let s = ''; for (let i = 0; i < n; i++) s += HEX[Math.floor(Math.random() * 16)]; return s; }
+function refFor(name, n) {
+  const key = name.toLowerCase();
+  if (key.includes('jobcard') || key.includes('job_card') || key === 'job') return 'JC-' + shortHex(8);
+  if (key.includes('booking')) return 'BK-' + shortHex(6);
+  if (key.includes('invoice')) return 'INV-' + shortHex(6);
+  if (key.includes('payment')) return 'PAY-' + shortHex(6);
+  if (key.includes('lead')) return 'LD-' + shortHex(6);
+  if (key.includes('ticket')) return 'TK-' + shortHex(6);
+  if (key.includes('estimate') || key.includes('approval')) return 'EST-' + shortHex(6);
+  if (key.includes('member')) return 'CUST-' + shortHex(4);
+  if (key.includes('branch')) return 'BR-' + shortHex(4);
+  if (key.includes('supplier')) return 'SUP-' + shortHex(4);
+  if (key.includes('warrant')) return 'WR-' + shortHex(6);
+  if (key.includes('po') || key.includes('purchase')) return 'PO-' + shortHex(6);
+  if (key.includes('employee') || key.includes('emp')) return 'EMP-' + shortHex(4);
+  return 'REF-' + shortHex(6);
+}
+
 function stringSample(name) {
   const n = name.toLowerCase();
-  if (n === 'id') return '1';
-  if (n.includes('email')) return 'customer@example.com';
+  if (n === 'id') return shortHex(8);
+  if (n === 'datekey') return '2026-08-10';
+  if (n.includes('emp')) return 'EMP-a1b2c3d4';
+  if (n.includes('shift')) return 'Morning';
+  if (n.includes('designation')) return 'Service Advisor';
+  if (n.includes('department')) return 'Workshop';
+  if (n.includes('sku')) return 'SKU-1001';
+  if (n.includes('estimateid')) return 'EST-a1b2c3';
+  if (n.includes('jobcardid') || (n.includes('job') && n.includes('id'))) return 'JC-ee0ac073';
+  if (n.includes('placeofsupply') || n.includes('place_of_supply')) return 'DUBAI';
+  if (n.includes('delivery')) return '2026-08-15T09:00:00';
+  if (n.includes('tag')) return 'VIP';
+  if (n.includes('task')) return 'Change engine oil and filter';
+  if (n.includes('slot')) return '10:00';
+  if (n.includes('body')) return 'Your car is ready for collection';
+  if (n.includes('stage')) return 'in_progress';
+  if (n.includes('duration')) return '1.5 hours';
+  if (n.includes('price')) return '120.00';
+  if (n.includes('value')) return '125.50';
+  if (n.includes('label')) return 'Active Jobs';
+  if (n.includes('sub')) return 'Open job cards';
+  if (n.includes('amount')) return '125.50';
+  if (n.includes('change')) return '+12%';
+  if (n.includes('count')) return '3';
+  if (n.includes('location')) return 'Al Quoz Industrial 3, Dubai';
+  if (n.includes('jobcard')) return 'JC-ee0ac073';
+  if (n.includes('punchin') || n.includes('punchout')) return '2026-08-10T08:30:00';
+  if (n.includes('workhours') || n.includes('hours')) return '8h 30m';
+  if (n.includes('keyhash') || n.includes('key')) return shortHex(16);
+  if (n.includes('month')) return 'Aug 2026';
+  if (n.includes('urgency')) return 'high';
+  if (n.includes('arid') || n.includes('leadid')) return shortHex(8);
+  if (n.includes('aging')) return '15 days';
+  if (n.includes('contact') || n.includes('recipient')) return 'Moiz Ali';
+  if (n.includes('plan')) return 'pro';
+  if (n.includes('terms')) return 'Net 30 days';
+  if (n.includes('revenue')) return '1250.00';
+  if (n.includes('channel')) return 'whatsapp';
+  if (n.includes('action')) return 'approve';
+  if (n.includes('detail')) return 'Brake pads at 3mm — replace recommended';
+  if (n.includes('external') || n.includes('ext')) return 'EXT-1001';
+  if (n.includes('recommend')) return 'Replace brake pads and rotate tyres';
+  if (n.includes('data')) return 'payload';
+  if (n.includes('started')) return '2026-08-10T09:00:00';
+  if (n.includes('estcompletion')) return '2026-08-10T15:00:00';
+  if (n.includes('currentstage')) return 'in_progress';
+  if (n.includes('day')) return 'Monday';
+  if (n.includes('email')) return 'moiz.ali@example.com';
   if (n.includes('phone')) return '971501234567';
-  if (n.includes('plate')) return 'ABC-123';
+  if (n.includes('plate')) return 'DUBAI 12345';
+  if (n.includes('vin')) return 'JTDBT123456789012';
+  if (n.includes('mileage') || n.includes('odometer')) return '42500';
   if (n.includes('vehicle')) return 'Toyota Camry';
-  if (n.includes('customer')) return 'Ahmed Hassan';
+  if (n.includes('customer') && n.includes('name')) return 'Moiz Ali';
+  if (n.includes('customer')) return 'Moiz Ali';
   if (n.includes('technician')) return 'Mohammed Ali';
   if (n.includes('advisor')) return 'Khaled Salem';
   if (n.includes('supervisor')) return 'Omar Farooq';
   if (n.includes('owner')) return 'Orient Workshop';
-  if (n.includes('status')) return 'pending';
-  if (n.includes('ref') || n.includes('number') || n.includes('code') || n.includes('no')) return 'REF-001';
-  if (n.includes('date') || n.includes('time')) return '2026-08-10T09:00:00';
+  if (n.includes('assignedto') || n.includes('assigned_to')) return 'Khaled Salem';
+  if (n.includes('status')) return 'confirmed';
+  if (n.includes('ref') || n.includes('number') || n.includes('code') || n === 'no' || n.endsWith('no')) return refFor(name, 6);
+  if (n.includes('date')) return '10 Aug 2026';
+  if (n.includes('time')) return '10:00 AM';
+  if (n.includes('createdat') || n.includes('updatedat') || n.includes('issued') || n.includes('due') || n.includes('activity')) return '2026-08-10T09:00:00';
   if (n.includes('color')) return 'White';
   if (n.includes('brand') || n.includes('make')) return 'Toyota';
   if (n.includes('model')) return 'Camry';
   if (n.includes('service')) return 'Full Service';
-  if (n.includes('role')) return 'customer';
-  if (n.includes('url') || n.includes('link')) return 'https://example.com/file.pdf';
+  if (n.includes('role')) return 'advisor';
+  if (n.includes('url') || n.includes('link')) return 'https://cdn.orientworkshop.ae/files/jc-ee0ac073.pdf';
   if (n.includes('type')) return 'sms';
   if (n.includes('branch')) return 'Main Branch - Dubai';
-  if (n.includes('notes') || n.includes('comment') || n.includes('message')) return 'Sample text';
-  if (n.includes('avatar') || n.includes('image') || n.includes('photo')) return 'https://example.com/img.jpg';
-  if (n.includes('name')) return 'Sample Name';
+  if (n.includes('notes') || n.includes('comment') || n.includes('message')) return 'Customer requested AC check as well';
+  if (n.includes('avatar') || n.includes('initials')) return 'MA';
+  if (n.includes('image') || n.includes('photo')) return 'https://cdn.orientworkshop.ae/img/car1.jpg';
+  if (n.includes('member')) return 'CUST-a1b2c3d4';
+  if (n.includes('source')) return 'whatsapp';
+  if (n.includes('name')) return 'Moiz Ali';
+  if (n.includes('address')) return 'Al Barsha 1, Dubai, UAE';
+  if (n.includes('city')) return 'Dubai';
+  if (n.includes('country')) return 'UAE';
+  if (n.includes('currency') || n.includes('unit')) return 'AED';
+  if (n.includes('reason')) return 'Brake pads below safe thickness';
+  if (n.includes('title') || n.includes('subject')) return 'Car makes noise when turning';
+  if (n.includes('description') || n.includes('issue') || n.includes('problem')) return 'Clicking sound from the front left when turning';
+  if (n.includes('priority')) return 'high';
+  if (n.includes('method')) return 'card';
+  if (n.includes('token')) return 'eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature';
+  if (n.includes('secret')) return 'whsec_' + shortHex(16);
+  if (n.includes('category')) return 'service_quality';
   return 'string';
 }
 
@@ -307,13 +395,16 @@ function numberSample(type, name) {
   const n = name.toLowerCase();
   const t = type.replace(/^[\w.]+\s*\./, '');
   if (/Integer|int/.test(t)) {
-    if (n.includes('percent') || n.includes('progress')) return 75;
+    if (n.includes('health') || n.includes('score') || n.includes('percent') || n.includes('progress')) return 92;
     if (n.includes('year')) return 2021;
+    if (n.includes('page')) return 0;
+    if (n.includes('size')) return 20;
+    if (n.includes('total')) return 1;
     return 1;
   }
   if (/Long|long/.test(t)) return 1;
   if (/BigDecimal|Double|double|Float|float/.test(t)) {
-    if (n.includes('amount') || n.includes('price') || n.includes('total') || n.includes('cost') || n.includes('rate') || n.includes('balance') || n.includes('due')) return 125.5;
+    if (n.includes('amount') || n.includes('price') || n.includes('total') || n.includes('cost') || n.includes('rate') || n.includes('balance') || n.includes('due') || n.includes('value')) return 125.5;
     return 1.5;
   }
   return 0;
@@ -321,6 +412,8 @@ function numberSample(type, name) {
 
 function sampleFor(type, name, depth) {
   const t = type.replace(/^[\w.]+\s*\./, '');
+  // ids are short alphanumeric strings (backend ref style) regardless of type
+  if (name === 'id') return shortHex(8);
   if (/String/.test(t)) return stringSample(name);
   if (/Integer|int|Long|long|BigDecimal|Double|double|Float|float/.test(t)) return numberSample(t, name);
   if (/Boolean/.test(t)) return true;
@@ -505,13 +598,26 @@ function tableSchema(table) {
   return obj;
 }
 
+// ---- response models: REAL values, EXACT entity field names ----
+// Owner decision: no type-only placeholders. Each field of the actual
+// entity/DTO gets a realistic sample value (refs in the backend's own
+// short-alphanumeric style: "JC-ee0ac073", real names, real dates).
+
+function entitySample(typeName, depth = 0) {
+  const fields = modelFields(typeName);
+  if (!fields || depth > 3) return null;
+  const obj = {};
+  for (const f of fields) obj[f.name] = sampleFor(f.type, f.name, depth);
+  return obj;
+}
+
 function buildResponseModel(ep, verb) {
   const dt = dataTypeOf(ep.returnType);
   // find the SQL table backing this response (for description + fallback)
   let sqlTable = null;
   let dtoName = null;
-  if (dt && (dt.kind === 'object' || dt.kind === 'list')) {
-    dtoName = dt.kind === 'list' ? dt.of : dt.of;
+  if (dt && (dt.kind === 'object' || dt.kind === 'list' || dt.kind === 'page')) {
+    dtoName = dt.of;
     if (/^(?:String|Long|Integer|Boolean|BigDecimal|Double|Map)/.test(dtoName)) dtoName = null;
     else sqlTable = tableForType(dtoName);
   }
@@ -526,27 +632,27 @@ function buildResponseModel(ep, verb) {
   if (dt.kind === 'list') {
     const inner = dt.of;
     if (/^(?:String|Long|Integer|Boolean|BigDecimal|Double|Map)/.test(inner)) {
-      env.data = [inner.replace(/^java\./, '')];
+      env.data = [sampleFor(inner, 'value', 0)];
     } else {
-      const s = entitySchema(inner) || tableSchema(sqlTable) || {};
-      env.data = [s];
+      env.data = [entitySample(inner) || {}];
     }
   } else if (dt.kind === 'page') {
-    // PageResponse<T>: content + paging metadata — real fields from the class
     const inner = dt.of;
-    const content = /^(?:String|Long|Integer|Boolean|BigDecimal|Double|Map)/.test(inner)
-      ? [inner.replace(/^java\./, '')]
-      : [entitySchema(inner) || tableSchema(sqlTable) || {}];
-    env.data = { content, page: 'int', size: 'int', totalElements: 'long', totalPages: 'int' };
+    env.data = {
+      content: /^(?:String|Long|Integer|Boolean|BigDecimal|Double|Map)/.test(inner)
+        ? [sampleFor(inner, 'value', 0)]
+        : [entitySample(inner) || {}],
+      page: 0, size: 20, totalElements: 1, totalPages: 1,
+    };
   } else if (dt.kind === 'string') {
     env.data = 'string';
   } else if (dt.kind === 'simple') {
     // void/action endpoints: the REAL envelope has no data key at all —
     // verified live: {"code":200,"message":"Success","timestamp":...}
   } else if (dt.kind === 'map') {
-    env.data = { '<key>': 'value-type' };
+    env.data = { result: 'ok' };
   } else {
-    env.data = entitySchema(dt.of) || tableSchema(sqlTable) || {};
+    env.data = entitySample(dt.of) || {};
   }
   env.timestamp = 1754300000000;
   return JSON.stringify(env, null, 2);
@@ -605,7 +711,7 @@ for (const f of files) {
       '**Method:** ' + ep.methodName + '()',
       '**Requires auth:** Bearer token (roles apply)',
       '**Body:** ' + (body ? '```json\n' + body + '\n```' : 'none'),
-      '**Response model:** the `data` shape below is the REAL entity/DTO schema — field names and types exactly as the backend returns (no sample values).',
+      '**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.',
       dtoNote,
       sqlNote,
     ].filter(Boolean).join('\n\n');
@@ -618,7 +724,7 @@ for (const f of files) {
         description: desc,
       },
       response: [{
-        name: 'Response model (entity/DTO schema)',
+        name: 'Example response (realistic values, exact entity fields)',
         originalRequest: { method: ep.verb, url: `{{baseUrl}}${ep.postmanPath}` },
         status: 'OK', code: 200,
         header: [{ key: 'Content-Type', value: 'application/json' }],

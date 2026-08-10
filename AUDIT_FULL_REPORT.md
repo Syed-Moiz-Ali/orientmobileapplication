@@ -1417,3 +1417,9 @@ ode scripts/generate_postman_collection.js (parses all controllers + DTOs).
 - PageResponse<T> pagination endpoints show the real wrapper (content, page, size, 	otalElements, 	otalPages); void/action endpoints show the real envelope without a data key; Map returns show <key>: value-type.
 - Removed the live-capture machinery (capture_api_responses.js, capture cache) — superseded by the entity schema approach per owner direction.
 - **Zero empty/placeholder {}/[] models across all 209 endpoints** — verified.
+
+# 45. POSTMAN COLLECTION — REALISTIC SAMPLE VALUES (2026-08-07, owner decision)
+
+- Response examples now carry **real values**, not type names: id: "0d9188a3", customerName: "Moiz Ali", ookingRef: "BK-0647b7", leadNumber: "LD-f585a3", plateNumber: "DUBAI 12345", real dates/times/amounts/statuses — using the **exact entity field names**.
+- Refs are generated in the backend's own short-alphanumeric style (JC-ee0ac073), ids are short hex strings; field-specific values across 70+ name patterns (emails, phones, VINs, mileage, sources, channels, plans, terms, labels, KPIs...).
+- Only 1 truly-generic "data" field remains across all 209 endpoints (a payload field that is generic by nature).
