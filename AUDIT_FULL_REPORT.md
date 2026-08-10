@@ -1368,7 +1368,7 @@ Remaining backlog is now empty of code-completable items. The repo ships: full a
 
 | # | Item | Fix |
 |---|---|---|
-| P0-1 | **CI release APKs were dead on arrival** — built without a BASE_URL while release builds hard-fail at startup | `build-apks` now runs `flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}` for all 4 apps (GitHub Actions variable) |
+| P0-1 | **CI release APKs were dead on arrival** — built without a BASE_URL while release builds hard-fail at startup | `build-apks` now writes the API URL into the bundled `.env` from the GitHub `API_BASE_URL` variable (owner decision: `.env`, no dart-define) |
 | P0-2 | Customer booking offline resilience | **Verified already complete** — submit catches API failure, enqueues a `booking` SyncOperation, syncs via DioSyncHandler('booking'), server idempotency prevents duplicates; bookings list merges local+remote |
 | P1-3 | **Bells were stale/decorative** — customer/owner/crm bells had no badge, no destination; supervisor bell only loaded on tap | Customer bell now shows the **live unread badge** (from unreadCount) and opens the notifications view; supervisor StaffNotificationBell **polls every 30s** (TickerMode-gated) |
 | P1-4 | **Cross-app changes were invisible until manual refresh** | New shared ResumeRefreshScope (lifecycle observer) wired into all 4 apps: customer (dashboard+bookings+approvals), staff (queue+review+notifications+advisor tick), owner (dashboard+job cards), CRM (full reload) — approve in one app, it appears in the other on resume |
@@ -1381,3 +1381,14 @@ Remaining backlog is now empty of code-completable items. The repo ships: full a
 ## 40.2 Deployment checklist (now accurate)
 
 Code-completable: **done**. Deploy-phase (your inputs): API domain → GitHub API_BASE_URL variable → CI produces usable signed APKs · SMS/email provider + FCM creds (delivery infra) · real TLS cert + SSL_KEY_PASSWORD · regenerate release keystore with company identity (optional but recommended) · hosting/backups/monitoring (no Docker chosen).
+
+# 41. BASE_URL SOURCE CHANGE — .env ONLY (2026-08-07, owner decision)
+
+- EnvironmentConfig now reads **BASE_URL and APP_ENV exclusively from the bundled .env** (packages/shared_core/assets/.env, declared as an asset). The --dart-define path is gone — no dart-define required in dev or production.
+- Release fail-fast preserved: a release build without BASE_URL, or with an http/localhost/devtunnel URL, throws at startup (never silently misroutes).
+- CI uild-apks writes the .env from the GitHub API_BASE_URL/APP_ENV variables before the four release builds.
+- Local .env now carries an explicit dev BASE_URL=http://localhost:8080/api/v1.
+- New regression test environment_config_test.dart guards the .env-driven config.
+- Verified: all apps analyze 0 errors, 73 tests (shared_core 21), **release APK builds with an https .env URL and no dart-define (exit 0)**; dev .env restored after the proof build.
+
+Deploy workflow is now: set BASE_URL=https://your-domain/api/v1 in the .env (or the API_BASE_URL GitHub variable) → build → signed APK.

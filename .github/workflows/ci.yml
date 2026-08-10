@@ -147,20 +147,32 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
-      # FE-FIX (P0, pre-deployment): release APKs fail at startup without a
-      # valid https BASE_URL — inject it from a GitHub Actions variable
-      # (Settings > Variables > API_BASE_URL). CI artifacts are otherwise dead.
+      # FE-FIX (owner decision): BASE_URL comes from the bundled .env, not
+      # dart-define. Write it from a GitHub Actions variable (Settings >
+      # Variables > API_BASE_URL) before building — without it, release builds
+      # fail at startup by design (never silently misroute to localhost).
+      - name: Configure API endpoint (.env)
+        run: |
+          if [ -n "$API_BASE_URL" ]; then
+            printf 'APP_ENV=%s\nBASE_URL=%s\n' "${APP_ENV:-production}" "$API_BASE_URL" > packages/shared_core/assets/.env
+            echo "Wrote .env (BASE_URL=$API_BASE_URL)"
+          else
+            echo "WARNING: API_BASE_URL variable not set — release APKs will fail at startup (fail-fast by design)"
+          fi
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          APP_ENV: ${{ vars.APP_ENV }}
       - name: Build staff_app release APK
-        run: flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}
+        run: flutter build apk --release
         working-directory: apps/staff_app
       - name: Build owner_app release APK
-        run: flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}
+        run: flutter build apk --release
         working-directory: apps/owner_app
       - name: Build customer_app release APK
-        run: flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}
+        run: flutter build apk --release
         working-directory: apps/customer_app
       - name: Build crm_app release APK
-        run: flutter build apk --release --dart-define=BASE_URL=${{ vars.API_BASE_URL }} --dart-define=APP_ENV=${{ vars.APP_ENV }}
+        run: flutter build apk --release
         working-directory: apps/crm_app
       - name: Upload staff APK
         uses: actions/upload-artifact@v4
