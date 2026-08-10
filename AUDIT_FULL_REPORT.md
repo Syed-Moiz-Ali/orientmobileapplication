@@ -1433,3 +1433,13 @@ Every entity now carries a **prefixed, unique public id (ref)** — CUST-3f9a2c1
 - **Response DTOs now expose the refs**: VehicleResponse.ref, BookingResponse.bookingRef, NotificationResponse.ref, AttendanceResponse.ref, CrmTaskResponse.ref, ConversationResponse.ref, OwnerJobCardResponse.jobCardRef (+ entities returned directly: api keys, webhooks, inventory, suppliers, subscriptions…).
 - 30 entities annotated; RepairOrder/PurchaseOrder/Warranty correctly keep their app-generated refs (no duplicate column).
 - **Verified: mvn BUILD SUCCESS, E2E live 28/28** with V13 applied; Postman collection regenerated showing the prefixed refs (refs styled per source: DB-padded VEH-000001 vs app-hex BK-497392).
+
+# 47. PRODUCT-MODEL ID ALIGNMENT (2026-08-07, owner correction)
+
+The product has **no User entity** — it has customer, owner, staff (advisor/supervisor/technician roles) and CRM. Corrected:
+
+- **V14__product_model_alignment.sql**: users.ref dropped (the accounts table is internal auth, not a domain entity — no USR- ids anywhere). Customer refs re-aligned to the memberId format: **CUST-000045** (zero-padded) — the customer id is now identical across customers.ref and memberId.
+- User entity no longer carries ref; MyBatisPlusConfig.REF_PREFIX no longer lists the accounts table.
+- Domain id vocabulary is now: **customers CUST-000001**, **staff EADV…/ESUP…/ETCH… (emp_id)**, vehicles VEH-, notifications NTF-, CRM CT-/CV-, api keys KEY-, webhooks WH-, inventory ITM-, suppliers SUP-, subscriptions SUB-, branches BR-… (27 tables from V13).
+- Postman collection + database-schema.md regenerated: no USR- anywhere; schema doc reflects the post-V14 state (drop statements replayed).
+- **Verified: mvn BUILD SUCCESS, E2E live 28/28** with V14 applied.

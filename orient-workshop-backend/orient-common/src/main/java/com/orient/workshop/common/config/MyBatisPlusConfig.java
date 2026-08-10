@@ -14,8 +14,10 @@ public class MyBatisPlusConfig implements MetaObjectHandler {
     // P1 (V13): prefixed unique refs. On INSERT the entity's `ref` field is
     // auto-filled with the type prefix + short alphanumeric suffix, e.g.
     // "CUST-3f9a2c1d". Entities without a ref field are untouched.
+    // The accounts table (users) is intentionally NOT listed — the product
+    // has no User entity; ids belong to customer (CUST-), staff (emp_id),
+    // owner and CRM accounts.
     private static final Map<String, String> REF_PREFIX = Map.ofEntries(
-            Map.entry("User", "USR"),
             Map.entry("Customer", "CUST"),
             Map.entry("Vehicle", "VEH"),
             Map.entry("ServiceType", "ST"),

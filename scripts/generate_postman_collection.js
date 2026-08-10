@@ -211,6 +211,17 @@ function parseSqlSchema() {
   }
 }
 parseSqlSchema();
+// replay DROP COLUMN statements so the schema doc reflects the FINAL state
+// (e.g. V14 drops users.ref — it must not appear in the doc)
+{
+  const migDir = path.join(BE, 'orient-gateway', 'src', 'main', 'resources', 'db', 'migration');
+  for (const f of fs.readdirSync(migDir).filter(n => /^V\d+.*\.sql$/.test(n))) {
+    const src = fs.readFileSync(path.join(migDir, f), 'utf8');
+    for (const m of src.matchAll(/ALTER TABLE (\w+)\s+DROP COLUMN (\w+)/gi)) {
+      if (sqlTables[m[1]]) delete sqlTables[m[1]][m[2]];
+    }
+  }
+}
 
 function snakeToCamel(s) {
   return s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
@@ -292,7 +303,7 @@ function shortHex(n) { let s = ''; for (let i = 0; i < n; i++) s += HEX[Math.flo
 // generates at insert use shortHex style (BK-3f9a2c1d); tables with the V13
 // DB-generated column use zero-padded style (VEH-000001).
 const TABLE_PREFIX = {
-  users: 'USR', customers: 'CUST', vehicles: 'VEH', service_types: 'ST',
+  customers: 'CUST', vehicles: 'VEH', service_types: 'ST',
   notifications: 'NTF', messages: 'MSG', whatsapp_messages: 'WM',
   approvals: 'APP', repair_order_services: 'ROS', repair_order_parts: 'ROP',
   predefined_services: 'PS', predefined_parts: 'PP', attendance: 'AT',
@@ -414,7 +425,7 @@ function stringSample(name) {
   if (n.includes('notes') || n.includes('comment') || n.includes('message')) return 'Customer requested AC check as well';
   if (n.includes('avatar') || n.includes('initials')) return 'MA';
   if (n.includes('image') || n.includes('photo')) return 'https://cdn.orientworkshop.ae/img/car1.jpg';
-  if (n.includes('member')) return 'CUST-a1b2c3d4';
+  if (n.includes('member')) return 'CUST-000001';
   if (n.includes('source')) return 'whatsapp';
   if (n.includes('name')) return 'Moiz Ali';
   if (n.includes('address')) return 'Al Barsha 1, Dubai, UAE';
