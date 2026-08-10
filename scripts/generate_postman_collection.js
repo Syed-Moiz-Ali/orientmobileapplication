@@ -772,6 +772,7 @@ for (const f of files) {
       dtoNote,
       sqlNote,
     ].filter(Boolean).join('\n');
+    const example = buildExample(ep, ep.verb);
     const item = {
       name: `${ep.verb} ${ep.postmanPath}`,
       request: {
@@ -780,6 +781,14 @@ for (const f of files) {
         url: { raw: `{{baseUrl}}${ep.postmanPath}`, host: ['{{baseUrl}}'], path: ep.postmanPath.split('/').filter(Boolean) },
         description: desc,
       },
+      response: [{
+        name: '200 OK',
+        originalRequest: { method: ep.verb, url: `{{baseUrl}}${ep.postmanPath}` },
+        status: 'OK', code: 200,
+        header: [{ key: 'Content-Type', value: 'application/json' }],
+        body: example,
+        _postman_previewlanguage: 'json',
+      }],
     };
     if (body) item.request.body = { mode: 'raw', raw: body, options: { raw: { language: 'json' } } };
     for (const p of ep.params) {
