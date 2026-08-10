@@ -137,7 +137,7 @@ function sampleValue(type) {
   const t = type.replace(/^[\w.]+\s*\./, '');
   if (/String/.test(t)) return 'string';
   if (/Long|Integer|int|long|BigDecimal|Double|Float/.test(t)) return 0;
-  if (/Boolean/.test(t)) return true;
+  if (/Boolean/i.test(t)) return true;
   if (/List|Set|\[\]/.test(t)) return [];
   if (/Map/.test(t)) return {};
   if (/LocalDate|LocalDateTime|Date/.test(t)) return '2026-08-10T09:00:00';
@@ -217,10 +217,20 @@ function snakeToCamel(s) {
 }
 
 // response DTO/entity -> underlying SQL table (by name similarity)
+const TYPE_TABLE_OVERRIDES = {
+  crmtask: 'crm_tasks', crmconversation: 'crm_conversations',
+  conversation: 'crm_conversations', crmintegration: 'crm_integrations',
+  workassignment: 'work_assignments', technicianjob: 'job_cards',
+  ownerjobcard: 'job_cards', customerapproval: 'approvals',
+  customerprofile: 'customers', teammember: 'staff', arrecord: 'accounts_receivable',
+  activelog: 'activity_log', leadactivity: 'lead_activities',
+  inspectiondraft: 'inspections', servicetype: 'service_types',
+};
 function tableForType(typeName) {
   let name = typeName
     .replace(/(Response|ResponseDto|DTO|Dto|Entity|Info|Summary|Detail|Item|Card)$/i, '')
     .toLowerCase();
+  if (TYPE_TABLE_OVERRIDES[name]) return TYPE_TABLE_OVERRIDES[name];
   const candidates = new Set([name, name + 's', name.replace(/s$/, ''), name + 'es', name.replace(/es$/, '')]);
   for (const cand of candidates) {
     if (sqlTables[cand]) return cand;
@@ -277,6 +287,37 @@ function modelFields(typeName) {
 // refs (e.g. "JC-ee0ac073"), so samples mirror that style.
 const HEX = '0123456789abcdef';
 function shortHex(n) { let s = ''; for (let i = 0; i < n; i++) s += HEX[Math.floor(Math.random() * 16)]; return s; }
+
+// P1 (V13): every table has a prefixed unique ref. Tables whose refs the app
+// generates at insert use shortHex style (BK-3f9a2c1d); tables with the V13
+// DB-generated column use zero-padded style (VEH-000001).
+const TABLE_PREFIX = {
+  users: 'USR', customers: 'CUST', vehicles: 'VEH', service_types: 'ST',
+  notifications: 'NTF', messages: 'MSG', whatsapp_messages: 'WM',
+  approvals: 'APP', repair_order_services: 'ROS', repair_order_parts: 'ROP',
+  predefined_services: 'PS', predefined_parts: 'PP', attendance: 'AT',
+  activity_log: 'AL', employee_documents: 'DOC', crm_conversations: 'CV',
+  crm_tasks: 'CT', crm_integrations: 'CI', lead_activities: 'LA',
+  branches: 'BR', departments: 'DEPT', suppliers: 'SUP', inventory_items: 'ITM',
+  purchase_order_items: 'POI', feedback: 'FB', device_tokens: 'DT',
+  webhook_subscriptions: 'WH', api_keys: 'KEY', subscriptions: 'SUB',
+  bookings: 'BK', job_cards: 'JC', invoices: 'INV', payments: 'PAY',
+  leads: 'LD', support_tickets: 'TK', warranties: 'WR', purchase_orders: 'PO',
+  work_assignments: 'ASN', reminders: 'REM', breakdowns: 'BRK',
+  inspections: 'INSP', repair_orders: 'RO', accounts_receivable: 'AR',
+  staff: 'EMP', technician_tasks: 'TASK',
+};
+const APP_GENERATED_REFS = new Set([
+  'bookings', 'job_cards', 'invoices', 'payments', 'leads', 'support_tickets',
+  'warranties', 'purchase_orders', 'work_assignments', 'reminders', 'breakdowns',
+  'inspections', 'repair_orders', 'accounts_receivable', 'staff', 'technician_tasks',
+]);
+
+function refValueFor(table) {
+  const p = TABLE_PREFIX[table] || 'REF';
+  return APP_GENERATED_REFS.has(table) ? `${p}-${shortHex(6)}` : `${p}-000001`;
+}
+
 function refFor(name, n) {
   const key = name.toLowerCase();
   if (key.includes('jobcard') || key.includes('job_card') || key === 'job') return 'JC-' + shortHex(8);
@@ -286,9 +327,9 @@ function refFor(name, n) {
   if (key.includes('lead')) return 'LD-' + shortHex(6);
   if (key.includes('ticket')) return 'TK-' + shortHex(6);
   if (key.includes('estimate') || key.includes('approval')) return 'EST-' + shortHex(6);
-  if (key.includes('member')) return 'CUST-' + shortHex(4);
-  if (key.includes('branch')) return 'BR-' + shortHex(4);
-  if (key.includes('supplier')) return 'SUP-' + shortHex(4);
+  if (key.includes('member')) return 'CUST-000001';
+  if (key.includes('branch')) return 'BR-000001';
+  if (key.includes('supplier')) return 'SUP-000001';
   if (key.includes('warrant')) return 'WR-' + shortHex(6);
   if (key.includes('po') || key.includes('purchase')) return 'PO-' + shortHex(6);
   if (key.includes('employee') || key.includes('emp')) return 'EMP-' + shortHex(4);
@@ -411,14 +452,19 @@ function numberSample(type, name) {
   return 0;
 }
 
-function sampleFor(type, name, depth) {
+function sampleFor(type, name, depth, table) {
   const t = type.replace(/^[\w.]+\s*\./, '');
   // ids match the SQL format: every table is `id BIGINT AUTO_INCREMENT` —
   // numeric values (1, 2, 3...), not hashes.
   if (name === 'id') return 1;
+  // P1 (V13): ref fields get the table-accurate prefixed value.
+  const nl = name.toLowerCase();
+  if ((nl.includes('ref') || /ref$/.test(nl)) && !nl.includes('member')) {
+    return table ? refValueFor(table) : refFor(name, 6);
+  }
   if (/String/.test(t)) return stringSample(name);
   if (/Integer|int|Long|long|BigDecimal|Double|double|Float|float/.test(t)) return numberSample(t, name);
-  if (/Boolean/.test(t)) return true;
+  if (/Boolean/i.test(t)) return true;
   if (/List|Set|\[\]/.test(t)) {
     const inner = t.match(/List\s*<([^>]+)>/) || t.match(/Set\s*<([^>]+)>/);
     const el = inner ? inner[1].trim() : 'String';
@@ -440,7 +486,7 @@ function modelSample(typeName, depth = 0) {
   const fields = modelFields(typeName);
   if (!fields) return null;
   const obj = {};
-  for (const f of fields) obj[f.name] = sampleFor(f.type, f.name, depth);
+  for (const f of fields) obj[f.name] = sampleFor(f.type, f.name, depth, null);
   return obj;
 }
 
@@ -605,11 +651,11 @@ function tableSchema(table) {
 // entity/DTO gets a realistic sample value (refs in the backend's own
 // short-alphanumeric style: "JC-ee0ac073", real names, real dates).
 
-function entitySample(typeName, depth = 0) {
+function entitySample(typeName, depth = 0, table = null) {
   const fields = modelFields(typeName);
   if (!fields || depth > 3) return null;
   const obj = {};
-  for (const f of fields) obj[f.name] = sampleFor(f.type, f.name, depth);
+  for (const f of fields) obj[f.name] = sampleFor(f.type, f.name, depth, table);
   return obj;
 }
 
@@ -636,14 +682,14 @@ function buildResponseModel(ep, verb) {
     if (/^(?:String|Long|Integer|Boolean|BigDecimal|Double|Map)/.test(inner)) {
       env.data = [sampleFor(inner, 'value', 0)];
     } else {
-      env.data = [entitySample(inner) || {}];
+      env.data = [entitySample(inner, 0, sqlTable) || {}];
     }
   } else if (dt.kind === 'page') {
     const inner = dt.of;
     env.data = {
       content: /^(?:String|Long|Integer|Boolean|BigDecimal|Double|Map)/.test(inner)
         ? [sampleFor(inner, 'value', 0)]
-        : [entitySample(inner) || {}],
+        : [entitySample(inner, 0, sqlTable) || {}],
       page: 0, size: 20, totalElements: 1, totalPages: 1,
     };
   } else if (dt.kind === 'string') {
@@ -654,7 +700,7 @@ function buildResponseModel(ep, verb) {
   } else if (dt.kind === 'map') {
     env.data = { result: 'ok' };
   } else {
-    env.data = entitySample(dt.of) || {};
+    env.data = entitySample(dt.of, 0, sqlTable) || {};
   }
   env.timestamp = 1754300000000;
   return JSON.stringify(env, null, 2);

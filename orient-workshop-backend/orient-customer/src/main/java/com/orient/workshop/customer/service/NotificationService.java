@@ -47,6 +47,7 @@ public class NotificationService {
                 : "";
         return NotificationResponse.builder()
                 .id(String.valueOf(n.getId()))
+                .ref(n.getRef())
                 .title(n.getTitle())
                 .body(n.getBody())
                 .time(time)

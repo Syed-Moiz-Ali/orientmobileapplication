@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
@@ -11,7 +12,12 @@ import java.time.LocalDateTime;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor @TableName("subscriptions")
 public class Subscription {
-    @TableId(type = IdType.AUTO) private Long id;
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    // P1 (V13): prefixed unique ref (public identifier).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
     private Long branchId;
     private String plan;
     private String status;

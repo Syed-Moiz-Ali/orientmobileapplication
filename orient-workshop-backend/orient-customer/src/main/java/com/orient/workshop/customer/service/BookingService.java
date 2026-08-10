@@ -170,6 +170,7 @@ public class BookingService {
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("hh:mm a");
         return BookingResponse.builder()
                 .id(b.getId())
+                .bookingRef(b.getBookingRef())
                 .service(b.getServiceType())
                 .vehicleName(b.getVehicleName())
                 .plateNumber(b.getPlateNumber())

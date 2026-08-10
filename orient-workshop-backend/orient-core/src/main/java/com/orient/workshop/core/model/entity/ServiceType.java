@@ -16,6 +16,10 @@ import java.time.LocalDateTime;
 public class ServiceType {
     @TableId(type = IdType.AUTO)
     private Long id;
+    // P1 (V13): prefixed unique ref (public identifier).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
     private String name;
     private String price;
     private String duration;

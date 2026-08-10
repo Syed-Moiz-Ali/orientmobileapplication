@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class NotificationResponse {
     private String id;
+    // P1 (V13): prefixed unique ref (NTF-000001).
+    private String ref;
     private String title;
     private String body;
     private String time;

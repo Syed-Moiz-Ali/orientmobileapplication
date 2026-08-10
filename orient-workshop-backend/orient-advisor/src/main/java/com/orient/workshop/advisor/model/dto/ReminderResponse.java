@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class ReminderResponse {
+    // id IS the prefixed unique ref (REM-000001) — no separate field needed.
     private String id;
     private String customerName;
     private String vehicleId;

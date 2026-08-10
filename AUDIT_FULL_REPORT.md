@@ -1423,3 +1423,13 @@ ode scripts/generate_postman_collection.js (parses all controllers + DTOs).
 - Response examples now carry **real values**, not type names: id: "0d9188a3", customerName: "Moiz Ali", ookingRef: "BK-0647b7", leadNumber: "LD-f585a3", plateNumber: "DUBAI 12345", real dates/times/amounts/statuses — using the **exact entity field names**.
 - Refs are generated in the backend's own short-alphanumeric style (JC-ee0ac073), ids are short hex strings; field-specific values across 70+ name patterns (emails, phones, VINs, mileage, sources, channels, plans, terms, labels, KPIs...).
 - Only 1 truly-generic "data" field remains across all 209 endpoints (a payload field that is generic by nature).
+
+# 46. PREFIXED UNIQUE IDS IN THE BACKEND (2026-08-07, owner decision)
+
+Every entity now carries a **prefixed, unique public id (ref)** — CUST-3f9a2c1d, USR-896765, VEH-acca66, CT-000001… so ids can never be confused across types.
+
+- **V13__prefixed_unique_refs.sql**: 27 tables get a ef column (backfilled, NOT NULL, UNIQUE). Tables with app-generated refs (bookings BK-, job_cards JC-, invoices INV-, payments PAY-, leads LD-, tickets TK-, warranties WR-, POs PO-, assignments ASN-, reminders REM-, breakdowns BRK-, inspections INSP-, repair orders RO-, AR AR-, staff EMP-) keep theirs.
+- **MyBatisPlusConfig.insertFill** auto-generates the ref on INSERT via IdGenerator.shortRef(prefix) (same BK-3f9a2c1d style), with @TableField(fill = FieldFill.INSERT) on the entity field (same mechanism as createdAt — proved reliable after the BEFORE/AFTER-trigger attempts failed on MySQL constraints: generated columns can't read AUTO_INCREMENT; triggers can't update their own table).
+- **Response DTOs now expose the refs**: VehicleResponse.ref, BookingResponse.bookingRef, NotificationResponse.ref, AttendanceResponse.ref, CrmTaskResponse.ref, ConversationResponse.ref, OwnerJobCardResponse.jobCardRef (+ entities returned directly: api keys, webhooks, inventory, suppliers, subscriptions…).
+- 30 entities annotated; RepairOrder/PurchaseOrder/Warranty correctly keep their app-generated refs (no duplicate column).
+- **Verified: mvn BUILD SUCCESS, E2E live 28/28** with V13 applied; Postman collection regenerated showing the prefixed refs (refs styled per source: DB-padded VEH-000001 vs app-hex BK-497392).

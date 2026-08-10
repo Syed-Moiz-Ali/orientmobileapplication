@@ -135,6 +135,7 @@ public class OwnerJobCardService {
                     Vehicle v = c.getVehicleId() != null ? vehicles.get(c.getVehicleId()) : null;
                     return OwnerJobCardResponse.builder()
                             .id(String.valueOf(c.getId()))
+                            .jobCardRef(c.getJobCardRef())
                             .customerName(customer != null && customer.getCustomerName() != null
                                     ? customer.getCustomerName() : "")
                             .vehicle(vehicleLabel(v))

@@ -65,6 +65,7 @@ public class CrmTaskService {
     private CrmTaskResponse toResponse(CrmTask t) {
         return CrmTaskResponse.builder()
                 .id(String.valueOf(t.getId()))
+                .ref(t.getRef())
                 .title(t.getTitle())
                 .assignedTo(t.getAssignedTo())
                 .dueDate(t.getDueDate())

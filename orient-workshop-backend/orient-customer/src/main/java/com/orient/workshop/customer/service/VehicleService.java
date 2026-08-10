@@ -97,6 +97,7 @@ public class VehicleService {
                 .lastService(v.getLastService())
                 .nextDue(v.getNextDue())
                 .healthScore(v.getHealthScore() != null ? v.getHealthScore() : 100)
+                .ref(v.getRef())
                 .build();
     }
 }

@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class ConversationResponse {
     private String id;
+    // P1 (V13): prefixed unique ref (CV-000001).
+    private String ref;
     private String customerName;
     private String lastMessage;
     private String time;

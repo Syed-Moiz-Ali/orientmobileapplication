@@ -17,6 +17,10 @@ import java.time.LocalDateTime;
 public class Vehicle {
     @TableId(type = IdType.AUTO)
     private Long id;
+    // P1 (V13): prefixed unique ref (VEH-000001).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
     private Long customerId;
     private Long branchId;
     private String registrationNumber;

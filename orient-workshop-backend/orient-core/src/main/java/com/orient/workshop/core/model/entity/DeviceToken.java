@@ -15,6 +15,10 @@ import java.time.LocalDateTime;
 public class DeviceToken {
     @TableId(type = IdType.AUTO)
     private Long id;
+    // P1 (V13): prefixed unique ref (public identifier).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
     private Long userId;
     private String token;
     private String platform;

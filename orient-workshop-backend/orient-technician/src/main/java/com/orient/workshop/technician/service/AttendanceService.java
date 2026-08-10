@@ -126,6 +126,7 @@ public class AttendanceService {
 
     private AttendanceResponse toResponse(Attendance a) {
         return AttendanceResponse.builder()
+                .ref(a.getRef())
                 .status(a.getStatus())
                 .punchIn(a.getPunchIn() != null ? a.getPunchIn() : "")
                 .punchOut(a.getPunchOut() != null ? a.getPunchOut() : "")

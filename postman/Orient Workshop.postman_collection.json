@@ -203,7 +203,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"address\": \"Al Barsha 1, Dubai, UAE\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"timezone\": \"10:00 AM\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"BR-000001\",\n      \"name\": \"Moiz Ali\",\n      \"address\": \"Al Barsha 1, Dubai, UAE\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"timezone\": \"10:00 AM\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -253,7 +253,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Moiz Ali\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"timezone\": \"10:00 AM\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"BR-000001\",\n    \"name\": \"Moiz Ali\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"timezone\": \"10:00 AM\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -304,7 +304,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Moiz Ali\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"timezone\": \"10:00 AM\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"BR-000001\",\n    \"name\": \"Moiz Ali\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"timezone\": \"10:00 AM\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -453,7 +453,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-7287d4\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-2ff77c\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ],
@@ -520,7 +520,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-7f8e81\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-654ca3\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -571,7 +571,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-1be234\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-569586\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -622,7 +622,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-8d34b7\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"role\": \"advisor\",\n    \"token\": \"eyJhbGciOiJIUzM4NCJ9.examplePayload.exampleSignature\",\n    \"refreshToken\": \"REF-42969e\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -824,7 +824,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"jobCardId\": 1,\n    \"jobCardRef\": \"JC-ee0ac073\",\n    \"status\": \"confirmed\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"jobCardId\": 1,\n    \"jobCardRef\": \"JC-e7385363\",\n    \"status\": \"confirmed\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -915,7 +915,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"REF-78cd38\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -958,7 +958,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"REF-3ffbf8\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1000,7 +1000,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"bookingRef\": \"BK-4db525\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"serviceType\": \"Full Service\",\n      \"bookingDate\": \"10 Aug 2026\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"bookingRef\": \"BK-9ef4c7\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"serviceType\": \"Full Service\",\n      \"bookingDate\": \"10 Aug 2026\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1044,7 +1044,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"taskRef\": \"Change engine oil and filter\",\n      \"jobCardRef\": \"JC-ee0ac073\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 0.05,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"taskRef\": \"REF-9fa4a3\",\n      \"jobCardRef\": \"JC-0c2b29d9\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 0.05,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -1581,7 +1581,7 @@
                 "draft"
               ]
             },
-            "description": "**Method:** getDraft()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `InspectionDraftResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getDraft()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `InspectionDraftResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `inspections` — columns: `id`, `inspection_ref`, `job_card_id`, `reference_number`, `place_of_supply`, `customer_requests`, `garage_recommendations`, `estimated_delivery`, `notify_owner_sms_email`, `tag`, `is_draft`, `sections`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -1598,7 +1598,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"jobCardId\": \"JC-ee0ac073\",\n    \"referenceNumber\": \"REF-aa082a\",\n    \"placeOfSupply\": \"DUBAI\",\n    \"customerRequests\": \"Moiz Ali\",\n    \"garageRecommendations\": \"Replace brake pads and rotate tyres\",\n    \"estimatedDelivery\": \"2026-08-15T09:00:00\",\n    \"notifyOwnerSmsEmail\": true,\n    \"tag\": \"VIP\",\n    \"isDraft\": true\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"jobCardId\": \"JC-ee0ac073\",\n    \"referenceNumber\": \"INSP-3bc2ac\",\n    \"placeOfSupply\": \"DUBAI\",\n    \"customerRequests\": \"Moiz Ali\",\n    \"garageRecommendations\": \"Replace brake pads and rotate tyres\",\n    \"estimatedDelivery\": \"2026-08-15T09:00:00\",\n    \"notifyOwnerSmsEmail\": true,\n    \"tag\": \"VIP\",\n    \"isDraft\": true\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2017,10 +2017,10 @@
                 "deliver"
               ]
             },
-            "description": "**Method:** deliver()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** ```json\n{\n  \"checklistCompleted\": \"string\",\n  \"notes\": \"string\"\n}\n```\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.",
+            "description": "**Method:** deliver()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** ```json\n{\n  \"checklistCompleted\": true,\n  \"notes\": \"string\"\n}\n```\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"checklistCompleted\": \"string\",\n  \"notes\": \"string\"\n}",
+              "raw": "{\n  \"checklistCompleted\": true,\n  \"notes\": \"string\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2410,7 +2410,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"regNo\": \"REF-529bf8\",\n      \"vin\": \"JTDBT123456789012\",\n      \"make\": \"Toyota\",\n      \"model\": \"Camry\",\n      \"plateNumber\": \"DUBAI 12345\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"regNo\": \"REF-0200cd\",\n      \"vin\": \"JTDBT123456789012\",\n      \"make\": \"Toyota\",\n      \"model\": \"Camry\",\n      \"plateNumber\": \"DUBAI 12345\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2457,7 +2457,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"service\": \"Full Service\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"date\": \"10 Aug 2026\",\n      \"time\": \"10:00 AM\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"bookingRef\": \"BK-497392\",\n      \"service\": \"Full Service\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"date\": \"10 Aug 2026\",\n      \"time\": \"10:00 AM\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2507,7 +2507,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-ad78f5\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-219485\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2607,7 +2607,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"service\": \"Full Service\",\n    \"vehicleName\": \"Toyota Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"date\": \"10 Aug 2026\",\n    \"time\": \"10:00 AM\",\n    \"status\": \"confirmed\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-21bcdd\",\n    \"service\": \"Full Service\",\n    \"vehicleName\": \"Toyota Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"date\": \"10 Aug 2026\",\n    \"time\": \"10:00 AM\",\n    \"status\": \"confirmed\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2658,7 +2658,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-f0e0f0\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-f588f0\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2683,7 +2683,7 @@
                 "profile"
               ]
             },
-            "description": "**Method:** getProfile()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `CustomerProfileResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getProfile()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `CustomerProfileResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `customers` — columns: `id`, `user_id`, `is_b2b`, `customer_name`, `phone_number`, `email`, `customer_group`, `tags`, `gender`, `address`, `tax_number`, `group_tax_number`, `occupation`, `organisation`, `source`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -2742,7 +2742,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ticketRef\": \"TK-2e9551\",\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"subject\": \"Open job cards\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"priority\": \"high\",\n      \"status\": \"confirmed\",\n      \"assignedStaffId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ticketRef\": \"TK-64b221\",\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"subject\": \"Open job cards\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"priority\": \"high\",\n      \"status\": \"confirmed\",\n      \"assignedStaffId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -2970,7 +2970,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-b034a6\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"bookingRef\": \"BK-af7060\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3017,7 +3017,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"jobCardId\": 1,\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"rating\": 1,\n      \"overallRating\": 1,\n      \"workQuality\": 1,\n      \"communication\": 1,\n      \"timeliness\": 1,\n      \"valueForMoney\": 1,\n      \"wouldRecommend\": true,\n      \"comment\": \"Customer requested AC check as well\",\n      \"isPublic\": true,\n      \"isModerated\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"FB-000001\",\n      \"jobCardId\": 1,\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"rating\": 1,\n      \"overallRating\": 1,\n      \"workQuality\": 1,\n      \"communication\": 1,\n      \"timeliness\": 1,\n      \"valueForMoney\": 1,\n      \"wouldRecommend\": true,\n      \"comment\": \"Customer requested AC check as well\",\n      \"isPublic\": true,\n      \"isModerated\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3150,7 +3150,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"jobCardId\": 1,\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"rating\": 1,\n      \"overallRating\": 1,\n      \"workQuality\": 1,\n      \"communication\": 1,\n      \"timeliness\": 1,\n      \"valueForMoney\": 1,\n      \"wouldRecommend\": true,\n      \"comment\": \"Customer requested AC check as well\",\n      \"isPublic\": true,\n      \"isModerated\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"FB-000001\",\n      \"jobCardId\": 1,\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"rating\": 1,\n      \"overallRating\": 1,\n      \"workQuality\": 1,\n      \"communication\": 1,\n      \"timeliness\": 1,\n      \"valueForMoney\": 1,\n      \"wouldRecommend\": true,\n      \"comment\": \"Customer requested AC check as well\",\n      \"isPublic\": true,\n      \"isModerated\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3192,7 +3192,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"title\": \"Car makes noise when turning\",\n      \"body\": \"Your car is ready for collection\",\n      \"time\": \"10:00 AM\",\n      \"type\": \"sms\",\n      \"isRead\": {}\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"NTF-000001\",\n      \"title\": \"Car makes noise when turning\",\n      \"body\": \"Your car is ready for collection\",\n      \"time\": \"10:00 AM\",\n      \"type\": \"sms\",\n      \"isRead\": true\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3322,7 +3322,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"hasActiveJob\": {},\n    \"jobCardId\": \"JC-ee0ac073\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vehicleName\": \"Toyota Camry\",\n    \"service\": \"Full Service\",\n    \"started\": \"2026-08-10T09:00:00\",\n    \"estCompletion\": \"2026-08-10T15:00:00\",\n    \"progressPercent\": 92,\n    \"currentStage\": \"VIP\",\n    \"technicianName\": \"Mohammed Ali\",\n    \"stages\": [\n      {\n        \"name\": \"Moiz Ali\",\n        \"time\": \"10:00 AM\",\n        \"status\": \"confirmed\"\n      }\n    ]\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"hasActiveJob\": true,\n    \"jobCardId\": \"JC-ee0ac073\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vehicleName\": \"Toyota Camry\",\n    \"service\": \"Full Service\",\n    \"started\": \"2026-08-10T09:00:00\",\n    \"estCompletion\": \"2026-08-10T15:00:00\",\n    \"progressPercent\": 92,\n    \"currentStage\": \"VIP\",\n    \"technicianName\": \"Mohammed Ali\",\n    \"stages\": [\n      {\n        \"name\": \"Moiz Ali\",\n        \"time\": \"10:00 AM\",\n        \"status\": \"confirmed\"\n      }\n    ]\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3347,7 +3347,7 @@
                 "types"
               ]
             },
-            "description": "**Method:** getServiceTypes()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `ServiceTypeResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getServiceTypes()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `ServiceTypeResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `service_types` — columns: `id`, `name`, `price`, `duration`, `is_active`, `created_at`"
           },
           "response": [
             {
@@ -3406,7 +3406,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"brand\": \"Toyota\",\n      \"model\": \"Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"vin\": \"JTDBT123456789012\",\n      \"color\": \"White\",\n      \"year\": 2021,\n      \"mileage\": \"42500\",\n      \"lastService\": \"Full Service\",\n      \"nextDue\": \"2026-08-10T09:00:00\",\n      \"healthScore\": 92\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"VEH-000001\",\n      \"brand\": \"Toyota\",\n      \"model\": \"Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"vin\": \"JTDBT123456789012\",\n      \"color\": \"White\",\n      \"year\": 2021,\n      \"mileage\": \"42500\",\n      \"lastService\": \"Full Service\",\n      \"nextDue\": \"2026-08-10T09:00:00\",\n      \"healthScore\": 92\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3457,7 +3457,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vin\": \"JTDBT123456789012\",\n    \"color\": \"White\",\n    \"year\": 2021,\n    \"mileage\": \"42500\",\n    \"lastService\": \"Full Service\",\n    \"nextDue\": \"2026-08-10T09:00:00\",\n    \"healthScore\": 92\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"VEH-000001\",\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vin\": \"JTDBT123456789012\",\n    \"color\": \"White\",\n    \"year\": 2021,\n    \"mileage\": \"42500\",\n    \"lastService\": \"Full Service\",\n    \"nextDue\": \"2026-08-10T09:00:00\",\n    \"healthScore\": 92\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -3509,7 +3509,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vin\": \"JTDBT123456789012\",\n    \"color\": \"White\",\n    \"year\": 2021,\n    \"mileage\": \"42500\",\n    \"lastService\": \"Full Service\",\n    \"nextDue\": \"2026-08-10T09:00:00\",\n    \"healthScore\": 92\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"VEH-000001\",\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"plateNumber\": \"DUBAI 12345\",\n    \"vin\": \"JTDBT123456789012\",\n    \"color\": \"White\",\n    \"year\": 2021,\n    \"mileage\": \"42500\",\n    \"lastService\": \"Full Service\",\n    \"nextDue\": \"2026-08-10T09:00:00\",\n    \"healthScore\": 92\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4062,7 +4062,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"bookingRef\": \"BK-8ca709\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"serviceType\": \"Full Service\",\n      \"bookingDate\": \"10 Aug 2026\",\n      \"dateKey\": \"2026-08-10\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"bookingRef\": \"BK-2986b4\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"serviceType\": \"Full Service\",\n      \"bookingDate\": \"10 Aug 2026\",\n      \"dateKey\": \"2026-08-10\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4157,7 +4157,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"breakdownRef\": \"REF-cfb82c\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"issue\": \"Clicking sound from the front left when turning\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"vehiclePlate\": \"DUBAI 12345\",\n      \"location\": \"Al Quoz Industrial 3, Dubai\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"breakdownRef\": \"REF-46fdb2\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"issue\": \"Clicking sound from the front left when turning\",\n      \"vehicleName\": \"Toyota Camry\",\n      \"vehiclePlate\": \"DUBAI 12345\",\n      \"location\": \"Al Quoz Industrial 3, Dubai\",\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4253,7 +4253,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"jobCardId\": 1,\n      \"jobCardRef\": \"JC-ee0ac073\",\n      \"customerName\": \"Moiz Ali\",\n      \"vehicleInfo\": \"Toyota Camry\",\n      \"technician\": \"Mohammed Ali\",\n      \"done\": 1,\n      \"total\": 1,\n      \"updatedAt\": \"10 Aug 2026\",\n      \"items\": [\n        {}\n      ],\n      \"id\": 1,\n      \"taskRef\": \"Change engine oil and filter\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 0.05,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"jobCardId\": 1,\n      \"jobCardRef\": \"JC-4d435886\",\n      \"customerName\": \"Moiz Ali\",\n      \"vehicleInfo\": \"Toyota Camry\",\n      \"technician\": \"Mohammed Ali\",\n      \"done\": 1,\n      \"total\": 1,\n      \"updatedAt\": \"10 Aug 2026\",\n      \"items\": [\n        {}\n      ],\n      \"id\": 1,\n      \"taskRef\": \"REF-46e1bb\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 0.05,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4460,7 +4460,7 @@
                 "work-assignments"
               ]
             },
-            "description": "**Method:** createAssignments()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** ```json\n{\n  \"description\": \"Change engine oil\",\n  \"technicianName\": \"Mohammed\",\n  \"deadline\": \"2026-08-11\"\n}\n```\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `WorkAssignmentResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).",
+            "description": "**Method:** createAssignments()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** ```json\n{\n  \"description\": \"Change engine oil\",\n  \"technicianName\": \"Mohammed\",\n  \"deadline\": \"2026-08-11\"\n}\n```\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `WorkAssignmentResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `work_assignments` — columns: `id`, `assignment_ref`, `job_card_id`, `description`, `department`, `technician_name`, `date_of_work`, `status_percent`, `std_time`, `remarks`, `status`, `created_at`, `updated_at`",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"description\": \"Change engine oil\",\n  \"technicianName\": \"Mohammed\",\n  \"deadline\": \"2026-08-11\"\n}",
@@ -4628,7 +4628,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"status\": \"confirmed\",\n    \"punchIn\": \"2026-08-10T08:30:00\",\n    \"punchOut\": \"2026-08-10T08:30:00\",\n    \"breakTime\": \"10:00 AM\",\n    \"workHours\": \"8h 30m\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"ref\": \"AT-000001\",\n    \"status\": \"confirmed\",\n    \"punchIn\": \"2026-08-10T08:30:00\",\n    \"punchOut\": \"2026-08-10T08:30:00\",\n    \"breakTime\": \"10:00 AM\",\n    \"workHours\": \"8h 30m\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -4836,7 +4836,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"status\": \"confirmed\",\n    \"punchIn\": \"2026-08-10T08:30:00\",\n    \"punchOut\": \"2026-08-10T08:30:00\",\n    \"breakTime\": \"10:00 AM\",\n    \"workHours\": \"8h 30m\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"ref\": \"AT-000001\",\n    \"status\": \"confirmed\",\n    \"punchIn\": \"2026-08-10T08:30:00\",\n    \"punchOut\": \"2026-08-10T08:30:00\",\n    \"breakTime\": \"10:00 AM\",\n    \"workHours\": \"8h 30m\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5236,7 +5236,7 @@
                 }
               ]
             },
-            "description": "**Method:** getJobs()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `TechnicianJobResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getJobs()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `TechnicianJobResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `job_cards` — columns: `id`, `job_card_ref`, `customer_id`, `vehicle_id`, `status`, `technician`, `created_date`, `last_updated`, `notes`, `tag`, `customer_requests`, `garage_recommendations`, `estimated_delivery`, `notify_owner_sms_email`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -5285,7 +5285,7 @@
                 }
               ]
             },
-            "description": "**Method:** searchJob()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `TechnicianJobResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** searchJob()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `TechnicianJobResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `job_cards` — columns: `id`, `job_card_ref`, `customer_id`, `vehicle_id`, `status`, `technician`, `created_date`, `last_updated`, `notes`, `tag`, `customer_requests`, `garage_recommendations`, `estimated_delivery`, `notify_owner_sms_email`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -5541,7 +5541,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"taskRef\": \"Change engine oil and filter\",\n      \"jobCardRef\": \"JC-ee0ac073\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 0.05,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"taskRef\": \"REF-ffa39c\",\n      \"jobCardRef\": \"JC-6abacde2\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"itemType\": \"sms\",\n      \"status\": \"confirmed\",\n      \"empId\": \"EMP-a1b2c3d4\",\n      \"empName\": \"EMP-a1b2c3d4\",\n      \"startTime\": \"10:00 AM\",\n      \"endTime\": \"10:00 AM\",\n      \"qty\": 1,\n      \"rate\": 0.05,\n      \"rejectReason\": \"Brake pads below safe thickness\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5764,7 +5764,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"keyHash\": \"2dfe4a590e3bbaaf\",\n      \"keyPrefix\": \"bd9b96234e6e73fd\",\n      \"role\": \"advisor\",\n      \"isActive\": true,\n      \"createdBy\": 1,\n      \"lastUsedAt\": \"2026-08-10T09:00:00\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"REF-9a2977\",\n      \"name\": \"Moiz Ali\",\n      \"keyHash\": \"b5ebd3a869c05937\",\n      \"keyPrefix\": \"REF-012faa\",\n      \"role\": \"advisor\",\n      \"isActive\": true,\n      \"createdBy\": 1,\n      \"lastUsedAt\": \"2026-08-10T09:00:00\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5898,7 +5898,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"REF-4ed07b\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5948,7 +5948,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"REF-02c6b1\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -5992,7 +5992,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"REF-3d0f17\",\n      \"sku\": \"SKU-1001\",\n      \"name\": \"Moiz Ali\",\n      \"category\": \"service_quality\",\n      \"branchId\": 1,\n      \"costPrice\": 125.5,\n      \"sellingPrice\": 125.5,\n      \"qtyOnHand\": 1,\n      \"reorderLevel\": 1,\n      \"supplierId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6044,7 +6044,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sku\": \"SKU-1001\",\n    \"name\": \"Moiz Ali\",\n    \"category\": \"service_quality\",\n    \"branchId\": 1,\n    \"costPrice\": 125.5,\n    \"sellingPrice\": 125.5,\n    \"qtyOnHand\": 1,\n    \"reorderLevel\": 1,\n    \"supplierId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"REF-e80962\",\n    \"sku\": \"SKU-1001\",\n    \"name\": \"Moiz Ali\",\n    \"category\": \"service_quality\",\n    \"branchId\": 1,\n    \"costPrice\": 125.5,\n    \"sellingPrice\": 125.5,\n    \"qtyOnHand\": 1,\n    \"reorderLevel\": 1,\n    \"supplierId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6095,7 +6095,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sku\": \"SKU-1001\",\n    \"name\": \"Moiz Ali\",\n    \"category\": \"service_quality\",\n    \"branchId\": 1,\n    \"costPrice\": 125.5,\n    \"sellingPrice\": 125.5,\n    \"qtyOnHand\": 1,\n    \"reorderLevel\": 1,\n    \"supplierId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"REF-a5b4d5\",\n    \"sku\": \"SKU-1001\",\n    \"name\": \"Moiz Ali\",\n    \"category\": \"service_quality\",\n    \"branchId\": 1,\n    \"costPrice\": 125.5,\n    \"sellingPrice\": 125.5,\n    \"qtyOnHand\": 1,\n    \"reorderLevel\": 1,\n    \"supplierId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6138,7 +6138,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Moiz Ali\",\n      \"contactName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"address\": \"Al Barsha 1, Dubai, UAE\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"SUP-000001\",\n      \"name\": \"Moiz Ali\",\n      \"contactName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"address\": \"Al Barsha 1, Dubai, UAE\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6181,7 +6181,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Moiz Ali\",\n    \"contactName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"SUP-000001\",\n    \"name\": \"Moiz Ali\",\n    \"contactName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"address\": \"Al Barsha 1, Dubai, UAE\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6224,7 +6224,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"poRef\": \"PO-f7b876\",\n      \"supplierId\": 1,\n      \"branchId\": 1,\n      \"status\": \"confirmed\",\n      \"total\": 125.5,\n      \"orderedAt\": \"2026-08-10T09:00:00\",\n      \"receivedAt\": \"2026-08-10T09:00:00\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"poRef\": \"PO-2dc4c2\",\n      \"supplierId\": 1,\n      \"branchId\": 1,\n      \"status\": \"confirmed\",\n      \"total\": 125.5,\n      \"orderedAt\": \"2026-08-10T09:00:00\",\n      \"receivedAt\": \"2026-08-10T09:00:00\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6276,7 +6276,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"poRef\": \"PO-2b2969\",\n    \"supplierId\": 1,\n    \"branchId\": 1,\n    \"status\": \"confirmed\",\n    \"total\": 125.5,\n    \"orderedAt\": \"2026-08-10T09:00:00\",\n    \"receivedAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"poRef\": \"PO-1667f3\",\n    \"supplierId\": 1,\n    \"branchId\": 1,\n    \"status\": \"confirmed\",\n    \"total\": 125.5,\n    \"orderedAt\": \"2026-08-10T09:00:00\",\n    \"receivedAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -6691,7 +6691,7 @@
                 "job-cards"
               ]
             },
-            "description": "**Method:** getJobCards()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `OwnerJobCardResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getJobCards()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `OwnerJobCardResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `job_cards` — columns: `id`, `job_card_ref`, `customer_id`, `vehicle_id`, `status`, `technician`, `created_date`, `last_updated`, `notes`, `tag`, `customer_requests`, `garage_recommendations`, `estimated_delivery`, `notify_owner_sms_email`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -6708,7 +6708,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customerName\": \"Moiz Ali\",\n      \"vehicle\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"services\": \"Full Service\",\n      \"technician\": \"Mohammed Ali\",\n      \"estCompletion\": \"2026-08-10T15:00:00\",\n      \"amount\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"jobCardRef\": \"JC-ac4b40\",\n      \"customerName\": \"Moiz Ali\",\n      \"vehicle\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"services\": \"Full Service\",\n      \"technician\": \"Mohammed Ali\",\n      \"estCompletion\": \"2026-08-10T15:00:00\",\n      \"amount\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7009,7 +7009,7 @@
                 "active"
               ]
             },
-            "description": "**Method:** getActiveJobs()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `OwnerJobCardResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getActiveJobs()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `OwnerJobCardResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `job_cards` — columns: `id`, `job_card_ref`, `customer_id`, `vehicle_id`, `status`, `technician`, `created_date`, `last_updated`, `notes`, `tag`, `customer_requests`, `garage_recommendations`, `estimated_delivery`, `notify_owner_sms_email`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -7026,7 +7026,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customerName\": \"Moiz Ali\",\n      \"vehicle\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"services\": \"Full Service\",\n      \"technician\": \"Mohammed Ali\",\n      \"estCompletion\": \"2026-08-10T15:00:00\",\n      \"amount\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"jobCardRef\": \"JC-80509d\",\n      \"customerName\": \"Moiz Ali\",\n      \"vehicle\": \"Toyota Camry\",\n      \"plateNumber\": \"DUBAI 12345\",\n      \"services\": \"Full Service\",\n      \"technician\": \"Mohammed Ali\",\n      \"estCompletion\": \"2026-08-10T15:00:00\",\n      \"amount\": 125.5,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7143,7 +7143,7 @@
                 "records"
               ]
             },
-            "description": "**Method:** getArRecords()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `ArRecordResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getArRecords()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `ArRecordResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `accounts_receivable` — columns: `id`, `ar_ref`, `customer_id`, `invoice_id`, `invoice_date`, `due_date`, `amount`, `outstanding`, `aging`, `contact_person`, `phone`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -7160,7 +7160,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"arId\": \"1a6f4094\",\n      \"customer\": \"Moiz Ali\",\n      \"invoiceDate\": \"10 Aug 2026\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"amount\": 125.5,\n      \"outstanding\": 1.5,\n      \"aging\": \"15 days\",\n      \"contactPerson\": \"Moiz Ali\",\n      \"phone\": \"971501234567\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"arId\": \"7e841445\",\n      \"customer\": \"Moiz Ali\",\n      \"invoiceDate\": \"10 Aug 2026\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"amount\": 125.5,\n      \"outstanding\": 1.5,\n      \"aging\": \"15 days\",\n      \"contactPerson\": \"Moiz Ali\",\n      \"phone\": \"971501234567\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7386,7 +7386,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ticketRef\": \"TK-d76475\",\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"subject\": \"Open job cards\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"priority\": \"high\",\n      \"status\": \"confirmed\",\n      \"assignedStaffId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ticketRef\": \"TK-c2252d\",\n      \"customerId\": 1,\n      \"branchId\": 1,\n      \"subject\": \"Open job cards\",\n      \"description\": \"Clicking sound from the front left when turning\",\n      \"priority\": \"high\",\n      \"status\": \"confirmed\",\n      \"assignedStaffId\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\",\n      \"updatedAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7478,7 +7478,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ticketRef\": \"TK-36d6fc\",\n    \"customerId\": 1,\n    \"branchId\": 1,\n    \"subject\": \"Open job cards\",\n    \"description\": \"Clicking sound from the front left when turning\",\n    \"priority\": \"high\",\n    \"status\": \"confirmed\",\n    \"assignedStaffId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ticketRef\": \"TK-0d6438\",\n    \"customerId\": 1,\n    \"branchId\": 1,\n    \"subject\": \"Open job cards\",\n    \"description\": \"Clicking sound from the front left when turning\",\n    \"priority\": \"high\",\n    \"status\": \"confirmed\",\n    \"assignedStaffId\": 1,\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7573,7 +7573,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"paymentRef\": \"PAY-65b7de\",\n      \"invoiceId\": 1,\n      \"branchId\": 1,\n      \"amount\": 125.5,\n      \"method\": \"card\",\n      \"reference\": \"REF-225885\",\n      \"paidAt\": \"2026-08-10T09:00:00\",\n      \"recordedBy\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"paymentRef\": \"PAY-c63fca\",\n      \"invoiceId\": 1,\n      \"branchId\": 1,\n      \"amount\": 125.5,\n      \"method\": \"card\",\n      \"reference\": \"PAY-6a29de\",\n      \"paidAt\": \"2026-08-10T09:00:00\",\n      \"recordedBy\": 1,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7615,7 +7615,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"branchId\": 1,\n    \"plan\": \"pro\",\n    \"status\": \"confirmed\",\n    \"startedAt\": \"2026-08-10T09:00:00\",\n    \"renewsAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"SUB-000001\",\n    \"branchId\": 1,\n    \"plan\": \"pro\",\n    \"status\": \"confirmed\",\n    \"startedAt\": \"2026-08-10T09:00:00\",\n    \"renewsAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7663,7 +7663,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"branchId\": 1,\n    \"plan\": \"pro\",\n    \"status\": \"confirmed\",\n    \"startedAt\": \"2026-08-10T09:00:00\",\n    \"renewsAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"SUB-000001\",\n    \"branchId\": 1,\n    \"plan\": \"pro\",\n    \"status\": \"confirmed\",\n    \"startedAt\": \"2026-08-10T09:00:00\",\n    \"renewsAt\": \"2026-08-10T09:00:00\",\n    \"createdAt\": \"2026-08-10T09:00:00\",\n    \"updatedAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7900,7 +7900,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"vehicleId\": 1,\n      \"warrantyRef\": \"WR-2d373e\",\n      \"type\": \"sms\",\n      \"startDate\": \"2026-08-10T09:00:00\",\n      \"endDate\": \"2026-08-10T09:00:00\",\n      \"terms\": \"Net 30 days\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"vehicleId\": 1,\n      \"warrantyRef\": \"WR-815f82\",\n      \"type\": \"sms\",\n      \"startDate\": \"2026-08-10T09:00:00\",\n      \"endDate\": \"2026-08-10T09:00:00\",\n      \"terms\": \"Net 30 days\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7942,7 +7942,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"vehicleId\": 1,\n    \"warrantyRef\": \"WR-0e0370\",\n    \"type\": \"sms\",\n    \"startDate\": \"2026-08-10T09:00:00\",\n    \"endDate\": \"2026-08-10T09:00:00\",\n    \"terms\": \"Net 30 days\",\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"vehicleId\": 1,\n    \"warrantyRef\": \"WR-66feb1\",\n    \"type\": \"sms\",\n    \"startDate\": \"2026-08-10T09:00:00\",\n    \"endDate\": \"2026-08-10T09:00:00\",\n    \"terms\": \"Net 30 days\",\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -7984,7 +7984,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"eventType\": \"sms\",\n      \"url\": \"https://cdn.orientworkshop.ae/files/jc-ee0ac073.pdf\",\n      \"secret\": \"whsec_d7faa8bbf4fa013b\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"REF-2b7bb5\",\n      \"eventType\": \"sms\",\n      \"url\": \"https://cdn.orientworkshop.ae/files/jc-ee0ac073.pdf\",\n      \"secret\": \"whsec_03f56ae822eece09\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8026,7 +8026,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"eventType\": \"sms\",\n    \"url\": \"https://cdn.orientworkshop.ae/files/jc-ee0ac073.pdf\",\n    \"secret\": \"whsec_631870cdb51a058b\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"REF-abe168\",\n    \"eventType\": \"sms\",\n    \"url\": \"https://cdn.orientworkshop.ae/files/jc-ee0ac073.pdf\",\n    \"secret\": \"whsec_6934b5d9e44d3c08\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-08-10T09:00:00\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8411,7 +8411,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"name\": \"Moiz Ali\",\n      \"connected\": {},\n      \"lastSyncAt\": \"2026-08-10T09:00:00\",\n      \"syncStatus\": \"confirmed\",\n      \"leadCount\": 1\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"name\": \"Moiz Ali\",\n      \"connected\": true,\n      \"lastSyncAt\": \"2026-08-10T09:00:00\",\n      \"syncStatus\": \"confirmed\",\n      \"leadCount\": 1\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8478,7 +8478,7 @@
                 "conversations"
               ]
             },
-            "description": "**Method:** getConversations()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `ConversationResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getConversations()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `ConversationResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `crm_conversations` — columns: `id`, `customer_name`, `last_message`, `time`, `channel`, `unread`, `status`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -8495,7 +8495,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customerName\": \"Moiz Ali\",\n      \"lastMessage\": \"Customer requested AC check as well\",\n      \"time\": \"10:00 AM\",\n      \"channel\": \"whatsapp\",\n      \"unread\": 1,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"CV-000001\",\n      \"customerName\": \"Moiz Ali\",\n      \"lastMessage\": \"Customer requested AC check as well\",\n      \"time\": \"10:00 AM\",\n      \"channel\": \"whatsapp\",\n      \"unread\": 1,\n      \"status\": \"confirmed\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8547,7 +8547,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sno\": 1,\n      \"leadNumber\": \"LD-109523\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"source\": \"whatsapp\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"status\": \"confirmed\",\n      \"lastActivity\": \"2026-08-10T09:00:00\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"leadValue\": 125.5,\n      \"followUpDate\": \"10 Aug 2026\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"sno\": 1,\n      \"leadNumber\": \"LD-ab056a\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"email\": \"moiz.ali@example.com\",\n      \"source\": \"whatsapp\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"status\": \"confirmed\",\n      \"lastActivity\": \"2026-08-10T09:00:00\",\n      \"notes\": \"Customer requested AC check as well\",\n      \"leadValue\": 125.5,\n      \"followUpDate\": \"10 Aug 2026\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8598,7 +8598,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sno\": 1,\n    \"leadNumber\": \"LD-1ad1c6\",\n    \"customerName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"source\": \"whatsapp\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"status\": \"confirmed\",\n    \"lastActivity\": \"2026-08-10T09:00:00\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"leadValue\": 125.5,\n    \"followUpDate\": \"10 Aug 2026\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sno\": 1,\n    \"leadNumber\": \"LD-efe11d\",\n    \"customerName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"source\": \"whatsapp\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"status\": \"confirmed\",\n    \"lastActivity\": \"2026-08-10T09:00:00\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"leadValue\": 125.5,\n    \"followUpDate\": \"10 Aug 2026\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8650,7 +8650,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sno\": 1,\n    \"leadNumber\": \"LD-0e5f51\",\n    \"customerName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"source\": \"whatsapp\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"status\": \"confirmed\",\n    \"lastActivity\": \"2026-08-10T09:00:00\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"leadValue\": 125.5,\n    \"followUpDate\": \"10 Aug 2026\"\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"sno\": 1,\n    \"leadNumber\": \"LD-85cb5e\",\n    \"customerName\": \"Moiz Ali\",\n    \"phone\": \"971501234567\",\n    \"email\": \"moiz.ali@example.com\",\n    \"source\": \"whatsapp\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"status\": \"confirmed\",\n    \"lastActivity\": \"2026-08-10T09:00:00\",\n    \"notes\": \"Customer requested AC check as well\",\n    \"leadValue\": 125.5,\n    \"followUpDate\": \"10 Aug 2026\"\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8720,7 +8720,7 @@
                 "activities"
               ]
             },
-            "description": "**Method:** getLeadActivities()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `LeadActivityResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getLeadActivities()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `LeadActivityResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `lead_activities` — columns: `id`, `lead_id`, `action`, `detail`, `created_at`"
           },
           "response": [
             {
@@ -8762,7 +8762,7 @@
                 "team-members"
               ]
             },
-            "description": "**Method:** getTeamMembers()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `TeamMemberResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getTeamMembers()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `TeamMemberResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `staff` — columns: `id`, `user_id`, `emp_id`, `name`, `role`, `branch`, `shift`, `designation`, `department`, `avatar_initials`, `is_active`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -8865,7 +8865,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"leadId\": \"b419ae65\",\n      \"leadNumber\": \"LD-ec2fa4\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"source\": \"whatsapp\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"status\": \"confirmed\",\n      \"followUpDate\": \"10 Aug 2026\",\n      \"leadValue\": \"125.50\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"leadId\": \"f7df23ff\",\n      \"leadNumber\": \"LD-3df5d1\",\n      \"customerName\": \"Moiz Ali\",\n      \"phone\": \"971501234567\",\n      \"source\": \"whatsapp\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"status\": \"confirmed\",\n      \"followUpDate\": \"10 Aug 2026\",\n      \"leadValue\": \"125.50\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8907,7 +8907,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"leadId\": \"f6ee6fa0\",\n      \"customerName\": \"Moiz Ali\",\n      \"action\": \"approve\",\n      \"detail\": \"Brake pads at 3mm — replace recommended\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"leadId\": \"1d4bed51\",\n      \"customerName\": \"Moiz Ali\",\n      \"action\": \"approve\",\n      \"detail\": \"Brake pads at 3mm — replace recommended\",\n      \"createdAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8951,7 +8951,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"name\": \"Moiz Ali\",\n    \"connected\": {},\n    \"lastSyncAt\": \"2026-08-10T09:00:00\",\n    \"syncStatus\": \"confirmed\",\n    \"leadCount\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"name\": \"Moiz Ali\",\n    \"connected\": true,\n    \"lastSyncAt\": \"2026-08-10T09:00:00\",\n    \"syncStatus\": \"confirmed\",\n    \"leadCount\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -8995,7 +8995,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"name\": \"Moiz Ali\",\n    \"connected\": {},\n    \"lastSyncAt\": \"2026-08-10T09:00:00\",\n    \"syncStatus\": \"confirmed\",\n    \"leadCount\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"name\": \"Moiz Ali\",\n    \"connected\": true,\n    \"lastSyncAt\": \"2026-08-10T09:00:00\",\n    \"syncStatus\": \"confirmed\",\n    \"leadCount\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -9039,7 +9039,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"name\": \"Moiz Ali\",\n    \"connected\": {},\n    \"lastSyncAt\": \"2026-08-10T09:00:00\",\n    \"syncStatus\": \"confirmed\",\n    \"leadCount\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"name\": \"Moiz Ali\",\n    \"connected\": true,\n    \"lastSyncAt\": \"2026-08-10T09:00:00\",\n    \"syncStatus\": \"confirmed\",\n    \"leadCount\": 1\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -9064,7 +9064,7 @@
                 "tasks"
               ]
             },
-            "description": "**Method:** getTasks()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `CrmTaskResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter)."
+            "description": "**Method:** getTasks()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** none\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `CrmTaskResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `crm_tasks` — columns: `id`, `title`, `assigned_to`, `due_date`, `priority`, `is_done`, `created_at`, `updated_at`"
           },
           "response": [
             {
@@ -9081,7 +9081,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"title\": \"Car makes noise when turning\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"priority\": \"high\",\n      \"isDone\": {}\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"CT-000001\",\n      \"title\": \"Car makes noise when turning\",\n      \"assignedTo\": \"Khaled Salem\",\n      \"dueDate\": \"10 Aug 2026\",\n      \"priority\": \"high\",\n      \"isDone\": true\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -9106,7 +9106,7 @@
                 "tasks"
               ]
             },
-            "description": "**Method:** createTask()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** ```json\n{\n  \"title\": \"string\",\n  \"assignedTo\": \"string\",\n  \"dueDate\": \"string\",\n  \"priority\": \"string\",\n  \"isDone\": true\n}\n```\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `CrmTaskResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).",
+            "description": "**Method:** createTask()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** ```json\n{\n  \"title\": \"string\",\n  \"assignedTo\": \"string\",\n  \"dueDate\": \"string\",\n  \"priority\": \"string\",\n  \"isDone\": true\n}\n```\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `CrmTaskResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `crm_tasks` — columns: `id`, `title`, `assigned_to`, `due_date`, `priority`, `is_done`, `created_at`, `updated_at`",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"title\": \"string\",\n  \"assignedTo\": \"string\",\n  \"dueDate\": \"string\",\n  \"priority\": \"string\",\n  \"isDone\": true\n}",
@@ -9132,7 +9132,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"Car makes noise when turning\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\",\n    \"isDone\": {}\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"CT-000001\",\n    \"title\": \"Car makes noise when turning\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\",\n    \"isDone\": true\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -9158,7 +9158,7 @@
                 ":id"
               ]
             },
-            "description": "**Method:** updateTask()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** ```json\n{\n  \"title\": \"string\",\n  \"assignedTo\": \"string\",\n  \"dueDate\": \"string\",\n  \"priority\": \"string\",\n  \"isDone\": true\n}\n```\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `CrmTaskResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).",
+            "description": "**Method:** updateTask()\n\n**Requires auth:** Bearer token (roles apply)\n\n**Body:** ```json\n{\n  \"title\": \"string\",\n  \"assignedTo\": \"string\",\n  \"dueDate\": \"string\",\n  \"priority\": \"string\",\n  \"isDone\": true\n}\n```\n\n**Response model:** realistic sample values using the EXACT entity/DTO field names (refs in the backend style: `JC-ee0ac073`), so the shape + values are what the API returns.\n\n**Model source:** `CrmTaskResponse` (Java DTO/entity — fields below are the exact model to mirror in Flutter).\n\n**SQL table:** `crm_tasks` — columns: `id`, `title`, `assigned_to`, `due_date`, `priority`, `is_done`, `created_at`, `updated_at`",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"title\": \"string\",\n  \"assignedTo\": \"string\",\n  \"dueDate\": \"string\",\n  \"priority\": \"string\",\n  \"isDone\": true\n}",
@@ -9184,7 +9184,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"Car makes noise when turning\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\",\n    \"isDone\": {}\n  },\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"ref\": \"CT-000001\",\n    \"title\": \"Car makes noise when turning\",\n    \"assignedTo\": \"Khaled Salem\",\n    \"dueDate\": \"10 Aug 2026\",\n    \"priority\": \"high\",\n    \"isDone\": true\n  },\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -9722,7 +9722,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"branchId\": 1,\n      \"customerPhone\": \"971501234567\",\n      \"templateName\": \"EMP-a1b2c3d4\",\n      \"messageBody\": \"Your car is ready for collection\",\n      \"status\": \"confirmed\",\n      \"messageType\": \"sms\",\n      \"externalId\": \"EXT-1001\",\n      \"sentAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
+              "body": "{\n  \"code\": 200,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ref\": \"REF-b7132f\",\n      \"branchId\": 1,\n      \"customerPhone\": \"971501234567\",\n      \"templateName\": \"EMP-a1b2c3d4\",\n      \"messageBody\": \"Your car is ready for collection\",\n      \"status\": \"confirmed\",\n      \"messageType\": \"sms\",\n      \"externalId\": \"EXT-1001\",\n      \"sentAt\": \"2026-08-10T09:00:00\"\n    }\n  ],\n  \"timestamp\": 1754300000000\n}",
               "_postman_previewlanguage": "json"
             }
           ]

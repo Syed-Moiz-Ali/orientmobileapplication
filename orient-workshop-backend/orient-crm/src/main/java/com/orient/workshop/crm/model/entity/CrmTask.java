@@ -9,6 +9,10 @@ import lombok.NoArgsConstructor;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor @TableName("crm_tasks")
 public class CrmTask {
     @TableId(type = IdType.AUTO) private Long id;
+    // P1 (V13): prefixed unique ref (public identifier).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
     private String title;
     private String assignedTo;
     private String dueDate;

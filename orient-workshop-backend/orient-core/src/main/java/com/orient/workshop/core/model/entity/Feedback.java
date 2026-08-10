@@ -9,6 +9,10 @@ import java.time.LocalDateTime;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor @TableName("feedback")
 public class Feedback {
     @TableId(type = IdType.AUTO) private Long id;
+    // P1 (V13): prefixed unique ref (public identifier).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
     private Long jobCardId;
     private Long customerId;
     private Long branchId;

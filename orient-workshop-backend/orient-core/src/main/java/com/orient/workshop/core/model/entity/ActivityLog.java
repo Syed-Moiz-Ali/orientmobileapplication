@@ -11,6 +11,10 @@ import java.time.LocalDateTime;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor @TableName("activity_log")
 public class ActivityLog {
     @TableId(type = IdType.AUTO) private Long id;
+    // P1 (V13): prefixed unique ref (public identifier).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
     private String type;
     private String title;
     private String description;

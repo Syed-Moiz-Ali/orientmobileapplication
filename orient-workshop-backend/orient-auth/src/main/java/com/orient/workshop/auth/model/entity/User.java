@@ -17,6 +17,10 @@ public class User {
 
     @TableId(type = IdType.AUTO)
     private Long id;
+    // P1 (V13): prefixed unique ref (public identifier).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
 
     private String phone;
 

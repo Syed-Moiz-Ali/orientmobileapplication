@@ -11,6 +11,10 @@ import java.math.BigDecimal;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor @TableName("purchase_order_items")
 public class PurchaseOrderItem {
     @TableId(type = IdType.AUTO) private Long id;
+    // P1 (V13): prefixed unique ref (public identifier).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
     private Long purchaseOrderId;
     private Long inventoryItemId;
     private String itemName;

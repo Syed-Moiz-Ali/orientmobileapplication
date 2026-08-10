@@ -22,6 +22,7 @@ public class ConversationService {
                 .stream()
                 .map(c -> ConversationResponse.builder()
                         .id(String.valueOf(c.getId()))
+                        .ref(c.getRef())
                         .customerName(c.getCustomerName() != null ? c.getCustomerName() : "")
                         .lastMessage(c.getLastMessage() != null ? c.getLastMessage() : "")
                         .time(c.getTime() != null ? c.getTime() : "")

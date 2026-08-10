@@ -16,6 +16,10 @@ import java.time.LocalDateTime;
 public class Notification {
     @TableId(type = IdType.AUTO)
     private Long id;
+    // P1 (V13): prefixed unique ref (NTF-000001).
+    @TableField(fill = FieldFill.INSERT)
+    // P1 (V13): prefixed unique ref (public identifier).
+    private String ref;
     private Long userId;
     private Long branchId;
     private String title;
