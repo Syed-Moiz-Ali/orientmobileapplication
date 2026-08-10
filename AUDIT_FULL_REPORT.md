@@ -1409,3 +1409,11 @@ ode scripts/generate_postman_collection.js (parses all controllers + DTOs).
 - Every one of the 209 endpoints has an accurate example: **95 live API captures** + **114 model examples built from the actual response DTO classes** (field names/nesting/types mirror the real payloads so Flutter models can be created directly).
 - Empty live datasets (test accounts with no data) fall back to the DTO model shape with an honest label — no empty {}/[] placeholders.
 - provision_loadtest.ps1 gained the technician role (6 users total); capture cache is gitignored; README documents the refresh workflow.
+
+# 44. POSTMAN COLLECTION — ENTITY-BASED RESPONSE MODELS (2026-08-07, owner decision)
+
+- **No example/sample responses anymore.** Every endpoint's response shows the REAL entity/DTO schema: exact field names + Java types as the backend returns (e.g. {"id": "Long", "bookingRef": "String", ...}) — the model your Flutter devs mirror 1:1.
+- **Checked against the SQL schemas**: all 53 CREATE TABLE statements (50 unique tables) from migrations V1–V12 are parsed; each endpoint's description names its backing table + columns (SQL table: bookings — id, booking_ref, ...), and postman/database-schema.md documents every table/column/type.
+- PageResponse<T> pagination endpoints show the real wrapper (content, page, size, 	otalElements, 	otalPages); void/action endpoints show the real envelope without a data key; Map returns show <key>: value-type.
+- Removed the live-capture machinery (capture_api_responses.js, capture cache) — superseded by the entity schema approach per owner direction.
+- **Zero empty/placeholder {}/[] models across all 209 endpoints** — verified.

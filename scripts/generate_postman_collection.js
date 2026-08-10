@@ -185,6 +185,57 @@ function bodyFor(ep) {
   return buildBody(ep.body);
 }
 
+// ---- SQL schema (from the Flyway migrations V1..V12) ----
+// Owner decision: response models must be checked against the DATABASE
+// schemas. Every table + column is parsed from the migration SQL.
+
+const sqlTables = {}; // table -> { col: { type, line } }
+function parseSqlSchema() {
+  const migDir = path.join(BE, 'orient-gateway', 'src', 'main', 'resources', 'db', 'migration');
+  if (!fs.existsSync(migDir)) return;
+  for (const f of fs.readdirSync(migDir).filter(n => /^V\d+.*\.sql$/.test(n))) {
+    const src = fs.readFileSync(path.join(migDir, f), 'utf8')
+      .replace(/--[^\n]*/g, '\n');
+    const lines = src.split(/\r?\n/);
+    let current = null;
+    for (const raw of lines) {
+      const line = raw.trim();
+      const create = line.match(/^CREATE TABLE (?:IF NOT EXISTS )?(\w+)/i);
+      if (create) { current = create[1]; sqlTables[current] = {}; continue; }
+      if (!current) continue;
+      if (line.startsWith(')')) { current = null; continue; }
+      if (/^(INDEX|KEY|PRIMARY|FOREIGN|UNIQUE|CONSTRAINT|CHECK|FULLTEXT|SPATIAL)/i.test(line)) continue;
+      const col = line.match(/^`?(\w+)`?\s+(\w+)(?:\(([^)]*)\))?/);
+      if (col) sqlTables[current][col[1]] = col[2] + (col[3] ? `(${col[3]})` : '');
+    }
+  }
+}
+parseSqlSchema();
+
+function snakeToCamel(s) {
+  return s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+}
+
+// response DTO/entity -> underlying SQL table (by name similarity)
+function tableForType(typeName) {
+  let name = typeName
+    .replace(/(Response|ResponseDto|DTO|Dto|Entity|Info|Summary|Detail|Item|Card)$/i, '')
+    .toLowerCase();
+  const candidates = new Set([name, name + 's', name.replace(/s$/, ''), name + 'es', name.replace(/es$/, '')]);
+  for (const cand of candidates) {
+    if (sqlTables[cand]) return cand;
+    const hit = Object.keys(sqlTables).find(t => t.toLowerCase() === cand);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+function tableColumns(table) {
+  const cols = sqlTables[table];
+  if (!cols) return null;
+  return Object.entries(cols).map(([col, type]) => ({ col, camel: snakeToCamel(col), type }));
+}
+
 // ---- response examples built from the ACTUAL response DTOs ----
 // Frontend devs create Flutter models from these shapes, so field names and
 // nesting mirror the real payloads exactly.
@@ -312,8 +363,10 @@ function dataTypeOf(returnType) {
   if (!inner) inner = t;
   inner = inner.replace(/^java\.util\./, '').replace(/^java\./, '');
   // strip generics already consumed
-  if (/^(?:List|Page|Set)\s*<(.+)>/.test(inner)) {
-    return { kind: 'list', of: inner.match(/^(?:List|Page|Set)\s*<(.+)>/)[1].trim() };
+  if (/^(?:List|Page|PageResponse|Set)\s*<(.+)>/.test(inner)) {
+    const innerType = inner.match(/^(?:List|Page|PageResponse|Set)\s*<(.+)>/)[1].trim();
+    const isPage = /^Page(?:Response)?\s*<(.+)>/.test(inner);
+    return { kind: isPage ? 'page' : 'list', of: innerType };
   }
   if (inner === 'void' || inner === 'Void' || inner === 'String' || /^(?:boolean|long|int)/.test(inner)) {
     return { kind: inner === 'String' ? 'string' : 'simple', of: inner };
@@ -415,40 +468,92 @@ const captured = fs.existsSync(capturedFile)
   ? JSON.parse(fs.readFileSync(capturedFile, 'utf8'))
   : {};
 
-function buildExample(ep, verb) {
-  const key = `${ep.verb} ${ep.postmanPath}`;
-  const cap = captured[key];
-  const capEmpty = cap && cap.status >= 200 && cap.status < 300 &&
-    /"data"\s*:\s*(\[\]|\{\})/.test(cap.body);
-  if (cap && !capEmpty && cap.status >= 200 && cap.status < 300) return cap.body;
-  if (curatedResponses[key]) return JSON.stringify(curatedResponses[key], null, 2);
-  const env = (data) => ({ code: 200, message: 'Success', data, timestamp: 1754300000000 });
+// ---- response models: NO example/sample values — the actual entity schema ----
+// Owner decision: responses must show exactly what the backend entity/DTO
+// declares (field name -> Java type), so frontend devs mirror the real model.
+
+function prettyType(type) {
+  let t = type
+    .replace(/^java\.util\./, '')
+    .replace(/^java\.time\./, '')
+    .replace(/^java\.math\./, '')
+    .replace(/^java\./, '')
+    .replace(/^com\.orient\.workshop\.[\w.]+\./, '');
+  const list = t.match(/^(?:List|Set)\s*<(.+)>/);
+  if (list) {
+    let inner = list[1].replace(/^java\.util\./, '').replace(/^java\.time\./, '').replace(/^java\.math\./, '').replace(/^java\./, '');
+    inner = inner.replace(/^com\.orient\.workshop\.[\w.]+\./, '');
+    return `List<${inner}>`;
+  }
+  return t;
+}
+
+function entitySchema(typeName, depth = 0) {
+  const fields = modelFields(typeName);
+  if (!fields || depth > 3) return null;
+  const obj = {};
+  for (const f of fields) obj[f.name] = prettyType(f.type);
+  return obj;
+}
+
+// schema from the SQL table when no Java DTO class exists
+function tableSchema(table) {
+  const cols = tableColumns(table);
+  if (!cols) return null;
+  const obj = {};
+  for (const c of cols) obj[c.camel] = c.type.toLowerCase();
+  return obj;
+}
+
+function buildResponseModel(ep, verb) {
   const dt = dataTypeOf(ep.returnType);
-  let data;
+  // find the SQL table backing this response (for description + fallback)
+  let sqlTable = null;
+  let dtoName = null;
+  if (dt && (dt.kind === 'object' || dt.kind === 'list')) {
+    dtoName = dt.kind === 'list' ? dt.of : dt.of;
+    if (/^(?:String|Long|Integer|Boolean|BigDecimal|Double|Map)/.test(dtoName)) dtoName = null;
+    else sqlTable = tableForType(dtoName);
+  }
+  ep.sqlTable = sqlTable;
+  ep.dtoName = dtoName;
+
+  const env = { code: 200, message: 'Success' };
   if (!dt) {
-    data = verb === 'GET' ? {} : { id: 1 };
-  } else if (dt.kind === 'list') {
+    env.timestamp = 1754300000000;
+    return JSON.stringify(env, null, 2);
+  }
+  if (dt.kind === 'list') {
     const inner = dt.of;
-    if (inner === 'String' || /^(?:String|Long|Integer|Map)/.test(inner)) {
-      data = [inner === 'String' ? 'string' : inner];
+    if (/^(?:String|Long|Integer|Boolean|BigDecimal|Double|Map)/.test(inner)) {
+      env.data = [inner.replace(/^java\./, '')];
     } else {
-      const sample = modelSample(inner);
-      data = sample ? [sample] : [{}];
+      const s = entitySchema(inner) || tableSchema(sqlTable) || {};
+      env.data = [s];
     }
+  } else if (dt.kind === 'page') {
+    // PageResponse<T>: content + paging metadata — real fields from the class
+    const inner = dt.of;
+    const content = /^(?:String|Long|Integer|Boolean|BigDecimal|Double|Map)/.test(inner)
+      ? [inner.replace(/^java\./, '')]
+      : [entitySchema(inner) || tableSchema(sqlTable) || {}];
+    env.data = { content, page: 'int', size: 'int', totalElements: 'long', totalPages: 'int' };
   } else if (dt.kind === 'string') {
-    data = 'string';
+    env.data = 'string';
   } else if (dt.kind === 'simple') {
     // void/action endpoints: the REAL envelope has no data key at all —
     // verified live: {"code":200,"message":"Success","timestamp":...}
-    return JSON.stringify({ code: 200, message: 'Success', timestamp: 1754300000000 }, null, 2);
   } else if (dt.kind === 'map') {
-    // Map<String, X> returns — show the shape with a realistic entry
-    data = /Boolean/.test(dt.of) ? { 'result': true } : { 'message': 'ok' };
+    env.data = { '<key>': 'value-type' };
   } else {
-    const sample = modelSample(dt.of);
-    data = sample || {};
+    env.data = entitySchema(dt.of) || tableSchema(sqlTable) || {};
   }
-  return JSON.stringify(env(data), null, 2);
+  env.timestamp = 1754300000000;
+  return JSON.stringify(env, null, 2);
+}
+
+function buildExample(ep, verb) {
+  return buildResponseModel(ep, verb);
 }
 
 // ---- build collection ----
@@ -492,21 +597,18 @@ for (const f of files) {
     total++;
     const body = bodyFor(ep);
     const example = buildExample(ep, ep.verb);
-    const capKey = `${ep.verb} ${ep.postmanPath}`;
-    const cap = captured[capKey];
-    const isLive = !!cap && cap.status >= 200 && cap.status < 300 &&
-      !(/"data"\s*:\s*(\[\]|\{\})/.test(cap.body));
-    const liveEmpty = !!cap && cap.status >= 200 && cap.status < 300 && !isLive;
+    const sqlNote = ep.sqlTable
+      ? '**SQL table:** `' + ep.sqlTable + '` — columns: `' + tableColumns(ep.sqlTable).map(c => c.col).join('`, `') + '`'
+      : null;
+    const dtoNote = ep.dtoName ? '**Model source:** `' + ep.dtoName + '` (Java DTO/entity — fields below are the exact model to mirror in Flutter).' : null;
     const desc = [
       '**Method:** ' + ep.methodName + '()',
       '**Requires auth:** Bearer token (roles apply)',
       '**Body:** ' + (body ? '```json\n' + body + '\n```' : 'none'),
-      '**Response:** ' + (isLive
-        ? 'LIVE capture from the running API.'
-        : liveEmpty
-          ? 'Live call returned an empty dataset for this account — showing the model shape instead.'
-          : 'Model example generated from the response DTO (the endpoint needs runtime state to return real data).'),
-    ].join('\n\n');
+      '**Response model:** the `data` shape below is the REAL entity/DTO schema — field names and types exactly as the backend returns (no sample values).',
+      dtoNote,
+      sqlNote,
+    ].filter(Boolean).join('\n\n');
     const item = {
       name: `${ep.verb} ${ep.postmanPath}`,
       request: {
@@ -516,7 +618,7 @@ for (const f of files) {
         description: desc,
       },
       response: [{
-        name: isLive ? 'Live response (real API)' : (liveEmpty ? 'Example (live returned empty)' : 'Example response (from DTO)'),
+        name: 'Response model (entity/DTO schema)',
         originalRequest: { method: ep.verb, url: `{{baseUrl}}${ep.postmanPath}` },
         status: 'OK', code: 200,
         header: [{ key: 'Content-Type', value: 'application/json' }],
@@ -612,6 +714,26 @@ const collection = {
 
 fs.mkdirSync(OUT, { recursive: true });
 fs.writeFileSync(path.join(OUT, 'Orient Workshop.postman_collection.json'), JSON.stringify(collection, null, 2));
+
+// ---- database schema doc (parsed from the Flyway migration SQL) ----
+const schemaLines = [
+  '# Orient Workshop — Database Schema',
+  '',
+  'Generated from the Flyway migrations (`orient-gateway/src/main/resources/db/migration/V1..V12`).',
+  'This is the ground truth the API entities map to — response models in the collection',
+  'are cross-checked against these tables.',
+  '',
+  '**' + Object.keys(sqlTables).length + ' tables.**',
+  '',
+];
+for (const [table, cols] of Object.entries(sqlTables).sort()) {
+  schemaLines.push('## `' + table + '`');
+  for (const [col, type] of Object.entries(cols)) {
+    schemaLines.push('- `' + col + '` — ' + type.toUpperCase());
+  }
+  schemaLines.push('');
+}
+fs.writeFileSync(path.join(OUT, 'database-schema.md'), schemaLines.join('\n'));
 
 const environment = {
   name: 'Orient Workshop (Local)',

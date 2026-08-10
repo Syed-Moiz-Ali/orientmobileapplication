@@ -29,7 +29,7 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-# FIX (audit P0): root-anchored patterns missed nested build dirs — 36 build
+# FIX (audit P0): root-anchored patterns missed nested build dirs â€” 36 build
 # artifacts (packages/*/build/**, apps/*/build/**) were tracked.
 **/build/
 **/coverage/
@@ -66,4 +66,3 @@ android_keystore/
 
 # Build artifacts (accidentally committed in an earlier pass)
 **/build/
-postman/.captured_responses.json
