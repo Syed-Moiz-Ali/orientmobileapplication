@@ -1402,3 +1402,10 @@ Deploy workflow is now: set BASE_URL=https://your-domain/api/v1 in the .env (or 
 - Regenerable: 
 ode scripts/generate_postman_collection.js (parses all controllers + DTOs).
 - Live-verified: sampled endpoints return 200 against the running gateway (login → profile/vehicles/notifications/invoices/bookings/availability).
+
+# 43. POSTMAN COLLECTION — REAL LIVE RESPONSES (2026-08-07)
+
+- The collection's example responses are now **captured from the real running API**, not rule-based placeholders: scripts/capture_api_responses.js logs in as all 6 roles and calls every endpoint, saving the actual JSON (124 live successes captured; 95 kept after empty-data filtering).
+- Every one of the 209 endpoints has an accurate example: **95 live API captures** + **114 model examples built from the actual response DTO classes** (field names/nesting/types mirror the real payloads so Flutter models can be created directly).
+- Empty live datasets (test accounts with no data) fall back to the DTO model shape with an honest label — no empty {}/[] placeholders.
+- provision_loadtest.ps1 gained the technician role (6 users total); capture cache is gitignored; README documents the refresh workflow.

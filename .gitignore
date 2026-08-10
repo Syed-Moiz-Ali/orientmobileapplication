@@ -66,3 +66,4 @@ android_keystore/
 
 # Build artifacts (accidentally committed in an earlier pass)
 **/build/
+postman/.captured_responses.json

@@ -70,9 +70,11 @@ function parseFile(file) {
       if (sigStart >= 0) {
         const fn = lines[sigStart].match(/public\s+[\w<>\[\],?.\s]+\s+(\w+)\s*\(/);
         if (fn) item.methodName = fn[1];
+        let sigText = '';
         j = sigStart;
         while (j < Math.min(sigStart + 10, lines.length)) {
           const sl = lines[j].trim();
+          sigText += ' ' + sl;
           const rb = sl.match(/@RequestBody\s+([\w<>]+)\s+\w+/);
           if (rb) item.body = rb[1].replace(/[<>]/g, '_');
           const pv = sl.match(/@PathVariable\(\s*"([^"]+)"\s*\)\s+[\w<>]+/);
@@ -86,6 +88,9 @@ function parseFile(file) {
           j++;
           if (sl.endsWith('{') && sl.includes(')')) break;
         }
+        // return type: ApiResponse<T> / ResponseEntity<T> / plain T
+        const ret = sigText.match(/public\s+([\w<>\[\],?.\s]+)\s+\w+\s*\(/);
+        if (ret) item.returnType = ret[1].trim();
       }
     }
   }
@@ -180,16 +185,258 @@ function bodyFor(ep) {
   return buildBody(ep.body);
 }
 
-// ---- response example ----
-function exampleFor(ep, verb) {
-  const envelope = (data) => ({ code: 200, message: 'Success', data, timestamp: 1754300000000 });
-  let data;
-  if (verb === 'GET') {
-    data = ep.path.includes('{') || /profile|me|summary|detail|status|health|version/i.test(ep.path) ? {} : [];
-  } else {
-    data = { id: 1 };
+// ---- response examples built from the ACTUAL response DTOs ----
+// Frontend devs create Flutter models from these shapes, so field names and
+// nesting mirror the real payloads exactly.
+
+const modelCache = {};
+function findClassFile(typeName) {
+  if (modelCache[typeName] !== undefined) return modelCache[typeName];
+  let found = null;
+  const walk = (dir) => {
+    if (found) return;
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (found) return;
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name === typeName + '.java') { found = p; return; }
+    }
+  };
+  for (const mod of ['orient-core','orient-advisor','orient-auth','orient-crm','orient-customer','orient-gateway','orient-media','orient-owner','orient-supervisor','orient-sync','orient-technician','orient-whatsapp','orient-common']) {
+    walk(path.join(BE, mod, 'src', 'main', 'java'));
+    if (found) break;
   }
-  return JSON.stringify(envelope(data), null, 2);
+  modelCache[typeName] = found;
+  return found;
+}
+
+function modelFields(typeName) {
+  const file = findClassFile(typeName);
+  if (!file) return null;
+  const src = fs.readFileSync(file, 'utf8');
+  const fields = [];
+  // only simple private fields on the class (skip static/final, inherited)
+  for (const m of src.matchAll(/private\s+(final\s+)?([\w<>\[\].]+)\s+(\w+)\s*(?:=|;)/g)) {
+    fields.push({ type: m[2].trim(), name: m[3] });
+  }
+  return fields.length ? fields : null;
+}
+
+// realistic string samples by field name (so models/docs read naturally)
+function stringSample(name) {
+  const n = name.toLowerCase();
+  if (n === 'id') return '1';
+  if (n.includes('email')) return 'customer@example.com';
+  if (n.includes('phone')) return '971501234567';
+  if (n.includes('plate')) return 'ABC-123';
+  if (n.includes('vehicle')) return 'Toyota Camry';
+  if (n.includes('customer')) return 'Ahmed Hassan';
+  if (n.includes('technician')) return 'Mohammed Ali';
+  if (n.includes('advisor')) return 'Khaled Salem';
+  if (n.includes('supervisor')) return 'Omar Farooq';
+  if (n.includes('owner')) return 'Orient Workshop';
+  if (n.includes('status')) return 'pending';
+  if (n.includes('ref') || n.includes('number') || n.includes('code') || n.includes('no')) return 'REF-001';
+  if (n.includes('date') || n.includes('time')) return '2026-08-10T09:00:00';
+  if (n.includes('color')) return 'White';
+  if (n.includes('brand') || n.includes('make')) return 'Toyota';
+  if (n.includes('model')) return 'Camry';
+  if (n.includes('service')) return 'Full Service';
+  if (n.includes('role')) return 'customer';
+  if (n.includes('url') || n.includes('link')) return 'https://example.com/file.pdf';
+  if (n.includes('type')) return 'sms';
+  if (n.includes('branch')) return 'Main Branch - Dubai';
+  if (n.includes('notes') || n.includes('comment') || n.includes('message')) return 'Sample text';
+  if (n.includes('avatar') || n.includes('image') || n.includes('photo')) return 'https://example.com/img.jpg';
+  if (n.includes('name')) return 'Sample Name';
+  return 'string';
+}
+
+function numberSample(type, name) {
+  const n = name.toLowerCase();
+  const t = type.replace(/^[\w.]+\s*\./, '');
+  if (/Integer|int/.test(t)) {
+    if (n.includes('percent') || n.includes('progress')) return 75;
+    if (n.includes('year')) return 2021;
+    return 1;
+  }
+  if (/Long|long/.test(t)) return 1;
+  if (/BigDecimal|Double|double|Float|float/.test(t)) {
+    if (n.includes('amount') || n.includes('price') || n.includes('total') || n.includes('cost') || n.includes('rate') || n.includes('balance') || n.includes('due')) return 125.5;
+    return 1.5;
+  }
+  return 0;
+}
+
+function sampleFor(type, name, depth) {
+  const t = type.replace(/^[\w.]+\s*\./, '');
+  if (/String/.test(t)) return stringSample(name);
+  if (/Integer|int|Long|long|BigDecimal|Double|double|Float|float/.test(t)) return numberSample(t, name);
+  if (/Boolean/.test(t)) return true;
+  if (/List|Set|\[\]/.test(t)) {
+    const inner = t.match(/List\s*<([^>]+)>/) || t.match(/Set\s*<([^>]+)>/);
+    const el = inner ? inner[1].trim() : 'String';
+    if (/String/.test(el)) return ['string'];
+    return [sampleFor(el, name + 'Item', depth + 1)];
+  }
+  if (/Map/.test(t)) return {};
+  if (/LocalDate|LocalDateTime|Date|Instant/.test(t)) return '2026-08-10T09:00:00';
+  if (/byte\[\]|Byte/.test(t)) return 'base64-encoded-bytes';
+  // nested DTO — recurse
+  if (depth < 3) {
+    const nested = modelSample(t, depth + 1);
+    if (nested) return nested;
+  }
+  return {};
+}
+
+function modelSample(typeName, depth = 0) {
+  const fields = modelFields(typeName);
+  if (!fields) return null;
+  const obj = {};
+  for (const f of fields) obj[f.name] = sampleFor(f.type, f.name, depth);
+  return obj;
+}
+
+// unwrap the data type from a controller return type
+function dataTypeOf(returnType) {
+  if (!returnType) return null;
+  const t = returnType.replace(/[\s]+/g, ' ').trim();
+  // ApiResponse<X> / ResponseEntity<X>
+  let inner = null;
+  const wrap = t.match(/^(?:[\w.]+\s*<)?\s*(?:ApiResponse|ResponseEntity)\s*<(.+)>\s*>?$/);
+  if (wrap) inner = wrap[1].trim();
+  else if (t.startsWith('ApiResponse<') || t.startsWith('ResponseEntity<')) {
+    inner = t.slice(t.indexOf('<') + 1, t.lastIndexOf('>')).trim();
+  }
+  if (!inner) inner = t;
+  // strip generics already consumed
+  if (/^(?:List|Page|Set)\s*<(.+)>/.test(inner)) {
+    return { kind: 'list', of: inner.match(/^(?:List|Page|Set)\s*<(.+)>/)[1].trim() };
+  }
+  if (inner === 'void' || inner === 'Void' || inner === 'String' || /^(?:boolean|long|int|Map)/.test(inner)) {
+    return { kind: inner === 'String' ? 'string' : 'simple', of: inner };
+  }
+  return { kind: 'object', of: inner };
+}
+
+// curated realistic responses for the most important endpoints
+const curatedResponses = {
+  'POST /auth/verify-otp': {
+    code: 200, message: 'Success',
+    data: { role: 'customer', token: 'eyJhbGciOiJIUzM4NCJ9.<jwt-payload>.<signature>', userId: 1 },
+    timestamp: 1754300000000,
+  },
+  'GET /auth/me': {
+    code: 200, message: 'Success',
+    data: { userId: 1, name: 'Ahmed Hassan', phone: '971501234567', role: 'customer', isActive: true, branchId: 1, branchName: 'Main Branch - Dubai', customerId: 1, memberId: 'CUST-001' },
+    timestamp: 1754300000000,
+  },
+  'GET /bookings/availability': {
+    code: 200, message: 'Success',
+    data: { date: '2026-08-10', serviceType: 'Full Service', availableSlots: ['09:00', '10:00', '11:00', '14:00'], bookedSlots: ['12:00', '13:00'], workshopCapacity: 4, bookedCount: 2 },
+    timestamp: 1754300000000,
+  },
+  'GET /customers/bookings': {
+    code: 200, message: 'Success',
+    data: [
+      { id: 1, service: 'Full Service', vehicleName: 'Toyota Camry', plateNumber: 'ABC-123', date: '10 Aug 2026', time: '10:00 AM', status: 'confirmed' },
+      { id: 2, service: 'Oil Change', vehicleName: 'Nissan Patrol', plateNumber: 'XYZ-999', date: '12 Aug 2026', time: '02:00 PM', status: 'pending' },
+    ],
+    timestamp: 1754300000000,
+  },
+  'GET /customers/profile': {
+    code: 200, message: 'Success',
+    data: { id: 1, name: 'Ahmed Hassan', firstName: 'Ahmed', lastName: 'Hassan', phone: '971501234567', email: 'ahmed@example.com', memberId: 'CUST-001', loyaltyPoints: 120, memberSince: '2026-01-01' },
+    timestamp: 1754300000000,
+  },
+  'GET /customers/vehicles': {
+    code: 200, message: 'Success',
+    data: [
+      { id: '1', brand: 'Toyota', model: 'Camry', plateNumber: 'ABC-123', vin: '4T1BF1FK4EU123456', color: 'White', year: 2021, mileage: '42500', lastService: '2026-01-15', nextDue: '2026-09-15', healthScore: 92 },
+    ],
+    timestamp: 1754300000000,
+  },
+  'GET /supervisor/bookings': {
+    code: 200, message: 'Success',
+    data: [
+      { id: 1, bookingRef: 'BK-1001', customerName: 'Ahmed Hassan', phone: '971501234567', vehicleName: 'Toyota Camry', plateNumber: 'ABC-123', serviceType: 'Full Service', bookingDate: '10 Aug 2026 · 10:00 AM', dateKey: '2026-08-10', notes: '', status: 'pending' },
+    ],
+    timestamp: 1754300000000,
+  },
+  'GET /supervisor/kpis': {
+    code: 200, message: 'Success',
+    data: [
+      { value: '7', label: 'Total Jobs', sub: 'Open job cards' },
+      { value: '3', label: 'In Progress', sub: 'Active now' },
+      { value: '4', label: 'Completed', sub: 'This week' },
+    ],
+    timestamp: 1754300000000,
+  },
+  'POST /owner/payments': {
+    code: 200, message: 'Success',
+    data: { paymentRef: 'PAY-1001', remaining: 0 },
+    timestamp: 1754300000000,
+  },
+  'GET /owner/invoices': {
+    code: 200, message: 'Success',
+    data: [
+      { id: 1, invoiceRef: 'INV-1001', customerName: 'Ahmed Hassan', jobCardRef: 'JC-1001', amount: 355.0, taxRate: 0.05, taxAmount: 17.75, grandTotal: 372.75, status: 'unpaid', issuedDate: '2026-08-10', dueDate: '2026-09-09' },
+    ],
+    timestamp: 1754300000000,
+  },
+  'GET /technicians/jobs': {
+    code: 200, message: 'Success',
+    data: [
+      { jobCardNo: 'JC-1001', vehicleName: 'Toyota Camry', plateNumber: 'ABC-123', serviceType: 'Full Service', status: 'In Progress', progressPercent: 60, notes: '', tasks: [{ taskId: 1, description: 'Change engine oil', status: 'done' }] },
+    ],
+    timestamp: 1754300000000,
+  },
+  'GET /crm/leads': {
+    code: 200, message: 'Success',
+    data: [
+      { id: '1', sno: 1, leadNumber: 'LD-001', customerName: 'Ahmed Hassan', phone: '971501234567', vehicle: 'Toyota Camry', source: 'whatsapp', status: 'new', assignedTo: 'Khaled Salem', createdAt: '2026-08-10T09:00:00', score: 78 },
+    ],
+    timestamp: 1754300000000,
+  },
+};
+
+// REAL captured responses (from scripts/capture_api_responses.js) win over
+// curated/DTO-derived examples — the collection then shows actual API output.
+const capturedFile = path.join(OUT, '.captured_responses.json');
+const captured = fs.existsSync(capturedFile)
+  ? JSON.parse(fs.readFileSync(capturedFile, 'utf8'))
+  : {};
+
+function buildExample(ep, verb) {
+  const key = `${ep.verb} ${ep.postmanPath}`;
+  const cap = captured[key];
+  const capEmpty = cap && cap.status >= 200 && cap.status < 300 &&
+    /"data"\s*:\s*(\[\]|\{\})/.test(cap.body);
+  if (cap && !capEmpty && cap.status >= 200 && cap.status < 300) return cap.body;
+  if (curatedResponses[key]) return JSON.stringify(curatedResponses[key], null, 2);
+  const env = (data) => ({ code: 200, message: 'Success', data, timestamp: 1754300000000 });
+  const dt = dataTypeOf(ep.returnType);
+  let data;
+  if (!dt) {
+    data = verb === 'GET' ? {} : { id: 1 };
+  } else if (dt.kind === 'list') {
+    const inner = dt.of;
+    if (inner === 'String' || /^(?:String|Long|Integer|Map)/.test(inner)) {
+      data = [inner === 'String' ? 'string' : inner];
+    } else {
+      const sample = modelSample(inner);
+      data = sample ? [sample] : [{}];
+    }
+  } else if (dt.kind === 'string') {
+    data = 'string';
+  } else if (dt.kind === 'simple') {
+    data = {};
+  } else {
+    const sample = modelSample(dt.of);
+    data = sample || {};
+  }
+  return JSON.stringify(env(data), null, 2);
 }
 
 // ---- build collection ----
@@ -232,11 +479,21 @@ for (const f of files) {
   for (const ep of parsed.endpoints) {
     total++;
     const body = bodyFor(ep);
-    const example = exampleFor(ep, ep.verb);
+    const example = buildExample(ep, ep.verb);
+    const capKey = `${ep.verb} ${ep.postmanPath}`;
+    const cap = captured[capKey];
+    const isLive = !!cap && cap.status >= 200 && cap.status < 300 &&
+      !(/"data"\s*:\s*(\[\]|\{\})/.test(cap.body));
+    const liveEmpty = !!cap && cap.status >= 200 && cap.status < 300 && !isLive;
     const desc = [
       '**Method:** ' + ep.methodName + '()',
       '**Requires auth:** Bearer token (roles apply)',
       '**Body:** ' + (body ? '```json\n' + body + '\n```' : 'none'),
+      '**Response:** ' + (isLive
+        ? 'LIVE capture from the running API.'
+        : liveEmpty
+          ? 'Live call returned an empty dataset for this account — showing the model shape instead.'
+          : 'Model example generated from the response DTO (the endpoint needs runtime state to return real data).'),
     ].join('\n\n');
     const item = {
       name: `${ep.verb} ${ep.postmanPath}`,
@@ -247,7 +504,7 @@ for (const f of files) {
         description: desc,
       },
       response: [{
-        name: 'Success (200)',
+        name: isLive ? 'Live response (real API)' : (liveEmpty ? 'Example (live returned empty)' : 'Example response (from DTO)'),
         originalRequest: { method: ep.verb, url: `{{baseUrl}}${ep.postmanPath}` },
         status: 'OK', code: 200,
         header: [{ key: 'Content-Type', value: 'application/json' }],

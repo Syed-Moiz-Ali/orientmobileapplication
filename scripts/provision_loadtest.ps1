@@ -31,7 +31,8 @@ $users = @(
     @{ Name = 'advisor';    Phone = '0501111001'; Role = 'advisor';      Staff = $true  },
     @{ Name = 'supervisor'; Phone = '0501111002'; Role = 'supervisor';   Staff = $true  },
     @{ Name = 'crm';        Phone = '0501111003'; Role = 'crmDashboard'; Staff = $false },
-    @{ Name = 'customer';   Phone = '0501111004'; Role = 'customer';     Staff = $false }
+    @{ Name = 'customer';   Phone = '0501111004'; Role = 'customer';     Staff = $false },
+    @{ Name = 'technician'; Phone = '0501111005'; Role = 'technician';   Staff = $true  }
 )
 
 $updates = @("DELETE FROM staff WHERE emp_id LIKE 'ELD%';")

@@ -24,16 +24,22 @@ Professional API collection for the Orient Workshop platform — **209 endpoints
 
 - **10 folders**: System · Auth · Advisor · Customer · Supervisor · Technician · Owner · CRM · Sync · WhatsApp
 - **Request bodies** for every POST/PUT endpoint — realistic samples (realistic values for the main flows: OTP login, booking, breakdown, check-in, QC review, payment, webhooks, API keys, subscription…; typed field samples for the rest)
-- **Example responses** in the standard envelope: `{"code": 200, "message": "Success", "data": {...}, "timestamp": ...}`
+- **Accurate response examples** — the shapes frontend devs build Flutter models from:
+  - **Live responses** captured from the real running API (real envelope, real field names/nesting)
+  - **Model examples** generated from the actual response DTO classes (for endpoints needing runtime state)
+  - Each example is labelled so you know which is which
 - **Query/path variables** (`{{date}}`, `{{page}}`, `:id`…) wired as Postman variables
 - **Collection README** with the envelope contract, role requirements, rate-limit notes
 
-## Regenerating
-
-The collection is generated from the controller sources by
-`scripts/generate_postman_collection.js` (node). After adding/changing endpoints:
+## Refreshing the live examples
 
 ```bash
+# 1. Start the gateway (dev profile)
+# 2. Provision roles:
+powershell -File scripts/provision_loadtest.ps1
+# 3. Capture real responses from the running API:
+node scripts/capture_api_responses.js
+# 4. Regenerate the collection:
 node scripts/generate_postman_collection.js
 ```
 
