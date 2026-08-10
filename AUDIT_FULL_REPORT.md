@@ -1392,3 +1392,13 @@ Code-completable: **done**. Deploy-phase (your inputs): API domain → GitHub AP
 - Verified: all apps analyze 0 errors, 73 tests (shared_core 21), **release APK builds with an https .env URL and no dart-define (exit 0)**; dev .env restored after the proof build.
 
 Deploy workflow is now: set BASE_URL=https://your-domain/api/v1 in the .env (or the API_BASE_URL GitHub variable) → build → signed APK.
+
+# 42. POSTMAN COLLECTION — COMPLETE API DOCUMENTATION (2026-08-07)
+
+- postman/Orient Workshop.postman_collection.json — **209 endpoints** across all 10 modules (System, Auth, Advisor, Customer, Supervisor, Technician, Owner, CRM, Sync, WhatsApp), generated from the controller sources.
+- Every request: correct method + path with path/query variables ({{baseUrl}}, :id, {{date}}...), **request body samples** (realistic for the main flows; typed field samples for the rest, derived from the actual DTOs), **example response** in the standard envelope.
+- Auth flow built in:  1 - Auth > verify-otp test script stores the JWT into {{token}}; all requests carry Authorization: Bearer {{token}}.
+- Environment template included; collection-level README documents the envelope contract, roles, rate limits, date formats.
+- Regenerable: 
+ode scripts/generate_postman_collection.js (parses all controllers + DTOs).
+- Live-verified: sampled endpoints return 200 against the running gateway (login → profile/vehicles/notifications/invoices/bookings/availability).
