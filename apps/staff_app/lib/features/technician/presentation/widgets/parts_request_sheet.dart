@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
@@ -7,11 +9,7 @@ class PartsRequestSheet extends ConsumerStatefulWidget {
   final String jobCardRef;
   final String technicianEmpId;
 
-  const PartsRequestSheet({
-    super.key,
-    required this.jobCardRef,
-    required this.technicianEmpId,
-  });
+  const PartsRequestSheet({super.key, required this.jobCardRef, required this.technicianEmpId});
 
   @override
   ConsumerState<PartsRequestSheet> createState() => _PartsRequestSheetState();
@@ -52,15 +50,11 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Parts request submitted')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Parts request submitted')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to request part: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to request part: $e')));
         setState(() => _isLoading = false);
       }
     }
@@ -69,15 +63,11 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.r24),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r24)),
         ),
         padding: const EdgeInsets.all(AppDimensions.s16),
         child: Form(
@@ -90,19 +80,11 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Request a Part',
-                style: AppTextStyles.rajdhaniTitle(
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              Text('Request a Part', style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary)),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _partNameCtrl,
@@ -133,49 +115,29 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Text(
-                    'Quantity:',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
+                  const Text('Quantity:', style: TextStyle(color: AppColors.textPrimary)),
                   const Spacer(),
                   IconButton(
-                    onPressed: _quantity > 1
-                        ? () => setState(() => _quantity--)
-                        : null,
-                    icon: const Icon(
-                      Icons.remove_circle_outline,
-                      color: AppColors.text3,
-                    ),
+                    onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
+                    icon: const Icon(Icons.remove_circle_outline, color: AppColors.text3),
                   ),
                   Text(
                     '$_quantity',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
                     onPressed: () => setState(() => _quantity++),
-                    icon: const Icon(
-                      Icons.add_circle_outline,
-                      color: AppColors.accent,
-                    ),
+                    icon: const Icon(Icons.add_circle_outline, color: AppColors.accent),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Urgency:',
-                style: TextStyle(color: AppColors.textPrimary),
-              ),
+              const Text('Urgency:', style: TextStyle(color: AppColors.textPrimary)),
               Row(
                 children: [
                   Expanded(
                     child: RadioListTile<String>(
-                      title: const Text(
-                        'Normal',
-                        style: TextStyle(fontSize: 14),
-                      ),
+                      title: const Text('Normal', style: TextStyle(fontSize: 14)),
                       value: 'Normal',
                       groupValue: _urgency,
                       onChanged: (v) => setState(() => _urgency = v!),
@@ -184,10 +146,7 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
                   ),
                   Expanded(
                     child: RadioListTile<String>(
-                      title: const Text(
-                        'Urgent',
-                        style: TextStyle(fontSize: 14),
-                      ),
+                      title: const Text('Urgent', style: TextStyle(fontSize: 14)),
                       value: 'Urgent',
                       groupValue: _urgency,
                       onChanged: (v) => setState(() => _urgency = v!),
@@ -218,24 +177,16 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
                   ),
                   onPressed: _isLoading ? null : _submit,
                   child: _isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text(
-                          'Submit Request',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                      : const Text('Submit Request', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],

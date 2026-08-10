@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_auth/src/presentation/providers/login_provider.dart';
@@ -416,7 +415,7 @@ class _PremiumTextField extends StatelessWidget {
             ),
             contentPadding: const EdgeInsets.symmetric(vertical: 16),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.15), width: 1.0),
+              borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.15)),
             ),
             focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.colorScheme.primary, width: 2.0)),
             isDense: true,

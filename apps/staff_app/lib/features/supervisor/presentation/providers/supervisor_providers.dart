@@ -7,11 +7,9 @@ import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/supervisor/data/datasources/supervisor_remote_datasource.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
 
-final supervisorRemoteDataSourceProvider = Provider<SupervisorRemoteDataSource>(
-  (ref) {
-    return SupervisorRemoteDataSource(ref.read(apiClientProvider));
-  },
-);
+final supervisorRemoteDataSourceProvider = Provider<SupervisorRemoteDataSource>((ref) {
+  return SupervisorRemoteDataSource(ref.read(apiClientProvider));
+});
 
 class SupervisorDashboardState {
   final int selectedIndex;
@@ -119,10 +117,8 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   List<StaffNotificationResponse> get notifications => _notifications;
   int get unreadNotifications => _notifications.where((n) => !n.isRead).length;
   int get totalAssigned => _allJobs.length;
-  int get inProgressCount =>
-      _allJobs.where((j) => j.status == 'In Progress').length;
-  int get completedCount =>
-      _allJobs.where((j) => j.status == 'Completed').length;
+  int get inProgressCount => _allJobs.where((j) => j.status == 'In Progress').length;
+  int get completedCount => _allJobs.where((j) => j.status == 'Completed').length;
 
   void selectTab(int index) {
     if (state.selectedIndex == index) return;
@@ -130,8 +126,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   }
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateJobCardSearch(String value) =>
-      state = state.copyWith(jobCardSearch: value);
+  void updateJobCardSearch(String value) => state = state.copyWith(jobCardSearch: value);
 
   void addAssignmentRow() {
     state = state.copyWith(
@@ -145,9 +140,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
 
   void removeAssignmentRow(int id) {
     if (state.assignmentRows.length <= 1) return;
-    state = state.copyWith(
-      assignmentRows: state.assignmentRows.where((r) => r.id != id).toList(),
-    );
+    state = state.copyWith(assignmentRows: state.assignmentRows.where((r) => r.id != id).toList());
   }
 
   void updateAssignmentRow(int id, WorkAssignmentEntity updated) {
@@ -159,9 +152,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   }
 
   Future<void> saveAndAssign() async {
-    final rows = state.assignmentRows
-        .where((r) => r.description.isNotEmpty || r.technicianName.isNotEmpty)
-        .toList();
+    final rows = state.assignmentRows.where((r) => r.description.isNotEmpty || r.technicianName.isNotEmpty).toList();
     if (rows.isEmpty) {
       state = state.copyWith(
         isAssignWorkLoading: false,
@@ -170,11 +161,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
       );
       return;
     }
-    state = state.copyWith(
-      isAssignWorkLoading: true,
-      assignWorkError: '',
-      assignWorkSuccess: '',
-    );
+    state = state.copyWith(isAssignWorkLoading: true, assignWorkError: '', assignWorkSuccess: '');
     try {
       // Build the payload matching the backend WorkAssignmentRequest DTO:
       // { items: [ { description, department, technicianName, dateOfWork,
@@ -210,15 +197,12 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
 
       state = state.copyWith(
         isAssignWorkLoading: false,
-        assignWorkSuccess:
-            'Work assignment submitted (${rows.length} task${rows.length == 1 ? '' : 's'})',
+        assignWorkSuccess: 'Work assignment submitted (${rows.length} task${rows.length == 1 ? '' : 's'})',
         assignWorkError: '',
         assignmentRows: [WorkAssignmentEntity(id: 1)],
       );
     } catch (e, st) {
-      ref
-          .read(loggerProvider)
-          .e('Failed to save work assignment', error: e, stackTrace: st);
+      ref.read(loggerProvider).e('Failed to save work assignment', error: e, stackTrace: st);
       state = state.copyWith(
         isAssignWorkLoading: false,
         assignWorkError: 'Could not submit the assignment. Try again.',
@@ -249,9 +233,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
       await _loadAll(r);
       state = state.copyWith(isDashboardLoading: false, dashboardError: '');
     } catch (e, st) {
-      ref
-          .read(loggerProvider)
-          .e('Failed to load supervisor dashboard', error: e, stackTrace: st);
+      ref.read(loggerProvider).e('Failed to load supervisor dashboard', error: e, stackTrace: st);
       state = state.copyWith(
         isDashboardLoading: false,
         dashboardError: 'Could not load the dashboard. Pull to refresh.',
@@ -293,11 +275,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
       Icons.search_rounded,
       Icons.thumb_up_outlined,
     ];
-    final jobColors = [
-      const Color(0xFF1F6FEB),
-      const Color(0xFF238636),
-      const Color(0xFFE3B341),
-    ];
+    final jobColors = [const Color(0xFF1F6FEB), const Color(0xFF238636), const Color(0xFFE3B341)];
 
     final results = await Future.wait([
       r.getKpis(),
@@ -325,12 +303,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
         .toList();
 
     _advisorJobData = (results[1] as List)
-        .map(
-          (e) => AdvisorJobEntity(
-            name: (e as AdvisorJobCountResponse).name,
-            count: e.count.toDouble(),
-          ),
-        )
+        .map((e) => AdvisorJobEntity(name: (e as AdvisorJobCountResponse).name, count: e.count.toDouble()))
         .toList();
 
     _jobTypes = (results[2] as List)
@@ -407,18 +380,12 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
     if (r == null) return;
     state = state.copyWith(isQueueLoading: true);
     try {
-      final results = await Future.wait([
-        r.getBookingQueue(),
-        r.getBreakdownQueue(),
-        r.getAssignableAdvisors(),
-      ]);
+      final results = await Future.wait([r.getBookingQueue(), r.getBreakdownQueue(), r.getAssignableAdvisors()]);
       _bookings = (results[0] as List).cast<BookingQueueResponse>();
       _breakdowns = (results[1] as List).cast<BreakdownQueueResponse>();
       _advisors = (results[2] as List).cast<AssignableStaffResponse>();
     } catch (e, st) {
-      ref
-          .read(loggerProvider)
-          .e('Failed to refresh supervisor queue', error: e, stackTrace: st);
+      ref.read(loggerProvider).e('Failed to refresh supervisor queue', error: e, stackTrace: st);
     }
     state = state.copyWith(isQueueLoading: false);
   }
@@ -452,9 +419,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
     try {
       _awaiting = await r.getAwaitingCompletions();
     } catch (e, st) {
-      ref
-          .read(loggerProvider)
-          .e('Failed to refresh completion review', error: e, stackTrace: st);
+      ref.read(loggerProvider).e('Failed to refresh completion review', error: e, stackTrace: st);
     }
     state = state.copyWith(isReviewLoading: false);
   }
@@ -481,10 +446,21 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
 
   // FE-FLOW (seamless-flow integration): the QC gate. Approve moves the job to
   // qualityCheckPassed; reject sends it back to inProgress with a reason.
-  Future<String> qcReview(String jobCardRef, String action,
-      {bool checklistPassed = true, String notes = '', String rejectReason = ''}) async {
-    final ok = await _remote?.qcReview(jobCardRef, action,
-            checklistPassed: checklistPassed, notes: notes, rejectReason: rejectReason) ??
+  Future<String> qcReview(
+    String jobCardRef,
+    String action, {
+    bool checklistPassed = true,
+    String notes = '',
+    String rejectReason = '',
+  }) async {
+    final ok =
+        await _remote?.qcReview(
+          jobCardRef,
+          action,
+          checklistPassed: checklistPassed,
+          notes: notes,
+          rejectReason: rejectReason,
+        ) ??
         false;
     if (ok) {
       if (action == 'reject') {
@@ -505,9 +481,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
       _notifications = await r.getStaffNotifications();
       state = state.copyWith();
     } catch (e, st) {
-      ref
-          .read(loggerProvider)
-          .e('Failed to load staff notifications', error: e, stackTrace: st);
+      ref.read(loggerProvider).e('Failed to load staff notifications', error: e, stackTrace: st);
     }
   }
 
@@ -538,16 +512,13 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
           .where((v) => v['id'] != null && v['description'] != null)
           .map((v) => WorkAssignmentEntity.fromMap(v))
           .toList();
-      if (savedAssignments.isNotEmpty)
+      if (savedAssignments.isNotEmpty) {
         state = state.copyWith(assignmentRows: savedAssignments);
+      }
       final savedJobs = box.values
           .whereType<Map>()
           .map((m) => Map<String, dynamic>.from(m))
-          .where(
-            (v) =>
-                v['jobCard'] != null &&
-                v['jobCard'].toString().startsWith('ASN-'),
-          )
+          .where((v) => v['jobCard'] != null && v['jobCard'].toString().startsWith('ASN-'))
           .map(
             (v) => AssignedJobEntity(
               jobCard: v['jobCard'] as String? ?? '',
@@ -565,18 +536,11 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
         _allJobs.addAll(savedJobs);
       }
     } catch (e, st) {
-      ref
-          .read(loggerProvider)
-          .e(
-            'Failed to load supervisor jobs from Hive',
-            error: e,
-            stackTrace: st,
-          );
+      ref.read(loggerProvider).e('Failed to load supervisor jobs from Hive', error: e, stackTrace: st);
     }
   }
 }
 
-final supervisorDashboardProvider =
-    NotifierProvider<SupervisorDashboardNotifier, SupervisorDashboardState>(
-      SupervisorDashboardNotifier.new,
-    );
+final supervisorDashboardProvider = NotifierProvider<SupervisorDashboardNotifier, SupervisorDashboardState>(
+  SupervisorDashboardNotifier.new,
+);

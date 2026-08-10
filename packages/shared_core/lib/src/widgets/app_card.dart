@@ -43,12 +43,7 @@ class AppCard extends StatelessWidget {
 
     // Hyper-minimalist ambient shadow using the theme's shadow/onSurface tone
     final defaultShadow = [
-      BoxShadow(
-        color: colorScheme.shadow.withValues(alpha: 0.04),
-        blurRadius: 16,
-        spreadRadius: 0,
-        offset: const Offset(0, 4),
-      ),
+      BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4)),
     ];
 
     final cardContent = AnimatedContainer(
@@ -59,7 +54,7 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: effectiveBorderColor, width: 1.0),
+        border: Border.all(color: effectiveBorderColor),
         boxShadow: boxShadow ?? defaultShadow,
       ),
       child: child,

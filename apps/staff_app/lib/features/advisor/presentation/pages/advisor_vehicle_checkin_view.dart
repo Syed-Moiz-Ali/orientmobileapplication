@@ -16,12 +16,10 @@ class AdvisorVehicleCheckinView extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<AdvisorVehicleCheckinView> createState() =>
-      _AdvisorVehicleCheckinViewState();
+  ConsumerState<AdvisorVehicleCheckinView> createState() => _AdvisorVehicleCheckinViewState();
 }
 
-class _AdvisorVehicleCheckinViewState
-    extends ConsumerState<AdvisorVehicleCheckinView> {
+class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleCheckinView> {
   int _step = 0;
   final _odometerCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
@@ -43,10 +41,7 @@ class _AdvisorVehicleCheckinViewState
         final ctrl = TextEditingController();
         return AlertDialog(
           backgroundColor: AppColors.surface,
-          title: Text(
-            'Damage on $area',
-            style: const TextStyle(color: AppColors.textPrimary),
-          ),
+          title: Text('Damage on $area', style: const TextStyle(color: AppColors.textPrimary)),
           content: TextField(
             controller: ctrl,
             decoration: const InputDecoration(
@@ -56,10 +51,7 @@ class _AdvisorVehicleCheckinViewState
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
             TextButton(
               onPressed: () {
                 if (ctrl.text.trim().isNotEmpty) {
@@ -87,22 +79,16 @@ class _AdvisorVehicleCheckinViewState
       });
       if (mounted) {
         if (ok) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Vehicle checked in successfully')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vehicle checked in successfully')));
           Navigator.pop(context);
         } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Failed to check in')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to check in')));
           setState(() => _isLoading = false);
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
         setState(() => _isLoading = false);
       }
     }
@@ -117,23 +103,15 @@ class _AdvisorVehicleCheckinViewState
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: AppColors.textPrimary,
-          ),
-          onPressed: () =>
-              _step == 0 ? Navigator.pop(context) : setState(() => _step = 0),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          onPressed: () => _step == 0 ? Navigator.pop(context) : setState(() => _step = 0),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Vehicle Check-In',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
             ),
             Text(
               '${widget.vehicleInfo} · ${widget.customerName}',
@@ -152,11 +130,7 @@ class _AdvisorVehicleCheckinViewState
       children: [
         const Text(
           'Vehicle Intake',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -175,10 +149,7 @@ class _AdvisorVehicleCheckinViewState
         const SizedBox(height: 16),
         const Text(
           'Fuel Level',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         SegmentedButton<String>(
@@ -192,8 +163,9 @@ class _AdvisorVehicleCheckinViewState
           onSelectionChanged: (set) => setState(() => _fuelLevel = set.first),
           style: ButtonStyle(
             backgroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected))
+              if (states.contains(WidgetState.selected)) {
                 return AppColors.accent.withValues(alpha: 0.2);
+              }
               return AppColors.surface;
             }),
           ),
@@ -220,15 +192,10 @@ class _AdvisorVehicleCheckinViewState
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accent,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
             ),
             onPressed: () => setState(() => _step = 1),
-            child: const Text(
-              'Next',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Next', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ),
       ],
@@ -241,17 +208,10 @@ class _AdvisorVehicleCheckinViewState
       children: [
         const Text(
           'Document Existing Condition',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Tap an area to add damage notes',
-          style: TextStyle(color: AppColors.text3, fontSize: 13),
-        ),
+        const Text('Tap an area to add damage notes', style: TextStyle(color: AppColors.text3, fontSize: 13)),
         const SizedBox(height: 24),
         GridView.count(
           shrinkWrap: true,
@@ -272,10 +232,7 @@ class _AdvisorVehicleCheckinViewState
         if (_damages.isNotEmpty) ...[
           const Text(
             'Noted Damages:',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -301,24 +258,16 @@ class _AdvisorVehicleCheckinViewState
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
             ),
             onPressed: _isLoading ? null : _submit,
             child: _isLoading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
-                : const Text(
-                    'Proceed to Check-In',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                : const Text('Proceed to Check-In', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ),
       ],
@@ -331,9 +280,7 @@ class _AdvisorVehicleCheckinViewState
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.textPrimary,
         side: const BorderSide(color: AppColors.border),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r8)),
       ),
       child: Text(label),
     );

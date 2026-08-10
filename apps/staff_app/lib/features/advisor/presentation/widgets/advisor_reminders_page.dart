@@ -8,11 +8,7 @@ import 'advisor_reminder_row.dart';
 class AdvisorRemindersPage extends ConsumerWidget {
   final List<FollowupReminderEntity> reminders;
   final void Function(FollowupReminderEntity) onContact;
-  const AdvisorRemindersPage({
-    super.key,
-    required this.reminders,
-    required this.onContact,
-  });
+  const AdvisorRemindersPage({super.key, required this.reminders, required this.onContact});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,16 +17,9 @@ class AdvisorRemindersPage extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.notifications_outlined,
-              size: 40,
-              color: AppColors.text4.withValues(alpha: 0.4),
-            ),
+            Icon(Icons.notifications_outlined, size: 40, color: AppColors.text4.withValues(alpha: 0.4)),
             const SizedBox(height: 12),
-            const Text(
-              'No reminders',
-              style: TextStyle(fontSize: 14, color: AppColors.text3),
-            ),
+            const Text('No reminders', style: TextStyle(fontSize: 14, color: AppColors.text3)),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => _showNewReminderSheet(context, ref),
@@ -40,9 +29,7 @@ class AdvisorRemindersPage extends ConsumerWidget {
                 backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],
@@ -54,10 +41,7 @@ class AdvisorRemindersPage extends ConsumerWidget {
         ListView.builder(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 70),
           itemCount: reminders.length,
-          itemBuilder: (_, i) => AdvisorReminderRow(
-            r: reminders[i],
-            onContact: () => onContact(reminders[i]),
-          ),
+          itemBuilder: (_, i) => AdvisorReminderRow(r: reminders[i], onContact: () => onContact(reminders[i])),
         ),
         Positioned(
           right: 14,
@@ -82,18 +66,11 @@ class AdvisorRemindersPage extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) => Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              20,
-              20,
-              MediaQuery.of(ctx).viewInsets.bottom + 20,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,19 +80,12 @@ class AdvisorRemindersPage extends ConsumerWidget {
                     Container(
                       width: 4,
                       height: 20,
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                      decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(2)),
                     ),
                     const SizedBox(width: 10),
                     const Text(
                       'New Reminder',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                     ),
                   ],
                 ),
@@ -152,10 +122,7 @@ class AdvisorRemindersPage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Text(
-                      'Priority: ',
-                      style: TextStyle(fontSize: 13, color: AppColors.text2),
-                    ),
+                    const Text('Priority: ', style: TextStyle(fontSize: 13, color: AppColors.text2)),
                     const SizedBox(width: 8),
                     ...ReminderPriority.values.map((p) {
                       final sel = priority == p;
@@ -164,10 +131,7 @@ class AdvisorRemindersPage extends ConsumerWidget {
                         child: GestureDetector(
                           onTap: () => setSheetState(() => priority = p),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 5,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                             decoration: BoxDecoration(
                               color: sel ? AppColors.accent : AppColors.canvas,
                               borderRadius: BorderRadius.circular(20),
@@ -191,8 +155,9 @@ class AdvisorRemindersPage extends ConsumerWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      if (nameCtrl.text.isEmpty || taskCtrl.text.isEmpty)
+                      if (nameCtrl.text.isEmpty || taskCtrl.text.isEmpty) {
                         return;
+                      }
                       ref
                           .read(advisorFollowupRemindersProvider.notifier)
                           .addReminder(
@@ -200,9 +165,7 @@ class AdvisorRemindersPage extends ConsumerWidget {
                               customerName: nameCtrl.text,
                               vehicleId: '',
                               task: taskCtrl.text,
-                              dueDate: dateCtrl.text.isEmpty
-                                  ? 'Today'
-                                  : dateCtrl.text,
+                              dueDate: dateCtrl.text.isEmpty ? 'Today' : dateCtrl.text,
                               priority: priority,
                             ),
                           );
@@ -213,14 +176,9 @@ class AdvisorRemindersPage extends ConsumerWidget {
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text(
-                      'Add Reminder',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
+                    child: const Text('Add Reminder', style: TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],

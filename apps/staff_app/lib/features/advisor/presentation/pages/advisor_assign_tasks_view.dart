@@ -16,12 +16,10 @@ class AdvisorAssignTasksView extends ConsumerStatefulWidget {
   const AdvisorAssignTasksView({super.key, required this.jobCardRef});
 
   @override
-  ConsumerState<AdvisorAssignTasksView> createState() =>
-      _AdvisorAssignTasksViewState();
+  ConsumerState<AdvisorAssignTasksView> createState() => _AdvisorAssignTasksViewState();
 }
 
-class _AdvisorAssignTasksViewState
-    extends ConsumerState<AdvisorAssignTasksView> {
+class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView> {
   final List<TaskDraft> _tasks = [TaskDraft(description: '', selected: true)];
   String? _selectedTechnicianId;
   DateTime? _estimatedCompletion;
@@ -36,36 +34,21 @@ class _AdvisorAssignTasksViewState
     );
     if (date == null) return;
     if (!mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
+    final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (time == null) return;
     setState(() {
-      _estimatedCompletion = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        time.hour,
-        time.minute,
-      );
+      _estimatedCompletion = DateTime(date.year, date.month, date.day, time.hour, time.minute);
     });
   }
 
   Future<void> _assignTasks() async {
-    final selectedTasks = _tasks
-        .where((t) => t.selected && t.description.trim().isNotEmpty)
-        .toList();
+    final selectedTasks = _tasks.where((t) => t.selected && t.description.trim().isNotEmpty).toList();
     if (_selectedTechnicianId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a technician')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a technician')));
       return;
     }
     if (selectedTasks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one task')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please add at least one task')));
       return;
     }
 
@@ -75,28 +58,20 @@ class _AdvisorAssignTasksViewState
       final ok = await remote.assignTasks(widget.jobCardRef, {
         'technicianId': _selectedTechnicianId,
         'estimatedCompletion': _estimatedCompletion?.toIso8601String(),
-        'tasks': selectedTasks
-            .map((t) => {'description': t.description.trim()})
-            .toList(),
+        'tasks': selectedTasks.map((t) => {'description': t.description.trim()}).toList(),
       });
       if (mounted) {
         if (ok) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tasks assigned successfully')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tasks assigned successfully')));
           Navigator.pop(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to assign tasks')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to assign tasks')));
           setState(() => _isLoading = false);
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
         setState(() => _isLoading = false);
       }
     }
@@ -114,10 +89,7 @@ class _AdvisorAssignTasksViewState
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: AppColors.textPrimary,
-          ),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -125,16 +97,9 @@ class _AdvisorAssignTasksViewState
           children: [
             const Text(
               'Assign Tasks',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
             ),
-            Text(
-              widget.jobCardRef,
-              style: const TextStyle(fontSize: 13, color: AppColors.text3),
-            ),
+            Text(widget.jobCardRef, style: const TextStyle(fontSize: 13, color: AppColors.text3)),
           ],
         ),
       ),
@@ -143,10 +108,7 @@ class _AdvisorAssignTasksViewState
         children: [
           const Text(
             'Assigned Technician',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
@@ -157,24 +119,15 @@ class _AdvisorAssignTasksViewState
                 borderRadius: BorderRadius.circular(AppDimensions.r12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
             hint: const Text('Select Technician'),
-            value: _selectedTechnicianId,
+            initialValue: _selectedTechnicianId,
             items: technicians
                 .map(
                   (tech) => DropdownMenuItem(
                     value: tech.empId,
-                    child: Text(
-                      tech.name,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                      ),
-                    ),
+                    child: Text(tech.name, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14)),
                   ),
                 )
                 .toList(),
@@ -183,10 +136,7 @@ class _AdvisorAssignTasksViewState
           const SizedBox(height: 24),
           const Text(
             'Tasks to Perform',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           ..._tasks.asMap().entries.map((e) {
@@ -209,9 +159,7 @@ class _AdvisorAssignTasksViewState
                         filled: true,
                         fillColor: AppColors.surface,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.r12,
-                          ),
+                          borderRadius: BorderRadius.circular(AppDimensions.r12),
                           borderSide: BorderSide.none,
                         ),
                       ),
@@ -220,10 +168,7 @@ class _AdvisorAssignTasksViewState
                   ),
                   if (_tasks.length > 1)
                     IconButton(
-                      icon: const Icon(
-                        Icons.remove_circle_outline,
-                        color: AppColors.danger,
-                      ),
+                      icon: const Icon(Icons.remove_circle_outline, color: AppColors.danger),
                       onPressed: () => setState(() => _tasks.removeAt(idx)),
                     ),
                 ],
@@ -231,21 +176,14 @@ class _AdvisorAssignTasksViewState
             );
           }),
           TextButton.icon(
-            onPressed: () =>
-                setState(() => _tasks.add(TaskDraft(description: ''))),
+            onPressed: () => setState(() => _tasks.add(TaskDraft(description: ''))),
             icon: const Icon(Icons.add, color: AppColors.accent),
-            label: const Text(
-              'Add Task',
-              style: TextStyle(color: AppColors.accent),
-            ),
+            label: const Text('Add Task', style: TextStyle(color: AppColors.accent)),
           ),
           const SizedBox(height: 24),
           const Text(
             'Estimated Completion (Optional)',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           InkWell(
@@ -259,20 +197,14 @@ class _AdvisorAssignTasksViewState
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.calendar_today_rounded,
-                    color: AppColors.accent,
-                    size: 20,
-                  ),
+                  const Icon(Icons.calendar_today_rounded, color: AppColors.accent, size: 20),
                   const SizedBox(width: 12),
                   Text(
                     _estimatedCompletion == null
                         ? 'Select Date & Time'
                         : _estimatedCompletion.toString().substring(0, 16),
                     style: TextStyle(
-                      color: _estimatedCompletion == null
-                          ? AppColors.text4
-                          : AppColors.textPrimary,
+                      color: _estimatedCompletion == null ? AppColors.text4 : AppColors.textPrimary,
                       fontSize: 14,
                     ),
                   ),
@@ -288,24 +220,16 @@ class _AdvisorAssignTasksViewState
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
               ),
               onPressed: _isLoading ? null : _assignTasks,
               child: _isLoading
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text(
-                      'Assign Tasks',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                  : const Text('Assign Tasks', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
         ],
