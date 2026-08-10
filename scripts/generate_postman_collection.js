@@ -310,13 +310,15 @@ function dataTypeOf(returnType) {
     inner = t.slice(t.indexOf('<') + 1, t.lastIndexOf('>')).trim();
   }
   if (!inner) inner = t;
+  inner = inner.replace(/^java\.util\./, '').replace(/^java\./, '');
   // strip generics already consumed
   if (/^(?:List|Page|Set)\s*<(.+)>/.test(inner)) {
     return { kind: 'list', of: inner.match(/^(?:List|Page|Set)\s*<(.+)>/)[1].trim() };
   }
-  if (inner === 'void' || inner === 'Void' || inner === 'String' || /^(?:boolean|long|int|Map)/.test(inner)) {
+  if (inner === 'void' || inner === 'Void' || inner === 'String' || /^(?:boolean|long|int)/.test(inner)) {
     return { kind: inner === 'String' ? 'string' : 'simple', of: inner };
   }
+  if (/^Map/.test(inner)) return { kind: 'map', of: inner };
   return { kind: 'object', of: inner };
 }
 
@@ -399,6 +401,11 @@ const curatedResponses = {
     ],
     timestamp: 1754300000000,
   },
+  'GET /crm/leads/:id/score': {
+    code: 200, message: 'Success',
+    data: { score: 78, level: 'hot', reasons: ['WhatsApp engagement', 'Repeated service visits'], nextFollowUp: '2026-08-12T10:00:00' },
+    timestamp: 1754300000000,
+  },
 };
 
 // REAL captured responses (from scripts/capture_api_responses.js) win over
@@ -431,7 +438,12 @@ function buildExample(ep, verb) {
   } else if (dt.kind === 'string') {
     data = 'string';
   } else if (dt.kind === 'simple') {
-    data = {};
+    // void/action endpoints: the REAL envelope has no data key at all —
+    // verified live: {"code":200,"message":"Success","timestamp":...}
+    return JSON.stringify({ code: 200, message: 'Success', timestamp: 1754300000000 }, null, 2);
+  } else if (dt.kind === 'map') {
+    // Map<String, X> returns — show the shape with a realistic entry
+    data = /Boolean/.test(dt.of) ? { 'result': true } : { 'message': 'ok' };
   } else {
     const sample = modelSample(dt.of);
     data = sample || {};
