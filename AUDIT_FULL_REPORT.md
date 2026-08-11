@@ -1443,3 +1443,10 @@ The product has **no User entity** — it has customer, owner, staff (advisor/su
 - Domain id vocabulary is now: **customers CUST-000001**, **staff EADV…/ESUP…/ETCH… (emp_id)**, vehicles VEH-, notifications NTF-, CRM CT-/CV-, api keys KEY-, webhooks WH-, inventory ITM-, suppliers SUP-, subscriptions SUB-, branches BR-… (27 tables from V13).
 - Postman collection + database-schema.md regenerated: no USR- anywhere; schema doc reflects the post-V14 state (drop statements replayed).
 - **Verified: mvn BUILD SUCCESS, E2E live 28/28** with V14 applied.
+
+# 48. DEV DEFAULT PROFILE + OTP FIX (2026-08-11, owner decision)
+
+- **spring.profiles.default=dev** — the backend now boots with dev when no profile is given (IntelliJ / java -jar just work). Production MUST still set SPRING_PROFILES_ACTIVE=prod explicitly (env-only secrets + fail-fast); noted in the config + deployment docs.
+- **Fixed a real bug the change exposed**: OtpService.generateOtp checked environment.getActiveProfiles() for the dev profile — which EXCLUDES default profiles — so the fixed dev OTP (123456) was ignored when dev came from the default, breaking login. Now uses environment.acceptsProfiles(Profiles.of("dev")) (covers active + default).
+- Root cause of the original error.txt: the app was launched with **no profile → H2 in-memory fallback → MySQL migrations syntax-error on H2**. With the dev default this can't happen for local runs.
+- Verified: boots with zero flags, login OK, **E2E 28/28**, mvn test BUILD SUCCESS.

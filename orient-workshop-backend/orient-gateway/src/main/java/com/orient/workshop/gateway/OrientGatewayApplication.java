@@ -30,6 +30,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class OrientGatewayApplication {
 
     public static void main(String[] args) {
+        // Profile: dev is the default (application.properties); production
+        // must set SPRING_PROFILES_ACTIVE=prod explicitly.
         SpringApplication.run(OrientGatewayApplication.class, args);
     }
 }

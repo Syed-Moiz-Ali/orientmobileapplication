@@ -156,8 +156,11 @@ public class OtpService {
 
     private String generateOtp() {
         if (fixedOtpValue != null && !fixedOtpValue.isBlank()) {
+            // acceptsProfiles covers BOTH explicitly-active profiles AND the
+            // default profile (spring.profiles.default=dev) — getActiveProfiles()
+            // alone misses defaults, which broke login when dev was the default.
             boolean devActive = environment != null
-                    && java.util.Arrays.asList(environment.getActiveProfiles()).contains("dev");
+                    && environment.acceptsProfiles(org.springframework.core.env.Profiles.of("dev"));
             if (devActive) {
                 return fixedOtpValue;
             }

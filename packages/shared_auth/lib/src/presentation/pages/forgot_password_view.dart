@@ -486,9 +486,8 @@ class _PremiumTextField extends StatelessWidget {
 class _ActionLink extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
-  final Color? color;
 
-  const _ActionLink({required this.text, required this.onTap, this.color});
+  const _ActionLink({required this.text, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -503,7 +502,7 @@ class _ActionLink extends StatelessWidget {
         child: Text(
           text,
           style: theme.textTheme.titleSmall?.copyWith(
-            color: color ?? theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             fontWeight: FontWeight.w600,
           ),
         ),
