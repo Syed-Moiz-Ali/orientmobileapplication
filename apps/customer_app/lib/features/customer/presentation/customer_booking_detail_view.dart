@@ -1,184 +1,284 @@
+import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
-import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
 class CustomerBookingDetailView extends ConsumerWidget {
   final CustomerBookingEntity booking;
+
   const CustomerBookingDetailView({super.key, required this.booking});
-
-  (Color, Color) _statusColors(BookingStatus s) {
-    switch (s) {
-      case BookingStatus.confirmed:
-        return (const Color(0xFFB2E0E5), AppColors.accent);
-      case BookingStatus.completed:
-        return (AppColors.successBg, AppColors.success);
-      case BookingStatus.pending:
-        return (AppColors.warningBg, AppColors.warning);
-      case BookingStatus.cancelled:
-        return (AppColors.dangerBg, AppColors.danger);
-    }
-  }
-
-  List<_StatusStep> _steps(BookingStatus status) {
-    switch (status) {
-      case BookingStatus.pending:
-        return [
-          _StatusStep('Booking Placed', true, true),
-          _StatusStep('Awaiting Confirmation', true, false),
-          _StatusStep('Service in Progress', false, false),
-          _StatusStep('Completed', false, false),
-        ];
-      case BookingStatus.confirmed:
-        return [
-          _StatusStep('Booking Placed', true, false),
-          _StatusStep('Confirmed', true, false),
-          _StatusStep('Service in Progress', true, true),
-          _StatusStep('Completed', false, false),
-        ];
-      case BookingStatus.completed:
-        return [
-          _StatusStep('Booking Placed', true, false),
-          _StatusStep('Confirmed', true, false),
-          _StatusStep('Service Completed', true, false),
-          _StatusStep('Ready for Collection', true, true),
-        ];
-      case BookingStatus.cancelled:
-        return [
-          _StatusStep('Booking Placed', true, false),
-          _StatusStep('Confirmed', true, false),
-          _StatusStep('Cancelled', false, true),
-        ];
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (bg, fg) = _statusColors(booking.status);
-    final steps = _steps(booking.status);
+    final textTheme = Theme.of(context).textTheme;
+    final cancellable =
+        booking.status == BookingStatus.pending ||
+        booking.status == BookingStatus.confirmed;
+
+    final statusColor = _statusColor(booking.status);
+    final statusBg = _statusBg(booking.status);
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(
           children: [
-            AppTopBar(title: 'Booking Details'),
-            const Divider(height: 1),
+            const AppTopBar(title: 'Appointment Details'),
+            const Divider(height: 1, color: AppColors.line),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppDimensions.s18),
+              child: AppResponsivePage(
+                physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppDimensions.s20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [fg.withValues(alpha: 0.1), fg.withValues(alpha: 0.04)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(AppDimensions.r16),
-                        border: Border.all(color: fg.withValues(alpha: 0.2)),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 64, height: 64,
-                            decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-                            child: Icon(
-                              booking.status == BookingStatus.completed
-                                  ? Icons.check_circle_rounded
-                                  : booking.status == BookingStatus.cancelled
-                                      ? Icons.cancel_rounded
-                                      : Icons.build_circle_outlined,
-                              color: fg, size: 32,
-                            ),
-                          ),
-                          const SizedBox(height: AppDimensions.s12),
-                          Text(
-                            'Appointment',
-                            style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: AppDimensions.s6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppDimensions.r20)),
-                            child: Text(
-                              booking.statusLabel,
-                              style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.s20),
-                    _StatusTimeline(steps: steps, fg: fg),
-                    const SizedBox(height: AppDimensions.s20),
+                    const SizedBox(height: AppDimensions.s16),
+
+                    // ── STATUS HEADER CARD ──────────────────────────────────
                     AppCard(
+                      borderRadius: 24,
+                      padding: const EdgeInsets.all(AppDimensions.s18),
+                      color: AppColors.surface,
+                      borderColor: AppColors.border,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _detailRow(Icons.directions_car_rounded, 'Vehicle', '${booking.vehicleName}  \u00b7  ${booking.plateNumber}'),
-                          const Divider(height: 24),
-                          _detailRow(Icons.calendar_month_rounded, 'Date', booking.date),
-                          if (booking.time.isNotEmpty) ...[
-                            const Divider(height: 24),
-                            _detailRow(Icons.schedule_rounded, 'Time', booking.time),
-                          ],
-                        ],
-                      ),
-                    ),
-                    if (booking.status == BookingStatus.completed)
-                      Padding(
-                        padding: const EdgeInsets.only(top: AppDimensions.s20),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(AppDimensions.s16),
-                          decoration: BoxDecoration(
-                            color: AppColors.successBg,
-                            borderRadius: BorderRadius.circular(AppDimensions.r14),
-                            border: Border.all(color: AppColors.successBorder),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          // Status pill
+                          Row(
                             children: [
-                              Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
-                              SizedBox(width: AppDimensions.s8),
-                              Text(
-                                'Service completed successfully',
-                                style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w700, fontSize: 14),
+                              StatusPill(
+                                label: booking.statusLabel.toUpperCase(),
+                                bg: statusBg,
+                                fg: statusColor,
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceAlt,
+                                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Text(
+                                  '#${booking.id.length > 8 ? booking.id.substring(booking.id.length - 8) : booking.id}',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: AppColors.text3,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 10,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                        ),
+                          const SizedBox(height: AppDimensions.s12),
+                          // Service name
+                          Text(
+                            booking.service.isNotEmpty
+                                ? booking.service
+                                : 'Scheduled Service',
+                            style: textTheme.headlineSmall?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          // Plate + vehicle
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  booking.plateNumber.toUpperCase(),
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: const Color(0xFFFACC15),
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 10,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: AppDimensions.s8),
+                              Expanded(
+                                child: Text(
+                                  booking.vehicleName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.text3,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    // FE-FIX (frontend pass): the cancel endpoint existed with
-                    // ownership checks but the app never surfaced it.
-                    if (booking.status == BookingStatus.pending ||
-                        booking.status == BookingStatus.confirmed) ...[
-                      const SizedBox(height: AppDimensions.s20),
+                    ),
+                    const SizedBox(height: AppDimensions.s20),
+
+                    // ── APPOINTMENT DETAILS CARD ────────────────────────────
+                    _SectionHeader(title: 'Appointment Details', subtitle: 'Date, time & vehicle summary'),
+                    const SizedBox(height: AppDimensions.s10),
+                    AppCard(
+                      borderRadius: 24,
+                      padding: EdgeInsets.zero,
+                      color: AppColors.surface,
+                      borderColor: AppColors.border,
+                      child: Column(
+                        children: [
+                          _InfoRow(
+                            icon: Icons.calendar_today_rounded,
+                            label: 'Date',
+                            value: booking.date.isNotEmpty ? booking.date : 'TBC',
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          _InfoRow(
+                            icon: Icons.access_time_rounded,
+                            label: 'Time',
+                            value: booking.time.isNotEmpty ? booking.time : 'TBC',
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          _InfoRow(
+                            icon: Icons.directions_car_rounded,
+                            label: 'Vehicle',
+                            value: booking.vehicleName.isNotEmpty
+                                ? booking.vehicleName
+                                : '—',
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          _InfoRow(
+                            icon: Icons.pin_rounded,
+                            label: 'Registration',
+                            value: booking.plateNumber.toUpperCase(),
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          _InfoRow(
+                            icon: Icons.build_rounded,
+                            label: 'Service Type',
+                            value: booking.service.isNotEmpty ? booking.service : '—',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s20),
+
+                    // ── PROGRESS TRACKER ────────────────────────────────────
+                    _SectionHeader(
+                      title: 'Service Progress',
+                      subtitle: 'Live stage tracker updated by the workshop',
+                    ),
+                    const SizedBox(height: AppDimensions.s10),
+                    AppCard(
+                      borderRadius: 24,
+                      padding: const EdgeInsets.all(AppDimensions.s18),
+                      color: AppColors.surface,
+                      borderColor: AppColors.border,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _StepCircle(
+                            label: 'Booked',
+                            isDone: true,
+                          ),
+                          _StepLine(
+                            isDone: booking.status == BookingStatus.confirmed ||
+                                booking.status == BookingStatus.completed ||
+                                booking.status == BookingStatus.completed,
+                          ),
+                          _StepCircle(
+                            label: 'Confirmed',
+                            isDone: booking.status == BookingStatus.confirmed ||
+                                booking.status == BookingStatus.completed ||
+                                booking.status == BookingStatus.completed,
+                            isCurrent: booking.status == BookingStatus.confirmed,
+                          ),
+                          _StepLine(
+                            isDone: booking.status == BookingStatus.completed ||
+                                booking.status == BookingStatus.completed,
+                          ),
+                          _StepCircle(
+                            label: 'In Bay',
+                            isDone: booking.status == BookingStatus.completed,
+                            isCurrent: booking.status == BookingStatus.completed,
+                          ),
+                          _StepLine(
+                            isDone: booking.status == BookingStatus.completed,
+                          ),
+                          _StepCircle(
+                            label: 'Done',
+                            isDone: booking.status == BookingStatus.completed,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s20),
+
+                    // ── WORKSHOP INFO ────────────────────────────────────────
+                    _SectionHeader(
+                      title: 'Workshop Location',
+                      subtitle: 'Orient Automotive • Main Bay',
+                    ),
+                    const SizedBox(height: AppDimensions.s10),
+                    AppCard(
+                      borderRadius: 24,
+                      padding: EdgeInsets.zero,
+                      color: AppColors.surface,
+                      borderColor: AppColors.border,
+                      child: Column(
+                        children: [
+                          _InfoRow(
+                            icon: Icons.location_on_rounded,
+                            label: 'Address',
+                            value: 'Orient Automotive, Workshop Bay 1',
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          _InfoRow(
+                            icon: Icons.access_time_filled_rounded,
+                            label: 'Opening Hours',
+                            value: 'Mon–Fri 8:00am – 6:00pm',
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          _InfoRow(
+                            icon: Icons.phone_rounded,
+                            label: 'Workshop Line',
+                            value: '+44 (0) 20 1234 5678',
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── CANCEL BUTTON ────────────────────────────────────────
+                    if (cancellable) ...[
+                      const SizedBox(height: AppDimensions.s28),
                       SizedBox(
                         width: double.infinity,
+                        height: 50,
                         child: OutlinedButton.icon(
                           onPressed: () => _confirmCancel(context, ref),
+                          icon: const Icon(Icons.cancel_outlined, size: 18),
+                          label: const Text('Cancel This Appointment'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.danger,
                             side: const BorderSide(color: AppColors.dangerBorder),
-                            padding: const EdgeInsets.symmetric(vertical: AppDimensions.s14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppDimensions.r12),
+                              borderRadius: BorderRadius.circular(AppDimensions.rPill),
                             ),
-                          ),
-                          icon: const Icon(Icons.cancel_outlined, size: 18),
-                          label: const Text(
-                            'Cancel Booking',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
                     ],
+                    const SizedBox(height: AppDimensions.s32),
                   ],
                 ),
               ),
@@ -193,169 +293,230 @@ class CustomerBookingDetailView extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Cancel this booking?',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Cancel Booking?',
+            style: TextStyle(fontWeight: FontWeight.w900)),
         content: const Text(
-          'The workshop will be notified. This can be undone by booking again.',
-          style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+          'This appointment will be cancelled and cannot be undone.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Keep Booking'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Cancel Booking'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            child: const Text('Cancel Booking',
+                style: TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
     );
-    if (confirmed != true || !context.mounted) return;
-    final id = booking.id.isEmpty ? null : int.tryParse(booking.id);
-    final ok = id != null &&
-        await ref.read(customerRemoteDataSourceProvider).cancelBooking(id);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok
-            ? 'Booking cancelled'
-            : 'Could not cancel the booking. Try again.'),
-        backgroundColor: ok ? null : AppColors.danger,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    if (ok) {
+    if (confirmed == true) {
+      await ref
+          .read(customerRemoteDataSourceProvider)
+          .cancelBooking(int.tryParse(booking.id) ?? 0);
       ref.invalidate(customerBookingsProvider);
-      Navigator.pop(context);
+      if (context.mounted) Navigator.pop(context);
     }
   }
 
-  Widget _detailRow(IconData icon, String label, String value) {
-    return Row(
+  Color _statusColor(BookingStatus s) {
+    switch (s) {
+      case BookingStatus.confirmed:
+        return AppColors.primary;
+      case BookingStatus.completed:
+        return AppColors.success;
+      case BookingStatus.cancelled:
+        return AppColors.danger;
+      case BookingStatus.pending:
+        return AppColors.warning;
+    }
+  }
+
+  Color _statusBg(BookingStatus s) {
+    switch (s) {
+      case BookingStatus.confirmed:
+        return AppColors.primaryBg;
+      case BookingStatus.completed:
+        return AppColors.successBg;
+      case BookingStatus.cancelled:
+        return AppColors.dangerBg;
+      case BookingStatus.pending:
+        return AppColors.warningBg;
+    }
+  }
+}
+
+// ─── Shared Helpers ─────────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SectionHeader({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(color: AppColors.cyanLight, borderRadius: BorderRadius.circular(AppDimensions.r10)),
-          child: Icon(icon, color: AppColors.accent, size: 18),
+        Text(
+          title,
+          style: textTheme.titleMedium?.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.4,
+          ),
         ),
-        const SizedBox(width: AppDimensions.s12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.text3, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(value, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-          ],
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: textTheme.bodySmall?.copyWith(
+            color: AppColors.text3,
+            fontSize: 11,
+          ),
         ),
       ],
     );
   }
 }
 
-class _StatusStep {
-  final String title;
-  final bool completed;
-  final bool active;
-  const _StatusStep(this.title, this.completed, this.active);
-}
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
 
-class _StatusTimeline extends StatelessWidget {
-  final List<_StatusStep> steps;
-  final Color fg;
-  const _StatusTimeline({required this.steps, required this.fg});
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.s18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(color: AppColors.border),
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s16,
+        vertical: AppDimensions.s14,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(width: 4, height: 18, decoration: BoxDecoration(color: fg, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(width: AppDimensions.s10),
-              Text('Status Flow', style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary)),
-            ],
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.primaryBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 16),
           ),
-          const SizedBox(height: AppDimensions.s18),
-          ...steps.asMap().entries.map((e) {
-            final i = e.key;
-            final step = e.value;
-            final isLast = i == steps.length - 1;
-            return Row(
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: 32,
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 44, height: 44,
-                        decoration: BoxDecoration(
-                          color: step.completed ? AppColors.success : step.active ? fg : AppColors.surfaceAlt,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: step.completed ? AppColors.success : step.active ? fg : AppColors.border,
-                            width: 2,
-                          ),
-                        ),
-                        child: Icon(
-                          step.completed ? Icons.check_rounded : step.active ? Icons.autorenew_rounded : Icons.circle_outlined,
-                          size: 14,
-                          color: step.completed || step.active ? Colors.white : AppColors.text3,
-                        ),
-                      ),
-                      if (!isLast)
-                        Container(
-                          width: 2, height: 36,
-                          color: step.completed ? AppColors.success : AppColors.border,
-                        ),
-                    ],
+                Text(
+                  label,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: AppColors.text3,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
                   ),
                 ),
-                const SizedBox(width: AppDimensions.s12),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          step.title,
-                          style: TextStyle(
-                            color: step.active ? fg : AppColors.textPrimary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          step.completed ? 'Done' : step.active ? 'In progress...' : 'Pending',
-                          style: TextStyle(color: AppColors.text3, fontSize: 11),
-                        ),
-                      ],
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
-            );
-          }),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _StepCircle extends StatelessWidget {
+  final String label;
+  final bool isDone;
+  final bool isCurrent;
+
+  const _StepCircle({
+    required this.label,
+    this.isDone = false,
+    this.isCurrent = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDone
+        ? AppColors.success
+        : isCurrent
+            ? AppColors.primary
+            : AppColors.text4;
+
+    return Column(
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: isDone || isCurrent
+                ? color.withValues(alpha: 0.15)
+                : AppColors.surfaceAlt,
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: isCurrent ? 2 : 1),
+          ),
+          child: Center(
+            child: isDone
+                ? Icon(Icons.check_rounded, size: 14, color: color)
+                : Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight:
+                isCurrent || isDone ? FontWeight.w900 : FontWeight.w500,
+            color: isCurrent || isDone
+                ? AppColors.textPrimary
+                : AppColors.text4,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepLine extends StatelessWidget {
+  final bool isDone;
+
+  const _StepLine({required this.isDone});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: const EdgeInsets.only(bottom: 16),
+        color: isDone ? AppColors.success : AppColors.border,
       ),
     );
   }

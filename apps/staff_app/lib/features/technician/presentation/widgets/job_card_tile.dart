@@ -51,7 +51,7 @@ class JobCardTile extends StatelessWidget {
                 SizedBox(width: AppDimensions.s6),
                 Text(
                   job.id,
-                  style: AppTextStyles.rajdhaniBody(color: AppColors.accent),
+                  style: AppTextStyles.bodyStrong(color: AppColors.accent),
                 ),
                 const Spacer(),
                 Container(
@@ -68,7 +68,7 @@ class JobCardTile extends StatelessWidget {
                   ),
                   child: Text(
                     status.label,
-                    style: AppTextStyles.rajdhaniBody(color: status.color),
+                    style: AppTextStyles.bodyStrong(color: status.color),
                   ),
                 ),
               ],
@@ -95,7 +95,7 @@ class JobCardTile extends StatelessWidget {
                       child: Center(
                         child: Text(
                           job.customerName[0],
-                          style: AppTextStyles.rajdhaniBody(
+                          style: AppTextStyles.bodyStrong(
                             color: Colors.white,
                           ),
                         ),
@@ -137,7 +137,7 @@ class JobCardTile extends StatelessWidget {
                         children: [
                           Text(
                             'Service',
-                            style: AppTextStyles.rajdhaniBodySmall(
+                            style: AppTextStyles.bodySmall(
                               color: AppColors.text3,
                             ),
                           ),
@@ -203,7 +203,7 @@ class _AssignedActionButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: AppTextStyles.rajdhaniBodySmall(color: color),
+          style: AppTextStyles.bodySmall(color: color),
         ),
       ),
     );

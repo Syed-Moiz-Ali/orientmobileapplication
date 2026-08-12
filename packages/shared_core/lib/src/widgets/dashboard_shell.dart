@@ -28,11 +28,22 @@ class DashboardShell extends ConsumerWidget {
         appBar: appBar,
         // FE-FIX (pre-deployment): honest offline indicator — offline writes
         // are queued, so users must know they will sync later.
-        body: Column(
-          children: [
-            const OfflineBanner(),
-            Expanded(child: body),
-          ],
+        body: ColoredBox(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Column(
+            children: [
+              const OfflineBanner(),
+              Expanded(
+                child: FocusTraversalGroup(
+                  child: MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    child: body,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         bottomNavigationBar: bottomNavigationBar,
         drawer: drawer,

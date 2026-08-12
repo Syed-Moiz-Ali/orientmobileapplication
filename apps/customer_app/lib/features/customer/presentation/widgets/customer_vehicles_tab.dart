@@ -1,70 +1,285 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_vehicle_card.dart';
-
 import 'package:customer_app/features/customer/presentation/widgets/customer_empty_fallbacks.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_core/shared_core.dart';
 
 class CustomerVehiclesTab extends ConsumerWidget {
   const CustomerVehiclesTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vehicles = ref.watch(customerDashboardProvider).vehicles;
+    final dash = ref.watch(customerDashboardProvider);
+    final vehicles = dash.vehicles;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(customerDashboardProvider.notifier).refresh();
+        },
+        color: AppColors.primary,
+        child: AppResponsivePage(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. PAGE HEADER (Matches Home Tab Header Pattern)
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: AppDimensions.s12,
+                  bottom: AppDimensions.s8,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'My Garage Showcase 🚗',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.headlineLarge?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 26,
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Manage registered cars, MOT due dates & vehicle health',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: AppColors.text3,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppDimensions.s12),
+                    GestureDetector(
+                      onTap: () =>
+                          context.push(AppRoutes.customerNotifications),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: const Icon(
+                              Icons.notifications_outlined,
+                              color: AppColors.textPrimary,
+                              size: 22,
+                            ),
+                          ),
+                          if (dash.unreadCount > 0)
+                            Positioned(
+                              top: -2,
+                              right: -2,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.danger,
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.rPill,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.bg,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Text(
+                                  dash.unreadCount > 99
+                                      ? '99+'
+                                      : '${dash.unreadCount}',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s16),
+
+              // 2. MASONRY QUICK ACTIONS GRID
+              _GarageQuickActionsGrid(
+                onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
+                onBookService: () =>
+                    context.push(AppRoutes.customerBookService),
+                onSos: () => context.push(AppRoutes.customerBreakdownHelp),
+              ),
+              const SizedBox(height: AppDimensions.s24),
+
+              // 3. VEHICLES LIST (Rich Garage Showcase Deck)
+              if (vehicles.isEmpty)
+                EmptyVehiclesCard(
+                  onAddVehicle: () =>
+                      context.push(AppRoutes.customerAddVehicle),
+                )
+              else ...[
+                _ExplanatorySectionHeader(
+                  title: 'Your Registered Vehicles (${vehicles.length})',
+                  subtitle:
+                      'Tap any car to book a service, check MOT due date, or edit details',
+                ),
+                const SizedBox(height: AppDimensions.s10),
+                Column(
+                  children: [
+                    for (final vehicle in vehicles) ...[
+                      _VehicleCardWithActions(vehicle: vehicle, ref: ref),
+                      if (vehicle != vehicles.last)
+                        const SizedBox(height: AppDimensions.s12),
+                    ],
+                  ],
+                ),
+              ],
+              const SizedBox(height: AppDimensions.s32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// MASONRY QUICK ACTIONS GRID FOR GARAGE
+class _GarageQuickActionsGrid extends StatelessWidget {
+  final VoidCallback onAddVehicle;
+  final VoidCallback onBookService;
+  final VoidCallback onSos;
+
+  const _GarageQuickActionsGrid({
+    required this.onAddVehicle,
+    required this.onBookService,
+    required this.onSos,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      children: [
+        Expanded(
+          child: AppCard(
+            onTap: onAddVehicle,
+            borderRadius: 20,
+            padding: const EdgeInsets.all(AppDimensions.s14),
+            color: AppColors.surface,
+            borderColor: AppColors.border,
             child: Row(
               children: [
-                Text('My Vehicles', style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary)),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => context.push(AppRoutes.customerAddVehicle),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add_rounded, size: 16, color: AppColors.accent),
-                        SizedBox(width: 4),
-                        Text('Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.accent)),
-                      ],
-                    ),
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryBg,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Add Vehicle',
+                        style: textTheme.titleSmall?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        'Register car',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: AppColors.text3,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          if (vehicles.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: EmptyVehiclesCard(
-                onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
-              ),
-            )
-          else
-            ...vehicles.map(
-              (v) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _VehicleCardWithActions(vehicle: v, ref: ref),
-              ),
+        ),
+        const SizedBox(width: AppDimensions.s10),
+        Expanded(
+          child: AppCard(
+            onTap: onBookService,
+            borderRadius: 20,
+            padding: const EdgeInsets.all(AppDimensions.s14),
+            color: AppColors.surface,
+            borderColor: AppColors.border,
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_month_rounded,
+                    color: AppColors.accent,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Book Service',
+                        style: textTheme.titleSmall?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        'Reserve slot',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: AppColors.text3,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -72,83 +287,241 @@ class CustomerVehiclesTab extends ConsumerWidget {
 class _VehicleCardWithActions extends StatelessWidget {
   final CustomerVehicleEntity vehicle;
   final WidgetRef ref;
+
   const _VehicleCardWithActions({required this.vehicle, required this.ref});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        CustomerVehicleCard(vehicle: vehicle),
-        Positioned(
-          top: 12, right: 12,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+    final textTheme = Theme.of(context).textTheme;
+
+    final healthColor = vehicle.healthScore >= 80
+        ? AppColors.success
+        : vehicle.healthScore >= 60
+        ? AppColors.warning
+        : AppColors.danger;
+
+    final healthProgress = (vehicle.healthScore.clamp(0, 100) / 100).toDouble();
+
+    return AppCard(
+      borderRadius: 24,
+      padding: const EdgeInsets.all(AppDimensions.s16),
+      color: AppColors.surface,
+      borderColor: AppColors.border,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              _ActionBtn(
-                icon: Icons.edit_outlined,
-                color: AppColors.info,
-                onTap: () => context.push(AppRoutes.customerEditVehicle(vehicle.id)),
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBg,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.directions_car_filled_rounded,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
               ),
-              const SizedBox(width: 6),
-              _ActionBtn(
-                icon: Icons.delete_outline_rounded,
-                color: AppColors.danger,
-                onTap: () => _confirmDelete(context, vehicle, ref),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      vehicle.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceAlt,
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.rPill,
+                            ),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Text(
+                            vehicle.plateNumber,
+                            style: textTheme.labelSmall?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppDimensions.s8),
+                        if (vehicle.mileage.isNotEmpty)
+                          Text(
+                            vehicle.mileage,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: AppColors.text3,
+                              fontSize: 11,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              StatusPill(
+                label: '${vehicle.healthScore}% Healthy',
+                bg: healthColor.withValues(alpha: 0.12),
+                fg: healthColor,
               ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  void _confirmDelete(BuildContext context, CustomerVehicleEntity v, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Vehicle', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: Text('Remove ${v.displayName} (${v.plateNumber})?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _delete(context, v, ref);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
-            child: const Text('Delete'),
+          const SizedBox(height: AppDimensions.s12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Vehicle Health Index',
+                          style: textTheme.labelSmall?.copyWith(
+                            color: AppColors.text3,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${vehicle.healthScore}/100',
+                          style: textTheme.labelSmall?.copyWith(
+                            color: healthColor,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                      child: LinearProgressIndicator(
+                        value: healthProgress,
+                        minHeight: 6,
+                        backgroundColor: AppColors.surfaceAlt,
+                        valueColor: AlwaysStoppedAnimation(healthColor),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          const Divider(height: 1, color: AppColors.line),
+          const SizedBox(height: AppDimensions.s10),
+          Row(
+            children: [
+              const Icon(
+                Icons.event_available_rounded,
+                size: 14,
+                color: AppColors.text3,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                vehicle.nextDue.isNotEmpty
+                    ? 'MOT Due: ${vehicle.nextDue}'
+                    : 'Annual MOT OK',
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.text3,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                ),
+              ),
+              const Spacer(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    onTap: () => context.push(AppRoutes.customerBookService),
+                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.s6,
+                        vertical: 2,
+                      ),
+                      child: Text(
+                        'Book Service →',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _ActionBtn(
+                    icon: Icons.edit_outlined,
+                    color: AppColors.info,
+                    onTap: () =>
+                        context.push(AppRoutes.customerEditVehicle(vehicle.id)),
+                  ),
+                  const SizedBox(width: 4),
+                  _ActionBtn(
+                    icon: Icons.delete_outline_rounded,
+                    color: AppColors.danger,
+                    onTap: () => _confirmDelete(context, vehicle, ref),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Future<void> _delete(BuildContext context, CustomerVehicleEntity v, WidgetRef ref) async {
-    try {
-      final remote = ref.read(customerRemoteDataSourceProvider);
-      await remote.deleteVehicle(v.id);
-    } catch (_) {
-      final box = Hive.box<dynamic>('customer_cache');
-      final local = GenericLocalDataSource(box);
-      await local.save('vehicle_${v.id}_deleted', {'id': v.id, 'deleted': true});
-      // FIX (audit P0): also drop the vehicle from the cached list so an
-      // offline refresh does not resurrect it.
-      final cached = List<Map<String, dynamic>>.from(
-        (box.get('cached_vehicles') as List?)?.cast() ?? const [],
-      );
-      cached.removeWhere((m) => m['id'] == v.id);
-      await box.put('cached_vehicles', cached);
-      final queue = ref.read(syncQueueProvider);
-      await queue.enqueue(SyncOperation(
-        id: v.id, entityType: 'vehicle', entityId: v.id,
-        changeType: ChangeType.delete, payload: {'id': v.id},
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-      ));
-    }
-    ref.read(customerDashboardProvider.notifier).removeVehicle(v.id);
+  void _confirmDelete(
+    BuildContext context,
+    CustomerVehicleEntity v,
+    WidgetRef ref,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Remove ${v.displayName}?'),
+        content: const Text(
+          'This will remove the vehicle from your garage. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ref.read(customerDashboardProvider.notifier).removeVehicle(v.id);
+            },
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: AppColors.danger),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -156,25 +529,64 @@ class _ActionBtn extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  const _ActionBtn({required this.icon, required this.color, required this.onTap});
+
+  const _ActionBtn({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        // P3 (audit): touch target raised 32px → 44px (WCAG 2.5.5).
-        child: Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 18, color: color),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
         ),
+        child: Icon(icon, size: 16, color: color),
       ),
+    );
+  }
+}
+
+class _ExplanatorySectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _ExplanatorySectionHeader({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: textTheme.titleMedium?.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.4,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: textTheme.bodySmall?.copyWith(
+            color: AppColors.text3,
+            fontSize: 11,
+          ),
+        ),
+      ],
     );
   }
 }

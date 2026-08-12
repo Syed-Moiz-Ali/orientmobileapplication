@@ -15,14 +15,15 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 16,
+            style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
@@ -33,8 +34,7 @@ class SectionHeader extends StatelessWidget {
               onTap: onAction,
               child: Text(
                 action!,
-                style: const TextStyle(
-                  fontSize: 13,
+                style: textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.primary,
                 ),

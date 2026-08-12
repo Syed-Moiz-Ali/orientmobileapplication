@@ -13,6 +13,29 @@ import 'package:owner_app/features/dashboard/presentation/widgets/top_sales_page
 class DashboardBody extends ConsumerWidget {
   const DashboardBody({super.key});
 
+  static const _navItems = <AppNavItem>[
+    AppNavItem(
+      selectedIcon: Icons.dashboard_rounded,
+      icon: Icons.dashboard_outlined,
+      label: 'Dashboard',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.leaderboard_rounded,
+      icon: Icons.leaderboard_outlined,
+      label: 'Top Sales',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.chat_bubble_rounded,
+      icon: Icons.chat_bubble_outline_rounded,
+      label: 'Messages',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.notifications_rounded,
+      icon: Icons.notifications_outlined,
+      label: 'Activity',
+    ),
+  ];
+
   static const _pages = <Widget>[
     OwnerDashboardPage(),
     TopSalesPage(),
@@ -23,6 +46,7 @@ class DashboardBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(dashboardUiProvider.notifier);
+    final adaptive = context.adaptive;
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -36,18 +60,26 @@ class DashboardBody extends ConsumerWidget {
       body: Consumer(
         builder: (context, ref, _) {
           final state = ref.watch(dashboardUiProvider);
-          return IndexedStack(index: state.selectedIndex, children: _pages);
-        },
-      ),
-      bottomNavigationBar: Consumer(
-        builder: (context, ref, _) {
-          final state = ref.watch(dashboardUiProvider);
-          return OwnerBottomNav(
+          return AppAdaptiveNavigationFrame(
+            items: _navItems,
             selectedIndex: state.selectedIndex,
-            onTap: notifier.selectTab,
+            onSelected: notifier.selectTab,
+            child: IndexedStack(index: state.selectedIndex, children: _pages),
           );
         },
       ),
+      bottomNavigationBar: !adaptive.useNavigationRail
+          ? Consumer(
+              builder: (context, ref, _) {
+                final state = ref.watch(dashboardUiProvider);
+                return OwnerBottomNav(
+                  items: _navItems,
+                  selectedIndex: state.selectedIndex,
+                  onTap: notifier.selectTab,
+                );
+              },
+            )
+          : null,
     );
   }
 }

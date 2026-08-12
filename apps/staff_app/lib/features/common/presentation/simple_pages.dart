@@ -51,7 +51,7 @@ class ProfilePage extends StatelessWidget {
                   child: Center(
                     child: Text(
                       profile.avatarInitials,
-                      style: AppTextStyles.rajdhaniTitle(color: Colors.white),
+                      style: AppTextStyles.title(color: Colors.white),
                     ),
                   ),
                 ),
@@ -62,12 +62,12 @@ class ProfilePage extends StatelessWidget {
                     children: [
                       Text(
                         profile.name.isEmpty ? 'Staff Member' : profile.name,
-                        style: AppTextStyles.rajdhaniTitle(color: Colors.white),
+                        style: AppTextStyles.title(color: Colors.white),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${profile.id} · ${profile.role}',
-                        style: AppTextStyles.rajdhaniBodySmall(
+                        style: AppTextStyles.bodySmall(
                           color: Colors.white70,
                         ),
                       ),

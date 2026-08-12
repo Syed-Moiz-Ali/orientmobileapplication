@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/layout/app_responsive.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 class AppCard extends StatelessWidget {
@@ -36,10 +37,16 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final adaptive = context.adaptive;
 
     // Resolves colors strictly from Theme.of(context)
     final effectiveBackgroundColor = color ?? colorScheme.surface;
     final effectiveBorderColor = borderColor ?? colorScheme.outline.withValues(alpha: 0.12);
+    final effectiveRadius =
+        borderRadius == AppDimensions.r14 || borderRadius == AppDimensions.r18
+            ? adaptive.radius
+            : borderRadius;
+    final effectivePadding = padding ?? EdgeInsets.all(adaptive.itemSpacing);
 
     // Hyper-minimalist ambient shadow using the theme's shadow/onSurface tone
     final defaultShadow = [
@@ -50,10 +57,10 @@ class AppCard extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
       width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(AppDimensions.s16),
+      padding: effectivePadding,
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: BorderRadius.circular(effectiveRadius),
         border: Border.all(color: effectiveBorderColor),
         boxShadow: boxShadow ?? defaultShadow,
       ),
@@ -63,10 +70,10 @@ class AppCard extends StatelessWidget {
     if (onTap != null) {
       return Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: BorderRadius.circular(effectiveRadius),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(borderRadius),
+          borderRadius: BorderRadius.circular(effectiveRadius),
           splashColor: colorScheme.primary.withValues(alpha: 0.05),
           highlightColor: colorScheme.primary.withValues(alpha: 0.02),
           child: cardContent,

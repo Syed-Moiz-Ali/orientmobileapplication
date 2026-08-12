@@ -72,7 +72,7 @@ class CrmKpiCard extends StatelessWidget {
               color: CrmColors.textH,
               fontSize: 15,
               fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
+              letterSpacing: 0,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

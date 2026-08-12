@@ -30,6 +30,8 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return TextField(
       controller: controller,
       obscureText: obscureText,
@@ -37,10 +39,16 @@ class AppTextField extends StatelessWidget {
       keyboardType: keyboardType,
       maxLength: maxLength,
       textInputAction: textInputAction,
-      style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+      style: theme.textTheme.bodyLarge?.copyWith(
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w500,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.text4, fontSize: 14),
+        hintStyle: theme.textTheme.bodyLarge?.copyWith(
+          color: AppColors.text4,
+          fontWeight: FontWeight.w400,
+        ),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: AppColors.text4, size: 20)
             : null,
@@ -48,7 +56,7 @@ class AppTextField extends StatelessWidget {
         filled: true,
         fillColor: fillColor ?? const Color(0xFFF5F5F5),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
+          horizontal: AppDimensions.s16,
           vertical: AppDimensions.s14,
         ),
         border: OutlineInputBorder(

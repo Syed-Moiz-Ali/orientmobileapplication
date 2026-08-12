@@ -2,25 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 class AuthHeader extends StatelessWidget {
-  final BrandConfig brand;
   final String title;
   final String subtitle;
-  final IconData? customIcon;
+  final IconData icon;
+  final Color accentColor;
 
   const AuthHeader({
     super.key,
-    required this.brand,
     required this.title,
     required this.subtitle,
-    this.customIcon,
+    required this.icon,
+    required this.accentColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconData = customIcon ?? brand.icon;
-    final accentColor = brand.accentColor;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -31,7 +28,7 @@ class AuthHeader extends StatelessWidget {
             color: accentColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(iconData, color: accentColor, size: 22),
+          child: Icon(icon, color: accentColor, size: 22),
         ),
         const SizedBox(height: 24),
         Text(
@@ -40,7 +37,7 @@ class AuthHeader extends StatelessWidget {
             color: isDark ? Colors.white : AppColors.textPrimary,
             fontSize: 26,
             fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
+            letterSpacing: 0,
           ),
         ),
         const SizedBox(height: 8),

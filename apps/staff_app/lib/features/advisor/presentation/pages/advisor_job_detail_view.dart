@@ -521,7 +521,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               const SizedBox(height: 16),
               Text(
                 'Assign work item',
-                style: AppTextStyles.rajdhaniTitle(
+                style: AppTextStyles.title(
                   color: AppColors.textPrimary,
                 ),
               ),

@@ -35,6 +35,8 @@ class ServiceEstimatorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return AppCard(
       padding: const EdgeInsets.all(AppDimensions.s16),
       child: Column(
@@ -55,22 +57,23 @@ class ServiceEstimatorCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppDimensions.s10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Popular Workshop Services',
-                      style: TextStyle(
-                        fontSize: 15,
+                      style: textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       'Transparent pricing & turnaround times',
-                      style: TextStyle(fontSize: 12, color: AppColors.text3),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.text3,
+                      ),
                     ),
                   ],
                 ),
@@ -93,22 +96,27 @@ class ServiceEstimatorCard extends StatelessWidget {
                           children: [
                             Text(
                               s['name']!,
-                              style: const TextStyle(
-                                fontSize: 13,
+                              style: textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.bg,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 s['duration']!,
-                                style: const TextStyle(fontSize: 10, color: AppColors.text3, fontWeight: FontWeight.w600),
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: AppColors.text3,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ],
@@ -116,7 +124,9 @@ class ServiceEstimatorCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           s['desc']!,
-                          style: const TextStyle(fontSize: 11, color: AppColors.text3),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: AppColors.text3,
+                          ),
                         ),
                       ],
                     ),
@@ -127,8 +137,7 @@ class ServiceEstimatorCard extends StatelessWidget {
                     children: [
                       Text(
                         'From ${s['price']}',
-                        style: const TextStyle(
-                          fontSize: 13,
+                        style: textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: AppColors.accent,
                         ),
@@ -137,7 +146,8 @@ class ServiceEstimatorCard extends StatelessWidget {
                       SizedBox(
                         height: 28,
                         child: ElevatedButton(
-                          onPressed: () => context.push(AppRoutes.customerBookService),
+                          onPressed: () =>
+                              context.push(AppRoutes.customerBookService),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.darkNavy,
                             foregroundColor: Colors.white,
@@ -147,7 +157,13 @@ class ServiceEstimatorCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(6),
                             ),
                           ),
-                          child: const Text('Book', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                          child: Text(
+                            'Book',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ),
                       ),
                     ],

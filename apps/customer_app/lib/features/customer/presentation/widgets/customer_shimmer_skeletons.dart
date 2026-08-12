@@ -29,9 +29,10 @@ class _ShimmerBoxState extends State<ShimmerBox>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.3, end: 0.75).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0.3,
+      end: 0.75,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -66,25 +67,49 @@ class HomeSkeletonLoading extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ShimmerBox(width: double.infinity, height: 160, borderRadius: 24),
+          const ShimmerBox(
+            width: double.infinity,
+            height: 160,
+            borderRadius: 24,
+          ),
           const SizedBox(height: 24),
           const ShimmerBox(width: 120, height: 20),
           const SizedBox(height: 12),
           const Row(
             children: [
-              Expanded(child: ShimmerBox(width: double.infinity, height: 80, borderRadius: 12)),
+              Expanded(
+                child: ShimmerBox(
+                  width: double.infinity,
+                  height: 80,
+                  borderRadius: 12,
+                ),
+              ),
               SizedBox(width: 12),
-              Expanded(child: ShimmerBox(width: double.infinity, height: 80, borderRadius: 12)),
+              Expanded(
+                child: ShimmerBox(
+                  width: double.infinity,
+                  height: 80,
+                  borderRadius: 12,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
           const ShimmerBox(width: 140, height: 20),
           const SizedBox(height: 12),
-          const ShimmerBox(width: double.infinity, height: 100, borderRadius: 16),
+          const ShimmerBox(
+            width: double.infinity,
+            height: 100,
+            borderRadius: 16,
+          ),
           const SizedBox(height: 24),
           const ShimmerBox(width: 130, height: 20),
           const SizedBox(height: 12),
-          const ShimmerBox(width: double.infinity, height: 90, borderRadius: 16),
+          const ShimmerBox(
+            width: double.infinity,
+            height: 90,
+            borderRadius: 16,
+          ),
         ],
       ),
     );

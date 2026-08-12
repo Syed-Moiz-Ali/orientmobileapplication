@@ -3,9 +3,13 @@ import 'package:shared_core/shared_core.dart';
 
 class AuthBackground extends StatelessWidget {
   final Widget child;
-  final BrandConfig brand;
+  final Color accentColor;
 
-  const AuthBackground({super.key, required this.child, required this.brand});
+  const AuthBackground({
+    super.key,
+    required this.child,
+    this.accentColor = AppColors.primary,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,12 +32,12 @@ class AuthBackground extends StatelessWidget {
             Positioned(
               top: -110,
               right: -80,
-              child: _Glow(color: brand.accentColor, size: 280),
+              child: _Glow(color: accentColor, size: 280),
             ),
             Positioned(
               bottom: -160,
               left: -120,
-              child: _Glow(color: brand.accentColor, size: 340),
+              child: _Glow(color: accentColor, size: 340),
             ),
             child,
           ],

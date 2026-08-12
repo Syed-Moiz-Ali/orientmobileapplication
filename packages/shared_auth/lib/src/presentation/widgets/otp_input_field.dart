@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_core/shared_core.dart';
 
 class OtpInputField extends StatefulWidget {
-  final BrandConfig brand;
+  final Color accentColor;
   final String phone;
 
   /// Display label for the verification target (e.g. '+971 50 123 4567').
@@ -19,8 +19,8 @@ class OtpInputField extends StatefulWidget {
 
   const OtpInputField({
     super.key,
-    required this.brand,
     required this.phone,
+    this.accentColor = AppColors.primary,
     this.identifierLabel,
     required this.error,
     required this.isLoading,
@@ -108,7 +108,7 @@ class _OtpInputFieldState extends State<OtpInputField> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = widget.brand.accentColor;
+    final accentColor = widget.accentColor;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -82,16 +82,16 @@ class CustomerAppBar extends ConsumerWidget implements PreferredSizeWidget {
         children: [
           Text(
             _titles[state.selectedIndex],
-            style: AppTextStyles.rajdhaniTitle(color: Colors.white),
+            style: AppTextStyles.title(color: Colors.white),
           ),
           Text(
             _subtitles[state.selectedIndex],
-            style: AppTextStyles.rajdhaniBodySmall(color: Colors.white70),
+            style: AppTextStyles.bodySmall(color: Colors.white70),
           ),
         ],
       ),
       actions: [
-        // FE-FIX (pre-deployment): the bell was decorative â€” no badge, no
+        // FE-FIX (pre-deployment): the bell was decorative - no badge, no
         // destination, while the backend delivered real notifications.
         NotificationBell(
           showBadge: state.unreadCount > 0,
@@ -112,9 +112,7 @@ class CustomerAppBar extends ConsumerWidget implements PreferredSizeWidget {
               // FIX (audit QA BUG-027): onLogout was never wired — the
               // Logout button confirmed but did nothing.
               customerProfileData,
-              onLogout: () => ref
-                  .read(authNotifierProvider.notifier)
-                  .logout(),
+              onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
             ),
           ),
         ),

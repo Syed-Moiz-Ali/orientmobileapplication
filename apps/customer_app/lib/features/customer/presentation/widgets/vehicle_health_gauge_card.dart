@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
-// FE-FIX (frontend pass): this card was 100% hardcoded (static 92% score and
-// invented part metrics). Now it renders the REAL healthScore the backend
-// computes per vehicle, with an honest empty state when unavailable.
 class VehicleHealthGaugeCard extends StatelessWidget {
   final String vehicleName;
   final String plateNumber;
@@ -22,12 +19,13 @@ class VehicleHealthGaugeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final score = healthScore.clamp(0, 100);
     final (color, label) = score >= 80
         ? (AppColors.success, 'GOOD')
         : score >= 50
-            ? (AppColors.warning, 'ATTENTION')
-            : (AppColors.danger, 'CRITICAL');
+        ? (AppColors.warning, 'ATTENTION')
+        : (AppColors.danger, 'CRITICAL');
 
     return AppCard(
       padding: const EdgeInsets.all(AppDimensions.s16),
@@ -54,9 +52,8 @@ class VehicleHealthGaugeCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$vehicleName · Health Score',
-                      style: const TextStyle(
-                        fontSize: 14,
+                      '$vehicleName - Health Score',
+                      style: textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
@@ -65,22 +62,26 @@ class VehicleHealthGaugeCard extends StatelessWidget {
                     Text(
                       mileage.isEmpty
                           ? plateNumber
-                          : '$plateNumber · $mileage km',
-                      style: const TextStyle(fontSize: 11, color: AppColors.text3),
+                          : '$plateNumber - $mileage km',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.text3,
+                      ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: color,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppDimensions.r12),
                 ),
                 child: Text(
                   '$score% $label',
-                  style: const TextStyle(
-                    fontSize: 11,
+                  style: textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
@@ -90,7 +91,7 @@ class VehicleHealthGaugeCard extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s14),
           ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(AppDimensions.r6),
             child: LinearProgressIndicator(
               value: score / 100,
               minHeight: 8,
@@ -114,7 +115,7 @@ class VehicleHealthGaugeCard extends StatelessWidget {
                   nextServiceDue.isEmpty
                       ? 'No service due date on record'
                       : 'Next service due $nextServiceDue',
-                  style: const TextStyle(fontSize: 11, color: AppColors.text3),
+                  style: textTheme.bodySmall?.copyWith(color: AppColors.text3),
                 ),
               ),
             ],

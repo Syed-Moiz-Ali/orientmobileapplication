@@ -59,7 +59,7 @@ class SupervisorQueueTab extends ConsumerWidget {
                   isBooking
                       ? 'Assign booking to advisor'
                       : 'Dispatch breakdown to advisor',
-                  style: AppTextStyles.rajdhaniTitle(
+                  style: AppTextStyles.title(
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -163,7 +163,7 @@ class SupervisorQueueTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 'Bookings & Breakdowns',
-                style: AppTextStyles.rajdhaniTitle(
+                style: AppTextStyles.title(
                   color: AppColors.textPrimary,
                 ),
               ),

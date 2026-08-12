@@ -35,11 +35,11 @@ class CustomerStatCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(value, style: AppTextStyles.orbitronKpiNumber(color: color)),
+          Text(value, style: AppTextStyles.displayLarge(color: color)),
           const SizedBox(height: 5),
           Text(
             label,
-            style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
+            style: AppTextStyles.bodySmall(color: AppColors.text3),
             textAlign: TextAlign.center,
           ),
         ],
@@ -55,7 +55,7 @@ class CustomerStatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chips = [
+    final chips = <Widget>[
       CustomerStatCard(
         value: '${state.servicesThisYear}',
         label: 'Services\nthis year',
@@ -76,17 +76,10 @@ class CustomerStatGrid extends StatelessWidget {
       ),
     ];
 
-    return Row(
-      children: chips.asMap().entries.map((e) {
-        final chip = e.value;
-        final isLast = e.key == chips.length - 1;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: isLast ? 0 : 10),
-            child: chip,
-          ),
-        );
-      }).toList(),
+    return AppAdaptiveGrid(
+      minChildWidth: 160,
+      childAspectRatio: 1.25,
+      children: chips,
     );
   }
 }

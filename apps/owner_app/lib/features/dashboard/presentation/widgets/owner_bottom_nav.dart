@@ -2,23 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 class OwnerBottomNav extends StatelessWidget {
+  final List<AppNavItem> items;
   final int selectedIndex;
   final void Function(int) onTap;
   const OwnerBottomNav({
     super.key,
+    required this.items,
     required this.selectedIndex,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    const items = [
-      (Icons.dashboard_rounded, Icons.dashboard_outlined, 'Dashboard'),
-      (Icons.leaderboard_rounded, Icons.leaderboard_outlined, 'Top Sales'),
-      (Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'Messages'),
-      (Icons.notifications_rounded, Icons.notifications_outlined, 'Activity'),
-    ];
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -43,46 +38,47 @@ class OwnerBottomNav extends StatelessWidget {
                 child: Semantics(
                   button: true,
                   selected: sel,
-                  label: items[i].$3,
+                  label: items[i].label,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: () => onTap(i),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: sel
-                              ? AppColors.accent.withValues(alpha: 0.12)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.r24,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: sel
+                                ? AppColors.accent.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.r24,
+                            ),
+                          ),
+                          child: Icon(
+                            sel ? items[i].selectedIcon : items[i].icon,
+                            color: sel ? AppColors.accent : AppColors.text3,
+                            size: 26,
                           ),
                         ),
-                        child: Icon(
-                          sel ? items[i].$1 : items[i].$2,
-                          color: sel ? AppColors.accent : AppColors.text3,
-                          size: 26,
+                        const SizedBox(height: 3),
+                        Text(
+                          items[i].label,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: sel ? AppColors.accent : AppColors.text3,
+                            fontWeight:
+                                sel ? FontWeight.w800 : FontWeight.w500,
+                            letterSpacing: sel ? 0.2 : 0,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        items[i].$3,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: sel ? AppColors.accent : AppColors.text3,
-                          fontWeight: sel ? FontWeight.w800 : FontWeight.w500,
-                          letterSpacing: sel ? 0.2 : 0,
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   ),
                 ),
               );

@@ -17,7 +17,7 @@ class CountryOption {
 }
 
 class PhoneInputField extends StatefulWidget {
-  final BrandConfig brand;
+  final Color accentColor;
   final String? error;
   final ValueChanged<String> onChanged;
   final VoidCallback? onSubmitted;
@@ -26,9 +26,9 @@ class PhoneInputField extends StatefulWidget {
 
   const PhoneInputField({
     super.key,
-    required this.brand,
     required this.error,
     required this.onChanged,
+    this.accentColor = AppColors.primary,
     this.onSubmitted,
     this.controller,
     this.onCountryChanged,
@@ -89,7 +89,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
 
   void _showCountryPicker(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = widget.brand.accentColor;
+    final accentColor = widget.accentColor;
 
     showModalBottomSheet(
       context: context,
@@ -175,7 +175,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = widget.brand.accentColor;
+    final accentColor = widget.accentColor;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

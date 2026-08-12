@@ -22,7 +22,7 @@ class JobSearchBar extends ConsumerWidget {
             style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
             decoration: InputDecoration(
               hintText: 'Enter Job Card Number...',
-              hintStyle: AppTextStyles.rajdhaniBody(color: AppColors.text3),
+              hintStyle: AppTextStyles.bodyStrong(color: AppColors.text3),
               prefixIcon: Icon(
                 Icons.search_rounded,
                 color: AppColors.text3,
@@ -77,7 +77,7 @@ class JobSearchBar extends ConsumerWidget {
             ),
             child: Text(
               'Go',
-              style: AppTextStyles.rajdhaniBody(color: Colors.white),
+              style: AppTextStyles.bodyStrong(color: Colors.white),
             ),
           ),
         ),

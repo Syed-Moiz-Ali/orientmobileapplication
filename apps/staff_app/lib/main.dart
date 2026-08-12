@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/core/router/app_router.dart';
@@ -13,7 +12,6 @@ import 'package:staff_app/features/supervisor/presentation/providers/supervisor_
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EnvironmentConfig.init();
-  GoogleFonts.config.allowRuntimeFetching = false;
 
   final logger = createLogger();
   AppErrorHandler.init(logger);

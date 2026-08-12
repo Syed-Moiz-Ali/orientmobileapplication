@@ -51,7 +51,7 @@ class AdvisorHeaderButton extends StatelessWidget {
             ],
             Text(
               label,
-              style: AppTextStyles.rajdhaniButton(
+              style: AppTextStyles.button(
                 color: isPrimary ? AppColors.navy : Colors.white,
               ).copyWith(fontSize: 14, letterSpacing: 0.3),
             ),

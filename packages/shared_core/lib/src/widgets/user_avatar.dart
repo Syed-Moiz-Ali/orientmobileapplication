@@ -4,6 +4,9 @@ class UserAvatar extends StatelessWidget {
   final String initials;
   final double size;
   final double borderWidth;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+  final Color? borderColor;
   final VoidCallback? onTap;
 
   const UserAvatar({
@@ -11,6 +14,9 @@ class UserAvatar extends StatelessWidget {
     required this.initials,
     this.size = 34,
     this.borderWidth = 1.5,
+    this.backgroundColor,
+    this.foregroundColor,
+    this.borderColor,
     this.onTap,
   });
 
@@ -20,10 +26,10 @@ class UserAvatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.20),
+        color: backgroundColor ?? Colors.white.withValues(alpha: 0.20),
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.5),
+          color: borderColor ?? Colors.white.withValues(alpha: 0.5),
           width: borderWidth,
         ),
       ),
@@ -31,7 +37,7 @@ class UserAvatar extends StatelessWidget {
         child: Text(
           initials,
           style: TextStyle(
-            color: Colors.white,
+            color: foregroundColor ?? Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: size * 0.44,
           ),

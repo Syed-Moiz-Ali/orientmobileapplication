@@ -120,7 +120,7 @@ class _StatPill extends StatelessWidget {
               color: color,
               fontSize: 15,
               fontWeight: FontWeight.w900,
-              letterSpacing: -0.4,
+              letterSpacing: 0,
             ),
           ),
           const SizedBox(width: 5),

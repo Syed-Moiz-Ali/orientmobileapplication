@@ -41,7 +41,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 child: Center(
                   child: Text(
                     profile.avatarInitials,
-                    style: AppTextStyles.rajdhaniButton(color: Colors.white),
+                    style: AppTextStyles.button(color: Colors.white),
                   ),
                 ),
               ),
@@ -52,12 +52,12 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                   children: [
                     Text(
                       profile.name,
-                      style: AppTextStyles.rajdhaniButton(color: Colors.white),
+                      style: AppTextStyles.button(color: Colors.white),
                     ),
                     SizedBox(height: AppDimensions.s4),
                     Text(
                       '${profile.empId} \u2022 ${profile.branch}',
-                      style: AppTextStyles.rajdhaniLabel(color: Colors.white70),
+                      style: AppTextStyles.subtitle(color: Colors.white70),
                     ),
                     SizedBox(height: AppDimensions.s4),
                     Container(
@@ -90,7 +90,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                           SizedBox(width: AppDimensions.s4),
                           Text(
                             status.label,
-                            style: AppTextStyles.rajdhaniBodySmall(
+                            style: AppTextStyles.bodySmall(
                               color: Colors.white,
                             ),
                           ),
@@ -119,7 +119,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                     child: Center(
                       child: Text(
                         profile.avatarInitials.substring(0, 1),
-                        style: AppTextStyles.rajdhaniBody(color: Colors.white),
+                        style: AppTextStyles.bodyStrong(color: Colors.white),
                       ),
                     ),
                   ),
@@ -172,7 +172,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
               child: Center(
                 child: Text(
                   profile.avatarInitials,
-                  style: AppTextStyles.rajdhaniTitle(color: Colors.white),
+                  style: AppTextStyles.title(color: Colors.white),
                 ),
               ),
             ),
@@ -183,7 +183,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 color: AppColors.textPrimary,
                 fontSize: 19,
                 fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
+                letterSpacing: 0,
               ),
             ),
             SizedBox(height: AppDimensions.s4),
@@ -198,13 +198,13 @@ class TechnicianHeaderWidget extends ConsumerWidget {
               ),
               child: Text(
                 '${profile.role} \u2022 ${profile.branch}',
-                style: AppTextStyles.rajdhaniLabel(color: AppColors.accent),
+                style: AppTextStyles.subtitle(color: AppColors.accent),
               ),
             ),
             SizedBox(height: AppDimensions.s6),
             Text(
               'Shift: ${profile.shift}',
-              style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
+              style: AppTextStyles.bodySmall(color: AppColors.text3),
             ),
             SizedBox(height: AppDimensions.s24),
             _menuItem(
@@ -273,7 +273,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 icon: const Icon(Icons.logout_rounded, size: 18),
                 label: Text(
                   'Logout',
-                  style: AppTextStyles.rajdhaniLabel(color: AppColors.danger),
+                  style: AppTextStyles.subtitle(color: AppColors.danger),
                 ),
               ),
             ),
@@ -307,7 +307,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 SizedBox(width: AppDimensions.s12),
                 Text(
                   label,
-                  style: AppTextStyles.rajdhaniBody(
+                  style: AppTextStyles.bodyStrong(
                     color: AppColors.textPrimary,
                   ),
                 ),

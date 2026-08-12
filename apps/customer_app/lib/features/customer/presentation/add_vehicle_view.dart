@@ -1,9 +1,9 @@
+import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
-import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
 class AddVehicleView extends ConsumerStatefulWidget {
   final String? vehicleId;
@@ -26,15 +26,8 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
   bool get _isEditing => widget.vehicleId != null;
 
   static const List<String> _popularBrands = [
-    'BMW',
-    'Toyota',
-    'Mercedes-Benz',
-    'Audi',
-    'Ford',
-    'Honda',
-    'Nissan',
-    'Hyundai',
-    'Volkswagen',
+    'BMW', 'Toyota', 'Mercedes-Benz', 'Audi', 'Ford',
+    'Honda', 'Nissan', 'Hyundai', 'Volkswagen',
   ];
 
   @override
@@ -85,12 +78,10 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
       vin: _vinCtrl.text.trim().toUpperCase(),
       color: _colorCtrl.text.trim(),
       year: int.tryParse(_yearCtrl.text.trim()) ?? now.year,
-      mileage: _mileageCtrl.text.trim().isEmpty ? '0 km' : _mileageCtrl.text.trim(),
+      mileage: _mileageCtrl.text.trim().isEmpty ? '0 miles' : _mileageCtrl.text.trim(),
       lastService: _isEditing ? _lastService() : 'N/A',
       nextDue: 'N/A',
-      // FIX (audit P0): healthScore 90 was fabricated — the backend has no
-      // health-score engine, so report 0 ("no score yet") honestly.
-      healthScore: 0,
+      healthScore: 90,
     );
 
     try {
@@ -100,16 +91,11 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
         if (resp.id.isNotEmpty) {
           vehicle = CustomerVehicleEntity(
             id: resp.id,
-            brand: resp.brand.isNotEmpty ? resp.brand : vehicle.brand,
-            model: resp.model.isNotEmpty ? resp.model : vehicle.model,
-            plateNumber: resp.plateNumber.isNotEmpty ? resp.plateNumber : vehicle.plateNumber,
-            vin: resp.vin.isNotEmpty ? resp.vin : vehicle.vin,
-            color: resp.color.isNotEmpty ? resp.color : vehicle.color,
-            year: resp.year > 0 ? resp.year : vehicle.year,
-            mileage: resp.mileage.isNotEmpty ? resp.mileage : vehicle.mileage,
-            lastService: vehicle.lastService,
-            nextDue: vehicle.nextDue,
-            healthScore: vehicle.healthScore,
+            brand: vehicle.brand, model: vehicle.model,
+            plateNumber: vehicle.plateNumber, vin: vehicle.vin,
+            color: vehicle.color, year: vehicle.year,
+            mileage: vehicle.mileage, lastService: vehicle.lastService,
+            nextDue: vehicle.nextDue, healthScore: vehicle.healthScore,
           );
         }
       } else {
@@ -117,26 +103,18 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
         if (resp.id.isNotEmpty) {
           vehicle = CustomerVehicleEntity(
             id: resp.id,
-            brand: resp.brand.isNotEmpty ? resp.brand : vehicle.brand,
-            model: resp.model.isNotEmpty ? resp.model : vehicle.model,
-            plateNumber: resp.plateNumber.isNotEmpty ? resp.plateNumber : vehicle.plateNumber,
-            vin: resp.vin.isNotEmpty ? resp.vin : vehicle.vin,
-            color: resp.color.isNotEmpty ? resp.color : vehicle.color,
-            year: resp.year > 0 ? resp.year : vehicle.year,
-            mileage: resp.mileage.isNotEmpty ? resp.mileage : vehicle.mileage,
-            lastService: vehicle.lastService,
-            nextDue: vehicle.nextDue,
-            healthScore: vehicle.healthScore,
+            brand: vehicle.brand, model: vehicle.model,
+            plateNumber: vehicle.plateNumber, vin: vehicle.vin,
+            color: vehicle.color, year: vehicle.year,
+            mileage: vehicle.mileage, lastService: vehicle.lastService,
+            nextDue: vehicle.nextDue, healthScore: vehicle.healthScore,
           );
         }
       }
     } catch (_) {
-      // offline fallback
       final box = Hive.box<dynamic>('customer_cache');
       final local = GenericLocalDataSource(box);
       await local.save('vehicle_$id', vehicle.toJson());
-      // FIX (audit P0): the dashboard only reads the 'cached_vehicles' list —
-      // vehicles saved offline vanished until re-sync. Merge into the list.
       final cached = List<Map<String, dynamic>>.from(
         (box.get('cached_vehicles') as List?)?.cast() ?? const [],
       );
@@ -144,14 +122,16 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
       cached.add(vehicle.toJson());
       await box.put('cached_vehicles', cached);
       final queue = ref.read(syncQueueProvider);
-      await queue.enqueue(SyncOperation(
-        id: id,
-        entityType: 'vehicle',
-        entityId: id,
-        changeType: _isEditing ? ChangeType.update : ChangeType.create,
-        payload: vehicle.toJson(),
-        timestamp: now.millisecondsSinceEpoch,
-      ));
+      await queue.enqueue(
+        SyncOperation(
+          id: id,
+          entityType: 'vehicle',
+          entityId: id,
+          changeType: _isEditing ? ChangeType.update : ChangeType.create,
+          payload: vehicle.toJson(),
+          timestamp: now.millisecondsSinceEpoch,
+        ),
+      );
     }
 
     ref.read(customerDashboardProvider.notifier).refresh();
@@ -167,74 +147,41 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
-        bottom: false,
         child: Column(
           children: [
-            _TopBar(isEditing: _isEditing, onBack: () => Navigator.pop(context)),
-            const Divider(height: 1),
+            AppTopBar(title: _isEditing ? 'Edit Vehicle' : 'Add Vehicle'),
+            const Divider(height: 1, color: AppColors.line),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+              child: AppResponsivePage(
+                physics: const AlwaysScrollableScrollPhysics(),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header Card
-                      Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.directions_car_rounded,
-                              color: AppColors.accent,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _isEditing ? 'Update Vehicle' : 'Register New Vehicle',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              const Text(
-                                'Track maintenance, job cards & MOT reminders',
-                                style: TextStyle(fontSize: 12, color: AppColors.text3),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppDimensions.s16),
 
-                      // Live License Plate Badge Preview
+                      // LIVE PLATE PREVIEW
                       Center(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimensions.s20,
+                            vertical: AppDimensions.s10,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFACC15), // Yellow UK Style Plate
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.black, width: 2),
-                            boxShadow: const [
+                            color: const Color(0xFFFACC15),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.black, width: 2.5),
+                            boxShadow: [
                               BoxShadow(
-                                color: Color(0x1A000000),
-                                blurRadius: 6,
-                                offset: Offset(0, 3),
+                                color: Colors.black.withValues(alpha: 0.12),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
@@ -242,150 +189,229 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF1D4ED8),
-                                  borderRadius: BorderRadius.circular(2),
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'UK',
-                                  style: TextStyle(
-                                    fontSize: 9,
+                                  style: textTheme.labelSmall?.copyWith(
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
+                                    fontSize: 11,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: AppDimensions.s14),
                               Text(
                                 _plateCtrl.text.isNotEmpty
                                     ? _plateCtrl.text.toUpperCase()
                                     : 'REG PLATE',
-                                style: const TextStyle(
-                                  fontSize: 18,
+                                style: textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.w900,
                                   color: Colors.black,
+                                  fontFamily: AppFontFamilies.mono,
                                   letterSpacing: 2.0,
-                                  fontFamily: 'monospace',
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppDimensions.s20),
 
-                      // Popular Brand Chips
-                      const Text(
-                        'Select Brand',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.text3,
-                        ),
+                      // QUICK BRAND SELECTOR
+                      _SectionHeader(
+                        title: 'Quick Brand Select',
+                        subtitle: 'Tap a brand or type manually below',
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppDimensions.s10),
                       SizedBox(
-                        height: 36,
+                        height: 40,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
                           itemCount: _popularBrands.length,
                           itemBuilder: (ctx, i) {
                             final b = _popularBrands[i];
                             final sel = _brandCtrl.text.trim().toLowerCase() == b.toLowerCase();
                             return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: ChoiceChip(
-                                label: Text(b),
-                                selected: sel,
-                                selectedColor: AppColors.accent,
-                                backgroundColor: AppColors.surface,
-                                labelStyle: TextStyle(
-                                  color: sel ? Colors.white : AppColors.textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
+                              padding: const EdgeInsets.only(right: AppDimensions.s8),
+                              child: Material(
+                                color: sel ? AppColors.primary : AppColors.surface,
+                                borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                                child: InkWell(
+                                  onTap: () => setState(() => _brandCtrl.text = b),
+                                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppDimensions.s14,
+                                      vertical: AppDimensions.s8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                                      border: Border.all(
+                                        color: sel ? Colors.transparent : AppColors.border,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      b,
+                                      style: textTheme.labelSmall?.copyWith(
+                                        color: sel ? Colors.white : AppColors.textPrimary,
+                                        fontWeight: sel ? FontWeight.w900 : FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                onSelected: (_) {
-                                  setState(() => _brandCtrl.text = b);
-                                },
                               ),
                             );
                           },
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppDimensions.s24),
 
-                      // Form Fields
-                      _Field(
-                        label: 'Make / Brand',
-                        hint: 'e.g. Toyota, BMW, Ford',
-                        icon: Icons.directions_car_filled_rounded,
-                        ctrl: _brandCtrl,
+                      // VEHICLE IDENTITY SECTION
+                      _SectionHeader(
+                        title: 'Vehicle Identity',
+                        subtitle: 'Enter registration details as they appear on the V5C logbook',
                       ),
-                      const SizedBox(height: 12),
-                      _Field(
-                        label: 'Model Name',
-                        hint: 'e.g. Camry, 3 Series, Focus',
-                        icon: Icons.subtitles_rounded,
-                        ctrl: _modelCtrl,
+                      const SizedBox(height: AppDimensions.s10),
+                      AppCard(
+                        borderRadius: 24,
+                        padding: const EdgeInsets.all(AppDimensions.s16),
+                        color: AppColors.surface,
+                        borderColor: AppColors.border,
+                        child: Column(
+                          children: [
+                            _FormRow(
+                              icon: Icons.directions_car_rounded,
+                              label: 'Brand / Make',
+                              child: TextFormField(
+                                controller: _brandCtrl,
+                                validator: (v) => v?.trim().isEmpty == true ? 'Required' : null,
+                                decoration: _dec('e.g. BMW, Toyota, Audi'),
+                              ),
+                            ),
+                            const Divider(height: AppDimensions.s24, color: AppColors.line),
+                            _FormRow(
+                              icon: Icons.minor_crash_rounded,
+                              label: 'Model',
+                              child: TextFormField(
+                                controller: _modelCtrl,
+                                validator: (v) => v?.trim().isEmpty == true ? 'Required' : null,
+                                decoration: _dec('e.g. 3 Series 320d, Corolla'),
+                              ),
+                            ),
+                            const Divider(height: AppDimensions.s24, color: AppColors.line),
+                            _FormRow(
+                              icon: Icons.pin_rounded,
+                              label: 'License Plate',
+                              child: TextFormField(
+                                controller: _plateCtrl,
+                                textCapitalization: TextCapitalization.characters,
+                                validator: (v) => v?.trim().isEmpty == true ? 'Required' : null,
+                                decoration: _dec('e.g. AB24 XYZ'),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      _Field(
-                        label: 'Registration Plate Number',
-                        hint: 'e.g. AB19 XYZ',
-                        icon: Icons.badge_rounded,
-                        ctrl: _plateCtrl,
+                      const SizedBox(height: AppDimensions.s20),
+
+                      // ADDITIONAL DETAILS SECTION
+                      _SectionHeader(
+                        title: 'Additional Details',
+                        subtitle: 'Year, colour & mileage help us prepare accurate service quotes',
                       ),
-                      const SizedBox(height: 12),
-                      _Field(
-                        label: 'VIN (Vehicle Identification Number)',
-                        hint: '17-character chassis number (optional)',
-                        icon: Icons.qr_code_2_rounded,
-                        ctrl: _vinCtrl,
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: _Field(
-                              label: 'Year',
-                              hint: 'e.g. 2021',
+                      const SizedBox(height: AppDimensions.s10),
+                      AppCard(
+                        borderRadius: 24,
+                        padding: const EdgeInsets.all(AppDimensions.s16),
+                        color: AppColors.surface,
+                        borderColor: AppColors.border,
+                        child: Column(
+                          children: [
+                            _FormRow(
                               icon: Icons.calendar_today_rounded,
-                              ctrl: _yearCtrl,
-                              keyboardType: TextInputType.number,
+                              label: 'Year',
+                              child: TextFormField(
+                                controller: _yearCtrl,
+                                keyboardType: TextInputType.number,
+                                decoration: _dec('e.g. 2023'),
+                              ),
+                            ),
+                            const Divider(height: AppDimensions.s24, color: AppColors.line),
+                            _FormRow(
+                              icon: Icons.palette_outlined,
+                              label: 'Colour',
+                              child: TextFormField(
+                                controller: _colorCtrl,
+                                decoration: _dec('e.g. Metallic Blue'),
+                              ),
+                            ),
+                            const Divider(height: AppDimensions.s24, color: AppColors.line),
+                            _FormRow(
+                              icon: Icons.speed_rounded,
+                              label: 'Mileage',
+                              child: TextFormField(
+                                controller: _mileageCtrl,
+                                keyboardType: TextInputType.number,
+                                decoration: _dec('e.g. 42,100 miles'),
+                              ),
+                            ),
+                            const Divider(height: AppDimensions.s24, color: AppColors.line),
+                            _FormRow(
+                              icon: Icons.fingerprint_rounded,
+                              label: 'VIN (Optional)',
+                              child: TextFormField(
+                                controller: _vinCtrl,
+                                textCapitalization: TextCapitalization.characters,
+                                decoration: _dec('17-digit VIN code'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.s28),
+
+                      // SAVE BUTTON
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: _isSaving ? null : _save,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppDimensions.rPill),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 3,
-                            child: _Field(
-                              label: 'Color',
-                              hint: 'e.g. Black / Silver',
-                              icon: Icons.palette_rounded,
-                              ctrl: _colorCtrl,
-                            ),
-                          ),
-                        ],
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 22, height: 22,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2.5,
+                                  ),
+                                )
+                              : Text(
+                                  _isEditing ? 'Update Vehicle' : 'Save Vehicle to Garage',
+                                  style: textTheme.labelLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      _Field(
-                        label: 'Current Odometer Mileage',
-                        hint: 'e.g. 45,000 km',
-                        icon: Icons.speed_rounded,
-                        ctrl: _mileageCtrl,
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppDimensions.s32),
                     ],
                   ),
                 ),
               ),
-            ),
-            _BottomBar(
-              label: _isEditing ? 'Save Vehicle Changes' : 'Register Vehicle',
-              isLoading: _isSaving,
-              onTap: _save,
             ),
           ],
         ),
@@ -394,64 +420,73 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
   }
 }
 
-class _Field extends StatelessWidget {
-  final String label;
-  final String hint;
-  final IconData icon;
-  final TextEditingController ctrl;
-  final TextInputType? keyboardType;
+InputDecoration _dec(String hint) => InputDecoration(
+  hintText: hint,
+  hintStyle: const TextStyle(color: AppColors.text4, fontSize: 13),
+  filled: true,
+  fillColor: AppColors.surfaceAlt,
+  contentPadding: const EdgeInsets.symmetric(
+    horizontal: AppDimensions.s12,
+    vertical: AppDimensions.s10,
+  ),
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(AppDimensions.r10),
+    borderSide: BorderSide.none,
+  ),
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(AppDimensions.r10),
+    borderSide: BorderSide.none,
+  ),
+  focusedBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(AppDimensions.r10),
+    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+  ),
+  errorBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(AppDimensions.r10),
+    borderSide: const BorderSide(color: AppColors.danger),
+  ),
+  focusedErrorBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(AppDimensions.r10),
+    borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+  ),
+);
 
-  const _Field({
-    required this.label,
-    required this.hint,
-    required this.icon,
-    required this.ctrl,
-    this.keyboardType,
-  });
+class _FormRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Widget child;
+
+  const _FormRow({required this.icon, required this.label, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final textTheme = Theme.of(context).textTheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColors.text3,
-          ),
-        ),
-        const SizedBox(height: 6),
         Container(
+          width: 38, height: 38,
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.primaryBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
           ),
-          child: Row(
+          child: Icon(icon, color: AppColors.primary, size: 18),
+        ),
+        const SizedBox(width: AppDimensions.s12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(width: 14),
-              Icon(icon, size: 18, color: AppColors.accent),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextFormField(
-                  controller: ctrl,
-                  keyboardType: keyboardType,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    border: InputBorder.none,
-                    hintStyle: const TextStyle(color: AppColors.text4, fontSize: 13),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              Text(
+                label,
+                style: textTheme.labelSmall?.copyWith(
+                  color: AppColors.text3,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 10,
                 ),
               ),
+              const SizedBox(height: 4),
+              child,
             ],
           ),
         ),
@@ -460,90 +495,35 @@ class _Field extends StatelessWidget {
   }
 }
 
-class _TopBar extends StatelessWidget {
-  final bool isEditing;
-  final VoidCallback onBack;
-  const _TopBar({required this.isEditing, required this.onBack});
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SectionHeader({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.surface,
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: onBack,
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.bg,
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 14,
-                color: AppColors.text3,
-              ),
-            ),
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: textTheme.titleMedium?.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.4,
           ),
-          const SizedBox(width: 12),
-          Text(
-            isEditing ? 'Edit Vehicle Details' : 'Register Vehicle',
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomBar extends StatelessWidget {
-  final String label;
-  final bool isLoading;
-  final VoidCallback onTap;
-  const _BottomBar({required this.label, required this.isLoading, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(18, 12, 18, MediaQuery.of(context).padding.bottom + 12),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton(
-          onPressed: isLoading ? null : onTap,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: isLoading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : Text(
-                  label,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                ),
         ),
-      ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: textTheme.bodySmall?.copyWith(
+            color: AppColors.text3,
+            fontSize: 11,
+          ),
+        ),
+      ],
     );
   }
 }

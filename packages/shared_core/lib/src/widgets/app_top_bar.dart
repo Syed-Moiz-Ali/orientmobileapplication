@@ -16,6 +16,8 @@ class AppTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       color: AppColors.surface,
       height: 60,
@@ -44,9 +46,8 @@ class AppTopBar extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -74,6 +75,8 @@ class CustomerTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       color: AppColors.surface,
       height: AppDimensions.s64,
@@ -105,14 +108,16 @@ class CustomerTopBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Welcome back,',
-                  style: TextStyle(fontSize: 11, color: AppColors.text3),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.text3,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 Text(
                   name,
-                  style: const TextStyle(
-                    fontSize: 15,
+                  style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
@@ -154,7 +159,7 @@ class CustomerTopBar extends StatelessWidget {
                         child: Text(
                           '$notifCount',
                           style: const TextStyle(
-                            fontSize: 9,
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                           ),

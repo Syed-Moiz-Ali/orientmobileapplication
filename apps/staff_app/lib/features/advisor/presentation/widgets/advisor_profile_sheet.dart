@@ -53,7 +53,7 @@ class AdvisorProfileSheet extends ConsumerWidget {
               color: AppColors.textPrimary,
               fontSize: 19,
               fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
+              letterSpacing: 0,
             ),
           ),
           const SizedBox(height: 4),

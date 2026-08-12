@@ -68,11 +68,11 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
         children: [
           Text(
             _titles[selectedIndex],
-            style: AppTextStyles.rajdhaniLabel(color: Colors.white),
+            style: AppTextStyles.subtitle(color: Colors.white),
           ),
           Text(
             _subtitles[selectedIndex],
-            style: AppTextStyles.rajdhaniBodySmall(color: Colors.white70),
+            style: AppTextStyles.bodySmall(color: Colors.white70),
           ),
         ],
       ),

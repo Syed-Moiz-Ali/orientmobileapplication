@@ -8,6 +8,6 @@ class CardTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: AppTextStyles.rajdhaniButton(color: AppColors.textPrimary),
+    style: AppTextStyles.button(color: AppColors.textPrimary),
   );
 }

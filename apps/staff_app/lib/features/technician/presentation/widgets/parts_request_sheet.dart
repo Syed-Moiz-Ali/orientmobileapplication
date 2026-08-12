@@ -84,7 +84,7 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Request a Part', style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary)),
+              Text('Request a Part', style: AppTextStyles.title(color: AppColors.textPrimary)),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _partNameCtrl,

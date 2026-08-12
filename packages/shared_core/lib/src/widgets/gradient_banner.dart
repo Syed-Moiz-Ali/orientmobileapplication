@@ -26,6 +26,7 @@ class GradientBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brand = ref.watch(brandConfigProvider);
+    final textTheme = Theme.of(context).textTheme;
     final effectiveGradient = gradient ?? LinearGradient(
       colors: [brand.accentColor, brand.iconColor],
       begin: Alignment.topLeft,
@@ -60,11 +61,9 @@ class GradientBanner extends ConsumerWidget {
                       ),
                       Text(
                         liveLabel!,
-                        style: TextStyle(
+                        style: textTheme.labelMedium?.copyWith(
                           color: liveDotColor ?? brand.buttonColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -72,17 +71,18 @@ class GradientBanner extends ConsumerWidget {
                 const SizedBox(height: 6),
                 Text(
                   greeting,
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: textTheme.titleLarge?.copyWith(
                     color: Colors.white,
-                    fontSize: 20,
                     fontWeight: FontWeight.w900,
                     height: 1.2,
-                    letterSpacing: 0.5,
                   ),
                 ),
                 if (pills.isNotEmpty) ...[
@@ -92,7 +92,7 @@ class GradientBanner extends ConsumerWidget {
                         .map(
                           (p) => Padding(
                             padding: const EdgeInsets.only(right: 8),
-                            child: _pill(p.icon, p.label, p.accent),
+                            child: _pill(context, p.icon, p.label, p.accent),
                           ),
                         )
                         .toList(),
@@ -120,7 +120,9 @@ class GradientBanner extends ConsumerWidget {
     );
   }
 
-  Widget _pill(IconData icon, String label, Color accent) {
+  Widget _pill(BuildContext context, IconData icon, String label, Color accent) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
@@ -135,10 +137,9 @@ class GradientBanner extends ConsumerWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: textTheme.labelMedium?.copyWith(
               color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

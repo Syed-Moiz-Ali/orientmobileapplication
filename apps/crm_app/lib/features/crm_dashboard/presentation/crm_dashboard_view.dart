@@ -18,10 +18,54 @@ import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_settings
 class CrmDashboardView extends ConsumerWidget {
   const CrmDashboardView({super.key});
 
+  static const _navItems = <AppNavItem>[
+    AppNavItem(
+      selectedIcon: Icons.dashboard_rounded,
+      icon: Icons.dashboard_outlined,
+      label: 'Dashboard',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.person_search_rounded,
+      icon: Icons.person_search_outlined,
+      label: 'Leads',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.chat_bubble_rounded,
+      icon: Icons.chat_bubble_outline_rounded,
+      label: 'Conversations',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.groups_rounded,
+      icon: Icons.groups_outlined,
+      label: 'Sales Team',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.task_alt_rounded,
+      icon: Icons.task_outlined,
+      label: 'Tasks',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.bar_chart_rounded,
+      icon: Icons.bar_chart_outlined,
+      label: 'Reports',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.power_rounded,
+      icon: Icons.power_outlined,
+      label: 'Integrations',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.settings_rounded,
+      icon: Icons.settings_outlined,
+      label: 'Settings',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(crmUiProvider.notifier);
     final state = ref.watch(crmUiProvider);
+    final adaptive = context.adaptive;
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: CrmColors.primary, statusBarIconBrightness: Brightness.light),
@@ -40,8 +84,13 @@ class CrmDashboardView extends ConsumerWidget {
 
     return DashboardShell(
       appBar: CrmAppBar(notifier: notifier),
-      drawer: CrmDrawer(notifier: notifier),
-      body: IndexedStack(index: state.selectedIndex, children: pages),
+      drawer: !adaptive.useNavigationRail ? CrmDrawer(notifier: notifier) : null,
+      body: AppAdaptiveNavigationFrame(
+        items: _navItems,
+        selectedIndex: state.selectedIndex,
+        onSelected: notifier.selectTab,
+        child: IndexedStack(index: state.selectedIndex, children: pages),
+      ),
     );
   }
 }

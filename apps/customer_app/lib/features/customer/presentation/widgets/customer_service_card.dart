@@ -16,6 +16,8 @@ class CustomerActiveServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -49,20 +51,21 @@ class CustomerActiveServiceCard extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(AppDimensions.rPill),
                   ),
-                  child: const Text(
+                  child: Text(
                     'LIVE',
-                    style: TextStyle(
-                      fontSize: 9,
+                    style: textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
-                      letterSpacing: 1.2,
                     ),
                   ),
                 ),
                 const SizedBox(width: AppDimensions.s8),
-                const Text(
+                Text(
                   'Current Service',
-                  style: TextStyle(fontSize: 12, color: Colors.white70),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const Spacer(),
                 const Icon(
@@ -73,14 +76,11 @@ class CustomerActiveServiceCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppDimensions.s12),
-            Text(
-              svc.service,
-              style: AppTextStyles.rajdhaniTitle(color: Colors.white),
-            ),
+            Text(svc.service, style: AppTextStyles.title(color: Colors.white)),
             const SizedBox(height: AppDimensions.s4),
             Text(
               '${svc.vehicleName}  \u00b7  ${svc.plateNumber}',
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
+              style: textTheme.bodyMedium?.copyWith(color: Colors.white70),
             ),
             const SizedBox(height: AppDimensions.s16),
             Row(
@@ -89,9 +89,12 @@ class CustomerActiveServiceCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Progress',
-                        style: TextStyle(fontSize: 10, color: Colors.white60),
+                        style: textTheme.labelMedium?.copyWith(
+                          color: Colors.white60,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 7),
                       ClipRRect(
@@ -113,14 +116,14 @@ class CustomerActiveServiceCard extends StatelessWidget {
                 const SizedBox(width: AppDimensions.s16),
                 Text(
                   '${svc.progressPercent}%',
-                  style: AppTextStyles.orbitronKpiNumber(color: Colors.white),
+                  style: AppTextStyles.displayLarge(color: Colors.white),
                 ),
               ],
             ),
             const SizedBox(height: AppDimensions.s10),
             Text(
               '\u23f1  Est. ready by ${svc.estCompletion}',
-              style: const TextStyle(fontSize: 11, color: Colors.white70),
+              style: textTheme.bodySmall?.copyWith(color: Colors.white70),
             ),
           ],
         ),
@@ -136,6 +139,9 @@ class CustomerServiceStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -162,15 +168,12 @@ class CustomerServiceStatusCard extends StatelessWidget {
                   children: [
                     Text(
                       svc.service,
-                      style: AppTextStyles.rajdhaniTitle(
-                        color: AppColors.textPrimary,
-                      ),
+                      style: AppTextStyles.title(color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: AppDimensions.s4),
                     Text(
                       '${svc.vehicleName}  \u00b7  ${svc.plateNumber}',
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: textTheme.bodyMedium?.copyWith(
                         color: AppColors.text3,
                       ),
                     ),
@@ -186,11 +189,10 @@ class CustomerServiceStatusCard extends StatelessWidget {
                   color: AppColors.cyanLight,
                   borderRadius: BorderRadius.circular(AppDimensions.r20),
                 ),
-                child: const Text(
+                child: Text(
                   'In Progress',
-                  style: TextStyle(
+                  style: textTheme.labelMedium?.copyWith(
                     color: AppColors.accent,
-                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -202,20 +204,17 @@ class CustomerServiceStatusCard extends StatelessWidget {
             children: [
               Text(
                 '${svc.progressPercent}%',
-                style: AppTextStyles.orbitronDisplayLarge(
-                  color: AppColors.accent,
-                ),
+                style: AppTextStyles.displayLarge(color: AppColors.accent),
               ),
               const SizedBox(width: AppDimensions.s14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Completion',
-                      style: TextStyle(
+                      style: textTheme.labelMedium?.copyWith(
                         color: AppColors.text3,
-                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -253,9 +252,8 @@ class CustomerServiceStatusCard extends StatelessWidget {
                 const SizedBox(width: AppDimensions.s8),
                 Text(
                   'Est. ready by ${svc.estCompletion}',
-                  style: const TextStyle(
+                  style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.text3,
-                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

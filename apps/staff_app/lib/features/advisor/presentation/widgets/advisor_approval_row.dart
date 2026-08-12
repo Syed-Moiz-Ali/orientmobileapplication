@@ -77,7 +77,7 @@ class AdvisorApprovalRow extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: AppColors.warning,
-                    letterSpacing: -0.3,
+                    letterSpacing: 0,
                   ),
                 ),
                 const SizedBox(height: 4),

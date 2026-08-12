@@ -17,6 +17,11 @@ class NotificationBell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final badgeStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+        );
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -39,7 +44,7 @@ class NotificationBell extends StatelessWidget {
                     child: Center(
                       child: Text(
                         '${badgeCount!}',
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white),
+                        style: badgeStyle,
                       ),
                     ),
                   )

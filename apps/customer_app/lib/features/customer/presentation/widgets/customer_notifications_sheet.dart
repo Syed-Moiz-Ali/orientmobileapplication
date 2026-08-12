@@ -22,7 +22,9 @@ class CustomerNotificationsSheet extends ConsumerWidget {
       builder: (_, scrollController) => Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.r24)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.r24),
+          ),
         ),
         child: Column(
           children: [
@@ -36,17 +38,28 @@ class CustomerNotificationsSheet extends ConsumerWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s24, vertical: AppDimensions.s16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.s24,
+                vertical: AppDimensions.s16,
+              ),
               child: Row(
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Notifications', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                      Text(
+                        'Notifications',
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                       if (state.unreadCount > 0)
                         Text(
                           '${state.unreadCount} unread',
-                          style: textTheme.bodySmall?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w600),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                     ],
                   ),
@@ -54,27 +67,41 @@ class CustomerNotificationsSheet extends ConsumerWidget {
                   if (state.unreadCount > 0)
                     TextButton(
                       onPressed: () => notifier.markAllRead(),
-                      child: Text('Mark all read', style: textTheme.labelLarge?.copyWith(color: colorScheme.primary)),
+                      child: Text(
+                        'Mark all read',
+                        style: textTheme.labelLarge?.copyWith(
+                          color: colorScheme.primary,
+                        ),
+                      ),
                     ),
                 ],
               ),
             ),
-            Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.08)),
+            Divider(
+              height: 1,
+              color: colorScheme.outline.withValues(alpha: 0.08),
+            ),
             Expanded(
               child: state.notifications.isEmpty
                   ? Center(
                       child: Text(
                         'No notifications',
-                        style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     )
                   : ListView.builder(
                       controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s24, vertical: AppDimensions.s12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.s24,
+                        vertical: AppDimensions.s12,
+                      ),
                       itemCount: state.notifications.length,
                       itemBuilder: (_, i) => _NotifCard(
                         notif: state.notifications[i],
-                        onTap: () => notifier.markRead(state.notifications[i].id),
+                        onTap: () =>
+                            notifier.markRead(state.notifications[i].id),
                       ),
                     ),
             ),
@@ -123,10 +150,14 @@ class _NotifCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: AppDimensions.s12),
         padding: const EdgeInsets.all(AppDimensions.s16),
         decoration: BoxDecoration(
-          color: notif.isRead ? colorScheme.surface : color.withValues(alpha: 0.05),
+          color: notif.isRead
+              ? colorScheme.surface
+              : color.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(AppDimensions.r16),
           border: Border.all(
-            color: notif.isRead ? colorScheme.outline.withValues(alpha: 0.08) : color.withValues(alpha: 0.2),
+            color: notif.isRead
+                ? colorScheme.outline.withValues(alpha: 0.08)
+                : color.withValues(alpha: 0.2),
             width: notif.isRead ? 1.0 : 1.5,
           ),
         ),
@@ -136,7 +167,10 @@ class _NotifCard extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
               child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: AppDimensions.s12),
@@ -147,7 +181,9 @@ class _NotifCard extends StatelessWidget {
                   Text(
                     notif.title,
                     style: textTheme.labelLarge?.copyWith(
-                      fontWeight: notif.isRead ? FontWeight.w500 : FontWeight.w700,
+                      fontWeight: notif.isRead
+                          ? FontWeight.w500
+                          : FontWeight.w700,
                       color: colorScheme.onSurface,
                     ),
                   ),
@@ -155,7 +191,6 @@ class _NotifCard extends StatelessWidget {
                   Text(
                     notif.body,
                     style: textTheme.bodyMedium?.copyWith(
-                      fontSize: 12,
                       color: colorScheme.onSurfaceVariant,
                       height: 1.4,
                     ),
@@ -164,8 +199,9 @@ class _NotifCard extends StatelessWidget {
                   Text(
                     notif.time,
                     style: textTheme.bodySmall?.copyWith(
-                      fontSize: 10,
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                   ),
                 ],

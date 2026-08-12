@@ -1,18 +1,19 @@
+import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/add_vehicle_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_book_service_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_booking_detail_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_booking_success_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_breakdown_detail_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_breakdown_help_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_dashboard_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_feedback_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_invoice_detail_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_notifications_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_service_status_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
-import 'package:customer_app/features/customer/presentation/customer_dashboard_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_book_service_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_breakdown_help_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_booking_detail_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_breakdown_detail_view.dart';
-import 'package:customer_app/features/customer/presentation/add_vehicle_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_booking_success_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_invoice_detail_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_feedback_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_service_status_view.dart';
-import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:shared_core/shared_core.dart';
 
 class AppRoutes {
@@ -32,6 +33,7 @@ class AppRoutes {
   static const String customerInvoiceDetail = '/invoice-detail';
   static const String customerFeedback = '/feedback';
   static const String customerServiceStatus = '/customer_service_status_view';
+  static const String customerNotifications = '/notifications';
 }
 
 final _routerRefreshNotifier = ValueNotifier<int>(0);
@@ -53,7 +55,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       return switch (authState) {
         AuthUnauthenticated() => isAuthRoute ? null : AppRoutes.login,
-        AuthLoading() => matched == AppRoutes.startup ? null : AppRoutes.startup,
+        AuthLoading() =>
+          matched == AppRoutes.startup ? null : AppRoutes.startup,
         AuthError() => isAuthRoute ? null : AppRoutes.login,
         AuthAuthenticated(:final role) when role != UserRole.customer =>
           isAuthRoute ? null : AppRoutes.login,
@@ -64,7 +67,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       };
     },
     routes: [
-      GoRoute(path: AppRoutes.startup, builder: (context, state) => const AuthLoadingView()),
+      GoRoute(
+        path: AppRoutes.startup,
+        builder: (context, state) => const AuthLoadingView(),
+      ),
       GoRoute(
         path: AppRoutes.login,
         name: AppRoutes.login,
@@ -77,21 +83,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) => ForgotPasswordView(onBackToLogin: () => context.pop()),
+        builder: (context, state) => ForgotPasswordView(
+          onBackToLogin: () => context.go(AppRoutes.login),
+        ),
       ),
       GoRoute(
         path: AppRoutes.customerDashboard,
         name: AppRoutes.customerDashboard,
-        // FIX (audit P0/P1): 'Track Booking' pushes extra {'tab': 1} which was
-        // silently ignored — the user landed on Home. Pass it through.
-        builder: (context, state) {
-          final extra = state.extra;
-          int initialTab = 0;
-          if (extra is Map<String, dynamic> && extra['tab'] is int) {
-            initialTab = extra['tab'] as int;
-          }
-          return CustomerDashboardView(initialTab: initialTab);
-        },
+        builder: (context, state) => const CustomerDashboardView(),
       ),
       GoRoute(
         path: AppRoutes.customerBookService,
@@ -104,28 +103,48 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CustomerBreakdownHelpView(),
       ),
       GoRoute(
+        path: AppRoutes.customerServiceStatus,
+        name: AppRoutes.customerServiceStatus,
+        builder: (context, state) => const CustomerServiceStatusView(),
+      ),
+      GoRoute(
+        path: AppRoutes.customerNotifications,
+        name: AppRoutes.customerNotifications,
+        builder: (context, state) => const CustomerNotificationsView(),
+      ),
+      GoRoute(
         path: AppRoutes.customerAddVehicle,
         name: AppRoutes.customerAddVehicle,
         builder: (context, state) => const AddVehicleView(),
       ),
       GoRoute(
         path: '/edit-vehicle/:id',
-        name: 'edit-vehicle',
-        builder: (context, state) => AddVehicleView(vehicleId: state.pathParameters['id']),
+        name: 'customerEditVehicle',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return AddVehicleView(vehicleId: id);
+        },
       ),
       GoRoute(
         path: AppRoutes.customerBookingDetail,
         name: AppRoutes.customerBookingDetail,
         builder: (context, state) {
           final extra = state.extra;
-          if (extra is! CustomerBookingEntity) {
-            return const _RouteErrorPage(
-              title: 'Booking unavailable',
-              message: 'Open this booking again from My Bookings.',
+
+          if (extra is CustomerBookingEntity) {
+            return CustomerBookingDetailView(booking: extra);
+          }
+
+          if (extra is Map<String, dynamic>) {
+            return CustomerBookingDetailView(
+              booking: CustomerBookingEntity.fromJson(extra),
             );
           }
-          final booking = extra;
-          return CustomerBookingDetailView(booking: booking);
+
+          return const _RouteErrorPage(
+            title: 'Booking detail unavailable',
+            message: 'Select a booking again from My Bookings.',
+          );
         },
       ),
       GoRoute(
@@ -133,12 +152,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.customerBreakdownDetail,
         builder: (context, state) {
           final extra = state.extra;
+
           if (extra is! Map<String, dynamic>) {
             return const _RouteErrorPage(
-              title: 'Breakdown unavailable',
-              message: 'Open this request again from Service Status.',
+              title: 'Breakdown detail unavailable',
+              message: 'Select a request again from Breakdown Help.',
             );
           }
+
           final breakdown = extra;
           return CustomerBreakdownDetailView(breakdown: breakdown);
         },
@@ -148,6 +169,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.customerBookingSuccess,
         builder: (context, state) {
           final extra = state.extra;
+
           if (extra is! Map<String, dynamic> ||
               extra['service'] is! String ||
               extra['date'] is! String ||
@@ -157,6 +179,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               message: 'Check My Bookings for the latest appointment status.',
             );
           }
+
           final args = extra;
           return CustomerBookingSuccessView(
             bookingRef: args['ref'] as String?,
@@ -171,12 +194,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.customerInvoiceDetail,
         builder: (context, state) {
           final extra = state.extra;
+
           if (extra is! InvoiceResponse) {
             return const _RouteErrorPage(
               title: 'Invoice unavailable',
               message: 'Open this invoice again from Estimates & Invoices.',
             );
           }
+
           final invoice = extra;
           return CustomerInvoiceDetailView(invoice: invoice);
         },
@@ -186,12 +211,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.customerFeedback,
         builder: (context, state) => const CustomerFeedbackView(),
       ),
-      GoRoute(
-        path: AppRoutes.customerServiceStatus,
-        name: AppRoutes.customerServiceStatus,
-        builder: (context, state) => const CustomerServiceStatusView(),
-      ),
     ],
+    errorBuilder: (context, state) => Scaffold(
+      appBar: AppBar(title: const Text('Navigation Error')),
+      body: Center(
+        child: Text(
+          'No route found for ${state.matchedLocation}',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      ),
+    ),
   );
 });
 
@@ -204,32 +233,39 @@ class _RouteErrorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.canvas,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => context.go(AppRoutes.customerDashboard),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.s20),
-          child: EmptyState(
-            title: title,
-            message: message,
-            icon: Icons.link_off_rounded,
-            actionLabel: 'Go to Dashboard',
-            onAction: () => context.go(AppRoutes.customerDashboard),
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: Colors.amber,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.go(AppRoutes.customerDashboard),
+                child: const Text('Return to Home'),
+              ),
+            ],
           ),
         ),
       ),

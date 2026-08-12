@@ -33,7 +33,7 @@ class SupervisorReviewTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 'Completion Review',
-                style: AppTextStyles.rajdhaniTitle(
+                style: AppTextStyles.title(
                   color: AppColors.textPrimary,
                 ),
               ),

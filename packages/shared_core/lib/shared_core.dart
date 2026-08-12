@@ -4,6 +4,8 @@ export 'src/theme/app_text_styles.dart';
 export 'src/theme/app_fonts.dart';
 export 'src/theme/app_theme.dart';
 export 'src/branding/brand_config.dart';
+export 'src/layout/app_adaptive_navigation.dart';
+export 'src/layout/app_responsive.dart';
 
 export 'src/widgets/app_card.dart';
 export 'src/widgets/app_text_field.dart';

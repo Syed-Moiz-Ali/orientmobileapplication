@@ -28,7 +28,7 @@ class JobCardRegisterCard extends StatelessWidget {
                   flex: 3,
                   child: Text(
                     'Category',
-                    style: AppTextStyles.rajdhaniBodySmall(
+                    style: AppTextStyles.bodySmall(
                       color: AppColors.accent,
                     ),
                   ),
@@ -38,7 +38,7 @@ class JobCardRegisterCard extends StatelessWidget {
                   child: Text(
                     'Open',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.rajdhaniBodySmall(
+                    style: AppTextStyles.bodySmall(
                       color: AppColors.accent,
                     ),
                   ),
@@ -48,7 +48,7 @@ class JobCardRegisterCard extends StatelessWidget {
                   child: Text(
                     'Total',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.rajdhaniBodySmall(
+                    style: AppTextStyles.bodySmall(
                       color: AppColors.accent,
                     ),
                   ),

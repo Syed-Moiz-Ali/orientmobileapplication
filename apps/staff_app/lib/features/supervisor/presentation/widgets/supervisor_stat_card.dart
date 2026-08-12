@@ -60,14 +60,14 @@ class SupervisorStatCard extends StatelessWidget {
           const Spacer(),
           Text(
             kpi.value,
-            style: AppTextStyles.orbitronDisplaySmall(
+            style: AppTextStyles.displaySmall(
               color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 3),
           Text(
             kpi.label,
-            style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
+            style: AppTextStyles.bodySmall(color: AppColors.text3),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),

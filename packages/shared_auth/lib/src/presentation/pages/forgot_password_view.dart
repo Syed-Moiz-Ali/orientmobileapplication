@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_background.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
 import 'package:shared_core/shared_core.dart';
 
 enum ForgotMethod { phone, email }
 
 class ForgotPasswordView extends ConsumerStatefulWidget {
   final VoidCallback onBackToLogin;
+
   const ForgotPasswordView({super.key, required this.onBackToLogin});
 
   @override
@@ -17,6 +16,9 @@ class ForgotPasswordView extends ConsumerStatefulWidget {
 }
 
 class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
+  final _identifierCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+
   ForgotMethod _method = ForgotMethod.phone;
   String _phone = '';
   String _email = '';
@@ -27,128 +29,102 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   bool _otpSent = false;
   int _resendCooldown = 0;
 
-  final TextEditingController _unifiedCtrl = TextEditingController();
-  late final TextEditingController _passCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _passCtrl = TextEditingController(text: _password);
-  }
-
   @override
   void dispose() {
-    _unifiedCtrl.dispose();
-    _passCtrl.dispose();
+    _identifierCtrl.dispose();
+    _passwordCtrl.dispose();
     super.dispose();
   }
 
-  void _clearError() {
-    if (_error != null) setState(() => _error = null);
+  bool _looksLikeEmail(String value) {
+    return value.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(value);
   }
 
-  void _setOtp(String v) {
-    final c = v.replaceAll(RegExp(r'[^\d]'), '');
-    if (c.length <= 6) {
-      setState(() {
-        _otp = c;
-        _error = null;
-      });
-    }
-  }
-
-  void _setPassword(String v) {
-    setState(() {
-      _password = v;
-      _error = null;
-    });
-  }
-
-  String _fullPhone(String p) {
-    final c = p.replaceAll(RegExp(r'[^\d]'), '');
-    if (c.startsWith('971')) return c;
-    return '971${c.startsWith('0') ? c.substring(1) : c}';
+  String _fullPhone(String value) {
+    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.startsWith('971')) return digits;
+    return '971${digits.startsWith('0') ? digits.substring(1) : digits}';
   }
 
   Future<void> _sendOtp() async {
-    final input = _unifiedCtrl.text.trim();
+    final input = _identifierCtrl.text.trim();
     if (input.isEmpty) {
-      setState(() => _error = 'Enter your email or phone');
+      setState(() => _error = 'Enter your email or phone number.');
       return;
     }
 
-    // Smart detection
-    final isEmail = input.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(input);
-    setState(() {
-      _method = isEmail ? ForgotMethod.email : ForgotMethod.phone;
-      if (isEmail) {
-        _email = input;
-        if (!_email.contains('@')) _error = 'Enter a valid email';
-      } else {
-        _phone = input.replaceAll(RegExp(r'[^\d]'), '');
-        if (_phone.length < 8) _error = 'Enter a valid phone number';
-      }
-    });
-
-    if (_error != null) return;
+    final email = _looksLikeEmail(input);
+    if (email && !input.contains('@')) {
+      setState(() => _error = 'Enter a valid email address.');
+      return;
+    }
+    if (!email && input.replaceAll(RegExp(r'[^0-9]'), '').length < 8) {
+      setState(() => _error = 'Enter a valid phone number.');
+      return;
+    }
 
     setState(() {
+      _method = email ? ForgotMethod.email : ForgotMethod.phone;
+      _email = email ? input : '';
+      _phone = email ? '' : input.replaceAll(RegExp(r'[^0-9]'), '');
       _isLoading = true;
       _error = null;
     });
 
-    final r = await ref.read(forgotPasswordProvider)(
-      _method == ForgotMethod.phone ? 'sms' : 'email',
-      _method == ForgotMethod.phone ? _fullPhone(_phone) : '',
-      _method == ForgotMethod.email ? _email : '',
+    final result = await ref.read(forgotPasswordProvider)(
+      email ? 'email' : 'sms',
+      email ? '' : _fullPhone(_phone),
+      email ? _email : '',
     );
 
     if (!mounted) return;
 
-    r.when(
-      success: (_) => setState(() {
-        _isLoading = false;
-        _otpSent = true;
+    result.when(
+      success: (_) {
+        setState(() {
+          _isLoading = false;
+          _otpSent = true;
+        });
         _startCooldown();
-      }),
-      failure: (e) => setState(() {
+      },
+      failure: (error) => setState(() {
         _isLoading = false;
-        _error = e.message;
+        _error = error.message;
       }),
     );
   }
 
   Future<void> _resetPassword() async {
-    final o = _otp.replaceAll(RegExp(r'[^\d]'), '');
-    if (o.length != 6) {
-      setState(() => _error = 'Enter the 6-digit code');
+    if (_otp.length != 6) {
+      setState(() => _error = 'Enter the 6 digit code.');
       return;
     }
     if (_password.length < 6) {
-      setState(() => _error = 'Password must be 6+ characters');
+      setState(() => _error = 'Password must be at least 6 characters.');
       return;
     }
 
+    final email = _method == ForgotMethod.email;
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
-    final r = await ref.read(resetPasswordProvider)(
-      _method == ForgotMethod.phone ? 'sms' : 'email',
-      _method == ForgotMethod.phone ? _fullPhone(_phone) : '',
-      _method == ForgotMethod.email ? _email : '',
+    final result = await ref.read(resetPasswordProvider)(
+      email ? 'email' : 'sms',
+      email ? '' : _fullPhone(_phone),
+      email ? _email : '',
       _otp,
       _password,
     );
 
     if (!mounted) return;
 
-    r.when(
+    result.when(
       success: (_) => widget.onBackToLogin(),
-      failure: (e) => setState(() {
+      failure: (error) => setState(() {
         _isLoading = false;
-        _error = e.message;
+        _error = error.message;
       }),
     );
   }
@@ -172,341 +148,194 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
       _otpSent = false;
       _otp = '';
       _password = '';
-      _passCtrl.clear();
+      _passwordCtrl.clear();
       _error = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final brand = ref.watch(brandConfigProvider);
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: AuthBackground(
-        brand: brand,
-        child: Center(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                layoutBuilder: (currentChild, previousChildren) {
-                  return Stack(
-                    alignment: Alignment.topLeft,
-                    children: <Widget>[...previousChildren, if (currentChild != null) currentChild],
-                  );
-                },
-                child: KeyedSubtree(
-                  key: ValueKey(_otpSent),
-                  child: _otpSent ? _buildResetStep(brand, theme) : _buildSendStep(brand, theme),
+    return AuthShell(
+      title: _otpSent ? 'New password' : 'Recover access',
+      subtitle: _otpSent
+          ? 'Enter the code and choose a new password.'
+          : 'Use your registered email or mobile number.',
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        child: KeyedSubtree(
+          key: ValueKey(_otpSent),
+          child: _otpSent
+              ? _ResetStep(
+                  identifier: _method == ForgotMethod.email
+                      ? _email
+                      : '+971 $_phone',
+                  passwordCtrl: _passwordCtrl,
+                  error: _error,
+                  isLoading: _isLoading,
+                  resendCooldown: _resendCooldown,
+                  onOtpChanged: (value) => setState(() {
+                    _otp = value;
+                    _error = null;
+                  }),
+                  onPasswordChanged: (value) => setState(() {
+                    _password = value;
+                    _error = null;
+                  }),
+                  onSubmit: _resetPassword,
+                  onEditIdentifier: _editIdentifier,
+                  onResend: _sendOtp,
+                  onBackToLogin: widget.onBackToLogin,
+                )
+              : _RequestStep(
+                  identifierCtrl: _identifierCtrl,
+                  error: _error,
+                  isLoading: _isLoading,
+                  onChanged: () => setState(() => _error = null),
+                  onSubmit: _sendOtp,
+                  onBackToLogin: widget.onBackToLogin,
                 ),
-              ),
-            ),
-          ),
         ),
       ),
     );
   }
-
-  Widget _buildSendStep(BrandConfig brand, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(brand.icon, color: theme.colorScheme.primary, size: 40),
-        const SizedBox(height: 32),
-        Text(
-          'Reset password',
-          style: theme.textTheme.headlineLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1.0,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Enter your email or phone number to receive a recovery code.',
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        const SizedBox(height: 56),
-        _PremiumTextField(
-          controller: _unifiedCtrl,
-          hint: 'Email or phone',
-          keyboardType: TextInputType.emailAddress,
-          error: _error,
-          onChanged: (_) => _clearError(),
-          onSubmitted: (_) => _sendOtp(),
-        ),
-        const SizedBox(height: 40),
-        AuthButton(text: 'Send Code', isLoading: _isLoading, onPressed: _sendOtp, brand: brand),
-        const SizedBox(height: 32),
-        _ActionLink(text: 'Back to login', onTap: widget.onBackToLogin),
-      ],
-    );
-  }
-
-  Widget _buildResetStep(BrandConfig brand, ThemeData theme) {
-    final identifier = _method == ForgotMethod.phone ? '971 $_phone' : _email;
-    final isEmail = _method == ForgotMethod.email;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Check ${isEmail ? 'inbox' : 'messages'}.',
-          style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.5),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Text(
-              identifier,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(width: 16),
-            GestureDetector(
-              onTap: _editIdentifier,
-              behavior: HitTestBehavior.opaque,
-              child: Text(
-                'Edit',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 48),
-        _MinimalOtpRow(onChanged: _setOtp),
-        const SizedBox(height: 24),
-        GestureDetector(
-          onTap: _resendCooldown > 0 ? null : _sendOtp,
-          behavior: HitTestBehavior.opaque,
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 200),
-            style: theme.textTheme.titleSmall!.copyWith(
-              color: _resendCooldown > 0
-                  ? theme.colorScheme.onSurface.withValues(alpha: 0.3)
-                  : theme.colorScheme.primary,
-              fontWeight: _resendCooldown > 0 ? FontWeight.w500 : FontWeight.w600,
-            ),
-            child: Text(_resendCooldown > 0 ? 'Resend code in ${_resendCooldown}s' : 'Didn\'t receive a code? Resend'),
-          ),
-        ),
-        const SizedBox(height: 48),
-        _PremiumTextField(
-          controller: _passCtrl,
-          hint: 'New password',
-          obscure: true,
-          onChanged: _setPassword,
-          error: _error,
-        ),
-        const SizedBox(height: 40),
-        AuthButton(text: 'Reset Password', isLoading: _isLoading, onPressed: _resetPassword, brand: brand),
-        const SizedBox(height: 32),
-        _ActionLink(text: 'Back to login', onTap: widget.onBackToLogin),
-      ],
-    );
-  }
 }
 
-class _MinimalOtpRow extends StatefulWidget {
-  final ValueChanged<String> onChanged;
-  const _MinimalOtpRow({required this.onChanged});
-
-  @override
-  State<_MinimalOtpRow> createState() => _MinimalOtpRowState();
-}
-
-class _MinimalOtpRowState extends State<_MinimalOtpRow> {
-  final _controllers = List.generate(6, (_) => TextEditingController());
-  final _focusNodes = List.generate(6, (_) => FocusNode());
-
-  @override
-  void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
-    super.dispose();
-  }
-
-  void _onChanged(int index, String value) {
-    if (value.length > 1) {
-      final digits = value.replaceAll(RegExp(r'[^\d]'), '');
-      for (int i = 0; i < 6; i++) {
-        _controllers[i].text = i < digits.length ? digits[i] : '';
-      }
-      final otp = _controllers.map((c) => c.text).join();
-      widget.onChanged(otp);
-      _focusNodes[digits.length.clamp(0, 5)].requestFocus();
-      return;
-    }
-    if (value.isNotEmpty && index < 5) _focusNodes[index + 1].requestFocus();
-    widget.onChanged(_controllers.map((c) => c.text).join());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(6, (i) {
-        final focused = _focusNodes[i].hasFocus;
-        final filled = _controllers[i].text.isNotEmpty;
-
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 44,
-          height: 56,
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: focused
-                    ? theme.colorScheme.primary
-                    : (filled
-                          ? theme.colorScheme.onSurface.withValues(alpha: 0.3)
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.1)),
-                width: focused ? 2.5 : 1.5,
-              ),
-            ),
-          ),
-          child: TextField(
-            controller: _controllers[i],
-            focusNode: _focusNodes[i],
-            textAlign: TextAlign.center,
-            maxLength: 1,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            cursorColor: theme.colorScheme.primary,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: const InputDecoration(
-              counterText: '',
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
-            ),
-            onChanged: (v) => _onChanged(i, v),
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _PremiumTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-  final ValueChanged<String>? onChanged;
-  final ValueChanged<String>? onSubmitted;
-  final bool obscure;
-  final TextInputType? keyboardType;
+class _RequestStep extends StatelessWidget {
+  final TextEditingController identifierCtrl;
   final String? error;
+  final bool isLoading;
+  final VoidCallback onChanged;
+  final VoidCallback onSubmit;
+  final VoidCallback onBackToLogin;
 
-  const _PremiumTextField({
-    required this.controller,
-    required this.hint,
-    this.onChanged,
-    this.onSubmitted,
-    this.obscure = false,
-    this.keyboardType,
-    this.error,
+  const _RequestStep({
+    required this.identifierCtrl,
+    required this.error,
+    required this.isLoading,
+    required this.onChanged,
+    required this.onSubmit,
+    required this.onBackToLogin,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: controller,
-          obscureText: obscure,
-          keyboardType: keyboardType,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.3,
-            color: theme.colorScheme.onSurface,
-          ),
-          cursorColor: theme.colorScheme.primary,
-          cursorHeight: 24,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-              fontWeight: FontWeight.w400,
-              letterSpacing: -0.3,
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 16),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.15)),
-            ),
-            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.colorScheme.primary, width: 2.0)),
-            isDense: true,
-          ),
-          onChanged: onChanged,
-          onSubmitted: onSubmitted,
+        AuthTextField(
+          controller: identifierCtrl,
+          label: 'Email or mobile number',
+          hint: 'name@company.com or 501234567',
+          icon: Icons.alternate_email_rounded,
+          keyboardType: TextInputType.emailAddress,
+          errorText: error,
+          onChanged: (_) => onChanged(),
+          onSubmitted: (_) => onSubmit(),
         ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          alignment: Alignment.topCenter,
-          child: error != null
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    error!,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.error,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
+        const SizedBox(height: AppDimensions.s20),
+        AuthPrimaryButton(
+          label: 'Send code',
+          icon: Icons.arrow_forward_rounded,
+          isLoading: isLoading,
+          onPressed: onSubmit,
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        AuthLinkButton(
+          label: 'Back to sign in',
+          onPressed: onBackToLogin,
         ),
       ],
     );
   }
 }
 
-class _ActionLink extends StatelessWidget {
-  final String text;
-  final VoidCallback onTap;
+class _ResetStep extends StatelessWidget {
+  final String identifier;
+  final TextEditingController passwordCtrl;
+  final String? error;
+  final bool isLoading;
+  final int resendCooldown;
+  final ValueChanged<String> onOtpChanged;
+  final ValueChanged<String> onPasswordChanged;
+  final VoidCallback onSubmit;
+  final VoidCallback onEditIdentifier;
+  final VoidCallback onResend;
+  final VoidCallback onBackToLogin;
 
-  const _ActionLink({required this.text, required this.onTap});
+  const _ResetStep({
+    required this.identifier,
+    required this.passwordCtrl,
+    required this.error,
+    required this.isLoading,
+    required this.resendCooldown,
+    required this.onOtpChanged,
+    required this.onPasswordChanged,
+    required this.onSubmit,
+    required this.onEditIdentifier,
+    required this.onResend,
+    required this.onBackToLogin,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(
-          text,
-          style: theme.textTheme.titleSmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            fontWeight: FontWeight.w600,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          identifier,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
           ),
         ),
-      ),
+        const SizedBox(height: AppDimensions.s16),
+        AuthOtpField(
+          onChanged: onOtpChanged,
+          errorText: error,
+          onSubmitted: (_) => onSubmit(),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AuthTextField(
+          controller: passwordCtrl,
+          label: 'New password',
+          hint: 'At least 6 characters',
+          icon: Icons.lock_outline_rounded,
+          obscureText: true,
+          errorText: error,
+          onChanged: onPasswordChanged,
+          onSubmitted: (_) => onSubmit(),
+        ),
+        const SizedBox(height: AppDimensions.s20),
+        AuthPrimaryButton(
+          label: 'Reset password',
+          icon: Icons.check_rounded,
+          isLoading: isLoading,
+          onPressed: onSubmit,
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        Wrap(
+          spacing: AppDimensions.s12,
+          runSpacing: AppDimensions.s4,
+          children: [
+            AuthLinkButton(
+              label: 'Edit email or phone',
+              onPressed: onEditIdentifier,
+            ),
+            AuthLinkButton(
+              label: resendCooldown > 0
+                  ? 'Resend in ${resendCooldown}s'
+                  : 'Resend code',
+              onPressed: resendCooldown > 0 ? () {} : onResend,
+            ),
+            AuthLinkButton(
+              label: 'Back to sign in',
+              onPressed: onBackToLogin,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

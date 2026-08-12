@@ -85,7 +85,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                         children: [
                           Text(
                             job.jobCardNo,
-                            style: AppTextStyles.orbitronDisplaySmall(
+                            style: AppTextStyles.displaySmall(
                               color: Colors.white,
                             ),
                           ),
@@ -115,7 +115,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                                 SizedBox(width: AppDimensions.s4),
                                 Text(
                                   job.status.label,
-                                  style: AppTextStyles.rajdhaniBodySmall(
+                                  style: AppTextStyles.bodySmall(
                                     color: Colors.white,
                                   ),
                                 ),
@@ -146,7 +146,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                         children: [
                           Text(
                             '${job.vehicleBrand} ${job.vehicleModel}',
-                            style: AppTextStyles.rajdhaniBodySmall(
+                            style: AppTextStyles.bodySmall(
                               color: Colors.white70,
                             ),
                           ),
@@ -164,7 +164,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                             ),
                             child: Text(
                               job.plateNumber,
-                              style: AppTextStyles.rajdhaniBodySmall(
+                              style: AppTextStyles.bodySmall(
                                 color: AppColors.accent,
                               ),
                             ),
@@ -176,14 +176,14 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                         children: [
                           Text(
                             'Job Progress',
-                            style: AppTextStyles.rajdhaniBodySmall(
+                            style: AppTextStyles.bodySmall(
                               color: Colors.white70,
                             ),
                           ),
                           const Spacer(),
                           Text(
                             '${job.completedTasks}/${job.tasks.length} tasks (${(job.progressPercent * 100).toInt()}%)',
-                            style: AppTextStyles.rajdhaniBodySmall(
+                            style: AppTextStyles.bodySmall(
                               color: Colors.white,
                             ),
                           ),
@@ -224,7 +224,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                           SizedBox(width: AppDimensions.s10),
                           Text(
                             'Work Tasks',
-                            style: AppTextStyles.rajdhaniTitle(
+                            style: AppTextStyles.title(
                               color: AppColors.textPrimary,
                             ),
                           ),
@@ -233,7 +233,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                       SizedBox(height: AppDimensions.s4),
                       Text(
                         'Track and update task progress',
-                        style: AppTextStyles.rajdhaniBodySmall(
+                        style: AppTextStyles.bodySmall(
                           color: AppColors.text3,
                         ),
                       ),
@@ -305,7 +305,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                           SizedBox(width: AppDimensions.s6),
                           Text(
                             'Technician Notes',
-                            style: AppTextStyles.rajdhaniLabel(
+                            style: AppTextStyles.subtitle(
                               color: AppColors.textPrimary,
                             ),
                           ),
@@ -323,7 +323,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                         decoration: InputDecoration(
                           hintText:
                               'Add any notes or observations about this job...',
-                          hintStyle: AppTextStyles.rajdhaniBodySmall(
+                          hintStyle: AppTextStyles.bodySmall(
                             color: AppColors.text3,
                           ),
                           filled: true,
@@ -465,7 +465,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                               ),
                               child: Text(
                                 'Close',
-                                style: AppTextStyles.rajdhaniBodySmall(
+                                style: AppTextStyles.bodySmall(
                                   color: AppColors.text2,
                                 ),
                               ),
@@ -509,7 +509,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                                   : const Icon(Icons.save_rounded, size: 16),
                               label: Text(
                                 'Save',
-                                style: AppTextStyles.rajdhaniBodySmall(),
+                                style: AppTextStyles.bodySmall(),
                               ),
                             ),
                             SizedBox(width: AppDimensions.s8),
@@ -600,7 +600,7 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                                     SizedBox(width: AppDimensions.s6),
                                     Text(
                                       'Complete Job',
-                                      style: AppTextStyles.rajdhaniBodySmall(
+                                      style: AppTextStyles.bodySmall(
                                         color: Colors.white,
                                       ),
                                     ),
@@ -630,7 +630,7 @@ class _ColHead extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: AppTextStyles.rajdhaniBodySmall(color: AppColors.accent),
+    style: AppTextStyles.bodySmall(color: AppColors.accent),
   );
 }
 
@@ -672,7 +672,7 @@ class _TaskRow extends StatelessWidget {
             width: 28,
             child: Text(
               '$index',
-              style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
+              style: AppTextStyles.bodySmall(color: AppColors.text3),
             ),
           ),
           Expanded(
@@ -759,7 +759,7 @@ class _TaskStatusDropdown extends StatelessWidget {
             size: 12,
             color: AppColors.text3,
           ),
-          style: AppTextStyles.rajdhaniBodySmall(color: AppColors.textPrimary),
+          style: AppTextStyles.bodySmall(color: AppColors.textPrimary),
           onChanged: (v) {
             if (v != null) onChanged(v);
           },
@@ -769,7 +769,7 @@ class _TaskStatusDropdown extends StatelessWidget {
                   value: s,
                   child: Text(
                     s.label,
-                    style: AppTextStyles.rajdhaniBodySmall(),
+                    style: AppTextStyles.bodySmall(),
                   ),
                 ),
               )
@@ -826,7 +826,7 @@ class _TaskActionButton extends StatelessWidget {
             SizedBox(width: AppDimensions.s4),
             Text(
               inProg ? 'Done' : 'Start',
-              style: AppTextStyles.rajdhaniBodySmall(
+              style: AppTextStyles.bodySmall(
                 color: inProg ? AppColors.success : AppColors.accent,
               ),
             ),

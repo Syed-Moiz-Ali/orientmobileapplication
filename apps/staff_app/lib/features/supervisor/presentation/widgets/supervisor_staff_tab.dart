@@ -30,7 +30,7 @@ class SupervisorStaffTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 'Advisors (${advisors.length})',
-                style: AppTextStyles.rajdhaniTitle(
+                style: AppTextStyles.title(
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -127,7 +127,7 @@ class SupervisorStaffTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 'Technicians (${techs.length})',
-                style: AppTextStyles.rajdhaniTitle(
+                style: AppTextStyles.title(
                   color: AppColors.textPrimary,
                 ),
               ),

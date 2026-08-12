@@ -7,8 +7,8 @@ Future<bool?> showLogoutDialog(
   BuildContext context, {
   VoidCallback? onLogout,
 }) async {
-  // FIX (audit P0): pending sync no longer blocks logout forever — the user
-  // can force-logout (pending ops are cleared with the local data).
+  final textTheme = Theme.of(context).textTheme;
+
   if (HiveCleaner.hasPendingSync()) {
     final force = await showDialog<bool>(
       context: context,
@@ -17,35 +17,37 @@ Future<bool?> showLogoutDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r16),
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(
+            const Icon(
               Icons.sync_problem_rounded,
               color: AppColors.warning,
               size: 22,
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
               'Sync Pending',
-              style: TextStyle(
-                fontSize: 18,
+              style: textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'You have pending sync operations that could not be sent.\n\n'
-          'Wait and retry, or log out anyway — unsent changes will be cleared.',
-          style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+          'Wait and retry, or log out anyway - unsent changes will be cleared.',
+          style: textTheme.bodyLarge?.copyWith(
+            color: AppColors.text2,
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(
+              style: textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.text3,
               ),
@@ -61,9 +63,12 @@ Future<bool?> showLogoutDialog(
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text(
+            child: Text(
               'Logout Anyway',
-              style: TextStyle(fontWeight: FontWeight.w700),
+              style: textTheme.labelLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -74,6 +79,7 @@ Future<bool?> showLogoutDialog(
     onLogout?.call();
     return true;
   }
+
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -81,30 +87,32 @@ Future<bool?> showLogoutDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.r16),
       ),
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.logout_rounded, color: AppColors.danger, size: 22),
-          SizedBox(width: 10),
+          const Icon(Icons.logout_rounded, color: AppColors.danger, size: 22),
+          const SizedBox(width: 10),
           Text(
             'Logout',
-            style: TextStyle(
-              fontSize: 18,
+            style: textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
         ],
       ),
-      content: const Text(
+      content: Text(
         'Are you sure you want to logout?\nAll local data will be cleared.',
-        style: TextStyle(fontSize: 14, color: AppColors.text2, height: 1.5),
+        style: textTheme.bodyLarge?.copyWith(
+          color: AppColors.text2,
+          height: 1.5,
+        ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(
+            style: textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.text3,
             ),
@@ -120,9 +128,12 @@ Future<bool?> showLogoutDialog(
             ),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
-          child: const Text(
+          child: Text(
             'Yes, Logout',
-            style: TextStyle(fontWeight: FontWeight.w700),
+            style: textTheme.labelLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],

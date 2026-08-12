@@ -33,7 +33,7 @@ class SupervisorReportsTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 'Overview',
-                style: AppTextStyles.rajdhaniTitle(
+                style: AppTextStyles.title(
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -78,7 +78,7 @@ class SupervisorReportsTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 'Job Types',
-                style: AppTextStyles.rajdhaniTitle(
+                style: AppTextStyles.title(
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -161,7 +161,7 @@ class SupervisorReportsTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 'Revenue',
-                style: AppTextStyles.rajdhaniTitle(
+                style: AppTextStyles.title(
                   color: AppColors.textPrimary,
                 ),
               ),

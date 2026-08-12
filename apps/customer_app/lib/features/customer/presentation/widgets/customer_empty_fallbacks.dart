@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
-/// Reusable enterprise empty state card with modern design tokens
 class CustomerEmptyStateCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -26,27 +25,19 @@ class CustomerEmptyStateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.s24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+    final textTheme = Theme.of(context).textTheme;
+    final adaptive = context.adaptive;
+
+    return AppCard(
+      padding: EdgeInsets.all(
+        adaptive.pick(compact: AppDimensions.s20, medium: AppDimensions.s24),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.12),
               shape: BoxShape.circle,
@@ -57,45 +48,27 @@ class CustomerEmptyStateCard extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
               color: AppColors.textPrimary,
-              letterSpacing: 0.2,
             ),
           ),
-          const SizedBox(height: AppDimensions.s6),
+          const SizedBox(height: AppDimensions.s8),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 13,
+            style: textTheme.bodyMedium?.copyWith(
               color: AppColors.text3,
               height: 1.4,
             ),
           ),
           if (buttonLabel != null && onButtonTap != null) ...[
-            const SizedBox(height: AppDimensions.s18),
+            const SizedBox(height: AppDimensions.s20),
             SizedBox(
               width: double.infinity,
-              height: 44,
-              child: ElevatedButton(
+              child: FilledButton(
                 onPressed: onButtonTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: iconColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  ),
-                ),
-                child: Text(
-                  buttonLabel!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
+                child: Text(buttonLabel!),
               ),
             ),
           ],
@@ -105,10 +78,9 @@ class CustomerEmptyStateCard extends StatelessWidget {
               onPressed: onSecondaryButtonTap,
               child: Text(
                 secondaryButtonLabel!,
-                style: TextStyle(
+                style: textTheme.labelLarge?.copyWith(
                   color: iconColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -119,9 +91,9 @@ class CustomerEmptyStateCard extends StatelessWidget {
   }
 }
 
-/// Fallback for Empty Vehicles list
 class EmptyVehiclesCard extends StatelessWidget {
   final VoidCallback onAddVehicle;
+
   const EmptyVehiclesCard({super.key, required this.onAddVehicle});
 
   @override
@@ -131,16 +103,16 @@ class EmptyVehiclesCard extends StatelessWidget {
       iconColor: AppColors.accent,
       title: 'No Vehicles Registered',
       description:
-          'Add your vehicle details to easily book services, track job card status, and receive MOT & maintenance reminders.',
+          'Add your vehicle details to book services, track job card status, and receive maintenance reminders.',
       buttonLabel: 'Register Vehicle',
       onButtonTap: onAddVehicle,
     );
   }
 }
 
-/// Fallback for Empty Bookings list
 class EmptyBookingsCard extends StatelessWidget {
   final VoidCallback onBookService;
+
   const EmptyBookingsCard({super.key, required this.onBookService});
 
   @override
@@ -150,14 +122,13 @@ class EmptyBookingsCard extends StatelessWidget {
       iconColor: const Color(0xFF1F6FEB),
       title: 'No Upcoming Appointments',
       description:
-          'Need oil change, brake check, or full service? Choose a date & time to book your workshop slot.',
+          'Need an oil change, brake check, or full service? Choose a date and book your workshop slot.',
       buttonLabel: 'Book Appointment',
       onButtonTap: onBookService,
     );
   }
 }
 
-/// Fallback for Empty Invoices
 class EmptyInvoicesCard extends StatelessWidget {
   const EmptyInvoicesCard({super.key});
 
@@ -166,16 +137,16 @@ class EmptyInvoicesCard extends StatelessWidget {
     return const CustomerEmptyStateCard(
       icon: Icons.verified_rounded,
       iconColor: AppColors.success,
-      title: 'All Invoices Paid!',
+      title: 'All Invoices Paid',
       description:
-          'You have no pending payments. Past invoices and service history receipts will appear here.',
+          'You have no pending payments. Receipts and history will appear here.',
     );
   }
 }
 
-/// Fallback for Active Service Status when idle
 class IdleServiceCard extends StatelessWidget {
   final VoidCallback onBook;
+
   const IdleServiceCard({super.key, required this.onBook});
 
   @override
@@ -183,9 +154,9 @@ class IdleServiceCard extends StatelessWidget {
     return CustomerEmptyStateCard(
       icon: Icons.build_circle_rounded,
       iconColor: AppColors.cyan,
-      title: 'Vehicle Idle — No Active Service',
+      title: 'Vehicle Idle - No Active Service',
       description:
-          'Your vehicle is not currently in the workshop. When your car is checked in, live stage updates will appear here in real time.',
+          'Your vehicle is not currently in the workshop. Live updates will appear when it is checked in.',
       buttonLabel: 'Book Maintenance Service',
       onButtonTap: onBook,
     );

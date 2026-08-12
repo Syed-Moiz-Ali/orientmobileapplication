@@ -8,6 +8,6 @@ class FormLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
+    style: AppTextStyles.bodySmall(color: AppColors.text3),
   );
 }

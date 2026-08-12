@@ -16,6 +16,8 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.s10,
@@ -27,8 +29,7 @@ class StatusPill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11,
+        style: textTheme.labelMedium?.copyWith(
           fontWeight: FontWeight.w700,
           color: fg,
         ),

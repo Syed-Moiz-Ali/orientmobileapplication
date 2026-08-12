@@ -39,7 +39,7 @@ class SupervisorAssignSheet extends ConsumerWidget {
                         color: AppColors.textPrimary,
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
+                        letterSpacing: 0,
                       ),
                     ),
                     const Spacer(),
@@ -346,7 +346,7 @@ class _FormRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.rajdhaniLabel(color: AppColors.text2)),
+        Text(label, style: AppTextStyles.subtitle(color: AppColors.text2)),
         const SizedBox(height: 7),
         child,
       ],

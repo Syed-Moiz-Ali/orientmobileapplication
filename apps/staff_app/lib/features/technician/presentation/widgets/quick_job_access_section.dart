@@ -66,7 +66,7 @@ class QuickJobAccessSection extends ConsumerWidget {
                 SizedBox(width: AppDimensions.s10),
                 Text(
                   'Quick Job Access',
-                  style: AppTextStyles.rajdhaniLabel(
+                  style: AppTextStyles.subtitle(
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -89,7 +89,7 @@ class QuickJobAccessSection extends ConsumerWidget {
                         ),
                         decoration: InputDecoration(
                           hintText: 'Enter Job Card Number...',
-                          hintStyle: AppTextStyles.rajdhaniBody(
+                          hintStyle: AppTextStyles.bodyStrong(
                             color: AppColors.text3,
                           ),
                           prefixIcon: Icon(
@@ -154,7 +154,7 @@ class QuickJobAccessSection extends ConsumerWidget {
                         ),
                         child: Text(
                           'Go',
-                          style: AppTextStyles.rajdhaniBody(
+                          style: AppTextStyles.bodyStrong(
                             color: Colors.white,
                           ),
                         ),

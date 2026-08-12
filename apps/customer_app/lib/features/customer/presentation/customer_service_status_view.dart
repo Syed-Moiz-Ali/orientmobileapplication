@@ -11,10 +11,12 @@ class CustomerServiceStatusView extends ConsumerStatefulWidget {
   const CustomerServiceStatusView({super.key});
 
   @override
-  ConsumerState<CustomerServiceStatusView> createState() => _CustomerServiceStatusViewState();
+  ConsumerState<CustomerServiceStatusView> createState() =>
+      _CustomerServiceStatusViewState();
 }
 
-class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatusView> {
+class _CustomerServiceStatusViewState
+    extends ConsumerState<CustomerServiceStatusView> {
   Timer? _timer;
   DateTime _lastUpdated = DateTime.now();
 
@@ -45,6 +47,7 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
   Widget build(BuildContext context) {
     final state = ref.watch(customerDashboardProvider);
     final svc = state.activeService;
+    final textTheme = Theme.of(context).textTheme;
 
     if (svc == null || !svc.hasActiveJob) {
       return Scaffold(
@@ -60,7 +63,9 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                   padding: const EdgeInsets.all(AppDimensions.s20),
                   child: Center(
                     child: IdleServiceCard(
-                      onBook: () => ref.read(customerDashboardProvider.notifier).selectTab(2),
+                      onBook: () => ref
+                          .read(customerDashboardProvider.notifier)
+                          .selectTab(2),
                     ),
                   ),
                 ),
@@ -72,7 +77,9 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
     }
 
     final diffMinutes = DateTime.now().difference(_lastUpdated).inMinutes;
-    final lastUpdatedStr = diffMinutes == 0 ? 'Just now' : '$diffMinutes minutes ago';
+    final lastUpdatedStr = diffMinutes == 0
+        ? 'Just now'
+        : '$diffMinutes minutes ago';
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -90,13 +97,7 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
             ),
             const Divider(height: 1),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.s18,
-                  AppDimensions.s18,
-                  AppDimensions.s18,
-                  AppDimensions.s32,
-                ),
+              child: AppResponsivePage(
                 child: Column(
                   children: [
                     AppCard(
@@ -129,16 +130,13 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                                   children: [
                                     Text(
                                       svc.jobCardId,
-                                      style: const TextStyle(
-                                        fontSize: 11,
+                                      style: textTheme.labelMedium?.copyWith(
                                         color: Colors.white60,
-                                        letterSpacing: .3,
                                       ),
                                     ),
                                     Text(
                                       svc.service,
-                                      style: const TextStyle(
-                                        fontSize: 16,
+                                      style: textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.w800,
                                         color: Colors.white,
                                       ),
@@ -157,10 +155,9 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                                     AppDimensions.rPill,
                                   ),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'In Service',
-                                  style: TextStyle(
-                                    fontSize: 10,
+                                  style: textTheme.labelSmall?.copyWith(
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                   ),
@@ -190,7 +187,9 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                     ),
                     const SizedBox(height: AppDimensions.s14),
                     AdvisorContactCard(
-                      advisorName: svc.technicianName.isNotEmpty ? svc.technicianName : 'Service Advisor',
+                      advisorName: svc.technicianName.isNotEmpty
+                          ? svc.technicianName
+                          : 'Service Advisor',
                     ),
                     const SizedBox(height: AppDimensions.s14),
 
@@ -200,10 +199,9 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                         children: [
                           Row(
                             children: [
-                              const Text(
+                              Text(
                                 'Overall Progress',
-                                style: TextStyle(
-                                  fontSize: 15,
+                                style: textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textPrimary,
                                 ),
@@ -211,8 +209,7 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                               const Spacer(),
                               Text(
                                 '${svc.progressPercent}%',
-                                style: const TextStyle(
-                                  fontSize: 22,
+                                style: textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.primary,
                                 ),
@@ -244,8 +241,7 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                               const SizedBox(width: AppDimensions.s6),
                               Text(
                                 'Current: ${svc.currentStage}',
-                                style: const TextStyle(
-                                  fontSize: 12,
+                                style: textTheme.bodyMedium?.copyWith(
                                   color: AppColors.text3,
                                 ),
                               ),
@@ -277,18 +273,16 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Your Technician',
-                                  style: TextStyle(
-                                    fontSize: 11,
+                                  style: textTheme.labelMedium?.copyWith(
                                     color: AppColors.text3,
                                   ),
                                 ),
                                 const SizedBox(height: AppDimensions.s4),
                                 Text(
                                   svc.technicianName,
-                                  style: const TextStyle(
-                                    fontSize: 15,
+                                  style: textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textPrimary,
                                   ),
@@ -319,9 +313,7 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text(
-                                    'Chat is not available yet',
-                                  ),
+                                  content: Text('Chat is not available yet'),
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );
@@ -336,10 +328,9 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Service Stages',
-                            style: TextStyle(
-                              fontSize: 15,
+                            style: textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
                             ),
@@ -363,19 +354,18 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                         borderRadius: BorderRadius.circular(AppDimensions.r12),
                         border: Border.all(color: AppColors.successBorder),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.sync_rounded,
                             color: AppColors.success,
                             size: 17,
                           ),
-                          SizedBox(width: AppDimensions.s10),
+                          const SizedBox(width: AppDimensions.s10),
                           Expanded(
                             child: Text(
                               'Auto-refreshes every minute. SMS alerts for major milestones.',
-                              style: TextStyle(
-                                fontSize: 12,
+                              style: textTheme.bodyMedium?.copyWith(
                                 color: AppColors.success,
                                 height: 1.4,
                               ),
@@ -388,7 +378,9 @@ class _CustomerServiceStatusViewState extends ConsumerState<CustomerServiceStatu
                     Center(
                       child: Text(
                         'Last updated $lastUpdatedStr',
-                        style: const TextStyle(fontSize: 11, color: AppColors.text4),
+                        style: textTheme.labelMedium?.copyWith(
+                          color: AppColors.text4,
+                        ),
                       ),
                     ),
                   ],
@@ -408,24 +400,30 @@ class _MetaItem extends StatelessWidget {
   const _MetaItem({required this.label, required this.value});
 
   @override
-  Widget build(BuildContext context) => Expanded(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 9, color: Colors.white54)),
-        const SizedBox(height: AppDimensions.s4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: textTheme.labelSmall?.copyWith(color: Colors.white54),
           ),
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: AppDimensions.s4),
+          Text(
+            value,
+            style: textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _IconBtn extends StatelessWidget {
@@ -476,6 +474,7 @@ class _StageItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final (color, bg, icon) = _props;
     return IntrinsicHeight(
       child: Row(
@@ -516,8 +515,7 @@ class _StageItem extends StatelessWidget {
                       children: [
                         Text(
                           stage.name,
-                          style: TextStyle(
-                            fontSize: 13,
+                          style: textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: stage.status == StageStatus.pending
                                 ? AppColors.text3
@@ -527,8 +525,7 @@ class _StageItem extends StatelessWidget {
                         if (stage.time != null)
                           Text(
                             stage.time!,
-                            style: const TextStyle(
-                              fontSize: 11,
+                            style: textTheme.bodySmall?.copyWith(
                               color: AppColors.text3,
                             ),
                           ),

@@ -39,6 +39,8 @@ void showProfileSheet(
   ProfileSheetData data, {
   VoidCallback? onLogout,
 }) {
+  final textTheme = Theme.of(context).textTheme;
+
   showModalBottomSheet(
     context: context,
     backgroundColor: AppColors.surface,
@@ -71,12 +73,15 @@ void showProfileSheet(
             child: Center(
               child: Text(
                 data.initials,
-                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                style: textTheme.headlineMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
           const SizedBox(height: 14),
-          Text(data.roleLabel, style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary)),
+          Text(data.roleLabel, style: AppTextStyles.title(color: AppColors.textPrimary)),
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -84,7 +89,7 @@ void showProfileSheet(
               color: AppColors.primaryBg,
               borderRadius: BorderRadius.circular(AppDimensions.r20),
             ),
-            child: Text(data.roleBadge, style: AppTextStyles.rajdhaniBodySmall(color: AppColors.primary)),
+            child: Text(data.roleBadge, style: AppTextStyles.bodySmall(color: AppColors.primary)),
           ),
           const SizedBox(height: 24),
           for (final item in data.menuItems) ...[
@@ -109,7 +114,12 @@ void showProfileSheet(
                 ),
               ),
               icon: const Icon(Icons.logout_rounded, size: 18),
-              label: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              label: Text(
+                'Logout',
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ],
@@ -136,7 +146,7 @@ Widget _menuItem(BuildContext context, {
             children: [
               Icon(icon, size: 20, color: AppColors.text2),
               SizedBox(width: AppDimensions.s12),
-              Text(label, style: AppTextStyles.rajdhaniBody(color: AppColors.textPrimary)),
+              Text(label, style: AppTextStyles.bodyStrong(color: AppColors.textPrimary)),
               const Spacer(),
               Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.text3),
             ],

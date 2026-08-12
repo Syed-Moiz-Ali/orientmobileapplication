@@ -23,9 +23,9 @@ class BrandConfig {
     appName: 'ORIENT',
     tagline: 'Auto Garage ERP',
     icon: Icons.build_rounded,
-    iconColor: AppColors.accent,
+    iconColor: AppColors.primary,
     accentColor: AppColors.accent,
-    buttonColor: AppColors.accent,
+    buttonColor: AppColors.primary,
   );
 }
 

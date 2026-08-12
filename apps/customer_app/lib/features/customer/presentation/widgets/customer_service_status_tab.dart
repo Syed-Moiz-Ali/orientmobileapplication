@@ -1,31 +1,29 @@
 import 'dart:async';
+import 'package:customer_app/core/router/app_router.dart';
+import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/widgets/advisor_contact_card.dart';
+import 'package:customer_app/features/customer/presentation/widgets/garage_info_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
-import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_empty_fallbacks.dart';
-import 'package:customer_app/features/customer/presentation/widgets/garage_info_card.dart';
-import 'package:customer_app/features/customer/presentation/widgets/advisor_contact_card.dart';
-import 'package:customer_app/core/router/app_router.dart';
 
 class CustomerServiceStatusTab extends ConsumerStatefulWidget {
   const CustomerServiceStatusTab({super.key});
 
   @override
-  ConsumerState<CustomerServiceStatusTab> createState() => _CustomerServiceStatusTabState();
+  ConsumerState<CustomerServiceStatusTab> createState() =>
+      _CustomerServiceStatusTabState();
 }
 
-class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatusTab> {
+class _CustomerServiceStatusTabState
+    extends ConsumerState<CustomerServiceStatusTab> {
   Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
-    // Auto-refresh active service tracking every 60 seconds.
-    // FE-FIX (pre-deployment): skip while hidden (IndexedStack) or when no
-    // service is active — no background polls.
     _refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
       if (!mounted || !TickerMode.of(context)) return;
       final dash = ref.read(customerDashboardProvider);
@@ -41,635 +39,841 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
     super.dispose();
   }
 
-  (Color, Color) _statusColors(BookingStatus s) {
-    switch (s) {
-      case BookingStatus.confirmed:
-        return (const Color(0xFFB2E0E5), AppColors.accent);
-      case BookingStatus.completed:
-        return (AppColors.successBg, AppColors.success);
-      case BookingStatus.pending:
-        return (AppColors.warningBg, AppColors.warning);
-      case BookingStatus.cancelled:
-        return (AppColors.dangerBg, AppColors.danger);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final bookings = ref.watch(customerBookingsProvider).value ?? const <CustomerBookingEntity>[];
-    final breakdowns = ref.watch(customerBreakdownsProvider);
+    final textTheme = Theme.of(context).textTheme;
+    final bookings =
+        ref.watch(customerBookingsProvider).value ??
+        const <CustomerBookingEntity>[];
     final dash = ref.watch(customerDashboardProvider);
     final activeService = dash.activeService;
-    final hasActiveService = activeService != null && activeService.hasActiveJob && activeService.jobCardId.isNotEmpty;
-    final activeBookings = bookings.where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending).toList();
+    final hasActiveLiveJob =
+        activeService != null &&
+        activeService.hasActiveJob &&
+        activeService.jobCardId.isNotEmpty;
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(customerDashboardProvider.notifier).refresh();
-      },
-      color: AppColors.accent,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          AppDimensions.s16,
-          AppDimensions.s16,
-          AppDimensions.s16,
-          AppDimensions.s32,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status Header Banner
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Service Tracker',
-                        style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Real-time workshop stage monitoring',
-                        style: TextStyle(fontSize: 12, color: AppColors.text3),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: AppColors.successBg,
-                    borderRadius: BorderRadius.circular(AppDimensions.r20),
-                    border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.circle, size: 8, color: AppColors.success),
-                      SizedBox(width: 6),
-                      Text(
-                        'LIVE UPDATES',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.success,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.s16),
+    // Filter pending or confirmed bookings
+    final activeBookings = bookings
+        .where(
+          (b) =>
+              b.status == BookingStatus.confirmed ||
+              b.status == BookingStatus.pending,
+        )
+        .toList();
 
-            // Main Active Job or Idle Section
-            if (hasActiveService) ...[
-              _ActiveServiceTimelineCard(service: activeService),
-              const SizedBox(height: AppDimensions.s14),
-              AdvisorContactCard(
-                advisorName: activeService.technicianName.isNotEmpty ? activeService.technicianName : 'Service Advisor',
-              ),
-              const SizedBox(height: AppDimensions.s24),
-            ] else if (activeBookings.isNotEmpty) ...[
-              _ActiveServiceCard(booking: activeBookings.first),
-              const SizedBox(height: AppDimensions.s24),
-            ] else ...[
-              IdleServiceCard(
-                onBook: () => context.push(AppRoutes.customerBookService),
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(customerDashboardProvider.notifier).refresh();
+        },
+        color: AppColors.primary,
+        child: AppResponsivePage(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. PAGE HEADER
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: AppDimensions.s12,
+                  bottom: AppDimensions.s8,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Service Status Tracker 📡',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.headlineLarge?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 26,
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            hasActiveLiveJob
+                                ? 'Live telemetry repair stage & completion ETA'
+                                : activeBookings.isNotEmpty
+                                ? 'Pending appointment awaiting workshop check-in'
+                                : 'All systems clear • No pending services',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: AppColors.text3,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppDimensions.s12),
+                    GestureDetector(
+                      onTap: () =>
+                          context.push(AppRoutes.customerNotifications),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: const Icon(
+                              Icons.notifications_outlined,
+                              color: AppColors.textPrimary,
+                              size: 22,
+                            ),
+                          ),
+                          if (dash.unreadCount > 0)
+                            Positioned(
+                              top: -2,
+                              right: -2,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.danger,
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.rPill,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.bg,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Text(
+                                  dash.unreadCount > 99
+                                      ? '99+'
+                                      : '${dash.unreadCount}',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: AppDimensions.s16),
-              EmergencyBreakdownBanner(
-                onTap: () => context.push(AppRoutes.customerBreakdownHelp),
+
+              // 2. ACTIVE SERVICE OR PENDING BOOKING CARD
+              if (hasActiveLiveJob) ...[
+                _ActiveJobTelemetryHero(service: activeService),
+                const SizedBox(height: AppDimensions.s16),
+                AdvisorContactCard(
+                  advisorName: activeService.technicianName.isNotEmpty
+                      ? activeService.technicianName
+                      : 'Service Advisor',
+                ),
+                const SizedBox(height: AppDimensions.s24),
+              ] else if (activeBookings.isNotEmpty) ...[
+                // FIX: SHOW PENDING SERVICE CARD WHEN SERVICE IS PENDING OR CONFIRMED!
+                _PendingServiceStatusCard(
+                  booking: activeBookings.first,
+                  onViewDetails: () => context.push(
+                    AppRoutes.customerBookingDetail,
+                    extra: activeBookings.first,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s24),
+              ] else ...[
+                _NoActiveJobStatusCard(
+                  onBook: () => context.push(AppRoutes.customerBookService),
+                ),
+                const SizedBox(height: AppDimensions.s24),
+              ],
+
+              // 3. WORKSHOP INFORMATION & LOCATION
+              _ExplanatorySectionHeader(
+                title: 'Workshop Location & Hours',
+                subtitle: 'Visit our main workshop bay or get live directions',
               ),
+              const SizedBox(height: AppDimensions.s10),
+              const GarageInfoCard(),
               const SizedBox(height: AppDimensions.s24),
-            ],
 
-            // Workshop Location & Direct Contact Card
-            _sectionLabel('Workshop Info & Location'),
-            const SizedBox(height: AppDimensions.s12),
-            const GarageInfoCard(),
-
-            // Booking History List
-            if (bookings.isNotEmpty) ...[
-              const SizedBox(height: AppDimensions.s28),
-              _sectionLabel('Booking History'),
-              const SizedBox(height: AppDimensions.s12),
-              ...bookings.map((b) {
-                final (bg, fg) = _statusColors(b.status);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppDimensions.s10),
-                  child: GestureDetector(
-                    onTap: () => context.push(AppRoutes.customerBookingDetail, extra: b),
-                    child: Container(
-                      padding: const EdgeInsets.all(AppDimensions.s12),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppDimensions.r12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: bg.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(AppDimensions.r10),
-                            ),
-                            child: Icon(Icons.build_circle_outlined, color: fg, size: 20),
-                          ),
-                          const SizedBox(width: AppDimensions.s10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  b.service.isNotEmpty ? b.service : 'Service Booking',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${b.vehicleName}  \u00b7  ${b.date}',
-                                  style: const TextStyle(fontSize: 11, color: AppColors.text3),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppDimensions.r20)),
-                            child: Text(b.statusLabel, style: TextStyle(color: fg, fontSize: 9, fontWeight: FontWeight.w700)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ],
-
-            // Breakdown Requests History
-            if (breakdowns.isNotEmpty) ...[
-              const SizedBox(height: AppDimensions.s28),
-              _sectionLabel('Breakdown Assistance History'),
-              const SizedBox(height: AppDimensions.s12),
-              ...breakdowns.take(3).map((b) {
-                final status = b['status'] as String? ?? 'pending';
-                final isResolved = status == 'resolved';
-                final clr = isResolved ? AppColors.success : AppColors.warning;
-                final bgColor = isResolved ? AppColors.successBg : AppColors.warningBg;
-                final statusLabel = AppStatusLabels.breakdown(status);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppDimensions.s10),
-                  child: GestureDetector(
-                    onTap: () => context.push(AppRoutes.customerBreakdownDetail, extra: b),
-                    child: Container(
-                      padding: const EdgeInsets.all(AppDimensions.s12),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppDimensions.r12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.dangerBg,
-                              borderRadius: BorderRadius.circular(AppDimensions.r10),
-                            ),
-                            child: const Icon(Icons.emergency_rounded, color: AppColors.danger, size: 20),
-                          ),
-                          const SizedBox(width: AppDimensions.s10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  b['issue'] as String? ?? 'Breakdown Assistance',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  b['vehicleName'] as String? ?? '',
-                                  style: const TextStyle(fontSize: 11, color: AppColors.text3),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(AppDimensions.r20)),
-                            child: Text(statusLabel, style: TextStyle(color: clr, fontSize: 9, fontWeight: FontWeight.w700)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _sectionLabel(String text) => Row(
-    children: [
-      Container(
-        width: 4,
-        height: 18,
-        decoration: BoxDecoration(
-          color: AppColors.accent,
-          borderRadius: BorderRadius.circular(AppDimensions.r2),
-        ),
-      ),
-      const SizedBox(width: AppDimensions.s10),
-      Text(
-        text,
-        style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
-      ),
-    ],
-  );
-}
-
-class _ActiveServiceTimelineCard extends StatelessWidget {
-  final CustomerServiceEntity service;
-  const _ActiveServiceTimelineCard({required this.service});
-
-  (Color, Color) _stageColors(StageStatus s) {
-    switch (s) {
-      case StageStatus.done:
-        return (AppColors.success, AppColors.successBg);
-      case StageStatus.inProgress:
-        return (AppColors.warning, AppColors.warningBg);
-      case StageStatus.pending:
-        return (AppColors.text3, AppColors.surfaceAlt);
-    }
-  }
-
-  String _stageLabel(StageStatus s) {
-    switch (s) {
-      case StageStatus.done:
-        return 'Completed';
-      case StageStatus.inProgress:
-        return 'In progress...';
-      case StageStatus.pending:
-        return 'Pending';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final stages = service.stages;
-    return GestureDetector(
-      onTap: () => context.push(AppRoutes.customerServiceStatus),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimensions.s18),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.r16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0A000000),
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.accent, Color(0xFF40B3C0)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  ),
-                  child: const Icon(Icons.build_circle_outlined, color: Colors.white, size: 24),
+              // 4. SERVICE & MAINTENANCE RECORDS
+              if (bookings.isNotEmpty) ...[
+                _ExplanatorySectionHeader(
+                  title: 'Service & Maintenance Records',
+                  subtitle: 'Past service receipts & inspection reports',
+                  action: 'View All',
+                  onAction: () =>
+                      ref.read(customerDashboardProvider.notifier).selectTab(2),
                 ),
-                const SizedBox(width: AppDimensions.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        service.service.isNotEmpty ? service.service : 'Service in Progress',
-                        style: AppTextStyles.rajdhaniLabel(color: AppColors.textPrimary),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        service.vehicleName.isNotEmpty
-                            ? '${service.vehicleName}  \u00b7  ${service.plateNumber}'
-                            : 'Job Card ${service.jobCardId}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.text3),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.cyanLight,
-                    borderRadius: BorderRadius.circular(AppDimensions.r20),
-                  ),
-                  child: Text(
-                    '${service.progressPercent}%',
-                    style: const TextStyle(
-                      color: AppColors.accent,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.s8),
-            Row(
-              children: [
-                const Icon(Icons.badge_outlined, color: AppColors.text3, size: 12),
-                const SizedBox(width: 5),
-                Text('Job Card: ${service.jobCardId}', style: const TextStyle(fontSize: 11, color: AppColors.text3)),
-                const Spacer(),
-                const Text(
-                  'Tap for details \u203a',
-                  style: TextStyle(fontSize: 11, color: AppColors.accent, fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.s14),
-            LinearProgressIndicator(
-              value: (service.progressPercent / 100).clamp(0.0, 1.0),
-              backgroundColor: AppColors.surfaceAlt,
-              color: AppColors.accent,
-              minHeight: 6,
-              borderRadius: BorderRadius.circular(3),
-            ),
-            const SizedBox(height: AppDimensions.s18),
-            ...stages.asMap().entries.map((e) {
-              final i = e.key;
-              final stage = e.value;
-              final isLast = i == stages.length - 1;
-              final (fg, bg) = _stageColors(stage.status);
-              final completed = stage.status == StageStatus.done;
-              final active = stage.status == StageStatus.inProgress;
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 28,
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: completed ? AppColors.success : active ? fg : AppColors.surfaceAlt,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: completed ? AppColors.success : active ? fg : AppColors.border,
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            completed ? Icons.check_rounded : active ? Icons.autorenew_rounded : Icons.circle_outlined,
-                            size: 12,
-                            color: completed || active ? Colors.white : AppColors.text3,
-                          ),
+                const SizedBox(height: AppDimensions.s10),
+                Column(
+                  children: [
+                    for (final b in bookings.take(3)) ...[
+                      _ServiceRecordCard(
+                        booking: b,
+                        onTap: () => context.push(
+                          AppRoutes.customerBookingDetail,
+                          extra: b,
                         ),
-                        if (!isLast)
-                          Container(
-                            width: 2,
-                            height: 28,
-                            color: completed ? AppColors.success : AppColors.border,
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: AppDimensions.s10),
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            stage.name,
-                            style: TextStyle(
-                              color: active ? fg : AppColors.textPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            stage.time ?? _stageLabel(stage.status),
-                            style: const TextStyle(color: AppColors.text3, fontSize: 11),
-                          ),
-                        ],
                       ),
-                    ),
-                  ),
-                  if (active)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppDimensions.r20)),
-                      child: Text('Current', style: TextStyle(color: fg, fontSize: 9, fontWeight: FontWeight.w700)),
-                    ),
-                ],
-              );
-            }),
-          ],
+                      if (b != bookings.take(3).last)
+                        const SizedBox(height: AppDimensions.s10),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: AppDimensions.s32),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _ActiveServiceCard extends StatelessWidget {
+/// PENDING OR CONFIRMED SERVICE STATUS CARD (Fixes "No Active Job" bug for pending services)
+class _PendingServiceStatusCard extends StatelessWidget {
   final CustomerBookingEntity booking;
-  const _ActiveServiceCard({required this.booking});
+  final VoidCallback onViewDetails;
 
-  List<_StepData> get _steps {
-    switch (booking.status) {
-      case BookingStatus.pending:
-        return [
-          _StepData('Booking Placed', true, true),
-          _StepData('Awaiting Confirmation', true, false),
-          _StepData('Service in Progress', false, false),
-          _StepData('Completed', false, false),
-        ];
-      case BookingStatus.confirmed:
-        return [
-          _StepData('Booking Placed', true, false),
-          _StepData('Confirmed', true, false),
-          _StepData('Service in Progress', true, true),
-          _StepData('Completed', false, false),
-        ];
-      default:
-        return [
-          _StepData('Booking Placed', true, false),
-          _StepData(booking.statusLabel, true, true),
-        ];
-    }
-  }
-
-  (Color, Color) _statusColors(BookingStatus s) {
-    switch (s) {
-      case BookingStatus.confirmed:
-        return (const Color(0xFFB2E0E5), AppColors.accent);
-      case BookingStatus.completed:
-        return (AppColors.successBg, AppColors.success);
-      case BookingStatus.pending:
-        return (AppColors.warningBg, AppColors.warning);
-      case BookingStatus.cancelled:
-        return (AppColors.dangerBg, AppColors.danger);
-    }
-  }
+  const _PendingServiceStatusCard({
+    required this.booking,
+    required this.onViewDetails,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg) = _statusColors(booking.status);
-    final steps = _steps;
+    final textTheme = Theme.of(context).textTheme;
+    final isConfirmed = booking.status == BookingStatus.confirmed;
 
-    return GestureDetector(
-      onTap: () => context.push(AppRoutes.customerBookingDetail, extra: booking),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimensions.s18),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.r16),
-          border: Border.all(color: AppColors.border),
+    return AppCard(
+      onTap: onViewDetails,
+      color: AppColors.surface,
+      borderColor: isConfirmed
+          ? AppColors.primaryBorder
+          : AppColors.warningBorder,
+      borderRadius: 24,
+      padding: const EdgeInsets.all(AppDimensions.s18),
+      boxShadow: [
+        BoxShadow(
+          color: (isConfirmed ? AppColors.primary : AppColors.warning)
+              .withValues(alpha: 0.08),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
         ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [fg, fg.withValues(alpha: 0.6)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.s10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: (isConfirmed
+                      ? AppColors.primaryBg
+                      : AppColors.warningBg),
+                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                  border: Border.all(
+                    color: (isConfirmed
+                        ? AppColors.primaryBorder
+                        : AppColors.warningBorder),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: isConfirmed
+                            ? AppColors.primary
+                            : AppColors.warning,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  ),
-                  child: const Icon(Icons.build_circle_outlined, color: Colors.white, size: 24),
+                    const SizedBox(width: AppDimensions.s6),
+                    Text(
+                      isConfirmed
+                          ? 'SERVICE CONFIRMED • AWAITING INTAKE'
+                          : 'SERVICE PENDING WORKSHOP CONFIRMATION',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: isConfirmed
+                            ? AppColors.primary
+                            : AppColors.warning,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 9,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppDimensions.s12),
+              ),
+              const Spacer(),
+              StatusPill(
+                label: booking.statusLabel,
+                bg: isConfirmed ? AppColors.primaryBg : AppColors.warningBg,
+                fg: isConfirmed ? AppColors.primary : AppColors.warning,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s14),
+          Text(
+            booking.service.isNotEmpty
+                ? booking.service
+                : 'Scheduled Service Appointment',
+            style: textTheme.titleLarge?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Text(
+                  booking.plateNumber,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Expanded(
+                child: Text(
+                  booking.vehicleName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.text3,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s14),
+
+          // Scheduled Date & Time Pill Box
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s12,
+              vertical: AppDimensions.s10,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primaryBg,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.event_available_rounded,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
+                const SizedBox(width: AppDimensions.s8),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Appointment', style: AppTextStyles.rajdhaniLabel(color: AppColors.textPrimary)),
-                      const SizedBox(height: 4),
-                      Text('${booking.vehicleName}  \u00b7  ${booking.plateNumber}', style: const TextStyle(fontSize: 12, color: AppColors.text3)),
-                    ],
+                  child: Text(
+                    'Scheduled for: ${booking.date}${booking.time.isNotEmpty ? " at ${booking.time}" : ""}',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppDimensions.r20)),
-                  child: Text(booking.statusLabel, style: TextStyle(color: fg, fontSize: 10, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
-            const SizedBox(height: AppDimensions.s20),
-            ...steps.asMap().entries.map((e) {
-              final i = e.key;
-              final step = e.value;
-              final isLast = i == steps.length - 1;
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 28,
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: step.completed ? AppColors.success : step.active ? fg : AppColors.surfaceAlt,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: step.completed ? AppColors.success : step.active ? fg : AppColors.border,
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            step.completed ? Icons.check_rounded : step.active ? Icons.autorenew_rounded : Icons.circle_outlined,
-                            size: 12,
-                            color: step.completed || step.active ? Colors.white : AppColors.text3,
-                          ),
-                        ),
-                        if (!isLast)
-                          Container(width: 2, height: 28, color: step.completed ? AppColors.success : AppColors.border),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: AppDimensions.s10),
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            step.title,
-                            style: TextStyle(
-                              color: step.active ? fg : AppColors.textPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            step.completed ? 'Completed' : step.active ? 'In progress...' : 'Pending',
-                            style: const TextStyle(color: AppColors.text3, fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+
+          // Visual Stepper Pipeline
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const _StepCircle(label: 'Booked', isDone: true),
+              const _StepLine(isDone: true),
+              _StepCircle(
+                label: 'Check-In',
+                isCurrent: isConfirmed,
+                isDone: isConfirmed,
+              ),
+              const _StepLine(isDone: false),
+              const _StepCircle(label: 'Repairs', isDone: false),
+              const _StepLine(isDone: false),
+              const _StepCircle(label: 'Pick-Up', isDone: false),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s14),
+
+          // Action Button
+          Container(
+            width: double.infinity,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(AppDimensions.rPill),
+            ),
+            child: Center(
+              child: Text(
+                'View Booking Details & Instructions →',
+                style: textTheme.labelMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _StepData {
+/// NO ACTIVE JOB CARD (Clear Explanation & Call To Action)
+class _NoActiveJobStatusCard extends StatelessWidget {
+  final VoidCallback onBook;
+
+  const _NoActiveJobStatusCard({required this.onBook});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      borderRadius: 24,
+      padding: const EdgeInsets.all(AppDimensions.s20),
+      color: AppColors.surface,
+      borderColor: AppColors.border,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.successBg,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: AppColors.success,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'No Pending or Active Service Jobs',
+                      style: textTheme.titleMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Your vehicle is idle and ready for driving.',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.text3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          const Divider(height: 1, color: AppColors.line),
+          const SizedBox(height: AppDimensions.s14),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Due for maintenance or routine checkup?',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: onBook,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s16,
+                    vertical: AppDimensions.s10,
+                  ),
+                ),
+                child: const Text(
+                  'Book Service →',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ACTIVE JOB TELEMETRY HERO (Clear Visual Stages)
+class _ActiveJobTelemetryHero extends StatelessWidget {
+  final CustomerServiceEntity service;
+
+  const _ActiveJobTelemetryHero({required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final progress = (service.progressPercent.clamp(0, 100) / 100).toDouble();
+
+    return AppCard(
+      color: AppColors.surface,
+      borderColor: AppColors.primaryBorder,
+      borderRadius: 24,
+      padding: const EdgeInsets.all(AppDimensions.s18),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.08),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
+        ),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.s10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppColors.accent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppDimensions.s6),
+                    Text(
+                      'STAGE 3 OF 4 • IN PROGRESS',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 9,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${service.progressPercent}% Completed',
+                style: textTheme.titleSmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s14),
+          Text(
+            service.currentStage.isNotEmpty
+                ? service.currentStage
+                : 'Service In Progress',
+            style: textTheme.titleLarge?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Vehicle: ${service.vehicleName} (${service.plateNumber}) • Job #${service.jobCardId}',
+            style: textTheme.bodySmall?.copyWith(
+              color: AppColors.text3,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppDimensions.rPill),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 10,
+              backgroundColor: AppColors.surfaceAlt,
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s14),
+
+          // Visual Stepper Pipeline
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _StepCircle(label: 'Check-In', isDone: true),
+              _StepLine(isDone: true),
+              _StepCircle(label: 'Inspection', isDone: true),
+              _StepLine(isDone: true),
+              _StepCircle(label: 'Repairing', isCurrent: true),
+              _StepLine(isDone: false),
+              _StepCircle(label: 'Pick-Up', isDone: false),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepCircle extends StatelessWidget {
+  final String label;
+  final bool isDone;
+  final bool isCurrent;
+
+  const _StepCircle({
+    required this.label,
+    this.isDone = false,
+    this.isCurrent = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDone
+        ? AppColors.success
+        : isCurrent
+        ? AppColors.primary
+        : AppColors.text4;
+
+    return Column(
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: isDone || isCurrent
+                ? color.withValues(alpha: 0.15)
+                : AppColors.surfaceAlt,
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: isCurrent ? 2 : 1),
+          ),
+          child: Center(
+            child: isDone
+                ? Icon(Icons.check_rounded, size: 14, color: color)
+                : Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: isCurrent || isDone ? FontWeight.w900 : FontWeight.w500,
+            color: isCurrent || isDone
+                ? AppColors.textPrimary
+                : AppColors.text4,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepLine extends StatelessWidget {
+  final bool isDone;
+
+  const _StepLine({required this.isDone});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: const EdgeInsets.only(bottom: 16),
+        color: isDone ? AppColors.success : AppColors.border,
+      ),
+    );
+  }
+}
+
+class _ServiceRecordCard extends StatelessWidget {
+  final CustomerBookingEntity booking;
+  final VoidCallback onTap;
+
+  const _ServiceRecordCard({required this.booking, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      onTap: onTap,
+      borderRadius: 24,
+      padding: const EdgeInsets.all(AppDimensions.s14),
+      color: AppColors.surface,
+      borderColor: AppColors.border,
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primaryBg,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  booking.service.isNotEmpty
+                      ? booking.service
+                      : 'Completed Service',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${booking.vehicleName} • ${booking.date}',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.text3,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          StatusPill(
+            label: booking.statusLabel,
+            bg: AppColors.successBg,
+            fg: AppColors.success,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExplanatorySectionHeader extends StatelessWidget {
   final String title;
-  final bool completed;
-  final bool active;
-  const _StepData(this.title, this.completed, this.active);
+  final String subtitle;
+  final String? action;
+  final VoidCallback? onAction;
+
+  const _ExplanatorySectionHeader({
+    required this.title,
+    required this.subtitle,
+    this.action,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: textTheme.titleMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.text3,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (action != null && onAction != null)
+          GestureDetector(
+            onTap: onAction,
+            child: Text(
+              action!,
+              style: textTheme.labelMedium?.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }

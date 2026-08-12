@@ -10,8 +10,11 @@ abstract final class AppTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: brand.buttonColor,
       primary: brand.buttonColor,
+      secondary: AppColors.accent,
+      error: AppColors.danger,
       surface: AppColors.surface,
       surfaceContainerLow: AppColors.surfaceAlt,
+      surfaceContainerHighest: AppColors.bg,
       outline: AppColors.border,
       outlineVariant: AppColors.borderMd,
       onSurface: AppColors.textPrimary,
@@ -30,7 +33,7 @@ abstract final class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+        titleTextStyle: AppTextStyles.title(color: AppColors.textPrimary),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -41,9 +44,9 @@ abstract final class AppTheme {
           shadowColor: Colors.transparent,
           // Fixed width issue: Size(0, 52) instead of Size.fromHeight(52)
           minimumSize: const Size(0, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          textStyle: AppTextStyles.rajdhaniButton(color: Colors.white),
+          textStyle: AppTextStyles.button(color: Colors.white),
         ),
       ),
 
@@ -53,9 +56,9 @@ abstract final class AppTheme {
           // Fixed width issue: Size(0, 52) instead of Size.fromHeight(52)
           minimumSize: const Size(0, 52),
           side: const BorderSide(color: AppColors.border),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          textStyle: AppTextStyles.rajdhaniButton(color: AppColors.textPrimary),
+          textStyle: AppTextStyles.button(color: AppColors.textPrimary),
         ),
       ),
 
@@ -63,17 +66,27 @@ abstract final class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: brand.buttonColor,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          textStyle: AppTextStyles.rajdhaniButton(color: brand.buttonColor),
+          textStyle: AppTextStyles.button(color: brand.buttonColor),
         ),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
-        filled: false,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-        border: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.border)),
-        enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.border)),
-        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: brand.buttonColor, width: 2)),
-        hintStyle: AppTextStyles.rajdhaniLabel(color: AppColors.text4),
+        filled: true,
+        fillColor: AppColors.bg,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: brand.buttonColor, width: 1.5),
+        ),
+        hintStyle: AppTextStyles.body(color: AppColors.text4),
       ),
 
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -83,7 +96,7 @@ abstract final class AppTheme {
         focusElevation: 0,
         hoverElevation: 0,
         highlightElevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
 
       dividerTheme: const DividerThemeData(color: AppColors.line, thickness: 1, space: 1),
@@ -111,7 +124,7 @@ abstract final class AppTheme {
         disabledColor: AppColors.surfaceAlt,
         side: BorderSide.none,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-        labelStyle: AppTextStyles.rajdhaniLabel(color: brand.buttonColor),
+        labelStyle: AppTextStyles.subtitle(color: brand.buttonColor),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
@@ -125,7 +138,11 @@ abstract final class AppTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: brand.buttonColor,
       primary: brand.buttonColor,
+      secondary: AppColors.accent,
+      error: AppColors.danger,
       surface: darkSurface,
+      surfaceContainerLow: const Color(0xFF111827),
+      surfaceContainerHighest: const Color(0xFF0B1220),
       outline: darkBorder,
       onSurface: const Color(0xFFF8FAFC),
       onSurfaceVariant: AppColors.text4,
@@ -143,7 +160,7 @@ abstract final class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTextStyles.rajdhaniTitle(color: colorScheme.onSurface),
+        titleTextStyle: AppTextStyles.title(color: colorScheme.onSurface),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -154,9 +171,9 @@ abstract final class AppTheme {
           shadowColor: Colors.transparent,
           // Fixed width issue: Size(0, 52) instead of Size.fromHeight(52)
           minimumSize: const Size(0, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          textStyle: AppTextStyles.rajdhaniButton(color: Colors.white),
+          textStyle: AppTextStyles.button(color: Colors.white),
         ),
       ),
 
@@ -166,19 +183,29 @@ abstract final class AppTheme {
           // Fixed width issue: Size(0, 52) instead of Size.fromHeight(52)
           minimumSize: const Size(0, 52),
           side: const BorderSide(color: darkBorder),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          textStyle: AppTextStyles.rajdhaniButton(color: colorScheme.onSurface),
+          textStyle: AppTextStyles.button(color: colorScheme.onSurface),
         ),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
-        filled: false,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-        border: const UnderlineInputBorder(borderSide: BorderSide(color: darkBorder)),
-        enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: darkBorder)),
-        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: brand.buttonColor, width: 2)),
-        hintStyle: AppTextStyles.rajdhaniLabel(color: AppColors.text4),
+        filled: true,
+        fillColor: const Color(0xFF111827),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: darkBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: darkBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: brand.buttonColor, width: 1.5),
+        ),
+        hintStyle: AppTextStyles.body(color: AppColors.text4),
       ),
 
       // P3 (audit): dark() was missing the component themes light() defines —
@@ -188,7 +215,7 @@ abstract final class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: brand.buttonColor,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          textStyle: AppTextStyles.rajdhaniButton(color: brand.buttonColor),
+          textStyle: AppTextStyles.button(color: brand.buttonColor),
         ),
       ),
 
@@ -199,7 +226,7 @@ abstract final class AppTheme {
         focusElevation: 0,
         hoverElevation: 0,
         highlightElevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
 
       dividerTheme: const DividerThemeData(color: darkBorder, thickness: 1, space: 1),
@@ -226,7 +253,7 @@ abstract final class AppTheme {
         selectedColor: brand.buttonColor,
         side: BorderSide.none,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-        labelStyle: AppTextStyles.rajdhaniLabel(color: Colors.white),
+        labelStyle: AppTextStyles.subtitle(color: Colors.white),
       ),
     );
   }

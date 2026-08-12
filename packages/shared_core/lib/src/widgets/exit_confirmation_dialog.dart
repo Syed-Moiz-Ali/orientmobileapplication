@@ -29,6 +29,8 @@ class ExitConfirmationWrapper extends StatelessWidget {
 /// Shows a premium exit confirmation dialog.
 /// Returns true if the user confirmed they want to exit, false otherwise.
 Future<bool> showExitConfirmationDialog(BuildContext context) async {
+  final textTheme = Theme.of(context).textTheme;
+
   final result = await showDialog<bool>(
     context: context,
     builder: (BuildContext context) {
@@ -69,24 +71,20 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Exit Application?',
-                style: TextStyle(
-                  fontSize: 18,
+                style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
-                  
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Are you sure you want to close the Orient Mobile application?',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
+                style: textTheme.bodyLarge?.copyWith(
                   color: AppColors.text3,
                   height: 1.4,
-                  
                 ),
               ),
               const SizedBox(height: 24),
@@ -104,13 +102,11 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                           ),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
-                        style: TextStyle(
+                        style: textTheme.labelLarge?.copyWith(
                           color: AppColors.text2,
                           fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          
                         ),
                       ),
                     ),
@@ -130,12 +126,11 @@ Future<bool> showExitConfirmationDialog(BuildContext context) async {
                           ),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Exit',
-                        style: TextStyle(
+                        style: textTheme.labelLarge?.copyWith(
+                          color: Colors.white,
                           fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          
                         ),
                       ),
                     ),

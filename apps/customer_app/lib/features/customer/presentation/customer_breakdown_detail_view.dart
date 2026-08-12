@@ -4,10 +4,11 @@ import 'package:shared_core/shared_core.dart';
 
 class CustomerBreakdownDetailView extends ConsumerWidget {
   final Map<String, dynamic> breakdown;
+
   const CustomerBreakdownDetailView({super.key, required this.breakdown});
 
-  (Color, Color) _statusColors(String s) {
-    switch (s) {
+  (Color, Color) _statusColors(String status) {
+    switch (status) {
       case 'resolved':
         return (AppColors.successBg, AppColors.success);
       case 'inProgress':
@@ -17,11 +18,11 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
     }
   }
 
-  String _statusLabel(String s) =>
-      AppStatusLabels.breakdown(s);
+  String _statusLabel(String status) => AppStatusLabels.breakdown(status);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
     final status = breakdown['status'] as String? ?? 'pending';
     final (bg, fg) = _statusColors(status);
     final issue = breakdown['issue'] as String? ?? 'Breakdown';
@@ -29,98 +30,154 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
     final vehiclePlate = breakdown['vehiclePlate'] as String? ?? '';
     final location = breakdown['location'] as String? ?? '';
     final createdAt = breakdown['createdAt'] as String? ?? '';
+    final resolved = status == 'resolved';
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(
           children: [
-            AppTopBar(title: 'Breakdown Request'),
-            const Divider(height: 1),
+            const AppTopBar(title: 'Breakdown Request'),
+            const Divider(height: 1, color: AppColors.line),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppDimensions.s18),
+              child: AppResponsivePage(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Compact Status Banner
                     Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppDimensions.s20),
+                      padding: const EdgeInsets.all(AppDimensions.s12),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [AppColors.danger.withValues(alpha: 0.1), AppColors.danger.withValues(alpha: 0.04)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(AppDimensions.r16),
-                        border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
+                        color: AppColors.dangerBg,
+                        borderRadius: BorderRadius.circular(AppDimensions.r12),
+                        border: Border.all(color: AppColors.dangerBorder),
                       ),
-                      child: Column(
+                      child: Row(
                         children: [
                           Container(
-                            width: 64, height: 64,
-                            decoration: BoxDecoration(color: AppColors.dangerBg, shape: BoxShape.circle),
-                            child: const Icon(Icons.emergency_rounded, color: AppColors.danger, size: 32),
-                          ),
-                          const SizedBox(height: AppDimensions.s12),
-                          Text(
-                            issue,
-                            style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: AppDimensions.s6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppDimensions.r20)),
-                            child: Text(
-                              _statusLabel(status),
-                              style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700),
+                            width: 38,
+                            height: 38,
+                            decoration: const BoxDecoration(
+                              color: AppColors.danger,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.emergency_rounded,
+                              color: Colors.white,
+                              size: 20,
                             ),
                           ),
+                          const SizedBox(width: AppDimensions.s12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  issue,
+                                  style: textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _formatDate(createdAt),
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: AppColors.text3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          StatusPill(
+                            label: _statusLabel(status),
+                            bg: bg,
+                            fg: fg,
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.s20),
+                    const SizedBox(height: AppDimensions.s14),
+
+                    // Details Card
                     AppCard(
+                      padding: const EdgeInsets.all(AppDimensions.s14),
+                      color: AppColors.surface,
+                      borderColor: AppColors.border,
                       child: Column(
                         children: [
-                          _detailRow(Icons.directions_car_rounded, 'Vehicle', vehicleName.isNotEmpty ? '$vehicleName  \u00b7  $vehiclePlate' : 'Not specified'),
+                          _DetailRow(
+                            icon: Icons.directions_car_rounded,
+                            label: 'Vehicle',
+                            value: vehicleName.isNotEmpty
+                                ? '$vehicleName • $vehiclePlate'
+                                : 'Not specified',
+                          ),
                           if (location.isNotEmpty) ...[
-                            const Divider(height: 24),
-                            _detailRow(Icons.location_on_outlined, 'Location', location),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppDimensions.s10,
+                              ),
+                              child: Divider(height: 1, color: AppColors.line),
+                            ),
+                            _DetailRow(
+                              icon: Icons.location_on_outlined,
+                              label: 'Location',
+                              value: location,
+                            ),
                           ],
-                          const Divider(height: 24),
-                          _detailRow(Icons.access_time_rounded, 'Requested', _formatDate(createdAt)),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: AppDimensions.s10,
+                            ),
+                            child: Divider(height: 1, color: AppColors.line),
+                          ),
+                          _DetailRow(
+                            icon: Icons.access_time_rounded,
+                            label: 'Requested',
+                            value: _formatDate(createdAt),
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.s20),
+                    const SizedBox(height: AppDimensions.s14),
+
+                    // Resolution Info Box
                     Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppDimensions.s16),
+                      padding: const EdgeInsets.all(AppDimensions.s12),
                       decoration: BoxDecoration(
-                        color: status == 'resolved' ? AppColors.successBg : AppColors.warningBg,
-                        borderRadius: BorderRadius.circular(AppDimensions.r14),
+                        color: resolved
+                            ? AppColors.successBg
+                            : AppColors.warningBg,
+                        borderRadius: BorderRadius.circular(AppDimensions.r12),
                         border: Border.all(
-                          color: status == 'resolved' ? AppColors.successBorder : AppColors.warningBorder,
+                          color: resolved
+                              ? AppColors.successBorder
+                              : AppColors.warningBorder,
                         ),
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            status == 'resolved' ? Icons.check_circle_rounded : Icons.info_outline_rounded,
-                            color: status == 'resolved' ? AppColors.success : AppColors.warning,
+                            resolved
+                                ? Icons.check_circle_rounded
+                                : Icons.info_outline_rounded,
+                            color: resolved
+                                ? AppColors.success
+                                : AppColors.warning,
                             size: 20,
                           ),
-                          const SizedBox(width: AppDimensions.s8),
+                          const SizedBox(width: AppDimensions.s10),
                           Expanded(
                             child: Text(
-                              status == 'resolved'
+                              resolved
                                   ? 'This breakdown request has been resolved.'
-                                  : 'Your request is being processed. We\'ll reach out shortly.',
-                              style: TextStyle(
-                                color: status == 'resolved' ? AppColors.success : AppColors.warning,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                                  : 'Dispatch team is en route. Contact helpline for emergency status.',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: resolved
+                                    ? AppColors.success
+                                    : AppColors.warning,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
@@ -140,28 +197,61 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
   String _formatDate(String iso) {
     try {
       final dt = DateTime.parse(iso);
-      return '${dt.day}/${dt.month}/${dt.year}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      return '${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     } catch (_) {
       return iso;
     }
   }
+}
 
-  Widget _detailRow(IconData icon, String label, String value) {
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Row(
       children: [
         Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(color: AppColors.dangerBg, borderRadius: BorderRadius.circular(AppDimensions.r10)),
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.dangerBg,
+            borderRadius: BorderRadius.circular(AppDimensions.r10),
+          ),
           child: Icon(icon, color: AppColors.danger, size: 18),
         ),
-        const SizedBox(width: AppDimensions.s12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.text3, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(value, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-          ],
+        const SizedBox(width: AppDimensions.s10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: textTheme.labelSmall?.copyWith(
+                  color: AppColors.text3,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: textTheme.titleSmall?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

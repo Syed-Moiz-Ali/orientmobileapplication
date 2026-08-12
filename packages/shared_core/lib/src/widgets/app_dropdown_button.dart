@@ -18,8 +18,13 @@ class AppDropdownButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        );
+
     return Container(
-      height: 32,
+      height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
@@ -30,13 +35,13 @@ class AppDropdownButton extends StatelessWidget {
         child: DropdownButton<String>(
           value: value,
           dropdownColor: dropdownColor ?? AppColors.navy,
-          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+          style: textStyle,
           icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
           isDense: true,
           onChanged: (v) => onChanged(v ?? value),
           items: items.map((item) => DropdownMenuItem(
             value: item,
-            child: Text(item, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+            child: Text(item, style: textStyle),
           )).toList(),
         ),
       ),

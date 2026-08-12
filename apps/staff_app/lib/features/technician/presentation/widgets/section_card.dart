@@ -66,7 +66,7 @@ class SectionCard extends StatelessWidget {
                 SizedBox(width: AppDimensions.s10),
                 Text(
                   title,
-                  style: AppTextStyles.rajdhaniLabel(
+                  style: AppTextStyles.subtitle(
                     color: AppColors.textPrimary,
                   ),
                 ),

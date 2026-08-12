@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/core/router/app_router.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
@@ -8,7 +7,6 @@ import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_pro
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EnvironmentConfig.init();
-  GoogleFonts.config.allowRuntimeFetching = false;
 
   final logger = createLogger();
   AppErrorHandler.init(logger);

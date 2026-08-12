@@ -1,10 +1,7 @@
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
-
-const Color _cyanLight = AppColors.cyanLight;
-const Color _cyanMid = Color(0xFFB2E0E5);
 
 class CustomerBookServiceTab extends ConsumerWidget {
   const CustomerBookServiceTab({super.key});
@@ -13,180 +10,61 @@ class CustomerBookServiceTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
+    final textTheme = Theme.of(context).textTheme;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.s16,
-        AppDimensions.s12,
-        AppDimensions.s16,
-        AppDimensions.s32,
-      ),
+    return AppResponsivePage(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Book a Service',
-            style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+            style: textTheme.displaySmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: AppColors.textPrimary,
+            ),
           ),
-          const SizedBox(height: AppDimensions.s4),
+          const SizedBox(height: AppDimensions.s6),
           Text(
-            'Fill in the details below',
-            style: const TextStyle(fontSize: 13, color: AppColors.text3),
+            'Choose a vehicle, service type, and preferred workshop date.',
+            style: textTheme.bodyLarge?.copyWith(color: AppColors.text3),
           ),
-          const SizedBox(height: AppDimensions.s18),
-          const Text(
-            'Select Vehicle',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.text2,
-            ),
+          const SizedBox(height: AppDimensions.s24),
+          const SectionHeader(title: 'Select Vehicle'),
+          const SizedBox(height: AppDimensions.s10),
+          AppAdaptiveGrid(
+            minChildWidth: 300,
+            childAspectRatio: 3.35,
+            children: [
+              for (final vehicle in state.vehicles)
+                _OptionCard(
+                  selected: state.selectedVehicle == vehicle.id,
+                  icon: Icons.directions_car_rounded,
+                  title: vehicle.displayName,
+                  subtitle: '${vehicle.plateNumber} - ${vehicle.year}',
+                  onTap: () => notifier.setSelectedVehicle(vehicle.id),
+                ),
+            ],
           ),
-          const SizedBox(height: AppDimensions.s8),
-          ...state.vehicles.map((v) {
-            final isSel = state.selectedVehicle == v.id;
-            return GestureDetector(
-              onTap: () => notifier.setSelectedVehicle(v.id),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                margin: const EdgeInsets.only(bottom: AppDimensions.s8),
-                padding: const EdgeInsets.all(AppDimensions.s14),
-                decoration: BoxDecoration(
-                  color: isSel ? _cyanLight : AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  border: Border.all(
-                    color: isSel ? AppColors.accent : AppColors.border,
-                    width: isSel ? 1.5 : 0.8,
-                  ),
+          const SizedBox(height: AppDimensions.s24),
+          const SectionHeader(title: 'Service Type'),
+          const SizedBox(height: AppDimensions.s10),
+          AppAdaptiveGrid(
+            minChildWidth: 300,
+            childAspectRatio: 3.35,
+            children: [
+              for (final service in notifier.serviceTypes)
+                _OptionCard(
+                  selected: state.selectedServiceType == service,
+                  icon: Icons.build_outlined,
+                  title: service,
+                  onTap: () => notifier.setSelectedServiceType(service),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: isSel ? _cyanMid : _cyanLight,
-                        borderRadius: BorderRadius.circular(AppDimensions.r10),
-                      ),
-                      child: Icon(
-                        Icons.directions_car_rounded,
-                        color: AppColors.accent,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.s12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            v.displayName,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: isSel
-                                  ? AppColors.accent
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: AppDimensions.s4),
-                          Text(
-                            '${v.plateNumber}  \u00b7  ${v.year}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.text3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isSel)
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        color: AppColors.accent,
-                        size: 22,
-                      ),
-                  ],
-                ),
-              ),
-            );
-          }),
-          const SizedBox(height: AppDimensions.s18),
-          const Text(
-            'Service Type',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.text2,
-            ),
+            ],
           ),
-          const SizedBox(height: AppDimensions.s8),
-          ...notifier.serviceTypes.map((s) {
-            final isSel = state.selectedServiceType == s;
-            return GestureDetector(
-              onTap: () => notifier.setSelectedServiceType(s),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                margin: const EdgeInsets.only(bottom: AppDimensions.s8),
-                padding: const EdgeInsets.all(AppDimensions.s14),
-                decoration: BoxDecoration(
-                  color: isSel ? _cyanLight : AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  border: Border.all(
-                    color: isSel ? AppColors.accent : AppColors.border,
-                    width: isSel ? 1.5 : 0.8,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: isSel ? _cyanMid : _cyanLight,
-                        borderRadius: BorderRadius.circular(AppDimensions.r10),
-                      ),
-                      child: Icon(
-                        Icons.build_outlined,
-                        color: AppColors.accent,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.s12),
-                    Expanded(
-                      child: Text(
-                        s,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: isSel
-                              ? AppColors.accent
-                              : AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    if (isSel)
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        color: AppColors.accent,
-                        size: 22,
-                      ),
-                  ],
-                ),
-              ),
-            );
-          }),
-          const SizedBox(height: AppDimensions.s18),
-          const Text(
-            'Preferred Date',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.text2,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s8),
-          GestureDetector(
+          const SizedBox(height: AppDimensions.s24),
+          const SectionHeader(title: 'Preferred Date'),
+          const SizedBox(height: AppDimensions.s10),
+          AppCard(
             onTap: () async {
               final date = await showDatePicker(
                 context: context,
@@ -200,60 +78,64 @@ class CustomerBookServiceTab extends ConsumerWidget {
                 notifier.setBookingDate(date);
               }
             },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.s14,
-                vertical: AppDimensions.s14,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppDimensions.r10),
+                  ),
+                  child: const Icon(
                     Icons.calendar_month_rounded,
                     color: AppColors.accent,
-                    size: 20,
                   ),
-                  const SizedBox(width: AppDimensions.s12),
-                  Text(
+                ),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Text(
                     state.bookingDate != null
                         ? '${state.bookingDate!.day}/${state.bookingDate!.month}/${state.bookingDate!.year}'
                         : 'Tap to select date',
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: textTheme.titleSmall?.copyWith(
                       color: state.bookingDate != null
                           ? AppColors.textPrimary
                           : AppColors.text3,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                ],
-              ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppColors.text4),
+              ],
             ),
           ),
-          if (state.bookingError != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppDimensions.s14),
-              child: Row(
-                children: [
-                  const Icon(Icons.error_outline_rounded, size: 16, color: AppColors.danger),
-                  const SizedBox(width: AppDimensions.s8),
-                  Expanded(
-                    child: Text(
-                      state.bookingError!,
-                      style: const TextStyle(color: AppColors.danger, fontSize: 13),
+          if (state.bookingError != null) ...[
+            const SizedBox(height: AppDimensions.s14),
+            Row(
+              children: [
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 18,
+                  color: AppColors.danger,
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
+                  child: Text(
+                    state.bookingError!,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.danger,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ],
           const SizedBox(height: AppDimensions.s24),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
+            child: FilledButton(
               onPressed: () async {
                 final ok = await notifier.submitBooking();
                 if (ok && context.mounted) {
@@ -267,22 +149,83 @@ class CustomerBookServiceTab extends ConsumerWidget {
                   );
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppDimensions.s16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                ),
-              ),
-              child: const Text(
-                'Submit Booking',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
+              child: const Text('Submit Booking'),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OptionCard extends StatelessWidget {
+  final bool selected;
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  const _OptionCard({
+    required this.selected,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final color = selected ? AppColors.accent : AppColors.text3;
+
+    return AppCard(
+      onTap: onTap,
+      color: selected ? AppColors.cyanLight : AppColors.surface,
+      borderColor: selected ? AppColors.accent : AppColors.border,
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.accent.withValues(alpha: 0.12)
+                  : AppColors.bg,
+              borderRadius: BorderRadius.circular(AppDimensions.r10),
+            ),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: selected ? AppColors.accent : AppColors.textPrimary,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: AppDimensions.s4),
+                  Text(
+                    subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.text3,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (selected)
+            const Icon(Icons.check_circle_rounded, color: AppColors.accent),
         ],
       ),
     );

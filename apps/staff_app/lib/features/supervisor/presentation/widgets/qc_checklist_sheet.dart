@@ -133,7 +133,7 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
               children: [
                 Text(
                   'Quality Control Review',
-                  style: AppTextStyles.rajdhaniTitle(
+                  style: AppTextStyles.title(
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -148,7 +148,7 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                   children: [
                     Text(
                       'Checklist',
-                      style: AppTextStyles.rajdhaniTitle(
+                      style: AppTextStyles.title(
                         color: AppColors.textPrimary,
                       ),
                     ),

@@ -80,7 +80,7 @@ Widget _SectionLabel(String text) => Row(
     const SizedBox(width: 10),
     Text(
       text,
-      style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+      style: AppTextStyles.title(color: AppColors.textPrimary),
     ),
   ],
 );
@@ -146,7 +146,7 @@ class _HeaderBanner extends ConsumerWidget {
                 ),
                 Text(
                   'Supervisor',
-                  style: AppTextStyles.orbitronDisplayMedium(
+                  style: AppTextStyles.displayMedium(
                     color: Colors.white,
                   ),
                 ),
@@ -495,14 +495,14 @@ class _RevenueMetricCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             metric.amount,
-            style: AppTextStyles.orbitronDisplaySmall(
+            style: AppTextStyles.displaySmall(
               color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 5),
           Text(
             metric.label,
-            style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
+            style: AppTextStyles.bodySmall(color: AppColors.text3),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -613,12 +613,12 @@ class _PendingCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             status.count,
-            style: AppTextStyles.orbitronKpiNumber(color: status.color),
+            style: AppTextStyles.displayLarge(color: status.color),
           ),
           const SizedBox(height: 5),
           Text(
             status.label,
-            style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text2),
+            style: AppTextStyles.bodySmall(color: AppColors.text2),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -635,6 +635,6 @@ class _CardTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: AppTextStyles.rajdhaniButton(color: AppColors.textPrimary),
+    style: AppTextStyles.button(color: AppColors.textPrimary),
   );
 }

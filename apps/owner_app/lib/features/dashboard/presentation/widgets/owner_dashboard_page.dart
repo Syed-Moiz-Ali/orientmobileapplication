@@ -29,46 +29,40 @@ class OwnerDashboardPage extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: notifier.refresh,
       color: AppColors.accent,
-      child: SingleChildScrollView(
+      child: AppResponsivePage(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const HeaderBanner(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 22, 16, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _sectionLabel('KPI Overview'),
-                  const SizedBox(height: 12),
-                  KpiGrid(kpis: notifier.kpis),
-                  const SizedBox(height: 26),
+            const SizedBox(height: AppDimensions.s24),
+            _sectionLabel('KPI Overview'),
+            const SizedBox(height: AppDimensions.s12),
+            KpiGrid(kpis: notifier.kpis),
+            const SizedBox(height: AppDimensions.s28),
 
-                  _sectionLabel('Job Card Register'),
-                  const SizedBox(height: 12),
-                  JobCardRegisterCard(items: notifier.registerItems),
-                  const SizedBox(height: 26),
+            _sectionLabel('Job Card Register'),
+            const SizedBox(height: AppDimensions.s12),
+            JobCardRegisterCard(items: notifier.registerItems),
+            const SizedBox(height: AppDimensions.s28),
 
-                  _sectionLabel('Analytics'),
-                  const SizedBox(height: 12),
-                  SalesTrendCard(
-                    salesData: notifier.salesTrend,
-                    profitData: notifier.profitTrend,
-                  ),
-                  const SizedBox(height: 12),
-                  SalesVsExpensesCard(
-                    salesData: notifier.salesTrend,
-                    expenseData: notifier.expensesTrend,
-                  ),
-                  const SizedBox(height: 26),
-
-                  _sectionLabel('Quick Actions'),
-                  const SizedBox(height: 12),
-                  const QuickActionsRow(),
-                ],
+            _sectionLabel('Analytics'),
+            const SizedBox(height: AppDimensions.s12),
+            AppSplitView(
+              primary: SalesTrendCard(
+                salesData: notifier.salesTrend,
+                profitData: notifier.profitTrend,
+              ),
+              secondary: SalesVsExpensesCard(
+                salesData: notifier.salesTrend,
+                expenseData: notifier.expensesTrend,
               ),
             ),
+            const SizedBox(height: AppDimensions.s28),
+
+            _sectionLabel('Quick Actions'),
+            const SizedBox(height: AppDimensions.s12),
+            const QuickActionsRow(),
           ],
         ),
       ),
@@ -88,7 +82,7 @@ class OwnerDashboardPage extends ConsumerWidget {
       const SizedBox(width: 10),
       Text(
         text,
-        style: AppTextStyles.rajdhaniTitle(color: AppColors.textPrimary),
+        style: AppTextStyles.title(color: AppColors.textPrimary),
       ),
     ],
   );

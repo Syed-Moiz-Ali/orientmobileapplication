@@ -47,7 +47,7 @@ class AttendanceSection extends ConsumerWidget {
                     SizedBox(width: AppDimensions.s6),
                     Text(
                       status.label,
-                      style: AppTextStyles.rajdhaniBody(color: status.color),
+                      style: AppTextStyles.bodyStrong(color: status.color),
                     ),
                   ],
                 ),
@@ -94,7 +94,7 @@ class AttendanceSection extends ConsumerWidget {
                   ),
                   child: Text(
                     'Shift Ended',
-                    style: AppTextStyles.rajdhaniBody(color: AppColors.text3),
+                    style: AppTextStyles.bodyStrong(color: AppColors.text3),
                   ),
                 ),
             ],
@@ -174,7 +174,7 @@ class _AttBtn extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 14),
             SizedBox(width: AppDimensions.s4),
-            Text(label, style: AppTextStyles.rajdhaniBody(color: color)),
+            Text(label, style: AppTextStyles.bodyStrong(color: color)),
           ],
         ),
       ),
@@ -202,11 +202,11 @@ class _AttCell extends StatelessWidget {
           SizedBox(height: AppDimensions.s4),
           Text(
             value,
-            style: AppTextStyles.orbitronHeadline(color: AppColors.textPrimary),
+            style: AppTextStyles.label(color: AppColors.textPrimary),
           ),
           Text(
             label,
-            style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
+            style: AppTextStyles.bodySmall(color: AppColors.text3),
           ),
         ],
       ),

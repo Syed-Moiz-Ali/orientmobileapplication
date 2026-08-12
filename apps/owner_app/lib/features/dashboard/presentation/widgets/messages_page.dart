@@ -109,7 +109,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
               children: [
                 Text(
                   'SEND NEW MESSAGE',
-                  style: AppTextStyles.rajdhaniBodySmall(
+                  style: AppTextStyles.bodySmall(
                     color: AppColors.text3,
                   ),
                 ),
@@ -236,7 +236,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                         const SizedBox(width: 10),
                         Text(
                           'SEND MESSAGE',
-                          style: AppTextStyles.rajdhaniLabel(
+                          style: AppTextStyles.subtitle(
                             color: Colors.white,
                           ),
                         ),
@@ -262,7 +262,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                 const SizedBox(width: 10),
                 Text(
                   'RECENT MESSAGES',
-                  style: AppTextStyles.rajdhaniButton(
+                  style: AppTextStyles.button(
                     color: AppColors.textPrimary,
                   ),
                 ),

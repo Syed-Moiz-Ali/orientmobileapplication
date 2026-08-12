@@ -143,7 +143,7 @@ class _StaffNotificationsSheet extends ConsumerWidget {
                   const SizedBox(width: 10),
                   Text(
                     'Notifications',
-                    style: AppTextStyles.rajdhaniTitle(
+                    style: AppTextStyles.title(
                       color: AppColors.textPrimary,
                     ),
                   ),

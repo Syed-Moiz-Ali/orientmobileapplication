@@ -41,7 +41,7 @@ class AdvisorApprovalSheet extends StatelessWidget {
                   fontSize: 34,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
-                  letterSpacing: -1.0,
+                  letterSpacing: 0,
                 ),
               ),
               const SizedBox(height: 4),

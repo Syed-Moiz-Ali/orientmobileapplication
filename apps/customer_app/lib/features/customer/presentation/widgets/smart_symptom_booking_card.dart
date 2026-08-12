@@ -53,6 +53,8 @@ class SmartSymptomBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return AppCard(
       padding: const EdgeInsets.all(AppDimensions.s16),
       child: Column(
@@ -73,22 +75,23 @@ class SmartSymptomBookingCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppDimensions.s10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Having a Car Issue?',
-                      style: TextStyle(
-                        fontSize: 15,
+                      style: textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       'Select a symptom to find the right service & book',
-                      style: TextStyle(fontSize: 12, color: AppColors.text3),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.text3,
+                      ),
                     ),
                   ],
                 ),
@@ -98,79 +101,78 @@ class SmartSymptomBookingCard extends StatelessWidget {
           const SizedBox(height: AppDimensions.s14),
           const Divider(height: 1),
           const SizedBox(height: AppDimensions.s14),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 1.85,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemCount: _symptoms.length,
-            itemBuilder: (ctx, i) {
-              final item = _symptoms[i];
-              final Color color = item['color'] as Color;
-              return GestureDetector(
-                onTap: () {
-                  context.push(AppRoutes.customerBookService);
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.bg,
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
+          AppAdaptiveGrid(
+            minChildWidth: 230,
+            childAspectRatio: 2.65,
+            children: [
+              for (final item in _symptoms)
+                Builder(
+                  builder: (context) {
+                    final Color color = item['color'] as Color;
+                    return GestureDetector(
+                      onTap: () {
+                        context.push(AppRoutes.customerBookService);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(AppDimensions.r8),
+                          color: AppColors.bg,
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r12,
+                          ),
+                          border: Border.all(color: AppColors.border),
                         ),
-                        child: Icon(
-                          item['icon'] as IconData,
-                          size: 18,
-                          color: color,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            Text(
-                              item['title'] as String,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.r8,
+                                ),
+                              ),
+                              child: Icon(
+                                item['icon'] as IconData,
+                                size: 18,
+                                color: color,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item['subtitle'] as String,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: AppColors.text3,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item['title'] as String,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: textTheme.labelLarge?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    item['subtitle'] as String,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: AppColors.text3,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
+            ],
           ),
         ],
       ),

@@ -62,13 +62,13 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
         children: [
           Text(
             _titles[state.selectedIndex],
-            style: AppTextStyles.rajdhaniButton(color: Colors.white),
+            style: AppTextStyles.button(color: Colors.white),
           ),
           Text(
             state.selectedIndex == 0
                 ? ownerProfileData.branch
                 : _subtitles(state.selectedIndex),
-            style: AppTextStyles.rajdhaniBodySmall(color: Colors.white70),
+            style: AppTextStyles.bodySmall(color: Colors.white70),
           ),
         ],
       ),

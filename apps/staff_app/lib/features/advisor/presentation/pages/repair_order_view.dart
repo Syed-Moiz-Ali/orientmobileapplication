@@ -1598,7 +1598,7 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
                 const Text(
                   'Repair Order',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: IC.text1, letterSpacing: -0.3),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: IC.text1, letterSpacing: 0),
                 ),
 
                 const SizedBox(height: 12),

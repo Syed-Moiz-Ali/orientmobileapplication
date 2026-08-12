@@ -103,7 +103,7 @@ class _EscalationSheetState extends ConsumerState<EscalationSheet> {
                   const SizedBox(width: 8),
                   Text(
                     'Flag an Issue',
-                    style: AppTextStyles.rajdhaniTitle(color: AppColors.danger),
+                    style: AppTextStyles.title(color: AppColors.danger),
                   ),
                 ],
               ),

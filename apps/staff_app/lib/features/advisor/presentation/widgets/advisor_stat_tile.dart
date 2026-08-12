@@ -58,7 +58,7 @@ class AdvisorStatTile extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                   color: color,
                   height: 1,
-                  letterSpacing: -0.5,
+                  letterSpacing: 0,
                 ),
               ),
               const SizedBox(height: 4),

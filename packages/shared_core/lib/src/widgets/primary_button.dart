@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/layout/app_responsive.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 class PrimaryButton extends StatelessWidget {
@@ -24,13 +25,15 @@ class PrimaryButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final adaptive = context.adaptive;
 
     final effectiveBackgroundColor = backgroundColor ?? colorScheme.primary;
     final effectiveForegroundColor = colorScheme.onPrimary;
+    final effectiveHeight = height == 52.0 ? adaptive.controlHeight : height;
 
     return SizedBox(
       width: double.infinity,
-      height: height,
+      height: effectiveHeight,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
@@ -40,8 +43,10 @@ class PrimaryButton extends StatelessWidget {
           disabledForegroundColor: effectiveForegroundColor.withValues(alpha: 0.7),
           elevation: 0,
           shadowColor: Colors.transparent,
-          minimumSize: Size(0, height),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+          minimumSize: Size(0, effectiveHeight),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(adaptive.radius),
+          ),
         ),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
@@ -107,21 +112,25 @@ class SecondaryButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final adaptive = context.adaptive;
 
     final effectiveForegroundColor = foregroundColor ?? colorScheme.onSurface;
     final effectiveBorderColor = borderColor ?? colorScheme.outline.withValues(alpha: 0.16);
+    final effectiveHeight = height == 52.0 ? adaptive.controlHeight : height;
 
     return SizedBox(
       width: double.infinity,
-      height: height,
+      height: effectiveHeight,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: effectiveForegroundColor,
           disabledForegroundColor: effectiveForegroundColor.withValues(alpha: 0.38),
           side: BorderSide(color: effectiveBorderColor),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
-          minimumSize: Size(0, height),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(adaptive.radius),
+          ),
+          minimumSize: Size(0, effectiveHeight),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

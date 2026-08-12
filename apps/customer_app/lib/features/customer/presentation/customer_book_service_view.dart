@@ -1,15 +1,16 @@
+import 'package:customer_app/core/local/sync_providers.dart'; // ignore: unused_import
+import 'package:customer_app/core/router/app_router.dart';
+import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:customer_app/core/local/sync_providers.dart';
-import 'package:customer_app/core/router/app_router.dart';
-import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
-import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
 class CustomerBookServiceView extends ConsumerStatefulWidget {
   const CustomerBookServiceView({super.key});
+
   @override
   ConsumerState<CustomerBookServiceView> createState() =>
       _CustomerBookServiceViewState();
@@ -17,69 +18,23 @@ class CustomerBookServiceView extends ConsumerStatefulWidget {
 
 class _CustomerBookServiceViewState
     extends ConsumerState<CustomerBookServiceView> {
-  int _step = 0;
-  // FIX (audit P0): the calendar opened on a hardcoded April 2026.
-  DateTime _focusedMonth = DateTime(DateTime.now().year, DateTime.now().month);
-  DateTime? _selectedDate;
-  String? _selectedTime;
-  CustomerVehicleEntity? _selectedVehicle;
   final _notesCtrl = TextEditingController();
 
-  List<ServiceTypeResponse> _serviceTypes = [];
-  bool _isLoadingTypes = true;
-  String? _selectedServiceTypeId;
-
-  // FE-FLOW: real availability slots for the selected date.
-  List<String> _availableSlots = [];
-  bool _isLoadingSlots = false;
-
-  static const _months = [
-    '',
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  static const _wd = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  List<ServiceTypeResponse> _services = const [];
+  List<String> _slots = const [];
+  bool _loadingServices = true;
+  bool _loadingSlots = false;
+  bool _submitting = false;
+  String? _error;
+  String? _selectedServiceId;
+  CustomerVehicleEntity? _selectedVehicle;
+  DateTime? _selectedDate;
+  String? _selectedTime;
 
   @override
   void initState() {
     super.initState();
-    _loadServiceTypes();
-  }
-
-  Future<void> _loadServiceTypes() async {
-    final types = await ref.read(customerRemoteDataSourceProvider).getServiceTypes();
-    if (mounted) {
-      setState(() {
-        _serviceTypes = types;
-        _isLoadingTypes = false;
-      });
-    }
-  }
-
-  // FE-FLOW: fetch real slot availability for the selected date (was a
-  // hardcoded 09:00-16:00 list with no workshop awareness).
-  Future<void> _loadAvailability(DateTime date) async {
-    setState(() => _isLoadingSlots = true);
-    final slots = await ref
-        .read(customerRemoteDataSourceProvider)
-        .getAvailability(
-            '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}');
-    if (mounted) {
-      setState(() {
-        _availableSlots = slots;
-        _isLoadingSlots = false;
-      });
-    }
+    _loadServices();
   }
 
   @override
@@ -88,804 +43,606 @@ class _CustomerBookServiceViewState
     super.dispose();
   }
 
-  List<DateTime?> _calDays() {
-    final first = DateTime(_focusedMonth.year, _focusedMonth.month);
-    final last = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
-    final days = <DateTime?>[];
-    for (int i = 0; i < first.weekday % 7; i++) {
-      days.add(null);
-    }
-    for (int d = 1; d <= last.day; d++) {
-      days.add(DateTime(_focusedMonth.year, _focusedMonth.month, d));
-    }
-    while (days.length % 7 != 0) {
-      days.add(null);
-    }
-    return days;
+  Future<void> _loadServices() async {
+    final services = await ref.read(customerRemoteDataSourceProvider).getServiceTypes();
+    if (!mounted) return;
+    setState(() {
+      _services = services;
+      _loadingServices = false;
+      _error = services.isEmpty ? 'No service types available right now.' : null;
+    });
   }
 
-  String get _summaryDate => _selectedDate == null
-      ? '\u2014'
-      : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}';
+  Future<void> _loadSlots(DateTime date) async {
+    setState(() {
+      _selectedDate = date;
+      _selectedTime = null;
+      _loadingSlots = true;
+      _slots = const [];
+    });
+    final iso =
+        '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final slots = await ref.read(customerRemoteDataSourceProvider).getAvailability(iso);
+    if (!mounted) return;
+    setState(() {
+      _slots = slots;
+      _loadingSlots = false;
+    });
+  }
 
-  List<CustomerVehicleEntity> get _vehicles =>
-      ref.watch(customerDashboardProvider).vehicles;
-
-  IconData _getServiceIcon(String name) {
-    switch (name) {
-      case 'Full Service': return Icons.build_rounded;
-      case 'Oil Change': return Icons.opacity_rounded;
-      case 'Brakes': return Icons.disc_full_rounded;
-      case 'Tyres': return Icons.radio_button_checked_rounded;
-      case 'MOT': return Icons.fact_check_rounded;
-      case 'Battery': return Icons.battery_charging_full_rounded;
-      case 'Diagnostics': return Icons.analytics_rounded;
-      default: return Icons.miscellaneous_services_rounded;
+  ServiceTypeResponse? get _selectedService {
+    for (final s in _services) {
+      if (s.id == _selectedServiceId) return s;
     }
+    return null;
+  }
+
+  bool get _canConfirm =>
+      _selectedVehicle != null &&
+      _selectedService != null &&
+      _selectedDate != null &&
+      _selectedTime != null &&
+      !_submitting;
+
+  String get _displayDate {
+    final d = _selectedDate;
+    if (d == null) return 'Not selected';
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
+  Future<void> _confirm() async {
+    if (!_canConfirm) {
+      setState(() => _error = 'Choose a vehicle, service, date and time.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    final vehicle = _selectedVehicle!;
+    final service = _selectedService!;
+    final now = DateTime.now();
+    final bookingId = now.millisecondsSinceEpoch.toString();
+    final payload = <String, dynamic>{
+      'id': bookingId,
+      'vehicleId': vehicle.id,
+      'vehicleName': vehicle.displayName,
+      'plateNumber': vehicle.plateNumber,
+      'serviceId': service.id,
+      'service': service.name,
+      'date': _displayDate,
+      'time': _selectedTime ?? '',
+      'status': BookingStatus.pending.name,
+      'notes': _notesCtrl.text.trim(),
+    };
+
+    try {
+      final remote = ref.read(customerRemoteDataSourceProvider);
+      final resp = await remote.createBooking(payload);
+      if (resp.id.isNotEmpty) {
+        payload['id'] = resp.id;
+      }
+    } catch (_) {
+      final box = Hive.box<dynamic>('customer_cache');
+      final local = GenericLocalDataSource(box);
+      await local.save('booking_$bookingId', payload);
+      final cached = List<Map<String, dynamic>>.from(
+        (box.get('cached_bookings') as List?)?.cast() ?? const [],
+      );
+      cached.removeWhere((m) => m['id'] == bookingId);
+      cached.add(payload);
+      await box.put('cached_bookings', cached);
+      final queue = ref.read(syncQueueProvider);
+      await queue.enqueue(
+        SyncOperation(
+          id: bookingId,
+          entityType: 'booking',
+          entityId: bookingId,
+          changeType: ChangeType.create,
+          payload: payload,
+          timestamp: now.millisecondsSinceEpoch,
+        ),
+      );
+    }
+
+    ref.invalidate(customerBookingsProvider);
+    ref.read(customerDashboardProvider.notifier).refresh();
+
+    if (!mounted) return;
+    setState(() => _submitting = false);
+
+
+    context.push(AppRoutes.customerBookingSuccess, extra: <String, dynamic>{
+      'ref': (payload['id'] ?? bookingId).toString(),
+      'service': service.name,
+      'date': _displayDate,
+      'time': _selectedTime ?? '',
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final vehicles = ref.watch(customerDashboardProvider).vehicles;
+
+    if (_selectedVehicle == null && vehicles.isNotEmpty) {
+      _selectedVehicle = vehicles.first;
+    }
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
-        bottom: false,
         child: Column(
           children: [
-            _TopBar(
-              step: _step,
-              onBack: () {
-                if (_step == 0) {
-                  Navigator.pop(context);
-                } else {
-                  setState(() => _step--);
-                }
-              },
-            ),
-            const Divider(height: 1),
-            _StepBar(step: _step),
+            const AppTopBar(title: 'Book Service'),
+            const Divider(height: 1, color: AppColors.line),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.s18,
-                  AppDimensions.s20,
-                  AppDimensions.s18,
-                  AppDimensions.s20,
+              child: AppResponsivePage(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: AppDimensions.s16),
+
+                    // ERROR BANNER
+                    if (_error != null) ...[
+                      AppCard(
+                        color: AppColors.dangerBg,
+                        borderColor: AppColors.dangerBorder,
+                        borderRadius: 20,
+                        padding: const EdgeInsets.all(AppDimensions.s12),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline_rounded,
+                                color: AppColors.danger, size: 18),
+                            const SizedBox(width: AppDimensions.s10),
+                            Expanded(
+                              child: Text(
+                                _error!,
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: AppColors.danger,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.s16),
+                    ],
+
+                    // SECTION 1: SELECT VEHICLE
+                    _SectionHeader(
+                      icon: Icons.directions_car_rounded,
+                      title: 'Select Vehicle',
+                      subtitle: 'Choose which car to bring in',
+                    ),
+                    const SizedBox(height: AppDimensions.s10),
+                    if (vehicles.isEmpty)
+                      AppCard(
+                        borderRadius: 20,
+                        padding: const EdgeInsets.all(AppDimensions.s20),
+                        color: AppColors.surface,
+                        borderColor: AppColors.border,
+                        child: Column(
+                          children: [
+                            const Icon(Icons.directions_car_outlined,
+                                color: AppColors.text4, size: 36),
+                            const SizedBox(height: AppDimensions.s10),
+                            Text(
+                              'No vehicles in garage',
+                              style: textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Register a vehicle first to book a service',
+                              textAlign: TextAlign.center,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: AppColors.text3,
+                              ),
+                            ),
+                            const SizedBox(height: AppDimensions.s14),
+                            OutlinedButton.icon(
+                              onPressed: () => context.push(AppRoutes.customerAddVehicle),
+                              icon: const Icon(Icons.add_rounded, size: 16),
+                              label: const Text('Add Vehicle'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                side: const BorderSide(color: AppColors.primary),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        height: 88,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: vehicles.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: AppDimensions.s8),
+                          itemBuilder: (ctx, i) {
+                            final v = vehicles[i];
+                            final selected = _selectedVehicle?.id == v.id;
+                            return GestureDetector(
+                              onTap: () => setState(() => _selectedVehicle = v),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 188,
+                                padding: const EdgeInsets.all(AppDimensions.s12),
+                                decoration: BoxDecoration(
+                                  color: selected ? AppColors.primaryBg : AppColors.surface,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: selected ? AppColors.primary : AppColors.border,
+                                    width: selected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 38, height: 38,
+                                      decoration: BoxDecoration(
+                                        color: selected
+                                            ? AppColors.primary.withValues(alpha: 0.2)
+                                            : AppColors.surfaceAlt,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(Icons.directions_car_rounded,
+                                          color: selected ? AppColors.primary : AppColors.text4,
+                                          size: 20),
+                                    ),
+                                    const SizedBox(width: AppDimensions.s10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            v.displayName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: textTheme.labelMedium?.copyWith(
+                                              fontWeight: FontWeight.w900,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              v.plateNumber.toUpperCase(),
+                                              style: textTheme.labelSmall?.copyWith(
+                                                color: const Color(0xFFFACC15),
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 10,
+                                                letterSpacing: 1.2,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (selected)
+                                      const Icon(Icons.check_circle_rounded,
+                                          color: AppColors.primary, size: 16),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    const SizedBox(height: AppDimensions.s24),
+
+                    // SECTION 2: SELECT SERVICE
+                    _SectionHeader(
+                      icon: Icons.build_rounded,
+                      title: 'Select Service',
+                      subtitle: 'Choose the service type you need',
+                    ),
+                    const SizedBox(height: AppDimensions.s10),
+                    if (_loadingServices)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(AppDimensions.s24),
+                          child: CircularProgressIndicator(color: AppColors.primary),
+                        ),
+                      )
+                    else
+                      AppCard(
+                        borderRadius: 24,
+                        padding: EdgeInsets.zero,
+                        color: AppColors.surface,
+                        borderColor: AppColors.border,
+                        child: Column(
+                          children: [
+                            for (int i = 0; i < _services.length; i++) ...[
+                              _ServiceRow(
+                                service: _services[i],
+                                selected: _selectedServiceId == _services[i].id,
+                                onTap: () => setState(
+                                  () => _selectedServiceId = _services[i].id,
+                                ),
+                              ),
+                              if (i < _services.length - 1)
+                                const Divider(height: 1, color: AppColors.line),
+                            ],
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: AppDimensions.s24),
+
+                    // SECTION 3: DATE & TIME
+                    _SectionHeader(
+                      icon: Icons.event_available_rounded,
+                      title: 'Date & Time Slot',
+                      subtitle: 'Choose when to bring your vehicle in',
+                    ),
+                    const SizedBox(height: AppDimensions.s10),
+                    AppCard(
+                      borderRadius: 24,
+                      padding: const EdgeInsets.all(AppDimensions.s16),
+                      color: AppColors.surface,
+                      borderColor: AppColors.border,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Date picker
+                          InkWell(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now().add(const Duration(days: 1)),
+                                firstDate: DateTime.now().add(const Duration(days: 1)),
+                                lastDate: DateTime.now().add(const Duration(days: 90)),
+                                builder: (ctx, child) => Theme(
+                                  data: Theme.of(ctx).copyWith(
+                                    colorScheme: ColorScheme.light(
+                                      primary: AppColors.primary,
+                                      onSurface: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  child: child!,
+                                ),
+                              );
+                              if (picked != null) _loadSlots(picked);
+                            },
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimensions.s14,
+                                vertical: AppDimensions.s12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.calendar_today_rounded,
+                                      color: AppColors.primary, size: 18),
+                                  const SizedBox(width: AppDimensions.s10),
+                                  Expanded(
+                                    child: Text(
+                                      _selectedDate != null
+                                          ? _displayDate
+                                          : 'Tap to choose a date',
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color: _selectedDate != null
+                                            ? AppColors.textPrimary
+                                            : AppColors.text4,
+                                        fontWeight: _selectedDate != null
+                                            ? FontWeight.w700
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(Icons.chevron_right_rounded,
+                                      color: AppColors.text4, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (_loadingSlots) ...[
+                            const SizedBox(height: AppDimensions.s12),
+                            const Center(
+                              child: SizedBox(
+                                width: 24, height: 24,
+                                child: CircularProgressIndicator(
+                                  color: AppColors.primary, strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          ] else if (_slots.isNotEmpty) ...[
+                            const SizedBox(height: AppDimensions.s14),
+                            Text(
+                              'Available Slots',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: AppColors.text3,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10,
+                              ),
+                            ),
+                            const SizedBox(height: AppDimensions.s8),
+                            Wrap(
+                              spacing: AppDimensions.s8,
+                              runSpacing: AppDimensions.s8,
+                              children: _slots.map((slot) {
+                                final sel = _selectedTime == slot;
+                                return GestureDetector(
+                                  onTap: () => setState(() => _selectedTime = slot),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppDimensions.s12,
+                                      vertical: AppDimensions.s8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: sel ? AppColors.primary : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                                      border: Border.all(
+                                        color: sel ? AppColors.primary : AppColors.border,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      slot,
+                                      style: textTheme.labelSmall?.copyWith(
+                                        color: sel ? Colors.white : AppColors.textPrimary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ] else if (_selectedDate != null) ...[
+                            const SizedBox(height: AppDimensions.s12),
+                            Text(
+                              'No slots available for this date.',
+                              style: textTheme.bodySmall?.copyWith(color: AppColors.text4),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s24),
+
+                    // SECTION 4: NOTES
+                    _SectionHeader(
+                      icon: Icons.notes_rounded,
+                      title: 'Service Notes',
+                      subtitle: 'Describe any symptoms or special requests (optional)',
+                    ),
+                    const SizedBox(height: AppDimensions.s10),
+                    TextField(
+                      controller: _notesCtrl,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'e.g. Strange noise when braking, oil light on…',
+                        hintStyle: const TextStyle(color: AppColors.text4, fontSize: 13),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        contentPadding: const EdgeInsets.all(AppDimensions.s14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: const BorderSide(
+                              color: AppColors.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s28),
+
+                    // CONFIRM BUTTON
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _canConfirm ? _confirm : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: AppColors.surfaceAlt,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                          ),
+                        ),
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 22, height: 22,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2.5),
+                              )
+                            : Text(
+                                'Confirm Booking',
+                                style: textTheme.labelLarge?.copyWith(
+                                  color: _canConfirm ? Colors.white : AppColors.text4,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s32),
+                  ],
                 ),
-                child: [_buildStep0, _buildStep1, _buildStep2][_step](context),
               ),
-            ),
-            _BottomBar(
-              label: _step == 2 ? 'Confirm Booking' : 'Continue',
-              onTap: () async {
-                if (_step == 0) {
-                  if (_selectedServiceTypeId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please select a service type')),
-                    );
-                    return;
-                  }
-                  setState(() => _step++);
-                } else if (_step == 1) {
-                  if (_selectedDate == null || _selectedTime == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please select a date and time')),
-                    );
-                    return;
-                  }
-                  setState(() => _step++);
-                } else {
-                  if (_selectedVehicle == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please select a vehicle')),
-                    );
-                    return;
-                  }
-                  await _showConfirmSheet(context);
-                }
-              },
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildStep0(BuildContext ctx) {
-    if (_isLoadingTypes) {
-      return const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()));
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Select Service',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s4),
-        const Text(
-          'What does your vehicle need today?',
-          style: TextStyle(fontSize: 13, color: AppColors.text3),
-        ),
-        const SizedBox(height: AppDimensions.s18),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: AppDimensions.s10,
-            mainAxisSpacing: AppDimensions.s10,
-            childAspectRatio: 0.85,
-          ),
-          itemCount: _serviceTypes.length,
-          itemBuilder: (context, index) {
-            final type = _serviceTypes[index];
-            final isSelected = _selectedServiceTypeId == type.id;
-
-            return GestureDetector(
-              onTap: () => setState(() => _selectedServiceTypeId = type.id),
-              child: AppCard(
-                color: isSelected ? AppColors.primaryBg : AppColors.surface,
-                borderColor: isSelected ? AppColors.primary : AppColors.border,
-                padding: const EdgeInsets.all(AppDimensions.s14),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _getServiceIcon(type.name),
-                      size: 32,
-                      color: isSelected ? AppColors.primary : AppColors.text2,
-                    ),
-                    const SizedBox(height: AppDimensions.s12),
-                    Text(
-                      type.name,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.s6),
-                    Text(
-                      type.price,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.accent,
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.s4),
-                    Text(
-                      type.duration,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.text3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep1(BuildContext ctx) {
-    final today = DateTime.now();
-    final calDays = _calDays();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Book an appointment',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s4),
-        const Text(
-          'Pick a date & time \u2014 the workshop advisor will confirm the service needed',
-          style: TextStyle(fontSize: 13, color: AppColors.text3),
-        ),
-        const SizedBox(height: AppDimensions.s18),
-        AppCard(
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  _NavBtn(
-                    icon: Icons.chevron_left,
-                    onTap: () => setState(
-                      () => _focusedMonth = DateTime(
-                        _focusedMonth.year,
-                        _focusedMonth.month - 1,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      '${_months[_focusedMonth.month]} ${_focusedMonth.year}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  _NavBtn(
-                    icon: Icons.chevron_right,
-                    onTap: () => setState(
-                      () => _focusedMonth = DateTime(
-                        _focusedMonth.year,
-                        _focusedMonth.month + 1,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppDimensions.s14),
-              Row(
-                children: _wd
-                    .map(
-                      (d) => Expanded(
-                        child: Text(
-                          d,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.text3,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: AppDimensions.s8),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  childAspectRatio: 1.1,
-                ),
-                itemCount: calDays.length,
-                itemBuilder: (_, i) {
-                  final d = calDays[i];
-                  if (d == null) return const SizedBox();
-                  final isToday =
-                      d.year == today.year &&
-                      d.month == today.month &&
-                      d.day == today.day;
-                  final isSel =
-                      _selectedDate != null &&
-                      d.year == _selectedDate!.year &&
-                      d.month == _selectedDate!.month &&
-                      d.day == _selectedDate!.day;
-                  final isPast = d.isBefore(
-                    DateTime(today.year, today.month, today.day),
-                  );
-                  return GestureDetector(
-                    onTap: isPast
-                        ? null
-                        : () {
-                            setState(() {
-                              _selectedDate = d;
-                              _selectedTime = null;
-                              _availableSlots = [];
-                            });
-                            _loadAvailability(d);
-                          },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 120),
-                      margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: isSel
-                            ? AppColors.primary
-                            : isToday
-                            ? AppColors.primaryBg
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(AppDimensions.r8),
-                        border: isToday && !isSel
-                            ? Border.all(color: AppColors.primary)
-                            : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${d.day}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSel || isToday
-                                ? FontWeight.w700
-                                : FontWeight.normal,
-                            color: isSel
-                                ? Colors.white
-                                : isPast
-                                ? AppColors.text4
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s20),
-        const Text(
-          'Available times',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s12),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 4,
-          crossAxisSpacing: 9,
-          mainAxisSpacing: 9,
-          childAspectRatio: 2.2,
-          children: _isLoadingSlots
-              ? const [
-                  Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                ]
-              : (_availableSlots.isEmpty
-                  ? [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppDimensions.r9),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: const Text(
-                          'No slots available for this date yet',
-                          style: TextStyle(fontSize: 12, color: AppColors.text3),
-                        ),
-                      )
-                    ]
-                  : _availableSlots.map((t) {
-                      final isSel = _selectedTime == t;
-                      return Semantics(
-                        button: true,
-                        selected: isSel,
-                        label: 'Book at $t',
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedTime = t),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 120),
-                            decoration: BoxDecoration(
-                              color: isSel ? AppColors.primary : AppColors.surface,
-                              borderRadius: BorderRadius.circular(AppDimensions.r9),
-                              border: Border.all(
-                                color: isSel ? AppColors.primary : AppColors.border,
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                t,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isSel ? Colors.white : AppColors.text2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList()),
-        ),
-        const SizedBox(height: AppDimensions.s20),
-      ],
-    );
-  }
-
-  Widget _buildStep2(BuildContext ctx) {
-    final selService = _serviceTypes.firstWhere((t) => t.id == _selectedServiceTypeId, orElse: () => const ServiceTypeResponse(name: 'Appointment'));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Almost done!',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s4),
-        const Text(
-          'Choose your vehicle and review',
-          style: TextStyle(fontSize: 13, color: AppColors.text3),
-        ),
-        const SizedBox(height: AppDimensions.s18),
-
-        if (_vehicles.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Column(
-              children: [
-                const Icon(Icons.directions_car_outlined, size: 48, color: AppColors.text4),
-                const SizedBox(height: 12),
-                const Text(
-                  'No vehicles yet \u2014 add your vehicle first',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.text3),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => ctx.push(AppRoutes.customerAddVehicle),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Add Vehicle'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          ..._vehicles.map((v) {
-          final isSel = _selectedVehicle?.id == v.id;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedVehicle = v),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 130),
-              margin: const EdgeInsets.only(bottom: AppDimensions.s10),
-              padding: const EdgeInsets.all(AppDimensions.s14),
-              decoration: BoxDecoration(
-                color: isSel ? AppColors.primaryBg : AppColors.surface,
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-                border: Border.all(
-                  color: isSel ? AppColors.primary : AppColors.border,
-                  width: isSel ? 1.5 : 0.8,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isSel ? AppColors.primaryBg : AppColors.bg,
-                      borderRadius: BorderRadius.circular(AppDimensions.r10),
-                    ),
-                    child: Icon(
-                      Icons.directions_car_rounded,
-                      color: isSel ? AppColors.primary : AppColors.text3,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: AppDimensions.s12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          v.displayName,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: isSel
-                                ? AppColors.primary
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.s4),
-                        Text(
-                          '${v.plateNumber}  \u00b7  ${v.year}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.text3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (isSel)
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      color: AppColors.primary,
-                      size: 22,
-                    ),
-                ],
-              ),
-            ),
-          );
-        }),
-        const SizedBox(height: AppDimensions.s8),
-
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: TextField(
-            controller: _notesCtrl,
-            maxLines: 3,
-            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-            decoration: const InputDecoration(
-              hintText: 'Additional notes (optional)\u2026',
-              hintStyle: TextStyle(color: AppColors.text4, fontSize: 13),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(AppDimensions.s14),
-            ),
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s18),
-
-        AppCard(
-          color: AppColors.primaryBg,
-          borderColor: AppColors.primaryBorder,
-          child: Column(
-            children: [
-              _SumRow(
-                icon: Icons.build_rounded,
-                label: 'Service',
-                value: selService.name,
-              ),
-              const Divider(height: 18, color: AppColors.primaryBorder),
-              _SumRow(
-                icon: Icons.calendar_month_rounded,
-                label: 'Date',
-                value: _summaryDate,
-              ),
-              const Divider(height: 18, color: AppColors.primaryBorder),
-              _SumRow(
-                icon: Icons.access_time_rounded,
-                label: 'Time',
-                value: _selectedTime ?? '\u2014',
-              ),
-              const Divider(height: 18, color: AppColors.primaryBorder),
-              _SumRow(
-                icon: Icons.directions_car_rounded,
-                label: 'Vehicle',
-                value: _selectedVehicle?.displayName ?? '\u2014',
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s20),
-      ],
-    );
-  }
-
-  Future<void> _showConfirmSheet(BuildContext context) async {
-    final now = DateTime.now();
-
-    final selected = _selectedDate ?? DateTime.now();
-    final bookingDate = _selectedTime == null
-        ? selected.toIso8601String()
-        : '${selected.year.toString().padLeft(4, '0')}-'
-            '${selected.month.toString().padLeft(2, '0')}-'
-            '${selected.day.toString().padLeft(2, '0')}T'
-            '$_selectedTime:00';
-            
-    final selService = _serviceTypes.firstWhere((t) => t.id == _selectedServiceTypeId, orElse: () => const ServiceTypeResponse(name: 'Appointment'));
-
-    final payload = {
-      'vehicleId': _selectedVehicle?.id ?? '',
-      'vehicleName': _selectedVehicle?.displayName ?? '',
-      'plateNumber': _selectedVehicle?.plateNumber ?? '',
-      'serviceType': selService.name,
-      'bookingDate': bookingDate,
-      'notes': _notesCtrl.text,
-    };
-
-    final local = GenericLocalDataSource(Hive.box<dynamic>('customer_bookings'));
-    var bookingRef = '';
-    var synced = true;
-    final remote = ref.read(customerRemoteDataSourceProvider);
-    try {
-      final resp = await remote.createBooking(payload);
-      // FIX (audit QA BUG-020): prefer the human-friendly booking ref (BK-...)
-      // over the numeric DB id when the backend provided one.
-      bookingRef = resp.bookingRef.isNotEmpty ? resp.bookingRef : resp.id;
-    } catch (e, st) {
-      ref.read(loggerProvider).e('Booking API failed \u2014 queueing offline',
-          error: e, stackTrace: st);
-      synced = false;
-    }
-
-    final id = bookingRef.isNotEmpty ? bookingRef : await IdGenerator.nextId('BK');
-    local.save(id, {
-      'id': id,
-      'serviceType': selService.name,
-      'vehicleName': _selectedVehicle?.displayName ?? '',
-      'plateNumber': _selectedVehicle?.plateNumber ?? '',
-      'date': _summaryDate,
-      'time': _selectedTime ?? '',
-      'notes': _notesCtrl.text,
-      'status': 'pending',
-      'createdAt': now.toIso8601String(),
-    });
-
-    if (!synced) {
-      final queue = ref.read(syncQueueProvider);
-      await queue.enqueue(SyncOperation(
-        id: id,
-        entityType: 'booking',
-        entityId: id,
-        changeType: ChangeType.create,
-        payload: payload,
-        timestamp: now.millisecondsSinceEpoch,
-      ));
-      await ref.read(syncEngineProvider).syncAll();
-    }
-    ref.invalidate(customerBookingsProvider);
-    if (!context.mounted) return;
-    
-    context.go(AppRoutes.customerBookingSuccess, extra: {
-      'ref': id,
-      'service': selService.name,
-      'date': _summaryDate,
-      'time': _selectedTime ?? '--',
-    });
-  }
 }
 
-class _NavBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _NavBtn({required this.icon, required this.onTap});
+// ─── Supporting Widgets ────────────────────────────────────────────────────
 
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: AppColors.bg,
-        borderRadius: BorderRadius.circular(AppDimensions.r8),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Icon(icon, size: 20, color: AppColors.text2),
-    ),
-  );
-}
-
-class _SumRow extends StatelessWidget {
+class _SectionHeader extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final String value;
-  const _SumRow({
+  final String title;
+  final String subtitle;
+
+  const _SectionHeader({
     required this.icon,
-    required this.label,
-    required this.value,
+    required this.title,
+    required this.subtitle,
   });
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Icon(icon, size: 16, color: AppColors.text3),
-      const SizedBox(width: AppDimensions.s10),
-      Text(label, style: const TextStyle(fontSize: 13, color: AppColors.text3)),
-      const Spacer(),
-      Text(
-        value,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-      ),
-    ],
-  );
-}
-
-class _StepBar extends StatelessWidget {
-  final int step;
-  const _StepBar({required this.step});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    color: AppColors.surface,
-    padding: const EdgeInsets.fromLTRB(
-      AppDimensions.s18,
-      AppDimensions.s10,
-      AppDimensions.s18,
-      AppDimensions.s12,
-    ),
-    child: Row(
-      children: [
-        _Node(n: 0, step: step, label: 'Service'),
-        _Line(done: step > 0),
-        _Node(n: 1, step: step, label: 'Schedule'),
-        _Line(done: step > 1),
-        _Node(n: 2, step: step, label: 'Confirm'),
-      ],
-    ),
-  );
-}
-
-class _Node extends StatelessWidget {
-  final int n;
-  final int step;
-  final String label;
-  const _Node({required this.n, required this.step, required this.label});
-
-  @override
   Widget build(BuildContext context) {
-    final done = step > n;
-    final active = step == n;
-    return Column(
+    final textTheme = Theme.of(context).textTheme;
+    return Row(
       children: [
         Container(
-          width: 26,
-          height: 26,
+          width: 34, height: 34,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: done
-                ? AppColors.success
-                : active
-                ? AppColors.primary
-                : AppColors.bg,
-            border: Border.all(
-              color: done
-                  ? AppColors.success
-                  : active
-                  ? AppColors.primary
-                  : AppColors.borderMd,
-              width: 1.5,
-            ),
+            color: AppColors.primaryBg,
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Center(
-            child: done
-                ? const Icon(Icons.check, size: 13, color: Colors.white)
-                : Text(
-                    '${n + 1}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: active ? Colors.white : AppColors.text3,
-                    ),
-                  ),
-          ),
+          child: Icon(icon, color: AppColors.primary, size: 16),
         ),
-        const SizedBox(height: AppDimensions.s4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
-            color: done
-                ? AppColors.success
-                : active
-                ? AppColors.primary
-                : AppColors.text4,
+        const SizedBox(width: AppDimensions.s10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: textTheme.titleSmall?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.text3,
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -893,102 +650,94 @@ class _Node extends StatelessWidget {
   }
 }
 
-class _Line extends StatelessWidget {
-  final bool done;
-  const _Line({required this.done});
+class _ServiceRow extends StatelessWidget {
+  final ServiceTypeResponse service;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ServiceRow({
+    required this.service,
+    required this.selected,
+    required this.onTap,
+  });
+
+  IconData get _icon {
+    final n = service.name.toLowerCase();
+    if (n.contains('oil')) return Icons.oil_barrel_rounded;
+    if (n.contains('brake')) return Icons.do_not_disturb_on_rounded;
+    if (n.contains('tyre') || n.contains('tire')) return Icons.radio_button_checked_rounded;
+    if (n.contains('battery')) return Icons.battery_charging_full_rounded;
+    if (n.contains('air') || n.contains('filter')) return Icons.air_rounded;
+    if (n.contains('diagnos')) return Icons.biotech_rounded;
+    if (n.contains('mot')) return Icons.assignment_turned_in_rounded;
+    if (n.contains('full') || n.contains('service')) return Icons.build_rounded;
+    return Icons.settings_rounded;
+  }
 
   @override
-  Widget build(BuildContext context) => Expanded(
-    child: Container(
-      height: 1.5,
-      margin: const EdgeInsets.only(bottom: AppDimensions.s16),
-      color: done ? AppColors.success : AppColors.border,
-    ),
-  );
-}
-
-class _TopBar extends StatelessWidget {
-  final int step;
-  final VoidCallback onBack;
-  const _TopBar({required this.step, required this.onBack});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    color: AppColors.surface,
-    height: 60,
-    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s18),
-    child: Row(
-      children: [
-        GestureDetector(
-          onTap: onBack,
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.bg,
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 14,
-              color: AppColors.text3,
-            ),
-          ),
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.s16,
+          vertical: AppDimensions.s14,
         ),
-        const Expanded(
-          child: Center(
-            child: Text(
-              'Book Service',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+        color: selected ? AppColors.primaryBg : Colors.transparent,
+        child: Row(
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: selected
+                    ? AppColors.primary.withValues(alpha: 0.15)
+                    : AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                _icon,
+                color: selected ? AppColors.primary : AppColors.text4,
+                size: 20,
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 34),
-      ],
-    ),
-  );
-}
-
-class _BottomBar extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _BottomBar({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    color: AppColors.surface,
-    padding: const EdgeInsets.fromLTRB(
-      AppDimensions.s18,
-      AppDimensions.s14,
-      AppDimensions.s18,
-      AppDimensions.s24,
-    ),
-    child: SafeArea(
-      top: false,
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: onTap,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: AppDimensions.s14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.r12),
+            const SizedBox(width: AppDimensions.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    service.name,
+                    style: textTheme.labelLarge?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  if (service.price.isNotEmpty || service.duration.isNotEmpty)
+                    Text(
+                      [
+                        if (service.price.isNotEmpty) service.price,
+                        if (service.duration.isNotEmpty) service.duration,
+                      ].join(' · '),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.text3,
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
+              ),
             ),
-            elevation: 0,
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          ),
+            if (selected)
+              const Icon(Icons.check_circle_rounded,
+                  color: AppColors.primary, size: 18)
+            else
+              const Icon(Icons.radio_button_unchecked_rounded,
+                  color: AppColors.border, size: 18),
+          ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }

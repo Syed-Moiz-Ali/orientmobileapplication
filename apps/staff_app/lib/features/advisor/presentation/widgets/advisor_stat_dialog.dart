@@ -40,7 +40,7 @@ class AdvisorStatDialog extends StatelessWidget {
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
                   color: color,
-                  letterSpacing: -0.5,
+                  letterSpacing: 0,
                 ),
               ),
             ),

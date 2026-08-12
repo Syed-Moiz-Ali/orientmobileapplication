@@ -55,7 +55,7 @@ class SalesCategoryCard extends StatelessWidget {
                 children: [
                   Text(
                     category.title.toUpperCase(),
-                    style: AppTextStyles.rajdhaniLabel(
+                    style: AppTextStyles.subtitle(
                       color: isExpanded
                           ? AppColors.accent
                           : AppColors.textPrimary,
@@ -85,7 +85,7 @@ class SalesCategoryCard extends StatelessWidget {
                     width: 40,
                     child: Text(
                       'S.NO',
-                      style: AppTextStyles.rajdhaniBodySmall(
+                      style: AppTextStyles.bodySmall(
                         color: AppColors.text3,
                       ),
                     ),
@@ -93,14 +93,14 @@ class SalesCategoryCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'DESCRIPTION',
-                      style: AppTextStyles.rajdhaniBodySmall(
+                      style: AppTextStyles.bodySmall(
                         color: AppColors.text3,
                       ),
                     ),
                   ),
                   Text(
                     'VALUE',
-                    style: AppTextStyles.rajdhaniBodySmall(
+                    style: AppTextStyles.bodySmall(
                       color: AppColors.text3,
                     ),
                   ),
@@ -149,7 +149,7 @@ class SalesCategoryCard extends StatelessWidget {
                     ),
                     Text(
                       item.value,
-                      style: AppTextStyles.orbitronHeadline(
+                      style: AppTextStyles.label(
                         color: AppColors.success,
                       ),
                     ),

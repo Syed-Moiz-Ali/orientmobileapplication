@@ -5,55 +5,66 @@ class GarageInfoCard extends StatelessWidget {
   final VoidCallback? onCall;
   final VoidCallback? onMap;
 
-  const GarageInfoCard({
-    super.key,
-    this.onCall,
-    this.onMap,
-  });
+  const GarageInfoCard({super.key, this.onCall, this.onMap});
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return AppCard(
-      padding: const EdgeInsets.all(AppDimensions.s16),
+      borderRadius: 24,
+      padding: const EdgeInsets.all(AppDimensions.s18),
+      color: AppColors.surface,
+      borderColor: AppColors.border,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.04),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: AppColors.primaryBg,
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.primaryBorder),
                 ),
                 child: const Icon(
                   Icons.garage_rounded,
-                  color: AppColors.accent,
-                  size: 24,
+                  color: AppColors.primary,
+                  size: 26,
                 ),
               ),
               const SizedBox(width: AppDimensions.s12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Orient Auto Workshop',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          'Orient Auto Workshop',
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Mon - Sat: 8:00 AM - 7:00 PM',
-                      style: TextStyle(
-                        fontSize: 12,
+                      'Mon - Sat: 8:00 AM - 7:00 PM • Open Now',
+                      style: textTheme.bodySmall?.copyWith(
                         color: AppColors.success,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
                       ),
                     ),
                   ],
@@ -63,44 +74,86 @@ class GarageInfoCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.successBg,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                  border: Border.all(color: AppColors.successBorder),
                 ),
-                child: const Text(
-                  'OPEN NOW',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.success,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppColors.success,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'OPEN NOW',
+                      style: textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.success,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s14),
+          const Divider(height: 1, color: AppColors.line),
+          const SizedBox(height: AppDimensions.s12),
+          Row(
+            children: [
+              const Icon(
+                Icons.location_on_outlined,
+                size: 16,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Bay 3, Unit 4 Industrial Estate, Main Highway',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.s14),
-          const Divider(height: 1),
           const SizedBox(height: AppDimensions.s12),
-          const Row(
+
+          // Amenities Pills Bar
+          Row(
             children: [
-              Icon(Icons.location_on_outlined, size: 16, color: AppColors.text3),
-              SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'Unit 4, Industrial Area 1, Main Workshop Highway',
-                  style: TextStyle(fontSize: 12, color: AppColors.text3),
-                ),
+              _AmenityPill(icon: Icons.wifi_rounded, label: 'Free Wi-Fi'),
+              const SizedBox(width: 6),
+              _AmenityPill(icon: Icons.local_cafe_rounded, label: 'Lounge'),
+              const SizedBox(width: 6),
+              _AmenityPill(
+                icon: Icons.ev_station_rounded,
+                label: 'EV Charging',
               ),
             ],
           ),
           const SizedBox(height: AppDimensions.s14),
+
+          // Action Buttons
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onCall ??
+                  onPressed:
+                      onCall ??
                       () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Calling Workshop Hotline: +1 800 555-AUTO'),
+                            content: Text(
+                              'Calling Workshop Hotline: +1 800 555-AUTO',
+                            ),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -108,11 +161,11 @@ class GarageInfoCard extends StatelessWidget {
                   icon: const Icon(Icons.phone_rounded, size: 16),
                   label: const Text('Call Workshop'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.accent,
-                    side: const BorderSide(color: AppColors.accent),
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primaryBorder),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r10),
+                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
                     ),
                   ),
                 ),
@@ -120,29 +173,64 @@ class GarageInfoCard extends StatelessWidget {
               const SizedBox(width: AppDimensions.s10),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: onMap ??
+                  onPressed:
+                      onMap ??
                       () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Opening Google Maps location...'),
+                            content: Text('Opening Google Maps navigation...'),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                       },
                   icon: const Icon(Icons.directions_rounded, size: 16),
-                  label: const Text('Directions'),
+                  label: const Text('Get Directions'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkNavy,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r10),
+                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
                     ),
                   ),
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmenityPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _AmenityPill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppDimensions.rPill),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: AppColors.text3),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.text3,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -157,22 +245,24 @@ class EmergencyBreakdownBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppDimensions.s14),
       decoration: BoxDecoration(
-        color: const Color(0xFFDA3633).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(color: const Color(0xFFDA3633).withValues(alpha: 0.3)),
+        color: AppColors.dangerBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.dangerBorder),
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFDA3633),
-              borderRadius: BorderRadius.circular(AppDimensions.r10),
+              color: AppColors.danger,
+              borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
               Icons.emergency_rounded,
@@ -181,22 +271,24 @@ class EmergencyBreakdownBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppDimensions.s12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '24/7 Roadside Assistance',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFFDA3633),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.danger,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   'Stranded or car won\'t start? Request emergency breakdown tow',
-                  style: TextStyle(fontSize: 11, color: AppColors.text3),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.text3,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -205,17 +297,19 @@ class EmergencyBreakdownBanner extends StatelessWidget {
           ElevatedButton(
             onPressed: onTap,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDA3633),
+              backgroundColor: AppColors.danger,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r8),
+                borderRadius: BorderRadius.circular(AppDimensions.rPill),
               ),
             ),
-            child: const Text(
+            child: Text(
               'Get Help',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+              style: textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],

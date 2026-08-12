@@ -58,7 +58,7 @@ class _SupervisorScheduleTabState extends ConsumerState<SupervisorScheduleTab> {
                 const SizedBox(width: 10),
                 Text(
                   'Schedule',
-                  style: AppTextStyles.rajdhaniTitle(
+                  style: AppTextStyles.title(
                     color: AppColors.textPrimary,
                   ),
                 ),

@@ -65,7 +65,7 @@ class KpiCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             kpi.value,
-            style: AppTextStyles.orbitronDisplaySmall(
+            style: AppTextStyles.displaySmall(
               color: AppColors.textPrimary,
             ),
             maxLines: 1,
@@ -74,7 +74,7 @@ class KpiCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             kpi.label,
-            style: AppTextStyles.rajdhaniBodySmall(color: AppColors.text3),
+            style: AppTextStyles.bodySmall(color: AppColors.text3),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

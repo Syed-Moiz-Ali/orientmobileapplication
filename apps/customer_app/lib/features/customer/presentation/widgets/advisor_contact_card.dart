@@ -16,6 +16,8 @@ class AdvisorContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return AppCard(
       padding: const EdgeInsets.all(AppDimensions.s14),
       child: Row(
@@ -30,8 +32,7 @@ class AdvisorContactCard extends StatelessWidget {
             child: Center(
               child: Text(
                 advisorName.isNotEmpty ? advisorName.substring(0, 1) : 'A',
-                style: const TextStyle(
-                  fontSize: 18,
+                style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.primary,
                 ),
@@ -47,20 +48,23 @@ class AdvisorContactCard extends StatelessWidget {
                   children: [
                     Text(
                       advisorName,
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.verified_rounded, size: 14, color: AppColors.primary),
+                    const Icon(
+                      Icons.verified_rounded,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text(
                   advisorRole,
-                  style: const TextStyle(fontSize: 11, color: AppColors.text3),
+                  style: textTheme.bodySmall?.copyWith(color: AppColors.text3),
                 ),
               ],
             ),
@@ -81,7 +85,11 @@ class AdvisorContactCard extends StatelessWidget {
                 color: AppColors.accent.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.phone_rounded, color: AppColors.accent, size: 18),
+              child: const Icon(
+                Icons.phone_rounded,
+                color: AppColors.accent,
+                size: 18,
+              ),
             ),
           ),
         ],

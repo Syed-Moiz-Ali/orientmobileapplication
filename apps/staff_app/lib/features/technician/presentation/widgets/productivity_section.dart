@@ -39,13 +39,13 @@ class ProductivitySection extends ConsumerWidget {
                         children: [
                           Text(
                             '${p.efficiency.toInt()}%',
-                            style: AppTextStyles.orbitronHeadline(
+                            style: AppTextStyles.label(
                               color: AppColors.accent,
                             ),
                           ),
                           Text(
                             'Eff.',
-                            style: AppTextStyles.rajdhaniBody(
+                            style: AppTextStyles.bodyStrong(
                               color: AppColors.text3,
                             ),
                           ),
@@ -109,12 +109,12 @@ class ProductivitySection extends ConsumerWidget {
                 SizedBox(width: AppDimensions.s10),
                 Text(
                   'Total Hours Worked:',
-                  style: AppTextStyles.rajdhaniBody(color: AppColors.text2),
+                  style: AppTextStyles.bodyStrong(color: AppColors.text2),
                 ),
                 const Spacer(),
                 Text(
                   p.totalHoursWorked,
-                  style: AppTextStyles.orbitronHeadline(
+                  style: AppTextStyles.label(
                     color: AppColors.accent,
                   ),
                 ),
@@ -155,11 +155,11 @@ class _ProdCell extends StatelessWidget {
           children: [
             Text(
               value,
-              style: AppTextStyles.orbitronDisplaySmall(color: color),
+              style: AppTextStyles.displaySmall(color: color),
             ),
             Text(
               label,
-              style: AppTextStyles.rajdhaniBody(color: AppColors.text3),
+              style: AppTextStyles.bodyStrong(color: AppColors.text3),
             ),
           ],
         ),

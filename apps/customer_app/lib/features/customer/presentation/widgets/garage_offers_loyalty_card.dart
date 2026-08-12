@@ -4,22 +4,17 @@ import 'package:shared_core/shared_core.dart';
 class GarageOffersLoyaltyCard extends StatelessWidget {
   final VoidCallback? onClaimOffer;
 
-  const GarageOffersLoyaltyCard({
-    super.key,
-    this.onClaimOffer,
-  });
+  const GarageOffersLoyaltyCard({super.key, this.onClaimOffer});
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.s16),
+      padding: const EdgeInsets.all(AppDimensions.s18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.darkNavy, Color(0xFF1E3A8A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.darkNavy,
         borderRadius: BorderRadius.circular(AppDimensions.r16),
         boxShadow: const [
           BoxShadow(
@@ -35,100 +30,96 @@ class GarageOffersLoyaltyCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.stars_rounded, size: 14, color: Color(0xFFD97706)),
-                    SizedBox(width: 4),
+                    const Icon(
+                      Icons.stars_rounded,
+                      size: 14,
+                      color: Color(0xFFD97706),
+                    ),
+                    const SizedBox(width: AppDimensions.s4),
                     Text(
                       'GARAGE REWARDS',
-                      style: TextStyle(
-                        fontSize: 10,
+                      style: textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFFD97706),
-                        letterSpacing: 0.5,
+                        color: const Color(0xFFD97706),
                       ),
                     ),
                   ],
                 ),
               ),
               const Spacer(),
-              const Text(
+              Text(
                 '450 Points',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
                   color: Colors.white,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.s12),
-          const Text(
-            '☀️ Summer AC & Battery Health Check',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
+          const SizedBox(height: AppDimensions.s14),
+          Text(
+            'Summer AC & Battery Health Check',
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
+          const SizedBox(height: AppDimensions.s6),
+          Text(
             'Complimentary 15-point inspection with any full service this month.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF93C5FD),
-              height: 1.3,
+            style: textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFFBFDBFE),
+              height: 1.35,
             ),
           ),
-          const SizedBox(height: AppDimensions.s14),
-          Row(
+          const SizedBox(height: AppDimensions.s16),
+          Wrap(
+            spacing: AppDimensions.s10,
+            runSpacing: AppDimensions.s10,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
                 ),
-                child: const Text(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(AppDimensions.r8),
+                ),
+                child: Text(
                   'CODE: ORIENT2026',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                  style: textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    letterSpacing: 0.8,
                   ),
                 ),
               ),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: onClaimOffer ??
+              FilledButton(
+                onPressed:
+                    onClaimOffer ??
                     () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Voucher ORIENT2026 applied to next booking!'),
+                          content: Text(
+                            'Voucher ORIENT2026 applied to next booking!',
+                          ),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
                     },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.r8),
-                  ),
-                ),
-                child: const Text(
-                  'Claim Offer',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-                ),
+                child: const Text('Claim Offer'),
               ),
             ],
           ),

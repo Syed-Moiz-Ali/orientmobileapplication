@@ -14,6 +14,8 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -29,9 +31,9 @@ class ErrorView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 15,
+              style: textTheme.bodyLarge?.copyWith(
                 color: AppColors.text2,
+                height: 1.45,
               ),
             ),
             if (onRetry != null) ...[
