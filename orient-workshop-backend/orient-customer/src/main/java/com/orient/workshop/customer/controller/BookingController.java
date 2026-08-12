@@ -49,9 +49,16 @@ public class BookingController {
     @PutMapping("/customers/bookings/{bookingId}/status")
     public ApiResponse<BookingResponse> updateBookingStatus(
             @PathVariable Long bookingId,
-            @RequestBody java.util.Map<String, String> body,
+            @RequestBody(required = false) java.util.Map<String, String> body,
+            @RequestParam(required = false) String status,
             @AuthenticationPrincipal JwtUserPrincipal principal) {
-        return ApiResponse.success(bookingService.updateStatus(bookingId, body.get("status"), principal));
+        // FIX (audit QA BUG-010): the customer app sends ?status=cancelled as a
+        // query param with no body; the Postman collection and older clients use
+        // {"status": ...}. Accept both so the cancel flow works end-to-end.
+        String resolved = (body != null && body.get("status") != null && !body.get("status").isBlank())
+                ? body.get("status")
+                : status;
+        return ApiResponse.success(bookingService.updateStatus(bookingId, resolved, principal));
     }
 }
 

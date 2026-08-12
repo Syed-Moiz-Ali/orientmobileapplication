@@ -126,7 +126,13 @@ public class AuthService {
             case "sms" -> {
                 if (phone == null || phone.isBlank())
                     throw new BadRequestException("Phone is required for sms OTP");
-                otpService.sendSmsOtp(PhoneUtil.normalize(phone));
+                String normalized = PhoneUtil.normalize(phone);
+                // FIX (audit QA BUG-005): reject invalid phones — previously any
+                // non-blank value got an OTP record (abuse / invalid SMS targets).
+                if (!PhoneUtil.isValid(normalized)) {
+                    throw new BadRequestException("Invalid phone number");
+                }
+                otpService.sendSmsOtp(normalized);
             }
             case "email" -> {
                 if (email == null || email.isBlank())
@@ -144,6 +150,10 @@ public class AuthService {
                 if (phone == null || phone.isBlank())
                     throw new BadRequestException("Phone is required for sms OTP");
                 String normalizedPhone = PhoneUtil.normalize(phone);
+                // FIX (audit QA BUG-005): reject invalid phones at verification too.
+                if (!PhoneUtil.isValid(normalizedPhone)) {
+                    throw new BadRequestException("Invalid phone number");
+                }
                 otpService.verifySmsOtp(normalizedPhone, otpCode);
                 yield findOrCreateUserByPhone(normalizedPhone);
             }

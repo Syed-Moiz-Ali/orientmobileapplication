@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 public class FeedbackRequest {
     private Long jobCardId;
     private Integer rating; // Kept for backwards compatibility
+    // FIX (audit QA BUG-029): the customer app sends `overall`; accept it as an
+    // alias for overallRating so submissions actually succeed.
+    private Integer overall;
     private Integer overallRating;
     private Integer workQuality;
     private Integer communication;

@@ -60,6 +60,21 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
   @override
   DashboardUiState build() {
     _dataSource = ref.read(dashboardDataSourceProvider);
+    // FIX (audit QA BUG-028): loadAll() in the datasource provider is
+    // fire-and-forget with no state notification — the dashboard rendered
+    // placeholder zeros on fresh login until an app resume forced a rebuild.
+    // Trigger the load here and notify state so the first paint gets data.
+    Future.microtask(() async {
+      state = state.copyWith(isLoading: true);
+      try {
+        await (_dataSource as DashboardUIRemoteAdapter).loadAll();
+      } catch (e, st) {
+        ref
+            .read(loggerProvider)
+            .e('Failed to load dashboard', error: e, stackTrace: st);
+      }
+      state = state.copyWith(isLoading: false);
+    });
     final saved = _loadMessages();
     return DashboardUiState(sentMessages: saved);
   }

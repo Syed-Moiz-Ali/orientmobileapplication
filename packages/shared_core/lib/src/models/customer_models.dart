@@ -71,6 +71,12 @@ class ServiceTypeResponse {
 
 class IdResponse {
   final String id;
-  const IdResponse({this.id=''});
-  factory IdResponse.fromJson(Map<String,dynamic> j) => IdResponse(id: (j['id']??'').toString());
+  // FIX (audit QA BUG-020): the backend returns both id and bookingRef; the app
+  // previously displayed the numeric id as the "Reference".
+  final String bookingRef;
+  const IdResponse({this.id = '', this.bookingRef = ''});
+  factory IdResponse.fromJson(Map<String, dynamic> j) => IdResponse(
+        id: (j['id'] ?? '').toString(),
+        bookingRef: (j['bookingRef'] ?? '').toString(),
+      );
 }

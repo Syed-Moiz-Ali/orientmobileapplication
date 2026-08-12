@@ -9,6 +9,7 @@ import com.orient.workshop.owner.model.dto.InventoryItemRequest;
 import com.orient.workshop.owner.model.dto.PurchaseOrderRequest;
 import com.orient.workshop.owner.service.InventoryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +43,7 @@ public class InventoryController {
     }
 
     @PostMapping("/items")
-    public ApiResponse<InventoryItem> createItem(@RequestBody InventoryItemRequest req,
+    public ApiResponse<InventoryItem> createItem(@Valid @RequestBody InventoryItemRequest req,
                                                  @AuthenticationPrincipal JwtUserPrincipal principal) {
         return ApiResponse.success(inventoryService.createItem(req, principal));
     }

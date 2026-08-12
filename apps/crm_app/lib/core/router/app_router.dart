@@ -27,17 +27,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authNotifierProvider);
       final matched = state.matchedLocation;
 
+      final isAuthRoute =
+          matched == AppRoutes.login || matched == AppRoutes.forgotPassword;
+
       return switch (authState) {
-        AuthUnauthenticated() =>
-          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
-              ? null
-              : AppRoutes.login,
+        AuthUnauthenticated() => isAuthRoute ? null : AppRoutes.login,
         AuthLoading() =>
           matched == AppRoutes.startup ? null : AppRoutes.startup,
-        AuthError() =>
-          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
-              ? null
-              : AppRoutes.login,
+        AuthError() => isAuthRoute ? null : AppRoutes.login,
+        AuthAuthenticated(:final role) when !_isCrmRole(role) =>
+          isAuthRoute ? null : AppRoutes.login,
         AuthAuthenticated() =>
           matched == AppRoutes.login || matched == AppRoutes.startup
               ? AppRoutes.crmDashboard
@@ -71,3 +70,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+bool _isCrmRole(UserRole role) {
+  return role == UserRole.crmDashboard || role == UserRole.owner;
+}

@@ -1,6 +1,7 @@
 package com.orient.workshop.owner.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,8 @@ public class InventoryItemRequest {
     private Long branchId;
     private BigDecimal costPrice;
     private BigDecimal sellingPrice;
+    // FIX (audit QA BUG-015): negative stock must be rejected, not persisted.
+    @PositiveOrZero(message = "Quantity cannot be negative")
     private Integer qtyOnHand;
     private Integer reorderLevel;
     private Long supplierId;

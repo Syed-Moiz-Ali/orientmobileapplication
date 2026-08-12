@@ -43,39 +43,43 @@ public class JobCardService {
 
     public PageResponse<JobCardResponse> listJobCards(String status, String search, int page, int limit,
                                                       JwtUserPrincipal principal) {
-        int offset = (page - 1) * limit;
+        // FIX (audit QA BUG-007): page=0 produced a negative OFFSET ((0-1)*limit)
+        // which MySQL rejects with a SQL syntax error -> 500. Clamp both params.
+        int safePage = Math.max(page, 1);
+        int safeLimit = Math.min(Math.max(limit, 1), 100);
+        int offset = (safePage - 1) * safeLimit;
         Long branchId = scopedBranchId(principal);
         List<JobCard> cards;
         long total;
 
         if (search != null && !search.isBlank()) {
             if (branchId != null) {
-                cards = jobCardMapper.searchCardsByBranch(search, branchId, limit, offset);
+                cards = jobCardMapper.searchCardsByBranch(search, branchId, safeLimit, offset);
                 total = jobCardMapper.countSearchByBranch(search, branchId);
             } else {
-                cards = jobCardMapper.searchCards(search, limit, offset);
+                cards = jobCardMapper.searchCards(search, safeLimit, offset);
                 total = jobCardMapper.countSearch(search);
             }
         } else if (status != null && !status.isBlank()) {
             if (branchId != null) {
-                cards = jobCardMapper.findByStatusAndBranch(status, branchId, limit, offset);
+                cards = jobCardMapper.findByStatusAndBranch(status, branchId, safeLimit, offset);
                 total = jobCardMapper.countByStatusAndBranch(status, branchId);
             } else {
-                cards = jobCardMapper.findByStatus(status, limit, offset);
+                cards = jobCardMapper.findByStatus(status, safeLimit, offset);
                 total = jobCardMapper.countByStatus(status);
             }
         } else {
             if (branchId != null) {
-                cards = jobCardMapper.findRecentByBranch(branchId, limit, offset);
+                cards = jobCardMapper.findRecentByBranch(branchId, safeLimit, offset);
                 total = jobCardMapper.countAllByBranch(branchId);
             } else {
-                cards = jobCardMapper.findRecent(limit, offset);
+                cards = jobCardMapper.findRecent(safeLimit, offset);
                 total = jobCardMapper.countAll();
             }
         }
 
         List<JobCardResponse> items = toResponses(cards);
-        return PageResponse.of(items, page, limit, total);
+        return PageResponse.of(items, safePage, safeLimit, total);
     }
 
     public JobCardDetailResponse getJobCard(Long id, JwtUserPrincipal principal) {

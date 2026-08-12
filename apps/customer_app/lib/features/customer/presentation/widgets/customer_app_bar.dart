@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/models/profile_data.dart';
 import 'package:customer_app/features/customer/presentation/customer_notifications_view.dart';
@@ -7,7 +9,7 @@ import 'package:customer_app/features/customer/presentation/providers/customer_p
 
 const Color _navy = AppColors.darkNavy;
 
-class CustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
+class CustomerAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final CustomerDashboardState state;
   final CustomerDashboardNotifier notifier;
 
@@ -37,7 +39,7 @@ class CustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AppBar(
       flexibleSpace: Container(
         decoration: const BoxDecoration(
@@ -105,7 +107,15 @@ class CustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.only(right: 14),
           child: UserAvatar(
             initials: 'C',
-            onTap: () => showProfileSheet(context, customerProfileData),
+            onTap: () => showProfileSheet(
+              context,
+              // FIX (audit QA BUG-027): onLogout was never wired — the
+              // Logout button confirmed but did nothing.
+              customerProfileData,
+              onLogout: () => ref
+                  .read(authNotifierProvider.notifier)
+                  .logout(),
+            ),
           ),
         ),
       ],

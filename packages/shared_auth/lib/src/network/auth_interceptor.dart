@@ -28,8 +28,14 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
+    // FIX (audit QA BUG-023): never auto-refresh the /auth/logout call. The
+    // token may already be expired; refreshing here re-enters the logout flow
+    // and (with a revoked/failing refresh token) deadlocks on the single-flight
+    // refresh future, leaving the user unable to log out.
+    final path = err.requestOptions.path;
     if (err.response?.statusCode != 401 ||
-        err.requestOptions.headers['X-Retry'] == 'true') {
+        err.requestOptions.headers['X-Retry'] == 'true' ||
+        path.endsWith('/auth/logout')) {
       handler.next(err);
       return;
     }

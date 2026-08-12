@@ -20,6 +20,15 @@ public class ReportService {
     private final JobCardMapper jobCardMapper;
 
     public ReportResponse getReports(String range) {
+        // FIX (audit QA BUG-012): invalid ranges were silently accepted and fell
+        // back to 7 days. Validate instead of guessing.
+        if (range == null
+                || !(range.equalsIgnoreCase("today")
+                        || range.equalsIgnoreCase("week")
+                        || range.equalsIgnoreCase("month"))) {
+            throw new com.orient.workshop.common.exception.BadRequestException(
+                    "Invalid range '" + range + "'. Allowed: today, week, month");
+        }
         int total = (int) jobCardMapper.countAll();
         int completed = jobCardMapper.countCompletedToday();
         int inProgress = jobCardMapper.countInProgress();

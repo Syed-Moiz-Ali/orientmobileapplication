@@ -61,6 +61,29 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(400, "Invalid request"));
     }
 
+    // FIX (audit QA BUG-017): MediaService (and friends) reject bad input with
+    // IllegalArgumentException ("File is empty", "File type not allowed"...).
+    // Without this they surfaced as opaque 500s.
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException e) {
+        log.warn("Invalid argument: {}", e.getMessage());
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(400, e.getMessage() != null ? e.getMessage() : "Invalid request"));
+    }
+
+    // FIX (audit QA BUG-006): unknown paths fell through to the static-resource
+    // handler and surfaced as 500 (or 401 from the security chain) with an empty
+    // body. Return a proper 404 envelope so clients can distinguish "no such
+    // endpoint" from real failures.
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResource(
+            org.springframework.web.servlet.resource.NoResourceFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(404, "Endpoint not found"));
+    }
+
     // H-7: duplicate keys / constraint violations -> 409
     @ExceptionHandler({DuplicateKeyException.class, DataIntegrityViolationException.class})
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(Exception e) {

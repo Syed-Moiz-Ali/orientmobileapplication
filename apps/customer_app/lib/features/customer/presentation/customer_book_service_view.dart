@@ -710,7 +710,9 @@ class _CustomerBookServiceViewState
     final remote = ref.read(customerRemoteDataSourceProvider);
     try {
       final resp = await remote.createBooking(payload);
-      bookingRef = resp.id;
+      // FIX (audit QA BUG-020): prefer the human-friendly booking ref (BK-...)
+      // over the numeric DB id when the backend provided one.
+      bookingRef = resp.bookingRef.isNotEmpty ? resp.bookingRef : resp.id;
     } catch (e, st) {
       ref.read(loggerProvider).e('Booking API failed \u2014 queueing offline',
           error: e, stackTrace: st);
@@ -745,9 +747,7 @@ class _CustomerBookServiceViewState
     ref.invalidate(customerBookingsProvider);
     if (!context.mounted) return;
     
-    // Instead of showing sheet, navigate to success screen
-    Navigator.pop(context); // pop the book service view
-    context.push(AppRoutes.customerBookingSuccess, extra: {
+    context.go(AppRoutes.customerBookingSuccess, extra: {
       'ref': id,
       'service': selService.name,
       'date': _summaryDate,

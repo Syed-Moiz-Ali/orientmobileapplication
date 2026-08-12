@@ -99,6 +99,36 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       AppColors.text3,
       AppColors.surfaceAlt,
     ),
+    JobCardStatus.pending => _StatusStyle(
+      'Pending',
+      AppColors.warning,
+      AppColors.warningBg,
+    ),
+    JobCardStatus.awaitingSupervisor => _StatusStyle(
+      'Awaiting Supervisor',
+      AppColors.warning,
+      AppColors.warningBg,
+    ),
+    JobCardStatus.vehicleReceived => _StatusStyle(
+      'Vehicle Received',
+      AppColors.info,
+      AppColors.infoBg,
+    ),
+    JobCardStatus.waitingCustomerApproval => _StatusStyle(
+      'Waiting Customer Approval',
+      AppColors.warning,
+      AppColors.warningBg,
+    ),
+    JobCardStatus.delivered => _StatusStyle(
+      'Delivered',
+      AppColors.success,
+      AppColors.successBg,
+    ),
+    JobCardStatus.qualityCheckPassed => _StatusStyle(
+      'QC Passed',
+      AppColors.success,
+      AppColors.successBg,
+    ),
   };
 
   String _getVal(String key) => _hiveData?[key] as String? ?? '';
@@ -989,6 +1019,8 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
 
   void _showStatusSheet(BuildContext context) {
     final statuses = JobCardStatus.values;
+    // FIX (audit QA BUG-025): cover all 12 backend statuses — labels[s]! below
+    // would crash on any value missing from this map.
     final labels = {
       JobCardStatus.inProgress: 'In Progress',
       JobCardStatus.pendingApproval: 'Pending Approval',
@@ -996,6 +1028,12 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       JobCardStatus.waitingParts: 'Waiting Parts',
       JobCardStatus.qualityCheck: 'QC Check',
       JobCardStatus.cancelled: 'Cancelled',
+      JobCardStatus.pending: 'Pending',
+      JobCardStatus.awaitingSupervisor: 'Awaiting Supervisor',
+      JobCardStatus.vehicleReceived: 'Vehicle Received',
+      JobCardStatus.waitingCustomerApproval: 'Waiting Customer Approval',
+      JobCardStatus.delivered: 'Delivered',
+      JobCardStatus.qualityCheckPassed: 'QC Passed',
     };
     final colors = {
       JobCardStatus.inProgress: AppColors.accent,
@@ -1004,6 +1042,12 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       JobCardStatus.waitingParts: AppColors.danger,
       JobCardStatus.qualityCheck: AppColors.info,
       JobCardStatus.cancelled: AppColors.text3,
+      JobCardStatus.pending: AppColors.warning,
+      JobCardStatus.awaitingSupervisor: AppColors.warning,
+      JobCardStatus.vehicleReceived: AppColors.info,
+      JobCardStatus.waitingCustomerApproval: AppColors.warning,
+      JobCardStatus.delivered: AppColors.success,
+      JobCardStatus.qualityCheckPassed: AppColors.success,
     };
     showModalBottomSheet(
       context: context,

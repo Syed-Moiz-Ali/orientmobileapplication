@@ -33,10 +33,7 @@ class AuthRemoteDatasource implements AuthDatasource {
       data: {'type': 'sms', 'phone': phone, 'otp': otp},
       fromJson: (d) => TokenResponse.fromJson(d as Map<String, dynamic>),
     );
-    return r.when(
-      success: (v) => Success(_toAuth(v)),
-      failure: (e) => Failure(e),
-    );
+    return _mapTokenResponse(r);
   }
 
   @override
@@ -54,10 +51,7 @@ class AuthRemoteDatasource implements AuthDatasource {
       data: {'type': 'email', 'email': email, 'otp': otp},
       fromJson: (d) => TokenResponse.fromJson(d as Map<String, dynamic>),
     );
-    return r.when(
-      success: (v) => Success(_toAuth(v)),
-      failure: (e) => Failure(e),
-    );
+    return _mapTokenResponse(r);
   }
 
   @override
@@ -80,10 +74,7 @@ class AuthRemoteDatasource implements AuthDatasource {
       data: data,
       fromJson: (d) => TokenResponse.fromJson(d as Map<String, dynamic>),
     );
-    return r.when(
-      success: (v) => Success(_toAuth(v)),
-      failure: (e) => Failure(e),
-    );
+    return _mapTokenResponse(r);
   }
 
   @override
@@ -100,10 +91,7 @@ class AuthRemoteDatasource implements AuthDatasource {
       data: data,
       fromJson: (d) => TokenResponse.fromJson(d as Map<String, dynamic>),
     );
-    return r.when(
-      success: (v) => Success(_toAuth(v)),
-      failure: (e) => Failure(e),
-    );
+    return _mapTokenResponse(r);
   }
 
   @override
@@ -113,10 +101,7 @@ class AuthRemoteDatasource implements AuthDatasource {
       data: {'refreshToken': refreshToken},
       fromJson: (d) => TokenResponse.fromJson(d as Map<String, dynamic>),
     );
-    return r.when(
-      success: (v) => Success(_toAuth(v)),
-      failure: (e) => Failure(e),
-    );
+    return _mapTokenResponse(r);
   }
 
   @override
@@ -154,17 +139,32 @@ class AuthRemoteDatasource implements AuthDatasource {
     );
   }
 
-  AuthResult _toAuth(TokenResponse r) => AuthResult(
-    role: _parse(r.role),
-    token: r.token,
-    refreshToken: r.refreshToken,
-  );
+  Result<AuthResult> _mapTokenResponse(Result<TokenResponse> result) {
+    return result.when(
+      success: (v) {
+        final role = _parse(v.role);
+        if (role == null) {
+          return const Failure(
+            ValidationException('The server returned an unsupported role.'),
+          );
+        }
+        return Success(
+          AuthResult(
+            role: role,
+            token: v.token,
+            refreshToken: v.refreshToken,
+          ),
+        );
+      },
+      failure: (e) => Failure(e),
+    );
+  }
 
-  UserRole _parse(String role) {
+  UserRole? _parse(String role) {
     try {
       return UserRole.values.byName(role);
     } catch (_) {
-      return UserRole.customer;
+      return null;
     }
   }
 }

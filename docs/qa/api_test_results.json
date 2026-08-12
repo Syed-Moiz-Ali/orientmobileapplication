@@ -1,0 +1,1192 @@
+[
+    {
+        "check":  "health returns 200",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "version returns 200",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "unknown route -\u003e 404/401 (BUG-006 fixed: no more 500)",
+        "pass":  true,
+        "detail":  "got 401 body=\u0027\u0027"
+    },
+    {
+        "check":  "unsupported X-API-Version returns 406",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "context path already included -\u003e 401/404 (BUG-006 fixed: no more 500)",
+        "pass":  true,
+        "detail":  "got 401 body=\u0027\u0027"
+    },
+    {
+        "check":  "send-otp valid sms -\u003e 200",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "send-otp valid email -\u003e 200",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "send-otp invalid type -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "send-otp empty body -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "send-otp invalid phone rejected (BUG-005: accepted, \"OTP sent\")",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "verify-otp wrong otp rejected (400 or 401)",
+        "pass":  true,
+        "detail":  "got 400: "
+    },
+    {
+        "check":  "verify-otp empty otp -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "verify-otp missing otp -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "login customer role",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "bootstrap logins created customer accounts (S-2 role gate)",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "login advisor role",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "login supervisor role",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "login technician role",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "login owner role",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "login crmDashboard role",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "/auth/me as customer returns own role",
+        "pass":  true,
+        "detail":  "status=200 role=customer"
+    },
+    {
+        "check":  "/auth/me as advisor returns own role",
+        "pass":  true,
+        "detail":  "status=200 role=advisor"
+    },
+    {
+        "check":  "/auth/me as supervisor returns own role",
+        "pass":  true,
+        "detail":  "status=200 role=supervisor"
+    },
+    {
+        "check":  "/auth/me as technician returns own role",
+        "pass":  true,
+        "detail":  "status=200 role=technician"
+    },
+    {
+        "check":  "/auth/me as owner returns own role",
+        "pass":  true,
+        "detail":  "status=200 role=owner"
+    },
+    {
+        "check":  "/auth/me as crmDashboard returns own role",
+        "pass":  true,
+        "detail":  "status=200 role=crmDashboard"
+    },
+    {
+        "check":  "/auth/me without token -\u003e 401",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "register customer -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Registration successful\",\"data\":{\"role\":\"customer\",\"token\":\"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNDEiLCJwaG9uZSI6Ijk3MTUyMDEwNTUxMTEiLCJyb2xlIjoiY3VzdG9tZXIiLCJqdGkiOiI3YTkxMDZjYS1mYWVjLTQyZTctODA5ZS1jZmI3NTViYWQ4M2UiLCJpYXQiOjE3ODY1NDU2ODAsImV4cCI6MTc4NjU0NjU4MH0.ECDQVSSWid0eh0wNkrzVscvJ8oryNnPK_Srl-77do4wMW2eEgNG_BvcK9yi6ovz3\",\"refreshToken\":\"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNDEiLCJ0eXBlIjoicmVmcmVzaCIsImp0aSI6ImFkYzg3MmQ4LWJiNTItNDIzOS04Y2FmLWUyZTBmOWM4N2M1ZCIsImlhdCI6MTc4NjU0NTY4MCwiZXhwIjoxNzg5MTM3NjgwfQ.vnSQecASbOYeN5MADfE0mZVoS9FdC__wxePzd_0cwvZ9j1XzKYr1G-GCHCLPuBHm\"},\"timestamp\":1786545680151}"
+    },
+    {
+        "check":  "register invalid email -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "register weak password -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "register duplicate phone -\u003e 400/409",
+        "pass":  true,
+        "detail":  "got 400: "
+    },
+    {
+        "check":  "register with owner role -\u003e 403/400 (customer-only)",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "register with admin role -\u003e 403/400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "login with password (phone) -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"role\":\"customer\",\"token\":\"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNDEiLCJwaG9uZSI6Ijk3MTUyMDEwNTUxMTEiLCJyb2xlIjoiY3VzdG9tZXIiLCJqdGkiOiI1Nzg1ZjYwYS1lMzU3LTQ2OTgtOGQ2My0yMGEzOTI3NGUwNGYiLCJpYXQiOjE3ODY1NDU2ODAsImV4cCI6MTc4NjU0NjU4MH0.E68phP80ZNeNX5uB1hDLz1wx2jEmvtCiz9fTHumLIqRw7pDL_dKXNz7tMPnnseIN\",\"refreshToken\":\"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNDEiLCJ0eXBlIjoicmVmcmVzaCIsImp0aSI6IjExOTAzZjUwLTBiZmUtNGJkMi04YTczLWQ2Njk5NjkyZWM0MCIsImlhdCI6MTc4NjU0NTY4MCwiZXhwIjoxNzg5MTM3NjgwfQ.tB8VCgXzPJwks1J4JuMP-FekkmuLC_M4oKiYzP7uZuEJbZGcgJi7-zIRExTP_FjF\"},\"timestamp\":1786545680278}"
+    },
+    {
+        "check":  "login with password (email) -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "login wrong password -\u003e 400/401",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "login wrong password 2 -\u003e 400/401",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "login unknown user -\u003e 400/401",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "login missing password -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "refresh token -\u003e 200 with new tokens",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "reuse old refresh token -\u003e 401 (family revoked)",
+        "pass":  true,
+        "detail":  "got 401: "
+    },
+    {
+        "check":  "new refresh token still valid -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "refresh with garbage token -\u003e 400/401",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "refresh empty body -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "logout -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "me after logout (revoked refresh) still valid access token",
+        "pass":  true,
+        "detail":  "got 200 (access token stateless; refresh revoked)"
+    },
+    {
+        "check":  "forgot-password -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "reset-password wrong otp -\u003e 400/401",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "reset-password correct otp -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Password reset successfully\",\"timestamp\":1786545722881}"
+    },
+    {
+        "check":  "login with new password -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "old password no longer works -\u003e 400/401",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "login locked after 5 failures -\u003e 429/401",
+        "pass":  true,
+        "detail":  "got 429"
+    },
+    {
+        "check":  "otp capped after 5 wrong attempts (BUG-009: got 200, cap ineffective)",
+        "pass":  true,
+        "detail":  "got 429 (expected rejection)"
+    },
+    {
+        "check":  "RBAC: customer -\u003e owner endpoint -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: advisor -\u003e owner endpoint -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: customer -\u003e crm endpoint -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: advisor -\u003e crm endpoint -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: customer -\u003e supervisor endpoint -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: advisor -\u003e supervisor endpoint -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: customer -\u003e advisor endpoint -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: owner -\u003e advisor endpoint (owner has advisor access) -\u003e 200",
+        "pass":  true,
+        "detail":  "expected 200"
+    },
+    {
+        "check":  "RBAC: customer -\u003e technician endpoint -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: advisor -\u003e branches (owner only) -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: customer -\u003e staff search -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: customer -\u003e moderation inbox -\u003e 403",
+        "pass":  true,
+        "detail":  "expected 403"
+    },
+    {
+        "check":  "RBAC: advisor -\u003e moderation inbox allowed -\u003e 200",
+        "pass":  true,
+        "detail":  "expected 200"
+    },
+    {
+        "check":  "no token -\u003e 401",
+        "pass":  true,
+        "detail":  "got 401"
+    },
+    {
+        "check":  "garbage token -\u003e 401",
+        "pass":  true,
+        "detail":  "got 401"
+    },
+    {
+        "check":  "Bearer garbage -\u003e 401",
+        "pass":  true,
+        "detail":  "got 401"
+    },
+    {
+        "check":  "forged JWT with expired exp -\u003e 401",
+        "pass":  true,
+        "detail":  "got 401"
+    },
+    {
+        "check":  "forged JWT without exp -\u003e 401",
+        "pass":  true,
+        "detail":  "got 401"
+    },
+    {
+        "check":  "forged JWT bad signature -\u003e 401",
+        "pass":  true,
+        "detail":  "got 401"
+    },
+    {
+        "check":  "forged JWT role escalation (customer sub=1 as owner) -\u003e 401/403",
+        "pass":  true,
+        "detail":  "got 401: {\"code\":401,\"message\":\"Unauthorized\",\"timestamp\":1786545723463}"
+    },
+    {
+        "check":  "customer profile -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "list vehicles -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "create vehicle -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"77\",\"ref\":\"VEH-3f8071ba\",\"brand\":\"Toyota\",\"model\":\"Camry\",\"plateNumber\":\"QA201055\",\"vin\":null,\"color\":null,\"year\":2022,\"mileage\":null,\"lastService\":null,\"nextDue\":null,\"healthScore\":0},\"timestamp\":1786545723534}"
+    },
+    {
+        "check":  "duplicate vehicle reg allowed (no unique constraint - by design)",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "update vehicle -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"77\",\"ref\":\"VEH-3f8071ba\",\"brand\":\"Toyota\",\"model\":\"Corolla\",\"plateNumber\":\"QA201055\",\"vin\":null,\"color\":null,\"year\":2023,\"mileage\":null,\"lastService\":null,\"nextDue\":null,\"healthScore\":0},\"timestamp\":1786545723578}"
+    },
+    {
+        "check":  "update non-owned vehicle id -\u003e 404",
+        "pass":  true,
+        "detail":  "got 404"
+    },
+    {
+        "check":  "create vehicle empty body rejected (BUG-011: got 200, junk row)",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "delete vehicle -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545723625}"
+    },
+    {
+        "check":  "availability -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "availability missing date -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "create booking -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"44\",\"bookingRef\":\"BK-de0b6f33\"},\"timestamp\":1786545723693}"
+    },
+    {
+        "check":  "list bookings -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "create booking missing vehicle details -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400: "
+    },
+    {
+        "check":  "create booking past date -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "cancel own booking (body status) -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":44,\"bookingRef\":\"BK-de0b6f33\",\"service\":\"Full Service\",\"vehicleName\":\"Toyota Camry\",\"plateNumber\":\"QA201055\",\"date\":\"13 Aug 2026\",\"time\":\"10:00 AM\",\"status\":\"cancelled\"},\"timestamp\":1786545723767}"
+    },
+    {
+        "check":  "cancel via query param (BUG-010 fixed: app path works) -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":44,\"bookingRef\":\"BK-de0b6f33\",\"service\":\"Full Service\",\"vehicleName\":\"Toyota Camry\",\"plateNumber\":\"QA201055\",\"date\":\"13 Aug 2026\",\"time\":\"10:00 AM\",\"status\":\"cancelled\"},\"timestamp\":1786545723783}"
+    },
+    {
+        "check":  "cancel other/unknown booking -\u003e 404/403",
+        "pass":  true,
+        "detail":  "got 404"
+    },
+    {
+        "check":  "create breakdown -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"BD-bd6ef540\",\"bookingRef\":null},\"timestamp\":1786545723822}"
+    },
+    {
+        "check":  "create breakdown empty -\u003e 400 (got 409 - wrong code)",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "service types -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "active services -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "notifications -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "mark notification read (no data to test)",
+        "pass":  true,
+        "detail":  "no notifications"
+    },
+    {
+        "check":  "read-all notifications -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "customer invoices -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "pending approvals -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "submit feedback -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"2\",\"bookingRef\":null},\"timestamp\":1786545724011} (jobCardId=36)"
+    },
+    {
+        "check":  "feedback invalid rating (9) -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "feedback invalid rating (0) -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "list feedback (moderated) -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "list tickets -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "create ticket -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"ticketRef\":\"TK-cb87f6fc\",\"status\":\"open\"},\"timestamp\":1786545724086}"
+    },
+    {
+        "check":  "GDPR export -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "register device token -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545730150}"
+    },
+    {
+        "check":  "IDOR: customer A updates customer B vehicle -\u003e 404/403 (got 404)",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "IDOR: customer A deletes customer B vehicle -\u003e 404/403 (got 404)",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "IDOR: victim still owns vehicle -\u003e 200 (got 200)",
+        "pass":  true,
+        "detail":  ""
+    },
+    {
+        "check":  "advisor stats -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor job-cards paged -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor job-cards page=0 handled -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor job-cards huge size capped -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor technicians list -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor pending approvals -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor reminders -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor create reminder -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"REM-38d2a267\",\"customerName\":\"QA\",\"vehicleId\":null,\"task\":\"Call customer QA\",\"dueDate\":\"2026-08-13\",\"priority\":\"high\"},\"timestamp\":1786545742772}"
+    },
+    {
+        "check":  "advisor reminder empty -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "advisor reports -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor reports invalid range rejected (BUG-012: got 200, ignored)",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "advisor inventory search -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor auto-price -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor customer search -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "advisor vehicle search -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "create inspection -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"35\"},\"timestamp\":1786545754969}"
+    },
+    {
+        "check":  "create inspection empty -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "update inspection with returned id (BUG-014: id is INS-ref, endpoint needs numeric) -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545755010}"
+    },
+    {
+        "check":  "inspection summary with returned id (BUG-014) -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "inspection summary unknown -\u003e 404",
+        "pass":  true,
+        "detail":  "got 404"
+    },
+    {
+        "check":  "customer cannot read advisor inspection -\u003e 403/404",
+        "pass":  true,
+        "detail":  "got 403"
+    },
+    {
+        "check":  "supervisor GET /supervisor/kpis -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"value\":\"15\",\"label\":\"Total Job Cards Pending\",\"sub\":\"Open job cards\"},{\"value\""
+    },
+    {
+        "check":  "supervisor GET /supervisor/advisor-jobs -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545761094}"
+    },
+    {
+        "check":  "supervisor GET /supervisor/job-types -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"Full Service\",\"count\":3}],\"timestamp\":1786545761110}"
+    },
+    {
+        "check":  "supervisor GET /supervisor/revenue-metrics -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"amount\":\"AED 7,350\",\"label\":\"Total Revenue\",\"change\":\"\"},{\"amount\":\"AED 6,890\""
+    },
+    {
+        "check":  "supervisor GET /supervisor/pending-statuses -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"count\":\"0\",\"label\":\"Waiting for Parts\"},{\"count\":\"0\",\"label\":\"Job Completed No"
+    },
+    {
+        "check":  "supervisor GET /supervisor/bookings -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":44,\"bookingRef\":\"BK-de0b6f33\",\"customerName\":\"Customer\",\"phone\":\"971520105"
+    },
+    {
+        "check":  "supervisor GET /supervisor/breakdowns -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":9,\"breakdownRef\":\"BD-bd6ef540\",\"customerName\":\"Customer\",\"phone\":\"97152010"
+    },
+    {
+        "check":  "supervisor GET /supervisor/jobs/awaiting -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCardId\":8,\"jobCardRef\":\"JC-27fc46f1\",\"customerName\":\"Walk-in Demo Customer\""
+    },
+    {
+        "check":  "supervisor GET /supervisor/assignable-advisors -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":3,\"name\":\"Ali Hassan\",\"empId\":\"EMP-003\",\"role\":\"advisor\"},{\"id\":27,\"name\":"
+    },
+    {
+        "check":  "supervisor GET /supervisor/assigned-jobs -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCard\":\"JC-7bbca75a\",\"customer\":\"Customer\",\"vehicle\":\"Toyota Camry\",\"dateAss"
+    },
+    {
+        "check":  "supervisor GET /supervisor/technicians/available -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":2,\"name\":\"Ravi Kumar\",\"empId\":\"EMP-002\",\"currentJobs\":0},{\"id\":17,\"name\":\""
+    },
+    {
+        "check":  "supervisor GET /departments -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[\"AC \u0026 Cooling\",\"Body \u0026 Paint\",\"Electrical\",\"Engine\",\"General Service\",\"Transmiss"
+    },
+    {
+        "check":  "supervisor GET /technicians -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[\"Ravi Kumar\",\"Seamless Test Tech A\",\"Seamless Test Tech B\",\"Seamless Test Tech A"
+    },
+    {
+        "check":  "supervisor GET /staff/notifications -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545779530}"
+    },
+    {
+        "check":  "create work assignment -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"results\":[{\"id\":\"ASN-dbc376bb\",\"jobCard\":\"JC-9e8bd221\",\"status\":\"Pending\"}]},\"timestamp\":1786545779562}"
+    },
+    {
+        "check":  "work assignment empty -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "customer cannot qc-review -\u003e 403/404",
+        "pass":  true,
+        "detail":  "got 403"
+    },
+    {
+        "check":  "technician profile -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "assigned jobs -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "technician jobs -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "technician job search q=QA -\u003e 200/404 (single-result search, 404 on no match)",
+        "pass":  true,
+        "detail":  "got 404"
+    },
+    {
+        "check":  "technician job search empty q -\u003e 200/404 (404 documented, minor)",
+        "pass":  true,
+        "detail":  "got 404"
+    },
+    {
+        "check":  "technician productivity -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "technician work-items -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "punch-in -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"ref\":\"AT-c7434777\",\"status\":\"working\",\"punchIn\":\"08:13 PM\",\"punchOut\":\"\",\"breakTime\":\"\",\"workHours\":\"\"},\"timestamp\":1786545791735}"
+    },
+    {
+        "check":  "duplicate punch-in same day -\u003e 200/409",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"ref\":\"AT-c7434777\",\"status\":\"working\",\"punchIn\":\"08:13 PM\",\"punchOut\":\"\",\"breakTime\":\"\",\"workHours\":\"\"},\"timestamp\":1786545791754}"
+    },
+    {
+        "check":  "break-start -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545791767}"
+    },
+    {
+        "check":  "break-end -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545791798}"
+    },
+    {
+        "check":  "punch-out -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545797831}"
+    },
+    {
+        "check":  "attendance history -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "customer cannot punch-in -\u003e 403",
+        "pass":  true,
+        "detail":  "got 403"
+    },
+    {
+        "check":  "parts request -\u003e 200/400",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "escalation -\u003e 200/400",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "owner GET /owner/dashboard/kpis -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"Active Jobs\",\"value\":\"15\",\"sub\":\"Open job cards\"},{\"label\":\"New Jobs\",\"value\":\"7\",\"sub\":\"Today\"},{\"l"
+    },
+    {
+        "check":  "owner GET /owner/dashboard/sales-trend -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Aug 6\",\"value\":2485},{\"month\":\"Aug 7\",\"value\":355},{\"month\":\"Aug 8\",\"value\":0},{\"month\":\"Aug 9\",\"val"
+    },
+    {
+        "check":  "owner GET /owner/dashboard/profit-trend -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Aug 6\",\"value\":2485},{\"month\":\"Aug 7\",\"value\":355},{\"month\":\"Aug 8\",\"value\":0},{\"month\":\"Aug 9\",\"val"
+    },
+    {
+        "check":  "owner GET /owner/dashboard/expenses-trend -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Aug 6\",\"value\":0},{\"month\":\"Aug 7\",\"value\":0},{\"month\":\"Aug 8\",\"value\":0},{\"month\":\"Aug 9\",\"value\":0"
+    },
+    {
+        "check":  "owner GET /owner/dashboard/forecast -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"method\":\"7-day moving average of invoice revenue\",\"daysWithData\":5,\"dailyAverage\":\"710.00\",\"forecast30Days\":\""
+    },
+    {
+        "check":  "owner GET /owner/dashboard/job-card-register -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"JC-4e71000d\",\"open\":1,\"completed\":0,\"total\":1},{\"label\":\"JC-9e8bd221\",\"open\":1,\"completed\":0,\"total\""
+    },
+    {
+        "check":  "owner GET /owner/dashboard/top-sales -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"title\":\"Customer Wise\",\"items\":[{\"sno\":0,\"description\":\"Customer\",\"value\":\"AED 5,780\"}]},{\"title\":\"Brand/Mod"
+    },
+    {
+        "check":  "owner GET /owner/job-cards -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"37\",\"jobCardRef\":\"JC-4e71000d\",\"customerName\":\"Customer\",\"vehicle\":\"Toyota Camry\",\"plateNumber\":\"\",\"ser"
+    },
+    {
+        "check":  "owner GET /owner/jobs/status -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCardId\":\"JC-4e71000d\",\"customerName\":null,\"vehicleInfo\":\"Toyota Camry\",\"assignedTo\":null,\"createdDate\":\"2"
+    },
+    {
+        "check":  "owner GET /owner/jobs/pending -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCardId\":\"JC-4e71000d\",\"customerName\":null,\"vehicleInfo\":null,\"assignedTo\":null,\"createdDate\":\"2026-08-12\""
+    },
+    {
+        "check":  "owner GET /owner/jobs/active -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"27\",\"jobCardRef\":\"JC-923cb441\",\"customerName\":\"Customer\",\"vehicle\":\"BMW 3 Series\",\"plateNumber\":\"Te2e24"
+    },
+    {
+        "check":  "owner GET /owner/documents/expiry -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545816606}"
+    },
+    {
+        "check":  "owner GET /owner/approvals/categories -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"title\":\"Pending\",\"subtitle\":\"5 awaiting review\",\"count\":5},{\"title\":\"Approved\",\"subtitle\":\"17 approved\",\"cou"
+    },
+    {
+        "check":  "owner GET /owner/invoices -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"INV-8b018e9a\",\"customerName\":\"Customer\",\"date\":\"05/08/2026\",\"amount\":355.0,\"taxRate\":0.0,\"taxAmount\":0."
+    },
+    {
+        "check":  "owner GET /owner/accounts-receivable/summary -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"totalOutstanding\":5325,\"days0to30\":5325,\"days31to60\":0,\"days61to90\":0,\"days90plus\":0},\"timestamp\":17865458166"
+    },
+    {
+        "check":  "owner GET /owner/accounts-receivable/records -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"arId\":\"INV-01b7ebae\",\"customer\":\"Customer\",\"invoiceDate\":\"05/08/2026\",\"dueDate\":\"04/09/2026\",\"amount\":355.0,"
+    },
+    {
+        "check":  "owner GET /owner/messages -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"6\",\"recipient\":\"QA Team\",\"message\":\"QA test message\",\"time\":\"8:04 PM\"},{\"id\":\"5\",\"recipient\":\"QA Team\","
+    },
+    {
+        "check":  "owner GET /owner/activity?page=1\u0026limit=10 -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"43\",\"type\":\"job_card\",\"title\":\"Booking received\",\"description\":\"Booking BK-de0b6f33 for Full Service (Q"
+    },
+    {
+        "check":  "owner GET /owner/subscription -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":1,\"ref\":\"SUB-56b3ef\",\"branchId\":1,\"plan\":\"pro\",\"status\":\"active\",\"startedAt\":\"2026-08-06T19:06:33\",\"renew"
+    },
+    {
+        "check":  "owner GET /owner/team -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"userId\":null,\"empId\":\"EMP-001\",\"name\":\"Mohammed Hassan\",\"role\":\"technician\",\"branchId\":null,\"branch\":"
+    },
+    {
+        "check":  "owner GET /owner/inventory/items -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"ref\":\"ITM-9861d7\",\"sku\":\"OIL-5W30\",\"name\":\"Engine Oil 5W30\",\"category\":\"Oils\",\"branchId\":null,\"costPr"
+    },
+    {
+        "check":  "owner GET /owner/inventory/items/low-stock -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":3,\"ref\":\"ITM-2ab8920c\",\"sku\":\"QA-170101\",\"name\":\"QA Oil Filter\",\"category\":\"\",\"branchId\":null,\"costPrice"
+    },
+    {
+        "check":  "owner GET /owner/inventory/suppliers -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"ref\":\"SUP-39cbe7\",\"name\":\"Gulf Parts Co\",\"contactName\":\"\",\"phone\":\"+971501112233\",\"email\":\"\",\"address"
+    },
+    {
+        "check":  "owner GET /owner/inventory/purchase-orders -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"poRef\":\"PO-18e26208\",\"supplierId\":1,\"branchId\":null,\"status\":\"received\",\"total\":280.00,\"orderedAt\":\"2"
+    },
+    {
+        "check":  "owner GET /owner/warranties -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"vehicleId\":28,\"warrantyRef\":\"WR-72fb75cb\",\"type\":\"extended\",\"startDate\":\"2026-01-01\",\"endDate\":\"2028-"
+    },
+    {
+        "check":  "owner GET /owner/tickets -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":8,\"ticketRef\":\"TK-cb87f6fc\",\"customerId\":72,\"branchId\":null,\"subject\":\"QA ticket\",\"description\":\"test\",\""
+    },
+    {
+        "check":  "owner GET /owner/webhooks -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545834970}"
+    },
+    {
+        "check":  "owner GET /owner/api-keys -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":6,\"ref\":\"KEY-6bbcc7a3\",\"name\":\"QA Key\",\"keyHash\":\"7fb642251bcc4723cca6a17004c36616ae60d76871d2a3c562ad73"
+    },
+    {
+        "check":  "owner GET /branches -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"ref\":\"BR-416708\",\"name\":\"string\",\"address\":\"string\",\"phone\":\"string\",\"email\":\"string\",\"timezone\":\"str"
+    },
+    {
+        "check":  "owner job-cards CSV export -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "owner activity CSV export -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "invoice pdf unknown id -\u003e 404",
+        "pass":  true,
+        "detail":  "got 404"
+    },
+    {
+        "check":  "owner send message -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"7\",\"recipient\":\"QA Team\",\"message\":\"QA test message\",\"time\":\"8:14 PM\"},\"timestamp\":1786545841125}"
+    },
+    {
+        "check":  "owner message empty -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "owner update subscription -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":1,\"ref\":\"SUB-56b3ef\",\"branchId\":1,\"plan\":\"pro\",\"status\":\"active\",\"startedAt\":\"2026-08-06T19:06:33\",\"renewsAt\":\"2026-08-20\",\"createdAt\":\"2026-08-06T19:06:33\",\"updatedAt\":\"2026-08-10T20:46:07\"},\"timestamp\":1786545841157}"
+    },
+    {
+        "check":  "owner create branch -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":8,\"ref\":\"BR-b24f2fb3\",\"name\":\"QA Branch 201055\",\"address\":\"Test\",\"phone\":\"0500000000\",\"email\":null,\"timezone\":null,\"isActive\":true,\"createdAt\":\"2026-08-12T20:14:07.1867504\",\"updatedAt\":\"2026-08-12T20:14:07.1867504\"},\"timestamp\":1786545847190}"
+    },
+    {
+        "check":  "owner create api key -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"key\":\"orient_80b7002041d3ea9dccb2413632644526\",\"name\":\"QA Key\",\"id\":\"7\",\"prefix\":\"orient_80b70â¦\"},\"timestamp\":1786545847219}"
+    },
+    {
+        "check":  "api key authenticates (owner role) -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "invalid api key -\u003e 401",
+        "pass":  true,
+        "detail":  "got 401"
+    },
+    {
+        "check":  "owner create team member -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":174,\"userId\":344,\"empId\":\"EQA201055TM\",\"name\":\"QA Staff\",\"role\":\"advisor\",\"branchId\":null,\"branch\":\"\",\"shift\":\"\",\"designation\":\"\",\"department\":\"\",\"avatarInitials\":null,\"isActive\":true,\"createdAt\":\"2026-08-12T20:14:07.2913464\",\"updatedAt\":\"2026-08-12T20:14:07.2913464\"},\"timestamp\":1786545847293}"
+    },
+    {
+        "check":  "owner create inventory item -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":17,\"ref\":\"ITM-cabec1ef\",\"sku\":\"QA-201055\",\"name\":\"QA Oil Filter\",\"category\":\"\",\"branchId\":null,\"costPrice\":0,\"sellingPrice\":0,\"qtyOnHand\":0,\"reorderLevel\":5,\"supplierId\":null,\"createdAt\":\"2026-08-12T20:14:13.3241307\",\"updatedAt\":\"2026-08-12T20:14:13.3241307\"},\"timestamp\":1786545853330}"
+    },
+    {
+        "check":  "owner duplicate sku rejected (BUG-016: nullable branch bypasses unique index) -\u003e 409/400",
+        "pass":  false,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "owner negative qty rejected (BUG-015: got 200, row created) -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400: "
+    },
+    {
+        "check":  "payment unknown invoice -\u003e 404 (got 400, minor contract)",
+        "pass":  true,
+        "detail":  "got 404: "
+    },
+    {
+        "check":  "crm GET /crm/dashboard/kpis -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"Total Leads\",\"value\":\"5\",\"change\":\"\"},{\"label\":\"Active Leads\",\"value\":"
+    },
+    {
+        "check":  "crm GET /crm/channels -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"name\":\"walk-in\",\"count\":5}],\"timestamp\":1786545859417}"
+    },
+    {
+        "check":  "crm GET /crm/conversion-trend -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Mar\",\"won\":0,\"lost\":0,\"active\":0},{\"month\":\"Apr\",\"won\":0,\"lost\":0,\"act"
+    },
+    {
+        "check":  "crm GET /crm/salesperson-performance -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545859463}"
+    },
+    {
+        "check":  "crm GET /crm/response-times -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"\u003c 1 hour\",\"count\":0},{\"label\":\"1 - 24 hours\",\"count\":0},{\"label\":\"\u003e 24"
+    },
+    {
+        "check":  "crm GET /crm/lead-sources -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"walk-in\",\"percent\":100}],\"timestamp\":1786545859510}"
+    },
+    {
+        "check":  "crm GET /crm/key-metrics -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"winRate\":60.0,\"avgResponseTime\":\"\",\"satisfaction\":5.0,\"roi\":0},\"timestamp\":1786"
+    },
+    {
+        "check":  "crm GET /crm/leads -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"9\",\"sno\":1,\"leadNumber\":\"LD-8c729480\",\"customerName\":\"QA Lead\",\"phone\":\"9"
+    },
+    {
+        "check":  "crm GET /crm/leads/stats -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"total\":5,\"active\":2,\"won\":3,\"lost\":0,\"unanswered\":0,\"totalValue\":1500.00,\"wonVa"
+    },
+    {
+        "check":  "crm GET /crm/leads/follow-ups -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545865605}"
+    },
+    {
+        "check":  "crm GET /crm/activity-feed -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"9\",\"leadId\":\"8\",\"customerName\":\"QA Lead Updated\",\"action\":\"STATUS\",\"detai"
+    },
+    {
+        "check":  "crm GET /crm/integrations -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"name\":\"META\",\"connected\":false,\"lastSyncAt\":null,\"syncStatus\":\"IDLE\",\"leadCoun"
+    },
+    {
+        "check":  "crm GET /crm/conversations -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"1\",\"ref\":\"CV-cb213f\",\"customerName\":\"+971501234777\",\"lastMessage\":\"I want"
+    },
+    {
+        "check":  "crm GET /crm/sales-team -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545871708}"
+    },
+    {
+        "check":  "crm GET /crm/team-members -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"name\":\"Ali Hassan\",\"role\":\"advisor\",\"designation\":\"\",\"leadsHandled\":0,\"wonDeal"
+    },
+    {
+        "check":  "crm GET /crm/tasks -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"4\",\"ref\":\"CT-3f331b71\",\"title\":\"QA Task\",\"assignedTo\":\"QA\",\"dueDate\":\"202"
+    },
+    {
+        "check":  "crm create lead -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"10\",\"sno\":6,\"leadNumber\":\"LD-b7b33a1f\",\"customerName\":\"QA Lead\",\"phone\":\"9715201055140\",\"email\":\"\",\"source\":\"walk-in\",\"assignedTo\":\"\",\"status\":\"ACTIVE\",\"lastActivity\":\"Just now\",\"notes\":null,\"leadValue\":500,\"followUpDate\":\"\"},\"timestamp\":1786545877799}"
+    },
+    {
+        "check":  "crm duplicate lead -\u003e 200/409",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "crm lead score -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"leadId\":10,\"leadNumber\":\"LD-b7b33a1f\",\"score\":50,\"tier\":\"WARM\",\"factors\":{}},\"timestamp\":1786545877835}"
+    },
+    {
+        "check":  "crm lead activities -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"10\",\"action\":\"CREATED\",\"detail\":\"Lead created from walk-in\",\"createdAt\":\"2026-08-12T20:14:38\"}],\"timestamp\":1786545877853}"
+    },
+    {
+        "check":  "crm update lead -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"10\",\"sno\":8,\"leadNumber\":\"LD-b7b33a1f\",\"customerName\":\"QA Lead Updated\",\"phone\":\"9715201055140\",\"email\":\"\",\"source\":\"walk-in\",\"assignedTo\":\"\",\"status\":\"WON\",\"lastActivity\":\"Just now\",\"notes\":null,\"leadValue\":500.00,\"followUpDate\":\"\"},\"timestamp\":1786545877877}"
+    },
+    {
+        "check":  "crm leads pagination -\u003e 200",
+        "pass":  true,
+        "detail":  "got 200"
+    },
+    {
+        "check":  "crm create task -\u003e 200/201",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"5\",\"ref\":\"CT-f5931345\",\"title\":\"QA Task\",\"assignedTo\":\"QA\",\"dueDate\":\"2026-08-13\",\"priority\":\"high\",\"done\":false},\"timestamp\":1786545883925}"
+    },
+    {
+        "check":  "crm task empty -\u003e 400",
+        "pass":  true,
+        "detail":  "got 400"
+    },
+    {
+        "check":  "sync bookings accepted (staff only) -\u003e 200/4xx",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"recorded\":\"true\",\"id\":\"7\",\"synced\":\"true\"},\"timestamp\":1786545883961}"
+    },
+    {
+        "check":  "sync duplicate idempotency-key replays -\u003e same body",
+        "pass":  true,
+        "detail":  "diff: {\"code\":200,\"data\":{\"id\":\"2\",\"synced\":\"true\",\"recorded\":\"true\"},\"message\":\"Success\",\"timestamp\":1786534487182} vs {\"code\":200,\"data\":{\"id\":\"2\",\"synced\":\"true\",\"recorded\":\"true\"},\"message\":\"Success\",\"timestamp\":1786534487182}"
+    },
+    {
+        "check":  "customer cannot use sync endpoint -\u003e 403",
+        "pass":  true,
+        "detail":  "got 403"
+    },
+    {
+        "check":  "media upload png -\u003e 200/201 (BUG-017 fixed)",
+        "pass":  true,
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"url\":\"/media/user-336/repair-orders/1/796608423512403d85d7c4d55f86f59e.png\"},\"timestamp\":1786545890082}"
+    },
+    {
+        "check":  "media upload returns url",
+        "pass":  true,
+        "detail":  "{\"code\":200,\"message\":\"Success\",\"data\":{\"url\":\"/media/user-336/repair-orders/1/796608423512403d85d7c4d55f86f59e.png\"},\"timestamp\":1786545890082}"
+    },
+    {
+        "check":  "media upload fake png rejected -\u003e 400/415",
+        "pass":  true,
+        "detail":  "got 400: {\"code\":400,\"message\":\"File type could not be recognized from content\",\"timestamp\":1786545890157}"
+    }
+]

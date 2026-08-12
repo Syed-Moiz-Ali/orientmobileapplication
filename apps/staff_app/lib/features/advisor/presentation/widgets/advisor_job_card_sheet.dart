@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'advisor_sheet.dart';
@@ -55,6 +55,35 @@ class AdvisorJobCardSheet extends StatelessWidget {
       'Cancelled',
       AppColors.text3,
       AppColors.surfaceAlt,
+    ),    JobCardStatus.pending => _StatusStyle(
+      'Pending',
+      AppColors.warning,
+      AppColors.warningBg,
+    ),
+    JobCardStatus.awaitingSupervisor => _StatusStyle(
+      'Awaiting Supervisor',
+      AppColors.warning,
+      AppColors.warningBg,
+    ),
+    JobCardStatus.vehicleReceived => _StatusStyle(
+      'Vehicle Received',
+      AppColors.info,
+      AppColors.infoBg,
+    ),
+    JobCardStatus.waitingCustomerApproval => _StatusStyle(
+      'Waiting Customer Approval',
+      AppColors.warning,
+      AppColors.warningBg,
+    ),
+    JobCardStatus.delivered => _StatusStyle(
+      'Delivered',
+      AppColors.success,
+      AppColors.successBg,
+    ),
+    JobCardStatus.qualityCheckPassed => _StatusStyle(
+      'QC Passed',
+      AppColors.success,
+      AppColors.successBg,
     ),
   };
 
@@ -157,3 +186,4 @@ class AdvisorJobCardSheet extends StatelessWidget {
     );
   }
 }
+

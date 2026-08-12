@@ -178,9 +178,7 @@ class SyncEngine {
   Future<bool> _executeOperation(SyncOperation op) async {
     final handler = _handlers[op.entityType];
     if (handler == null) {
-      throw UnimplementedError(
-        'No SyncHandler registered for entity type: ${op.entityType}',
-      );
+      throw MissingSyncHandlerException(op.entityType);
     }
     return handler.execute(op);
   }

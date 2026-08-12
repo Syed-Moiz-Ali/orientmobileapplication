@@ -173,7 +173,16 @@ class AuthNotifier extends Notifier<AuthState> {
         return true;
       },
       failure: (_) async {
-        await logout();
+        // FIX (audit QA BUG-023): never call the full logout() here — the
+        // logout API call would 401 (token expired) and the auth interceptor
+        // would re-enter this failure path, deadlocking on the single-flight
+        // refresh future. Clear local state directly instead.
+        try {
+          await storage.clearAll();
+        } catch (_) {
+          // Storage failure must not keep the user logged in.
+        }
+        state = const AuthUnauthenticated();
         return false;
       },
     );
@@ -187,7 +196,16 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (_) {
       // Ignore network errors during logout.
     }
-    await ref.read(tokenStorageProvider).clearAll();
+    // FIX (audit QA BUG-023): the in-memory session MUST always be dropped.
+    // flutter_secure_storage.deleteAll() can throw on some devices (e.g.
+    // Android Keystore unavailable) — if it did, state stayed authenticated
+    // and logout appeared to do nothing (user could not log out).
+    try {
+      await ref.read(tokenStorageProvider).clearAll();
+    } catch (_) {
+      // Storage failure must not keep the user logged in — the router only
+      // reads the AuthState, so clearing it is sufficient to force logout.
+    }
     state = const AuthUnauthenticated();
   }
 

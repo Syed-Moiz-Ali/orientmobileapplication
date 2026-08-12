@@ -37,7 +37,16 @@ class TokenStorage {
   }
 
   Future<void> clearAll() async {
-    await _storage.deleteAll();
+    // FIX (audit QA BUG-023): deleteAll() can throw (Android Keystore /
+    // platform exceptions). Fall back to deleting each key individually so
+    // logout always clears credentials.
+    try {
+      await _storage.deleteAll();
+    } catch (_) {
+      await _storage.delete(key: _tokenKey);
+      await _storage.delete(key: _refreshTokenKey);
+      await _storage.delete(key: _roleKey);
+    }
   }
 }
 

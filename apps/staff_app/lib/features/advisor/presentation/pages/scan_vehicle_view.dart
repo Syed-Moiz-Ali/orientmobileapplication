@@ -54,6 +54,13 @@ class _ScanVehicleViewState extends State<ScanVehicleView>
           });
         }
       } else {
+        // FIX (audit QA BUG-026): after a permanent denial Android never shows
+        // the permission dialog again — request() returns permanentlyDenied.
+        // Send the user to the app settings screen instead of leaving a dead
+        // "Grant Permission" button.
+        if (status.isPermanentlyDenied) {
+          openAppSettings();
+        }
         if (mounted) {
           setState(() => _cameraReady = false);
         }

@@ -157,6 +157,12 @@ class _StatusBadge extends StatelessWidget {
     JobCardStatus.completed => AppColors.success,
     JobCardStatus.cancelled => AppColors.danger,
     JobCardStatus.pendingApproval => AppColors.warning,
+    JobCardStatus.pending => AppColors.warning,
+    JobCardStatus.awaitingSupervisor => AppColors.warning,
+    JobCardStatus.vehicleReceived => AppColors.info,
+    JobCardStatus.waitingCustomerApproval => AppColors.warning,
+    JobCardStatus.delivered => AppColors.success,
+    JobCardStatus.qualityCheckPassed => AppColors.success,
   };
   Color _statusBg(JobCardStatus s) => switch (s) {
     JobCardStatus.inProgress => AppColors.primaryBg,
@@ -165,6 +171,12 @@ class _StatusBadge extends StatelessWidget {
     JobCardStatus.completed => AppColors.successBg,
     JobCardStatus.cancelled => AppColors.dangerBg,
     JobCardStatus.pendingApproval => AppColors.warningBg,
+    JobCardStatus.pending => AppColors.warningBg,
+    JobCardStatus.awaitingSupervisor => AppColors.warningBg,
+    JobCardStatus.vehicleReceived => AppColors.infoBg,
+    JobCardStatus.waitingCustomerApproval => AppColors.warningBg,
+    JobCardStatus.delivered => AppColors.successBg,
+    JobCardStatus.qualityCheckPassed => AppColors.successBg,
   };
   String _statusLabel(JobCardStatus s) => switch (s) {
     JobCardStatus.inProgress => 'In Progress',
@@ -173,6 +185,12 @@ class _StatusBadge extends StatelessWidget {
     JobCardStatus.completed => 'Completed',
     JobCardStatus.cancelled => 'Cancelled',
     JobCardStatus.pendingApproval => 'Pending Approval',
+    JobCardStatus.pending => 'Pending',
+    JobCardStatus.awaitingSupervisor => 'Awaiting Supervisor',
+    JobCardStatus.vehicleReceived => 'Vehicle Received',
+    JobCardStatus.waitingCustomerApproval => 'Waiting Customer Approval',
+    JobCardStatus.delivered => 'Delivered',
+    JobCardStatus.qualityCheckPassed => 'QC Passed',
   };
 }
 

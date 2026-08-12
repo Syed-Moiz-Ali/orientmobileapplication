@@ -383,6 +383,12 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     JobCardStatus.waitingParts => 'Waiting Parts',
     JobCardStatus.qualityCheck => 'QC Check',
     JobCardStatus.cancelled => 'Cancelled',
+    JobCardStatus.pending => 'Pending',
+    JobCardStatus.awaitingSupervisor => 'Awaiting Supervisor',
+    JobCardStatus.vehicleReceived => 'Vehicle Received',
+    JobCardStatus.waitingCustomerApproval => 'Waiting Customer Approval',
+    JobCardStatus.delivered => 'Delivered',
+    JobCardStatus.qualityCheckPassed => 'QC Passed',
   };
 }
 

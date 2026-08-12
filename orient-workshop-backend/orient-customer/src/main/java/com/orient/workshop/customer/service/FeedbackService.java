@@ -33,12 +33,16 @@ public class FeedbackService {
     public IdResponse submit(JwtUserPrincipal principal, FeedbackRequest req) {
         Customer customer = resolveCustomer(principal);
 
-        Integer rating = req.getRating();
+        // FIX (audit QA BUG-029): the app sends `overall`; the API documented
+        // `overallRating`. Normalize both, and let the legacy `rating` fall back
+        // to the overall score instead of rejecting modern clients.
+        Integer overall = req.getOverallRating() != null ? req.getOverallRating() : req.getOverall();
+        Integer rating = req.getRating() != null ? req.getRating() : overall;
         if (rating == null || rating < 1 || rating > 5) {
             throw new BadRequestException("rating must be between 1 and 5");
         }
         // validate every dimension, not just `rating`
-        validateDimension("overallRating", req.getOverallRating());
+        validateDimension("overallRating", overall);
         validateDimension("workQuality", req.getWorkQuality());
         validateDimension("communication", req.getCommunication());
         validateDimension("timeliness", req.getTimeliness());
@@ -51,8 +55,8 @@ public class FeedbackService {
                 .jobCardId(req.getJobCardId())
                 .customerId(customer.getId())
                 .branchId(principal.getBranchId())
-                .rating(req.getOverallRating() != null ? req.getOverallRating() : rating)
-                .overallRating(req.getOverallRating())
+                .rating(overall != null ? overall : rating)
+                .overallRating(overall)
                 .workQuality(req.getWorkQuality())
                 .communication(req.getCommunication())
                 .timeliness(req.getTimeliness())

@@ -48,13 +48,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authNotifierProvider);
       final matched = state.matchedLocation;
 
+      final isAuthRoute =
+          matched == AppRoutes.login || matched == AppRoutes.forgotPassword;
+
       return switch (authState) {
-        AuthUnauthenticated() =>
-          matched == AppRoutes.login || matched == AppRoutes.forgotPassword ? null : AppRoutes.login,
+        AuthUnauthenticated() => isAuthRoute ? null : AppRoutes.login,
         AuthLoading() => matched == AppRoutes.startup ? null : AppRoutes.startup,
-        AuthError() => matched == AppRoutes.login || matched == AppRoutes.forgotPassword ? null : AppRoutes.login,
+        AuthError() => isAuthRoute ? null : AppRoutes.login,
+        AuthAuthenticated(:final role) when role != UserRole.customer =>
+          isAuthRoute ? null : AppRoutes.login,
         AuthAuthenticated() =>
-          matched == AppRoutes.login || matched == AppRoutes.startup ? AppRoutes.customerDashboard : null,
+          matched == AppRoutes.login || matched == AppRoutes.startup
+              ? AppRoutes.customerDashboard
+              : null,
       };
     },
     routes: [
@@ -111,7 +117,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.customerBookingDetail,
         name: AppRoutes.customerBookingDetail,
         builder: (context, state) {
-          final booking = state.extra as CustomerBookingEntity;
+          final extra = state.extra;
+          if (extra is! CustomerBookingEntity) {
+            return const _RouteErrorPage(
+              title: 'Booking unavailable',
+              message: 'Open this booking again from My Bookings.',
+            );
+          }
+          final booking = extra;
           return CustomerBookingDetailView(booking: booking);
         },
       ),
@@ -119,7 +132,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.customerBreakdownDetail,
         name: AppRoutes.customerBreakdownDetail,
         builder: (context, state) {
-          final breakdown = state.extra as Map<String, dynamic>;
+          final extra = state.extra;
+          if (extra is! Map<String, dynamic>) {
+            return const _RouteErrorPage(
+              title: 'Breakdown unavailable',
+              message: 'Open this request again from Service Status.',
+            );
+          }
+          final breakdown = extra;
           return CustomerBreakdownDetailView(breakdown: breakdown);
         },
       ),
@@ -127,7 +147,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.customerBookingSuccess,
         name: AppRoutes.customerBookingSuccess,
         builder: (context, state) {
-          final args = state.extra as Map<String, dynamic>;
+          final extra = state.extra;
+          if (extra is! Map<String, dynamic> ||
+              extra['service'] is! String ||
+              extra['date'] is! String ||
+              extra['time'] is! String) {
+            return const _RouteErrorPage(
+              title: 'Booking result unavailable',
+              message: 'Check My Bookings for the latest appointment status.',
+            );
+          }
+          final args = extra;
           return CustomerBookingSuccessView(
             bookingRef: args['ref'] as String?,
             service: args['service'] as String,
@@ -140,7 +170,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.customerInvoiceDetail,
         name: AppRoutes.customerInvoiceDetail,
         builder: (context, state) {
-          final invoice = state.extra as InvoiceResponse;
+          final extra = state.extra;
+          if (extra is! InvoiceResponse) {
+            return const _RouteErrorPage(
+              title: 'Invoice unavailable',
+              message: 'Open this invoice again from Estimates & Invoices.',
+            );
+          }
+          final invoice = extra;
           return CustomerInvoiceDetailView(invoice: invoice);
         },
       ),
@@ -157,3 +194,45 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+class _RouteErrorPage extends StatelessWidget {
+  final String title;
+  final String message;
+
+  const _RouteErrorPage({required this.title, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => context.go(AppRoutes.customerDashboard),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.s20),
+          child: EmptyState(
+            title: title,
+            message: message,
+            icon: Icons.link_off_rounded,
+            actionLabel: 'Go to Dashboard',
+            onAction: () => context.go(AppRoutes.customerDashboard),
+          ),
+        ),
+      ),
+    );
+  }
+}

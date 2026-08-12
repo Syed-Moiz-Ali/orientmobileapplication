@@ -1,0 +1,715 @@
+﻿CLIPPED/OFFSCREEN: crm_large_dashboard [] bounds=[1324,108][1396,180] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_dashboard [A] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_dashboard [Connect] bounds=[1397,599][1536,665] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_dashboard [Γåæ 0 Lost] bounds=[812,1402][1568,1962] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_dashboard [Γåæ 0 No Response] bounds=[812,1986][1568,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_dashboard [Γåæ 0 Unanswered] bounds=[32,1986][788,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_dashboard [Γåæ 3 Active Leads] bounds=[812,818][1568,1378] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_drawer [A Admin Super Admin] bounds=[32,2376][576,2464] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_leads [] bounds=[1324,108][1396,180] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_leads [A] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: crm_large_leads [No salesperson data yet] bounds=[1066,873][1314,907] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [] bounds=[1408,96][1504,192] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [] bounds=[1472,234][1568,330] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [7] bounds=[1464,119][1472,145] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [Approvals Approvals] bounds=[960,2360][1280,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [Approve the workshop estimate to start the work] bounds=[32,342][1568,380] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [Bookings Bookings] bounds=[640,2360][960,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [C] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [Estimates] bounds=[32,234][1568,330] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [Home Home] bounds=[0,2360][320,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [INV-4db04bba 12/08/2026 ┬ú355.00 Unpaid] bounds=[32,908][1568,1060] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [Invoices] bounds=[32,776][1568,834] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [No estimates waiting for approval] bounds=[32,404][1568,736] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [Status Status] bounds=[320,2360][640,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [Vehicles Vehicles] bounds=[1280,2360][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_approvals [Your invoices from completed jobs] bounds=[32,846][1568,884] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s1 [3] bounds=[1528,242][1539,270] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s1 [Confirm] bounds=[1503,290][1564,316] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s1 [Continue] bounds=[36,2344][1564,2448] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s1 [General Repair POA Varies] bounds=[810,1427][1564,2314] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s1 [Tyre Rotation From AED 55 ~45 min] bounds=[810,520][1564,1407] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [] bounds=[1466,554][1530,618] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [1] bounds=[1321,694][1530,884] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [13] bounds=[904,1073][1113,1263] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [14] bounds=[1113,1073][1321,1263] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [15] bounds=[1321,1073][1530,1263] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [20] bounds=[904,1263][1113,1452] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [21] bounds=[1113,1263][1321,1452] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [22] bounds=[1321,1263][1530,1452] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [27] bounds=[904,1452][1113,1642] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [28] bounds=[1113,1452][1321,1642] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [29] bounds=[1321,1452][1530,1642] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [3] bounds=[1528,242][1539,270] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [6] bounds=[904,884][1113,1073] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [7] bounds=[1113,884][1321,1073] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [8] bounds=[1321,884][1530,1073] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [August 2026] bounds=[134,566][1466,606] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [Confirm] bounds=[1503,290][1564,316] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [Continue] bounds=[36,2344][1564,2448] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [Fr] bounds=[1113,646][1321,678] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [Sa] bounds=[1321,646][1530,678] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_book_svc_s2 [Th] bounds=[904,646][1113,678] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [] bounds=[1408,96][1504,192] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [7] bounds=[1464,119][1472,145] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [Appointment BMW 3 Series ┬╖ T201508 13 Aug 2026 Cancelled] bounds=[32,472][1568,654] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [Appointment BMW 3 Series ┬╖ T201508 13 Aug 2026 Confirmed] bounds=[32,678][1568,860] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [Appointment BMW 3 Series ┬╖ T201508 13/08/2026 Pending] bounds=[32,884][1568,1066] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [Approvals Approvals] bounds=[960,2360][1280,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [Bookings Bookings] bounds=[640,2360][960,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [C] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [Home Home] bounds=[0,2360][320,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [Status Status] bounds=[320,2360][640,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_bookings [Vehicles Vehicles] bounds=[1280,2360][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [] bounds=[1408,96][1504,192] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [7] bounds=[1464,119][1472,145] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Approvals Approvals] bounds=[960,2360][1280,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Bookings Bookings] bounds=[640,2360][960,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Brake Issue Spongy pedal, squealing, vibration] bounds=[810,1179][1534,1571] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [C] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Get Help] bounds=[1383,2086][1538,2190] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Home Home] bounds=[0,2360][320,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Status Status] bounds=[320,2360][640,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Strange Noise Squeaking, knocking, grinding] bounds=[810,768][1534,1159] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Transparent pricing & turnaround times] bounds=[158,2340][562,2358] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Tyre / Steering Pull Low pressure, pulling left/right] bounds=[810,1591][1534,1982] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home [Vehicles Vehicles] bounds=[1280,2360][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [] bounds=[1408,96][1504,192] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [7] bounds=[1464,119][1472,145] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Approvals Approvals] bounds=[960,2360][1280,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Bookings Bookings] bounds=[640,2360][960,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Brake Issue Spongy pedal, squealing, vibration] bounds=[810,1179][1534,1571] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [C] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Get Help] bounds=[1383,2086][1538,2190] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Home Home] bounds=[0,2360][320,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Status Status] bounds=[320,2360][640,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Strange Noise Squeaking, knocking, grinding] bounds=[810,768][1534,1159] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Transparent pricing & turnaround times] bounds=[158,2340][562,2358] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Tyre / Steering Pull Low pressure, pulling left/right] bounds=[810,1591][1534,1982] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_home2 [Vehicles Vehicles] bounds=[1280,2360][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [] bounds=[1408,96][1504,192] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [7] bounds=[1464,119][1472,145] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [Appointment BMW 3 Series ┬╖ T201508 13 Aug 2026 Cancelled] bounds=[32,472][1568,654] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [Appointment BMW 3 Series ┬╖ T201508 13 Aug 2026 Confirmed] bounds=[32,678][1568,860] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [Appointment BMW 3 Series ┬╖ T201508 13/08/2026 Pending] bounds=[32,884][1568,1066] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [Approvals Approvals] bounds=[960,2360][1280,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [Bookings Bookings] bounds=[640,2360][960,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [C] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [Home Home] bounds=[0,2360][320,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [Status Status] bounds=[320,2360][640,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_status [Vehicles Vehicles] bounds=[1280,2360][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [] bounds=[1356,344][1444,432] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [] bounds=[1408,96][1504,192] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [] bounds=[1456,344][1544,432] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [7] bounds=[1464,119][1472,145] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [Approvals Approvals] bounds=[960,2360][1280,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [BMW 3 Series T201508 Year 2022 White 12000 km] bounds=[32,320][1568,668] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [Book Service] bounds=[1239,506][1534,610] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [Bookings Bookings] bounds=[640,2360][960,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [C] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [Edit Vehicle] bounds=[1438,355][1534,451] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [Home Home] bounds=[0,2360][320,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [My Vehicles Add] bounds=[32,226][1568,320] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [Status Status] bounds=[320,2360][640,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: customer_large_vehicles [Vehicles Vehicles] bounds=[1280,2360][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [] bounds=[66,656][1534,912] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [5:04 PM] bounds=[1464,2033][1538,2065] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [5:31 PM] bounds=[1469,1873][1538,1905] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [5:45 PM] bounds=[1465,1713][1538,1745] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [7:26 PM] bounds=[1467,2193][1538,2225] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [7:50 PM] bounds=[1467,1553][1538,1585] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [8:04 PM] bounds=[1463,1393][1538,1425] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [8:14 PM] bounds=[1468,1233][1538,1265] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [Activity Activity] bounds=[1200,2348][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [Choose a user...] bounds=[96,474][1504,570] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [Dashboard Dashboard] bounds=[0,2348][400,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [Messages Messages] bounds=[800,2348][1200,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [O] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [SEND MESSAGE] bounds=[66,948][1534,1048] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_activity [Top Sales Top Sales] bounds=[400,2348][800,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [Activity Activity] bounds=[1200,2348][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [All time 38 Total Jobs] bounds=[812,1234][1568,1794] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [All time AED 6,135 Invoice Revenue] bounds=[32,1818][788,2346] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [Dashboard Dashboard] bounds=[0,2348][400,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [Messages Messages] bounds=[800,2348][1200,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [O] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [This Week] bounds=[1230,114][1374,174] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [Today 8 New Jobs] bounds=[812,650][1568,1210] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [Top Sales Top Sales] bounds=[400,2348][800,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard [Unpaid AED 5,680 Receivables] bounds=[812,1818][1568,2346] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [Activity Activity] bounds=[1200,2348][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [All time 38 Total Jobs] bounds=[812,1234][1568,1794] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [All time AED 6,135 Invoice Revenue] bounds=[32,1818][788,2346] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [Dashboard Dashboard] bounds=[0,2348][400,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [Messages Messages] bounds=[800,2348][1200,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [O] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [This Week] bounds=[1230,114][1374,174] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [Today 8 New Jobs] bounds=[812,650][1568,1210] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [Top Sales Top Sales] bounds=[400,2348][800,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_dashboard_scrolled [Unpaid AED 5,680 Receivables] bounds=[812,1818][1568,2346] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_messages [Activity Activity] bounds=[1200,2348][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_messages [Dashboard Dashboard] bounds=[0,2348][400,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_messages [Messages Messages] bounds=[800,2348][1200,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_messages [O] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_messages [Top Sales Top Sales] bounds=[400,2348][800,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [Activity Activity] bounds=[1200,2348][1600,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [All time 38 Total Jobs] bounds=[812,1234][1568,1794] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [All time AED 6,135 Invoice Revenue] bounds=[32,1818][788,2346] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [Dashboard Dashboard] bounds=[0,2348][400,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [Messages Messages] bounds=[800,2348][1200,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [O] bounds=[1504,110][1572,178] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [This Week] bounds=[1230,114][1374,174] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [Today 8 New Jobs] bounds=[812,650][1568,1210] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [Top Sales Top Sales] bounds=[400,2348][800,2496] screen=1080x2340
+CLIPPED/OFFSCREEN: owner_large_top_sales [Unpaid AED 5,680 Receivables] bounds=[812,1818][1568,2346] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [] bounds=[1388,116][1484,212] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [0 Delivered] bounds=[1198,762][1568,986] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [18 Ready] bounds=[809,762][1180,986] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [A] bounds=[1484,130][1552,198] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [Home Home] bounds=[32,2362][339,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [Inspection] bounds=[810,472][1560,560] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [JC-4e71000d Pending Customer Toyota Camry 08:12 PM] bounds=[62,1356][1538,1554] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [JC-8833bf5e Completed Customer BMW 3 Series 08:15 PM] bounds=[62,1158][1538,1356] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [JC-9e8bd221 Pending Customer Toyota Camry 08:03 PM] bounds=[62,1554][1538,1726] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [Jobs Jobs] bounds=[339,2362][646,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [Profile Profile] bounds=[1261,2362][1568,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [Reminders 6] bounds=[1052,1038][1556,1128] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [Reports Reports] bounds=[954,2362][1261,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [Scan vehicle QR code] bounds=[1476,368][1560,452] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [SCAN] bounds=[742,2278][858,2394] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [Search Search name, plate, phoneΓÇª] bounds=[40,368][1456,452] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [Today's Overview 12 Aug 2026] bounds=[32,680][1568,738] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_dashboard [View all job cards] bounds=[34,1138][1566,1818] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [] bounds=[32,200][1568,276] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [Home Home] bounds=[32,2362][339,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-1a1e4e87 Completed Customer BMW 3 Series 02:02 PM] bounds=[32,1984][1568,2182] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-1a3e0e60 Pending Customer Toyota Camry 05:43 PM] bounds=[32,1390][1568,1588] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-4e71000d Pending Customer Toyota Camry 08:12 PM] bounds=[32,598][1568,796] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-697a9176 Completed Customer BMW 3 Series 05:47 PM] bounds=[32,1192][1568,1390] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-76330d9c Completed Customer BMW 3 Series 09:09 PM] bounds=[32,2182][1568,2336] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-7bbca75a Pending Customer Toyota Camry 07:49 PM] bounds=[32,994][1568,1192] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-8833bf5e Completed Customer BMW 3 Series 08:15 PM] bounds=[32,400][1568,598] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-9e8bd221 Pending Customer Toyota Camry 08:03 PM] bounds=[32,796][1568,994] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-b01d6d2c Pending Customer Toyota Camry 05:30 PM] bounds=[32,1588][1568,1786] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [JC-c6ba546e Pending Customer Toyota Camry 05:02 PM] bounds=[32,1786][1568,1984] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [Jobs Jobs] bounds=[339,2362][646,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [Profile Profile] bounds=[1261,2362][1568,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [Reports Reports] bounds=[954,2362][1261,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_jobs [SCAN] bounds=[742,2278][858,2394] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_profile_sheet [Logout] bounds=[200,2356][1400,2456] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_profile_sheet [My Profile] bounds=[200,2130][1400,2226] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_profile_sheet [Scrim] bounds=[0,0][1600,1662] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_profile_sheet [Switch Branch] bounds=[200,2226][1400,2322] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [0 (0%)] bounds=[1466,752][1526,784] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [0] bounds=[1373,326][1391,362] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [0] bounds=[1500,2143][1514,2181] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [2 (22%)] bounds=[1457,652][1526,684] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [2] bounds=[1501,2013][1514,2051] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [29] bounds=[1487,1883][1514,1921] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [38] bounds=[1486,1623][1514,1661] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [7 (78%)] bounds=[1459,702][1526,734] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [7] bounds=[1503,1753][1514,1791] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Cancelled] bounds=[1341,370][1423,398] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Cancelled] bounds=[162,2142][1480,2182] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Cancelled] bounds=[430,751][1466,785] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Completed] bounds=[162,2012][1481,2052] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Completed] bounds=[430,651][1457,685] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Export Report] bounds=[32,2276][1568,2336] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Home Home] bounds=[32,2362][339,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [In Progress] bounds=[162,1752][1483,1792] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [In Progress] bounds=[430,701][1459,735] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Jobs Jobs] bounds=[339,2362][646,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Pending] bounds=[162,1882][1467,1922] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Profile Profile] bounds=[1261,2362][1568,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Reports Reports] bounds=[954,2362][1261,2472] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Sat] bounds=[1217,1402][1246,1430] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [SCAN] bounds=[742,2278][858,2394] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Sun] bounds=[1417,1402][1450,1430] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [This Week] bounds=[1369,130][1550,178] screen=1080x2340
+CLIPPED/OFFSCREEN: staff_large_reports [Total Jobs] bounds=[162,1622][1466,1662] screen=1080x2340
+OVERFLOW/EXCEPTION crm_font20: 08-12 21:03:08.961 26738 26738 I flutter : [38;5;196mΓöé A RenderFlex overflowed by 8.8 pixels on the right.[0m
+OVERFLOW/EXCEPTION customer_font20: 08-12 20:54:34.562 21844 21844 I flutter : [38;5;196mΓöé A RenderFlex overflowed by 5.0 pixels on the right.[0m
+TOUCH-TARGET <48dp: crm_default_dashboard [] 29.1x28.7dp
+TOUCH-TARGET <48dp: crm_default_dashboard [] 44.7x44.7dp
+TOUCH-TARGET <48dp: crm_default_dashboard [A] 27.3x27.3dp
+TOUCH-TARGET <48dp: crm_default_dashboard [Connect] 55.6x26.5dp
+TOUCH-TARGET <48dp: crm_default_drawer [A Admin Super Admin] 217.8x35.3dp
+TOUCH-TARGET <48dp: crm_default_drawer [Conversations] 224x41.5dp
+TOUCH-TARGET <48dp: crm_default_drawer [Dashboard] 224x41.5dp
+TOUCH-TARGET <48dp: crm_default_drawer [Integrations] 224x41.8dp
+TOUCH-TARGET <48dp: crm_default_drawer [Leads 0] 224x41.8dp
+TOUCH-TARGET <48dp: crm_default_drawer [Reports & Analytics] 224x41.5dp
+TOUCH-TARGET <48dp: crm_default_drawer [Sales Team] 224x41.8dp
+TOUCH-TARGET <48dp: crm_default_drawer [Settings] 224x41.5dp
+TOUCH-TARGET <48dp: crm_default_drawer [Tasks] 224x41.5dp
+TOUCH-TARGET <48dp: crm_default_leads [] 25.8x25.5dp
+TOUCH-TARGET <48dp: crm_default_leads [] 29.1x28.7dp
+TOUCH-TARGET <48dp: crm_default_leads [] 44.7x44.7dp
+TOUCH-TARGET <48dp: crm_default_leads [A] 27.3x27.3dp
+TOUCH-TARGET <48dp: crm_default_leads [Add Task] 115.6x41.5dp
+TOUCH-TARGET <48dp: crm_default_leads [Add Task] 74.2x26.2dp
+TOUCH-TARGET <48dp: crm_font13_dashboard [] 29.1x28.7dp
+TOUCH-TARGET <48dp: crm_font13_dashboard [] 44.7x44.7dp
+TOUCH-TARGET <48dp: crm_font13_dashboard [A] 27.3x27.3dp
+TOUCH-TARGET <48dp: crm_font13_dashboard [Connect] 65.1x30.5dp
+TOUCH-TARGET <48dp: crm_font13_drawer [A Admin Super Admin] 217.8x41.8dp
+TOUCH-TARGET <48dp: crm_font13_drawer [Conversations] 224x46.5dp
+TOUCH-TARGET <48dp: crm_font13_drawer [Dashboard] 224x46.5dp
+TOUCH-TARGET <48dp: crm_font13_drawer [Integrations] 224x46.2dp
+TOUCH-TARGET <48dp: crm_font13_drawer [Leads 0] 224x46.2dp
+TOUCH-TARGET <48dp: crm_font13_drawer [Reports & Analytics] 224x46.5dp
+TOUCH-TARGET <48dp: crm_font13_drawer [Sales Team] 224x46.2dp
+TOUCH-TARGET <48dp: crm_font13_drawer [Settings] 224x46.5dp
+TOUCH-TARGET <48dp: crm_font13_drawer [Tasks] 224x46.5dp
+TOUCH-TARGET <48dp: crm_font13_leads [] 25.8x25.8dp
+TOUCH-TARGET <48dp: crm_font13_leads [] 29.1x28.7dp
+TOUCH-TARGET <48dp: crm_font13_leads [] 44.7x44.7dp
+TOUCH-TARGET <48dp: crm_font13_leads [A] 27.3x27.3dp
+TOUCH-TARGET <48dp: crm_font13_leads [Add Task] 128.7x41.8dp
+TOUCH-TARGET <48dp: crm_font13_leads [Add Task] 84.7x30.2dp
+TOUCH-TARGET <48dp: crm_font20_dashboard [] 29.1x28.7dp
+TOUCH-TARGET <48dp: crm_font20_dashboard [] 44.7x44.7dp
+TOUCH-TARGET <48dp: crm_font20_dashboard [A] 27.3x27.3dp
+TOUCH-TARGET <48dp: crm_font20_dashboard [Connect] 87.6x40dp
+TOUCH-TARGET <48dp: crm_font20_leads [] 29.1x28.7dp
+TOUCH-TARGET <48dp: crm_font20_leads [] 44.7x44.7dp
+TOUCH-TARGET <48dp: crm_font20_leads [A] 27.3x27.3dp
+TOUCH-TARGET <48dp: crm_large_dashboard [] 26.2x26.2dp
+TOUCH-TARGET <48dp: crm_large_dashboard [] 40.7x40.7dp
+TOUCH-TARGET <48dp: crm_large_dashboard [A] 24.7x24.7dp
+TOUCH-TARGET <48dp: crm_large_dashboard [Connect] 50.5x24dp
+TOUCH-TARGET <48dp: crm_large_drawer [A Admin Super Admin] 197.8x32dp
+TOUCH-TARGET <48dp: crm_large_drawer [Conversations] 203.6x37.8dp
+TOUCH-TARGET <48dp: crm_large_drawer [Dashboard] 203.6x37.8dp
+TOUCH-TARGET <48dp: crm_large_drawer [Integrations] 203.6x37.8dp
+TOUCH-TARGET <48dp: crm_large_drawer [Leads 0] 203.6x37.8dp
+TOUCH-TARGET <48dp: crm_large_drawer [Reports & Analytics] 203.6x37.8dp
+TOUCH-TARGET <48dp: crm_large_drawer [Sales Team] 203.6x37.8dp
+TOUCH-TARGET <48dp: crm_large_drawer [Settings] 203.6x37.8dp
+TOUCH-TARGET <48dp: crm_large_drawer [Tasks] 203.6x37.8dp
+TOUCH-TARGET <48dp: crm_large_leads [] 26.2x26.2dp
+TOUCH-TARGET <48dp: crm_large_leads [] 40.7x40.7dp
+TOUCH-TARGET <48dp: crm_large_leads [A] 24.7x24.7dp
+TOUCH-TARGET <48dp: crm_small_dashboard [] 39.3x39.3dp
+TOUCH-TARGET <48dp: crm_small_dashboard [A] 37.1x37.1dp
+TOUCH-TARGET <48dp: crm_small_dashboard [Connect] 75.6x36dp
+TOUCH-TARGET <48dp: crm_small_drawer [Settings] 305.5x38.2dp
+TOUCH-TARGET <48dp: crm_small_leads [] 39.3x39.3dp
+TOUCH-TARGET <48dp: crm_small_leads [A] 37.1x37.1dp
+TOUCH-TARGET <48dp: customer_default_approvals [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_default_approvals [] 38.5x38.2dp
+TOUCH-TARGET <48dp: customer_default_approvals [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s1 [] 26.9x26.9dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s1 [Continue] 363.6x41.5dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [] 25.5x25.5dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [] 26.9x26.9dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [12] 48x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [13] 48x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [14] 48.4x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [15] 48x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [16] 48x44dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [17] 48.4x44dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [18] 48x44dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [19] 48x44dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [20] 48x44dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [21] 48.4x44dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [22] 48x44dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [23] 48x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [24] 48.4x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [25] 48x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [26] 48x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [27] 48x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [28] 48.4x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [29] 48x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [30] 48x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [31] 48.4x43.6dp
+TOUCH-TARGET <48dp: customer_default_book_svc_s2 [Continue] 363.6x41.5dp
+TOUCH-TARGET <48dp: customer_default_bookings [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_default_bookings [All] 44.7x26.9dp
+TOUCH-TARGET <48dp: customer_default_bookings [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_default_bookings [Cancelled] 76x26.9dp
+TOUCH-TARGET <48dp: customer_default_bookings [Completed] 81.1x26.9dp
+TOUCH-TARGET <48dp: customer_default_bookings [Confirmed] 79.6x26.9dp
+TOUCH-TARGET <48dp: customer_default_bookings [Pending] 69.1x26.9dp
+TOUCH-TARGET <48dp: customer_default_home [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_default_home [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_default_home [Get Help] 61.8x41.5dp
+TOUCH-TARGET <48dp: customer_default_home2 [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_default_home2 [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_default_home2 [Get Help] 61.8x41.5dp
+TOUCH-TARGET <48dp: customer_default_status [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_default_status [All] 44.7x26.9dp
+TOUCH-TARGET <48dp: customer_default_status [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_default_status [Cancelled] 76x26.9dp
+TOUCH-TARGET <48dp: customer_default_status [Completed] 81.1x26.9dp
+TOUCH-TARGET <48dp: customer_default_status [Confirmed] 79.6x26.9dp
+TOUCH-TARGET <48dp: customer_default_status [Pending] 69.1x26.9dp
+TOUCH-TARGET <48dp: customer_default_vehicles [] 34.9x34.9dp
+TOUCH-TARGET <48dp: customer_default_vehicles [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_default_vehicles [Book Service] 117.8x41.5dp
+TOUCH-TARGET <48dp: customer_default_vehicles [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_default_vehicles [Edit Vehicle] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_default_vehicles [My Vehicles Add] 367.3x37.5dp
+TOUCH-TARGET <48dp: customer_font13_approvals [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font13_approvals [] 38.5x38.2dp
+TOUCH-TARGET <48dp: customer_font13_approvals [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s1 [] 26.9x26.9dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s1 [Continue] 363.6x42.2dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [] 25.5x25.5dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [] 26.9x26.9dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [12] 48x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [13] 48x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [14] 48.4x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [15] 48x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [16] 48x44dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [17] 48.4x44dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [18] 48x44dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [19] 48x44dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [20] 48x44dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [21] 48.4x44dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [22] 48x44dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [23] 48x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [24] 48.4x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [25] 48x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [26] 48x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [27] 48x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [28] 48.4x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [29] 48x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [30] 48x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [31] 48.4x43.6dp
+TOUCH-TARGET <48dp: customer_font13_book_svc_s2 [Continue] 363.6x42.2dp
+TOUCH-TARGET <48dp: customer_font13_bookings [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font13_bookings [All] 48x27.3dp
+TOUCH-TARGET <48dp: customer_font13_bookings [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font13_bookings [Cancelled] 52.4x27.3dp
+TOUCH-TARGET <48dp: customer_font13_bookings [Completed] 94.9x27.3dp
+TOUCH-TARGET <48dp: customer_font13_bookings [Confirmed] 92.7x27.3dp
+TOUCH-TARGET <48dp: customer_font13_bookings [Pending] 79.3x27.3dp
+TOUCH-TARGET <48dp: customer_font13_home [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font13_home [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font13_home [Get Help] 72x41.5dp
+TOUCH-TARGET <48dp: customer_font13_home2 [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font13_home2 [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font13_home2 [Get Help] 72x41.5dp
+TOUCH-TARGET <48dp: customer_font13_status [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font13_status [All] 48x27.3dp
+TOUCH-TARGET <48dp: customer_font13_status [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font13_status [Cancelled] 52.4x27.3dp
+TOUCH-TARGET <48dp: customer_font13_status [Completed] 94.9x27.3dp
+TOUCH-TARGET <48dp: customer_font13_status [Confirmed] 92.7x27.3dp
+TOUCH-TARGET <48dp: customer_font13_status [Pending] 79.3x27.3dp
+TOUCH-TARGET <48dp: customer_font13_vehicles [] 34.9x35.3dp
+TOUCH-TARGET <48dp: customer_font13_vehicles [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font13_vehicles [Book Service] 136.7x41.8dp
+TOUCH-TARGET <48dp: customer_font13_vehicles [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font13_vehicles [Edit Vehicle] 38.2x38.5dp
+TOUCH-TARGET <48dp: customer_font13_vehicles [My Vehicles Add] 367.3x42.2dp
+TOUCH-TARGET <48dp: customer_font20_approvals [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font20_approvals [] 38.5x38.5dp
+TOUCH-TARGET <48dp: customer_font20_approvals [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_book_svc_s1 [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font20_book_svc_s1 [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_book_svc_s2 [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font20_book_svc_s2 [All] 55.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_book_svc_s2 [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_book_svc_s2 [Completed] 84.7x27.3dp
+TOUCH-TARGET <48dp: customer_font20_book_svc_s2 [Confirmed] 123.6x27.3dp
+TOUCH-TARGET <48dp: customer_font20_book_svc_s2 [Pending] 103.6x27.3dp
+TOUCH-TARGET <48dp: customer_font20_bookings [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font20_bookings [All] 55.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_bookings [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_bookings [Completed] 84.7x27.3dp
+TOUCH-TARGET <48dp: customer_font20_bookings [Confirmed] 123.6x27.3dp
+TOUCH-TARGET <48dp: customer_font20_bookings [Pending] 103.6x27.3dp
+TOUCH-TARGET <48dp: customer_font20_home [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font20_home [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_home2 [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font20_home2 [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_status [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font20_status [All] 55.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_status [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_status [Completed] 84.7x27.3dp
+TOUCH-TARGET <48dp: customer_font20_status [Confirmed] 123.6x27.3dp
+TOUCH-TARGET <48dp: customer_font20_status [Pending] 103.6x27.3dp
+TOUCH-TARGET <48dp: customer_font20_vehicles [] 34.9x35.3dp
+TOUCH-TARGET <48dp: customer_font20_vehicles [] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_font20_vehicles [Book Service] 181.1x45.5dp
+TOUCH-TARGET <48dp: customer_font20_vehicles [C] 27.3x27.3dp
+TOUCH-TARGET <48dp: customer_font20_vehicles [Edit Vehicle] 38.2x38.2dp
+TOUCH-TARGET <48dp: customer_large_approvals [] 34.9x34.9dp
+TOUCH-TARGET <48dp: customer_large_approvals [C] 24.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_book_svc_s1 [] 24.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_book_svc_s1 [Continue] 555.6x37.8dp
+TOUCH-TARGET <48dp: customer_large_book_svc_s2 [] 23.3x23.3dp
+TOUCH-TARGET <48dp: customer_large_book_svc_s2 [] 24.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_book_svc_s2 [Continue] 555.6x37.8dp
+TOUCH-TARGET <48dp: customer_large_bookings [] 34.9x34.9dp
+TOUCH-TARGET <48dp: customer_large_bookings [All] 40.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_bookings [C] 24.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_bookings [Cancelled] 69.1x24.7dp
+TOUCH-TARGET <48dp: customer_large_bookings [Completed] 73.8x24.7dp
+TOUCH-TARGET <48dp: customer_large_bookings [Confirmed] 72x24.7dp
+TOUCH-TARGET <48dp: customer_large_bookings [Pending] 62.9x24.7dp
+TOUCH-TARGET <48dp: customer_large_home [] 34.9x34.9dp
+TOUCH-TARGET <48dp: customer_large_home [C] 24.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_home [Get Help] 56.4x37.8dp
+TOUCH-TARGET <48dp: customer_large_home2 [] 34.9x34.9dp
+TOUCH-TARGET <48dp: customer_large_home2 [C] 24.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_home2 [Get Help] 56.4x37.8dp
+TOUCH-TARGET <48dp: customer_large_status [] 34.9x34.9dp
+TOUCH-TARGET <48dp: customer_large_status [All] 40.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_status [C] 24.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_status [Cancelled] 69.1x24.7dp
+TOUCH-TARGET <48dp: customer_large_status [Completed] 73.8x24.7dp
+TOUCH-TARGET <48dp: customer_large_status [Confirmed] 72x24.7dp
+TOUCH-TARGET <48dp: customer_large_status [Pending] 62.9x24.7dp
+TOUCH-TARGET <48dp: customer_large_vehicles [] 32x32dp
+TOUCH-TARGET <48dp: customer_large_vehicles [] 34.9x34.9dp
+TOUCH-TARGET <48dp: customer_large_vehicles [Book Service] 107.3x37.8dp
+TOUCH-TARGET <48dp: customer_large_vehicles [C] 24.7x24.7dp
+TOUCH-TARGET <48dp: customer_large_vehicles [Edit Vehicle] 34.9x34.9dp
+TOUCH-TARGET <48dp: customer_large_vehicles [My Vehicles Add] 558.5x34.2dp
+TOUCH-TARGET <48dp: customer_small_approvals [C] 37.1x37.1dp
+TOUCH-TARGET <48dp: customer_small_book_svc_s1 [C] 37.1x37.1dp
+TOUCH-TARGET <48dp: customer_small_book_svc_s2 [All] 60.7x37.1dp
+TOUCH-TARGET <48dp: customer_small_book_svc_s2 [C] 37.1x37.1dp
+TOUCH-TARGET <48dp: customer_small_book_svc_s2 [Completed] 94.2x37.1dp
+TOUCH-TARGET <48dp: customer_small_book_svc_s2 [Confirmed] 108.4x37.1dp
+TOUCH-TARGET <48dp: customer_small_book_svc_s2 [Pending] 94.5x37.1dp
+TOUCH-TARGET <48dp: customer_small_bookings [All] 60.7x37.1dp
+TOUCH-TARGET <48dp: customer_small_bookings [C] 37.1x37.1dp
+TOUCH-TARGET <48dp: customer_small_bookings [Completed] 94.2x37.1dp
+TOUCH-TARGET <48dp: customer_small_bookings [Confirmed] 108.4x37.1dp
+TOUCH-TARGET <48dp: customer_small_bookings [Pending] 94.5x37.1dp
+TOUCH-TARGET <48dp: customer_small_home [C] 37.1x37.1dp
+TOUCH-TARGET <48dp: customer_small_home2 [C] 37.1x37.1dp
+TOUCH-TARGET <48dp: customer_small_status [All] 60.7x37.1dp
+TOUCH-TARGET <48dp: customer_small_status [C] 37.1x37.1dp
+TOUCH-TARGET <48dp: customer_small_status [Completed] 94.2x37.1dp
+TOUCH-TARGET <48dp: customer_small_status [Confirmed] 108.4x37.1dp
+TOUCH-TARGET <48dp: customer_small_status [Pending] 94.5x37.1dp
+TOUCH-TARGET <48dp: customer_small_vehicles [C] 37.1x37.1dp
+TOUCH-TARGET <48dp: owner_default_activity [] 38.2x38.2dp
+TOUCH-TARGET <48dp: owner_default_activity [Choose a user...] 315.6x38.2dp
+TOUCH-TARGET <48dp: owner_default_activity [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_default_activity [SEND MESSAGE] 339.6x40dp
+TOUCH-TARGET <48dp: owner_default_dashboard [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_default_dashboard [This Week] 57.5x24dp
+TOUCH-TARGET <48dp: owner_default_dashboard_scrolled [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_default_dashboard_scrolled [This Week] 57.5x24dp
+TOUCH-TARGET <48dp: owner_default_messages [] 38.2x38.2dp
+TOUCH-TARGET <48dp: owner_default_messages [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_default_top_sales [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_default_top_sales [This Week] 57.5x24dp
+TOUCH-TARGET <48dp: owner_font13_activity [] 38.2x38.2dp
+TOUCH-TARGET <48dp: owner_font13_activity [Choose a user...] 315.6x38.2dp
+TOUCH-TARGET <48dp: owner_font13_activity [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font13_activity [SEND MESSAGE] 339.6x40dp
+TOUCH-TARGET <48dp: owner_font13_dashboard [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font13_dashboard [This Week] 70.9x24dp
+TOUCH-TARGET <48dp: owner_font13_dashboard_scrolled [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font13_dashboard_scrolled [This Week] 70.9x24dp
+TOUCH-TARGET <48dp: owner_font13_messages [] 38.2x38.2dp
+TOUCH-TARGET <48dp: owner_font13_messages [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font13_top_sales [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font13_top_sales [This Week] 70.9x24dp
+TOUCH-TARGET <48dp: owner_font20_activity [] 38.2x38.2dp
+TOUCH-TARGET <48dp: owner_font20_activity [Choose a user...] 315.6x38.5dp
+TOUCH-TARGET <48dp: owner_font20_activity [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font20_activity [SEND MESSAGE] 339.6x40dp
+TOUCH-TARGET <48dp: owner_font20_dashboard [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font20_dashboard [This Week] 102.5x24dp
+TOUCH-TARGET <48dp: owner_font20_dashboard_scrolled [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font20_dashboard_scrolled [This Week] 102.5x24dp
+TOUCH-TARGET <48dp: owner_font20_messages [] 38.2x38.2dp
+TOUCH-TARGET <48dp: owner_font20_messages [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font20_top_sales [O] 27.3x27.3dp
+TOUCH-TARGET <48dp: owner_font20_top_sales [This Week] 102.5x24dp
+TOUCH-TARGET <48dp: owner_large_activity [] 34.9x34.9dp
+TOUCH-TARGET <48dp: owner_large_activity [Choose a user...] 512x34.9dp
+TOUCH-TARGET <48dp: owner_large_activity [O] 24.7x24.7dp
+TOUCH-TARGET <48dp: owner_large_activity [SEND MESSAGE] 533.8x36.4dp
+TOUCH-TARGET <48dp: owner_large_dashboard [O] 24.7x24.7dp
+TOUCH-TARGET <48dp: owner_large_dashboard [This Week] 52.4x21.8dp
+TOUCH-TARGET <48dp: owner_large_dashboard_scrolled [O] 24.7x24.7dp
+TOUCH-TARGET <48dp: owner_large_dashboard_scrolled [This Week] 52.4x21.8dp
+TOUCH-TARGET <48dp: owner_large_messages [] 34.9x34.9dp
+TOUCH-TARGET <48dp: owner_large_messages [O] 24.7x24.7dp
+TOUCH-TARGET <48dp: owner_large_top_sales [O] 24.7x24.7dp
+TOUCH-TARGET <48dp: owner_large_top_sales [This Week] 52.4x21.8dp
+TOUCH-TARGET <48dp: owner_small_activity [O] 37.1x37.1dp
+TOUCH-TARGET <48dp: owner_small_dashboard [O] 37.1x37.1dp
+TOUCH-TARGET <48dp: owner_small_dashboard [This Week] 78.5x32.7dp
+TOUCH-TARGET <48dp: owner_small_dashboard_scrolled [O] 37.1x37.1dp
+TOUCH-TARGET <48dp: owner_small_dashboard_scrolled [This Week] 78.5x32.7dp
+TOUCH-TARGET <48dp: owner_small_messages [O] 37.1x37.1dp
+TOUCH-TARGET <48dp: owner_small_top_sales [O] 37.1x37.1dp
+TOUCH-TARGET <48dp: owner_small_top_sales [This Week] 78.5x32.7dp
+TOUCH-TARGET <48dp: staff_default_dashboard [] 38.2x38.2dp
+TOUCH-TARGET <48dp: staff_default_dashboard [+ New Job Card] 176.4x35.3dp
+TOUCH-TARGET <48dp: staff_default_dashboard [A Advisor On Shift] 85.1x35.3dp
+TOUCH-TARGET <48dp: staff_default_dashboard [A] 27.3x27.3dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Approvals 5] 119.3x36dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Inspection] 176.4x35.3dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Job Cards 15] 119.3x36dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Reminders 6] 119.3x36dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Scan vehicle QR code] 33.5x33.5dp
+TOUCH-TARGET <48dp: staff_default_dashboard [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_default_dashboard [Search Search name, plate, phoneΓÇª] 319.3x33.5dp
+TOUCH-TARGET <48dp: staff_default_jobs [] 367.3x30.5dp
+TOUCH-TARGET <48dp: staff_default_jobs [All] 40.7x30.5dp
+TOUCH-TARGET <48dp: staff_default_jobs [Cancelled] 57.5x30.5dp
+TOUCH-TARGET <48dp: staff_default_jobs [Completed] 74.5x30.5dp
+TOUCH-TARGET <48dp: staff_default_jobs [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_jobs [In Progress] 76x30.5dp
+TOUCH-TARGET <48dp: staff_default_jobs [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_jobs [Pending] 63.3x30.5dp
+TOUCH-TARGET <48dp: staff_default_jobs [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_jobs [QC Check] 68x30.5dp
+TOUCH-TARGET <48dp: staff_default_jobs [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_jobs [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_default_profile_sheet [Logout] 360.7x40dp
+TOUCH-TARGET <48dp: staff_default_profile_sheet [My Profile] 360.7x38.5dp
+TOUCH-TARGET <48dp: staff_default_profile_sheet [Switch Branch] 360.7x38.5dp
+TOUCH-TARGET <48dp: staff_default_reports [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_reports [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_reports [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_reports [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_default_reports [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_default_reports [This Week] 72.4x19.3dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [] 38.2x38.2dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [+ New Job Card] 176.4x35.3dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [A Advisor On Shift] 95.3x44.7dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [A] 27.3x27.3dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Approvals 5] 119.3x40dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Inspection] 176.4x35.3dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [JC-9e8bd221 Pending Customer Toyota Camry 08:03 PM] 343.3x40.7dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Job Cards 15] 119.3x40dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Reminders 6] 119.3x40dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Scan vehicle QR code] 33.5x33.5dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_font13_dashboard [Search Search name, plate, phoneΓÇª] 319.3x33.5dp
+TOUCH-TARGET <48dp: staff_font13_jobs [] 367.3x30.5dp
+TOUCH-TARGET <48dp: staff_font13_jobs [All] 43.6x30.5dp
+TOUCH-TARGET <48dp: staff_font13_jobs [Cancelled] 8.4x30.5dp
+TOUCH-TARGET <48dp: staff_font13_jobs [Completed] 86.9x30.5dp
+TOUCH-TARGET <48dp: staff_font13_jobs [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_jobs [In Progress] 89.5x30.5dp
+TOUCH-TARGET <48dp: staff_font13_jobs [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_jobs [Pending] 73.1x30.5dp
+TOUCH-TARGET <48dp: staff_font13_jobs [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_jobs [QC Check] 78.5x30.5dp
+TOUCH-TARGET <48dp: staff_font13_jobs [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_jobs [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_font13_profile_sheet [Logout] 360.7x40dp
+TOUCH-TARGET <48dp: staff_font13_profile_sheet [My Profile] 360.7x38.5dp
+TOUCH-TARGET <48dp: staff_font13_profile_sheet [Switch Branch] 360.7x38.5dp
+TOUCH-TARGET <48dp: staff_font13_reports [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_reports [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_reports [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_reports [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font13_reports [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_font13_reports [This Week] 88.4x20.4dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [] 38.2x38.2dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [+ New Job Card] 176.4x35.3dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [A] 27.3x27.3dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [Inspection] 176.4x35.3dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [JC-4e71000d Pending Customer Toyota Camry 08:12 PM] 343.3x7.3dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [Scan vehicle QR code] 33.5x33.5dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_font20_dashboard [Search Search name, plate, phoneΓÇª] 319.3x33.5dp
+TOUCH-TARGET <48dp: staff_font20_jobs [] 367.3x30.5dp
+TOUCH-TARGET <48dp: staff_font20_jobs [All] 50.5x30.5dp
+TOUCH-TARGET <48dp: staff_font20_jobs [Completed] 117.1x30.5dp
+TOUCH-TARGET <48dp: staff_font20_jobs [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_jobs [In Progress] 120x30.5dp
+TOUCH-TARGET <48dp: staff_font20_jobs [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_jobs [Pending] 92.4x30.5dp
+TOUCH-TARGET <48dp: staff_font20_jobs [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_jobs [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_jobs [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_font20_profile_sheet [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_profile_sheet [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_profile_sheet [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_profile_sheet [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_profile_sheet [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_font20_profile_sheet [This Week] 125.5x31.3dp
+TOUCH-TARGET <48dp: staff_font20_reports [Home Home] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_reports [Jobs Jobs] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_reports [Profile Profile] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_reports [Reports Reports] 73.5x44dp
+TOUCH-TARGET <48dp: staff_font20_reports [SCAN] 46.5x46.5dp
+TOUCH-TARGET <48dp: staff_font20_reports [This Week] 125.5x31.3dp
+TOUCH-TARGET <48dp: staff_large_dashboard [] 34.9x34.9dp
+TOUCH-TARGET <48dp: staff_large_dashboard [+ New Job Card] 272.7x32dp
+TOUCH-TARGET <48dp: staff_large_dashboard [A Advisor On Shift] 77.1x32dp
+TOUCH-TARGET <48dp: staff_large_dashboard [A] 24.7x24.7dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Approvals 5] 183.3x32.7dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Home Home] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Inspection] 272.7x32dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Job Cards 15] 183.3x32.7dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Jobs Jobs] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Profile Profile] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Reminders 6] 183.3x32.7dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Reports Reports] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Scan vehicle QR code] 30.5x30.5dp
+TOUCH-TARGET <48dp: staff_large_dashboard [SCAN] 42.2x42.2dp
+TOUCH-TARGET <48dp: staff_large_dashboard [Search Search name, plate, phoneΓÇª] 514.9x30.5dp
+TOUCH-TARGET <48dp: staff_large_jobs [] 558.5x27.6dp
+TOUCH-TARGET <48dp: staff_large_jobs [All] 37.1x27.6dp
+TOUCH-TARGET <48dp: staff_large_jobs [Cancelled] 63.3x27.6dp
+TOUCH-TARGET <48dp: staff_large_jobs [Completed] 67.6x27.6dp
+TOUCH-TARGET <48dp: staff_large_jobs [Home Home] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_jobs [In Progress] 69.1x27.6dp
+TOUCH-TARGET <48dp: staff_large_jobs [Jobs Jobs] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_jobs [Pending] 57.8x27.6dp
+TOUCH-TARGET <48dp: staff_large_jobs [Profile Profile] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_jobs [QC Check] 61.5x27.6dp
+TOUCH-TARGET <48dp: staff_large_jobs [Reports Reports] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_jobs [SCAN] 42.2x42.2dp
+TOUCH-TARGET <48dp: staff_large_profile_sheet [Logout] 436.4x36.4dp
+TOUCH-TARGET <48dp: staff_large_profile_sheet [My Profile] 436.4x34.9dp
+TOUCH-TARGET <48dp: staff_large_profile_sheet [Switch Branch] 436.4x34.9dp
+TOUCH-TARGET <48dp: staff_large_reports [Export Report] 558.5x21.8dp
+TOUCH-TARGET <48dp: staff_large_reports [Home Home] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_reports [Jobs Jobs] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_reports [Profile Profile] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_reports [Reports Reports] 111.6x40dp
+TOUCH-TARGET <48dp: staff_large_reports [SCAN] 42.2x42.2dp
+TOUCH-TARGET <48dp: staff_large_reports [This Week] 65.8x17.5dp
+TOUCH-TARGET <48dp: staff_small_dashboard [A] 37.1x37.1dp
+TOUCH-TARGET <48dp: staff_small_dashboard [Approvals 5] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_dashboard [Job Cards 15] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_dashboard [Reminders 6] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_dashboard [Scan vehicle QR code] 45.8x45.8dp
+TOUCH-TARGET <48dp: staff_small_dashboard [Search Search name, plate, phoneΓÇª] 292.4x45.8dp
+TOUCH-TARGET <48dp: staff_small_jobs [A] 37.1x37.1dp
+TOUCH-TARGET <48dp: staff_small_jobs [Approvals 5] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_jobs [Job Cards 15] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_jobs [Reminders 6] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_jobs [Scan vehicle QR code] 45.8x45.8dp
+TOUCH-TARGET <48dp: staff_small_jobs [Search Search name, plate, phoneΓÇª] 292.4x45.8dp
+TOUCH-TARGET <48dp: staff_small_profile_sheet [A] 37.1x37.1dp
+TOUCH-TARGET <48dp: staff_small_profile_sheet [Approvals 5] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_profile_sheet [Job Cards 15] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_profile_sheet [Reminders 6] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_profile_sheet [Scan vehicle QR code] 45.8x45.8dp
+TOUCH-TARGET <48dp: staff_small_profile_sheet [Search Search name, plate, phoneΓÇª] 292.4x45.8dp
+TOUCH-TARGET <48dp: staff_small_reports [A] 37.1x37.1dp
+TOUCH-TARGET <48dp: staff_small_reports [Approvals 5] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_reports [Job Cards 15] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_reports [Reminders 6] 114.9x40.4dp
+TOUCH-TARGET <48dp: staff_small_reports [Scan vehicle QR code] 45.8x45.8dp
+TOUCH-TARGET <48dp: staff_small_reports [Search Search name, plate, phoneΓÇª] 292.4x45.8dp

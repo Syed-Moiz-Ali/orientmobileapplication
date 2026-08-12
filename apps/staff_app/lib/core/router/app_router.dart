@@ -65,17 +65,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authNotifierProvider);
       final matched = state.matchedLocation;
 
+      final isAuthRoute =
+          matched == AppRoutes.login || matched == AppRoutes.forgotPassword;
+
       return switch (authState) {
-        AuthUnauthenticated() =>
-          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
-              ? null
-              : AppRoutes.login,
+        AuthUnauthenticated() => isAuthRoute ? null : AppRoutes.login,
         AuthLoading() =>
           matched == AppRoutes.startup ? null : AppRoutes.startup,
-        AuthError() =>
-          matched == AppRoutes.login || matched == AppRoutes.forgotPassword
-              ? null
-              : AppRoutes.login,
+        AuthError() => isAuthRoute ? null : AppRoutes.login,
+        AuthAuthenticated(:final role) when !_isStaffRole(role) =>
+          isAuthRoute ? null : AppRoutes.login,
         AuthAuthenticated(:final role) =>
           matched == AppRoutes.login || matched == AppRoutes.startup
               ? AppRoutes.dashboardForRole(role)
@@ -149,7 +148,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.inspectionSheet,
         name: AppRoutes.inspectionSheet,
         builder: (context, state) {
-          final callbacks = state.extra as InspectionCallbacks?;
+          final extra = state.extra;
+          final callbacks = extra is InspectionCallbacks ? extra : null;
           return InspectionSheetView(
             callbacks:
                 callbacks ??
@@ -165,7 +165,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.inspectionPreview,
         name: AppRoutes.inspectionPreview,
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
+          final extra = _mapExtra(state.extra);
           return InspectionPreviewView(
             onBack: extra?['onBack'] as VoidCallback? ?? (() => context.pop()),
             jobId: extra?['jobId'] as String? ?? '',
@@ -200,13 +200,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.shiftDetails,
         name: AppRoutes.shiftDetails,
         builder: (context, state) =>
-            ShiftDetailsPage(data: state.extra as Map<String, dynamic>?),
+            ShiftDetailsPage(data: _mapExtra(state.extra)),
       ),
       GoRoute(
         path: AppRoutes.settings,
         name: AppRoutes.settings,
         builder: (context, state) =>
-            SettingsPage(data: state.extra as Map<String, dynamic>?),
+            SettingsPage(data: _mapExtra(state.extra)),
       ),
       GoRoute(
         path: AppRoutes.supervisorLogin,
@@ -216,3 +216,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+bool _isStaffRole(UserRole role) {
+  return role == UserRole.advisor ||
+      role == UserRole.supervisor ||
+      role == UserRole.technician;
+}
+
+Map<String, dynamic>? _mapExtra(Object? extra) {
+  return extra is Map<String, dynamic> ? extra : null;
+}

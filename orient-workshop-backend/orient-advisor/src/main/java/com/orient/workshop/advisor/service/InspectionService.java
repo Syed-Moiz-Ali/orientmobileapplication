@@ -131,7 +131,10 @@ public class InspectionService {
         // Phase 3 — inspection items marked fair/poor become tracked work items
         taskGeneratorService.generateForJobCard(jobCard.getId());
 
-        return InspectionResponse.builder().id(insRef).build();
+        // FIX (audit QA BUG-014): return the numeric DB id — update/draft/summary
+        // endpoints all resolve ids via selectById(Long); the previous INS-<hex>
+        // ref could not be used with any of them.
+        return InspectionResponse.builder().id(String.valueOf(inspection.getId())).build();
     }
 
     private void linkBooking(String bookingId, Long jobCardId, JwtUserPrincipal principal) {

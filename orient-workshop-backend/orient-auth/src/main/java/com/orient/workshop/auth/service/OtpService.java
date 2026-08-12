@@ -7,9 +7,12 @@ import com.orient.workshop.common.exception.TooManyRequestsException;
 import com.orient.workshop.common.util.PhoneUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
@@ -24,6 +27,13 @@ public class OtpService {
 
     private final OtpRecordMapper otpRecordMapper;
     private final Environment environment;
+
+    // FIX (audit QA BUG-009): self-reference so REQUIRES_NEW actually applies —
+    // a direct self-invocation would bypass the Spring proxy and run inside the
+    // caller's transaction (which rolls back on the wrong-OTP exception).
+    @Lazy
+    @Autowired
+    private OtpService self;
 
     @Value("${app.otp.expiry-minutes:5}")
     private int otpExpiryMinutes;
@@ -94,8 +104,15 @@ public class OtpService {
 
         // S-6 + P1: constant-time comparison against the stored digest.
         if (!constantTimeEquals(record.getOtpCode(), hashOtp(otpCode))) {
-            record.setAttempts(record.getAttempts() + 1);
-            otpRecordMapper.updateById(record);
+            // FIX (audit QA BUG-009): the failed-attempt counter must survive the
+            // outer verifyOtp transaction rollback. AuthService.verifyOtp is
+            // @Transactional and throws on the wrong OTP — a plain update here was
+            // rolled back with it, so the 5-attempt cap never accumulated and OTPs
+            // could be brute-forced indefinitely. REQUIRES_NEW commits independently.
+            boolean capped = self.recordFailedAttempt(record.getId());
+            if (capped) {
+                throw new TooManyRequestsException("Too many OTP attempts. Please try later.");
+            }
             throw new BadRequestException("Invalid OTP");
         }
 
@@ -112,12 +129,29 @@ public class OtpService {
         }
 
         if (!constantTimeEquals(record.getOtpCode(), hashOtp(otpCode))) {
-            record.setAttempts(record.getAttempts() + 1);
-            otpRecordMapper.updateById(record);
+            boolean capped = self.recordFailedAttempt(record.getId());
+            if (capped) {
+                throw new TooManyRequestsException("Too many OTP attempts. Please try later.");
+            }
             throw new BadRequestException("Invalid OTP");
         }
 
         otpRecordMapper.markUsed(record.getId());
+    }
+
+    /**
+     * FIX (audit QA BUG-009): increments the failed-attempt counter in its own
+     * transaction so it is committed even when the caller's transaction rolls
+     * back. Returns true when the counter reached the cap.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    boolean recordFailedAttempt(Long recordId) {
+        OtpRecord record = otpRecordMapper.selectById(recordId);
+        if (record == null) return false;
+        int next = record.getAttempts() + 1;
+        record.setAttempts(next);
+        otpRecordMapper.updateById(record);
+        return next >= maxAttempts;
     }
 
     /**
