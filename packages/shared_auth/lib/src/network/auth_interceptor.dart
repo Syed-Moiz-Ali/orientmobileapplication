@@ -12,7 +12,10 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._ref, this._dio);
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     final authState = _ref.read(authNotifierProvider);
     if (authState case AuthAuthenticated(:final token)) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -35,7 +38,8 @@ class AuthInterceptor extends Interceptor {
     final path = err.requestOptions.path;
     if (err.response?.statusCode != 401 ||
         err.requestOptions.headers['X-Retry'] == 'true' ||
-        path.endsWith('/auth/logout')) {
+        path.endsWith('/auth/logout') ||
+        path.endsWith('/auth/refresh')) {
       handler.next(err);
       return;
     }
@@ -49,7 +53,9 @@ class AuthInterceptor extends Interceptor {
     final storage = _ref.read(tokenStorageProvider);
     final currentToken = await storage.getToken();
     final authState = _ref.read(authNotifierProvider);
-    final token = authState is AuthAuthenticated ? authState.token : currentToken;
+    final token = authState is AuthAuthenticated
+        ? authState.token
+        : currentToken;
 
     if (token != null && token.isNotEmpty) {
       final options = RequestOptions(

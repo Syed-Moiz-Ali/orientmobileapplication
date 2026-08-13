@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
@@ -13,20 +14,27 @@ class CustomerHomeTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
+    final bookings = ref.watch(customerBookingsProvider).value ?? const [];
 
-    if (state.isLoading) return const _CustomerHomeLoading();
+    if (state.isLoading) return const _HomeLoading();
 
     if (state.loadError.isNotEmpty) {
       return AppResponsivePage(
         child: EmptyState(
           title: 'Connection Error',
-          message: 'Unable to load your vehicle dashboard.',
+          message: 'Unable to load your dashboard.',
           icon: Icons.wifi_off_rounded,
-          actionLabel: 'Retry Sync',
+          actionLabel: 'Retry',
           onAction: notifier.refresh,
         ),
       );
     }
+
+    final firstName = state.profile?.firstName.isNotEmpty == true ? state.profile!.firstName : 'Customer';
+    final vehicles = state.vehicles;
+    final activeBooking = bookings
+        .where((b) => b.status == BookingStatus.pending || b.status == BookingStatus.confirmed)
+        .firstOrNull;
 
     return SafeArea(
       child: RefreshIndicator(
@@ -37,68 +45,71 @@ class CustomerHomeTab extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER GREETING & NOTIFICATION BELL
-              _UnifiedHeader(
-                firstName: state.profile?.firstName.isNotEmpty == true
-                    ? state.profile!.firstName
-                    : 'Customer',
-                memberId: state.profile?.memberId ?? '102',
+              const SizedBox(height: AppDimensions.s16),
+
+              // ── 1. USER PROFILE HEADER ─────────────────────────────────
+              _UberHeader(
+                firstName: firstName,
                 unreadCount: state.unreadCount,
-                onNotificationTap: () =>
-                    context.push(AppRoutes.customerNotifications),
+                onNotificationTap: () => context.push(AppRoutes.customerNotifications),
               ),
               const SizedBox(height: AppDimensions.s16),
 
-              // PROMOTIONAL HERO BANNER CAROUSEL
-              _PromotionalHeroBannerCarousel(
-                onClaimOffer: () => context.push(AppRoutes.customerBookService),
-              ),
-              const SizedBox(height: AppDimensions.s16),
+              // ── 2. HERO FEATURED CAROUSEL ──────────────────────────────
+              _UberHeroCarousel(onBook: () => context.push(AppRoutes.customerBookService)),
+              const SizedBox(height: AppDimensions.s20),
 
-              // LIVE WORKSHOP EXPRESS SLOT TICKER BANNER
-              _LiveWorkshopSlotBanner(
-                onBook: () => context.push(AppRoutes.customerBookService),
-              ),
-              const SizedBox(height: AppDimensions.s16),
+              // ── 3. ACTIVE REPAIR STATUS BAR (If active) ────────────────
+              if (activeBooking != null) ...[
+                _ActiveJobBanner(
+                  booking: activeBooking,
+                  onTap: () => context.push(AppRoutes.customerBookingDetail, extra: activeBooking),
+                ),
+                const SizedBox(height: AppDimensions.s20),
+              ],
 
-              // MASONRY QUICK ACTIONS (r24 Curves & Flush Baseline)
-              _MasonryQuickActionGrid(
+              // ── 4. CATEGORY TILES (Uber / Airbnb Square Cards) ────────
+              const _SectionHeading(title: 'What would you like to do?'),
+              const SizedBox(height: AppDimensions.s12),
+              _UberCategoryGrid(
                 onBook: () => context.push(AppRoutes.customerBookService),
                 onTrack: () => notifier.selectTab(1),
                 onGarage: () => notifier.selectTab(3),
-                onBreakdown: () =>
-                    context.push(AppRoutes.customerBreakdownHelp),
+                onSos: () => context.push(AppRoutes.customerBreakdownHelp),
               ),
               const SizedBox(height: AppDimensions.s24),
 
-              // SERVICE PLANS & PACKAGES
-              _SectionHeader(
-                title: 'Popular Service Packages',
-                action: 'View All',
-                onAction: () => context.push(AppRoutes.customerBookService),
+              // ── 5. MY GARAGE VEHICLE CARDS ─────────────────────────────
+              _SectionHeadingWithAction(
+                title: 'My Vehicles',
+                actionText: 'Manage Garage',
+                onAction: () => notifier.selectTab(3),
               ),
-              const SizedBox(height: AppDimensions.s10),
-              _FeaturedServicePackagesDeck(
-                onSelectPackage: (pkg) =>
-                    context.push(AppRoutes.customerBookService),
-              ),
+              const SizedBox(height: AppDimensions.s12),
+              if (vehicles.isEmpty)
+                _EmptyGarageTile(onAdd: () => context.push(AppRoutes.customerAddVehicle))
+              else
+                _UberGarageDeck(
+                  vehicles: vehicles,
+                  onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
+                  onBookService: (v) => context.push(AppRoutes.customerBookService),
+                ),
               const SizedBox(height: AppDimensions.s24),
 
-              // MY GARAGE SHOWCASE
-              _SectionHeader(
-                title: 'My Garage Showcase',
-                action: '+ Add Vehicle',
-                onAction: () => context.push(AppRoutes.customerAddVehicle),
-              ),
-              const SizedBox(height: AppDimensions.s10),
-              _EnhancedGarageDeck(
-                vehicles: state.vehicles,
-                onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
-                onBookService: () =>
-                    context.push(AppRoutes.customerBookService),
-                onManage: () => notifier.selectTab(3),
-              ),
-              const SizedBox(height: AppDimensions.s24),
+              // ── 6. RECENT ACTIVITY CARDS ───────────────────────────────
+              if (bookings.isNotEmpty) ...[
+                _SectionHeadingWithAction(
+                  title: 'Recent Bookings',
+                  actionText: 'View All',
+                  onAction: () => notifier.selectTab(2),
+                ),
+                const SizedBox(height: AppDimensions.s12),
+                _UberRecentBookings(
+                  bookings: bookings.take(3).toList(),
+                  onTap: (b) => context.push(AppRoutes.customerBookingDetail, extra: b),
+                ),
+                const SizedBox(height: AppDimensions.s24),
+              ],
             ],
           ),
         ),
@@ -107,158 +118,258 @@ class CustomerHomeTab extends ConsumerWidget {
   }
 }
 
-/// PROMOTIONAL HERO BANNER CAROUSEL (Dribbble Grade 24px Curved Banner)
-class _PromotionalHeroBannerCarousel extends StatefulWidget {
-  final VoidCallback onClaimOffer;
+// ─── Header ──────────────────────────────────────────────────────────────────
 
-  const _PromotionalHeroBannerCarousel({required this.onClaimOffer});
+class _UberHeader extends StatelessWidget {
+  final String firstName;
+  final int unreadCount;
+  final VoidCallback onNotificationTap;
+
+  const _UberHeader({required this.firstName, required this.unreadCount, required this.onNotificationTap});
 
   @override
-  State<_PromotionalHeroBannerCarousel> createState() =>
-      __PromotionalHeroBannerCarouselState();
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C',
+              style: textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w900),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppDimensions.s12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome, $firstName',
+                style: textTheme.headlineSmall?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Orient Auto Service • Open Today',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.text3,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: onNotificationTap,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary, size: 22),
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-class __PromotionalHeroBannerCarouselState
-    extends State<_PromotionalHeroBannerCarousel> {
-  final PageController _controller = PageController();
-  int _currentPage = 0;
+// ─── Hero Carousel (Uber/Airbnb Visual Banner) ────────────────────────────────
 
-  static const _banners = [
+class _UberHeroCarousel extends StatefulWidget {
+  final VoidCallback onBook;
+  const _UberHeroCarousel({required this.onBook});
+
+  @override
+  State<_UberHeroCarousel> createState() => _UberHeroCarouselState();
+}
+
+class _UberHeroCarouselState extends State<_UberHeroCarousel> {
+  final _pageCtrl = PageController();
+  int _currPage = 0;
+  Timer? _timer;
+
+  static const _slides = [
     (
-      '30% OFF FULL SERVICE',
-      'Summer Maintenance Package',
-      'Synthetic Oil & Filter + 20-pt Check',
-      'Claim Offer →',
-      Color(0xFF1D4ED8),
-      Color(0xFF3B82F6),
-      Icons.local_offer_rounded,
+      tag: 'RECOMMENDED',
+      title: 'Full Vehicle Service & Check',
+      sub: 'Engine oil, filter replacement & 30-point inspection',
+      cta: 'Book Now',
+      img: 'assets/images/banner_workshop.jpg',
+      color: Color(0xFF1E3A8A),
     ),
     (
-      'FREE PRE-MOT CHECK',
-      'VIP Member Exclusive',
-      '20-Point Official DVSA Pre-Audit',
-      'Book Check →',
-      Color(0xFF0F766E),
-      Color(0xFF14B8A6),
-      Icons.verified_user_rounded,
+      tag: 'FREE AUDIT',
+      title: 'Pre-MOT Inspection',
+      sub: 'Avoid test failures with DVSA official check',
+      cta: 'Claim Free Check',
+      img: 'assets/images/banner_service.jpg',
+      color: Color(0xFF065F46),
     ),
     (
-      '24/7 ROAD ASSIST',
-      'Emergency SOS Support',
-      'Instant Tow Truck & Battery Jumpstart',
-      'Get SOS →',
-      Color(0xFFB91C1C),
-      Color(0xFFEF4444),
-      Icons.emergency_rounded,
+      tag: 'EMERGENCY',
+      title: '24/7 Roadside Assistance',
+      sub: 'Flat tire, dead battery or instant towing support',
+      cta: 'Get Assistance',
+      img: 'assets/images/banner_sos.jpg',
+      color: Color(0xFF991B1B),
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted) return;
+      final next = (_currPage + 1) % _slides.length;
+      _pageCtrl.animateToPage(next, duration: const Duration(milliseconds: 350), curve: Curves.easeInOut);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return SizedBox(
-      height: 140,
+      height: 165,
       child: Stack(
         children: [
           PageView.builder(
-            controller: _controller,
-            onPageChanged: (i) => setState(() => _currentPage = i),
-            itemCount: _banners.length,
+            controller: _pageCtrl,
+            onPageChanged: (i) => setState(() => _currPage = i),
+            itemCount: _slides.length,
             itemBuilder: (ctx, i) {
-              final b = _banners[i];
-              return AppCard(
-                onTap: widget.onClaimOffer,
-                borderRadius: 24,
-                padding: const EdgeInsets.all(AppDimensions.s16),
-                color: b.$5,
+              final s = _slides[i];
+              return GestureDetector(
+                onTap: widget.onBook,
                 child: Container(
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    gradient: LinearGradient(
-                      colors: [b.$5, b.$6],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: s.color,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4)),
+                    ],
                   ),
-                  child: Row(
+                  child: Stack(
                     children: [
-                      Expanded(
+                      // Image background
+                      Positioned.fill(
+                        child: Image.asset(
+                          s.img,
+                          fit: BoxFit.cover,
+                          colorBlendMode: BlendMode.darken,
+                          color: Colors.black.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      // Text content overlay
+                      Padding(
+                        padding: const EdgeInsets.all(AppDimensions.s16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.22),
-                                borderRadius: BorderRadius.circular(
-                                  AppDimensions.rPill,
-                                ),
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6)),
                               child: Text(
-                                b.$1,
+                                s.tag,
                                 style: textTheme.labelSmall?.copyWith(
-                                  color: Colors.white,
+                                  color: Colors.black,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 9,
-                                  letterSpacing: 0.5,
+                                  letterSpacing: 0.6,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             Text(
-                              b.$2,
+                              s.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: textTheme.titleMedium?.copyWith(
+                              style: textTheme.titleLarge?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 17,
+                                fontSize: 18,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4),
                             Text(
-                              b.$3,
+                              s.sub,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: textTheme.bodySmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 11,
+                                color: Colors.white.withValues(alpha: 0.88),
+                                fontSize: 12,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: AppDimensions.s10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.s12,
-                          vertical: AppDimensions.s8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.rPill,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Text(
+                                  s.cta,
+                                  style: textTheme.labelMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
+                              ],
                             ),
                           ],
-                        ),
-                        child: Text(
-                          b.$4,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: b.$5,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 11,
-                          ),
                         ),
                       ),
                     ],
@@ -267,22 +378,21 @@ class __PromotionalHeroBannerCarouselState
               );
             },
           ),
+          // Page indicators
           Positioned(
-            bottom: 10,
-            right: 18,
+            bottom: 12,
+            right: 16,
             child: Row(
-              children: List.generate(_banners.length, (i) {
-                final sel = _currentPage == i;
+              children: List.generate(_slides.length, (i) {
+                final sel = _currPage == i;
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.only(left: 4),
                   width: sel ? 16 : 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: sel
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                    color: sel ? Colors.white : Colors.white.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 );
               }),
@@ -294,220 +404,564 @@ class __PromotionalHeroBannerCarouselState
   }
 }
 
-/// TOP HEADER WITH NOTIFICATION BELL ICON (Clean Native Header)
-class _UnifiedHeader extends StatelessWidget {
-  final String firstName;
-  final String memberId;
-  final int unreadCount;
-  final VoidCallback onNotificationTap;
+// ─── Active Job Banner ───────────────────────────────────────────────────────
 
-  const _UnifiedHeader({
-    required this.firstName,
-    required this.memberId,
-    required this.unreadCount,
-    required this.onNotificationTap,
+class _ActiveJobBanner extends StatelessWidget {
+  final CustomerBookingEntity booking;
+  final VoidCallback onTap;
+
+  const _ActiveJobBanner({required this.booking, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.primaryBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.s14),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.build_circle_rounded, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Active Booking In Progress',
+                            style: textTheme.labelMedium?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${booking.service} • ${booking.vehicleName}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodySmall?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Uber/Airbnb Style 2x2 Category Grid ────────────────────────────────────
+
+class _UberCategoryGrid extends StatelessWidget {
+  final VoidCallback onBook;
+  final VoidCallback onTrack;
+  final VoidCallback onGarage;
+  final VoidCallback onSos;
+
+  const _UberCategoryGrid({required this.onBook, required this.onTrack, required this.onGarage, required this.onSos});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              _CategoryCard(
+                title: 'Book Service',
+                subtitle: 'Maintenance & repair',
+                icon: Icons.calendar_month_rounded,
+                color: AppColors.primary,
+                bgColor: AppColors.primaryBg,
+                onTap: onBook,
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              _CategoryCard(
+                title: 'My Garage',
+                subtitle: 'Registered vehicles',
+                icon: Icons.directions_car_rounded,
+                color: const Color(0xFF0F766E),
+                bgColor: const Color(0xFFCCFBF1),
+                onTap: onGarage,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppDimensions.s12),
+        Expanded(
+          child: Column(
+            children: [
+              _CategoryCard(
+                title: 'Live Tracking',
+                subtitle: 'Repair status updates',
+                icon: Icons.satellite_alt_rounded,
+                color: const Color(0xFF6D28D9),
+                bgColor: const Color(0xFFEDE9FE),
+                onTap: onTrack,
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              _CategoryCard(
+                title: '24/7 SOS',
+                subtitle: 'Breakdown help',
+                icon: Icons.sos_rounded,
+                color: AppColors.danger,
+                bgColor: AppColors.dangerBg,
+                onTap: onSos,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final Color bgColor;
+  final VoidCallback onTap;
+
+  const _CategoryCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.bgColor,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final greeting = _greetingTime();
 
-    return Padding(
-      padding: const EdgeInsets.only(
-        top: AppDimensions.s12,
-        bottom: AppDimensions.s8,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$greeting, $firstName 👋',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.headlineLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 26,
-                    letterSpacing: -0.8,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.accent,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.s6),
-                    Text(
-                      'Member #$memberId • Workshop Online',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.text3,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s12),
-
-          // Notification Bell Button
-          GestureDetector(
-            onTap: onNotificationTap,
-            child: Stack(
-              clipBehavior: Clip.none,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.s14),
+            child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(width: AppDimensions.s10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleSmall?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.labelSmall?.copyWith(color: AppColors.text3, fontSize: 10),
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.notifications_outlined,
-                    color: AppColors.textPrimary,
-                    size: 22,
-                  ),
                 ),
-                if (unreadCount > 0)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.danger,
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.rPill,
-                        ),
-                        border: Border.all(color: AppColors.bg, width: 2),
-                      ),
-                      child: Text(
-                        unreadCount > 99 ? '99+' : '$unreadCount',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Uber/Airbnb Style Garage Deck ──────────────────────────────────────────
+
+class _UberGarageDeck extends StatelessWidget {
+  final List<CustomerVehicleEntity> vehicles;
+  final VoidCallback onAddVehicle;
+  final void Function(CustomerVehicleEntity) onBookService;
+
+  const _UberGarageDeck({required this.vehicles, required this.onAddVehicle, required this.onBookService});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return SizedBox(
+      height: 200,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: vehicles.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(width: AppDimensions.s12),
+        itemBuilder: (ctx, i) {
+          if (i == vehicles.length) {
+            return GestureDetector(
+              onTap: onAddVehicle,
+              child: Container(
+                width: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(color: AppColors.primaryBg, shape: BoxShape.circle),
+                      child: const Icon(Icons.add_rounded, color: AppColors.primary, size: 24),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Add Vehicle',
+                      style: textTheme.labelMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final v = vehicles[i];
+          final healthColor = v.healthScore >= 80
+              ? AppColors.success
+              : v.healthScore >= 60
+              ? AppColors.warning
+              : AppColors.danger;
+
+          return Container(
+            width: 220,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Vehicle Photo Banner
+                  Container(
+                    height: 100,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceAlt,
+                      image: DecorationImage(
+                        image: AssetImage(i % 2 == 0 ? 'assets/images/car_sedan.jpg' : 'assets/images/car_suv.jpg'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.75),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(color: healthColor, shape: BoxShape.circle),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${v.healthScore}%',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFACC15),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.black, width: 1.5),
+                            ),
+                            child: Text(
+                              v.plateNumber.toUpperCase(),
+                              style: textTheme.labelSmall?.copyWith(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: AppFontFamilies.mono,
+                                fontSize: 9,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Vehicle Details & Action
+                  Padding(
+                    padding: const EdgeInsets.all(AppDimensions.s12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          v.displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.titleSmall?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 32,
+                          child: ElevatedButton(
+                            onPressed: () => onBookService(v),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: EdgeInsets.zero,
+                            ),
+                            child: Text(
+                              'Book Service',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _EmptyGarageTile extends StatelessWidget {
+  final VoidCallback onAdd;
+  const _EmptyGarageTile({required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onAdd,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.s16),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(color: AppColors.primaryBg, shape: BoxShape.circle),
+                  child: const Icon(Icons.add_rounded, color: AppColors.primary, size: 22),
+                ),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Add your first vehicle',
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Tap to register a vehicle to your garage',
+                        style: textTheme.bodySmall?.copyWith(color: AppColors.text3),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppColors.text4, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Uber/Airbnb Style Recent Bookings List ──────────────────────────────────
+
+class _UberRecentBookings extends StatelessWidget {
+  final List<CustomerBookingEntity> bookings;
+  final void Function(CustomerBookingEntity) onTap;
+
+  const _UberRecentBookings({required this.bookings, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          for (int i = 0; i < bookings.length; i++) ...[
+            _BookingTile(booking: bookings[i], onTap: () => onTap(bookings[i])),
+            if (i < bookings.length - 1) const Divider(height: 1, color: AppColors.line),
+          ],
         ],
       ),
     );
   }
-
-  static String _greetingTime() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
 }
 
-/// LIVE WORKSHOP SLOT AVAILABILITY BANNER (Rounded Pill Banner)
-class _LiveWorkshopSlotBanner extends StatelessWidget {
-  final VoidCallback onBook;
+class _BookingTile extends StatelessWidget {
+  final CustomerBookingEntity booking;
+  final VoidCallback onTap;
 
-  const _LiveWorkshopSlotBanner({required this.onBook});
+  const _BookingTile({required this.booking, required this.onTap});
+
+  Color get _statusFg {
+    switch (booking.status) {
+      case BookingStatus.confirmed:
+        return AppColors.primary;
+      case BookingStatus.completed:
+        return AppColors.success;
+      case BookingStatus.cancelled:
+        return AppColors.danger;
+      case BookingStatus.pending:
+        return AppColors.warning;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Material(
-      color: AppColors.primaryBg,
-      borderRadius: BorderRadius.circular(AppDimensions.rPill),
+      color: Colors.transparent,
       child: InkWell(
-        onTap: onBook,
-        borderRadius: BorderRadius.circular(AppDimensions.rPill),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s14,
-            vertical: AppDimensions.s10,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.primaryBg,
-            borderRadius: BorderRadius.circular(AppDimensions.rPill),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.18),
-            ),
-          ),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s16, vertical: AppDimensions.s14),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(color: AppColors.primaryBg, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
                     Text(
-                      'EXPRESS SLOT',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 9,
-                      ),
+                      booking.service.isNotEmpty ? booking.service : 'Service',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleSmall?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${booking.vehicleName} • ${booking.date}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodySmall?.copyWith(color: AppColors.text3, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: AppDimensions.s10),
-              Expanded(
-                child: Text(
-                  'Next Slot Today: 2:30 PM (Bay 3)',
-                  style: textTheme.labelMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Text(
-                'Reserve →',
-                style: textTheme.labelSmall?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+              const SizedBox(width: AppDimensions.s8),
+              StatusPill(label: booking.statusLabel, bg: _statusFg.withValues(alpha: 0.12), fg: _statusFg),
             ],
           ),
         ),
@@ -516,732 +970,33 @@ class _LiveWorkshopSlotBanner extends StatelessWidget {
   }
 }
 
-/// PERFECTLY ALIGNED MASONRY QUICK ACTION GRID (Flush Baseline via IntrinsicHeight)
-class _MasonryQuickActionGrid extends StatelessWidget {
-  final VoidCallback onBook;
-  final VoidCallback onTrack;
-  final VoidCallback onGarage;
-  final VoidCallback onBreakdown;
+// ─── Helpers & Headings ──────────────────────────────────────────────────────
 
-  const _MasonryQuickActionGrid({
-    required this.onBook,
-    required this.onTrack,
-    required this.onGarage,
-    required this.onBreakdown,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Left Column (Hero Book Service + My Garage)
-          Expanded(
-            flex: 6,
-            child: Column(
-              children: [
-                // Hero Book Card (Stretches to fill available space)
-                Expanded(
-                  child: AppCard(
-                    onTap: onBook,
-                    color: AppColors.primary,
-                    borderRadius: 24,
-                    padding: const EdgeInsets.all(AppDimensions.s16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.28),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: const Icon(
-                                Icons.calendar_month_rounded,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimensions.s8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.22),
-                                borderRadius: BorderRadius.circular(
-                                  AppDimensions.rPill,
-                                ),
-                              ),
-                              child: Text(
-                                'QUICK SLOT',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        Text(
-                          'Book Service',
-                          style: textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Reserve slot & get estimate',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 11,
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.s14),
-                        Container(
-                          width: double.infinity,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.rPill,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Book Appointment',
-                              style: textTheme.labelMedium?.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.s10),
-
-                // My Garage Card (Aligns FLUSH with Roadside SOS on the right)
-                AppCard(
-                  onTap: onGarage,
-                  color: AppColors.surface,
-                  borderColor: AppColors.border,
-                  borderRadius: 24,
-                  padding: const EdgeInsets.all(AppDimensions.s14),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryBg,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.directions_car_filled_rounded,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: AppDimensions.s10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'My Garage',
-                              style: textTheme.titleSmall?.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            Text(
-                              'Manage vehicles',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: AppColors.text3,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s10),
-
-          // Right Column (Track Repair + Roadside SOS)
-          Expanded(
-            flex: 5,
-            child: Column(
-              children: [
-                // Track Repair Card
-                Expanded(
-                  child: AppCard(
-                    onTap: onTrack,
-                    color: AppColors.surface,
-                    borderColor: AppColors.border,
-                    borderRadius: 24,
-                    padding: const EdgeInsets.all(AppDimensions.s14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.satellite_alt_rounded,
-                                color: AppColors.accent,
-                                size: 20,
-                              ),
-                            ),
-                            const Spacer(),
-                            const Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 12,
-                              color: AppColors.text4,
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        Text(
-                          'Live Tracking',
-                          style: textTheme.titleSmall?.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Workshop updates',
-                          style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.text3,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.s10),
-
-                // Roadside SOS 24/7 Card
-                Expanded(
-                  child: AppCard(
-                    onTap: onBreakdown,
-                    color: AppColors.dangerBg,
-                    borderColor: AppColors.dangerBorder,
-                    borderRadius: 24,
-                    padding: const EdgeInsets.all(AppDimensions.s14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: const BoxDecoration(
-                                color: AppColors.danger,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.sos_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.danger,
-                                borderRadius: BorderRadius.circular(
-                                  AppDimensions.rPill,
-                                ),
-                              ),
-                              child: Text(
-                                '24/7',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 9,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        Text(
-                          'Roadside SOS',
-                          style: textTheme.titleSmall?.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Emergency dispatch',
-                          style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.danger,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// ROUNDED FEATURED SERVICE PACKAGES CAROUSEL (r24 Curves)
-class _FeaturedServicePackagesDeck extends StatelessWidget {
-  final ValueChanged<String> onSelectPackage;
-
-  const _FeaturedServicePackagesDeck({required this.onSelectPackage});
-
-  static const _packages = [
-    (
-      'Full Synthetic Oil Service',
-      '£89',
-      '45 mins',
-      'Engine flush, synthetic oil & filter + 20-pt check',
-      Icons.oil_barrel_rounded,
-      AppColors.primary,
-    ),
-    (
-      'Complete Brake & Disc Service',
-      '£149',
-      '1.5 hrs',
-      'Front & rear pads, rotor check & fluid flush',
-      Icons.do_not_disturb_on_rounded,
-      AppColors.danger,
-    ),
-    (
-      'AC Regas & Sanitization',
-      '£59',
-      '30 mins',
-      'Full R134a/R1234yf gas refill & anti-bacterial clean',
-      Icons.ac_unit_rounded,
-      AppColors.accent,
-    ),
-    (
-      'Annual MOT & Pre-Check Test',
-      '£45',
-      '1.0 hr',
-      'Official DVSA certified MOT testing & pre-audit',
-      Icons.verified_user_rounded,
-      AppColors.success,
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: [
-          for (final pkg in _packages) ...[
-            SizedBox(
-              width: 260,
-              child: AppCard(
-                onTap: () => onSelectPackage(pkg.$1),
-                borderRadius: 24,
-                padding: const EdgeInsets.all(AppDimensions.s14),
-                color: AppColors.surface,
-                borderColor: AppColors.border,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: pkg.$6.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(pkg.$5, size: 18, color: pkg.$6),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.s8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryBg,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.rPill,
-                            ),
-                          ),
-                          child: Text(
-                            pkg.$2,
-                            style: textTheme.labelSmall?.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppDimensions.s12),
-                    Text(
-                      pkg.$1,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleSmall?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      pkg.$4,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.text3,
-                        height: 1.3,
-                        fontSize: 11,
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.s10),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.schedule_rounded,
-                          size: 12,
-                          color: AppColors.text4,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          pkg.$3,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.text4,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          'Book Slot →',
-                          style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: AppDimensions.s10),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// ROUNDED ENHANCED GARAGE SHOWCASE (r24 Curves)
-class _EnhancedGarageDeck extends StatelessWidget {
-  final List<CustomerVehicleEntity> vehicles;
-  final VoidCallback onAddVehicle;
-  final VoidCallback onBookService;
-  final VoidCallback onManage;
-
-  const _EnhancedGarageDeck({
-    required this.vehicles,
-    required this.onAddVehicle,
-    required this.onBookService,
-    required this.onManage,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (vehicles.isEmpty) {
-      return EmptyState(
-        title: 'No registered vehicles',
-        message: 'Add your vehicle details to enable quick booking & tracking.',
-        icon: Icons.directions_car_outlined,
-        actionLabel: 'Add vehicle',
-        onAction: onAddVehicle,
-      );
-    }
-
-    final displayVehicles = vehicles.take(3).toList();
-
-    return Column(
-      children: [
-        for (final vehicle in displayVehicles) ...[
-          _EnhancedVehicleCard(
-            vehicle: vehicle,
-            onBookService: onBookService,
-            onManage: onManage,
-          ),
-          if (vehicle != displayVehicles.last)
-            const SizedBox(height: AppDimensions.s10),
-        ],
-      ],
-    );
-  }
-}
-
-class _EnhancedVehicleCard extends StatelessWidget {
-  final CustomerVehicleEntity vehicle;
-  final VoidCallback onBookService;
-  final VoidCallback onManage;
-
-  const _EnhancedVehicleCard({
-    required this.vehicle,
-    required this.onBookService,
-    required this.onManage,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    final healthColor = vehicle.healthScore >= 80
-        ? AppColors.success
-        : vehicle.healthScore >= 60
-        ? AppColors.warning
-        : AppColors.danger;
-
-    final healthProgress = (vehicle.healthScore.clamp(0, 100) / 100).toDouble();
-
-    return AppCard(
-      onTap: onManage,
-      borderRadius: 24,
-      padding: const EdgeInsets.all(AppDimensions.s16),
-      color: AppColors.surface,
-      borderColor: AppColors.border,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBg,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.directions_car_filled_rounded,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: AppDimensions.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      vehicle.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceAlt,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.rPill,
-                            ),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Text(
-                            vehicle.plateNumber,
-                            style: textTheme.labelSmall?.copyWith(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppDimensions.s8),
-                        if (vehicle.mileage.isNotEmpty)
-                          Text(
-                            vehicle.mileage,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: AppColors.text3,
-                              fontSize: 11,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              StatusPill(
-                label: '${vehicle.healthScore}% Healthy',
-                bg: healthColor.withValues(alpha: 0.12),
-                fg: healthColor,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.s12),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Health Index',
-                          style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.text3,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 10,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${vehicle.healthScore}/100',
-                          style: textTheme.labelSmall?.copyWith(
-                            color: healthColor,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                      child: LinearProgressIndicator(
-                        value: healthProgress,
-                        minHeight: 6,
-                        backgroundColor: AppColors.surfaceAlt,
-                        valueColor: AlwaysStoppedAnimation(healthColor),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.s12),
-          const Divider(height: 1, color: AppColors.line),
-          const SizedBox(height: AppDimensions.s10),
-          Row(
-            children: [
-              const Icon(
-                Icons.event_available_rounded,
-                size: 14,
-                color: AppColors.text3,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                vehicle.nextDue.isNotEmpty
-                    ? 'MOT Due: ${vehicle.nextDue}'
-                    : 'Annual MOT & Service OK',
-                style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.text3,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 11,
-                ),
-              ),
-              const Spacer(),
-              InkWell(
-                onTap: onBookService,
-                borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.s8,
-                    vertical: 2,
-                  ),
-                  child: Text(
-                    'Book Service →',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
+class _SectionHeading extends StatelessWidget {
   final String title;
-  final String? action;
-  final VoidCallback? onAction;
 
-  const _SectionHeader({required this.title, this.action, this.onAction});
+  const _SectionHeading({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w900,
+        fontSize: 17,
+        letterSpacing: -0.4,
+      ),
+    );
+  }
+}
+
+class _SectionHeadingWithAction extends StatelessWidget {
+  final String title;
+  final String actionText;
+  final VoidCallback onAction;
+
+  const _SectionHeadingWithAction({required this.title, required this.actionText, required this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -1254,34 +1009,75 @@ class _SectionHeader extends StatelessWidget {
           style: textTheme.titleMedium?.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w900,
+            fontSize: 17,
             letterSpacing: -0.4,
           ),
         ),
         const Spacer(),
-        if (action != null && onAction != null)
-          GestureDetector(
-            onTap: onAction,
-            child: Text(
-              action!,
-              style: textTheme.labelMedium?.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+        GestureDetector(
+          onTap: onAction,
+          child: Text(
+            actionText,
+            style: textTheme.labelMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w800),
           ),
+        ),
       ],
     );
   }
 }
 
-class _CustomerHomeLoading extends StatelessWidget {
-  const _CustomerHomeLoading();
+// ─── Loading Skeleton ────────────────────────────────────────────────────────
+
+class _HomeLoading extends StatelessWidget {
+  const _HomeLoading();
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppColors.bg,
-      body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+    return AppResponsivePage(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: AppDimensions.s16),
+          _SkeletonBox(width: 200, height: 28, radius: 8),
+          const SizedBox(height: 8),
+          _SkeletonBox(width: 140, height: 14, radius: 6),
+          const SizedBox(height: AppDimensions.s20),
+          _SkeletonBox(width: double.infinity, height: 165, radius: 20),
+          const SizedBox(height: AppDimensions.s20),
+          Row(
+            children: [
+              Expanded(child: _SkeletonBox(width: double.infinity, height: 70, radius: 18)),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(child: _SkeletonBox(width: double.infinity, height: 70, radius: 18)),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          Row(
+            children: [
+              Expanded(child: _SkeletonBox(width: double.infinity, height: 70, radius: 18)),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(child: _SkeletonBox(width: double.infinity, height: 70, radius: 18)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonBox extends StatelessWidget {
+  final double width;
+  final double height;
+  final double radius;
+
+  const _SkeletonBox({required this.width, required this.height, required this.radius});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(color: AppColors.surfaceAlt, borderRadius: BorderRadius.circular(radius)),
     );
   }
 }

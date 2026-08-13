@@ -56,7 +56,6 @@ class AppCard extends StatelessWidget {
     final cardContent = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
-      width: double.infinity,
       padding: effectivePadding,
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,

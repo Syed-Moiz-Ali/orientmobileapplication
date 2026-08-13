@@ -88,13 +88,18 @@ class AuthNotifier extends Notifier<AuthState> {
 
     final first = await datasource.getMe();
     if (first case Success(:final data)) {
-      final role = _tryRoleFromName(data.role.isNotEmpty ? data.role : roleName ?? '');
+      final role = _tryRoleFromName(
+        data.role.isNotEmpty ? data.role : roleName ?? '',
+      );
       if (role == null) {
         await storage.clearAll();
         state = const AuthUnauthenticated();
         return false;
       }
-      await storage.setMetadata(_validatedAtKey, DateTime.now().millisecondsSinceEpoch.toString());
+      await storage.setMetadata(
+        _validatedAtKey,
+        DateTime.now().millisecondsSinceEpoch.toString(),
+      );
       state = AuthAuthenticated(role: role, token: token, profile: data);
       return true;
     }
@@ -123,8 +128,13 @@ class AuthNotifier extends Notifier<AuthState> {
     // Network failure / offline: proceed with the locally stored session ONLY
     // within the freshness TTL — a revoked user must not stay in forever.
     final validatedAt = await storage.getMetadata(_validatedAtKey);
-    final fresh = validatedAt != null &&
-        DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(int.tryParse(validatedAt) ?? 0)) <
+    final fresh =
+        validatedAt != null &&
+        DateTime.now().difference(
+              DateTime.fromMillisecondsSinceEpoch(
+                int.tryParse(validatedAt) ?? 0,
+              ),
+            ) <
             _sessionTtl;
     final role = _tryRoleFromName(roleName ?? '');
     if (!fresh || role == null) {
@@ -158,7 +168,15 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> refreshSession() async {
     final storage = ref.read(tokenStorageProvider);
     final refreshToken = await storage.getRefreshToken();
-    if (refreshToken == null) return false;
+    if (refreshToken == null) {
+      try {
+        await storage.clearAll();
+      } catch (_) {
+        // Storage failure must not keep the user logged in.
+      }
+      state = const AuthUnauthenticated();
+      return false;
+    }
 
     final datasource = ref.read(authDatasourceProvider);
     final result = await datasource.refreshToken(refreshToken);

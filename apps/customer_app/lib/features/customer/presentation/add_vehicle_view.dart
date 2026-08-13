@@ -166,6 +166,89 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                     children: [
                       const SizedBox(height: AppDimensions.s16),
 
+                      // VEHICLE PHOTO ATTACHMENT CARD
+                      Center(
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 160,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: AppColors.primary.withValues(alpha: 0.3),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(24),
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            AppColors.primaryBg,
+                                            AppColors.surface,
+                                          ],
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                        ),
+                                      ),
+                                    ),
+                                    Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            width: 52,
+                                            height: 52,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary.withValues(alpha: 0.12),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.add_a_photo_rounded,
+                                              color: AppColors.primary,
+                                              size: 24,
+                                            ),
+                                          ),
+                                          const SizedBox(height: AppDimensions.s8),
+                                          Text(
+                                            'Upload Vehicle Photo',
+                                            style: textTheme.titleSmall?.copyWith(
+                                              color: AppColors.primary,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Tap camera icon to capture or choose photo',
+                                            style: textTheme.labelSmall?.copyWith(
+                                              color: AppColors.text3,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.s20),
+
                       // LIVE PLATE PREVIEW
                       Center(
                         child: Container(

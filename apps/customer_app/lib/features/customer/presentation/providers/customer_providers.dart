@@ -251,6 +251,11 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
       ref
           .read(loggerProvider)
           .e('Failed to load customer dashboard', error: e, stackTrace: st);
+      if (e is UnauthorizedException) {
+        await ref.read(authNotifierProvider.notifier).logout();
+        state = state.copyWith(isLoading: false);
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         loadError:
