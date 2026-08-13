@@ -19,31 +19,11 @@ class CustomerScaffold extends ConsumerStatefulWidget {
 
 class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
   static const _navItems = <AppNavItem>[
-    AppNavItem(
-      selectedIcon: Icons.home_rounded,
-      icon: Icons.home_outlined,
-      label: 'Home',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.track_changes_rounded,
-      icon: Icons.track_changes_outlined,
-      label: 'Status',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.calendar_month_rounded,
-      icon: Icons.calendar_month_outlined,
-      label: 'Bookings',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.directions_car_rounded,
-      icon: Icons.directions_car_outlined,
-      label: 'Vehicles',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.person_rounded,
-      icon: Icons.person_outline_rounded,
-      label: 'Profile',
-    ),
+    AppNavItem(selectedIcon: Icons.home_rounded, icon: Icons.home_outlined, label: 'Home'),
+    AppNavItem(selectedIcon: Icons.track_changes_rounded, icon: Icons.track_changes_outlined, label: 'Status'),
+    AppNavItem(selectedIcon: Icons.calendar_month_rounded, icon: Icons.calendar_month_outlined, label: 'Appointments'),
+    AppNavItem(selectedIcon: Icons.directions_car_rounded, icon: Icons.directions_car_outlined, label: 'Vehicles'),
+    AppNavItem(selectedIcon: Icons.person_rounded, icon: Icons.person_outline_rounded, label: 'Profile'),
   ];
 
   static const _pages = <Widget>[
@@ -57,13 +37,10 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
   @override
   void initState() {
     super.initState();
-    // FIX (audit): apply the requested initial tab once (deep-link/extra).
     if (widget.initialTab > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ref
-              .read(customerDashboardProvider.notifier)
-              .selectTab(widget.initialTab);
+          ref.read(customerDashboardProvider.notifier).selectTab(widget.initialTab);
         }
       });
     }
@@ -71,6 +48,8 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
     final adaptive = context.adaptive;
@@ -78,16 +57,12 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Theme.of(context).brightness == Brightness.dark
-            ? Brightness.light
-            : Brightness.dark,
+        statusBarIconBrightness: theme.brightness == Brightness.dark ? Brightness.light : Brightness.dark,
       ),
     );
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
       appBar: null,
-      // FE-FIX (pre-deployment): offline indicator on the customer app too.
       body: Column(
         children: [
           const OfflineBanner(),
@@ -102,11 +77,7 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
         ],
       ),
       bottomNavigationBar: !adaptive.useNavigationRail
-          ? _BottomNav(
-              items: _navItems,
-              selectedIndex: state.selectedIndex,
-              onTap: notifier.selectTab,
-            )
+          ? _BottomNav(items: _navItems, selectedIndex: state.selectedIndex, onTap: notifier.selectTab)
           : null,
     );
   }
@@ -117,33 +88,22 @@ class _BottomNav extends StatelessWidget {
   final int selectedIndex;
   final void Function(int) onTap;
 
-  const _BottomNav({
-    required this.items,
-    required this.selectedIndex,
-    required this.onTap,
-  });
+  const _BottomNav({required this.items, required this.selectedIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(
-        AppDimensions.s14,
-        0,
-        AppDimensions.s14,
-        AppDimensions.s12,
-      ),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r24),
-        border: Border.all(color: AppColors.border),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(240),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
+          BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 8)),
         ],
       ),
       child: SafeArea(
@@ -167,30 +127,24 @@ class _BottomNav extends StatelessWidget {
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           curve: Curves.easeOutCubic,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.s14,
-                            vertical: 5,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                           decoration: BoxDecoration(
-                            color: sel
-                                ? AppColors.primaryBg
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.rPill,
-                            ),
+                            // color: sel ? colorScheme.primaryContainer : Colors.transparent,
+                            borderRadius: BorderRadius.circular(100),
                           ),
                           child: Icon(
                             sel ? items[i].selectedIcon : items[i].icon,
-                            color: sel ? AppColors.primary : AppColors.text4,
-                            size: 22,
+                            color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                            size: 24,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        // const SizedBox(height: 1),
                         Text(
                           items[i].label,
                           style: textTheme.labelSmall?.copyWith(
-                            color: sel ? AppColors.primary : AppColors.text3,
-                            fontWeight: sel ? FontWeight.w900 : FontWeight.w500,
+                            color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                            fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+                            fontSize: 13,
                           ),
                         ),
                       ],

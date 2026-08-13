@@ -81,7 +81,8 @@ class CustomerRemoteDataSource {
   // "cancelled" with ownership checks — the frontend never used it.
   Future<bool> cancelBooking(int bookingId) async {
     final r = await _client.put<dynamic>(
-      '${ApiEndpoints.customerBookings}/$bookingId/status?status=cancelled',
+      '${ApiEndpoints.customerBookings}/$bookingId/status',
+      data: {'status': 'cancelled'},
     );
     return r is Success;
   }
@@ -108,7 +109,10 @@ class CustomerRemoteDataSource {
       data: data,
       fromJson: (d) => IdResponse.fromJson(d as Map<String, dynamic>),
     );
-    return result.when(success: (r) => r, failure: (_) => const IdResponse());
+    return result.when(
+      success: (r) => r,
+      failure: (e) => throw e,
+    );
   }
 
   Future<ActiveServiceResponse> getActiveService() async {

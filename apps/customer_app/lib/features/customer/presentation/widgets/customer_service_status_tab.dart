@@ -13,17 +13,16 @@ class CustomerServiceStatusTab extends ConsumerStatefulWidget {
   const CustomerServiceStatusTab({super.key});
 
   @override
-  ConsumerState<CustomerServiceStatusTab> createState() =>
-      _CustomerServiceStatusTabState();
+  ConsumerState<CustomerServiceStatusTab> createState() => _CustomerServiceStatusTabState();
 }
 
-class _CustomerServiceStatusTabState
-    extends ConsumerState<CustomerServiceStatusTab> {
+class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatusTab> {
   Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
+    // Retaining the 60-second polling logic for active live jobs
     _refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
       if (!mounted || !TickerMode.of(context)) return;
       final dash = ref.read(customerDashboardProvider);
@@ -41,44 +40,50 @@ class _CustomerServiceStatusTabState
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final bookings =
-        ref.watch(customerBookingsProvider).value ??
-        const <CustomerBookingEntity>[];
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final bookings = ref.watch(customerBookingsProvider).value ?? const <CustomerBookingEntity>[];
     final dash = ref.watch(customerDashboardProvider);
     final activeService = dash.activeService;
-    final hasActiveLiveJob =
-        activeService != null &&
-        activeService.hasActiveJob &&
-        activeService.jobCardId.isNotEmpty;
 
-    // Filter pending or confirmed bookings
+    // Core state checks
+    final hasActiveLiveJob = activeService != null && activeService.hasActiveJob && activeService.jobCardId.isNotEmpty;
     final activeBookings = bookings
-        .where(
-          (b) =>
-              b.status == BookingStatus.confirmed ||
-              b.status == BookingStatus.pending,
-        )
+        .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending)
         .toList();
 
-    return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: () async {
-          await ref.read(customerDashboardProvider.notifier).refresh();
-        },
-        color: AppColors.primary,
-        child: AppResponsivePage(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. PAGE HEADER
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: AppDimensions.s12,
-                  bottom: AppDimensions.s8,
-                ),
-                child: Row(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      // ── FLOATING BOOK ACTION (Consistent with Home Tab) ──────────────────
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'customer-status-book-service-fab',
+        onPressed: () => context.push(AppRoutes.customerBookService),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        elevation: 4,
+        icon: Icon(Icons.add_rounded, color: colorScheme.onPrimary),
+        label: Text(
+          'New Booking',
+          style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onPrimary),
+        ),
+      ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await ref.read(customerDashboardProvider.notifier).refresh();
+          },
+          color: colorScheme.primary,
+          child: AppResponsivePage(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+
+                // ── 1. PREMIUM HEADER ──────────────────────────────────────────
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
@@ -86,36 +91,33 @@ class _CustomerServiceStatusTabState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Service Status Tracker 📡',
+                            'Service Tracker',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: textTheme.headlineLarge?.copyWith(
-                              color: AppColors.textPrimary,
+                            style: textTheme.headlineMedium?.copyWith(
+                              color: colorScheme.onSurface,
                               fontWeight: FontWeight.w900,
-                              fontSize: 26,
                               letterSpacing: -0.8,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             hasActiveLiveJob
-                                ? 'Live telemetry repair stage & completion ETA'
+                                ? 'Live telemetry repair stage & ETA'
                                 : activeBookings.isNotEmpty
-                                ? 'Pending appointment awaiting workshop check-in'
-                                : 'All systems clear • No pending services',
+                                ? 'Pending appointment awaiting check-in'
+                                : 'All systems clear • No active services',
                             style: textTheme.bodyMedium?.copyWith(
-                              color: AppColors.text3,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
-                              fontSize: 13,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: AppDimensions.s12),
+                    const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () =>
-                          context.push(AppRoutes.customerNotifications),
+                      onTap: () => context.push(AppRoutes.customerNotifications),
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -123,41 +125,27 @@ class _CustomerServiceStatusTabState
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.border),
+                              border: Border.all(color: colorScheme.outlineVariant),
                             ),
-                            child: const Icon(
-                              Icons.notifications_outlined,
-                              color: AppColors.textPrimary,
-                              size: 22,
-                            ),
+                            child: Icon(Icons.notifications_outlined, color: colorScheme.onSurface, size: 24),
                           ),
                           if (dash.unreadCount > 0)
                             Positioned(
                               top: -2,
                               right: -2,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.danger,
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimensions.rPill,
-                                  ),
-                                  border: Border.all(
-                                    color: AppColors.bg,
-                                    width: 2,
-                                  ),
+                                  color: colorScheme.error,
+                                  borderRadius: BorderRadius.circular(100),
+                                  border: Border.all(color: colorScheme.surface, width: 2),
                                 ),
                                 child: Text(
-                                  dash.unreadCount > 99
-                                      ? '99+'
-                                      : '${dash.unreadCount}',
+                                  dash.unreadCount > 99 ? '99+' : '${dash.unreadCount}',
                                   style: textTheme.labelSmall?.copyWith(
-                                    color: Colors.white,
+                                    color: colorScheme.onError,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 10,
                                   ),
@@ -169,73 +157,62 @@ class _CustomerServiceStatusTabState
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: AppDimensions.s16),
+                const SizedBox(height: 32),
 
-              // 2. ACTIVE SERVICE OR PENDING BOOKING CARD
-              if (hasActiveLiveJob) ...[
-                _ActiveJobTelemetryHero(service: activeService),
-                const SizedBox(height: AppDimensions.s16),
-                AdvisorContactCard(
-                  advisorName: activeService.technicianName.isNotEmpty
-                      ? activeService.technicianName
-                      : 'Service Advisor',
-                ),
-                const SizedBox(height: AppDimensions.s24),
-              ] else if (activeBookings.isNotEmpty) ...[
-                // FIX: SHOW PENDING SERVICE CARD WHEN SERVICE IS PENDING OR CONFIRMED!
-                _PendingServiceStatusCard(
-                  booking: activeBookings.first,
-                  onViewDetails: () => context.push(
-                    AppRoutes.customerBookingDetail,
-                    extra: activeBookings.first,
+                // ── 2. DYNAMIC STATUS CARD ─────────────────────────────────────
+                if (hasActiveLiveJob) ...[
+                  _ActiveJobTelemetryHero(service: activeService),
+                  const SizedBox(height: 16),
+                  AdvisorContactCard(
+                    advisorName: activeService.technicianName.isNotEmpty
+                        ? activeService.technicianName
+                        : 'Service Advisor',
                   ),
-                ),
-                const SizedBox(height: AppDimensions.s24),
-              ] else ...[
-                _NoActiveJobStatusCard(
-                  onBook: () => context.push(AppRoutes.customerBookService),
-                ),
-                const SizedBox(height: AppDimensions.s24),
-              ],
+                  const SizedBox(height: 36),
+                ] else if (activeBookings.isNotEmpty) ...[
+                  _PendingServiceStatusCard(
+                    booking: activeBookings.first,
+                    onViewDetails: () => context.push(AppRoutes.customerBookingDetail, extra: activeBookings.first),
+                  ),
+                  const SizedBox(height: 36),
+                ] else ...[
+                  _NoActiveJobStatusCard(onBook: () => context.push(AppRoutes.customerBookService)),
+                  const SizedBox(height: 36),
+                ],
 
-              // 3. WORKSHOP INFORMATION & LOCATION
-              _ExplanatorySectionHeader(
-                title: 'Workshop Location & Hours',
-                subtitle: 'Visit our main workshop bay or get live directions',
-              ),
-              const SizedBox(height: AppDimensions.s10),
-              const GarageInfoCard(),
-              const SizedBox(height: AppDimensions.s24),
-
-              // 4. SERVICE & MAINTENANCE RECORDS
-              if (bookings.isNotEmpty) ...[
+                // ── 3. WORKSHOP INFORMATION ────────────────────────────────────
                 _ExplanatorySectionHeader(
-                  title: 'Service & Maintenance Records',
-                  subtitle: 'Past service receipts & inspection reports',
-                  action: 'View All',
-                  onAction: () =>
-                      ref.read(customerDashboardProvider.notifier).selectTab(2),
+                  title: 'Workshop Location',
+                  subtitle: 'Visit our main bay or get live directions',
                 ),
-                const SizedBox(height: AppDimensions.s10),
-                Column(
-                  children: [
-                    for (final b in bookings.take(3)) ...[
-                      _ServiceRecordCard(
-                        booking: b,
-                        onTap: () => context.push(
-                          AppRoutes.customerBookingDetail,
-                          extra: b,
+                const SizedBox(height: 16),
+                const GarageInfoCard(), // Assuming this widget internally uses AppCard + outlineVariant now
+                const SizedBox(height: 36),
+
+                // ── 4. SERVICE RECORDS ─────────────────────────────────────────
+                if (bookings.isNotEmpty) ...[
+                  _ExplanatorySectionHeader(
+                    title: 'Maintenance Records',
+                    subtitle: 'Past service receipts & reports',
+                    action: 'View All',
+                    onAction: () => ref.read(customerDashboardProvider.notifier).selectTab(2),
+                  ),
+                  const SizedBox(height: 16),
+                  Column(
+                    children: [
+                      for (final b in bookings.take(3)) ...[
+                        _ServiceRecordCard(
+                          booking: b,
+                          onTap: () => context.push(AppRoutes.customerBookingDetail, extra: b),
                         ),
-                      ),
-                      if (b != bookings.take(3).last)
-                        const SizedBox(height: AppDimensions.s10),
+                        if (b != bookings.take(3).last) const SizedBox(height: 12),
+                      ],
                     ],
-                  ],
-                ),
-                const SizedBox(height: AppDimensions.s32),
+                  ),
+                  const SizedBox(height: 80), // Padding for Floating Action Button
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -243,36 +220,29 @@ class _CustomerServiceStatusTabState
   }
 }
 
-/// PENDING OR CONFIRMED SERVICE STATUS CARD (Fixes "No Active Job" bug for pending services)
+// ─── PENDING SERVICE STATUS CARD ─────────────────────────────────────────────
 class _PendingServiceStatusCard extends StatelessWidget {
   final CustomerBookingEntity booking;
   final VoidCallback onViewDetails;
 
-  const _PendingServiceStatusCard({
-    required this.booking,
-    required this.onViewDetails,
-  });
+  const _PendingServiceStatusCard({required this.booking, required this.onViewDetails});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isConfirmed = booking.status == BookingStatus.confirmed;
 
+    final highlightColor = isConfirmed ? colorScheme.primary : colorScheme.secondary;
+
     return AppCard(
       onTap: onViewDetails,
-      color: AppColors.surface,
-      borderColor: isConfirmed
-          ? AppColors.primaryBorder
-          : AppColors.warningBorder,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       borderRadius: 24,
-      padding: const EdgeInsets.all(AppDimensions.s18),
+      padding: const EdgeInsets.all(20),
       boxShadow: [
-        BoxShadow(
-          color: (isConfirmed ? AppColors.primary : AppColors.warning)
-              .withValues(alpha: 0.08),
-          blurRadius: 20,
-          offset: const Offset(0, 6),
-        ),
+        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 6)),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,20 +250,10 @@ class _PendingServiceStatusCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.s10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: (isConfirmed
-                      ? AppColors.primaryBg
-                      : AppColors.warningBg),
-                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                  border: Border.all(
-                    color: (isConfirmed
-                        ? AppColors.primaryBorder
-                        : AppColors.warningBorder),
-                  ),
+                  color: highlightColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(100),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -301,152 +261,99 @@ class _PendingServiceStatusCard extends StatelessWidget {
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: BoxDecoration(
-                        color: isConfirmed
-                            ? AppColors.primary
-                            : AppColors.warning,
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: BoxDecoration(color: highlightColor, shape: BoxShape.circle),
                     ),
-                    const SizedBox(width: AppDimensions.s6),
+                    const SizedBox(width: 8),
                     Text(
-                      isConfirmed
-                          ? 'SERVICE CONFIRMED • AWAITING INTAKE'
-                          : 'SERVICE PENDING WORKSHOP CONFIRMATION',
+                      isConfirmed ? 'CONFIRMED • AWAITING INTAKE' : 'PENDING CONFIRMATION',
                       style: textTheme.labelSmall?.copyWith(
-                        color: isConfirmed
-                            ? AppColors.primary
-                            : AppColors.warning,
+                        color: highlightColor,
                         fontWeight: FontWeight.w900,
                         fontSize: 9,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.8,
                       ),
                     ),
                   ],
                 ),
               ),
               const Spacer(),
-              StatusPill(
-                label: booking.statusLabel,
-                bg: isConfirmed ? AppColors.primaryBg : AppColors.warningBg,
-                fg: isConfirmed ? AppColors.primary : AppColors.warning,
-              ),
+              StatusPill(label: booking.statusLabel, bg: highlightColor.withValues(alpha: 0.15), fg: highlightColor),
             ],
           ),
-          const SizedBox(height: AppDimensions.s14),
+          const SizedBox(height: 16),
           Text(
-            booking.service.isNotEmpty
-                ? booking.service
-                : 'Scheduled Service Appointment',
-            style: textTheme.titleLarge?.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w900,
-              fontSize: 22,
-            ),
+            booking.service.isNotEmpty ? booking.service : 'Scheduled Appointment',
+            style: textTheme.titleLarge?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                  border: Border.all(color: AppColors.border),
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  booking.plateNumber,
+                  booking.plateNumber.toUpperCase(),
                   style: textTheme.labelSmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colorScheme.onSurface,
                     fontWeight: FontWeight.w900,
-                    fontSize: 10,
+                    letterSpacing: 1,
                   ),
                 ),
               ),
-              const SizedBox(width: AppDimensions.s8),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   booking.vehicleName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.text3,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.s14),
+          const SizedBox(height: 20),
 
-          // Scheduled Date & Time Pill Box
+          // Scheduled Date Pill
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.s12,
-              vertical: AppDimensions.s10,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.primaryBg,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colorScheme.outlineVariant),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.event_available_rounded,
-                  color: AppColors.primary,
-                  size: 18,
-                ),
-                const SizedBox(width: AppDimensions.s8),
+                Icon(Icons.event_available_rounded, color: colorScheme.onSurface, size: 20),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Scheduled for: ${booking.date}${booking.time.isNotEmpty ? " at ${booking.time}" : ""}',
-                    style: textTheme.labelMedium?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    'Scheduled: ${booking.date}${booking.time.isNotEmpty ? " at ${booking.time}" : ""}',
+                    style: textTheme.labelMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: AppDimensions.s16),
+          const SizedBox(height: 24),
 
           // Visual Stepper Pipeline
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const _StepCircle(label: 'Booked', isDone: true),
-              const _StepLine(isDone: true),
-              _StepCircle(
-                label: 'Check-In',
-                isCurrent: isConfirmed,
-                isDone: isConfirmed,
-              ),
-              const _StepLine(isDone: false),
-              const _StepCircle(label: 'Repairs', isDone: false),
-              const _StepLine(isDone: false),
-              const _StepCircle(label: 'Pick-Up', isDone: false),
+              _StepCircle(label: 'Booked', isDone: true, color: highlightColor),
+              _StepLine(isDone: true, color: highlightColor),
+              _StepCircle(label: 'Check-In', isCurrent: isConfirmed, isDone: isConfirmed, color: highlightColor),
+              _StepLine(isDone: false, color: highlightColor),
+              _StepCircle(label: 'Repairs', isDone: false, color: highlightColor),
+              _StepLine(isDone: false, color: highlightColor),
+              _StepCircle(label: 'Pick-Up', isDone: false, color: highlightColor),
             ],
-          ),
-          const SizedBox(height: AppDimensions.s14),
-
-          // Action Button
-          Container(
-            width: double.infinity,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(AppDimensions.rPill),
-            ),
-            child: Center(
-              child: Text(
-                'View Booking Details & Instructions →',
-                style: textTheme.labelMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -454,7 +361,7 @@ class _PendingServiceStatusCard extends StatelessWidget {
   }
 }
 
-/// NO ACTIVE JOB CARD (Clear Explanation & Call To Action)
+// ─── NO ACTIVE JOB CARD (Clean & Elegant) ────────────────────────────────────
 class _NoActiveJobStatusCard extends StatelessWidget {
   final VoidCallback onBook;
 
@@ -462,118 +369,16 @@ class _NoActiveJobStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return AppCard(
       borderRadius: 24,
-      padding: const EdgeInsets.all(AppDimensions.s20),
-      color: AppColors.surface,
-      borderColor: AppColors.border,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.successBg,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.check_circle_outline_rounded,
-                  color: AppColors.success,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: AppDimensions.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'No Pending or Active Service Jobs',
-                      style: textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Your vehicle is idle and ready for driving.',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.text3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          const Divider(height: 1, color: AppColors.line),
-          const SizedBox(height: AppDimensions.s14),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Due for maintenance or routine checkup?',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: onBook,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.s16,
-                    vertical: AppDimensions.s10,
-                  ),
-                ),
-                child: const Text(
-                  'Book Service →',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// ACTIVE JOB TELEMETRY HERO (Clear Visual Stages)
-class _ActiveJobTelemetryHero extends StatelessWidget {
-  final CustomerServiceEntity service;
-
-  const _ActiveJobTelemetryHero({required this.service});
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final progress = (service.progressPercent.clamp(0, 100) / 100).toDouble();
-
-    return AppCard(
-      color: AppColors.surface,
-      borderColor: AppColors.primaryBorder,
-      borderRadius: 24,
-      padding: const EdgeInsets.all(AppDimensions.s18),
+      padding: const EdgeInsets.all(24),
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       boxShadow: [
-        BoxShadow(
-          color: AppColors.primary.withValues(alpha: 0.08),
-          blurRadius: 20,
-          offset: const Offset(0, 6),
-        ),
+        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 6)),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -581,90 +386,52 @@ class _ActiveJobTelemetryHero extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.s10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(color: colorScheme.primaryContainer, borderRadius: BorderRadius.circular(16)),
+                child: Icon(Icons.check_circle_outline_rounded, color: colorScheme.primary, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.accent,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.s6),
                     Text(
-                      'STAGE 3 OF 4 • IN PROGRESS',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 9,
-                        letterSpacing: 0.5,
-                      ),
+                      'No Active Services',
+                      style: textTheme.titleMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Your vehicle is idle and ready.',
+                      style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
-              const Spacer(),
-              Text(
-                '${service.progressPercent}% Completed',
-                style: textTheme.titleSmall?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: AppDimensions.s14),
-          Text(
-            service.currentStage.isNotEmpty
-                ? service.currentStage
-                : 'Service In Progress',
-            style: textTheme.titleLarge?.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w900,
-              fontSize: 22,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Vehicle: ${service.vehicleName} (${service.plateNumber}) • Job #${service.jobCardId}',
-            style: textTheme.bodySmall?.copyWith(
-              color: AppColors.text3,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimensions.rPill),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 10,
-              backgroundColor: AppColors.surfaceAlt,
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s14),
-
-          // Visual Stepper Pipeline
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const SizedBox(height: 20),
+          Divider(height: 1, color: colorScheme.outlineVariant),
+          const SizedBox(height: 20),
+          Row(
             children: [
-              _StepCircle(label: 'Check-In', isDone: true),
-              _StepLine(isDone: true),
-              _StepCircle(label: 'Inspection', isDone: true),
-              _StepLine(isDone: true),
-              _StepCircle(label: 'Repairing', isCurrent: true),
-              _StepLine(isDone: false),
-              _StepCircle(label: 'Pick-Up', isDone: false),
+              Expanded(
+                child: Text(
+                  'Due for routine maintenance?',
+                  style: textTheme.labelMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w700),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: onBook,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  elevation: 0,
+                ),
+                child: const Text('Book Now', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+              ),
             ],
           ),
         ],
@@ -673,24 +440,142 @@ class _ActiveJobTelemetryHero extends StatelessWidget {
   }
 }
 
+// ─── ACTIVE JOB TELEMETRY HERO (Premium Dark Uber-Style) ─────────────────────
+class _ActiveJobTelemetryHero extends StatelessWidget {
+  final CustomerServiceEntity service;
+
+  const _ActiveJobTelemetryHero({required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final progress = (service.progressPercent.clamp(0, 100) / 100).toDouble();
+
+    return AppCard(
+      color: colorScheme.inverseSurface, // Deep luxury contrast
+      borderColor: Colors.transparent,
+      borderRadius: 24,
+      padding: const EdgeInsets.all(24),
+      boxShadow: [
+        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.15), blurRadius: 24, offset: const Offset(0, 8)),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'LIVE TELEMETRY',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 9,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${service.progressPercent}%',
+                style: textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onInverseSurface,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            service.currentStage.isNotEmpty ? service.currentStage : 'Service In Progress',
+            style: textTheme.headlineSmall?.copyWith(
+              color: colorScheme.onInverseSurface,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${service.vehicleName} (${service.plateNumber.toUpperCase()}) • Job #${service.jobCardId}',
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onInverseSurface.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(100),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: colorScheme.onInverseSurface.withValues(alpha: 0.15),
+              valueColor: AlwaysStoppedAnimation(colorScheme.primary),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Visual Stepper Pipeline
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _StepCircle(label: 'Check-In', isDone: true, color: colorScheme.primary, isDarkBg: true),
+              _StepLine(isDone: true, color: colorScheme.primary, isDarkBg: true),
+              _StepCircle(label: 'Inspection', isDone: true, color: colorScheme.primary, isDarkBg: true),
+              _StepLine(isDone: true, color: colorScheme.primary, isDarkBg: true),
+              _StepCircle(label: 'Repairing', isCurrent: true, color: colorScheme.primary, isDarkBg: true),
+              _StepLine(isDone: false, color: colorScheme.primary, isDarkBg: true),
+              _StepCircle(label: 'Pick-Up', isDone: false, color: colorScheme.primary, isDarkBg: true),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── STEPPER WIDGETS ─────────────────────────────────────────────────────────
 class _StepCircle extends StatelessWidget {
   final String label;
   final bool isDone;
   final bool isCurrent;
+  final Color color;
+  final bool isDarkBg;
 
   const _StepCircle({
     required this.label,
     this.isDone = false,
     this.isCurrent = false,
+    required this.color,
+    this.isDarkBg = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isDone
-        ? AppColors.success
-        : isCurrent
-        ? AppColors.primary
-        : AppColors.text4;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Explicitly defining a success color strictly inside the widget since AppTheme lacks it
+    final resolvedColor = isDone ? const Color(0xFF10B981) : color;
+    final emptyColor = isDarkBg
+        ? colorScheme.onInverseSurface.withValues(alpha: 0.2)
+        : colorScheme.surfaceContainerHighest;
+    final textColor = isDarkBg ? colorScheme.onInverseSurface : colorScheme.onSurface;
 
     return Column(
       children: [
@@ -698,34 +583,33 @@ class _StepCircle extends StatelessWidget {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: isDone || isCurrent
-                ? color.withValues(alpha: 0.15)
-                : AppColors.surfaceAlt,
+            color: isDone || isCurrent ? resolvedColor.withValues(alpha: 0.15) : emptyColor,
             shape: BoxShape.circle,
-            border: Border.all(color: color, width: isCurrent ? 2 : 1),
+            border: Border.all(
+              color: isDone || isCurrent ? resolvedColor : Colors.transparent,
+              width: isCurrent ? 2 : 1,
+            ),
           ),
           child: Center(
             child: isDone
-                ? Icon(Icons.check_rounded, size: 14, color: color)
+                ? Icon(Icons.check_rounded, size: 14, color: resolvedColor)
                 : Container(
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: color,
+                      color: isCurrent ? resolvedColor : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
                   ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           label,
           style: TextStyle(
             fontSize: 10,
-            fontWeight: isCurrent || isDone ? FontWeight.w900 : FontWeight.w500,
-            color: isCurrent || isDone
-                ? AppColors.textPrimary
-                : AppColors.text4,
+            fontWeight: isCurrent || isDone ? FontWeight.w900 : FontWeight.w600,
+            color: isCurrent || isDone ? textColor : textColor.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -735,21 +619,29 @@ class _StepCircle extends StatelessWidget {
 
 class _StepLine extends StatelessWidget {
   final bool isDone;
+  final Color color;
+  final bool isDarkBg;
 
-  const _StepLine({required this.isDone});
+  const _StepLine({required this.isDone, required this.color, this.isDarkBg = false});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final emptyColor = isDarkBg
+        ? colorScheme.onInverseSurface.withValues(alpha: 0.1)
+        : colorScheme.surfaceContainerHighest;
+
     return Expanded(
       child: Container(
         height: 2,
-        margin: const EdgeInsets.only(bottom: 16),
-        color: isDone ? AppColors.success : AppColors.border,
+        margin: const EdgeInsets.only(bottom: 18), // Aligned with the circles
+        color: isDone ? const Color(0xFF10B981) : emptyColor,
       ),
     );
   }
 }
 
+// ─── SERVICE RECORD LIST ITEM ────────────────────────────────────────────────
 class _ServiceRecordCard extends StatelessWidget {
   final CustomerBookingEntity booking;
   final VoidCallback onTap;
@@ -758,50 +650,42 @@ class _ServiceRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return AppCard(
       onTap: onTap,
-      borderRadius: 24,
-      padding: const EdgeInsets.all(AppDimensions.s14),
-      color: AppColors.surface,
-      borderColor: AppColors.border,
+      borderRadius: 20,
+      padding: const EdgeInsets.all(16),
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primaryBg,
+              color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              Icons.receipt_long_rounded,
-              color: AppColors.primary,
-              size: 22,
-            ),
+            child: Icon(Icons.receipt_long_rounded, color: colorScheme.onSurface, size: 24),
           ),
-          const SizedBox(width: AppDimensions.s12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  booking.service.isNotEmpty
-                      ? booking.service
-                      : 'Completed Service',
+                  booking.service.isNotEmpty ? booking.service : 'Completed Service',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleSmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   '${booking.vehicleName} • ${booking.date}',
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.text3,
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -810,8 +694,8 @@ class _ServiceRecordCard extends StatelessWidget {
           ),
           StatusPill(
             label: booking.statusLabel,
-            bg: AppColors.successBg,
-            fg: AppColors.success,
+            bg: const Color(0xFF10B981).withValues(alpha: 0.15),
+            fg: const Color(0xFF10B981),
           ),
         ],
       ),
@@ -819,25 +703,22 @@ class _ServiceRecordCard extends StatelessWidget {
   }
 }
 
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
 class _ExplanatorySectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? action;
   final VoidCallback? onAction;
 
-  const _ExplanatorySectionHeader({
-    required this.title,
-    required this.subtitle,
-    this.action,
-    this.onAction,
-  });
+  const _ExplanatorySectionHeader({required this.title, required this.subtitle, this.action, this.onAction});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Column(
@@ -845,20 +726,14 @@ class _ExplanatorySectionHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                style: textTheme.titleLarge?.copyWith(
+                  color: colorScheme.onSurface,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -0.4,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.text3,
-                  fontSize: 11,
-                ),
-              ),
+              const SizedBox(height: 4),
+              Text(subtitle, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
             ],
           ),
         ),
@@ -867,10 +742,7 @@ class _ExplanatorySectionHeader extends StatelessWidget {
             onTap: onAction,
             child: Text(
               action!,
-              style: textTheme.labelMedium?.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w800,
-              ),
+              style: textTheme.labelMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w800),
             ),
           ),
       ],

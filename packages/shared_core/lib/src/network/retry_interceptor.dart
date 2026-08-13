@@ -68,6 +68,10 @@ class RetryInterceptor extends Interceptor {
   }
 
   bool shouldRetry(DioException error) {
+    final method = error.requestOptions.method.toUpperCase();
+    if (method != 'GET' && method != 'HEAD' && method != 'OPTIONS') {
+      return error.response?.statusCode == 429;
+    }
     return error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout ||
         error.type == DioExceptionType.connectionError ||

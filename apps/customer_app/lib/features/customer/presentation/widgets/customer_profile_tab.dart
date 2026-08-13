@@ -11,21 +11,18 @@ class CustomerProfileTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     final state = ref.watch(customerDashboardProvider);
     final profile = state.profile;
 
     final name = profile?.name.isNotEmpty == true
         ? profile!.name
-        : (profile?.firstName.isNotEmpty == true
-              ? profile!.firstName
-              : 'Customer Profile');
-    final initials = profile?.avatarInitials.isNotEmpty == true
-        ? profile!.avatarInitials
-        : 'C';
-    final memberId = profile?.memberId.isNotEmpty == true
-        ? profile!.memberId
-        : '102';
+        : (profile?.firstName.isNotEmpty == true ? profile!.firstName : 'Customer Profile');
+    final initials = profile?.avatarInitials.isNotEmpty == true ? profile!.avatarInitials : 'C';
+    final memberId = profile?.memberId.isNotEmpty == true ? profile!.memberId : '102';
 
     return SafeArea(
       child: AppResponsivePage(
@@ -33,231 +30,208 @@ class CustomerProfileTab extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. PAGE HEADER (Matches Home Tab Header Pattern)
-            Padding(
-              padding: const EdgeInsets.only(
-                top: AppDimensions.s12,
-                bottom: AppDimensions.s8,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Account & Settings 👤',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.headlineLarge?.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 26,
-                            letterSpacing: -0.8,
-                          ),
+            const SizedBox(height: 16),
+
+            // ── 1. PREMIUM HEADER ──────────────────────────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Account',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.headlineMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.8,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Manage your VIP membership, app security & preferences',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: AppColors.text3,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Manage your VIP membership & preferences',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: AppDimensions.s12),
-                  GestureDetector(
-                    onTap: () => context.push(AppRoutes.customerNotifications),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: const Icon(
-                            Icons.notifications_outlined,
-                            color: AppColors.textPrimary,
-                            size: 22,
-                          ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => context.push(AppRoutes.customerNotifications),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: colorScheme.outlineVariant),
                         ),
-                        if (state.unreadCount > 0)
-                          Positioned(
-                            top: -2,
-                            right: -2,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.danger,
-                                borderRadius: BorderRadius.circular(
-                                  AppDimensions.rPill,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.bg,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Text(
-                                state.unreadCount > 99
-                                    ? '99+'
-                                    : '${state.unreadCount}',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 10,
-                                ),
+                        child: Icon(Icons.notifications_outlined, color: colorScheme.onSurface, size: 24),
+                      ),
+                      if (state.unreadCount > 0)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: colorScheme.error,
+                              borderRadius: BorderRadius.circular(100),
+                              border: Border.all(color: colorScheme.surface, width: 2),
+                            ),
+                            child: Text(
+                              state.unreadCount > 99 ? '99+' : '${state.unreadCount}',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onError,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 10,
                               ),
                             ),
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: AppDimensions.s16),
+            const SizedBox(height: 32),
 
-            // 2. HERO PROFILE INFO CARD (High Contrast Primary Card)
+            // ── 2. HERO PROFILE INFO CARD (Premium Gradient) ─────────────────
             AppCard(
-              color: AppColors.primary,
               borderRadius: 24,
-              padding: const EdgeInsets.all(AppDimensions.s16),
+              elevation: 0,
+              padding: EdgeInsets.zero,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.28),
-                  blurRadius: 20,
+                  color: colorScheme.primary.withValues(alpha: 0.2),
+                  blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
               ],
-              child: Row(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        initials,
-                        style: textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [colorScheme.primary, colorScheme.primaryContainer],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(width: AppDimensions.s14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
+                ),
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: colorScheme.onPrimary.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: colorScheme.onPrimary.withValues(alpha: 0.3), width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          initials,
+                          style: textTheme.headlineMedium?.copyWith(
+                            color: colorScheme.onPrimary,
                             fontWeight: FontWeight.w900,
-                            fontSize: 20,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Member #$memberId • Workshop Verified',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.rPill,
-                            ),
-                          ),
-                          child: Text(
-                            'VIP MEMBERSHIP ACTIVE',
-                            style: textTheme.labelSmall?.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 9,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.titleLarge?.copyWith(
+                              color: colorScheme.onPrimary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Member #$memberId • Verified',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onPrimary.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: colorScheme.onPrimary,
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            child: Text(
+                              'VIP ACTIVE',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 9,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: AppDimensions.s16),
+            const SizedBox(height: 24),
 
-            // 3. STATS ROW (r24 Cards)
+            // ── 3. STATS ROW ─────────────────────────────────────────────────
             Row(
               children: [
                 Expanded(
                   child: _StatTile(
-                    label: 'Registered Cars',
-                    value: '${state.vehicles.length}',
-                    icon: Icons.directions_car_filled_rounded,
+                    label: 'Garage',
+                    value: '${state.vehicles.length} Cars',
+                    icon: Icons.directions_car_rounded,
                   ),
                 ),
-                const SizedBox(width: AppDimensions.s10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: _StatTile(
-                    label: 'Loyalty Points',
-                    value: '1,450 PTS',
-                    icon: Icons.stars_rounded,
-                  ),
+                  child: _StatTile(label: 'Loyalty', value: '1,450 PTS', icon: Icons.stars_rounded),
                 ),
               ],
             ),
-            const SizedBox(height: AppDimensions.s16),
+            const SizedBox(height: 24),
 
-            // 4. LOYALTY REWARDS & SAVINGS BANNER CARD
-            _LoyaltyRewardsCard(
-              onRedeem: () => context.push(AppRoutes.customerBookService),
-            ),
-            const SizedBox(height: AppDimensions.s24),
+            // ── 4. NEW: REFER & EARN PROMO ───────────────────────────────────
+            const _ReferAndEarnBanner(),
+            const SizedBox(height: 36),
 
-            // 5. ACCOUNT SETTINGS (r24 Group Cards)
-            _ExplanatorySectionHeader(
-              title: 'Garage & Breakdown Shortcuts',
-              subtitle:
-                  'Manage registered cars, breakdown assistance & appointments',
-            ),
-            const SizedBox(height: AppDimensions.s10),
+            // ── 5. LOYALTY REWARDS & SAVINGS CARD ────────────────────────────
+            _ExplanatorySectionHeader(title: 'Your Rewards', subtitle: 'Claim your accumulated VIP credit'),
+            const SizedBox(height: 16),
+            _LoyaltyRewardsCard(onRedeem: () => context.push(AppRoutes.customerBookService)),
+            const SizedBox(height: 36),
+
+            // ── 6. ACCOUNT SETTINGS ──────────────────────────────────────────
+            _ExplanatorySectionHeader(title: 'Garage Shortcuts', subtitle: 'Manage vehicles and breakdown assistance'),
+            const SizedBox(height: 16),
             _SettingsGroup(
               items: [
                 _SettingsTile(
                   icon: Icons.directions_car_rounded,
                   title: 'My Garage & Vehicles',
                   subtitle: 'Manage registered cars, MOT & service details',
-                  onTap: () =>
-                      ref.read(customerDashboardProvider.notifier).selectTab(3),
+                  onTap: () => ref.read(customerDashboardProvider.notifier).selectTab(3),
                 ),
                 _SettingsTile(
                   icon: Icons.add_rounded,
@@ -273,25 +247,18 @@ class CustomerProfileTab extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppDimensions.s24),
+            const SizedBox(height: 36),
 
-            // 6. PREFERENCES & SECURITY (r24 Group Cards)
-            _ExplanatorySectionHeader(
-              title: 'App Preferences & Security',
-              subtitle: 'Configure notifications, Face ID security & support',
-            ),
-            const SizedBox(height: AppDimensions.s10),
+            // ── 7. PREFERENCES & SECURITY ────────────────────────────────────
+            _ExplanatorySectionHeader(title: 'App Preferences', subtitle: 'Configure notifications and security'),
+            const SizedBox(height: 16),
             _SettingsGroup(
               items: [
                 _SettingsTile(
                   icon: Icons.notifications_active_rounded,
                   title: 'Push Notifications',
-                  subtitle: 'Receive workshop stage updates & invoice alerts',
-                  trailing: Switch.adaptive(
-                    value: true,
-                    activeTrackColor: AppColors.primary,
-                    onChanged: (_) {},
-                  ),
+                  subtitle: 'Receive workshop stage updates & alerts',
+                  trailing: Switch.adaptive(value: true, activeTrackColor: colorScheme.primary, onChanged: (_) {}),
                   onTap: () {},
                 ),
                 _SettingsTile(
@@ -308,36 +275,30 @@ class CustomerProfileTab extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppDimensions.s28),
+            const SizedBox(height: 36),
 
-            // 7. LOGOUT BUTTON
+            // ── 8. LOGOUT BUTTON ─────────────────────────────────────────────
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 56,
               child: ElevatedButton.icon(
                 onPressed: () {
                   ref.read(authNotifierProvider.notifier).logout();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.dangerBg,
-                  foregroundColor: AppColors.danger,
+                  backgroundColor: colorScheme.errorContainer,
+                  foregroundColor: colorScheme.error,
                   elevation: 0,
-                  side: const BorderSide(color: AppColors.dangerBorder),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                icon: const Icon(Icons.logout_rounded, size: 18),
+                icon: const Icon(Icons.logout_rounded, size: 20),
                 label: Text(
                   'Log Out of Account',
-                  style: textTheme.labelLarge?.copyWith(
-                    color: AppColors.danger,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: textTheme.titleMedium?.copyWith(color: colorScheme.error, fontWeight: FontWeight.w800),
                 ),
               ),
             ),
-            const SizedBox(height: AppDimensions.s32),
+            const SizedBox(height: 48),
           ],
         ),
       ),
@@ -345,136 +306,60 @@ class CustomerProfileTab extends ConsumerWidget {
   }
 }
 
-/// LOYALTY REWARDS & SAVINGS CARD
-class _LoyaltyRewardsCard extends StatelessWidget {
-  final VoidCallback onRedeem;
-
-  const _LoyaltyRewardsCard({required this.onRedeem});
+// ─── NEW: REFER & EARN BANNER ────────────────────────────────────────────────
+class _ReferAndEarnBanner extends StatelessWidget {
+  const _ReferAndEarnBanner();
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return AppCard(
+      height: 120,
       borderRadius: 24,
-      padding: const EdgeInsets.all(AppDimensions.s16),
-      color: AppColors.surface,
-      borderColor: AppColors.border,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      elevation: 0,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
+      padding: EdgeInsets.zero,
+      boxShadow: [
+        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 6)),
+      ],
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.card_giftcard_rounded,
-                  color: AppColors.accent,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: AppDimensions.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '£14.50 Service Credit Available',
-                      style: textTheme.titleSmall?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(
-                      'From 1,450 Orient Loyalty Points',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.text3,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              ElevatedButton(
-                onPressed: onRedeem,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.s12,
-                    vertical: AppDimensions.s8,
-                  ),
-                ),
-                child: const Text(
-                  'Claim Credit',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
-                ),
-              ),
-            ],
+          Positioned(
+            right: -20,
+            bottom: -20,
+            child: Icon(Icons.redeem_rounded, size: 140, color: colorScheme.tertiary.withValues(alpha: 0.05)),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-
-  const _StatTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return AppCard(
-      borderRadius: 24,
-      padding: const EdgeInsets.all(AppDimensions.s12),
-      color: AppColors.surface,
-      borderColor: AppColors.border,
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.primaryBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: AppColors.primary, size: 18),
-          ),
-          const SizedBox(width: AppDimensions.s10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
               children: [
-                Text(
-                  value,
-                  style: textTheme.titleSmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w900,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Invite friends, get £50',
+                        style: textTheme.titleLarge?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Share your referral link to earn service credit.',
+                        style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  label,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.text3,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: colorScheme.tertiary, shape: BoxShape.circle),
+                  child: Icon(Icons.share_rounded, color: colorScheme.onTertiary, size: 20),
                 ),
               ],
             ),
@@ -485,43 +370,143 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-class _ExplanatorySectionHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
+// ─── LOYALTY REWARDS & SAVINGS CARD ──────────────────────────────────────────
+class _LoyaltyRewardsCard extends StatelessWidget {
+  final VoidCallback onRedeem;
 
-  const _ExplanatorySectionHeader({
-    required this.title,
-    required this.subtitle,
-  });
+  const _LoyaltyRewardsCard({required this.onRedeem});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return AppCard(
+      borderRadius: 24,
+      padding: const EdgeInsets.all(20),
+      color: colorScheme.surfaceContainerHighest,
+      borderColor: Colors.transparent,
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: colorScheme.secondary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(Icons.card_giftcard_rounded, color: colorScheme.secondary, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '£14.50 Available',
+                  style: textTheme.titleMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
+                ),
+                Text(
+                  'Ready to redeem on next service',
+                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: onRedeem,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: const Text('Claim', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── STAT TILE ───────────────────────────────────────────────────────────────
+class _StatTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _StatTile({required this.label, required this.value, required this.icon});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return AppCard(
+      borderRadius: 24,
+      padding: const EdgeInsets.all(16),
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: colorScheme.primaryContainer, borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: colorScheme.onPrimaryContainer, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
+                ),
+                Text(label, style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── EXPLANATORY SECTION HEADER ──────────────────────────────────────────────
+class _ExplanatorySectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _ExplanatorySectionHeader({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: textTheme.titleMedium?.copyWith(
-            color: AppColors.textPrimary,
+          style: textTheme.titleLarge?.copyWith(
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.w900,
             letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: 2),
-        Text(
-          subtitle,
-          style: textTheme.bodySmall?.copyWith(
-            color: AppColors.text3,
-            fontSize: 11,
-          ),
-        ),
+        const SizedBox(height: 4),
+        Text(subtitle, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
       ],
     );
   }
 }
 
+// ─── SETTINGS GROUP & TILES ──────────────────────────────────────────────────
 class _SettingsGroup extends StatelessWidget {
   final List<Widget> items;
 
@@ -529,17 +514,21 @@ class _SettingsGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return AppCard(
       borderRadius: 24,
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      color: AppColors.surface,
-      borderColor: AppColors.border,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
+      boxShadow: [
+        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+      ],
       child: Column(
         children: [
           for (int i = 0; i < items.length; i++) ...[
             items[i],
-            if (i < items.length - 1)
-              const Divider(height: 1, color: AppColors.line),
+            if (i < items.length - 1) Divider(height: 1, color: colorScheme.outlineVariant),
           ],
         ],
       ),
@@ -565,57 +554,41 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.s14,
-          vertical: AppDimensions.s12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: AppColors.primaryBg,
-                borderRadius: BorderRadius.circular(12),
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: AppColors.primary, size: 18),
+              child: Icon(icon, color: colorScheme.onSurface, size: 22),
             ),
-            const SizedBox(width: AppDimensions.s12),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: textTheme.titleSmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.text3,
-                      fontSize: 11,
-                    ),
-                  ),
+                  Text(subtitle, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
                 ],
               ),
             ),
             if (trailing != null)
               trailing!
             else
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.text4,
-                size: 20,
-              ),
+              Icon(Icons.chevron_right_rounded, color: colorScheme.outline, size: 20),
           ],
         ),
       ),

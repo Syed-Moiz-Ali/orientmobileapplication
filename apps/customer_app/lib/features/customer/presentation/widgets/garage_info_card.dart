@@ -16,13 +16,7 @@ class GarageInfoCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppDimensions.s18),
       color: AppColors.surface,
       borderColor: AppColors.border,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
-          blurRadius: 16,
-          offset: const Offset(0, 4),
-        ),
-      ],
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -36,11 +30,7 @@ class GarageInfoCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.primaryBorder),
                 ),
-                child: const Icon(
-                  Icons.garage_rounded,
-                  color: AppColors.primary,
-                  size: 26,
-                ),
+                child: const Icon(Icons.garage_rounded, color: AppColors.primary, size: 26),
               ),
               const SizedBox(width: AppDimensions.s12),
               Expanded(
@@ -83,10 +73,7 @@ class GarageInfoCard extends StatelessWidget {
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.success,
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -107,19 +94,12 @@ class GarageInfoCard extends StatelessWidget {
           const SizedBox(height: AppDimensions.s12),
           Row(
             children: [
-              const Icon(
-                Icons.location_on_outlined,
-                size: 16,
-                color: AppColors.primary,
-              ),
+              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'Bay 3, Unit 4 Industrial Estate, Main Highway',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: textTheme.bodySmall?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -133,10 +113,7 @@ class GarageInfoCard extends StatelessWidget {
               const SizedBox(width: 6),
               _AmenityPill(icon: Icons.local_cafe_rounded, label: 'Lounge'),
               const SizedBox(width: 6),
-              _AmenityPill(
-                icon: Icons.ev_station_rounded,
-                label: 'EV Charging',
-              ),
+              _AmenityPill(icon: Icons.ev_station_rounded, label: 'EV Charging'),
             ],
           ),
           const SizedBox(height: AppDimensions.s14),
@@ -151,9 +128,7 @@ class GarageInfoCard extends StatelessWidget {
                       () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'Calling Workshop Hotline: +1 800 555-AUTO',
-                            ),
+                            content: Text('Calling Workshop Hotline: +1 800 555-AUTO'),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -164,9 +139,7 @@ class GarageInfoCard extends StatelessWidget {
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.primaryBorder),
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.rPill)),
                   ),
                 ),
               ),
@@ -190,9 +163,7 @@ class GarageInfoCard extends StatelessWidget {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.rPill)),
                   ),
                 ),
               ),
@@ -226,11 +197,9 @@ class _AmenityPill extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.text3,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: AppColors.text3, fontSize: 10, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -260,15 +229,8 @@ class EmergencyBreakdownBanner extends StatelessWidget {
           Container(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.danger,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.emergency_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
+            decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.emergency_rounded, color: Colors.white, size: 22),
           ),
           const SizedBox(width: AppDimensions.s12),
           Expanded(
@@ -277,18 +239,12 @@ class EmergencyBreakdownBanner extends StatelessWidget {
               children: [
                 Text(
                   '24/7 Roadside Assistance',
-                  style: textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.danger,
-                  ),
+                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900, color: AppColors.danger),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Stranded or car won\'t start? Request emergency breakdown tow',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.text3,
-                    fontSize: 11,
-                  ),
+                  style: textTheme.bodySmall?.copyWith(color: AppColors.text3, fontSize: 11),
                 ),
               ],
             ),
@@ -301,16 +257,9 @@ class EmergencyBreakdownBanner extends StatelessWidget {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.rPill),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.rPill)),
             ),
-            child: Text(
-              'Get Help',
-              style: textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+            child: Text('Get Help', style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900)),
           ),
         ],
       ),

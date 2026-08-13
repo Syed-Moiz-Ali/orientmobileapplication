@@ -19,85 +19,93 @@ class CustomerBookingSuccessView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: AppResponsivePage(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: AppDimensions.s32),
+              const SizedBox(height: 32),
 
-              // ── SUCCESS ICON + HEADLINE ────────────────────────────────
+              // ── 1. SUCCESS ICON + HEADLINE ─────────────────────────────
               Center(
                 child: Column(
                   children: [
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 96,
+                      height: 96,
                       decoration: BoxDecoration(
-                        color: AppColors.successBg,
+                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.success.withValues(alpha: 0.3),
-                          width: 3,
-                        ),
+                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                            blurRadius: 24,
+                            spreadRadius: 4,
+                          ),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        color: AppColors.success,
-                        size: 40,
-                      ),
+                      child: const Center(child: Icon(Icons.check_rounded, color: Color(0xFF10B981), size: 48)),
                     ),
-                    const SizedBox(height: AppDimensions.s20),
+                    const SizedBox(height: 24),
                     Text(
-                      'Booking Submitted!',
+                      'Booking Requested!',
                       style: textTheme.headlineMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: colorScheme.onSurface,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -0.6,
+                        letterSpacing: -0.8,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
-                      'The workshop will confirm your slot shortly.\nTrack it anytime from My Bookings.',
+                      'The workshop will confirm your bay slot shortly.\nTrack live updates anytime from Appointments.',
                       textAlign: TextAlign.center,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.text3,
+                        color: colorScheme.onSurfaceVariant,
                         height: 1.5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppDimensions.s32),
+              const SizedBox(height: 36),
 
-              // ── BOOKING SUMMARY CARD ───────────────────────────────────
+              // ── 2. BOOKING SUMMARY CARD ────────────────────────────────
               Text(
                 'Booking Summary',
-                style: textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                style: textTheme.titleLarge?.copyWith(
+                  color: colorScheme.onSurface,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -0.4,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
-                'Keep this for your records',
-                style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.text3,
-                  fontSize: 11,
-                ),
+                'Keep this reference for your records',
+                style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: AppDimensions.s10),
+              const SizedBox(height: 16),
               AppCard(
                 borderRadius: 24,
+                elevation: 0,
                 padding: EdgeInsets.zero,
-                color: AppColors.surface,
-                borderColor: AppColors.border,
+                color: colorScheme.surface,
+                borderColor: colorScheme.outlineVariant,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withValues(alpha: 0.05),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
                 child: Column(
                   children: [
                     if (bookingRef != null && bookingRef!.isNotEmpty) ...[
@@ -106,78 +114,81 @@ class CustomerBookingSuccessView extends StatelessWidget {
                         label: 'Reference',
                         value: '#$bookingRef',
                         highlight: true,
+                        colorScheme: colorScheme,
                       ),
-                      const Divider(height: 1, color: AppColors.line),
+                      Divider(height: 1, color: colorScheme.outlineVariant),
                     ],
                     _InfoRow(
                       icon: Icons.build_rounded,
-                      label: 'Service',
+                      label: 'Service Package',
                       value: service,
+                      colorScheme: colorScheme,
                     ),
-                    const Divider(height: 1, color: AppColors.line),
+                    Divider(height: 1, color: colorScheme.outlineVariant),
                     _InfoRow(
                       icon: Icons.calendar_today_rounded,
-                      label: 'Date',
+                      label: 'Scheduled Date',
                       value: date,
+                      colorScheme: colorScheme,
                     ),
-                    const Divider(height: 1, color: AppColors.line),
+                    Divider(height: 1, color: colorScheme.outlineVariant),
                     _InfoRow(
                       icon: Icons.access_time_rounded,
-                      label: 'Time',
+                      label: 'Time Slot',
                       value: time.isNotEmpty ? time : 'TBC',
+                      colorScheme: colorScheme,
                     ),
-                    const Divider(height: 1, color: AppColors.line),
+                    Divider(height: 1, color: colorScheme.outlineVariant),
                     _InfoRow(
                       icon: Icons.pending_actions_rounded,
                       label: 'Status',
-                      value: 'Pending Confirmation',
-                      statusColor: AppColors.warning,
+                      value: 'Pending Intake',
+                      statusColor: colorScheme.secondary,
+                      colorScheme: colorScheme,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppDimensions.s20),
+              const SizedBox(height: 24),
 
-              // ── WHAT HAPPENS NEXT CARD ─────────────────────────────────
+              // ── 3. WHAT HAPPENS NEXT CARD ──────────────────────────────
               AppCard(
                 borderRadius: 24,
-                padding: const EdgeInsets.all(AppDimensions.s16),
-                color: AppColors.primaryBg,
-                borderColor: AppColors.primaryBorder,
+                elevation: 0,
+                padding: const EdgeInsets.all(20),
+                color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+                borderColor: colorScheme.primary.withValues(alpha: 0.2),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 36,
-                      height: 36,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
+                        color: colorScheme.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
-                        Icons.info_outline_rounded,
-                        color: AppColors.primary,
-                        size: 18,
-                      ),
+                      child: Icon(Icons.info_outline_rounded, color: colorScheme.primary, size: 22),
                     ),
-                    const SizedBox(width: AppDimensions.s12),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'What happens next?',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: AppColors.primary,
+                            style: textTheme.titleSmall?.copyWith(
+                              color: colorScheme.primary,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Text(
-                            'Our service team will review your booking and send a confirmation within 1–2 hours during working hours (Mon–Fri, 8am–6pm).',
+                            'Our team will review your booking and send confirmation within 1–2 hours during working hours (Mon–Fri, 8am–6pm).',
                             style: textTheme.bodySmall?.copyWith(
-                              color: AppColors.primary.withValues(alpha: 0.85),
+                              color: colorScheme.onSurfaceVariant,
                               height: 1.5,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -186,50 +197,41 @@ class CustomerBookingSuccessView extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: AppDimensions.s32),
+              const SizedBox(height: 36),
 
-              // ── ACTION BUTTONS ─────────────────────────────────────────
+              // ── 4. ACTION BUTTONS ──────────────────────────────────────
               SizedBox(
                 width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: () =>
-                      context.go(AppRoutes.customerDashboard, extra: {'tab': 2}),
-                  icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                  label: const Text('View My Bookings'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                height: 56,
+                child: FilledButton.icon(
+                  onPressed: () => context.go(AppRoutes.customerDashboard, extra: {'tab': 2}),
+                  icon: Icon(Icons.calendar_month_rounded, size: 20, color: colorScheme.onPrimary),
+                  label: Text('View Appointments'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                    ),
-                    textStyle: textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                    textStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
                   ),
                 ),
               ),
-              const SizedBox(height: AppDimensions.s12),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 56,
                 child: OutlinedButton(
                   onPressed: () => context.go(AppRoutes.customerDashboard),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
-                    side: const BorderSide(color: AppColors.border),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                    ),
-                    textStyle: textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    foregroundColor: colorScheme.onSurface,
+                    side: BorderSide(color: colorScheme.outlineVariant),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                    textStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                   ),
-                  child: const Text('Back to Home'),
+                  child: const Text('Back to Dashboard'),
                 ),
               ),
-              const SizedBox(height: AppDimensions.s32),
+              const SizedBox(height: 48),
             ],
           ),
         ),
@@ -244,6 +246,7 @@ class _InfoRow extends StatelessWidget {
   final String value;
   final bool highlight;
   final Color? statusColor;
+  final ColorScheme colorScheme;
 
   const _InfoRow({
     required this.icon,
@@ -251,6 +254,7 @@ class _InfoRow extends StatelessWidget {
     required this.value,
     this.highlight = false,
     this.statusColor,
+    required this.colorScheme,
   });
 
   @override
@@ -258,44 +262,35 @@ class _InfoRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.s16,
-        vertical: AppDimensions.s14,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primaryBg,
+              color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 16),
+            child: Icon(icon, color: colorScheme.onSurfaceVariant, size: 20),
           ),
-          const SizedBox(width: AppDimensions.s12),
+          const SizedBox(width: 16),
           Expanded(
             child: Text(
               label,
-              style: textTheme.bodySmall?.copyWith(
-                color: AppColors.text3,
-                fontWeight: FontWeight.w600,
-              ),
+              style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
             ),
           ),
           if (statusColor != null)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: statusColor!.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                color: statusColor!.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(100),
               ),
               child: Text(
                 value,
-                style: textTheme.labelSmall?.copyWith(
-                  color: statusColor,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: textTheme.labelSmall?.copyWith(color: statusColor, fontWeight: FontWeight.w900),
               ),
             )
           else
@@ -304,12 +299,9 @@ class _InfoRow extends StatelessWidget {
                 value,
                 textAlign: TextAlign.end,
                 maxLines: 2,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: highlight ? AppColors.primary : AppColors.textPrimary,
-                  fontWeight: highlight ? FontWeight.w900 : FontWeight.w700,
-                  fontFamily:
-                      highlight ? AppFontFamilies.mono : null,
-                  letterSpacing: highlight ? 0.5 : 0,
+                style: textTheme.titleSmall?.copyWith(
+                  color: highlight ? colorScheme.primary : colorScheme.onSurface,
+                  fontWeight: highlight ? FontWeight.w900 : FontWeight.w800,
                 ),
               ),
             ),

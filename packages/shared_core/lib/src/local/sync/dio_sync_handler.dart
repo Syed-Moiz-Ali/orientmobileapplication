@@ -40,18 +40,24 @@ class DioSyncHandler extends SyncHandler {
         ),
       );
 
-      if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
         return true;
       }
 
       if (response.statusCode == 409) {
-        throw ConflictException('Conflict on ${operation.entityType} ${operation.entityId}');
+        throw ConflictException(
+          'Conflict on ${operation.entityType} ${operation.entityId}',
+        );
       }
 
       return false;
     } on DioException catch (e) {
       if (e.response?.statusCode == 409) {
-        throw ConflictException('Conflict on ${operation.entityType} ${operation.entityId}');
+        throw ConflictException(
+          'Conflict on ${operation.entityType} ${operation.entityId}',
+        );
       }
       rethrow;
     }
@@ -110,7 +116,9 @@ class DioSyncHandler extends SyncHandler {
           response.statusCode! < 300;
     } on DioException catch (e) {
       if (e.response?.statusCode == 409) {
-        throw ConflictException('Conflict on ${operation.entityType} ${operation.entityId}');
+        throw ConflictException(
+          'Conflict on ${operation.entityType} ${operation.entityId}',
+        );
       }
       rethrow;
     } on UnsupportedError {
@@ -136,18 +144,16 @@ class DioSyncHandler extends SyncHandler {
     switch (op.entityType) {
       case 'job_complete':
         // CompleteJobRequest: jobCardNo, empId, status, tasks[{id,status,startTime,endTime}], notes
-        final tasks = (payload['tasks'] as List<dynamic>?)
-            ?.map((t) {
-              if (t is! Map) return <String, dynamic>{};
-              final m = Map<String, dynamic>.from(t);
-              return <String, dynamic>{
-                if (m['id'] != null) 'id': m['id'].toString(),
-                if (m['status'] != null) 'status': m['status'],
-                if (m['startTime'] != null) 'startTime': m['startTime'],
-                if (m['endTime'] != null) 'endTime': m['endTime'],
-              };
-            })
-            .toList();
+        final tasks = (payload['tasks'] as List<dynamic>?)?.map((t) {
+          if (t is! Map) return <String, dynamic>{};
+          final m = Map<String, dynamic>.from(t);
+          return <String, dynamic>{
+            if (m['id'] != null) 'id': m['id'].toString(),
+            if (m['status'] != null) 'status': m['status'],
+            if (m['startTime'] != null) 'startTime': m['startTime'],
+            if (m['endTime'] != null) 'endTime': m['endTime'],
+          };
+        }).toList();
         return <String, dynamic>{
           'jobCardNo': payload['jobCardNo'] ?? op.entityId,
           if (payload['empId'] != null) 'empId': payload['empId'],
@@ -195,17 +201,34 @@ class DioSyncHandler extends SyncHandler {
           'status': payload['status'] ?? 'inProgress',
         };
       case 'job_card':
-        return <String, dynamic>{
-          'status': payload['status'] ?? 'inProgress',
-        };
+        return <String, dynamic>{'status': payload['status'] ?? 'inProgress'};
       case 'job_card_technician':
         return <String, dynamic>{
-          if (payload['technician'] != null) 'technician': payload['technician'],
+          if (payload['technician'] != null)
+            'technician': payload['technician'],
         };
       case 'vehicle':
         // Customer app vehicle payload already matches AddVehicleRequest
         // (brand/model/plateNumber/vin/color/year/mileage/lastService/nextDue).
         return payload;
+      case 'booking':
+        // CreateBookingRequest: vehicleId, vehicleName, plateNumber,
+        // serviceType, bookingDate, bookingTime, notes.
+        return <String, dynamic>{
+          if (payload['vehicleId'] != null)
+            'vehicleId': payload['vehicleId'].toString(),
+          if (payload['vehicleName'] != null)
+            'vehicleName': payload['vehicleName'],
+          if (payload['plateNumber'] != null)
+            'plateNumber': payload['plateNumber'],
+          'serviceType':
+              payload['serviceType'] ?? payload['service'] ?? 'Service',
+          if (payload['bookingDate'] != null)
+            'bookingDate': payload['bookingDate'],
+          if (payload['bookingTime'] != null)
+            'bookingTime': payload['bookingTime'],
+          if (payload['notes'] != null) 'notes': payload['notes'],
+        };
       case 'technician_job':
         // UpdateAssignedJobStatusRequest: empId, status
         return <String, dynamic>{
@@ -220,8 +243,10 @@ class DioSyncHandler extends SyncHandler {
           if (payload['status'] != null) 'status': payload['status'],
           if (payload['bookingId'] != null) 'bookingId': payload['bookingId'],
           'customer': <String, dynamic>{
-            if (payload['customerName'] != null) 'customerName': payload['customerName'],
-            if (payload['phoneNumber'] != null) 'phoneNumber': payload['phoneNumber'],
+            if (payload['customerName'] != null)
+              'customerName': payload['customerName'],
+            if (payload['phoneNumber'] != null)
+              'phoneNumber': payload['phoneNumber'],
             if (payload['email'] != null) 'email': payload['email'],
           },
           'vehicle': <String, dynamic>{
