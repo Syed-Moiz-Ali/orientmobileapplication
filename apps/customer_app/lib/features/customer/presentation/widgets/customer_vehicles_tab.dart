@@ -21,16 +21,22 @@ class CustomerVehiclesTab extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'customer-vehicles-add-vehicle-fab',
-        onPressed: () => context.push(AppRoutes.customerAddVehicle),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        elevation: 4,
-        icon: Icon(Icons.add_rounded, color: colorScheme.onPrimary),
-        label: Text(
-          'Add Vehicle',
-          style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onPrimary),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 88),
+        child: FloatingActionButton.extended(
+          heroTag: 'customer-vehicles-add-vehicle-fab',
+          onPressed: () => context.push(AppRoutes.customerAddVehicle),
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          elevation: 4,
+          icon: Icon(Icons.add_rounded, color: colorScheme.onPrimary),
+          label: Text(
+            'Add Vehicle',
+            style: textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onPrimary,
+            ),
+          ),
         ),
       ),
       body: SafeArea(
@@ -77,7 +83,8 @@ class CustomerVehiclesTab extends ConsumerWidget {
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () => context.push(AppRoutes.customerNotifications),
+                      onTap: () =>
+                          context.push(AppRoutes.customerNotifications),
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -87,23 +94,37 @@ class CustomerVehiclesTab extends ConsumerWidget {
                             decoration: BoxDecoration(
                               color: colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: colorScheme.outlineVariant),
+                              border: Border.all(
+                                color: colorScheme.outlineVariant,
+                              ),
                             ),
-                            child: Icon(Icons.notifications_outlined, color: colorScheme.onSurface, size: 24),
+                            child: Icon(
+                              Icons.notifications_outlined,
+                              color: colorScheme.onSurface,
+                              size: 24,
+                            ),
                           ),
                           if (dash.unreadCount > 0)
                             Positioned(
                               top: -2,
                               right: -2,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: colorScheme.error,
                                   borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(color: colorScheme.surface, width: 2),
+                                  border: Border.all(
+                                    color: colorScheme.surface,
+                                    width: 2,
+                                  ),
                                 ),
                                 child: Text(
-                                  dash.unreadCount > 99 ? '99+' : '${dash.unreadCount}',
+                                  dash.unreadCount > 99
+                                      ? '99+'
+                                      : '${dash.unreadCount}',
                                   style: textTheme.labelSmall?.copyWith(
                                     color: colorScheme.onError,
                                     fontWeight: FontWeight.w900,
@@ -121,7 +142,10 @@ class CustomerVehiclesTab extends ConsumerWidget {
 
                 // ── 2. VEHICLES SHOWCASE DECK (FULL STACK IMAGES) ──────────────
                 if (vehicles.isEmpty)
-                  EmptyVehiclesCard(onAddVehicle: () => context.push(AppRoutes.customerAddVehicle))
+                  EmptyVehiclesCard(
+                    onAddVehicle: () =>
+                        context.push(AppRoutes.customerAddVehicle),
+                  )
                 else ...[
                   // _ExplanatorySectionHeader(
                   //   title: 'Your Registered Vehicles (${vehicles.length})',
@@ -138,7 +162,8 @@ class CustomerVehiclesTab extends ConsumerWidget {
                               ? 'https://images.unsplash.com/photo-1550355291-bbee04a92027?q=80&w=800&auto=format&fit=crop'
                               : 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?q=80&w=800&auto=format&fit=crop',
                         ),
-                        if (i != vehicles.length - 1) const SizedBox(height: 24),
+                        if (i != vehicles.length - 1)
+                          const SizedBox(height: 24),
                       ],
                     ],
                   ),
@@ -159,7 +184,11 @@ class _VehicleCardWithActions extends StatelessWidget {
   final WidgetRef ref;
   final String imageUrl;
 
-  const _VehicleCardWithActions({required this.vehicle, required this.ref, required this.imageUrl});
+  const _VehicleCardWithActions({
+    required this.vehicle,
+    required this.ref,
+    required this.imageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +203,11 @@ class _VehicleCardWithActions extends StatelessWidget {
       color: colorScheme.surface,
       borderColor: colorScheme.outlineVariant,
       boxShadow: [
-        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 8)),
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.1),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
       ],
       child: Stack(
         fit: StackFit.expand,
@@ -186,7 +219,11 @@ class _VehicleCardWithActions extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.transparent, Colors.black.withValues(alpha: 0.6), Colors.black.withValues(alpha: 0.95)],
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.6),
+                  Colors.black.withValues(alpha: 0.95),
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 stops: const [0.3, 0.7, 1.0],
@@ -203,11 +240,18 @@ class _VehicleCardWithActions extends StatelessWidget {
               children: [
                 // Plate Number Chip
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFACC15), // High Contrast Yellow Plate
+                    color: const Color(
+                      0xFFFACC15,
+                    ), // High Contrast Yellow Plate
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.black.withValues(alpha: 0.5)),
+                    border: Border.all(
+                      color: Colors.black.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: Text(
                     vehicle.plateNumber.toUpperCase(),
@@ -225,7 +269,10 @@ class _VehicleCardWithActions extends StatelessWidget {
                   vehicle.displayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w900),
+                  style: textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(height: 4),
 
@@ -244,7 +291,8 @@ class _VehicleCardWithActions extends StatelessWidget {
                   children: [
                     Expanded(
                       child: InkWell(
-                        onTap: () => context.push(AppRoutes.customerBookService),
+                        onTap: () =>
+                            context.push(AppRoutes.customerBookService),
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -267,13 +315,16 @@ class _VehicleCardWithActions extends StatelessWidget {
                     const SizedBox(width: 12),
                     _GlassActionButton(
                       icon: Icons.edit_outlined,
-                      onTap: () => context.push(AppRoutes.customerEditVehicle(vehicle.id)),
+                      onTap: () => context.push(
+                        AppRoutes.customerEditVehicle(vehicle.id),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     _GlassActionButton(
                       icon: Icons.delete_outline_rounded,
                       isDanger: true,
-                      onTap: () => _confirmDelete(context, vehicle, ref, colorScheme),
+                      onTap: () =>
+                          _confirmDelete(context, vehicle, ref, colorScheme),
                     ),
                   ],
                 ),
@@ -285,18 +336,28 @@ class _VehicleCardWithActions extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, CustomerVehicleEntity v, WidgetRef ref, ColorScheme colorScheme) {
+  void _confirmDelete(
+    BuildContext context,
+    CustomerVehicleEntity v,
+    WidgetRef ref,
+    ColorScheme colorScheme,
+  ) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text('Remove ${v.displayName}?'),
-        content: const Text('This will remove the vehicle from your garage. This action cannot be undone.'),
+        content: const Text(
+          'This will remove the vehicle from your garage. This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Cancel', style: TextStyle(color: colorScheme.onSurface)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -305,7 +366,10 @@ class _VehicleCardWithActions extends StatelessWidget {
             },
             child: Text(
               'Remove',
-              style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: colorScheme.error,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -320,7 +384,11 @@ class _GlassActionButton extends StatelessWidget {
   final bool isDanger;
   final VoidCallback onTap;
 
-  const _GlassActionButton({required this.icon, this.isDanger = false, required this.onTap});
+  const _GlassActionButton({
+    required this.icon,
+    this.isDanger = false,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -332,14 +400,22 @@ class _GlassActionButton extends StatelessWidget {
         height: 48,
         decoration: BoxDecoration(
           color: isDanger
-              ? const Color(0xFFEF4444).withValues(alpha: 0.2) // Danger red with opacity
+              ? const Color(0xFFEF4444).withValues(
+                  alpha: 0.2,
+                ) // Danger red with opacity
               : Colors.white.withValues(alpha: 0.15), // Glass white
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDanger ? const Color(0xFFEF4444).withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.2),
+            color: isDanger
+                ? const Color(0xFFEF4444).withValues(alpha: 0.3)
+                : Colors.white.withValues(alpha: 0.2),
           ),
         ),
-        child: Icon(icon, size: 22, color: isDanger ? const Color(0xFFEF4444) : Colors.white),
+        child: Icon(
+          icon,
+          size: 22,
+          color: isDanger ? const Color(0xFFEF4444) : Colors.white,
+        ),
       ),
     );
   }

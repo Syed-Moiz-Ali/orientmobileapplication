@@ -19,11 +19,31 @@ class CustomerScaffold extends ConsumerStatefulWidget {
 
 class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
   static const _navItems = <AppNavItem>[
-    AppNavItem(selectedIcon: Icons.home_rounded, icon: Icons.home_outlined, label: 'Home'),
-    AppNavItem(selectedIcon: Icons.track_changes_rounded, icon: Icons.track_changes_outlined, label: 'Status'),
-    AppNavItem(selectedIcon: Icons.calendar_month_rounded, icon: Icons.calendar_month_outlined, label: 'Appointments'),
-    AppNavItem(selectedIcon: Icons.directions_car_rounded, icon: Icons.directions_car_outlined, label: 'Vehicles'),
-    AppNavItem(selectedIcon: Icons.person_rounded, icon: Icons.person_outline_rounded, label: 'Profile'),
+    AppNavItem(
+      selectedIcon: Icons.home_rounded,
+      icon: Icons.home_outlined,
+      label: 'Home',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.track_changes_rounded,
+      icon: Icons.track_changes_outlined,
+      label: 'Status',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.calendar_month_rounded,
+      icon: Icons.calendar_month_outlined,
+      label: 'Appointments',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.directions_car_rounded,
+      icon: Icons.directions_car_outlined,
+      label: 'Vehicles',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.person_rounded,
+      icon: Icons.person_outline_rounded,
+      label: 'Profile',
+    ),
   ];
 
   static const _pages = <Widget>[
@@ -40,7 +60,9 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
     if (widget.initialTab > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ref.read(customerDashboardProvider.notifier).selectTab(widget.initialTab);
+          ref
+              .read(customerDashboardProvider.notifier)
+              .selectTab(widget.initialTab);
         }
       });
     }
@@ -57,28 +79,46 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: theme.brightness == Brightness.dark ? Brightness.light : Brightness.dark,
+        statusBarIconBrightness: theme.brightness == Brightness.dark
+            ? Brightness.light
+            : Brightness.dark,
       ),
     );
 
     return Scaffold(
+      extendBody: true,
       appBar: null,
-      body: Column(
+      body: Stack(
         children: [
-          const OfflineBanner(),
-          Expanded(
-            child: AppAdaptiveNavigationFrame(
-              items: _navItems,
-              selectedIndex: state.selectedIndex,
-              onSelected: notifier.selectTab,
-              child: IndexedStack(index: state.selectedIndex, children: _pages),
-            ),
+          Column(
+            children: [
+              const OfflineBanner(),
+              Expanded(
+                child: AppAdaptiveNavigationFrame(
+                  items: _navItems,
+                  selectedIndex: state.selectedIndex,
+                  onSelected: notifier.selectTab,
+                  child: IndexedStack(
+                    index: state.selectedIndex,
+                    children: _pages,
+                  ),
+                ),
+              ),
+            ],
           ),
+          if (!adaptive.useNavigationRail)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _BottomNav(
+                items: _navItems,
+                selectedIndex: state.selectedIndex,
+                onTap: notifier.selectTab,
+              ),
+            ),
         ],
       ),
-      bottomNavigationBar: !adaptive.useNavigationRail
-          ? _BottomNav(items: _navItems, selectedIndex: state.selectedIndex, onTap: notifier.selectTab)
-          : null,
     );
   }
 }
@@ -88,7 +128,11 @@ class _BottomNav extends StatelessWidget {
   final int selectedIndex;
   final void Function(int) onTap;
 
-  const _BottomNav({required this.items, required this.selectedIndex, required this.onTap});
+  const _BottomNav({
+    required this.items,
+    required this.selectedIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -96,63 +140,100 @@ class _BottomNav extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(240),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 8)),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: List.generate(items.length, (i) {
-              final sel = selectedIndex == i;
-              return Expanded(
-                child: Semantics(
-                  button: true,
-                  selected: sel,
-                  label: items[i].label,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => onTap(i),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOutCubic,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                          decoration: BoxDecoration(
-                            // color: sel ? colorScheme.primaryContainer : Colors.transparent,
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                          child: Icon(
-                            sel ? items[i].selectedIcon : items[i].icon,
-                            color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
-                            size: 24,
-                          ),
-                        ),
-                        // const SizedBox(height: 1),
-                        Text(
-                          items[i].label,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
-                            fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+      child: SizedBox(
+        height: 66,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colorScheme.surface.withValues(alpha: 0.96),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.72),
                 ),
-              );
-            }),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withValues(alpha: 0.16),
+                    blurRadius: 30,
+                    spreadRadius: -8,
+                    offset: const Offset(0, 16),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: Row(
+                  children: List.generate(items.length, (i) {
+                    final sel = selectedIndex == i;
+                    return Expanded(
+                      child: Semantics(
+                        button: true,
+                        selected: sel,
+                        label: items[i].label,
+                        child: InkWell(
+                          onTap: () => onTap(i),
+                          borderRadius: BorderRadius.circular(24),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 7,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  curve: Curves.easeOutCubic,
+                                  width: sel ? 42 : 34,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: sel
+                                        ? colorScheme.primary.withValues(
+                                            alpha: 0.12,
+                                          )
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: Icon(
+                                    sel ? items[i].selectedIcon : items[i].icon,
+                                    color: sel
+                                        ? colorScheme.primary
+                                        : colorScheme.onSurfaceVariant,
+                                    size: sel ? 22 : 21,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Flexible(
+                                  child: Text(
+                                    items[i].label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: textTheme.labelSmall?.copyWith(
+                                      color: sel
+                                          ? colorScheme.primary
+                                          : colorScheme.onSurfaceVariant,
+                                      fontWeight: sel
+                                          ? FontWeight.w800
+                                          : FontWeight.w600,
+                                      fontSize: 11,
+                                      height: 1,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
           ),
         ),
       ),

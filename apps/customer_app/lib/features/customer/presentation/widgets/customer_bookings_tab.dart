@@ -10,7 +10,8 @@ class CustomerBookingsTab extends ConsumerStatefulWidget {
   const CustomerBookingsTab({super.key});
 
   @override
-  ConsumerState<CustomerBookingsTab> createState() => _CustomerBookingsTabState();
+  ConsumerState<CustomerBookingsTab> createState() =>
+      _CustomerBookingsTabState();
 }
 
 class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
@@ -24,27 +25,40 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
 
     final dash = ref.watch(customerDashboardProvider);
     final bookingsAsync = ref.watch(customerBookingsProvider);
-    final bookings = bookingsAsync.valueOrNull ?? const <CustomerBookingEntity>[];
+    final bookings =
+        bookingsAsync.valueOrNull ?? const <CustomerBookingEntity>[];
 
-    final filtered = _filter == null ? bookings : bookings.where((booking) => booking.status == _filter).toList();
+    final filtered = _filter == null
+        ? bookings
+        : bookings.where((booking) => booking.status == _filter).toList();
 
     // ── INTELLIGENT STATE ROUTING ────────────────────────────────────────────
     final upcomingBooking = bookings
-        .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending)
+        .where(
+          (b) =>
+              b.status == BookingStatus.confirmed ||
+              b.status == BookingStatus.pending,
+        )
         .firstOrNull;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'customer-bookings-book-service-fab',
-        onPressed: () => context.push(AppRoutes.customerBookService),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        elevation: 4,
-        icon: Icon(Icons.add_rounded, color: colorScheme.onPrimary),
-        label: Text(
-          'Book Appointment',
-          style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onPrimary),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 88),
+        child: FloatingActionButton.extended(
+          heroTag: 'customer-bookings-book-service-fab',
+          onPressed: () => context.push(AppRoutes.customerBookService),
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          elevation: 4,
+          icon: Icon(Icons.add_rounded, color: colorScheme.onPrimary),
+          label: Text(
+            'Book Appointment',
+            style: textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onPrimary,
+            ),
+          ),
         ),
       ),
       body: SafeArea(
@@ -89,7 +103,8 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () => context.push(AppRoutes.customerNotifications),
+                      onTap: () =>
+                          context.push(AppRoutes.customerNotifications),
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -99,23 +114,37 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
                             decoration: BoxDecoration(
                               color: colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: colorScheme.outlineVariant),
+                              border: Border.all(
+                                color: colorScheme.outlineVariant,
+                              ),
                             ),
-                            child: Icon(Icons.notifications_outlined, color: colorScheme.onSurface, size: 24),
+                            child: Icon(
+                              Icons.notifications_outlined,
+                              color: colorScheme.onSurface,
+                              size: 24,
+                            ),
                           ),
                           if (dash.unreadCount > 0)
                             Positioned(
                               top: -2,
                               right: -2,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: colorScheme.error,
                                   borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(color: colorScheme.surface, width: 2),
+                                  border: Border.all(
+                                    color: colorScheme.surface,
+                                    width: 2,
+                                  ),
                                 ),
                                 child: Text(
-                                  dash.unreadCount > 99 ? '99+' : '${dash.unreadCount}',
+                                  dash.unreadCount > 99
+                                      ? '99+'
+                                      : '${dash.unreadCount}',
                                   style: textTheme.labelSmall?.copyWith(
                                     color: colorScheme.onError,
                                     fontWeight: FontWeight.w900,
@@ -135,10 +164,15 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
                 if (upcomingBooking != null)
                   _UpNextHeroCard(
                     booking: upcomingBooking,
-                    onTap: () => context.push(AppRoutes.customerBookingDetail, extra: upcomingBooking),
+                    onTap: () => context.push(
+                      AppRoutes.customerBookingDetail,
+                      extra: upcomingBooking,
+                    ),
                   )
                 else
-                  _BookNowHeroCard(onBook: () => context.push(AppRoutes.customerBookService)),
+                  _BookNowHeroCard(
+                    onBook: () => context.push(AppRoutes.customerBookService),
+                  ),
                 const SizedBox(height: 36),
 
                 // ── 3. QUICK RESERVE PACKAGES ──────────────────────────────────
@@ -147,7 +181,10 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
                   subtitle: 'Instantly lock in popular service packages',
                 ),
                 const SizedBox(height: 16),
-                _FeaturedPackagesCarousel(onSelect: (pkg) => context.push(AppRoutes.customerBookService)),
+                _FeaturedPackagesCarousel(
+                  onSelect: (pkg) =>
+                      context.push(AppRoutes.customerBookService),
+                ),
                 const SizedBox(height: 36),
 
                 // ── 4. ALL APPOINTMENTS & HISTORY ──────────────────────────────
@@ -156,13 +193,20 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
                   subtitle: 'Review your upcoming schedule and service history',
                 ),
                 const SizedBox(height: 16),
-                _BookingFilterPills(selected: _filter, onChanged: (status) => setState(() => _filter = status)),
+                _BookingFilterPills(
+                  selected: _filter,
+                  onChanged: (status) => setState(() => _filter = status),
+                ),
                 const SizedBox(height: 24),
 
                 if (bookingsAsync.isLoading && bookings.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 32),
-                    child: Center(child: CircularProgressIndicator(color: colorScheme.primary)),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: colorScheme.primary,
+                      ),
+                    ),
                   )
                 else if (bookingsAsync.hasError && bookings.isEmpty)
                   EmptyState(
@@ -174,7 +218,9 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
                   )
                 else if (filtered.isEmpty)
                   EmptyState(
-                    title: _filter == null ? 'No Bookings Scheduled' : 'No Matching Appointments',
+                    title: _filter == null
+                        ? 'No Bookings Scheduled'
+                        : 'No Matching Appointments',
                     message: _filter == null
                         ? 'You have no active or past service appointments. Tap below to reserve your slot.'
                         : 'Try selecting another status filter above or book a new appointment.',
@@ -185,7 +231,9 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
                 else
                   _BookingsList(bookings: filtered),
 
-                const SizedBox(height: 80), // Padding for Floating Action Button
+                const SizedBox(
+                  height: 80,
+                ), // Padding for Floating Action Button
               ],
             ),
           ),
@@ -218,7 +266,11 @@ class _UpNextHeroCard extends StatelessWidget {
       borderColor: Colors.transparent,
       padding: const EdgeInsets.all(24),
       boxShadow: [
-        BoxShadow(color: colorScheme.primary.withValues(alpha: 0.2), blurRadius: 24, offset: const Offset(0, 8)),
+        BoxShadow(
+          color: colorScheme.primary.withValues(alpha: 0.2),
+          blurRadius: 24,
+          offset: const Offset(0, 8),
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,7 +278,10 @@ class _UpNextHeroCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.onPrimaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(100),
@@ -243,15 +298,22 @@ class _UpNextHeroCard extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: isConfirmed ? colorScheme.primary : colorScheme.onPrimaryContainer.withValues(alpha: 0.2),
+                  color: isConfirmed
+                      ? colorScheme.primary
+                      : colorScheme.onPrimaryContainer.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(100),
                 ),
                 child: Text(
                   booking.statusLabel.toUpperCase(),
                   style: textTheme.labelSmall?.copyWith(
-                    color: isConfirmed ? colorScheme.onPrimary : colorScheme.onPrimaryContainer,
+                    color: isConfirmed
+                        ? colorScheme.onPrimary
+                        : colorScheme.onPrimaryContainer,
                     fontWeight: FontWeight.w900,
                     fontSize: 9,
                     letterSpacing: 0.5,
@@ -280,18 +342,32 @@ class _UpNextHeroCard extends StatelessWidget {
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(color: colorScheme.surface, borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Row(
               children: [
-                Icon(Icons.event_available_rounded, color: colorScheme.primary, size: 20),
+                Icon(
+                  Icons.event_available_rounded,
+                  color: colorScheme.primary,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     '${booking.date}${booking.time.isNotEmpty ? " at ${booking.time}" : ""}',
-                    style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
+                    style: textTheme.titleSmall?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.outline, size: 16),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: colorScheme.outline,
+                  size: 16,
+                ),
               ],
             ),
           ),
@@ -319,7 +395,11 @@ class _BookNowHeroCard extends StatelessWidget {
       borderColor: colorScheme.outlineVariant,
       padding: const EdgeInsets.all(24),
       boxShadow: [
-        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 8)),
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.05),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +412,11 @@ class _BookNowHeroCard extends StatelessWidget {
                   color: colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(Icons.flash_on_rounded, color: colorScheme.onSecondaryContainer, size: 24),
+                child: Icon(
+                  Icons.flash_on_rounded,
+                  color: colorScheme.onSecondaryContainer,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -350,7 +434,9 @@ class _BookNowHeroCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'You have no upcoming appointments.',
-                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -378,7 +464,10 @@ class _BookNowHeroCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Next Express Slot: Today at 2:30 PM',
-                    style: textTheme.labelLarge?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
+                    style: textTheme.labelLarge?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -393,9 +482,14 @@ class _BookNowHeroCard extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: colorScheme.onSurface,
                 foregroundColor: colorScheme.surface,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
-              child: const Text('Reserve Slot Now', style: TextStyle(fontWeight: FontWeight.w800)),
+              child: const Text(
+                'Reserve Slot Now',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
             ),
           ),
         ],
@@ -416,9 +510,27 @@ class _FeaturedPackagesCarousel extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final packages = [
-      ('Full Synthetic Oil Service', '£89', '45 mins', Icons.oil_barrel_rounded, colorScheme.primary),
-      ('Brake Disc & Pad Replacement', '£149', '1.5 hrs', Icons.minor_crash_rounded, colorScheme.error),
-      ('Air Conditioning Regas', '£59', '30 mins', Icons.ac_unit_rounded, colorScheme.secondary),
+      (
+        'Full Synthetic Oil Service',
+        '£89',
+        '45 mins',
+        Icons.oil_barrel_rounded,
+        colorScheme.primary,
+      ),
+      (
+        'Brake Disc & Pad Replacement',
+        '£149',
+        '1.5 hrs',
+        Icons.minor_crash_rounded,
+        colorScheme.error,
+      ),
+      (
+        'Air Conditioning Regas',
+        '£59',
+        '30 mins',
+        Icons.ac_unit_rounded,
+        colorScheme.secondary,
+      ),
     ];
 
     return SingleChildScrollView(
@@ -458,7 +570,10 @@ class _FeaturedPackagesCarousel extends StatelessWidget {
                       ),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(100),
@@ -487,7 +602,9 @@ class _FeaturedPackagesCarousel extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     'Est. Duration: ${pkg.$3}',
-                    style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -523,7 +640,11 @@ class _BookingFilterPills extends StatelessWidget {
       child: Row(
         children: [
           for (final item in items) ...[
-            _FilterPill(label: item.$1, isSelected: selected == item.$2, onTap: () => onChanged(item.$2)),
+            _FilterPill(
+              label: item.$1,
+              isSelected: selected == item.$2,
+              onTap: () => onChanged(item.$2),
+            ),
             const SizedBox(width: 8),
           ],
         ],
@@ -537,7 +658,11 @@ class _FilterPill extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _FilterPill({required this.label, required this.isSelected, required this.onTap});
+  const _FilterPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -555,12 +680,18 @@ class _FilterPill extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(100),
-            border: Border.all(color: isSelected ? Colors.transparent : colorScheme.outlineVariant),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.transparent
+                  : colorScheme.outlineVariant,
+            ),
           ),
           child: Text(
             label,
             style: textTheme.labelSmall?.copyWith(
-              color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+              color: isSelected
+                  ? colorScheme.onPrimary
+                  : colorScheme.onSurfaceVariant,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
             ),
           ),
@@ -602,13 +733,18 @@ class _BookingListItem extends StatelessWidget {
     final colors = _statusColors(booking.status, colorScheme);
 
     return AppCard(
-      onTap: () => context.push(AppRoutes.customerBookingDetail, extra: booking),
+      onTap: () =>
+          context.push(AppRoutes.customerBookingDetail, extra: booking),
       borderRadius: 24,
       padding: const EdgeInsets.all(20),
       color: colorScheme.surface,
       borderColor: colorScheme.outlineVariant,
       boxShadow: [
-        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.03), blurRadius: 16, offset: const Offset(0, 4)),
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.03),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -618,8 +754,15 @@ class _BookingListItem extends StatelessWidget {
               Container(
                 width: 48,
                 height: 48,
-                decoration: BoxDecoration(color: colors.$1, borderRadius: BorderRadius.circular(16)),
-                child: Icon(Icons.calendar_month_rounded, color: colors.$2, size: 24),
+                decoration: BoxDecoration(
+                  color: colors.$1,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.calendar_month_rounded,
+                  color: colors.$2,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -627,20 +770,30 @@ class _BookingListItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      booking.service.isNotEmpty ? booking.service : 'Service Appointment',
+                      booking.service.isNotEmpty
+                          ? booking.service
+                          : 'Service Appointment',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
+                      style: textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: colorScheme.outlineVariant),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                            ),
                           ),
                           child: Text(
                             booking.plateNumber.toUpperCase(),
@@ -668,7 +821,11 @@ class _BookingListItem extends StatelessWidget {
                   ],
                 ),
               ),
-              StatusPill(label: booking.statusLabel, bg: colors.$1, fg: colors.$2),
+              StatusPill(
+                label: booking.statusLabel,
+                bg: colors.$1,
+                fg: colors.$2,
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -676,16 +833,26 @@ class _BookingListItem extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              Icon(Icons.schedule_rounded, size: 16, color: colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.schedule_rounded,
+                size: 16,
+                color: colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 8),
               Text(
                 '${booking.date}${booking.time.isNotEmpty ? " at ${booking.time}" : ""}',
-                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const Spacer(),
               Text(
                 'View Details →',
-                style: textTheme.labelMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w900),
+                style: textTheme.labelMedium?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
@@ -696,10 +863,22 @@ class _BookingListItem extends StatelessWidget {
 
   (Color, Color) _statusColors(BookingStatus status, ColorScheme colorScheme) {
     return switch (status) {
-      BookingStatus.confirmed => (colorScheme.primary.withValues(alpha: 0.15), colorScheme.primary),
-      BookingStatus.completed => (const Color(0xFF10B981).withValues(alpha: 0.15), const Color(0xFF10B981)),
-      BookingStatus.pending => (colorScheme.secondary.withValues(alpha: 0.15), colorScheme.secondary),
-      BookingStatus.cancelled => (colorScheme.error.withValues(alpha: 0.15), colorScheme.error),
+      BookingStatus.confirmed => (
+        colorScheme.primary.withValues(alpha: 0.15),
+        colorScheme.primary,
+      ),
+      BookingStatus.completed => (
+        const Color(0xFF10B981).withValues(alpha: 0.15),
+        const Color(0xFF10B981),
+      ),
+      BookingStatus.pending => (
+        colorScheme.secondary.withValues(alpha: 0.15),
+        colorScheme.secondary,
+      ),
+      BookingStatus.cancelled => (
+        colorScheme.error.withValues(alpha: 0.15),
+        colorScheme.error,
+      ),
     };
   }
 }
@@ -709,7 +888,10 @@ class _ExplanatorySectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _ExplanatorySectionHeader({required this.title, required this.subtitle});
+  const _ExplanatorySectionHeader({
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -728,7 +910,12 @@ class _ExplanatorySectionHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(subtitle, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+        Text(
+          subtitle,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }

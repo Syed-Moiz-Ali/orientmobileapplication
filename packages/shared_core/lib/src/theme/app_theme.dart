@@ -7,155 +7,89 @@ abstract final class AppTheme {
   AppTheme._();
 
   static ThemeData light(BrandConfig brand) {
+    final primary = brand.buttonColor;
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: brand.buttonColor,
-      primary: brand.buttonColor,
-      secondary: AppColors.accent,
+      seedColor: primary,
+      primary: primary,
+      onPrimary: Colors.white,
+      secondary: const Color(0xFF2F6FED),
+      onSecondary: Colors.white,
+      tertiary: const Color(0xFF00A896),
+      onTertiary: Colors.white,
       error: AppColors.danger,
-      surface: AppColors.surface,
-      surfaceContainerLow: AppColors.surfaceAlt,
-      surfaceContainerHighest: AppColors.bg,
-      outline: AppColors.border,
-      outlineVariant: AppColors.borderMd,
-      onSurface: AppColors.textPrimary,
-      onSurfaceVariant: AppColors.text3,
+      surface: const Color(0xFFFFFFFF),
+      surfaceContainerLow: const Color(0xFFF8FAFC),
+      surfaceContainerHighest: const Color(0xFFF1F5F9),
+      outline: const Color(0xFFE2E8F0),
+      outlineVariant: const Color(0xFFCBD5E1),
+      onSurface: const Color(0xFF111827),
+      onSurfaceVariant: const Color(0xFF64748B),
+      shadow: Colors.black,
     );
 
-    return ThemeData(
-      useMaterial3: true,
+    return _buildTheme(
+      brand: brand,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.bg,
-      textTheme: AppTypography.textTheme,
-
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.bg,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        titleTextStyle: AppTextStyles.title(color: AppColors.textPrimary),
-      ),
-
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: brand.buttonColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          // Fixed width issue: Size(0, 52) instead of Size.fromHeight(52)
-          minimumSize: const Size(0, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          textStyle: AppTextStyles.button(color: Colors.white),
-        ),
-      ),
-
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          // Fixed width issue: Size(0, 52) instead of Size.fromHeight(52)
-          minimumSize: const Size(0, 52),
-          side: const BorderSide(color: AppColors.border),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          textStyle: AppTextStyles.button(color: AppColors.textPrimary),
-        ),
-      ),
-
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: brand.buttonColor,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          textStyle: AppTextStyles.button(color: brand.buttonColor),
-        ),
-      ),
-
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.bg,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: brand.buttonColor, width: 1.5),
-        ),
-        hintStyle: AppTextStyles.body(color: AppColors.text4),
-      ),
-
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: brand.buttonColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        focusElevation: 0,
-        hoverElevation: 0,
-        highlightElevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-
-      dividerTheme: const DividerThemeData(color: AppColors.line, thickness: 1, space: 1),
-
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.bg,
-        elevation: 0,
-        selectedItemColor: brand.buttonColor,
-        unselectedItemColor: AppColors.text4,
-        type: BottomNavigationBarType.fixed,
-        showUnselectedLabels: true,
-      ),
-
-      tabBarTheme: TabBarThemeData(
-        labelColor: brand.buttonColor,
-        unselectedLabelColor: AppColors.text3,
-        indicatorSize: TabBarIndicatorSize.label,
-        dividerColor: Colors.transparent,
-        indicator: UnderlineTabIndicator(borderSide: BorderSide(color: brand.buttonColor, width: 2)),
-      ),
-
-      chipTheme: ChipThemeData(
-        backgroundColor: brand.buttonColor.withValues(alpha: 0.08),
-        selectedColor: brand.buttonColor,
-        disabledColor: AppColors.surfaceAlt,
-        side: BorderSide.none,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-        labelStyle: AppTextStyles.subtitle(color: brand.buttonColor),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
+      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+      inputFillColor: colorScheme.surfaceContainerLow,
+      appBarBackgroundColor: const Color(0xFFF8FAFC),
     );
   }
 
   static ThemeData dark(BrandConfig brand) {
-    const darkBg = Color(0xFF0B0F17);
-    const darkSurface = Color(0xFF161E2E);
-    const darkBorder = Color(0xFF1E293B);
-
+    final primary = brand.buttonColor;
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: brand.buttonColor,
-      primary: brand.buttonColor,
-      secondary: AppColors.accent,
-      error: AppColors.danger,
-      surface: darkSurface,
-      surfaceContainerLow: const Color(0xFF111827),
-      surfaceContainerHighest: const Color(0xFF0B1220),
-      outline: darkBorder,
-      onSurface: const Color(0xFFF8FAFC),
-      onSurfaceVariant: AppColors.text4,
+      seedColor: primary,
       brightness: Brightness.dark,
+      primary: primary,
+      onPrimary: Colors.white,
+      secondary: const Color(0xFFFFD166),
+      onSecondary: const Color(0xFF171100),
+      tertiary: const Color(0xFF5DE2D1),
+      onTertiary: const Color(0xFF001B18),
+      error: const Color(0xFFFF6B7A),
+      surface: const Color(0xFF111722),
+      surfaceContainerLow: const Color(0xFF0F141D),
+      surfaceContainerHighest: const Color(0xFF192231),
+      outline: const Color(0xFF2A3444),
+      outlineVariant: const Color(0xFF344155),
+      onSurface: const Color(0xFFEAF0FF),
+      onSurfaceVariant: const Color(0xFFAAB5C8),
+      shadow: Colors.black,
     );
 
-    return ThemeData.dark(useMaterial3: true).copyWith(
+    return _buildTheme(
+      brand: brand,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: darkBg,
-      textTheme: AppTypography.textTheme,
+      scaffoldBackgroundColor: const Color(0xFF070A10),
+      inputFillColor: const Color(0xFF0F141D),
+      appBarBackgroundColor: const Color(0xFF070A10),
+    );
+  }
+
+  static ThemeData _buildTheme({
+    required BrandConfig brand,
+    required ColorScheme colorScheme,
+    required Color scaffoldBackgroundColor,
+    required Color inputFillColor,
+    required Color appBarBackgroundColor,
+  }) {
+    final primary = brand.buttonColor;
+    final onPrimary = colorScheme.onPrimary;
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: colorScheme.brightness,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: scaffoldBackgroundColor,
+      textTheme: AppTypography.textTheme.apply(
+        bodyColor: colorScheme.onSurface,
+        displayColor: colorScheme.onSurface,
+      ),
+      splashFactory: InkSparkle.splashFactory,
 
       appBarTheme: AppBarTheme(
-        backgroundColor: darkBg,
+        backgroundColor: appBarBackgroundColor,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -165,95 +99,129 @@ abstract final class AppTheme {
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: brand.buttonColor,
-          foregroundColor: Colors.white,
+          backgroundColor: primary,
+          foregroundColor: onPrimary,
           elevation: 0,
           shadowColor: Colors.transparent,
-          // Fixed width issue: Size(0, 52) instead of Size.fromHeight(52)
           minimumSize: const Size(0, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          textStyle: AppTextStyles.button(color: Colors.white),
+          textStyle: AppTextStyles.button(color: onPrimary),
+        ),
+      ),
+
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: onPrimary,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          minimumSize: const Size(0, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          textStyle: AppTextStyles.button(color: onPrimary),
         ),
       ),
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.onSurface,
-          // Fixed width issue: Size(0, 52) instead of Size.fromHeight(52)
           minimumSize: const Size(0, 52),
-          side: const BorderSide(color: darkBorder),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          side: BorderSide(color: colorScheme.outline),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           textStyle: AppTextStyles.button(color: colorScheme.onSurface),
         ),
       ),
 
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFF111827),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: darkBorder),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: darkBorder),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: brand.buttonColor, width: 1.5),
-        ),
-        hintStyle: AppTextStyles.body(color: AppColors.text4),
-      ),
-
-      // P3 (audit): dark() was missing the component themes light() defines —
-      // dark-mode screens rendered default M3 widgets that clashed with the
-      // brand. These were added for parity.
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: brand.buttonColor,
+          foregroundColor: primary,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          textStyle: AppTextStyles.button(color: brand.buttonColor),
+          textStyle: AppTextStyles.button(color: primary),
         ),
+      ),
+
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: colorScheme.onSurface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: inputFillColor,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: primary, width: 1.5),
+        ),
+        hintStyle: AppTextStyles.body(color: colorScheme.onSurfaceVariant),
       ),
 
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: brand.buttonColor,
-        foregroundColor: Colors.white,
+        backgroundColor: primary,
+        foregroundColor: onPrimary,
         elevation: 0,
         focusElevation: 0,
         hoverElevation: 0,
         highlightElevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
 
-      dividerTheme: const DividerThemeData(color: darkBorder, thickness: 1, space: 1),
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outline,
+        thickness: 1,
+        space: 1,
+      ),
 
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: darkBg,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
-        selectedItemColor: brand.buttonColor,
-        unselectedItemColor: AppColors.text4,
+        selectedItemColor: primary,
+        unselectedItemColor: colorScheme.onSurfaceVariant,
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
       ),
 
       tabBarTheme: TabBarThemeData(
-        labelColor: brand.buttonColor,
-        unselectedLabelColor: AppColors.text4,
+        labelColor: primary,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
         indicatorSize: TabBarIndicatorSize.label,
         dividerColor: Colors.transparent,
-        indicator: UnderlineTabIndicator(borderSide: BorderSide(color: brand.buttonColor, width: 2)),
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(color: primary, width: 2),
+        ),
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: brand.buttonColor.withValues(alpha: 0.15),
-        selectedColor: brand.buttonColor,
+        backgroundColor: primary.withValues(alpha: 0.10),
+        selectedColor: primary,
+        disabledColor: colorScheme.surfaceContainerHighest,
         side: BorderSide.none,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-        labelStyle: AppTextStyles.subtitle(color: Colors.white),
+        labelStyle: AppTextStyles.subtitle(color: primary),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
   }

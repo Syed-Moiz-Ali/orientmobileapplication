@@ -13,14 +13,7 @@ void main() async {
 
   await HiveRegistry.initHive();
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        loggerProvider.overrideWithValue(logger),
-      ],
-      child: const CustomerApp(),
-    ),
-  );
+  runApp(ProviderScope(overrides: [loggerProvider.overrideWithValue(logger)], child: const CustomerApp()));
 }
 
 class CustomerApp extends ConsumerWidget {
@@ -45,10 +38,9 @@ class CustomerApp extends ConsumerWidget {
         routerConfig: router,
         title: brand.appName,
         theme: AppTheme.light(brand),
+        darkTheme: AppTheme.dark(brand),
+        themeMode: ThemeMode.light,
       ),
     );
   }
 }
-
-
-

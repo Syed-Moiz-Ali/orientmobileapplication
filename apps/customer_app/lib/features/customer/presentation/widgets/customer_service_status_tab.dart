@@ -13,10 +13,12 @@ class CustomerServiceStatusTab extends ConsumerStatefulWidget {
   const CustomerServiceStatusTab({super.key});
 
   @override
-  ConsumerState<CustomerServiceStatusTab> createState() => _CustomerServiceStatusTabState();
+  ConsumerState<CustomerServiceStatusTab> createState() =>
+      _CustomerServiceStatusTabState();
 }
 
-class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatusTab> {
+class _CustomerServiceStatusTabState
+    extends ConsumerState<CustomerServiceStatusTab> {
   Timer? _refreshTimer;
 
   @override
@@ -44,29 +46,44 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    final bookings = ref.watch(customerBookingsProvider).value ?? const <CustomerBookingEntity>[];
+    final bookings =
+        ref.watch(customerBookingsProvider).value ??
+        const <CustomerBookingEntity>[];
     final dash = ref.watch(customerDashboardProvider);
     final activeService = dash.activeService;
 
     // Core state checks
-    final hasActiveLiveJob = activeService != null && activeService.hasActiveJob && activeService.jobCardId.isNotEmpty;
+    final hasActiveLiveJob =
+        activeService != null &&
+        activeService.hasActiveJob &&
+        activeService.jobCardId.isNotEmpty;
     final activeBookings = bookings
-        .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending)
+        .where(
+          (b) =>
+              b.status == BookingStatus.confirmed ||
+              b.status == BookingStatus.pending,
+        )
         .toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       // ── FLOATING BOOK ACTION (Consistent with Home Tab) ──────────────────
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'customer-status-book-service-fab',
-        onPressed: () => context.push(AppRoutes.customerBookService),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        elevation: 4,
-        icon: Icon(Icons.add_rounded, color: colorScheme.onPrimary),
-        label: Text(
-          'New Booking',
-          style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onPrimary),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 88),
+        child: FloatingActionButton.extended(
+          heroTag: 'customer-status-book-service-fab',
+          onPressed: () => context.push(AppRoutes.customerBookService),
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          elevation: 4,
+          icon: Icon(Icons.add_rounded, color: colorScheme.onPrimary),
+          label: Text(
+            'New Booking',
+            style: textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onPrimary,
+            ),
+          ),
         ),
       ),
       body: SafeArea(
@@ -117,7 +134,8 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () => context.push(AppRoutes.customerNotifications),
+                      onTap: () =>
+                          context.push(AppRoutes.customerNotifications),
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -127,23 +145,37 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
                             decoration: BoxDecoration(
                               color: colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: colorScheme.outlineVariant),
+                              border: Border.all(
+                                color: colorScheme.outlineVariant,
+                              ),
                             ),
-                            child: Icon(Icons.notifications_outlined, color: colorScheme.onSurface, size: 24),
+                            child: Icon(
+                              Icons.notifications_outlined,
+                              color: colorScheme.onSurface,
+                              size: 24,
+                            ),
                           ),
                           if (dash.unreadCount > 0)
                             Positioned(
                               top: -2,
                               right: -2,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: colorScheme.error,
                                   borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(color: colorScheme.surface, width: 2),
+                                  border: Border.all(
+                                    color: colorScheme.surface,
+                                    width: 2,
+                                  ),
                                 ),
                                 child: Text(
-                                  dash.unreadCount > 99 ? '99+' : '${dash.unreadCount}',
+                                  dash.unreadCount > 99
+                                      ? '99+'
+                                      : '${dash.unreadCount}',
                                   style: textTheme.labelSmall?.copyWith(
                                     color: colorScheme.onError,
                                     fontWeight: FontWeight.w900,
@@ -172,11 +204,16 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
                 ] else if (activeBookings.isNotEmpty) ...[
                   _PendingServiceStatusCard(
                     booking: activeBookings.first,
-                    onViewDetails: () => context.push(AppRoutes.customerBookingDetail, extra: activeBookings.first),
+                    onViewDetails: () => context.push(
+                      AppRoutes.customerBookingDetail,
+                      extra: activeBookings.first,
+                    ),
                   ),
                   const SizedBox(height: 36),
                 ] else ...[
-                  _NoActiveJobStatusCard(onBook: () => context.push(AppRoutes.customerBookService)),
+                  _NoActiveJobStatusCard(
+                    onBook: () => context.push(AppRoutes.customerBookService),
+                  ),
                   const SizedBox(height: 36),
                 ],
 
@@ -195,7 +232,9 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
                     title: 'Maintenance Records',
                     subtitle: 'Past service receipts & reports',
                     action: 'View All',
-                    onAction: () => ref.read(customerDashboardProvider.notifier).selectTab(2),
+                    onAction: () => ref
+                        .read(customerDashboardProvider.notifier)
+                        .selectTab(2),
                   ),
                   const SizedBox(height: 16),
                   Column(
@@ -203,13 +242,19 @@ class _CustomerServiceStatusTabState extends ConsumerState<CustomerServiceStatus
                       for (final b in bookings.take(3)) ...[
                         _ServiceRecordCard(
                           booking: b,
-                          onTap: () => context.push(AppRoutes.customerBookingDetail, extra: b),
+                          onTap: () => context.push(
+                            AppRoutes.customerBookingDetail,
+                            extra: b,
+                          ),
                         ),
-                        if (b != bookings.take(3).last) const SizedBox(height: 12),
+                        if (b != bookings.take(3).last)
+                          const SizedBox(height: 12),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 80), // Padding for Floating Action Button
+                  const SizedBox(
+                    height: 80,
+                  ), // Padding for Floating Action Button
                 ],
               ],
             ),
@@ -225,7 +270,10 @@ class _PendingServiceStatusCard extends StatelessWidget {
   final CustomerBookingEntity booking;
   final VoidCallback onViewDetails;
 
-  const _PendingServiceStatusCard({required this.booking, required this.onViewDetails});
+  const _PendingServiceStatusCard({
+    required this.booking,
+    required this.onViewDetails,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +281,9 @@ class _PendingServiceStatusCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final isConfirmed = booking.status == BookingStatus.confirmed;
 
-    final highlightColor = isConfirmed ? colorScheme.primary : colorScheme.secondary;
+    final highlightColor = isConfirmed
+        ? colorScheme.primary
+        : colorScheme.secondary;
 
     return AppCard(
       onTap: onViewDetails,
@@ -242,7 +292,11 @@ class _PendingServiceStatusCard extends StatelessWidget {
       borderRadius: 24,
       padding: const EdgeInsets.all(20),
       boxShadow: [
-        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 6)),
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.05),
+          blurRadius: 16,
+          offset: const Offset(0, 6),
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +304,10 @@ class _PendingServiceStatusCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: highlightColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(100),
@@ -261,11 +318,16 @@ class _PendingServiceStatusCard extends StatelessWidget {
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: BoxDecoration(color: highlightColor, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: highlightColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      isConfirmed ? 'CONFIRMED • AWAITING INTAKE' : 'PENDING CONFIRMATION',
+                      isConfirmed
+                          ? 'CONFIRMED • AWAITING INTAKE'
+                          : 'PENDING CONFIRMATION',
                       style: textTheme.labelSmall?.copyWith(
                         color: highlightColor,
                         fontWeight: FontWeight.w900,
@@ -277,13 +339,22 @@ class _PendingServiceStatusCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              StatusPill(label: booking.statusLabel, bg: highlightColor.withValues(alpha: 0.15), fg: highlightColor),
+              StatusPill(
+                label: booking.statusLabel,
+                bg: highlightColor.withValues(alpha: 0.15),
+                fg: highlightColor,
+              ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
-            booking.service.isNotEmpty ? booking.service : 'Scheduled Appointment',
-            style: textTheme.titleLarge?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
+            booking.service.isNotEmpty
+                ? booking.service
+                : 'Scheduled Appointment',
+            style: textTheme.titleLarge?.copyWith(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 6),
           Row(
@@ -329,12 +400,19 @@ class _PendingServiceStatusCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.event_available_rounded, color: colorScheme.onSurface, size: 20),
+                Icon(
+                  Icons.event_available_rounded,
+                  color: colorScheme.onSurface,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Scheduled: ${booking.date}${booking.time.isNotEmpty ? " at ${booking.time}" : ""}',
-                    style: textTheme.labelMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
+                    style: textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -348,11 +426,24 @@ class _PendingServiceStatusCard extends StatelessWidget {
             children: [
               _StepCircle(label: 'Booked', isDone: true, color: highlightColor),
               _StepLine(isDone: true, color: highlightColor),
-              _StepCircle(label: 'Check-In', isCurrent: isConfirmed, isDone: isConfirmed, color: highlightColor),
+              _StepCircle(
+                label: 'Check-In',
+                isCurrent: isConfirmed,
+                isDone: isConfirmed,
+                color: highlightColor,
+              ),
               _StepLine(isDone: false, color: highlightColor),
-              _StepCircle(label: 'Repairs', isDone: false, color: highlightColor),
+              _StepCircle(
+                label: 'Repairs',
+                isDone: false,
+                color: highlightColor,
+              ),
               _StepLine(isDone: false, color: highlightColor),
-              _StepCircle(label: 'Pick-Up', isDone: false, color: highlightColor),
+              _StepCircle(
+                label: 'Pick-Up',
+                isDone: false,
+                color: highlightColor,
+              ),
             ],
           ),
         ],
@@ -378,7 +469,11 @@ class _NoActiveJobStatusCard extends StatelessWidget {
       color: colorScheme.surface,
       borderColor: colorScheme.outlineVariant,
       boxShadow: [
-        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 6)),
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.05),
+          blurRadius: 16,
+          offset: const Offset(0, 6),
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,8 +483,15 @@ class _NoActiveJobStatusCard extends StatelessWidget {
               Container(
                 width: 52,
                 height: 52,
-                decoration: BoxDecoration(color: colorScheme.primaryContainer, borderRadius: BorderRadius.circular(16)),
-                child: Icon(Icons.check_circle_outline_rounded, color: colorScheme.primary, size: 28),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: colorScheme.primary,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -398,12 +500,17 @@ class _NoActiveJobStatusCard extends StatelessWidget {
                   children: [
                     Text(
                       'No Active Services',
-                      style: textTheme.titleMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
+                      style: textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Your vehicle is idle and ready.',
-                      style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -418,7 +525,10 @@ class _NoActiveJobStatusCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Due for routine maintenance?',
-                  style: textTheme.labelMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w700),
+                  style: textTheme.labelMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               ElevatedButton(
@@ -426,11 +536,19 @@ class _NoActiveJobStatusCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   elevation: 0,
                 ),
-                child: const Text('Book Now', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                child: const Text(
+                  'Book Now',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                ),
               ),
             ],
           ),
@@ -458,7 +576,11 @@ class _ActiveJobTelemetryHero extends StatelessWidget {
       borderRadius: 24,
       padding: const EdgeInsets.all(24),
       boxShadow: [
-        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.15), blurRadius: 24, offset: const Offset(0, 8)),
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.15),
+          blurRadius: 24,
+          offset: const Offset(0, 8),
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,7 +588,10 @@ class _ActiveJobTelemetryHero extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(100),
@@ -477,7 +602,10 @@ class _ActiveJobTelemetryHero extends StatelessWidget {
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -504,7 +632,9 @@ class _ActiveJobTelemetryHero extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            service.currentStage.isNotEmpty ? service.currentStage : 'Service In Progress',
+            service.currentStage.isNotEmpty
+                ? service.currentStage
+                : 'Service In Progress',
             style: textTheme.headlineSmall?.copyWith(
               color: colorScheme.onInverseSurface,
               fontWeight: FontWeight.w900,
@@ -525,7 +655,9 @@ class _ActiveJobTelemetryHero extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 8,
-              backgroundColor: colorScheme.onInverseSurface.withValues(alpha: 0.15),
+              backgroundColor: colorScheme.onInverseSurface.withValues(
+                alpha: 0.15,
+              ),
               valueColor: AlwaysStoppedAnimation(colorScheme.primary),
             ),
           ),
@@ -535,13 +667,45 @@ class _ActiveJobTelemetryHero extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _StepCircle(label: 'Check-In', isDone: true, color: colorScheme.primary, isDarkBg: true),
-              _StepLine(isDone: true, color: colorScheme.primary, isDarkBg: true),
-              _StepCircle(label: 'Inspection', isDone: true, color: colorScheme.primary, isDarkBg: true),
-              _StepLine(isDone: true, color: colorScheme.primary, isDarkBg: true),
-              _StepCircle(label: 'Repairing', isCurrent: true, color: colorScheme.primary, isDarkBg: true),
-              _StepLine(isDone: false, color: colorScheme.primary, isDarkBg: true),
-              _StepCircle(label: 'Pick-Up', isDone: false, color: colorScheme.primary, isDarkBg: true),
+              _StepCircle(
+                label: 'Check-In',
+                isDone: true,
+                color: colorScheme.primary,
+                isDarkBg: true,
+              ),
+              _StepLine(
+                isDone: true,
+                color: colorScheme.primary,
+                isDarkBg: true,
+              ),
+              _StepCircle(
+                label: 'Inspection',
+                isDone: true,
+                color: colorScheme.primary,
+                isDarkBg: true,
+              ),
+              _StepLine(
+                isDone: true,
+                color: colorScheme.primary,
+                isDarkBg: true,
+              ),
+              _StepCircle(
+                label: 'Repairing',
+                isCurrent: true,
+                color: colorScheme.primary,
+                isDarkBg: true,
+              ),
+              _StepLine(
+                isDone: false,
+                color: colorScheme.primary,
+                isDarkBg: true,
+              ),
+              _StepCircle(
+                label: 'Pick-Up',
+                isDone: false,
+                color: colorScheme.primary,
+                isDarkBg: true,
+              ),
             ],
           ),
         ],
@@ -575,7 +739,9 @@ class _StepCircle extends StatelessWidget {
     final emptyColor = isDarkBg
         ? colorScheme.onInverseSurface.withValues(alpha: 0.2)
         : colorScheme.surfaceContainerHighest;
-    final textColor = isDarkBg ? colorScheme.onInverseSurface : colorScheme.onSurface;
+    final textColor = isDarkBg
+        ? colorScheme.onInverseSurface
+        : colorScheme.onSurface;
 
     return Column(
       children: [
@@ -583,7 +749,9 @@ class _StepCircle extends StatelessWidget {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: isDone || isCurrent ? resolvedColor.withValues(alpha: 0.15) : emptyColor,
+            color: isDone || isCurrent
+                ? resolvedColor.withValues(alpha: 0.15)
+                : emptyColor,
             shape: BoxShape.circle,
             border: Border.all(
               color: isDone || isCurrent ? resolvedColor : Colors.transparent,
@@ -609,7 +777,9 @@ class _StepCircle extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             fontWeight: isCurrent || isDone ? FontWeight.w900 : FontWeight.w600,
-            color: isCurrent || isDone ? textColor : textColor.withValues(alpha: 0.5),
+            color: isCurrent || isDone
+                ? textColor
+                : textColor.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -622,7 +792,11 @@ class _StepLine extends StatelessWidget {
   final Color color;
   final bool isDarkBg;
 
-  const _StepLine({required this.isDone, required this.color, this.isDarkBg = false});
+  const _StepLine({
+    required this.isDone,
+    required this.color,
+    this.isDarkBg = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -668,7 +842,11 @@ class _ServiceRecordCard extends StatelessWidget {
               color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(Icons.receipt_long_rounded, color: colorScheme.onSurface, size: 24),
+            child: Icon(
+              Icons.receipt_long_rounded,
+              color: colorScheme.onSurface,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -676,10 +854,15 @@ class _ServiceRecordCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  booking.service.isNotEmpty ? booking.service : 'Completed Service',
+                  booking.service.isNotEmpty
+                      ? booking.service
+                      : 'Completed Service',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
+                  style: textTheme.titleSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -710,7 +893,12 @@ class _ExplanatorySectionHeader extends StatelessWidget {
   final String? action;
   final VoidCallback? onAction;
 
-  const _ExplanatorySectionHeader({required this.title, required this.subtitle, this.action, this.onAction});
+  const _ExplanatorySectionHeader({
+    required this.title,
+    required this.subtitle,
+    this.action,
+    this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -733,7 +921,12 @@ class _ExplanatorySectionHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(subtitle, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+              Text(
+                subtitle,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
         ),
@@ -742,7 +935,10 @@ class _ExplanatorySectionHeader extends StatelessWidget {
             onTap: onAction,
             child: Text(
               action!,
-              style: textTheme.labelMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w800),
+              style: textTheme.labelMedium?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
       ],
