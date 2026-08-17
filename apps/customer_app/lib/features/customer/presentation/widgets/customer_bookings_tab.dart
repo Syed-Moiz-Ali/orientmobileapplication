@@ -512,21 +512,21 @@ class _FeaturedPackagesCarousel extends StatelessWidget {
     final packages = [
       (
         'Full Synthetic Oil Service',
-        '£89',
+        'AED 89',
         '45 mins',
         Icons.oil_barrel_rounded,
         colorScheme.primary,
       ),
       (
         'Brake Disc & Pad Replacement',
-        '£149',
+        'AED 149',
         '1.5 hrs',
         Icons.minor_crash_rounded,
         colorScheme.error,
       ),
       (
         'Air Conditioning Regas',
-        '£59',
+        'AED 59',
         '30 mins',
         Icons.ac_unit_rounded,
         colorScheme.secondary,

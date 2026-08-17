@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.util.Optional;
 
 @Mapper
 public interface InventoryItemMapper extends BaseMapper<InventoryItem> {
@@ -22,4 +23,8 @@ public interface InventoryItemMapper extends BaseMapper<InventoryItem> {
 
     @Select("SELECT COUNT(*) FROM inventory_items")
     long countAll();
+
+    @Select("SELECT * FROM inventory_items WHERE sku = #{sku} "
+            + "AND ((branch_id = #{branchId}) OR (branch_id IS NULL AND #{branchId} IS NULL)) LIMIT 1")
+    Optional<InventoryItem> findBySkuAndBranch(@Param("sku") String sku, @Param("branchId") Long branchId);
 }

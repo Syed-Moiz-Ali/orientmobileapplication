@@ -15,7 +15,9 @@ class CustomerBookingDetailView extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    final cancellable = booking.status == BookingStatus.pending || booking.status == BookingStatus.confirmed;
+    final cancellable =
+        booking.status == BookingStatus.pending ||
+        booking.status == BookingStatus.confirmed;
 
     final statusColor = _statusColor(booking.status, colorScheme);
     final statusBg = _statusBg(booking.status, colorScheme);
@@ -25,7 +27,7 @@ class CustomerBookingDetailView extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const AppTopBar(title: 'Appointment Details'),
+            const AppTopBar(title: 'Booking Details'),
             Divider(height: 1, color: colorScheme.outlineVariant),
             Expanded(
               child: AppResponsivePage(
@@ -54,14 +56,23 @@ class CustomerBookingDetailView extends ConsumerWidget {
                         children: [
                           Row(
                             children: [
-                              StatusPill(label: booking.statusLabel.toUpperCase(), bg: statusBg, fg: statusColor),
+                              StatusPill(
+                                label: booking.statusLabel,
+                                bg: statusBg,
+                                fg: statusColor,
+                              ),
                               const Spacer(),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: colorScheme.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(color: colorScheme.outlineVariant),
+                                  border: Border.all(
+                                    color: colorScheme.outlineVariant,
+                                  ),
                                 ),
                                 child: Text(
                                   '#${booking.id.length > 8 ? booking.id.substring(booking.id.length - 8) : booking.id}',
@@ -77,7 +88,9 @@ class CustomerBookingDetailView extends ConsumerWidget {
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            booking.service.isNotEmpty ? booking.service : 'Scheduled Service',
+                            booking.service.isNotEmpty
+                                ? booking.service
+                                : 'Scheduled Service',
                             style: textTheme.headlineSmall?.copyWith(
                               color: colorScheme.onSurface,
                               fontWeight: FontWeight.w900,
@@ -88,11 +101,18 @@ class CustomerBookingDetailView extends ConsumerWidget {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFACC15), // Yellow plate
+                                  color: const Color(
+                                    0xFFFACC15,
+                                  ), // Yellow plate
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.black.withValues(alpha: 0.3)),
+                                  border: Border.all(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                  ),
                                 ),
                                 child: Text(
                                   booking.plateNumber.toUpperCase(),
@@ -124,7 +144,10 @@ class CustomerBookingDetailView extends ConsumerWidget {
                     const SizedBox(height: 24),
 
                     // ── 2. APPOINTMENT DETAILS CARD ────────────────────────
-                    _SectionHeader(title: 'Appointment Specifications', subtitle: 'Date, time & service details'),
+                    _SectionHeader(
+                      title: 'Appointment Specifications',
+                      subtitle: 'Date, time & service details',
+                    ),
                     const SizedBox(height: 16),
                     AppCard(
                       borderRadius: 24,
@@ -144,19 +167,25 @@ class CustomerBookingDetailView extends ConsumerWidget {
                           _InfoRow(
                             icon: Icons.calendar_today_rounded,
                             label: 'Date',
-                            value: booking.date.isNotEmpty ? booking.date : 'TBC',
+                            value: booking.date.isNotEmpty
+                                ? booking.date
+                                : 'TBC',
                           ),
                           Divider(height: 1, color: colorScheme.outlineVariant),
                           _InfoRow(
                             icon: Icons.access_time_rounded,
                             label: 'Time Slot',
-                            value: booking.time.isNotEmpty ? booking.time : 'TBC',
+                            value: booking.time.isNotEmpty
+                                ? booking.time
+                                : 'TBC',
                           ),
                           Divider(height: 1, color: colorScheme.outlineVariant),
                           _InfoRow(
                             icon: Icons.directions_car_rounded,
                             label: 'Vehicle',
-                            value: booking.vehicleName.isNotEmpty ? booking.vehicleName : '—',
+                            value: booking.vehicleName.isNotEmpty
+                                ? booking.vehicleName
+                                : '—',
                           ),
                           Divider(height: 1, color: colorScheme.outlineVariant),
                           _InfoRow(
@@ -168,7 +197,9 @@ class CustomerBookingDetailView extends ConsumerWidget {
                           _InfoRow(
                             icon: Icons.build_rounded,
                             label: 'Service Package',
-                            value: booking.service.isNotEmpty ? booking.service : '—',
+                            value: booking.service.isNotEmpty
+                                ? booking.service
+                                : '—',
                           ),
                         ],
                       ),
@@ -176,7 +207,10 @@ class CustomerBookingDetailView extends ConsumerWidget {
                     const SizedBox(height: 24),
 
                     // ── 3. PROGRESS TRACKER ────────────────────────────────
-                    _SectionHeader(title: 'Service Progress', subtitle: 'Live stage tracker updated by workshop'),
+                    _SectionHeader(
+                      title: 'Service Progress',
+                      subtitle: 'Live stage tracker updated by workshop',
+                    ),
                     const SizedBox(height: 16),
                     AppCard(
                       borderRadius: 24,
@@ -194,27 +228,41 @@ class CustomerBookingDetailView extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _StepCircle(label: 'Booked', isDone: true, colorScheme: colorScheme),
+                          _StepCircle(
+                            label: 'Booked',
+                            isDone: true,
+                            colorScheme: colorScheme,
+                          ),
                           _StepLine(
                             isDone:
-                                booking.status == BookingStatus.confirmed || booking.status == BookingStatus.completed,
+                                booking.status == BookingStatus.confirmed ||
+                                booking.status == BookingStatus.completed,
                             colorScheme: colorScheme,
                           ),
                           _StepCircle(
                             label: 'Confirmed',
                             isDone:
-                                booking.status == BookingStatus.confirmed || booking.status == BookingStatus.completed,
-                            isCurrent: booking.status == BookingStatus.confirmed,
+                                booking.status == BookingStatus.confirmed ||
+                                booking.status == BookingStatus.completed,
+                            isCurrent:
+                                booking.status == BookingStatus.confirmed,
                             colorScheme: colorScheme,
                           ),
-                          _StepLine(isDone: booking.status == BookingStatus.completed, colorScheme: colorScheme),
+                          _StepLine(
+                            isDone: booking.status == BookingStatus.completed,
+                            colorScheme: colorScheme,
+                          ),
                           _StepCircle(
                             label: 'In Bay',
                             isDone: booking.status == BookingStatus.completed,
-                            isCurrent: booking.status == BookingStatus.completed,
+                            isCurrent:
+                                booking.status == BookingStatus.completed,
                             colorScheme: colorScheme,
                           ),
-                          _StepLine(isDone: booking.status == BookingStatus.completed, colorScheme: colorScheme),
+                          _StepLine(
+                            isDone: booking.status == BookingStatus.completed,
+                            colorScheme: colorScheme,
+                          ),
                           _StepCircle(
                             label: 'Done',
                             isDone: booking.status == BookingStatus.completed,
@@ -226,7 +274,10 @@ class CustomerBookingDetailView extends ConsumerWidget {
                     const SizedBox(height: 24),
 
                     // ── 4. WORKSHOP INFO ───────────────────────────────────
-                    _SectionHeader(title: 'Workshop Location', subtitle: 'Orient Automotive • Main Bay'),
+                    _SectionHeader(
+                      title: 'Workshop Location',
+                      subtitle: 'Orient Automotive • Main Bay',
+                    ),
                     const SizedBox(height: 16),
                     AppCard(
                       borderRadius: 24,
@@ -255,7 +306,11 @@ class CustomerBookingDetailView extends ConsumerWidget {
                             value: 'Mon–Fri 8:00am – 6:00pm',
                           ),
                           Divider(height: 1, color: colorScheme.outlineVariant),
-                          _InfoRow(icon: Icons.phone_rounded, label: 'Workshop Line', value: '+44 (0) 20 1234 5678'),
+                          _InfoRow(
+                            icon: Icons.phone_rounded,
+                            label: 'Workshop Line',
+                            value: '+971 4 555 0123',
+                          ),
                         ],
                       ),
                     ),
@@ -267,10 +322,15 @@ class CustomerBookingDetailView extends ConsumerWidget {
                         width: double.infinity,
                         height: 56,
                         child: OutlinedButton.icon(
-                          onPressed: () => _confirmCancel(context, ref, colorScheme),
-                          icon: Icon(Icons.cancel_outlined, size: 20, color: colorScheme.error),
+                          onPressed: () =>
+                              _confirmCancel(context, ref, colorScheme),
+                          icon: Icon(
+                            Icons.cancel_outlined,
+                            size: 20,
+                            color: colorScheme.error,
+                          ),
                           label: Text(
-                            'Cancel This Appointment',
+                            'Cancel Booking',
                             style: textTheme.titleMedium?.copyWith(
                               color: colorScheme.error,
                               fontWeight: FontWeight.w800,
@@ -278,8 +338,12 @@ class CustomerBookingDetailView extends ConsumerWidget {
                           ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: colorScheme.error,
-                            side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                            side: BorderSide(
+                              color: colorScheme.error.withValues(alpha: 0.5),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(100),
+                            ),
                           ),
                         ),
                       ),
@@ -295,15 +359,22 @@ class CustomerBookingDetailView extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmCancel(BuildContext context, WidgetRef ref, ColorScheme colorScheme) async {
+  Future<void> _confirmCancel(
+    BuildContext context,
+    WidgetRef ref,
+    ColorScheme colorScheme,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
-          'Cancel Booking?',
-          style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
+          'Cancel this booking?',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: colorScheme.onSurface,
+          ),
         ),
         content: Text(
           'This appointment will be cancelled and cannot be undone.',
@@ -312,12 +383,18 @@ class CustomerBookingDetailView extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Keep Booking', style: TextStyle(color: colorScheme.onSurface)),
+            child: Text(
+              'Keep Booking',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: colorScheme.error),
-            child: const Text('Cancel Booking', style: TextStyle(fontWeight: FontWeight.w900)),
+            child: const Text(
+              'Cancel Booking',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
           ),
         ],
       ),
@@ -390,7 +467,12 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(subtitle, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+        Text(
+          subtitle,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -401,7 +483,11 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRow({required this.icon, required this.label, required this.value});
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -436,7 +522,10 @@ class _InfoRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
@@ -453,7 +542,12 @@ class _StepCircle extends StatelessWidget {
   final bool isCurrent;
   final ColorScheme colorScheme;
 
-  const _StepCircle({required this.label, this.isDone = false, this.isCurrent = false, required this.colorScheme});
+  const _StepCircle({
+    required this.label,
+    this.isDone = false,
+    this.isCurrent = false,
+    required this.colorScheme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -467,9 +561,14 @@ class _StepCircle extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: isDone || isCurrent ? activeColor.withValues(alpha: 0.15) : colorScheme.surfaceContainerHighest,
+            color: isDone || isCurrent
+                ? activeColor.withValues(alpha: 0.15)
+                : colorScheme.surfaceContainerHighest,
             shape: BoxShape.circle,
-            border: Border.all(color: isDone || isCurrent ? activeColor : inactiveColor, width: isCurrent ? 2 : 1),
+            border: Border.all(
+              color: isDone || isCurrent ? activeColor : inactiveColor,
+              width: isCurrent ? 2 : 1,
+            ),
           ),
           child: Center(
             child: isDone
@@ -490,7 +589,9 @@ class _StepCircle extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             fontWeight: isCurrent || isDone ? FontWeight.w900 : FontWeight.w600,
-            color: isCurrent || isDone ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+            color: isCurrent || isDone
+                ? colorScheme.onSurface
+                : colorScheme.onSurfaceVariant,
           ),
         ),
       ],

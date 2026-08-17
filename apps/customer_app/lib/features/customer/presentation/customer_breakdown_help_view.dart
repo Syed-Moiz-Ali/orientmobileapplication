@@ -10,12 +10,16 @@ class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
   const CustomerBreakdownHelpView({super.key});
 
   @override
-  ConsumerState<CustomerBreakdownHelpView> createState() => _CustomerBreakdownHelpViewState();
+  ConsumerState<CustomerBreakdownHelpView> createState() =>
+      _CustomerBreakdownHelpViewState();
 }
 
-class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHelpView> {
+class _CustomerBreakdownHelpViewState
+    extends ConsumerState<CustomerBreakdownHelpView> {
   final _notesCtrl = TextEditingController();
-  final _locationCtrl = TextEditingController(text: 'Current GPS Location (Auto-detected)');
+  final _locationCtrl = TextEditingController(
+    text: 'Current GPS Location (Auto-detected)',
+  );
   final _searchCtrl = TextEditingController();
 
   CustomerVehicleEntity? _selectedVehicle;
@@ -23,18 +27,59 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
   String _selectedCategory = 'All';
   bool _isSaving = false;
 
-  List<CustomerVehicleEntity> get _vehicles => ref.watch(customerDashboardProvider).vehicles;
+  List<CustomerVehicleEntity> get _vehicles =>
+      ref.watch(customerDashboardProvider).vehicles;
 
   // Expanded dataset structure with categories to showcase future-proofing
   static const _issues = [
-    (Icons.battery_alert_rounded, 'Battery Dead', 'Jumpstart or battery replacement', 'Electrical'),
-    (Icons.tire_repair_rounded, 'Flat Tyre', 'Tyre change or puncture repair', 'Wheels'),
-    (Icons.device_thermostat_rounded, 'Overheating', 'Coolant leak or engine heat', 'Engine'),
-    (Icons.local_gas_station_rounded, 'Fuel Empty', 'Emergency fuel delivery', 'Fluid'),
-    (Icons.key_rounded, 'Key Locked', 'Lockout assistance & key service', 'Access'),
-    (Icons.car_crash_rounded, 'Accident / Towing', 'Priority flatbed towing unit', 'Emergency'),
-    (Icons.electrical_services_rounded, 'Alternator Failure', 'Electrical charging system issue', 'Electrical'),
-    (Icons.warning_rounded, 'Brake Failure', 'Hydraulic pressure loss or pads', 'Mechanical'),
+    (
+      Icons.battery_alert_rounded,
+      'Battery Dead',
+      'Jumpstart or battery replacement',
+      'Electrical',
+    ),
+    (
+      Icons.tire_repair_rounded,
+      'Flat Tyre',
+      'Tyre change or puncture repair',
+      'Wheels',
+    ),
+    (
+      Icons.device_thermostat_rounded,
+      'Overheating',
+      'Coolant leak or engine heat',
+      'Engine',
+    ),
+    (
+      Icons.local_gas_station_rounded,
+      'Fuel Empty',
+      'Emergency fuel delivery',
+      'Fluid',
+    ),
+    (
+      Icons.key_rounded,
+      'Key Locked',
+      'Lockout assistance & key service',
+      'Access',
+    ),
+    (
+      Icons.car_crash_rounded,
+      'Accident / Towing',
+      'Priority flatbed towing unit',
+      'Emergency',
+    ),
+    (
+      Icons.electrical_services_rounded,
+      'Alternator Failure',
+      'Electrical charging system issue',
+      'Electrical',
+    ),
+    (
+      Icons.warning_rounded,
+      'Brake Failure',
+      'Hydraulic pressure loss or pads',
+      'Mechanical',
+    ),
   ];
 
   @override
@@ -57,12 +102,17 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
   Future<void> _submit() async {
     if (_selectedIssue == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select the breakdown issue type'), behavior: SnackBarBehavior.floating),
+        const SnackBar(
+          content: Text('Please select the breakdown issue type'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
     setState(() => _isSaving = true);
-    final local = GenericLocalDataSource(Hive.box<dynamic>('customer_breakdowns'));
+    final local = GenericLocalDataSource(
+      Hive.box<dynamic>('customer_breakdowns'),
+    );
     final payload = {
       'issue': _selectedIssue ?? '',
       'vehicleId': _selectedVehicle?.id ?? '',
@@ -79,12 +129,34 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
       final resp = await remote.createBreakdown(payload);
       refId = resp.id;
     } catch (e, st) {
-      ref.read(loggerProvider).e('Breakdown API failed - queueing offline', error: e, stackTrace: st);
-      synced = false;
+      ref
+          .read(loggerProvider)
+          .e('Breakdown API failed', error: e, stackTrace: st);
+      if (e is NetworkException) {
+        synced = false;
+      } else {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e is AppException
+                  ? e.message
+                  : 'Could not request emergency support.',
+            ),
+          ),
+        );
+        return;
+      }
     }
 
     final id = refId.isNotEmpty ? refId : await IdGenerator.nextId('BD');
-    await local.save(id, {...payload, 'id': id, 'status': 'pending', 'createdAt': DateTime.now().toIso8601String()});
+    await local.save(id, {
+      ...payload,
+      'id': id,
+      'status': 'pending',
+      'createdAt': DateTime.now().toIso8601String(),
+    });
 
     if (!synced) {
       final queue = ref.read(syncQueueProvider);
@@ -122,25 +194,41 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
     final textTheme = theme.textTheme;
 
     // Filter logic for scalability (Category + Search Query)
-    const categories = ['All', 'Electrical', 'Wheels', 'Engine', 'Mechanical', 'Emergency'];
+    const categories = [
+      'All',
+      'Electrical',
+      'Wheels',
+      'Engine',
+      'Mechanical',
+      'Emergency',
+    ];
 
     final filteredIssues = _issues.where((item) {
-      final matchesCategory = _selectedCategory == 'All' || item.$4 == _selectedCategory;
+      final matchesCategory =
+          _selectedCategory == 'All' || item.$4 == _selectedCategory;
       final query = _searchCtrl.text.toLowerCase();
       final matchesSearch =
-          query.isEmpty || item.$2.toLowerCase().contains(query) || item.$3.toLowerCase().contains(query);
+          query.isEmpty ||
+          item.$2.toLowerCase().contains(query) ||
+          item.$3.toLowerCase().contains(query);
       return matchesCategory && matchesSearch;
     }).toList();
 
     return Scaffold(
       // ── BOTTOM DOCKED CHECKOUT BAR ─────────────────────────────────────────
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24).copyWith(bottom: MediaQuery.of(context).padding.bottom + 24),
+        padding: const EdgeInsets.all(
+          24,
+        ).copyWith(bottom: MediaQuery.of(context).padding.bottom + 24),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
           boxShadow: [
-            BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, -8)),
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, -8),
+            ),
           ],
         ),
         child: Row(
@@ -151,15 +239,26 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                 onPressed: _callHelpline,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colorScheme.error,
-                  side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                  side: BorderSide(
+                    color: colorScheme.error.withValues(alpha: 0.5),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(100),
+                  ),
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.phone_rounded, size: 18, color: colorScheme.error),
+                    Icon(
+                      Icons.phone_rounded,
+                      size: 18,
+                      color: colorScheme.error,
+                    ),
                     const SizedBox(width: 8),
-                    const Text('Call', style: TextStyle(fontWeight: FontWeight.w800)),
+                    const Text(
+                      'Call',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
                   ],
                 ),
               ),
@@ -173,20 +272,31 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                   style: FilledButton.styleFrom(
                     backgroundColor: colorScheme.error,
                     foregroundColor: colorScheme.onError,
-                    disabledBackgroundColor: colorScheme.surfaceContainerHighest,
+                    disabledBackgroundColor:
+                        colorScheme.surfaceContainerHighest,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
                   ),
                   icon: _isSaving
                       ? SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2.5, color: colorScheme.onError),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: colorScheme.onError,
+                          ),
                         )
                       : const Icon(Icons.warning_amber_rounded, size: 22),
                   label: Text(
-                    _isSaving ? 'Dispatching Unit...' : 'Request Emergency Dispatch',
-                    style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onError),
+                    _isSaving
+                        ? 'Dispatching Unit...'
+                        : 'Request Emergency Dispatch',
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onError,
+                    ),
                   ),
                 ),
               ),
@@ -202,7 +312,10 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
               title: '24/7 Roadside SOS',
               trailing: IconButton(
                 onPressed: _callHelpline,
-                icon: Icon(Icons.phone_in_talk_rounded, color: colorScheme.error),
+                icon: Icon(
+                  Icons.phone_in_talk_rounded,
+                  color: colorScheme.error,
+                ),
                 tooltip: 'Call Emergency Helpline',
               ),
             ),
@@ -227,8 +340,15 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                           Container(
                             width: 52,
                             height: 52,
-                            decoration: BoxDecoration(color: colorScheme.error, shape: BoxShape.circle),
-                            child: Icon(Icons.sos_rounded, color: colorScheme.onError, size: 28),
+                            decoration: BoxDecoration(
+                              color: colorScheme.error,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.sos_rounded,
+                              color: colorScheme.onError,
+                              size: 28,
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -270,7 +390,9 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                     const SizedBox(height: 4),
                     Text(
                       'Filter categories or search symptoms below',
-                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 16),
 
@@ -278,25 +400,43 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                     TextField(
                       controller: _searchCtrl,
                       onChanged: (_) => setState(() {}),
-                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
                       decoration: InputDecoration(
-                        hintText: 'Search specific issue (e.g. battery, tyre)...',
-                        hintStyle: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-                        prefixIcon: Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant),
+                        hintText:
+                            'Search specific issue (e.g. battery, tyre)...',
+                        hintStyle: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                         filled: true,
                         fillColor: colorScheme.surface,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: colorScheme.outlineVariant),
+                          borderSide: BorderSide(
+                            color: colorScheme.outlineVariant,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: colorScheme.outlineVariant),
+                          borderSide: BorderSide(
+                            color: colorScheme.outlineVariant,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                          borderSide: BorderSide(
+                            color: colorScheme.primary,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -314,23 +454,35 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                           final cat = categories[index];
                           final isSelected = _selectedCategory == cat;
                           return GestureDetector(
-                            onTap: () => setState(() => _selectedCategory = cat),
+                            onTap: () =>
+                                setState(() => _selectedCategory = cat),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
-                                color: isSelected ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+                                color: isSelected
+                                    ? colorScheme.primary
+                                    : colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(100),
                                 border: Border.all(
-                                  color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+                                  color: isSelected
+                                      ? colorScheme.primary
+                                      : colorScheme.outlineVariant,
                                 ),
                               ),
                               child: Center(
                                 child: Text(
                                   cat,
                                   style: textTheme.labelSmall?.copyWith(
-                                    color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
-                                    fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                                    color: isSelected
+                                        ? colorScheme.onPrimary
+                                        : colorScheme.onSurface,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w900
+                                        : FontWeight.w700,
                                   ),
                                 ),
                               ),
@@ -348,7 +500,9 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                         child: Center(
                           child: Text(
                             'No matching breakdown issues found.',
-                            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       )
@@ -356,12 +510,14 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, // 2 items per row chip grid
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 1.5, // Compact rectangular chip cards
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2, // 2 items per row chip grid
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio:
+                                  1.5, // Compact rectangular chip cards
+                            ),
                         itemCount: filteredIssues.length,
                         itemBuilder: (context, index) {
                           final item = filteredIssues[index];
@@ -370,7 +526,8 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                             title: item.$2,
                             subtitle: item.$3,
                             selected: _selectedIssue == item.$2,
-                            onTap: () => setState(() => _selectedIssue = item.$2),
+                            onTap: () =>
+                                setState(() => _selectedIssue = item.$2),
                             colorScheme: colorScheme,
                           );
                         },
@@ -389,7 +546,9 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                     const SizedBox(height: 4),
                     Text(
                       'Confirm vehicle and breakdown location',
-                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     AppCard(
@@ -421,7 +580,9 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                             decoration: BoxDecoration(
                               color: colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: colorScheme.outlineVariant),
+                              border: Border.all(
+                                color: colorScheme.outlineVariant,
+                              ),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<CustomerVehicleEntity>(
@@ -430,7 +591,9 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                                 dropdownColor: colorScheme.surface,
                                 hint: Text(
                                   'Choose vehicle from garage',
-                                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                                 icon: Icon(
                                   Icons.keyboard_arrow_down_rounded,
@@ -451,7 +614,8 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                                       ),
                                     )
                                     .toList(),
-                                onChanged: (v) => setState(() => _selectedVehicle = v),
+                                onChanged: (v) =>
+                                    setState(() => _selectedVehicle = v),
                               ),
                             ),
                           ),
@@ -468,12 +632,18 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                             decoration: BoxDecoration(
                               color: colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: colorScheme.outlineVariant),
+                              border: Border.all(
+                                color: colorScheme.outlineVariant,
+                              ),
                             ),
                             child: Row(
                               children: [
                                 const SizedBox(width: 16),
-                                Icon(Icons.my_location_rounded, size: 20, color: colorScheme.error),
+                                Icon(
+                                  Icons.my_location_rounded,
+                                  size: 20,
+                                  color: colorScheme.error,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: TextFormField(
@@ -485,8 +655,13 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                                     decoration: InputDecoration(
                                       hintText: 'Enter location or landmark',
                                       border: InputBorder.none,
-                                      hintStyle: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-                                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                      hintStyle: textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 16,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -505,24 +680,36 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                           TextField(
                             controller: _notesCtrl,
                             maxLines: 2,
-                            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                            ),
                             decoration: InputDecoration(
-                              hintText: 'e.g. Parked in basement, hard to locate',
-                              hintStyle: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                              hintText:
+                                  'e.g. Parked in basement, hard to locate',
+                              hintStyle: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                               filled: true,
                               fillColor: colorScheme.surfaceContainerHighest,
                               contentPadding: const EdgeInsets.all(16),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colorScheme.outlineVariant),
+                                borderSide: BorderSide(
+                                  color: colorScheme.outlineVariant,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colorScheme.outlineVariant),
+                                borderSide: BorderSide(
+                                  color: colorScheme.outlineVariant,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                                borderSide: BorderSide(
+                                  color: colorScheme.primary,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -589,12 +776,25 @@ class _IssueChipCard extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: selected ? colorScheme.error.withValues(alpha: 0.15) : colorScheme.surfaceContainerHighest,
+                      color: selected
+                          ? colorScheme.error.withValues(alpha: 0.15)
+                          : colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(icon, size: 18, color: selected ? colorScheme.error : colorScheme.onSurfaceVariant),
+                    child: Icon(
+                      icon,
+                      size: 18,
+                      color: selected
+                          ? colorScheme.error
+                          : colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                  if (selected) Icon(Icons.check_circle_rounded, color: colorScheme.error, size: 18),
+                  if (selected)
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: colorScheme.error,
+                      size: 18,
+                    ),
                 ],
               ),
               Column(
@@ -605,7 +805,9 @@ class _IssueChipCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.titleSmall?.copyWith(
-                      color: selected ? colorScheme.error : colorScheme.onSurface,
+                      color: selected
+                          ? colorScheme.error
+                          : colorScheme.onSurface,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -614,7 +816,10 @@ class _IssueChipCard extends StatelessWidget {
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 10),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ),

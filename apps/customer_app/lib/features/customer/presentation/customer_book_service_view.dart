@@ -11,10 +11,12 @@ class CustomerBookServiceView extends ConsumerStatefulWidget {
   const CustomerBookServiceView({super.key});
 
   @override
-  ConsumerState<CustomerBookServiceView> createState() => _CustomerBookServiceViewState();
+  ConsumerState<CustomerBookServiceView> createState() =>
+      _CustomerBookServiceViewState();
 }
 
-class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceView> {
+class _CustomerBookServiceViewState
+    extends ConsumerState<CustomerBookServiceView> {
   final _notesCtrl = TextEditingController();
 
   List<ServiceTypeResponse> _services = const [];
@@ -44,12 +46,26 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
   }
 
   Future<void> _loadServices() async {
-    final services = await ref.read(customerRemoteDataSourceProvider).getServiceTypes();
+    List<ServiceTypeResponse> services = const [];
+    String? error;
+    try {
+      services = await ref
+          .read(customerRemoteDataSourceProvider)
+          .getServiceTypes();
+    } catch (e) {
+      error = e is AppException
+          ? e.message
+          : 'Could not load service packages.';
+    }
     if (!mounted) return;
     setState(() {
       _services = services;
       _loadingServices = false;
-      _error = services.isEmpty ? 'No service packages available right now.' : null;
+      _error =
+          error ??
+          (services.isEmpty
+              ? 'No service packages available right now.'
+              : null);
     });
   }
 
@@ -62,11 +78,22 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
     });
     final iso =
         '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    final slots = await ref.read(customerRemoteDataSourceProvider).getAvailability(iso);
+    List<String> slots = const [];
+    String? error;
+    try {
+      slots = await ref
+          .read(customerRemoteDataSourceProvider)
+          .getAvailability(iso);
+    } catch (e) {
+      error = e is AppException
+          ? e.message
+          : 'Could not load available time slots.';
+    }
     if (!mounted) return;
     setState(() {
       _slots = slots;
       _loadingSlots = false;
+      _error = error;
     });
   }
 
@@ -156,32 +183,47 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
         payload['bookingRef'] = resp.bookingRef;
       }
     } catch (e) {
-      if (e is NetworkException && e.message.toLowerCase().contains('receive data')) {
+      if (e is NetworkException) {
+        if (e.message.toLowerCase().contains('receive data')) {
+          if (!mounted) return;
+          setState(() {
+            _submitting = false;
+            _error =
+                'Booking request timed out. Please check My Bookings before trying again.';
+          });
+          return;
+        }
+
+        final box = Hive.box<dynamic>('customer_cache');
+        final local = GenericLocalDataSource(box);
+        await local.save('booking_$bookingId', payload);
+        final cached = List<Map<String, dynamic>>.from(
+          (box.get('cached_bookings') as List?)?.cast() ?? const [],
+        );
+        cached.removeWhere((m) => m['id'] == bookingId);
+        cached.add(payload);
+        await box.put('cached_bookings', cached);
+        final queue = ref.read(syncQueueProvider);
+        await queue.enqueue(
+          SyncOperation(
+            id: bookingId,
+            entityType: 'booking',
+            entityId: bookingId,
+            changeType: ChangeType.create,
+            payload: payload,
+            timestamp: now.millisecondsSinceEpoch,
+          ),
+        );
+      } else {
         if (!mounted) return;
         setState(() {
           _submitting = false;
-          _error = 'Booking request timed out. Please check My Bookings before trying again.';
+          _error = e is AppException
+              ? e.message
+              : 'Could not create this booking. Please try again.';
         });
         return;
       }
-      final box = Hive.box<dynamic>('customer_cache');
-      final local = GenericLocalDataSource(box);
-      await local.save('booking_$bookingId', payload);
-      final cached = List<Map<String, dynamic>>.from((box.get('cached_bookings') as List?)?.cast() ?? const []);
-      cached.removeWhere((m) => m['id'] == bookingId);
-      cached.add(payload);
-      await box.put('cached_bookings', cached);
-      final queue = ref.read(syncQueueProvider);
-      await queue.enqueue(
-        SyncOperation(
-          id: bookingId,
-          entityType: 'booking',
-          entityId: bookingId,
-          changeType: ChangeType.create,
-          payload: payload,
-          timestamp: now.millisecondsSinceEpoch,
-        ),
-      );
     }
 
     ref.invalidate(customerBookingsProvider);
@@ -216,12 +258,18 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
       backgroundColor: colorScheme.surfaceContainerHighest,
       // ── BOTTOM WIZARD CHECKOUT DOCK ────────────────────────────────────────
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24).copyWith(bottom: MediaQuery.of(context).padding.bottom + 24),
+        padding: const EdgeInsets.all(
+          24,
+        ).copyWith(bottom: MediaQuery.of(context).padding.bottom + 24),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
           boxShadow: [
-            BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, -8)),
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, -8),
+            ),
           ],
         ),
         child: Row(
@@ -233,11 +281,16 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colorScheme.onSurface,
                     side: BorderSide(color: colorScheme.outlineVariant),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                   ),
                   onPressed: () => setState(() => _currentStep--),
-                  child: const Text('Back', style: TextStyle(fontWeight: FontWeight.w800)),
+                  child: const Text(
+                    'Back',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -249,9 +302,12 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                   style: FilledButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
-                    disabledBackgroundColor: colorScheme.surfaceContainerHighest,
+                    disabledBackgroundColor:
+                        colorScheme.surfaceContainerHighest,
                     disabledForegroundColor: colorScheme.onSurfaceVariant,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
                     elevation: 0,
                   ),
                   onPressed: !_canProceed
@@ -267,12 +323,17 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                       ? SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: colorScheme.onPrimary, strokeWidth: 2.5),
+                          child: CircularProgressIndicator(
+                            color: colorScheme.onPrimary,
+                            strokeWidth: 2.5,
+                          ),
                         )
                       : Text(
                           _currentStep == 3 ? 'Confirm & Reserve' : 'Continue',
                           style: textTheme.titleMedium?.copyWith(
-                            color: _canProceed ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                            color: _canProceed
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -308,7 +369,11 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 20),
+                            Icon(
+                              Icons.error_outline_rounded,
+                              color: colorScheme.error,
+                              size: 20,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -329,7 +394,8 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                     if (_currentStep == 0) ...[
                       _StepTitleBlock(
                         title: 'Select Your Vehicle',
-                        subtitle: 'Choose which registered car requires service',
+                        subtitle:
+                            'Choose which registered car requires service',
                       ),
                       const SizedBox(height: 24),
                       if (vehicles.isEmpty)
@@ -340,7 +406,11 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                           borderColor: colorScheme.outlineVariant,
                           child: Column(
                             children: [
-                              Icon(Icons.directions_car_outlined, color: colorScheme.onSurfaceVariant, size: 48),
+                              Icon(
+                                Icons.directions_car_outlined,
+                                color: colorScheme.onSurfaceVariant,
+                                size: 48,
+                              ),
                               const SizedBox(height: 16),
                               Text(
                                 'No vehicles in your garage',
@@ -351,13 +421,16 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                               ),
                               const SizedBox(height: 24),
                               OutlinedButton.icon(
-                                onPressed: () => context.push(AppRoutes.customerAddVehicle),
+                                onPressed: () =>
+                                    context.push(AppRoutes.customerAddVehicle),
                                 icon: const Icon(Icons.add_rounded, size: 18),
                                 label: const Text('Add Vehicle'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: colorScheme.primary,
                                   side: BorderSide(color: colorScheme.primary),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
                                 ),
                               ),
                             ],
@@ -369,13 +442,17 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                             for (int i = 0; i < vehicles.length; i++) ...[
                               _VehicleSelectionCard(
                                 vehicle: vehicles[i],
-                                selected: _selectedVehicle?.id == vehicles[i].id,
+                                selected:
+                                    _selectedVehicle?.id == vehicles[i].id,
                                 imageUrl: i % 2 == 0
                                     ? 'https://images.unsplash.com/photo-1550355291-bbee04a92027?q=80&w=800&auto=format&fit=crop'
                                     : 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?q=80&w=800&auto=format&fit=crop',
-                                onTap: () => setState(() => _selectedVehicle = vehicles[i]),
+                                onTap: () => setState(
+                                  () => _selectedVehicle = vehicles[i],
+                                ),
                               ),
-                              if (vehicles[i] != vehicles.last) const SizedBox(height: 16),
+                              if (vehicles[i] != vehicles.last)
+                                const SizedBox(height: 16),
                             ],
                           ],
                         ),
@@ -385,14 +462,17 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                     if (_currentStep == 1) ...[
                       _StepTitleBlock(
                         title: 'Select Service Package',
-                        subtitle: 'Tap to choose the appropriate maintenance level',
+                        subtitle:
+                            'Tap to choose the appropriate maintenance level',
                       ),
                       const SizedBox(height: 24),
                       if (_loadingServices)
                         Center(
                           child: Padding(
                             padding: const EdgeInsets.all(40),
-                            child: CircularProgressIndicator(color: colorScheme.primary),
+                            child: CircularProgressIndicator(
+                              color: colorScheme.primary,
+                            ),
                           ),
                         )
                       else
@@ -406,10 +486,17 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                               for (int i = 0; i < _services.length; i++) ...[
                                 _ServiceRow(
                                   service: _services[i],
-                                  selected: _selectedServiceId == _services[i].id,
-                                  onTap: () => setState(() => _selectedServiceId = _services[i].id),
+                                  selected:
+                                      _selectedServiceId == _services[i].id,
+                                  onTap: () => setState(
+                                    () => _selectedServiceId = _services[i].id,
+                                  ),
                                 ),
-                                if (i < _services.length - 1) Divider(height: 1, color: colorScheme.outlineVariant),
+                                if (i < _services.length - 1)
+                                  Divider(
+                                    height: 1,
+                                    color: colorScheme.outlineVariant,
+                                  ),
                               ],
                             ],
                           ),
@@ -446,48 +533,75 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                                 scrollDirection: Axis.horizontal,
                                 physics: const BouncingScrollPhysics(),
                                 itemCount: 14,
-                                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 10),
                                 itemBuilder: (ctx, index) {
-                                  final date = DateTime.now().add(Duration(days: index + 1));
+                                  final date = DateTime.now().add(
+                                    Duration(days: index + 1),
+                                  );
                                   final isSelected =
                                       _selectedDate?.year == date.year &&
                                       _selectedDate?.month == date.month &&
                                       _selectedDate?.day == date.day;
 
-                                  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                                  const weekdays = [
+                                    'Mon',
+                                    'Tue',
+                                    'Wed',
+                                    'Thu',
+                                    'Fri',
+                                    'Sat',
+                                    'Sun',
+                                  ];
                                   final dayName = weekdays[date.weekday - 1];
 
                                   return GestureDetector(
                                     onTap: () => _loadSlots(date),
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
                                       width: 64,
                                       decoration: BoxDecoration(
-                                        color: isSelected ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+                                        color: isSelected
+                                            ? colorScheme.primary
+                                            : colorScheme
+                                                  .surfaceContainerHighest,
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+                                          color: isSelected
+                                              ? colorScheme.primary
+                                              : colorScheme.outlineVariant,
                                         ),
                                       ),
                                       child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             dayName,
-                                            style: textTheme.labelSmall?.copyWith(
-                                              color: isSelected
-                                                  ? colorScheme.onPrimary.withValues(alpha: 0.8)
-                                                  : colorScheme.onSurfaceVariant,
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                            style: textTheme.labelSmall
+                                                ?.copyWith(
+                                                  color: isSelected
+                                                      ? colorScheme.onPrimary
+                                                            .withValues(
+                                                              alpha: 0.8,
+                                                            )
+                                                      : colorScheme
+                                                            .onSurfaceVariant,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             '${date.day}',
-                                            style: textTheme.titleMedium?.copyWith(
-                                              color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
-                                              fontWeight: FontWeight.w900,
-                                            ),
+                                            style: textTheme.titleMedium
+                                                ?.copyWith(
+                                                  color: isSelected
+                                                      ? colorScheme.onPrimary
+                                                      : colorScheme.onSurface,
+                                                  fontWeight: FontWeight.w900,
+                                                ),
                                           ),
                                         ],
                                       ),
@@ -497,7 +611,10 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                               ),
                             ),
                             const SizedBox(height: 28),
-                            Divider(height: 1, color: colorScheme.outlineVariant),
+                            Divider(
+                              height: 1,
+                              color: colorScheme.outlineVariant,
+                            ),
                             const SizedBox(height: 24),
                             Text(
                               'Available Time Slots',
@@ -511,7 +628,9 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                               const Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(24),
-                                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                  ),
                                 ),
                               )
                             else if (_slots.isNotEmpty)
@@ -521,22 +640,38 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                                 children: _slots.map((slot) {
                                   final sel = _selectedTime == slot;
                                   return GestureDetector(
-                                    onTap: () => setState(() => _selectedTime = slot),
+                                    onTap: () =>
+                                        setState(() => _selectedTime = slot),
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 180),
-                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                      duration: const Duration(
+                                        milliseconds: 180,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 12,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: sel ? colorScheme.primary : colorScheme.surfaceContainerLow,
-                                        borderRadius: BorderRadius.circular(100),
+                                        color: sel
+                                            ? colorScheme.primary
+                                            : colorScheme.surfaceContainerLow,
+                                        borderRadius: BorderRadius.circular(
+                                          100,
+                                        ),
                                         border: Border.all(
-                                          color: sel ? colorScheme.primary : colorScheme.outlineVariant,
+                                          color: sel
+                                              ? colorScheme.primary
+                                              : colorScheme.outlineVariant,
                                         ),
                                       ),
                                       child: Text(
                                         slot,
                                         style: textTheme.labelMedium?.copyWith(
-                                          color: sel ? colorScheme.onPrimary : colorScheme.onSurface,
-                                          fontWeight: sel ? FontWeight.w900 : FontWeight.w700,
+                                          color: sel
+                                              ? colorScheme.onPrimary
+                                              : colorScheme.onSurface,
+                                          fontWeight: sel
+                                              ? FontWeight.w900
+                                              : FontWeight.w700,
                                         ),
                                       ),
                                     ),
@@ -548,7 +683,9 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                                 _selectedDate == null
                                     ? 'Select a date above to view slots'
                                     : 'No available slots for this date.',
-                                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
                               ),
                           ],
                         ),
@@ -559,7 +696,8 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                     if (_currentStep == 3) ...[
                       _StepTitleBlock(
                         title: 'Review Booking Details',
-                        subtitle: 'Confirm your specifications and add optional notes',
+                        subtitle:
+                            'Confirm your specifications and add optional notes',
                       ),
                       const SizedBox(height: 24),
                       AppCard(
@@ -570,17 +708,30 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _ReviewRow(label: 'Selected Vehicle', value: _selectedVehicle?.displayName ?? 'None'),
+                            _ReviewRow(
+                              label: 'Selected Vehicle',
+                              value: _selectedVehicle?.displayName ?? 'None',
+                            ),
                             const SizedBox(height: 16),
-                            Divider(height: 1, color: colorScheme.outlineVariant),
+                            Divider(
+                              height: 1,
+                              color: colorScheme.outlineVariant,
+                            ),
                             const SizedBox(height: 16),
-                            _ReviewRow(label: 'Service Package', value: _selectedService?.name ?? 'None'),
+                            _ReviewRow(
+                              label: 'Service Package',
+                              value: _selectedService?.name ?? 'None',
+                            ),
                             const SizedBox(height: 16),
-                            Divider(height: 1, color: colorScheme.outlineVariant),
+                            Divider(
+                              height: 1,
+                              color: colorScheme.outlineVariant,
+                            ),
                             const SizedBox(height: 16),
                             _ReviewRow(
                               label: 'Scheduled Slot',
-                              value: '$_displayDate at ${_selectedTime ?? "Not set"}',
+                              value:
+                                  '$_displayDate at ${_selectedTime ?? "Not set"}',
                             ),
                           ],
                         ),
@@ -597,24 +748,36 @@ class _CustomerBookServiceViewState extends ConsumerState<CustomerBookServiceVie
                       TextField(
                         controller: _notesCtrl,
                         maxLines: 4,
-                        style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                        ),
                         decoration: InputDecoration(
-                          hintText: 'e.g. Strange noise when braking, oil light on…',
-                          hintStyle: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                          hintText:
+                              'e.g. Strange noise when braking, oil light on…',
+                          hintStyle: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                           filled: true,
                           fillColor: colorScheme.surface,
                           contentPadding: const EdgeInsets.all(16),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(color: colorScheme.outlineVariant),
+                            borderSide: BorderSide(
+                              color: colorScheme.outlineVariant,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(color: colorScheme.outlineVariant),
+                            borderSide: BorderSide(
+                              color: colorScheme.outlineVariant,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                            borderSide: BorderSide(
+                              color: colorScheme.primary,
+                              width: 2,
+                            ),
                           ),
                         ),
                       ),
@@ -662,7 +825,10 @@ class _StepProgressBar extends StatelessWidget {
             ),
             Text(
               steps[currentStep],
-              style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w700),
+              style: textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -675,7 +841,9 @@ class _StepProgressBar extends StatelessWidget {
                 height: 6,
                 margin: EdgeInsets.only(right: index < 3 ? 6 : 0),
                 decoration: BoxDecoration(
-                  color: isActive ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+                  color: isActive
+                      ? colorScheme.primary
+                      : colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(100),
                 ),
               ),
@@ -710,7 +878,12 @@ class _StepTitleBlock extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(subtitle, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+        Text(
+          subtitle,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -740,7 +913,11 @@ class _VehicleSelectionCard extends StatelessWidget {
       color: colorScheme.surface,
       borderColor: selected ? colorScheme.primary : colorScheme.outlineVariant,
       boxShadow: [
-        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4)),
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.04),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
       ],
       child: Stack(
         children: [
@@ -755,7 +932,10 @@ class _VehicleSelectionCard extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.8),
+                      ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -776,19 +956,25 @@ class _VehicleSelectionCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFACC15),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.black.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: Colors.black.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Text(
                             vehicle.plateNumber.toUpperCase(),
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 10,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 10,
+                                ),
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -796,9 +982,11 @@ class _VehicleSelectionCard extends StatelessWidget {
                           vehicle.displayName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: Colors.white),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
                         ),
                       ],
                     ),
@@ -807,14 +995,20 @@ class _VehicleSelectionCard extends StatelessWidget {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: selected ? colorScheme.primary : Colors.white.withValues(alpha: 0.2),
+                      color: selected
+                          ? colorScheme.primary
+                          : Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
-                      border: Border.all(color: selected ? colorScheme.primary : Colors.white),
+                      border: Border.all(
+                        color: selected ? colorScheme.primary : Colors.white,
+                      ),
                     ),
                     child: Center(
                       child: Icon(
                         selected ? Icons.check_rounded : Icons.circle_outlined,
-                        color: selected ? colorScheme.onPrimary : Colors.transparent,
+                        color: selected
+                            ? colorScheme.onPrimary
+                            : Colors.transparent,
                         size: 18,
                       ),
                     ),
@@ -834,18 +1028,26 @@ class _ServiceRow extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _ServiceRow({required this.service, required this.selected, required this.onTap});
+  const _ServiceRow({
+    required this.service,
+    required this.selected,
+    required this.onTap,
+  });
 
   IconData get _icon {
     final n = service.name.toLowerCase();
     if (n.contains('oil')) return Icons.oil_barrel_rounded;
     if (n.contains('brake')) return Icons.minor_crash_rounded;
-    if (n.contains('tyre') || n.contains('tire')) return Icons.tire_repair_rounded;
+    if (n.contains('tyre') || n.contains('tire')) {
+      return Icons.tire_repair_rounded;
+    }
     if (n.contains('battery')) return Icons.battery_charging_full_rounded;
     if (n.contains('air') || n.contains('filter')) return Icons.ac_unit_rounded;
     if (n.contains('diagnos')) return Icons.biotech_rounded;
     if (n.contains('mot')) return Icons.assignment_turned_in_rounded;
-    if (n.contains('full') || n.contains('service')) return Icons.build_circle_rounded;
+    if (n.contains('full') || n.contains('service')) {
+      return Icons.build_circle_rounded;
+    }
     return Icons.settings_rounded;
   }
 
@@ -860,19 +1062,25 @@ class _ServiceRow extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        color: selected ? colorScheme.primary.withValues(alpha: 0.06) : Colors.transparent,
+        color: selected
+            ? colorScheme.primary.withValues(alpha: 0.06)
+            : Colors.transparent,
         child: Row(
           children: [
             Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: selected ? colorScheme.primaryContainer : colorScheme.surfaceContainerHighest,
+                color: selected
+                    ? colorScheme.primaryContainer
+                    : colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 _icon,
-                color: selected ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant,
+                color: selected
+                    ? colorScheme.onPrimaryContainer
+                    : colorScheme.onSurfaceVariant,
                 size: 22,
               ),
             ),
@@ -884,11 +1092,14 @@ class _ServiceRow extends StatelessWidget {
                   Text(
                     service.name,
                     style: textTheme.titleSmall?.copyWith(
-                      color: selected ? colorScheme.primary : colorScheme.onSurface,
+                      color: selected
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  if (service.price.isNotEmpty || service.duration.isNotEmpty) ...[
+                  if (service.price.isNotEmpty ||
+                      service.duration.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       [
@@ -905,7 +1116,11 @@ class _ServiceRow extends StatelessWidget {
               ),
             ),
             if (selected)
-              Icon(Icons.check_circle_rounded, color: colorScheme.primary, size: 26)
+              Icon(
+                Icons.check_circle_rounded,
+                color: colorScheme.primary,
+                size: 26,
+              )
             else
               Icon(Icons.circle_outlined, color: colorScheme.outline, size: 26),
           ],
@@ -931,11 +1146,17 @@ class _ReviewRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         Text(
           value,
-          style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
+          style: textTheme.titleSmall?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       ],
     );

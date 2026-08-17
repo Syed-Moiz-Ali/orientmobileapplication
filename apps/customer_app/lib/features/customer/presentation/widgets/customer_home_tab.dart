@@ -1359,7 +1359,7 @@ class _RecommendedServicesList extends StatelessWidget {
         children: [
           _ServicePackageCard(
             title: 'Full MOT & Service',
-            price: 'From \$199',
+            price: 'From AED 199',
             imageUrl:
                 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=800&auto=format&fit=crop',
             onTap: onBook,
@@ -1367,7 +1367,7 @@ class _RecommendedServicesList extends StatelessWidget {
           const SizedBox(width: 16),
           _ServicePackageCard(
             title: 'Oil & Filter Change',
-            price: 'From \$49',
+            price: 'From AED 49',
             imageUrl:
                 'https://images.unsplash.com/photo-1632733711679-529326f6db12?q=80&w=800&auto=format&fit=crop',
             onTap: onBook,

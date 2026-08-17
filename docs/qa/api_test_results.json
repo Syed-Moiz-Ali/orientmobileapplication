@@ -137,7 +137,7 @@
     {
         "check":  "register customer -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Registration successful\",\"data\":{\"role\":\"customer\",\"token\":\"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNDEiLCJwaG9uZSI6Ijk3MTUyMDEwNTUxMTEiLCJyb2xlIjoiY3VzdG9tZXIiLCJqdGkiOiI3YTkxMDZjYS1mYWVjLTQyZTctODA5ZS1jZmI3NTViYWQ4M2UiLCJpYXQiOjE3ODY1NDU2ODAsImV4cCI6MTc4NjU0NjU4MH0.ECDQVSSWid0eh0wNkrzVscvJ8oryNnPK_Srl-77do4wMW2eEgNG_BvcK9yi6ovz3\",\"refreshToken\":\"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNDEiLCJ0eXBlIjoicmVmcmVzaCIsImp0aSI6ImFkYzg3MmQ4LWJiNTItNDIzOS04Y2FmLWUyZTBmOWM4N2M1ZCIsImlhdCI6MTc4NjU0NTY4MCwiZXhwIjoxNzg5MTM3NjgwfQ.vnSQecASbOYeN5MADfE0mZVoS9FdC__wxePzd_0cwvZ9j1XzKYr1G-GCHCLPuBHm\"},\"timestamp\":1786545680151}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Registration successful\",\"data\":{\"role\":\"customer\",\"token\":\"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4IiwicGhvbmUiOiI5NzE1MTcyNTAwMTExIiwicm9sZSI6ImN1c3RvbWVyIiwianRpIjoiZjg1ZmI0ZjUtNGJhNC00ODcyLWEwYTMtNWFiMTNhY2E3Y2E2IiwiaWF0IjoxNzg2OTY3NzIxLCJleHAiOjE3ODY5Njg2MjF9.mab_5G_f0fdAVKVsLKRq7eew4-MzFCYgfp4omVnfg0A\",\"refreshToken\":\"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4IiwidHlwZSI6InJlZnJlc2giLCJqdGkiOiI1YjRiMzFkYy1hZmQ2LTQ0NTAtYjc0ZS1lZGViNDliMjc5ZDgiLCJpYXQiOjE3ODY5Njc3MjEsImV4cCI6MTc4OTU1OTcyMX0.HCvhQ8gMUDULNGg8ayfaBnOjaxiZe71kKcmZCPxmSjs\"},\"timestamp\":1786967721136}"
     },
     {
         "check":  "register invalid email -\u003e 400",
@@ -167,7 +167,7 @@
     {
         "check":  "login with password (phone) -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"role\":\"customer\",\"token\":\"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNDEiLCJwaG9uZSI6Ijk3MTUyMDEwNTUxMTEiLCJyb2xlIjoiY3VzdG9tZXIiLCJqdGkiOiI1Nzg1ZjYwYS1lMzU3LTQ2OTgtOGQ2My0yMGEzOTI3NGUwNGYiLCJpYXQiOjE3ODY1NDU2ODAsImV4cCI6MTc4NjU0NjU4MH0.E68phP80ZNeNX5uB1hDLz1wx2jEmvtCiz9fTHumLIqRw7pDL_dKXNz7tMPnnseIN\",\"refreshToken\":\"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNDEiLCJ0eXBlIjoicmVmcmVzaCIsImp0aSI6IjExOTAzZjUwLTBiZmUtNGJkMi04YTczLWQ2Njk5NjkyZWM0MCIsImlhdCI6MTc4NjU0NTY4MCwiZXhwIjoxNzg5MTM3NjgwfQ.tB8VCgXzPJwks1J4JuMP-FekkmuLC_M4oKiYzP7uZuEJbZGcgJi7-zIRExTP_FjF\"},\"timestamp\":1786545680278}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"role\":\"customer\",\"token\":\"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4IiwicGhvbmUiOiI5NzE1MTcyNTAwMTExIiwicm9sZSI6ImN1c3RvbWVyIiwianRpIjoiMDIxNjcwODAtN2YzNi00NTE2LTg3ZDMtM2YyNTM4Y2YyYjNmIiwiaWF0IjoxNzg2OTY3NzIxLCJleHAiOjE3ODY5Njg2MjF9.T9I4rmH5wMt0aG5FFZUR0GaI_mj2Swa9zW-ALfvENaM\",\"refreshToken\":\"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4IiwidHlwZSI6InJlZnJlc2giLCJqdGkiOiJjMDZmNGM0MC02Y2Q0LTRhMDgtYTk3MS03NjdlYzA3NTIyMmEiLCJpYXQiOjE3ODY5Njc3MjEsImV4cCI6MTc4OTU1OTcyMX0.Zstzp51aB_xe1TcPGZlggX2muDUWdvwyjw8FNqwFSr4\"},\"timestamp\":1786967721304}"
     },
     {
         "check":  "login with password (email) -\u003e 200",
@@ -242,7 +242,7 @@
     {
         "check":  "reset-password correct otp -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Password reset successfully\",\"timestamp\":1786545722881}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Password reset successfully\",\"timestamp\":1786967764433}"
     },
     {
         "check":  "login with new password -\u003e 200",
@@ -362,7 +362,7 @@
     {
         "check":  "forged JWT role escalation (customer sub=1 as owner) -\u003e 401/403",
         "pass":  true,
-        "detail":  "got 401: {\"code\":401,\"message\":\"Unauthorized\",\"timestamp\":1786545723463}"
+        "detail":  "got 401: "
     },
     {
         "check":  "customer profile -\u003e 200",
@@ -377,7 +377,7 @@
     {
         "check":  "create vehicle -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"77\",\"ref\":\"VEH-3f8071ba\",\"brand\":\"Toyota\",\"model\":\"Camry\",\"plateNumber\":\"QA201055\",\"vin\":null,\"color\":null,\"year\":2022,\"mileage\":null,\"lastService\":null,\"nextDue\":null,\"healthScore\":0},\"timestamp\":1786545723534}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"2\",\"ref\":\"VEH-6f71bd94\",\"brand\":\"Toyota\",\"model\":\"Camry\",\"plateNumber\":\"QA172500\",\"vin\":null,\"color\":null,\"year\":2022,\"mileage\":null,\"lastService\":null,\"nextDue\":null,\"healthScore\":0},\"timestamp\":1786967765486}"
     },
     {
         "check":  "duplicate vehicle reg allowed (no unique constraint - by design)",
@@ -387,7 +387,7 @@
     {
         "check":  "update vehicle -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"77\",\"ref\":\"VEH-3f8071ba\",\"brand\":\"Toyota\",\"model\":\"Corolla\",\"plateNumber\":\"QA201055\",\"vin\":null,\"color\":null,\"year\":2023,\"mileage\":null,\"lastService\":null,\"nextDue\":null,\"healthScore\":0},\"timestamp\":1786545723578}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"2\",\"ref\":\"VEH-6f71bd94\",\"brand\":\"Toyota\",\"model\":\"Corolla\",\"plateNumber\":\"QA172500\",\"vin\":null,\"color\":null,\"year\":2023,\"mileage\":null,\"lastService\":null,\"nextDue\":null,\"healthScore\":0},\"timestamp\":1786967765621}"
     },
     {
         "check":  "update non-owned vehicle id -\u003e 404",
@@ -402,7 +402,7 @@
     {
         "check":  "delete vehicle -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545723625}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786967765769}"
     },
     {
         "check":  "availability -\u003e 200",
@@ -417,7 +417,7 @@
     {
         "check":  "create booking -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"44\",\"bookingRef\":\"BK-de0b6f33\"},\"timestamp\":1786545723693}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"3\",\"bookingRef\":\"BK-8dc4e413\"},\"timestamp\":1786967765885}"
     },
     {
         "check":  "list bookings -\u003e 200",
@@ -437,12 +437,12 @@
     {
         "check":  "cancel own booking (body status) -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":44,\"bookingRef\":\"BK-de0b6f33\",\"service\":\"Full Service\",\"vehicleName\":\"Toyota Camry\",\"plateNumber\":\"QA201055\",\"date\":\"13 Aug 2026\",\"time\":\"10:00 AM\",\"status\":\"cancelled\"},\"timestamp\":1786545723767}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":3,\"bookingRef\":\"BK-8dc4e413\",\"service\":\"Full Service\",\"vehicleName\":\"Toyota Camry\",\"plateNumber\":\"QA172500\",\"date\":\"18 Aug 2026\",\"time\":\"10:00 AM\",\"status\":\"cancelled\"},\"timestamp\":1786967766019}"
     },
     {
         "check":  "cancel via query param (BUG-010 fixed: app path works) -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":44,\"bookingRef\":\"BK-de0b6f33\",\"service\":\"Full Service\",\"vehicleName\":\"Toyota Camry\",\"plateNumber\":\"QA201055\",\"date\":\"13 Aug 2026\",\"time\":\"10:00 AM\",\"status\":\"cancelled\"},\"timestamp\":1786545723783}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":3,\"bookingRef\":\"BK-8dc4e413\",\"service\":\"Full Service\",\"vehicleName\":\"Toyota Camry\",\"plateNumber\":\"QA172500\",\"date\":\"18 Aug 2026\",\"time\":\"10:00 AM\",\"status\":\"cancelled\"},\"timestamp\":1786967766081}"
     },
     {
         "check":  "cancel other/unknown booking -\u003e 404/403",
@@ -452,7 +452,7 @@
     {
         "check":  "create breakdown -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"BD-bd6ef540\",\"bookingRef\":null},\"timestamp\":1786545723822}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"BD-58543ff8\",\"bookingRef\":null},\"timestamp\":1786967766199}"
     },
     {
         "check":  "create breakdown empty -\u003e 400 (got 409 - wrong code)",
@@ -497,7 +497,7 @@
     {
         "check":  "submit feedback -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"2\",\"bookingRef\":null},\"timestamp\":1786545724011} (jobCardId=36)"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"1\",\"bookingRef\":null},\"timestamp\":1786967766513} (jobCardId=)"
     },
     {
         "check":  "feedback invalid rating (9) -\u003e 400",
@@ -522,7 +522,7 @@
     {
         "check":  "create ticket -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"ticketRef\":\"TK-cb87f6fc\",\"status\":\"open\"},\"timestamp\":1786545724086}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"status\":\"open\",\"ticketRef\":\"TK-b7da5ad6\"},\"timestamp\":1786967766688}"
     },
     {
         "check":  "GDPR export -\u003e 200",
@@ -532,7 +532,7 @@
     {
         "check":  "register device token -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545730150}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786967772793}"
     },
     {
         "check":  "IDOR: customer A updates customer B vehicle -\u003e 404/403 (got 404)",
@@ -587,7 +587,7 @@
     {
         "check":  "advisor create reminder -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"REM-38d2a267\",\"customerName\":\"QA\",\"vehicleId\":null,\"task\":\"Call customer QA\",\"dueDate\":\"2026-08-13\",\"priority\":\"high\"},\"timestamp\":1786545742772}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"REM-d5ee9421\",\"customerName\":\"QA\",\"vehicleId\":null,\"task\":\"Call customer QA\",\"dueDate\":\"2026-08-18\",\"priority\":\"high\"},\"timestamp\":1786967785628}"
     },
     {
         "check":  "advisor reminder empty -\u003e 400",
@@ -627,7 +627,7 @@
     {
         "check":  "create inspection -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"35\"},\"timestamp\":1786545754969}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"1\"},\"timestamp\":1786967798010}"
     },
     {
         "check":  "create inspection empty -\u003e 400",
@@ -637,7 +637,7 @@
     {
         "check":  "update inspection with returned id (BUG-014: id is INS-ref, endpoint needs numeric) -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545755010}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786967798054}"
     },
     {
         "check":  "inspection summary with returned id (BUG-014) -\u003e 200",
@@ -657,22 +657,22 @@
     {
         "check":  "supervisor GET /supervisor/kpis -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"value\":\"15\",\"label\":\"Total Job Cards Pending\",\"sub\":\"Open job cards\"},{\"value\""
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"value\":\"1\",\"label\":\"Total Job Cards Pending\",\"sub\":\"Open job cards\"},{\"value\":"
     },
     {
         "check":  "supervisor GET /supervisor/advisor-jobs -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545761094}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967804154}"
     },
     {
         "check":  "supervisor GET /supervisor/job-types -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"Full Service\",\"count\":3}],\"timestamp\":1786545761110}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967804172}"
     },
     {
         "check":  "supervisor GET /supervisor/revenue-metrics -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"amount\":\"AED 7,350\",\"label\":\"Total Revenue\",\"change\":\"\"},{\"amount\":\"AED 6,890\""
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"amount\":\"AED 0\",\"label\":\"Total Revenue\",\"change\":\"\"},{\"amount\":\"AED 0\",\"label\""
     },
     {
         "check":  "supervisor GET /supervisor/pending-statuses -\u003e 200",
@@ -682,32 +682,32 @@
     {
         "check":  "supervisor GET /supervisor/bookings -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":44,\"bookingRef\":\"BK-de0b6f33\",\"customerName\":\"Customer\",\"phone\":\"971520105"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":3,\"bookingRef\":\"BK-8dc4e413\",\"customerName\":\"Customer\",\"phone\":\"9715172500"
     },
     {
         "check":  "supervisor GET /supervisor/breakdowns -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":9,\"breakdownRef\":\"BD-bd6ef540\",\"customerName\":\"Customer\",\"phone\":\"97152010"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"breakdownRef\":\"BD-58543ff8\",\"customerName\":\"Customer\",\"phone\":\"97151725"
     },
     {
         "check":  "supervisor GET /supervisor/jobs/awaiting -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCardId\":8,\"jobCardRef\":\"JC-27fc46f1\",\"customerName\":\"Walk-in Demo Customer\""
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967810292}"
     },
     {
         "check":  "supervisor GET /supervisor/assignable-advisors -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":3,\"name\":\"Ali Hassan\",\"empId\":\"EMP-003\",\"role\":\"advisor\"},{\"id\":27,\"name\":"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"name\":\"QA Advisor\",\"empId\":\"EQA172500\",\"role\":\"advisor\"}],\"timestamp\":1"
     },
     {
         "check":  "supervisor GET /supervisor/assigned-jobs -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCard\":\"JC-7bbca75a\",\"customer\":\"Customer\",\"vehicle\":\"Toyota Camry\",\"dateAss"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967816340}"
     },
     {
         "check":  "supervisor GET /supervisor/technicians/available -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":2,\"name\":\"Ravi Kumar\",\"empId\":\"EMP-002\",\"currentJobs\":0},{\"id\":17,\"name\":\""
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":3,\"name\":\"QA Tech A\",\"empId\":\"EQA172500T\",\"currentJobs\":0}],\"timestamp\":17"
     },
     {
         "check":  "supervisor GET /departments -\u003e 200",
@@ -717,17 +717,17 @@
     {
         "check":  "supervisor GET /technicians -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[\"Ravi Kumar\",\"Seamless Test Tech A\",\"Seamless Test Tech B\",\"Seamless Test Tech A"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[\"QA Tech A\"],\"timestamp\":1786967816406}"
     },
     {
         "check":  "supervisor GET /staff/notifications -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545779530}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967822434}"
     },
     {
         "check":  "create work assignment -\u003e 200/201",
-        "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"results\":[{\"id\":\"ASN-dbc376bb\",\"jobCard\":\"JC-9e8bd221\",\"status\":\"Pending\"}]},\"timestamp\":1786545779562}"
+        "pass":  false,
+        "detail":  "got 400: "
     },
     {
         "check":  "work assignment empty -\u003e 400",
@@ -777,27 +777,27 @@
     {
         "check":  "punch-in -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"ref\":\"AT-c7434777\",\"status\":\"working\",\"punchIn\":\"08:13 PM\",\"punchOut\":\"\",\"breakTime\":\"\",\"workHours\":\"\"},\"timestamp\":1786545791735}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"ref\":\"AT-e0fb8d97\",\"status\":\"working\",\"punchIn\":\"11:57 AM\",\"punchOut\":\"\",\"breakTime\":\"\",\"workHours\":\"\"},\"timestamp\":1786967834765}"
     },
     {
         "check":  "duplicate punch-in same day -\u003e 200/409",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"ref\":\"AT-c7434777\",\"status\":\"working\",\"punchIn\":\"08:13 PM\",\"punchOut\":\"\",\"breakTime\":\"\",\"workHours\":\"\"},\"timestamp\":1786545791754}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"ref\":\"AT-e0fb8d97\",\"status\":\"working\",\"punchIn\":\"11:57 AM\",\"punchOut\":\"\",\"breakTime\":\"\",\"workHours\":\"\"},\"timestamp\":1786967834830}"
     },
     {
         "check":  "break-start -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545791767}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786967834894}"
     },
     {
         "check":  "break-end -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545791798}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786967834961}"
     },
     {
         "check":  "punch-out -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786545797831}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"timestamp\":1786967841000}"
     },
     {
         "check":  "attendance history -\u003e 200",
@@ -822,147 +822,147 @@
     {
         "check":  "owner GET /owner/dashboard/kpis -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"Active Jobs\",\"value\":\"15\",\"sub\":\"Open job cards\"},{\"label\":\"New Jobs\",\"value\":\"7\",\"sub\":\"Today\"},{\"l"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"Active Jobs\",\"value\":\"1\",\"sub\":\"Open job cards\"},{\"label\":\"New Jobs\",\"value\":\"1\",\"sub\":\"Today\"},{\"la"
     },
     {
         "check":  "owner GET /owner/dashboard/sales-trend -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Aug 6\",\"value\":2485},{\"month\":\"Aug 7\",\"value\":355},{\"month\":\"Aug 8\",\"value\":0},{\"month\":\"Aug 9\",\"val"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Aug 11\",\"value\":0},{\"month\":\"Aug 12\",\"value\":0},{\"month\":\"Aug 13\",\"value\":0},{\"month\":\"Aug 14\",\"valu"
     },
     {
         "check":  "owner GET /owner/dashboard/profit-trend -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Aug 6\",\"value\":2485},{\"month\":\"Aug 7\",\"value\":355},{\"month\":\"Aug 8\",\"value\":0},{\"month\":\"Aug 9\",\"val"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Aug 11\",\"value\":0},{\"month\":\"Aug 12\",\"value\":0},{\"month\":\"Aug 13\",\"value\":0},{\"month\":\"Aug 14\",\"valu"
     },
     {
         "check":  "owner GET /owner/dashboard/expenses-trend -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Aug 6\",\"value\":0},{\"month\":\"Aug 7\",\"value\":0},{\"month\":\"Aug 8\",\"value\":0},{\"month\":\"Aug 9\",\"value\":0"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Aug 11\",\"value\":0},{\"month\":\"Aug 12\",\"value\":0},{\"month\":\"Aug 13\",\"value\":0},{\"month\":\"Aug 14\",\"valu"
     },
     {
         "check":  "owner GET /owner/dashboard/forecast -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"method\":\"7-day moving average of invoice revenue\",\"daysWithData\":5,\"dailyAverage\":\"710.00\",\"forecast30Days\":\""
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"forecast30Days\":\"0.00\",\"method\":\"7-day moving average\",\"dailyAverage\":\"0.00\",\"note\":\"no revenue data yet\",\"da"
     },
     {
         "check":  "owner GET /owner/dashboard/job-card-register -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"JC-4e71000d\",\"open\":1,\"completed\":0,\"total\":1},{\"label\":\"JC-9e8bd221\",\"open\":1,\"completed\":0,\"total\""
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"JC-05616f94\",\"open\":1,\"completed\":0,\"total\":1}],\"timestamp\":1786967853301}"
     },
     {
         "check":  "owner GET /owner/dashboard/top-sales -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"title\":\"Customer Wise\",\"items\":[{\"sno\":0,\"description\":\"Customer\",\"value\":\"AED 5,780\"}]},{\"title\":\"Brand/Mod"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"title\":\"Customer Wise\",\"items\":[]},{\"title\":\"Brand/Model Wise\",\"items\":[]},{\"title\":\"Advisor Wise\",\"items\":["
     },
     {
         "check":  "owner GET /owner/job-cards -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"37\",\"jobCardRef\":\"JC-4e71000d\",\"customerName\":\"Customer\",\"vehicle\":\"Toyota Camry\",\"plateNumber\":\"\",\"ser"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"1\",\"jobCardRef\":\"JC-05616f94\",\"customerName\":\"Customer\",\"vehicle\":\"Toyota Camry\",\"plateNumber\":\"\",\"serv"
     },
     {
         "check":  "owner GET /owner/jobs/status -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCardId\":\"JC-4e71000d\",\"customerName\":null,\"vehicleInfo\":\"Toyota Camry\",\"assignedTo\":null,\"createdDate\":\"2"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCardId\":\"JC-05616f94\",\"customerName\":null,\"vehicleInfo\":\"Toyota Camry\",\"assignedTo\":null,\"createdDate\":\"2"
     },
     {
         "check":  "owner GET /owner/jobs/pending -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCardId\":\"JC-4e71000d\",\"customerName\":null,\"vehicleInfo\":null,\"assignedTo\":null,\"createdDate\":\"2026-08-12\""
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"jobCardId\":\"JC-05616f94\",\"customerName\":null,\"vehicleInfo\":null,\"assignedTo\":null,\"createdDate\":\"2026-08-17\""
     },
     {
         "check":  "owner GET /owner/jobs/active -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"27\",\"jobCardRef\":\"JC-923cb441\",\"customerName\":\"Customer\",\"vehicle\":\"BMW 3 Series\",\"plateNumber\":\"Te2e24"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967859416}"
     },
     {
         "check":  "owner GET /owner/documents/expiry -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545816606}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967859436}"
     },
     {
         "check":  "owner GET /owner/approvals/categories -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"title\":\"Pending\",\"subtitle\":\"5 awaiting review\",\"count\":5},{\"title\":\"Approved\",\"subtitle\":\"17 approved\",\"cou"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"title\":\"Pending\",\"subtitle\":\"0 awaiting review\",\"count\":0},{\"title\":\"Approved\",\"subtitle\":\"0 approved\",\"coun"
     },
     {
         "check":  "owner GET /owner/invoices -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"INV-8b018e9a\",\"customerName\":\"Customer\",\"date\":\"05/08/2026\",\"amount\":355.0,\"taxRate\":0.0,\"taxAmount\":0."
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967859475}"
     },
     {
         "check":  "owner GET /owner/accounts-receivable/summary -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"totalOutstanding\":5325,\"days0to30\":5325,\"days31to60\":0,\"days61to90\":0,\"days90plus\":0},\"timestamp\":17865458166"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"totalOutstanding\":0,\"days0to30\":0,\"days31to60\":0,\"days61to90\":0,\"days90plus\":0},\"timestamp\":1786967859492}"
     },
     {
         "check":  "owner GET /owner/accounts-receivable/records -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"arId\":\"INV-01b7ebae\",\"customer\":\"Customer\",\"invoiceDate\":\"05/08/2026\",\"dueDate\":\"04/09/2026\",\"amount\":355.0,"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967865519}"
     },
     {
         "check":  "owner GET /owner/messages -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"6\",\"recipient\":\"QA Team\",\"message\":\"QA test message\",\"time\":\"8:04 PM\"},{\"id\":\"5\",\"recipient\":\"QA Team\","
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967865539}"
     },
     {
         "check":  "owner GET /owner/activity?page=1\u0026limit=10 -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"43\",\"type\":\"job_card\",\"title\":\"Booking received\",\"description\":\"Booking BK-de0b6f33 for Full Service (Q"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"3\",\"type\":\"job_card\",\"title\":\"Booking received\",\"description\":\"Booking BK-8dc4e413 for Full Service (QA"
     },
     {
         "check":  "owner GET /owner/subscription -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":1,\"ref\":\"SUB-56b3ef\",\"branchId\":1,\"plan\":\"pro\",\"status\":\"active\",\"startedAt\":\"2026-08-06T19:06:33\",\"renew"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":null,\"ref\":null,\"branchId\":1,\"plan\":\"starter\",\"status\":\"trial\",\"startedAt\":\"2026-08-17T11:57:45.578194485"
     },
     {
         "check":  "owner GET /owner/team -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"userId\":null,\"empId\":\"EMP-001\",\"name\":\"Mohammed Hassan\",\"role\":\"technician\",\"branchId\":null,\"branch\":"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"userId\":3,\"empId\":\"EQA172500\",\"name\":\"QA Advisor\",\"role\":\"advisor\",\"branchId\":1,\"branch\":\"Main Branch"
     },
     {
         "check":  "owner GET /owner/inventory/items -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"ref\":\"ITM-9861d7\",\"sku\":\"OIL-5W30\",\"name\":\"Engine Oil 5W30\",\"category\":\"Oils\",\"branchId\":null,\"costPr"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967871621}"
     },
     {
         "check":  "owner GET /owner/inventory/items/low-stock -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":3,\"ref\":\"ITM-2ab8920c\",\"sku\":\"QA-170101\",\"name\":\"QA Oil Filter\",\"category\":\"\",\"branchId\":null,\"costPrice"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967871641}"
     },
     {
         "check":  "owner GET /owner/inventory/suppliers -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"ref\":\"SUP-39cbe7\",\"name\":\"Gulf Parts Co\",\"contactName\":\"\",\"phone\":\"+971501112233\",\"email\":\"\",\"address"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967871672}"
     },
     {
         "check":  "owner GET /owner/inventory/purchase-orders -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"poRef\":\"PO-18e26208\",\"supplierId\":1,\"branchId\":null,\"status\":\"received\",\"total\":280.00,\"orderedAt\":\"2"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967871698}"
     },
     {
         "check":  "owner GET /owner/warranties -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"vehicleId\":28,\"warrantyRef\":\"WR-72fb75cb\",\"type\":\"extended\",\"startDate\":\"2026-01-01\",\"endDate\":\"2028-"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967871723}"
     },
     {
         "check":  "owner GET /owner/tickets -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":8,\"ticketRef\":\"TK-cb87f6fc\",\"customerId\":72,\"branchId\":null,\"subject\":\"QA ticket\",\"description\":\"test\",\""
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"ticketRef\":\"TK-b7da5ad6\",\"customerId\":2,\"branchId\":null,\"subject\":\"QA ticket\",\"description\":\"test\",\"p"
     },
     {
         "check":  "owner GET /owner/webhooks -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545834970}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967877761}"
     },
     {
         "check":  "owner GET /owner/api-keys -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":6,\"ref\":\"KEY-6bbcc7a3\",\"name\":\"QA Key\",\"keyHash\":\"7fb642251bcc4723cca6a17004c36616ae60d76871d2a3c562ad73"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967877780}"
     },
     {
         "check":  "owner GET /branches -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"ref\":\"BR-416708\",\"name\":\"string\",\"address\":\"string\",\"phone\":\"string\",\"email\":\"string\",\"timezone\":\"str"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":1,\"ref\":\"BR-b31c5f\",\"name\":\"Main Branch - Dubai\",\"address\":\"Sheikh Zayed Rd, Dubai\",\"phone\":\"+9714123456"
     },
     {
         "check":  "owner job-cards CSV export -\u003e 200",
@@ -982,7 +982,7 @@
     {
         "check":  "owner send message -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"7\",\"recipient\":\"QA Team\",\"message\":\"QA test message\",\"time\":\"8:14 PM\"},\"timestamp\":1786545841125}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"1\",\"recipient\":\"QA Team\",\"message\":\"QA test message\",\"time\":\"11:58 AM\"},\"timestamp\":1786967883928}"
     },
     {
         "check":  "owner message empty -\u003e 400",
@@ -992,17 +992,17 @@
     {
         "check":  "owner update subscription -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":1,\"ref\":\"SUB-56b3ef\",\"branchId\":1,\"plan\":\"pro\",\"status\":\"active\",\"startedAt\":\"2026-08-06T19:06:33\",\"renewsAt\":\"2026-08-20\",\"createdAt\":\"2026-08-06T19:06:33\",\"updatedAt\":\"2026-08-10T20:46:07\"},\"timestamp\":1786545841157}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":1,\"ref\":\"SUB-56561573\",\"branchId\":1,\"plan\":\"pro\",\"status\":\"trial\",\"startedAt\":\"2026-08-17T11:58:03.99577616\",\"renewsAt\":\"2026-08-31\",\"createdAt\":\"2026-08-17T11:58:03.996668056\",\"updatedAt\":\"2026-08-17T11:58:03.996708613\"},\"timestamp\":1786967884001}"
     },
     {
         "check":  "owner create branch -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":8,\"ref\":\"BR-b24f2fb3\",\"name\":\"QA Branch 201055\",\"address\":\"Test\",\"phone\":\"0500000000\",\"email\":null,\"timezone\":null,\"isActive\":true,\"createdAt\":\"2026-08-12T20:14:07.1867504\",\"updatedAt\":\"2026-08-12T20:14:07.1867504\"},\"timestamp\":1786545847190}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":2,\"ref\":\"BR-1c288e07\",\"name\":\"QA Branch 172500\",\"address\":\"Test\",\"phone\":\"0500000000\",\"email\":null,\"timezone\":null,\"isActive\":true,\"createdAt\":\"2026-08-17T11:58:10.032469872\",\"updatedAt\":\"2026-08-17T11:58:10.032550522\"},\"timestamp\":1786967890038}"
     },
     {
         "check":  "owner create api key -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"key\":\"orient_80b7002041d3ea9dccb2413632644526\",\"name\":\"QA Key\",\"id\":\"7\",\"prefix\":\"orient_80b70â¦\"},\"timestamp\":1786545847219}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"prefix\":\"orient_08b79â¦\",\"id\":\"1\",\"name\":\"QA Key\",\"key\":\"orient_08b79e4d250a73e77b28668a729c7b9a\"},\"timestamp\":1786967890060}"
     },
     {
         "check":  "api key authenticates (owner role) -\u003e 200",
@@ -1017,12 +1017,12 @@
     {
         "check":  "owner create team member -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":174,\"userId\":344,\"empId\":\"EQA201055TM\",\"name\":\"QA Staff\",\"role\":\"advisor\",\"branchId\":null,\"branch\":\"\",\"shift\":\"\",\"designation\":\"\",\"department\":\"\",\"avatarInitials\":null,\"isActive\":true,\"createdAt\":\"2026-08-12T20:14:07.2913464\",\"updatedAt\":\"2026-08-12T20:14:07.2913464\"},\"timestamp\":1786545847293}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":4,\"userId\":11,\"empId\":\"EQA172500TM\",\"name\":\"QA Staff\",\"role\":\"advisor\",\"branchId\":null,\"branch\":\"\",\"shift\":\"\",\"designation\":\"\",\"department\":\"\",\"avatarInitials\":null,\"isActive\":true,\"createdAt\":\"2026-08-17T11:58:10.160531523\",\"updatedAt\":\"2026-08-17T11:58:10.160580619\"},\"timestamp\":1786967890162}"
     },
     {
         "check":  "owner create inventory item -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":17,\"ref\":\"ITM-cabec1ef\",\"sku\":\"QA-201055\",\"name\":\"QA Oil Filter\",\"category\":\"\",\"branchId\":null,\"costPrice\":0,\"sellingPrice\":0,\"qtyOnHand\":0,\"reorderLevel\":5,\"supplierId\":null,\"createdAt\":\"2026-08-12T20:14:13.3241307\",\"updatedAt\":\"2026-08-12T20:14:13.3241307\"},\"timestamp\":1786545853330}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":1,\"ref\":\"ITM-20f9f02e\",\"sku\":\"QA-172500\",\"name\":\"QA Oil Filter\",\"category\":\"\",\"branchId\":null,\"costPrice\":0,\"sellingPrice\":0,\"qtyOnHand\":0,\"reorderLevel\":5,\"supplierId\":null,\"createdAt\":\"2026-08-17T11:58:16.199038049\",\"updatedAt\":\"2026-08-17T11:58:16.199105076\"},\"timestamp\":1786967896206}"
     },
     {
         "check":  "owner duplicate sku rejected (BUG-016: nullable branch bypasses unique index) -\u003e 409/400",
@@ -1042,22 +1042,22 @@
     {
         "check":  "crm GET /crm/dashboard/kpis -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"Total Leads\",\"value\":\"5\",\"change\":\"\"},{\"label\":\"Active Leads\",\"value\":"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"Total Leads\",\"value\":\"0\",\"change\":\"\"},{\"label\":\"Active Leads\",\"value\":"
     },
     {
         "check":  "crm GET /crm/channels -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"name\":\"walk-in\",\"count\":5}],\"timestamp\":1786545859417}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967902384}"
     },
     {
         "check":  "crm GET /crm/conversion-trend -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"month\":\"Mar\",\"won\":0,\"lost\":0,\"active\":0},{\"month\":\"Apr\",\"won\":0,\"lost\":0,\"act"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967902400}"
     },
     {
         "check":  "crm GET /crm/salesperson-performance -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545859463}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967902418}"
     },
     {
         "check":  "crm GET /crm/response-times -\u003e 200",
@@ -1067,32 +1067,32 @@
     {
         "check":  "crm GET /crm/lead-sources -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"label\":\"walk-in\",\"percent\":100}],\"timestamp\":1786545859510}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967902453}"
     },
     {
         "check":  "crm GET /crm/key-metrics -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"winRate\":60.0,\"avgResponseTime\":\"\",\"satisfaction\":5.0,\"roi\":0},\"timestamp\":1786"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"winRate\":0.0,\"avgResponseTime\":\"\",\"satisfaction\":5.0,\"roi\":0},\"timestamp\":17869"
     },
     {
         "check":  "crm GET /crm/leads -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"9\",\"sno\":1,\"leadNumber\":\"LD-8c729480\",\"customerName\":\"QA Lead\",\"phone\":\"9"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967908506}"
     },
     {
         "check":  "crm GET /crm/leads/stats -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"total\":5,\"active\":2,\"won\":3,\"lost\":0,\"unanswered\":0,\"totalValue\":1500.00,\"wonVa"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"total\":0,\"active\":0,\"won\":0,\"lost\":0,\"unanswered\":0,\"totalValue\":0.00,\"wonValue"
     },
     {
         "check":  "crm GET /crm/leads/follow-ups -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545865605}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967908547}"
     },
     {
         "check":  "crm GET /crm/activity-feed -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"9\",\"leadId\":\"8\",\"customerName\":\"QA Lead Updated\",\"action\":\"STATUS\",\"detai"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967908570}"
     },
     {
         "check":  "crm GET /crm/integrations -\u003e 200",
@@ -1102,27 +1102,27 @@
     {
         "check":  "crm GET /crm/conversations -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"1\",\"ref\":\"CV-cb213f\",\"customerName\":\"+971501234777\",\"lastMessage\":\"I want"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967914618}"
     },
     {
         "check":  "crm GET /crm/sales-team -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786545871708}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967914639}"
     },
     {
         "check":  "crm GET /crm/team-members -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"name\":\"Ali Hassan\",\"role\":\"advisor\",\"designation\":\"\",\"leadsHandled\":0,\"wonDeal"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"name\":\"QA Advisor\",\"role\":\"advisor\",\"designation\":\"Advisor\",\"leadsHandled\":0,\""
     },
     {
         "check":  "crm GET /crm/tasks -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"4\",\"ref\":\"CT-3f331b71\",\"title\":\"QA Task\",\"assignedTo\":\"QA\",\"dueDate\":\"202"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[],\"timestamp\":1786967914684}"
     },
     {
         "check":  "crm create lead -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"10\",\"sno\":6,\"leadNumber\":\"LD-b7b33a1f\",\"customerName\":\"QA Lead\",\"phone\":\"9715201055140\",\"email\":\"\",\"source\":\"walk-in\",\"assignedTo\":\"\",\"status\":\"ACTIVE\",\"lastActivity\":\"Just now\",\"notes\":null,\"leadValue\":500,\"followUpDate\":\"\"},\"timestamp\":1786545877799}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"1\",\"sno\":1,\"leadNumber\":\"LD-b98e728f\",\"customerName\":\"QA Lead\",\"phone\":\"9715172500140\",\"email\":\"\",\"source\":\"walk-in\",\"assignedTo\":\"\",\"status\":\"ACTIVE\",\"lastActivity\":\"Just now\",\"notes\":null,\"leadValue\":500,\"followUpDate\":\"\"},\"timestamp\":1786967920722}"
     },
     {
         "check":  "crm duplicate lead -\u003e 200/409",
@@ -1132,17 +1132,17 @@
     {
         "check":  "crm lead score -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"leadId\":10,\"leadNumber\":\"LD-b7b33a1f\",\"score\":50,\"tier\":\"WARM\",\"factors\":{}},\"timestamp\":1786545877835}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"leadId\":1,\"leadNumber\":\"LD-b98e728f\",\"score\":50,\"tier\":\"WARM\",\"factors\":{}},\"timestamp\":1786967920812}"
     },
     {
         "check":  "crm lead activities -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"10\",\"action\":\"CREATED\",\"detail\":\"Lead created from walk-in\",\"createdAt\":\"2026-08-12T20:14:38\"}],\"timestamp\":1786545877853}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":[{\"id\":\"1\",\"action\":\"CREATED\",\"detail\":\"Lead created from walk-in\",\"createdAt\":\"2026-08-17T11:58:41\"}],\"timestamp\":1786967920835}"
     },
     {
         "check":  "crm update lead -\u003e 200",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"10\",\"sno\":8,\"leadNumber\":\"LD-b7b33a1f\",\"customerName\":\"QA Lead Updated\",\"phone\":\"9715201055140\",\"email\":\"\",\"source\":\"walk-in\",\"assignedTo\":\"\",\"status\":\"WON\",\"lastActivity\":\"Just now\",\"notes\":null,\"leadValue\":500.00,\"followUpDate\":\"\"},\"timestamp\":1786545877877}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"1\",\"sno\":3,\"leadNumber\":\"LD-b98e728f\",\"customerName\":\"QA Lead Updated\",\"phone\":\"9715172500140\",\"email\":\"\",\"source\":\"walk-in\",\"assignedTo\":\"\",\"status\":\"WON\",\"lastActivity\":\"Just now\",\"notes\":null,\"leadValue\":500.00,\"followUpDate\":\"\"},\"timestamp\":1786967920903}"
     },
     {
         "check":  "crm leads pagination -\u003e 200",
@@ -1152,7 +1152,7 @@
     {
         "check":  "crm create task -\u003e 200/201",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"5\",\"ref\":\"CT-f5931345\",\"title\":\"QA Task\",\"assignedTo\":\"QA\",\"dueDate\":\"2026-08-13\",\"priority\":\"high\",\"done\":false},\"timestamp\":1786545883925}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"1\",\"ref\":\"CT-0c5b6fff\",\"title\":\"QA Task\",\"assignedTo\":\"QA\",\"dueDate\":\"2026-08-18\",\"priority\":\"high\",\"done\":false},\"timestamp\":1786967926993}"
     },
     {
         "check":  "crm task empty -\u003e 400",
@@ -1162,12 +1162,12 @@
     {
         "check":  "sync bookings accepted (staff only) -\u003e 200/4xx",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"recorded\":\"true\",\"id\":\"7\",\"synced\":\"true\"},\"timestamp\":1786545883961}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"1\",\"recorded\":\"true\",\"synced\":\"true\"},\"timestamp\":1786967927075}"
     },
     {
         "check":  "sync duplicate idempotency-key replays -\u003e same body",
-        "pass":  true,
-        "detail":  "diff: {\"code\":200,\"data\":{\"id\":\"2\",\"synced\":\"true\",\"recorded\":\"true\"},\"message\":\"Success\",\"timestamp\":1786534487182} vs {\"code\":200,\"data\":{\"id\":\"2\",\"synced\":\"true\",\"recorded\":\"true\"},\"message\":\"Success\",\"timestamp\":1786534487182}"
+        "pass":  false,
+        "detail":  "diff: {\"code\":200,\"message\":\"Success\",\"data\":{\"id\":\"2\",\"recorded\":\"true\",\"synced\":\"true\"},\"timestamp\":1786967927139} vs {\"code\":200,\"data\":{\"id\":\"2\",\"synced\":\"true\",\"recorded\":\"true\"},\"message\":\"Success\",\"timestamp\":1786967927139}"
     },
     {
         "check":  "customer cannot use sync endpoint -\u003e 403",
@@ -1177,16 +1177,16 @@
     {
         "check":  "media upload png -\u003e 200/201 (BUG-017 fixed)",
         "pass":  true,
-        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"url\":\"/media/user-336/repair-orders/1/796608423512403d85d7c4d55f86f59e.png\"},\"timestamp\":1786545890082}"
+        "detail":  "got 200: {\"code\":200,\"message\":\"Success\",\"data\":{\"url\":\"/media/user-3/repair-orders/1/d4cb78ca38bf4332b23474daff8c7893.png\"},\"timestamp\":1786967933295}"
     },
     {
         "check":  "media upload returns url",
         "pass":  true,
-        "detail":  "{\"code\":200,\"message\":\"Success\",\"data\":{\"url\":\"/media/user-336/repair-orders/1/796608423512403d85d7c4d55f86f59e.png\"},\"timestamp\":1786545890082}"
+        "detail":  "{\"code\":200,\"message\":\"Success\",\"data\":{\"url\":\"/media/user-3/repair-orders/1/d4cb78ca38bf4332b23474daff8c7893.png\"},\"timestamp\":1786967933295}"
     },
     {
         "check":  "media upload fake png rejected -\u003e 400/415",
         "pass":  true,
-        "detail":  "got 400: {\"code\":400,\"message\":\"File type could not be recognized from content\",\"timestamp\":1786545890157}"
+        "detail":  "got 400: {\"code\":400,\"message\":\"File type could not be recognized from content\",\"timestamp\":1786967933370}"
     }
 ]

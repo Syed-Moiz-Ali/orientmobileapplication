@@ -2,6 +2,7 @@ package com.orient.workshop.owner.service;
 
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.exception.BadRequestException;
+import com.orient.workshop.common.exception.ConflictException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.core.model.entity.InventoryItem;
@@ -60,13 +61,18 @@ public class InventoryService {
         if (req.getSku() == null || req.getSku().isBlank() || req.getName() == null || req.getName().isBlank()) {
             throw new BadRequestException("sku and name are required");
         }
+        String sku = req.getSku().trim().toUpperCase();
+        Long branchId = req.getBranchId() != null && req.getBranchId() > 0 ? req.getBranchId()
+                : (principal != null && principal.getBranchId() != null && principal.getBranchId() > 0
+                ? principal.getBranchId() : null);
+        if (itemMapper.findBySkuAndBranch(sku, branchId).isPresent()) {
+            throw new ConflictException("Inventory SKU already exists for this branch: " + sku);
+        }
         InventoryItem item = InventoryItem.builder()
-                .sku(req.getSku().trim().toUpperCase())
+                .sku(sku)
                 .name(req.getName().trim())
                 .category(req.getCategory() != null ? req.getCategory() : "")
-                .branchId(req.getBranchId() != null && req.getBranchId() > 0 ? req.getBranchId()
-                        : (principal != null && principal.getBranchId() != null && principal.getBranchId() > 0
-                        ? principal.getBranchId() : null))
+                .branchId(branchId)
                 .costPrice(req.getCostPrice() != null ? req.getCostPrice() : BigDecimal.ZERO)
                 .sellingPrice(req.getSellingPrice() != null ? req.getSellingPrice() : BigDecimal.ZERO)
                 .qtyOnHand(req.getQtyOnHand() != null ? req.getQtyOnHand() : 0)

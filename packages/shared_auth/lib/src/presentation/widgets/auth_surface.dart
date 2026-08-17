@@ -10,7 +10,14 @@ class AuthShell extends StatelessWidget {
   final Widget child;
   final Widget? footer;
 
-  const AuthShell({super.key, this.top, required this.title, required this.subtitle, required this.child, this.footer});
+  const AuthShell({
+    super.key,
+    this.top,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+    this.footer,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,16 +34,28 @@ class AuthShell extends StatelessWidget {
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final adaptive = AppResponsive.specFor(context, constraints: constraints);
+              final adaptive = AppResponsive.specFor(
+                context,
+                constraints: constraints,
+              );
               final horizontal = adaptive.pagePadding.horizontal / 2;
               final topInset = adaptive.pagePadding.top;
               final contentWidth = adaptive.formMaxWidth;
 
               return SingleChildScrollView(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: EdgeInsets.fromLTRB(horizontal, topInset, horizontal, AppDimensions.s24),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.fromLTRB(
+                  horizontal,
+                  topInset,
+                  horizontal,
+                  AppDimensions.s24,
+                ),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight - topInset - AppDimensions.s24),
+                  constraints: BoxConstraints(
+                    minHeight:
+                        constraints.maxHeight - topInset - AppDimensions.s24,
+                  ),
                   child: Align(
                     alignment: adaptive.focusedFlowAlignment,
                     child: SizedBox(
@@ -44,13 +63,18 @@ class AuthShell extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (top != null) ...[top!, SizedBox(height: adaptive.itemSpacing)],
+                          if (top != null) ...[
+                            top!,
+                            SizedBox(height: adaptive.itemSpacing),
+                          ],
                           Container(
                             width: 40,
                             height: 4,
                             decoration: BoxDecoration(
                               color: colorScheme.primary,
-                              borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.rPill,
+                              ),
                             ),
                           ),
                           SizedBox(height: adaptive.itemSpacing),
@@ -61,16 +85,20 @@ class AuthShell extends StatelessWidget {
                               children: [
                                 Text(
                                   title,
-                                  style: theme.textTheme.displayMedium?.copyWith(
-                                    color: colorScheme.onSurface,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.08,
-                                  ),
+                                  style: theme.textTheme.displayMedium
+                                      ?.copyWith(
+                                        color: colorScheme.onSurface,
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.08,
+                                      ),
                                 ),
                                 const SizedBox(height: AppDimensions.s6),
                                 Text(
                                   subtitle,
-                                  style: theme.textTheme.bodyLarge?.copyWith(color: AppColors.text3, height: 1.45),
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: AppColors.text3,
+                                    height: 1.45,
+                                  ),
                                 ),
                               ],
                             ),
@@ -79,11 +107,16 @@ class AuthShell extends StatelessWidget {
                           SizedBox(
                             width: double.infinity,
                             child: ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: contentWidth),
+                              constraints: BoxConstraints(
+                                maxWidth: contentWidth,
+                              ),
                               child: child,
                             ),
                           ),
-                          if (footer != null) ...[const SizedBox(height: AppDimensions.s20), footer!],
+                          if (footer != null) ...[
+                            const SizedBox(height: AppDimensions.s20),
+                            footer!,
+                          ],
                         ],
                       ),
                     ),
@@ -156,7 +189,10 @@ class _AuthTextFieldState extends State<AuthTextField> {
         children: [
           Text(
             widget.label,
-            style: theme.textTheme.titleSmall?.copyWith(color: AppColors.text3, fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColors.text3,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: AppDimensions.s4),
           TextField(
@@ -174,20 +210,34 @@ class _AuthTextFieldState extends State<AuthTextField> {
               suffixIcon: widget.obscureText
                   ? IconButton(
                       onPressed: () => setState(() => _hidden = !_hidden),
-                      icon: Icon(_hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
+                      icon: Icon(
+                        _hidden
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        size: 20,
+                      ),
                       tooltip: _hidden ? 'Show password' : 'Hide password',
                     )
                   : null,
               filled: false,
-              contentPadding: const EdgeInsets.symmetric(vertical: AppDimensions.s12),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: AppDimensions.s12,
+              ),
               border: UnderlineInputBorder(
-                borderSide: BorderSide(color: hasError ? colorScheme.error : AppColors.borderMd),
+                borderSide: BorderSide(
+                  color: hasError ? colorScheme.error : AppColors.borderMd,
+                ),
               ),
               enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: hasError ? colorScheme.error : AppColors.borderMd),
+                borderSide: BorderSide(
+                  color: hasError ? colorScheme.error : AppColors.borderMd,
+                ),
               ),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: hasError ? colorScheme.error : colorScheme.primary, width: 1.4),
+                borderSide: BorderSide(
+                  color: hasError ? colorScheme.error : colorScheme.primary,
+                  width: 1.4,
+                ),
               ),
               hintStyle: theme.textTheme.bodyLarge?.copyWith(
                 color: AppColors.text4,
@@ -202,7 +252,10 @@ class _AuthTextFieldState extends State<AuthTextField> {
             const SizedBox(height: AppDimensions.s8),
             Text(
               widget.errorText!,
-              style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.error, fontWeight: FontWeight.w600),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.error,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ],
@@ -217,7 +270,13 @@ class AuthPrimaryButton extends StatelessWidget {
   final bool isLoading;
   final IconData? icon;
 
-  const AuthPrimaryButton({super.key, required this.label, required this.onPressed, this.isLoading = false, this.icon});
+  const AuthPrimaryButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.isLoading = false,
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -236,10 +295,16 @@ class AuthPrimaryButton extends StatelessWidget {
           disabledBackgroundColor: AppColors.border,
           disabledForegroundColor: AppColors.text3,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.r10),
+          ),
         ),
         child: isLoading
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.4))
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2.4),
+              )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
@@ -252,7 +317,10 @@ class AuthPrimaryButton extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (icon != null) ...[const SizedBox(width: AppDimensions.s8), Icon(icon, size: 18)],
+                  if (icon != null) ...[
+                    const SizedBox(width: AppDimensions.s8),
+                    Icon(icon, size: 18),
+                  ],
                 ],
               ),
       ),
@@ -264,7 +332,11 @@ class AuthLinkButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
 
-  const AuthLinkButton({super.key, required this.label, required this.onPressed});
+  const AuthLinkButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -275,13 +347,19 @@ class AuthLinkButton extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(
         foregroundColor: colorScheme.primary,
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s4, vertical: AppDimensions.s8),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.s8,
+          vertical: AppDimensions.s12,
+        ),
+        minimumSize: const Size(48, 48),
+        tapTargetSize: MaterialTapTargetSize.padded,
       ),
       child: Text(
         label,
-        style: theme.textTheme.labelLarge?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w700),
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: colorScheme.primary,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -292,7 +370,12 @@ class AuthOtpField extends StatefulWidget {
   final ValueChanged<String>? onSubmitted;
   final String? errorText;
 
-  const AuthOtpField({super.key, required this.onChanged, this.onSubmitted, this.errorText});
+  const AuthOtpField({
+    super.key,
+    required this.onChanged,
+    this.onSubmitted,
+    this.errorText,
+  });
 
   @override
   State<AuthOtpField> createState() => _AuthOtpFieldState();
@@ -312,7 +395,11 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
-    PinTheme pinTheme({required double width, required Color borderColor, double borderWidth = 1}) {
+    PinTheme pinTheme({
+      required double width,
+      required Color borderColor,
+      double borderWidth = 1,
+    }) {
       return PinTheme(
         width: width,
         height: 54,
@@ -334,13 +421,21 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
       children: [
         Text(
           'Verification code',
-          style: theme.textTheme.titleSmall?.copyWith(color: AppColors.text3, fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: AppColors.text3,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: AppDimensions.s10),
         LayoutBuilder(
           builder: (context, constraints) {
-            final fieldWidth = ((constraints.maxWidth - 40) / 6).clamp(42.0, 52.0).toDouble();
-            final defaultTheme = pinTheme(width: fieldWidth, borderColor: AppColors.borderMd);
+            final fieldWidth = ((constraints.maxWidth - 40) / 6)
+                .clamp(42.0, 52.0)
+                .toDouble();
+            final defaultTheme = pinTheme(
+              width: fieldWidth,
+              borderColor: AppColors.borderMd,
+            );
 
             return Pinput(
               controller: _controller,
@@ -348,9 +443,20 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
               autofocus: true,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               defaultPinTheme: defaultTheme,
-              focusedPinTheme: pinTheme(width: fieldWidth, borderColor: colorScheme.primary, borderWidth: 1.5),
-              submittedPinTheme: pinTheme(width: fieldWidth, borderColor: colorScheme.primary),
-              errorPinTheme: pinTheme(width: fieldWidth, borderColor: colorScheme.error, borderWidth: 1.5),
+              focusedPinTheme: pinTheme(
+                width: fieldWidth,
+                borderColor: colorScheme.primary,
+                borderWidth: 1.5,
+              ),
+              submittedPinTheme: pinTheme(
+                width: fieldWidth,
+                borderColor: colorScheme.primary,
+              ),
+              errorPinTheme: pinTheme(
+                width: fieldWidth,
+                borderColor: colorScheme.error,
+                borderWidth: 1.5,
+              ),
               forceErrorState: hasError,
               onChanged: widget.onChanged,
               onCompleted: widget.onSubmitted,
@@ -361,7 +467,10 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
           const SizedBox(height: AppDimensions.s8),
           Text(
             widget.errorText!,
-            style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.error, fontWeight: FontWeight.w600),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.error,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ],

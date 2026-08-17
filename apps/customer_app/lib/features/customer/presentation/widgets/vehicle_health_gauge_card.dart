@@ -52,7 +52,7 @@ class VehicleHealthGaugeCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$vehicleName - Health Score',
+                      '$vehicleName · Health Score',
                       style: textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,

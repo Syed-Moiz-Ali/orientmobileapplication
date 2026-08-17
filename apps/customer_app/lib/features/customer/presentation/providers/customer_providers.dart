@@ -71,10 +71,14 @@ final customerBookingsProvider = FutureProvider<List<CustomerBookingEntity>>((
 
 List<CustomerBookingEntity> _bookingsFromHive() {
   try {
-    final box = Hive.box<dynamic>('customer_bookings');
-    final saved = box.values
-        .whereType<Map>()
-        .map((m) => Map<String, dynamic>.from(m))
+    final legacy = Hive.box<dynamic>(
+      'customer_bookings',
+    ).values.whereType<Map>().map((m) => Map<String, dynamic>.from(m));
+    final cache = Hive.box<dynamic>('customer_cache').get('cached_bookings');
+    final cached = cache is List
+        ? cache.whereType<Map>().map((m) => Map<String, dynamic>.from(m))
+        : const <Map<String, dynamic>>[];
+    final saved = [...legacy, ...cached]
         .where((v) => v['serviceType'] != null || v['serviceName'] != null)
         .map(
           (v) => CustomerBookingEntity(
@@ -292,10 +296,42 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
     state = state.copyWith(vehicles: [...state.vehicles, vehicle]);
   }
 
-  void removeVehicle(String id) {
+  Future<bool> removeVehicle(String id) async {
+    try {
+      await ref.read(customerRemoteDataSourceProvider).deleteVehicle(id);
+    } catch (e) {
+      if (e is UnauthorizedException) {
+        await ref.read(authNotifierProvider.notifier).logout();
+        return false;
+      }
+      if (e is! NetworkException) return false;
+      await ref
+          .read(syncQueueProvider)
+          .enqueue(
+            SyncOperation(
+              id: 'vehicle-delete-$id',
+              entityType: 'vehicle',
+              entityId: id,
+              changeType: ChangeType.delete,
+              payload: const {},
+              timestamp: DateTime.now().millisecondsSinceEpoch,
+            ),
+          );
+    }
+    final cache = Hive.box<dynamic>('customer_cache');
+    final cached = cache.get('cached_vehicles');
+    if (cached is List) {
+      await cache.put(
+        'cached_vehicles',
+        cached
+            .where((item) => item is! Map || item['id'].toString() != id)
+            .toList(),
+      );
+    }
     state = state.copyWith(
       vehicles: state.vehicles.where((v) => v.id != id).toList(),
     );
+    return true;
   }
 
   void setSelectedVehicle(String value) =>

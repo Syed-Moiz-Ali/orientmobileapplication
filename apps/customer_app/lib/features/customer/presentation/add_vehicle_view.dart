@@ -76,7 +76,9 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
     setState(() => _isSaving = true);
 
     final now = DateTime.now();
-    final id = _isEditing ? widget.vehicleId! : now.millisecondsSinceEpoch.toString();
+    final id = _isEditing
+        ? widget.vehicleId!
+        : now.millisecondsSinceEpoch.toString();
     var vehicle = CustomerVehicleEntity(
       id: id,
       brand: _brandCtrl.text.trim(),
@@ -85,7 +87,9 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
       vin: _vinCtrl.text.trim().toUpperCase(),
       color: _colorCtrl.text.trim(),
       year: int.tryParse(_yearCtrl.text.trim()) ?? now.year,
-      mileage: _mileageCtrl.text.trim().isEmpty ? '0 miles' : _mileageCtrl.text.trim(),
+      mileage: _mileageCtrl.text.trim().isEmpty
+          ? '0 km'
+          : _mileageCtrl.text.trim(),
       lastService: _isEditing ? _lastService() : 'N/A',
       nextDue: 'N/A',
       healthScore: 90,
@@ -128,25 +132,40 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
           );
         }
       }
-    } catch (_) {
-      final box = Hive.box<dynamic>('customer_cache');
-      final local = GenericLocalDataSource(box);
-      await local.save('vehicle_$id', vehicle.toJson());
-      final cached = List<Map<String, dynamic>>.from((box.get('cached_vehicles') as List?)?.cast() ?? const []);
-      cached.removeWhere((m) => m['id'] == id);
-      cached.add(vehicle.toJson());
-      await box.put('cached_vehicles', cached);
-      final queue = ref.read(syncQueueProvider);
-      await queue.enqueue(
-        SyncOperation(
-          id: id,
-          entityType: 'vehicle',
-          entityId: id,
-          changeType: _isEditing ? ChangeType.update : ChangeType.create,
-          payload: vehicle.toJson(),
-          timestamp: now.millisecondsSinceEpoch,
-        ),
-      );
+    } catch (e) {
+      if (e is NetworkException) {
+        final box = Hive.box<dynamic>('customer_cache');
+        final local = GenericLocalDataSource(box);
+        await local.save('vehicle_$id', vehicle.toJson());
+        final cached = List<Map<String, dynamic>>.from(
+          (box.get('cached_vehicles') as List?)?.cast() ?? const [],
+        );
+        cached.removeWhere((m) => m['id'] == id);
+        cached.add(vehicle.toJson());
+        await box.put('cached_vehicles', cached);
+        final queue = ref.read(syncQueueProvider);
+        await queue.enqueue(
+          SyncOperation(
+            id: id,
+            entityType: 'vehicle',
+            entityId: id,
+            changeType: _isEditing ? ChangeType.update : ChangeType.create,
+            payload: vehicle.toJson(),
+            timestamp: now.millisecondsSinceEpoch,
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e is AppException ? e.message : 'Could not save vehicle.',
+            ),
+          ),
+        );
+        setState(() => _isSaving = false);
+        return;
+      }
     }
 
     ref.read(customerDashboardProvider.notifier).refresh();
@@ -169,12 +188,18 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
     return Scaffold(
       // ── BOTTOM DOCKED CHECKOUT BAR ─────────────────────────────────────────
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24).copyWith(bottom: MediaQuery.of(context).padding.bottom + 24),
+        padding: const EdgeInsets.all(
+          24,
+        ).copyWith(bottom: MediaQuery.of(context).padding.bottom + 24),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
           boxShadow: [
-            BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, -8)),
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, -8),
+            ),
           ],
         ),
         child: SizedBox(
@@ -187,17 +212,25 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
               foregroundColor: colorScheme.onPrimary,
               disabledBackgroundColor: colorScheme.surfaceContainerHighest,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(100),
+              ),
             ),
             child: _isSaving
                 ? SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(color: colorScheme.onPrimary, strokeWidth: 2.5),
+                    child: CircularProgressIndicator(
+                      color: colorScheme.onPrimary,
+                      strokeWidth: 2.5,
+                    ),
                   )
                 : Text(
                     _isEditing ? 'Update Vehicle' : 'Save Vehicle to Garage',
-                    style: textTheme.titleMedium?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.w900),
+                    style: textTheme.titleMedium?.copyWith(
+                      color: colorScheme.onPrimary,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
           ),
         ),
@@ -225,10 +258,15 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                           decoration: BoxDecoration(
                             color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3), width: 1.5),
+                            border: Border.all(
+                              color: colorScheme.primary.withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: colorScheme.shadow.withValues(alpha: 0.05),
+                                color: colorScheme.shadow.withValues(
+                                  alpha: 0.05,
+                                ),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),
@@ -242,7 +280,9 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        colorScheme.primaryContainer.withValues(alpha: 0.4),
+                                        colorScheme.primaryContainer.withValues(
+                                          alpha: 0.4,
+                                        ),
                                         colorScheme.surface,
                                       ],
                                       begin: Alignment.topCenter,
@@ -258,10 +298,16 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                                         width: 52,
                                         height: 52,
                                         decoration: BoxDecoration(
-                                          color: colorScheme.primary.withValues(alpha: 0.15),
+                                          color: colorScheme.primary.withValues(
+                                            alpha: 0.15,
+                                          ),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: Icon(Icons.add_a_photo_rounded, color: colorScheme.primary, size: 24),
+                                        child: Icon(
+                                          Icons.add_a_photo_rounded,
+                                          color: colorScheme.primary,
+                                          size: 24,
+                                        ),
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
@@ -274,7 +320,9 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                                       const SizedBox(height: 2),
                                       Text(
                                         'Tap to capture or choose photo from library',
-                                        style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -289,14 +337,19 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                       // ── LIVE PLATE PREVIEW ─────────────────────────────────
                       Center(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFACC15), // Yellow Plate
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: Colors.black, width: 2.5),
                             boxShadow: [
                               BoxShadow(
-                                color: colorScheme.shadow.withValues(alpha: 0.1),
+                                color: colorScheme.shadow.withValues(
+                                  alpha: 0.1,
+                                ),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),
@@ -306,13 +359,18 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1D4ED8), // UK Blue Tag
+                                  color: const Color(
+                                    0xFF1D4ED8,
+                                  ), // UAE plate styling
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  'UK',
+                                  'UAE',
                                   style: textTheme.labelSmall?.copyWith(
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
@@ -322,7 +380,9 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                               ),
                               const SizedBox(width: 16),
                               Text(
-                                _plateCtrl.text.isNotEmpty ? _plateCtrl.text.toUpperCase() : 'REG PLATE',
+                                _plateCtrl.text.isNotEmpty
+                                    ? _plateCtrl.text.toUpperCase()
+                                    : 'REG PLATE',
                                 style: textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.w900,
                                   color: Colors.black,
@@ -350,26 +410,42 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                           itemCount: _popularBrands.length,
                           itemBuilder: (ctx, i) {
                             final b = _popularBrands[i];
-                            final sel = _brandCtrl.text.trim().toLowerCase() == b.toLowerCase();
+                            final sel =
+                                _brandCtrl.text.trim().toLowerCase() ==
+                                b.toLowerCase();
                             return Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: Material(
-                                color: sel ? colorScheme.primary : colorScheme.surface,
+                                color: sel
+                                    ? colorScheme.primary
+                                    : colorScheme.surface,
                                 borderRadius: BorderRadius.circular(100),
                                 child: InkWell(
-                                  onTap: () => setState(() => _brandCtrl.text = b),
+                                  onTap: () =>
+                                      setState(() => _brandCtrl.text = b),
                                   borderRadius: BorderRadius.circular(100),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                      vertical: 10,
+                                    ),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(100),
-                                      border: Border.all(color: sel ? Colors.transparent : colorScheme.outlineVariant),
+                                      border: Border.all(
+                                        color: sel
+                                            ? Colors.transparent
+                                            : colorScheme.outlineVariant,
+                                      ),
                                     ),
                                     child: Text(
                                       b,
                                       style: textTheme.labelMedium?.copyWith(
-                                        color: sel ? colorScheme.onPrimary : colorScheme.onSurface,
-                                        fontWeight: sel ? FontWeight.w900 : FontWeight.w700,
+                                        color: sel
+                                            ? colorScheme.onPrimary
+                                            : colorScheme.onSurface,
+                                        fontWeight: sel
+                                            ? FontWeight.w900
+                                            : FontWeight.w700,
                                       ),
                                     ),
                                   ),
@@ -384,7 +460,8 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                       // ── VEHICLE IDENTITY SECTION ───────────────────────────
                       _SectionHeader(
                         title: 'Vehicle Identity',
-                        subtitle: 'Enter registration details as they appear on the V5C logbook',
+                        subtitle:
+                            'Enter registration details as they appear on the V5C logbook',
                       ),
                       const SizedBox(height: 16),
                       AppCard(
@@ -408,30 +485,49 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                               colorScheme: colorScheme,
                               child: TextFormField(
                                 controller: _brandCtrl,
-                                validator: (v) => v?.trim().isEmpty == true ? 'Required' : null,
-                                decoration: _dec('e.g. BMW, Toyota, Audi', colorScheme),
+                                validator: (v) => v?.trim().isEmpty == true
+                                    ? 'Required'
+                                    : null,
+                                decoration: _dec(
+                                  'e.g. BMW, Toyota, Audi',
+                                  colorScheme,
+                                ),
                               ),
                             ),
-                            Divider(height: 32, color: colorScheme.outlineVariant),
+                            Divider(
+                              height: 32,
+                              color: colorScheme.outlineVariant,
+                            ),
                             _FormRow(
                               icon: Icons.minor_crash_rounded,
                               label: 'Model',
                               colorScheme: colorScheme,
                               child: TextFormField(
                                 controller: _modelCtrl,
-                                validator: (v) => v?.trim().isEmpty == true ? 'Required' : null,
-                                decoration: _dec('e.g. 3 Series 320d, Corolla', colorScheme),
+                                validator: (v) => v?.trim().isEmpty == true
+                                    ? 'Required'
+                                    : null,
+                                decoration: _dec(
+                                  'e.g. 3 Series 320d, Corolla',
+                                  colorScheme,
+                                ),
                               ),
                             ),
-                            Divider(height: 32, color: colorScheme.outlineVariant),
+                            Divider(
+                              height: 32,
+                              color: colorScheme.outlineVariant,
+                            ),
                             _FormRow(
                               icon: Icons.pin_rounded,
                               label: 'License Plate',
                               colorScheme: colorScheme,
                               child: TextFormField(
                                 controller: _plateCtrl,
-                                textCapitalization: TextCapitalization.characters,
-                                validator: (v) => v?.trim().isEmpty == true ? 'Required' : null,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                validator: (v) => v?.trim().isEmpty == true
+                                    ? 'Required'
+                                    : null,
                                 decoration: _dec('e.g. AB24 XYZ', colorScheme),
                               ),
                             ),
@@ -443,7 +539,8 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                       // ── ADDITIONAL DETAILS SECTION ─────────────────────────
                       _SectionHeader(
                         title: 'Additional Details',
-                        subtitle: 'Year, colour & mileage help us prepare accurate service quotes',
+                        subtitle:
+                            'Year, colour & mileage help us prepare accurate service quotes',
                       ),
                       const SizedBox(height: 16),
                       AppCard(
@@ -471,17 +568,26 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                                 decoration: _dec('e.g. 2023', colorScheme),
                               ),
                             ),
-                            Divider(height: 32, color: colorScheme.outlineVariant),
+                            Divider(
+                              height: 32,
+                              color: colorScheme.outlineVariant,
+                            ),
                             _FormRow(
                               icon: Icons.palette_outlined,
                               label: 'Colour',
                               colorScheme: colorScheme,
                               child: TextFormField(
                                 controller: _colorCtrl,
-                                decoration: _dec('e.g. Metallic Blue', colorScheme),
+                                decoration: _dec(
+                                  'e.g. Metallic Blue',
+                                  colorScheme,
+                                ),
                               ),
                             ),
-                            Divider(height: 32, color: colorScheme.outlineVariant),
+                            Divider(
+                              height: 32,
+                              color: colorScheme.outlineVariant,
+                            ),
                             _FormRow(
                               icon: Icons.speed_rounded,
                               label: 'Mileage',
@@ -489,18 +595,25 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                               child: TextFormField(
                                 controller: _mileageCtrl,
                                 keyboardType: TextInputType.number,
-                                decoration: _dec('e.g. 42,100 miles', colorScheme),
+                                decoration: _dec('e.g. 42,100 km', colorScheme),
                               ),
                             ),
-                            Divider(height: 32, color: colorScheme.outlineVariant),
+                            Divider(
+                              height: 32,
+                              color: colorScheme.outlineVariant,
+                            ),
                             _FormRow(
                               icon: Icons.fingerprint_rounded,
                               label: 'VIN (Optional)',
                               colorScheme: colorScheme,
                               child: TextFormField(
                                 controller: _vinCtrl,
-                                textCapitalization: TextCapitalization.characters,
-                                decoration: _dec('17-digit VIN code', colorScheme),
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                decoration: _dec(
+                                  '17-digit VIN code',
+                                  colorScheme,
+                                ),
                               ),
                             ),
                           ],
@@ -525,8 +638,14 @@ InputDecoration _dec(String hint, ColorScheme colorScheme) => InputDecoration(
   filled: true,
   fillColor: colorScheme.surfaceContainerHighest,
   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(16),
+    borderSide: BorderSide.none,
+  ),
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(16),
+    borderSide: BorderSide.none,
+  ),
   focusedBorder: OutlineInputBorder(
     borderRadius: BorderRadius.circular(16),
     borderSide: BorderSide(color: colorScheme.primary, width: 2),
@@ -547,7 +666,12 @@ class _FormRow extends StatelessWidget {
   final Widget child;
   final ColorScheme colorScheme;
 
-  const _FormRow({required this.icon, required this.label, required this.child, required this.colorScheme});
+  const _FormRow({
+    required this.icon,
+    required this.label,
+    required this.child,
+    required this.colorScheme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -571,7 +695,10 @@ class _FormRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w700),
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 4),
               child,
@@ -606,7 +733,12 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(subtitle, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+        Text(
+          subtitle,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }

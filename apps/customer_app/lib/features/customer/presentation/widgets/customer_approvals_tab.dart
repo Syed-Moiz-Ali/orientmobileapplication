@@ -273,7 +273,7 @@ class _ApprovalCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimensions.s4),
                 Text(
-                  '\u00a3${approval.amount.toStringAsFixed(2)}',
+                  'AED ${approval.amount.toStringAsFixed(2)}',
                   style: textTheme.titleMedium?.copyWith(
                     color: AppColors.accent,
                     fontWeight: FontWeight.w900,
@@ -335,7 +335,7 @@ class _InvoiceCard extends StatelessWidget {
               ),
             ),
             Text(
-              '\u00a3${invoice.amount.toStringAsFixed(2)}',
+              'AED ${invoice.amount.toStringAsFixed(2)}',
               style: textTheme.titleSmall?.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w900,
@@ -394,7 +394,7 @@ class _ApprovalDetailSheet extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '\u00a3${(item.qty * item.rate).toStringAsFixed(2)}',
+                  'AED ${(item.qty * item.rate).toStringAsFixed(2)}',
                   style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.text2,
                     fontWeight: FontWeight.w700,
@@ -490,7 +490,7 @@ class _ApprovalDetailSheet extends StatelessWidget {
                         ),
                         const Spacer(),
                         Text(
-                          '\u00a3${detail.grandTotal.toStringAsFixed(2)}',
+                          'AED ${detail.grandTotal.toStringAsFixed(2)}',
                           style: textTheme.titleLarge?.copyWith(
                             color: AppColors.accent,
                             fontWeight: FontWeight.w900,

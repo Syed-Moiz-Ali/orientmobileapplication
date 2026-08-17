@@ -20,9 +20,15 @@ class CustomerProfileTab extends ConsumerWidget {
 
     final name = profile?.name.isNotEmpty == true
         ? profile!.name
-        : (profile?.firstName.isNotEmpty == true ? profile!.firstName : 'Customer Profile');
-    final initials = profile?.avatarInitials.isNotEmpty == true ? profile!.avatarInitials : 'C';
-    final memberId = profile?.memberId.isNotEmpty == true ? profile!.memberId : '102';
+        : (profile?.firstName.isNotEmpty == true
+              ? profile!.firstName
+              : 'Customer Profile');
+    final initials = profile?.avatarInitials.isNotEmpty == true
+        ? profile!.avatarInitials
+        : 'C';
+    final memberId = profile?.memberId.isNotEmpty == true
+        ? profile!.memberId
+        : '102';
 
     return SafeArea(
       child: AppResponsivePage(
@@ -75,21 +81,33 @@ class CustomerProfileTab extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: colorScheme.outlineVariant),
                         ),
-                        child: Icon(Icons.notifications_outlined, color: colorScheme.onSurface, size: 24),
+                        child: Icon(
+                          Icons.notifications_outlined,
+                          color: colorScheme.onSurface,
+                          size: 24,
+                        ),
                       ),
                       if (state.unreadCount > 0)
                         Positioned(
                           top: -2,
                           right: -2,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: colorScheme.error,
                               borderRadius: BorderRadius.circular(100),
-                              border: Border.all(color: colorScheme.surface, width: 2),
+                              border: Border.all(
+                                color: colorScheme.surface,
+                                width: 2,
+                              ),
                             ),
                             child: Text(
-                              state.unreadCount > 99 ? '99+' : '${state.unreadCount}',
+                              state.unreadCount > 99
+                                  ? '99+'
+                                  : '${state.unreadCount}',
                               style: textTheme.labelSmall?.copyWith(
                                 color: colorScheme.onError,
                                 fontWeight: FontWeight.w900,
@@ -134,7 +152,10 @@ class CustomerProfileTab extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: colorScheme.onPrimary.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: colorScheme.onPrimary.withValues(alpha: 0.3), width: 2),
+                        border: Border.all(
+                          color: colorScheme.onPrimary.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
                       ),
                       child: Center(
                         child: Text(
@@ -164,13 +185,18 @@ class CustomerProfileTab extends ConsumerWidget {
                           Text(
                             'Member #$memberId • Verified',
                             style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onPrimary.withValues(alpha: 0.8),
+                              color: colorScheme.onPrimary.withValues(
+                                alpha: 0.8,
+                              ),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: colorScheme.onPrimary,
                               borderRadius: BorderRadius.circular(100),
@@ -206,7 +232,11 @@ class CustomerProfileTab extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _StatTile(label: 'Loyalty', value: '1,450 PTS', icon: Icons.stars_rounded),
+                  child: _StatTile(
+                    label: 'Loyalty',
+                    value: '1,450 PTS',
+                    icon: Icons.stars_rounded,
+                  ),
                 ),
               ],
             ),
@@ -217,13 +247,21 @@ class CustomerProfileTab extends ConsumerWidget {
             const SizedBox(height: 36),
 
             // ── 5. LOYALTY REWARDS & SAVINGS CARD ────────────────────────────
-            _ExplanatorySectionHeader(title: 'Your Rewards', subtitle: 'Claim your accumulated VIP credit'),
+            _ExplanatorySectionHeader(
+              title: 'Your Rewards',
+              subtitle: 'Claim your accumulated VIP credit',
+            ),
             const SizedBox(height: 16),
-            _LoyaltyRewardsCard(onRedeem: () => context.push(AppRoutes.customerBookService)),
+            _LoyaltyRewardsCard(
+              onRedeem: () => context.push(AppRoutes.customerBookService),
+            ),
             const SizedBox(height: 36),
 
             // ── 6. ACCOUNT SETTINGS ──────────────────────────────────────────
-            _ExplanatorySectionHeader(title: 'Garage Shortcuts', subtitle: 'Manage vehicles and breakdown assistance'),
+            _ExplanatorySectionHeader(
+              title: 'Garage Shortcuts',
+              subtitle: 'Manage vehicles and breakdown assistance',
+            ),
             const SizedBox(height: 16),
             _SettingsGroup(
               items: [
@@ -231,7 +269,8 @@ class CustomerProfileTab extends ConsumerWidget {
                   icon: Icons.directions_car_rounded,
                   title: 'My Garage & Vehicles',
                   subtitle: 'Manage registered cars, MOT & service details',
-                  onTap: () => ref.read(customerDashboardProvider.notifier).selectTab(3),
+                  onTap: () =>
+                      ref.read(customerDashboardProvider.notifier).selectTab(3),
                 ),
                 _SettingsTile(
                   icon: Icons.add_rounded,
@@ -250,7 +289,10 @@ class CustomerProfileTab extends ConsumerWidget {
             const SizedBox(height: 36),
 
             // ── 7. PREFERENCES & SECURITY ────────────────────────────────────
-            _ExplanatorySectionHeader(title: 'App Preferences', subtitle: 'Configure notifications and security'),
+            _ExplanatorySectionHeader(
+              title: 'App Preferences',
+              subtitle: 'Configure notifications and security',
+            ),
             const SizedBox(height: 16),
             _SettingsGroup(
               items: [
@@ -258,7 +300,11 @@ class CustomerProfileTab extends ConsumerWidget {
                   icon: Icons.notifications_active_rounded,
                   title: 'Push Notifications',
                   subtitle: 'Receive workshop stage updates & alerts',
-                  trailing: Switch.adaptive(value: true, activeTrackColor: colorScheme.primary, onChanged: (_) {}),
+                  trailing: Switch.adaptive(
+                    value: true,
+                    activeTrackColor: colorScheme.primary,
+                    onChanged: (_) {},
+                  ),
                   onTap: () {},
                 ),
                 _SettingsTile(
@@ -289,12 +335,17 @@ class CustomerProfileTab extends ConsumerWidget {
                   backgroundColor: colorScheme.errorContainer,
                   foregroundColor: colorScheme.error,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 icon: const Icon(Icons.logout_rounded, size: 20),
                 label: Text(
                   'Log Out of Account',
-                  style: textTheme.titleMedium?.copyWith(color: colorScheme.error, fontWeight: FontWeight.w800),
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.error,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
@@ -323,14 +374,22 @@ class _ReferAndEarnBanner extends StatelessWidget {
       borderColor: colorScheme.outlineVariant,
       padding: EdgeInsets.zero,
       boxShadow: [
-        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 6)),
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.05),
+          blurRadius: 16,
+          offset: const Offset(0, 6),
+        ),
       ],
       child: Stack(
         children: [
           Positioned(
             right: -20,
             bottom: -20,
-            child: Icon(Icons.redeem_rounded, size: 140, color: colorScheme.tertiary.withValues(alpha: 0.05)),
+            child: Icon(
+              Icons.redeem_rounded,
+              size: 140,
+              color: colorScheme.tertiary.withValues(alpha: 0.05),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(20),
@@ -342,7 +401,7 @@ class _ReferAndEarnBanner extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Invite friends, get £50',
+                        'Invite friends, get AED 50',
                         style: textTheme.titleLarge?.copyWith(
                           color: colorScheme.onSurface,
                           fontWeight: FontWeight.w900,
@@ -351,15 +410,24 @@ class _ReferAndEarnBanner extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         'Share your referral link to earn service credit.',
-                        style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: colorScheme.tertiary, shape: BoxShape.circle),
-                  child: Icon(Icons.share_rounded, color: colorScheme.onTertiary, size: 20),
+                  decoration: BoxDecoration(
+                    color: colorScheme.tertiary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.share_rounded,
+                    color: colorScheme.onTertiary,
+                    size: 20,
+                  ),
                 ),
               ],
             ),
@@ -396,7 +464,11 @@ class _LoyaltyRewardsCard extends StatelessWidget {
               color: colorScheme.secondary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(Icons.card_giftcard_rounded, color: colorScheme.secondary, size: 24),
+            child: Icon(
+              Icons.card_giftcard_rounded,
+              color: colorScheme.secondary,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -404,12 +476,17 @@ class _LoyaltyRewardsCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '£14.50 Available',
-                  style: textTheme.titleMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
+                  'AED 14.50 Available',
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 Text(
                   'Ready to redeem on next service',
-                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -420,10 +497,15 @@ class _LoyaltyRewardsCard extends StatelessWidget {
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(100),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-            child: const Text('Claim', style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text(
+              'Claim',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
@@ -437,7 +519,11 @@ class _StatTile extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const _StatTile({required this.label, required this.value, required this.icon});
+  const _StatTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -454,7 +540,10 @@ class _StatTile extends StatelessWidget {
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(color: colorScheme.primaryContainer, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(icon, color: colorScheme.onPrimaryContainer, size: 20),
           ),
           const SizedBox(width: 12),
@@ -464,9 +553,17 @@ class _StatTile extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w900),
+                  style: textTheme.titleSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-                Text(label, style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                Text(
+                  label,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
@@ -481,7 +578,10 @@ class _ExplanatorySectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _ExplanatorySectionHeader({required this.title, required this.subtitle});
+  const _ExplanatorySectionHeader({
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -500,7 +600,12 @@ class _ExplanatorySectionHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(subtitle, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+        Text(
+          subtitle,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -522,13 +627,18 @@ class _SettingsGroup extends StatelessWidget {
       color: colorScheme.surface,
       borderColor: colorScheme.outlineVariant,
       boxShadow: [
-        BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.02),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
       ],
       child: Column(
         children: [
           for (int i = 0; i < items.length; i++) ...[
             items[i],
-            if (i < items.length - 1) Divider(height: 1, color: colorScheme.outlineVariant),
+            if (i < items.length - 1)
+              Divider(height: 1, color: colorScheme.outlineVariant),
           ],
         ],
       ),
@@ -578,17 +688,29 @@ class _SettingsTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
+                    style: textTheme.titleSmall?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                  Text(
+                    subtitle,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             ),
             if (trailing != null)
               trailing!
             else
-              Icon(Icons.chevron_right_rounded, color: colorScheme.outline, size: 20),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colorScheme.outline,
+                size: 20,
+              ),
           ],
         ),
       ),

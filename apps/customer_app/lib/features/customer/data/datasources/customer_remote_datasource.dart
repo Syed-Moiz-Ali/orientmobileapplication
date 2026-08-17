@@ -14,7 +14,7 @@ class CustomerRemoteDataSource {
       success: (r) => r,
       failure: (e) {
         if (e is UnauthorizedException) throw e;
-        return const CustomerProfileResponse();
+        throw e;
       },
     );
   }
@@ -33,7 +33,7 @@ class CustomerRemoteDataSource {
           .toList(),
       failure: (e) {
         if (e is UnauthorizedException) throw e;
-        return [];
+        throw e;
       },
     );
   }
@@ -48,10 +48,7 @@ class CustomerRemoteDataSource {
         return VehicleResponse.fromJson(raw as Map<String, dynamic>);
       },
     );
-    return result.when(
-      success: (r) => r,
-      failure: (_) => const VehicleResponse(),
-    );
+    return result.when(success: (r) => r, failure: (e) => throw e);
   }
 
   Future<VehicleResponse> updateVehicle(
@@ -67,10 +64,7 @@ class CustomerRemoteDataSource {
         return VehicleResponse.fromJson(raw as Map<String, dynamic>);
       },
     );
-    return result.when(
-      success: (r) => r,
-      failure: (_) => const VehicleResponse(),
-    );
+    return result.when(success: (r) => r, failure: (e) => throw e);
   }
 
   Future<void> deleteVehicle(String id) async {
@@ -98,7 +92,7 @@ class CustomerRemoteDataSource {
           .toList(),
       failure: (e) {
         if (e is UnauthorizedException) throw e;
-        return [];
+        throw e;
       },
     );
   }
@@ -109,10 +103,7 @@ class CustomerRemoteDataSource {
       data: data,
       fromJson: (d) => IdResponse.fromJson(d as Map<String, dynamic>),
     );
-    return result.when(
-      success: (r) => r,
-      failure: (e) => throw e,
-    );
+    return result.when(success: (r) => r, failure: (e) => throw e);
   }
 
   Future<ActiveServiceResponse> getActiveService() async {
@@ -125,7 +116,7 @@ class CustomerRemoteDataSource {
       success: (r) => r,
       failure: (e) {
         if (e is UnauthorizedException) throw e;
-        return const ActiveServiceResponse();
+        throw e;
       },
     );
   }
@@ -139,7 +130,7 @@ class CustomerRemoteDataSource {
       success: (list) => list
           .map((e) => ServiceTypeResponse.fromJson(e as Map<String, dynamic>))
           .toList(),
-      failure: (_) => [],
+      failure: (e) => throw e,
     );
   }
 
@@ -152,7 +143,7 @@ class CustomerRemoteDataSource {
     return result.when(
       success: (data) =>
           List<String>.from(data['availableSlots'] as List? ?? const []),
-      failure: (_) => const [],
+      failure: (e) => throw e,
     );
   }
 
@@ -162,7 +153,7 @@ class CustomerRemoteDataSource {
       data: data,
       fromJson: (d) => IdResponse.fromJson(d as Map<String, dynamic>),
     );
-    return result.when(success: (r) => r, failure: (_) => const IdResponse());
+    return result.when(success: (r) => r, failure: (e) => throw e);
   }
 
   Future<List<NotificationResponse>> getNotifications() async {
@@ -176,7 +167,7 @@ class CustomerRemoteDataSource {
           .toList(),
       failure: (e) {
         if (e is UnauthorizedException) throw e;
-        return [];
+        throw e;
       },
     );
   }
@@ -204,7 +195,7 @@ class CustomerRemoteDataSource {
             ),
           )
           .toList(),
-      failure: (_) => [],
+      failure: (e) => throw e,
     );
   }
 
@@ -216,10 +207,7 @@ class CustomerRemoteDataSource {
       fromJson: (d) =>
           CustomerApprovalDetailResponse.fromJson(d as Map<String, dynamic>),
     );
-    return result.when(
-      success: (r) => r,
-      failure: (_) => const CustomerApprovalDetailResponse(),
-    );
+    return result.when(success: (r) => r, failure: (e) => throw e);
   }
 
   Future<bool> processApproval(String estimateId, String action) async {
@@ -241,7 +229,7 @@ class CustomerRemoteDataSource {
           .toList(),
       failure: (e) {
         if (e is UnauthorizedException) throw e;
-        return [];
+        throw e;
       },
     );
   }

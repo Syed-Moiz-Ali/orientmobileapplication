@@ -682,9 +682,9 @@ $syncStatus1 = $r.status
 $r2 = Invoke-Api -Method POST -Path '/sync/bookings' -Token $TokenAdvisor -Body @{ booking_ref = 'SYNC-QA-1'; customer_id = 1; service_type = 'Test'; booking_date = $date } -ExtraHeaders @{ 'Idempotency-Key' = 'qa-key-1' }
 $r3 = Invoke-Api -Method POST -Path '/sync/bookings' -Token $TokenAdvisor -Body @{ booking_ref = 'SYNC-QA-1'; customer_id = 1; service_type = 'Test'; booking_date = $date } -ExtraHeaders @{ 'Idempotency-Key' = 'qa-key-1' }
 Check 'sync bookings accepted (staff only) -> 200/4xx' ($syncStatus1 -eq 200 -or $syncStatus1 -eq 400 -or $syncStatus1 -eq 409) "got ${syncStatus1}: $($r.body)"
-$norm2 = ($r2.data | ConvertTo-Json -Compress -Depth 8)
-$norm3 = ($r3.data | ConvertTo-Json -Compress -Depth 8)
-Check 'sync duplicate idempotency-key replays -> same body' ($norm2 -eq $norm3) "diff: $norm2 vs $norm3"
+$norm2 = @($r2.data.PSObject.Properties | Sort-Object Name | ForEach-Object { "$($_.Name)=$($_.Value)" }) -join ';'
+$norm3 = @($r3.data.PSObject.Properties | Sort-Object Name | ForEach-Object { "$($_.Name)=$($_.Value)" }) -join ';'
+Check 'sync duplicate idempotency-key replays -> same body' ($r2.status -eq $r3.status -and $norm2 -eq $norm3) "diff: $norm2 vs $norm3"
 $r = Invoke-Api -Method POST -Path '/sync/bookings' -Token $TokenCustomer -Body @{ }
 Check 'customer cannot use sync endpoint -> 403' ($r.status -eq 403) "got $($r.status)"
 

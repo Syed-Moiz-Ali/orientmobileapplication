@@ -360,9 +360,18 @@ class _VehicleCardWithActions extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(ctx).pop();
-              ref.read(customerDashboardProvider.notifier).removeVehicle(v.id);
+              final removed = await ref
+                  .read(customerDashboardProvider.notifier)
+                  .removeVehicle(v.id);
+              if (!removed && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Could not remove this vehicle.'),
+                  ),
+                );
+              }
             },
             child: Text(
               'Remove',
