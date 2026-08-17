@@ -12,7 +12,12 @@ class LoginView extends ConsumerStatefulWidget {
   final VoidCallback? onForgotPassword;
   final bool allowRegistration;
 
-  const LoginView({super.key, required this.onLoginSuccess, this.onForgotPassword, this.allowRegistration = false});
+  const LoginView({
+    super.key,
+    required this.onLoginSuccess,
+    this.onForgotPassword,
+    this.allowRegistration = false,
+  });
 
   @override
   ConsumerState<LoginView> createState() => _LoginViewState();
@@ -124,7 +129,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     state: state,
                     notifier: notifier,
                     identifierCtrl: _identifierCtrl,
-                    onUsePassword: () => _changeMode(_SignInMode.password, notifier),
+                    onUsePassword: () =>
+                        _changeMode(_SignInMode.password, notifier),
                     onSendCode: () => _sendCode(notifier),
                   ),
           ),
@@ -199,7 +205,10 @@ class _PasswordForm extends StatelessWidget {
           Row(
             children: [
               const Spacer(),
-              AuthLinkButton(label: 'Forgot password?', onPressed: onForgotPassword),
+              AuthLinkButton(
+                label: 'Forgot password?',
+                onPressed: onForgotPassword,
+              ),
             ],
           ),
         const SizedBox(height: AppDimensions.s16),
@@ -211,13 +220,18 @@ class _PasswordForm extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.s16),
         Center(
-          child: AuthLinkButton(label: 'Use one-time code instead', onPressed: onUseCode),
+          child: AuthLinkButton(
+            label: 'Use one-time code instead',
+            onPressed: onUseCode,
+          ),
         ),
         if (allowRegistration) ...[
           const SizedBox(height: AppDimensions.s16),
           Center(
             child: AuthLinkButton(
-              label: state.isRegistering ? 'Already have an account? Sign in' : 'New customer? Create an account',
+              label: state.isRegistering
+                  ? 'Already have an account? Sign in'
+                  : 'New customer? Create an account',
               onPressed: notifier.toggleRegister,
             ),
           ),
@@ -259,23 +273,30 @@ class _CodeForm extends StatelessWidget {
           AuthOtpField(
             onChanged: notifier.setOtp,
             errorText: state.error,
-            onSubmitted: (_) => email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
+            onSubmitted: (_) =>
+                email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
           ),
           const SizedBox(height: AppDimensions.s20),
           AuthPrimaryButton(
             label: 'Verify code',
             icon: Icons.verified_rounded,
             isLoading: state.isLoading,
-            onPressed: () => email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
+            onPressed: () =>
+                email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
           ),
           const SizedBox(height: AppDimensions.s12),
           Wrap(
             spacing: AppDimensions.s12,
             runSpacing: AppDimensions.s4,
             children: [
-              AuthLinkButton(label: 'Change email or mobile', onPressed: notifier.reset),
               AuthLinkButton(
-                label: state.resendCooldown > 0 ? 'Resend in ${state.resendCooldown}s' : 'Resend code',
+                label: 'Change email or mobile',
+                onPressed: notifier.reset,
+              ),
+              AuthLinkButton(
+                label: state.resendCooldown > 0
+                    ? 'Resend in ${state.resendCooldown}s'
+                    : 'Resend code',
                 onPressed: state.resendCooldown > 0 ? null : onSendCode,
               ),
             ],
@@ -297,7 +318,12 @@ class _CodeForm extends StatelessWidget {
           onSubmitted: (_) => onSendCode(),
         ),
         const SizedBox(height: AppDimensions.s8),
-        Text('No password needed.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.text3)),
+        Text(
+          'No password needed.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.text3),
+        ),
         const SizedBox(height: AppDimensions.s24),
         AuthPrimaryButton(
           label: 'Send code',
@@ -307,7 +333,10 @@ class _CodeForm extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.s16),
         Center(
-          child: AuthLinkButton(label: 'Use password instead', onPressed: onUsePassword),
+          child: AuthLinkButton(
+            label: 'Use password instead',
+            onPressed: onUsePassword,
+          ),
         ),
       ],
     );
@@ -337,7 +366,12 @@ class _InlineNotice extends StatelessWidget {
           Icon(icon, size: 18, color: colorScheme.primary),
           const SizedBox(width: AppDimensions.s10),
           Expanded(
-            child: Text(text, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+            child: Text(
+              text,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ],
       ),

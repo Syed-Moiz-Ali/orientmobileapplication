@@ -30,9 +30,9 @@ class _TechBody extends ConsumerWidget {
     final notifier = ref.read(technicianDashboardProvider.notifier);
 
     SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: AppColors.navy,
-        statusBarIconBrightness: Brightness.light,
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
       ),
     );
 
@@ -100,9 +100,7 @@ class _TechTabBar extends StatelessWidget {
                               ? AppTextStyles.bodyStrong(
                                   color: AppColors.accent,
                                 )
-                              : AppTextStyles.button(
-                                  color: AppColors.text3,
-                                ),
+                              : AppTextStyles.button(color: AppColors.text3),
                         ),
                       ],
                     ),
@@ -159,9 +157,7 @@ class _DashboardTab extends ConsumerWidget {
                 SizedBox(width: AppDimensions.s10),
                 Text(
                   'Technician Dashboard',
-                  style: AppTextStyles.title(
-                    color: AppColors.textPrimary,
-                  ),
+                  style: AppTextStyles.title(color: AppColors.textPrimary),
                 ),
                 const Spacer(),
                 GestureDetector(
@@ -460,10 +456,7 @@ class _KpiChip extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              value,
-              style: AppTextStyles.displaySmall(color: color),
-            ),
+            Text(value, style: AppTextStyles.displaySmall(color: color)),
             Text(
               label,
               style: AppTextStyles.bodySmall(color: AppColors.text3),
@@ -482,10 +475,8 @@ class _ColHead extends StatelessWidget {
   const _ColHead(this.text);
 
   @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: AppTextStyles.bodySmall(color: AppColors.accent),
-  );
+  Widget build(BuildContext context) =>
+      Text(text, style: AppTextStyles.bodySmall(color: AppColors.accent));
 }
 
 class _JobRow extends StatelessWidget {
@@ -775,9 +766,7 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                           const Spacer(),
                           Text(
                             '${job.completedTasks}/${job.tasks.length} tasks (${(job.progressPercent * 100).toInt()}%)',
-                            style: AppTextStyles.bodySmall(
-                              color: Colors.white,
-                            ),
+                            style: AppTextStyles.bodySmall(color: Colors.white),
                           ),
                         ],
                       ),
@@ -825,9 +814,7 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                       SizedBox(height: AppDimensions.s4),
                       Text(
                         'Track and update task progress',
-                        style: AppTextStyles.bodySmall(
-                          color: AppColors.text3,
-                        ),
+                        style: AppTextStyles.bodySmall(color: AppColors.text3),
                       ),
                       SizedBox(height: AppDimensions.s12),
                       Container(
@@ -1013,10 +1000,7 @@ class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
                                   ),
                                 )
                               : const Icon(Icons.save_rounded, size: 16),
-                          label: Text(
-                            'Save',
-                            style: AppTextStyles.bodySmall(),
-                          ),
+                          label: Text('Save', style: AppTextStyles.bodySmall()),
                         ),
                         SizedBox(width: AppDimensions.s8),
                         GestureDetector(
@@ -1214,10 +1198,7 @@ class _TaskStatusDropdown extends StatelessWidget {
               .map(
                 (s) => DropdownMenuItem(
                   value: s,
-                  child: Text(
-                    s.label,
-                    style: AppTextStyles.bodySmall(),
-                  ),
+                  child: Text(s.label, style: AppTextStyles.bodySmall()),
                 ),
               )
               .toList(),
@@ -1259,31 +1240,31 @@ class _TaskActionButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: inProg
                 ? AppColors.successBg
-              : AppColors.accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(AppDimensions.r8),
-          border: Border.all(
-            color: inProg ? AppColors.success : AppColors.accent,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              inProg
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.play_arrow_rounded,
+                : AppColors.accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppDimensions.r8),
+            border: Border.all(
               color: inProg ? AppColors.success : AppColors.accent,
-              size: 12,
             ),
-            SizedBox(width: AppDimensions.s4),
-            Text(
-              inProg ? 'Done' : 'Start',
-              style: AppTextStyles.bodySmall(
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                inProg
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.play_arrow_rounded,
                 color: inProg ? AppColors.success : AppColors.accent,
+                size: 12,
               ),
-            ),
-          ],
-        ),
+              SizedBox(width: AppDimensions.s4),
+              Text(
+                inProg ? 'Done' : 'Start',
+                style: AppTextStyles.bodySmall(
+                  color: inProg ? AppColors.success : AppColors.accent,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

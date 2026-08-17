@@ -15,49 +15,48 @@ class AdvisorHeaderButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: isPrimary
-            ? AppColors.surface
-            : Colors.white.withValues(alpha: 0.13),
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: isPrimary
-            ? null
-            : Border.all(color: Colors.white.withValues(alpha: 0.22)),
-        boxShadow: isPrimary
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: isPrimary ? colors.primary : colors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.r14),
+          border: isPrimary ? null : Border.all(color: colors.outlineVariant),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  color: isPrimary ? colors.onPrimary : colors.primary,
+                  size: 15,
                 ),
-              ]
-            : null,
-      ),
-      child: Center(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                color: isPrimary ? AppColors.navy : Colors.white,
-                size: 15,
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: AppTextStyles.button(
+                  color: isPrimary ? colors.onPrimary : colors.primary,
+                ).copyWith(fontSize: 14, letterSpacing: 0.3),
               ),
-              const SizedBox(width: 6),
             ],
-            Text(
-              label,
-              style: AppTextStyles.button(
-                color: isPrimary ? AppColors.navy : Colors.white,
-              ).copyWith(fontSize: 14, letterSpacing: 0.3),
-            ),
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

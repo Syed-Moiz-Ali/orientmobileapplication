@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
@@ -13,7 +14,19 @@ void main() async {
 
   await HiveRegistry.initHive();
 
-  runApp(ProviderScope(overrides: [loggerProvider.overrideWithValue(logger)], child: const CustomerApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        loggerProvider.overrideWithValue(logger),
+        dioClientProvider.overrideWith((ref) {
+          final dio = createDio(appName: 'customer');
+          dio.interceptors.add(AuthInterceptor(ref, dio));
+          return dio;
+        }),
+      ],
+      child: const CustomerApp(),
+    ),
+  );
 }
 
 class CustomerApp extends ConsumerWidget {

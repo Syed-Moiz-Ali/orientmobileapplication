@@ -39,30 +39,34 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public ApiResponse<TokenResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+    public ApiResponse<TokenResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request,
+                                                @RequestHeader(value = "X-App-Name", required = false) String appName) {
         TokenResponse response = authService.verifyOtp(
-                request.getType(), request.getPhone(), request.getEmail(), request.getOtp());
+                request.getType(), request.getPhone(), request.getEmail(), request.getOtp(), appName);
         return ApiResponse.success(response);
     }
 
     @PostMapping("/register")
-    public ApiResponse<TokenResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ApiResponse<TokenResponse> register(@Valid @RequestBody RegisterRequest request,
+                                               @RequestHeader(value = "X-App-Name", required = false) String appName) {
         TokenResponse response = authService.register(
                 request.getName(), request.getEmail(), request.getPhone(),
-                request.getPassword(), request.getRole());
+                request.getPassword(), request.getRole(), appName);
         return ApiResponse.success("Registration successful", response);
     }
 
     @PostMapping("/login")
-    public ApiResponse<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ApiResponse<TokenResponse> login(@Valid @RequestBody LoginRequest request,
+                                            @RequestHeader(value = "X-App-Name", required = false) String appName) {
         TokenResponse response = authService.loginWithPassword(
-                request.getEmail(), request.getPhone(), request.getPassword());
+                request.getEmail(), request.getPhone(), request.getPassword(), appName);
         return ApiResponse.success(response);
     }
 
     @PostMapping("/refresh")
-    public ApiResponse<TokenResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        TokenResponse response = authService.refreshToken(request.getRefreshToken());
+    public ApiResponse<TokenResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request,
+                                                   @RequestHeader(value = "X-App-Name", required = false) String appName) {
+        TokenResponse response = authService.refreshToken(request.getRefreshToken(), appName);
         return ApiResponse.success(response);
     }
 
@@ -82,9 +86,10 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request,
+                                           @RequestHeader(value = "X-App-Name", required = false) String appName) {
         authService.resetPassword(request.getType(), request.getPhone(), request.getEmail(),
-                request.getOtp(), request.getNewPassword());
+                request.getOtp(), request.getNewPassword(), appName);
         return ApiResponse.success("Password reset successfully", null);
     }
 }

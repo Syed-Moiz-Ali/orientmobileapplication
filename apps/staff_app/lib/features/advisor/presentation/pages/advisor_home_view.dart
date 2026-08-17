@@ -301,8 +301,8 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView>
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
-        statusBarColor: AppColors.navy,
-        statusBarIconBrightness: Brightness.light,
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
       ),
     );
 

@@ -12,15 +12,14 @@ class TechnicianHeaderWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
     final notifier = ref.read(technicianDashboardProvider.notifier);
     final state = ref.watch(technicianDashboardProvider);
     final profile = notifier.profile;
     final status = state.attendanceStatus;
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [AppColors.navy, AppColors.accent]),
-      ),
+      color: colors.surface,
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -41,7 +40,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 child: Center(
                   child: Text(
                     profile.avatarInitials,
-                    style: AppTextStyles.button(color: Colors.white),
+                    style: AppTextStyles.button(color: colors.onSurface),
                   ),
                 ),
               ),
@@ -57,7 +56,9 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                     SizedBox(height: AppDimensions.s4),
                     Text(
                       '${profile.empId} \u2022 ${profile.branch}',
-                      style: AppTextStyles.subtitle(color: Colors.white70),
+                      style: AppTextStyles.subtitle(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.s4),
                     Container(
@@ -66,11 +67,9 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                         vertical: AppDimensions.s4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: colors.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(AppDimensions.r20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
-                        ),
+                        border: Border.all(color: colors.outlineVariant),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -80,7 +79,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                             height: 6,
                             decoration: BoxDecoration(
                               color: status == AttendanceStatus.working
-                                  ? AppColors.accent
+                                  ? colors.primary
                                   : status == AttendanceStatus.onBreak
                                   ? AppColors.warning
                                   : Colors.white54,
@@ -91,7 +90,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                           Text(
                             status.label,
                             style: AppTextStyles.bodySmall(
-                              color: Colors.white,
+                              color: colors.onSurface,
                             ),
                           ),
                         ],
@@ -109,17 +108,17 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.20),
+                      color: colors.primary.withValues(alpha: 0.10),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: colors.primary.withValues(alpha: 0.30),
                         width: 1.5,
                       ),
                     ),
                     child: Center(
                       child: Text(
                         profile.avatarInitials.substring(0, 1),
-                        style: AppTextStyles.bodyStrong(color: Colors.white),
+                        style: AppTextStyles.bodyStrong(color: colors.primary),
                       ),
                     ),
                   ),
@@ -307,9 +306,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 SizedBox(width: AppDimensions.s12),
                 Text(
                   label,
-                  style: AppTextStyles.bodyStrong(
-                    color: AppColors.textPrimary,
-                  ),
+                  style: AppTextStyles.bodyStrong(color: AppColors.textPrimary),
                 ),
                 const Spacer(),
                 Icon(

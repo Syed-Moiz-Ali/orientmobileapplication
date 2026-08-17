@@ -3,6 +3,7 @@ package com.orient.workshop.auth.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orient.workshop.auth.model.entity.User;
 import com.orient.workshop.auth.repository.UserMapper;
+import com.orient.workshop.auth.security.AppAccessPolicy;
 import com.orient.workshop.auth.util.JwtUtil;
 import com.orient.workshop.common.constant.ApiConstants;
 import jakarta.servlet.FilterChain;
@@ -32,6 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
     private final ObjectMapper objectMapper;
+    private final AppAccessPolicy appAccessPolicy;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -52,6 +54,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         || role == null || !role.equalsIgnoreCase(user.getRole())) {
                     SecurityContextHolder.clearContext();
                     sendUnauthorized(response);
+                    return;
+                }
+
+                String appName = request.getHeader("X-App-Name");
+                if (StringUtils.hasText(appName) && !appAccessPolicy.isAllowed(appName, user.getRole())) {
+                    SecurityContextHolder.clearContext();
+                    sendForbidden(response, appName);
                     return;
                 }
 
@@ -85,6 +94,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Map<String, Object> body = new java.util.LinkedHashMap<>();
         body.put("code", 401);
         body.put("message", "Unauthorized");
+        body.put("timestamp", System.currentTimeMillis());
+        response.getWriter().write(objectMapper.writeValueAsString(body));
+    }
+
+    private void sendForbidden(HttpServletResponse response, String appName) throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", 403);
+        body.put("message", "Account is not authorized for the " + appName + " app");
         body.put("timestamp", System.currentTimeMillis());
         response.getWriter().write(objectMapper.writeValueAsString(body));
     }

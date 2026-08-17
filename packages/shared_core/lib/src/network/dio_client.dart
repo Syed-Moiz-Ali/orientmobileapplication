@@ -5,7 +5,7 @@ import 'package:shared_core/src/network/envelope_interceptor.dart';
 import 'package:shared_core/src/network/logging_interceptor.dart';
 import 'package:shared_core/src/network/retry_interceptor.dart';
 
-Dio createDio() {
+Dio createDio({String? appName}) {
   final dio = Dio(
     BaseOptions(
       baseUrl: EnvironmentConfig.baseUrl,
@@ -14,6 +14,7 @@ Dio createDio() {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        if (appName != null) 'X-App-Name': appName,
       },
     ),
   );

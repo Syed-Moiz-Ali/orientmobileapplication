@@ -35,29 +35,26 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return AppBar(
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [AppColors.navy, AppColors.accent]),
-        ),
-      ),
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.surface,
+      foregroundColor: colors.onSurface,
       elevation: 0,
-      systemOverlayStyle: const SystemUiOverlayStyle(
+      systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+        statusBarIconBrightness: Brightness.dark,
       ),
       titleSpacing: 0,
       leading: Padding(
         padding: const EdgeInsets.all(AppDimensions.s10),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
+            color: colors.primary.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(AppDimensions.r10),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.build_circle_rounded,
-            color: Colors.white,
+            color: colors.primary,
             size: AppDimensions.iconLg,
           ),
         ),
@@ -68,11 +65,11 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
         children: [
           Text(
             _titles[selectedIndex],
-            style: AppTextStyles.subtitle(color: Colors.white),
+            style: AppTextStyles.subtitle(color: colors.onSurface),
           ),
           Text(
             _subtitles[selectedIndex],
-            style: AppTextStyles.bodySmall(color: Colors.white70),
+            style: AppTextStyles.bodySmall(color: colors.onSurfaceVariant),
           ),
         ],
       ),

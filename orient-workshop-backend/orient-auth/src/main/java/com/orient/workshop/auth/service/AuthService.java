@@ -1,12 +1,14 @@
 package com.orient.workshop.auth.service;
 
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.auth.security.AppAccessPolicy;
 import com.orient.workshop.auth.model.dto.MeResponse;
 import com.orient.workshop.auth.model.dto.TokenResponse;
 import com.orient.workshop.auth.model.entity.User;
 import com.orient.workshop.auth.repository.UserMapper;
 import com.orient.workshop.common.constant.RoleConstants;
 import com.orient.workshop.common.exception.BadRequestException;
+import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.common.exception.TooManyRequestsException;
 import com.orient.workshop.common.util.PhoneUtil;
@@ -42,6 +44,7 @@ public class AuthService {
     private final StaffMapper staffMapper;
     private final CustomerMapper customerMapper;
     private final BranchMapper branchMapper;
+    private final AppAccessPolicy appAccessPolicy = new AppAccessPolicy();
 
     private final Map<String, LoginAttempt> loginAttempts = new ConcurrentHashMap<>();
 
@@ -145,6 +148,11 @@ public class AuthService {
 
     @Transactional
     public TokenResponse verifyOtp(String type, String phone, String email, String otpCode) {
+        return verifyOtp(type, phone, email, otpCode, null);
+    }
+
+    @Transactional
+    public TokenResponse verifyOtp(String type, String phone, String email, String otpCode, String appName) {
         User user = switch (type) {
             case "sms" -> {
                 if (phone == null || phone.isBlank())
@@ -166,6 +174,7 @@ public class AuthService {
             }
             default -> throw new BadRequestException("Invalid OTP type. Use 'sms' or 'email'");
         };
+        ensureAppAccess(appName, user.getRole());
         return jwtService.createTokenPair(user);
     }
 
@@ -173,6 +182,12 @@ public class AuthService {
 
     @Transactional
     public TokenResponse register(String name, String email, String phone, String rawPassword, String role) {
+        return register(name, email, phone, rawPassword, role, null);
+    }
+
+    @Transactional
+    public TokenResponse register(String name, String email, String phone, String rawPassword, String role, String appName) {
+        ensureAppAccess(appName, RoleConstants.CUSTOMER);
         if (email != null && !email.isBlank() && userMapper.findByEmail(email.trim().toLowerCase()).isPresent()) {
             throw new BadRequestException("Email already registered");
         }
@@ -206,6 +221,11 @@ public class AuthService {
 
     @Transactional
     public TokenResponse loginWithPassword(String email, String phone, String rawPassword) {
+        return loginWithPassword(email, phone, rawPassword, null);
+    }
+
+    @Transactional
+    public TokenResponse loginWithPassword(String email, String phone, String rawPassword, String appName) {
         String identifier = resolveIdentifier(email, phone);
         LoginAttempt attempt = loginAttempts.computeIfAbsent(identifier, k -> new LoginAttempt());
         long now = System.currentTimeMillis();
@@ -234,6 +254,7 @@ public class AuthService {
 
             passwordService.validate(rawPassword, user.getPasswordHash());
             loginAttempts.remove(identifier);
+            ensureAppAccess(appName, user.getRole());
             return jwtService.createTokenPair(user);
         } catch (BadRequestException e) {
             int failures = attempt.recordFailure(now);
@@ -244,10 +265,21 @@ public class AuthService {
         }
     }
 
+    private void ensureAppAccess(String appName, String role) {
+        if (!appAccessPolicy.isAllowed(appName, role)) {
+            throw new ForbiddenException("This account is not authorized for the " + appName + " app");
+        }
+    }
+
     // ========== FORGOT / RESET PASSWORD ==========
 
     @Transactional
     public void resetPassword(String type, String phone, String email, String otp, String newPassword) {
+        resetPassword(type, phone, email, otp, newPassword, null);
+    }
+
+    @Transactional
+    public void resetPassword(String type, String phone, String email, String otp, String newPassword, String appName) {
         User user;
         switch (type) {
             case "sms" -> {
@@ -276,6 +308,7 @@ public class AuthService {
             }
             default -> throw new BadRequestException("Invalid type. Use 'sms' or 'email'");
         }
+        ensureAppAccess(appName, user.getRole());
         user.setPasswordHash(passwordService.hash(newPassword));
         userMapper.updateById(user);
         jwtService.revokeAllUserTokens(user.getId());
@@ -284,7 +317,13 @@ public class AuthService {
     // ========== SHARED ==========
 
     public TokenResponse refreshToken(String refreshToken) {
-        return jwtService.refreshAccessToken(refreshToken);
+        return refreshToken(refreshToken, null);
+    }
+
+    public TokenResponse refreshToken(String refreshToken, String appName) {
+        TokenResponse response = jwtService.refreshAccessToken(refreshToken);
+        ensureAppAccess(appName, response.getRole());
+        return response;
     }
 
     public void logout(String refreshToken) {

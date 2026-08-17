@@ -88,6 +88,7 @@ class LoginNotifier extends Notifier<LoginState> {
     cancelCooldown();
     state = LoginState(method: m);
   }
+
   void setPasswordIdentifier(PasswordIdentifier value) {
     state = state.copyWith(
       identifier: value,

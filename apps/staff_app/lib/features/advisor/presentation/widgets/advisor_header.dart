@@ -30,10 +30,9 @@ class AdvisorHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [AppColors.navy, AppColors.accent]),
-      ),
+      color: colors.surface,
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -55,7 +54,7 @@ class AdvisorHeader extends StatelessWidget {
                             Text(
                               advisorName,
                               style: TextStyle(
-                                color: Colors.white,
+                                color: colors.onSurface,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0.5,
@@ -67,8 +66,8 @@ class AdvisorHeader extends StatelessWidget {
                                 Container(
                                   width: 6,
                                   height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.cyan,
+                                  decoration: BoxDecoration(
+                                    color: colors.primary,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -76,7 +75,7 @@ class AdvisorHeader extends StatelessWidget {
                                 Text(
                                   'On Shift',
                                   style: TextStyle(
-                                    color: AppColors.cyan,
+                                    color: colors.primary,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 0.3,
@@ -94,9 +93,9 @@ class AdvisorHeader extends StatelessWidget {
                     clipBehavior: Clip.none,
                     children: [
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.notifications_outlined,
-                          color: Colors.white,
+                          color: colors.onSurface,
                           size: 26,
                         ),
                         onPressed: onShowNotifications,
@@ -111,7 +110,7 @@ class AdvisorHeader extends StatelessWidget {
                             color: AppColors.amber400,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.navy,
+                              color: colors.surface,
                               width: 1.5,
                             ),
                           ),
@@ -127,10 +126,10 @@ class AdvisorHeader extends StatelessWidget {
                         width: 34,
                         height: 34,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.20),
+                          color: colors.primary.withValues(alpha: 0.10),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: colors.primary.withValues(alpha: 0.30),
                             width: 1.5,
                           ),
                         ),
@@ -138,7 +137,7 @@ class AdvisorHeader extends StatelessWidget {
                           child: Text(
                             advisorInitials.substring(0, 1),
                             style: TextStyle(
-                              color: Colors.white,
+                              color: colors.primary,
                               fontWeight: FontWeight.w900,
                               fontSize: 16,
                             ),
@@ -174,15 +173,15 @@ class AdvisorHeader extends StatelessWidget {
                     width: 6,
                     height: 6,
                     margin: const EdgeInsets.only(right: 6, top: 1),
-                    decoration: const BoxDecoration(
-                      color: AppColors.cyan,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
                       shape: BoxShape.circle,
                     ),
                   ),
                   Text(
                     'Live',
                     style: TextStyle(
-                      color: AppColors.cyan,
+                      color: colors.primary,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
@@ -192,7 +191,7 @@ class AdvisorHeader extends StatelessWidget {
                   Text(
                     'Good Morning,',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: colors.onSurfaceVariant,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -201,7 +200,7 @@ class AdvisorHeader extends StatelessWidget {
                   Text(
                     'Advisor Dashboard',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colors.onSurface,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.3,
@@ -223,27 +222,25 @@ class AdvisorHeader extends StatelessWidget {
                         child: Container(
                           height: 42,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.10),
+                            color: colors.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(
                               AppDimensions.r11,
                             ),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.15),
-                            ),
+                            border: Border.all(color: colors.outlineVariant),
                           ),
                           child: Row(
                             children: [
                               const SizedBox(width: 12),
                               Icon(
                                 Icons.search_rounded,
-                                color: Colors.white.withValues(alpha: 0.45),
+                                color: colors.onSurfaceVariant,
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 'Search name, plate, phone…',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.45),
+                                  color: colors.onSurfaceVariant,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -264,12 +261,12 @@ class AdvisorHeader extends StatelessWidget {
                         height: 42,
                         width: 42,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
+                          color: colors.primary.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(
                             AppDimensions.r11,
                           ),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.25),
+                            color: colors.primary.withValues(alpha: 0.30),
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -279,9 +276,9 @@ class AdvisorHeader extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.qr_code_scanner_rounded,
-                          color: Colors.white,
+                          color: colors.primary,
                           size: 20,
                         ),
                       ),
@@ -315,8 +312,8 @@ class AdvisorHeader extends StatelessWidget {
             ),
             Container(
               height: 24,
-              decoration: const BoxDecoration(
-                color: AppColors.canvas,
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHighest,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
             ),

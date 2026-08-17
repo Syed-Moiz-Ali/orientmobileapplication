@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:crm_app/core/router/app_router.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 
@@ -13,7 +14,19 @@ void main() async {
 
   await HiveRegistry.initHive();
 
-  runApp(ProviderScope(overrides: [loggerProvider.overrideWithValue(logger)], child: const CrmApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        loggerProvider.overrideWithValue(logger),
+        dioClientProvider.overrideWith((ref) {
+          final dio = createDio(appName: 'crm');
+          dio.interceptors.add(AuthInterceptor(ref, dio));
+          return dio;
+        }),
+      ],
+      child: const CrmApp(),
+    ),
+  );
 }
 
 class CrmApp extends ConsumerWidget {
@@ -36,5 +49,3 @@ class CrmApp extends ConsumerWidget {
     );
   }
 }
-
-

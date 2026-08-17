@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:owner_app/core/router/app_router.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/job_cards/presentation/providers/job_card_providers.dart';
@@ -14,7 +15,19 @@ void main() async {
 
   await HiveRegistry.initHive();
 
-  runApp(ProviderScope(overrides: [loggerProvider.overrideWithValue(logger)], child: const OwnerApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        loggerProvider.overrideWithValue(logger),
+        dioClientProvider.overrideWith((ref) {
+          final dio = createDio(appName: 'owner');
+          dio.interceptors.add(AuthInterceptor(ref, dio));
+          return dio;
+        }),
+      ],
+      child: const OwnerApp(),
+    ),
+  );
 }
 
 class OwnerApp extends ConsumerWidget {
@@ -41,5 +54,3 @@ class OwnerApp extends ConsumerWidget {
     );
   }
 }
-
-

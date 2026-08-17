@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
@@ -20,7 +21,14 @@ void main() async {
 
   runApp(
     ProviderScope(
-      overrides: [loggerProvider.overrideWithValue(logger)],
+      overrides: [
+        loggerProvider.overrideWithValue(logger),
+        dioClientProvider.overrideWith((ref) {
+          final dio = createDio(appName: 'staff');
+          dio.interceptors.add(AuthInterceptor(ref, dio));
+          return dio;
+        }),
+      ],
       child: const StaffApp(),
     ),
   );
@@ -80,5 +88,3 @@ class _StaffAppState extends ConsumerState<StaffApp> {
     );
   }
 }
-
-

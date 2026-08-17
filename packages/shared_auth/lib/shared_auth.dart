@@ -24,3 +24,4 @@ export 'src/presentation/widgets/otp_input_field.dart';
 export 'src/presentation/widgets/phone_input_field.dart';
 export 'src/presentation/widgets/security_badge.dart';
 export 'src/presentation/widgets/auth_loading_view.dart';
+export 'src/presentation/widgets/auth_surface.dart';

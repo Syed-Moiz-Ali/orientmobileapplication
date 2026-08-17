@@ -66,7 +66,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final matched = state.matchedLocation;
 
       final isAuthRoute =
-          matched == AppRoutes.login || matched == AppRoutes.forgotPassword;
+          matched == AppRoutes.login ||
+          matched == AppRoutes.supervisorLogin ||
+          matched == AppRoutes.forgotPassword;
 
       return switch (authState) {
         AuthUnauthenticated() => isAuthRoute ? null : AppRoutes.login,
@@ -205,8 +207,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.settings,
         name: AppRoutes.settings,
-        builder: (context, state) =>
-            SettingsPage(data: _mapExtra(state.extra)),
+        builder: (context, state) => SettingsPage(data: _mapExtra(state.extra)),
       ),
       GoRoute(
         path: AppRoutes.supervisorLogin,

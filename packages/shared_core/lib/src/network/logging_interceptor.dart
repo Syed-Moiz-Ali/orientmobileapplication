@@ -8,13 +8,13 @@ class LoggingInterceptor extends Interceptor {
   static const Set<String> _piiKeys = {
     'authorization',
     'password',
-    'newPassword',
+    'newpassword',
     'otp',
     'phone',
     'mobile',
-    'mobileNumber',
+    'mobilenumber',
     'token',
-    'refreshToken',
+    'refreshtoken',
   };
 
   LoggingInterceptor({Logger? logger})

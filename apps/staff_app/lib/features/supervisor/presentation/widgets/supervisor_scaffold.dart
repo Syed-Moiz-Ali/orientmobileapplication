@@ -23,8 +23,8 @@ class SupervisorScaffold extends ConsumerWidget {
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
-        statusBarColor: AppColors.navy,
-        statusBarIconBrightness: Brightness.light,
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
       ),
     );
 
