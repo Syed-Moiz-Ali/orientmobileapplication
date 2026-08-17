@@ -1,6 +1,6 @@
-// ignore_for_file: deprecated_member_use
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
@@ -13,64 +13,112 @@ class SupervisorAssignSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final state = ref.watch(supervisorDashboardProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
-    return Column(
-      children: [
-        Container(
-          color: AppColors.surface,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-          child: _SearchField(
-            hint: 'Search or enter job card number...',
-            onChanged: notifier.updateJobCardSearch,
-          ),
-        ),
-        const Divider(height: 1, color: AppColors.border),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Work Assignments',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const Spacer(),
-                    _TealChipButton(
-                      icon: Icons.add_rounded,
-                      label: 'Add Task',
-                      onTap: notifier.addAssignmentRow,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimensions.s16),
-                ...state.assignmentRows.asMap().entries.map(
-                  (e) => Padding(
-                    key: ValueKey(e.value.id),
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: _AssignmentCard(
-                      row: e.value,
-                      index: e.key + 1,
-                      departments: notifier.departments,
-                      technicians: notifier.technicians,
-                      onDelete: () => notifier.removeAssignmentRow(e.value.id),
-                      onChanged: (updated) =>
-                          notifier.updateAssignmentRow(e.value.id, updated),
-                    ),
-                  ),
-                ),
-              ],
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Column(
+        children: [
+          // ── 1. UBER-STYLE QUICK SEARCH BAR ─────────────────────────────────
+          Container(
+            color: colorScheme.surface,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: _ModernSearchField(
+              hint: 'Search job card number or registration...',
+              onChanged: notifier.updateJobCardSearch,
             ),
           ),
-        ),
-      ],
+          Divider(height: 1, color: colorScheme.outlineVariant),
+
+          // ── 2. WORK ASSIGNMENT CARDS ───────────────────────────────────────
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Technician Task Roster',
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: colorScheme.onSurface,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      _PressScale(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          notifier.addAssignmentRow();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(100),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colorScheme.primary.withValues(alpha: 0.28),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.add_rounded, color: colorScheme.onPrimary, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Add Task',
+                                style: TextStyle(
+                                  color: colorScheme.onPrimary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (state.assignmentRows.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: EmptyState(
+                        icon: Icons.assignment_late_outlined,
+                        message: 'No task assignments configured',
+                      ),
+                    )
+                  else
+                    ...state.assignmentRows.asMap().entries.map(
+                      (e) => Padding(
+                        key: ValueKey(e.value.id),
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _AssignmentCard(
+                          row: e.value,
+                          index: e.key + 1,
+                          departments: notifier.departments,
+                          technicians: notifier.technicians,
+                          onDelete: () {
+                            HapticFeedback.selectionClick();
+                            notifier.removeAssignmentRow(e.value.id);
+                          },
+                          onChanged: (updated) => notifier.updateAssignmentRow(e.value.id, updated),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -140,191 +188,144 @@ class _AssignmentCardState extends State<_AssignmentCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r18),
-        border: Border.all(color: AppColors.border),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
+          BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 14, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-            decoration: const BoxDecoration(
-              color: AppColors.primaryBg,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.navy, AppColors.accent],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(AppDimensions.r9),
-                  ),
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(color: colorScheme.primary, borderRadius: BorderRadius.circular(8)),
                   child: Center(
                     child: Text(
                       '${widget.index}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: TextStyle(color: colorScheme.onPrimary, fontSize: 12, fontWeight: FontWeight.w900),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Text(
-                  'Task Details',
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Text(
+                  'Task Specifications',
+                  style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
                 ),
                 const Spacer(),
                 GestureDetector(
                   onTap: widget.onDelete,
                   child: Container(
-                    width: 30,
-                    height: 30,
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.dangerBg,
-                      borderRadius: BorderRadius.circular(AppDimensions.r9),
+                      color: colorScheme.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: AppColors.danger,
-                      size: 16,
-                    ),
+                    child: Icon(Icons.delete_outline_rounded, color: colorScheme.error, size: 16),
                   ),
                 ),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(AppDimensions.s16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _FormRow(
-                  label: 'Description of Work',
-                  child: _PersistentInput(
+                _FormFieldWrapper(
+                  label: 'Work Description',
+                  child: _PersistentFieldInput(
                     controller: _descCtrl,
-                    hint: 'Enter work description...',
-                    onChanged: (v) =>
-                        widget.onChanged(widget.row.copyWith(description: v)),
+                    hint: 'Describe component diagnostics, part replacement, or servicing...',
+                    onChanged: (v) => widget.onChanged(widget.row.copyWith(description: v)),
                   ),
                 ),
-                const SizedBox(height: AppDimensions.s14),
+                const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
-                      child: _FormRow(
+                      child: _FormFieldWrapper(
                         label: 'Department',
-                        child: _LightDropdown(
-                          value: widget.row.department.isEmpty
-                              ? null
-                              : widget.row.department,
-                          hint: 'Select',
+                        child: _ThemePillDropdown(
+                          value: widget.row.department.isEmpty ? null : widget.row.department,
+                          hint: 'Select Bay',
                           items: widget.departments,
-                          onChanged: (v) => widget.onChanged(
-                            widget.row.copyWith(department: v ?? ''),
-                          ),
+                          onChanged: (v) => widget.onChanged(widget.row.copyWith(department: v ?? '')),
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppDimensions.s12),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: _FormRow(
+                      child: _FormFieldWrapper(
                         label: 'Technician',
-                        child: _LightDropdown(
-                          value: widget.row.technicianName.isEmpty
-                              ? null
-                              : widget.row.technicianName,
-                          hint: 'Select',
+                        child: _ThemePillDropdown(
+                          value: widget.row.technicianName.isEmpty ? null : widget.row.technicianName,
+                          hint: 'Assign Staff',
                           items: widget.technicians,
-                          onChanged: (v) => widget.onChanged(
-                            widget.row.copyWith(technicianName: v ?? ''),
-                          ),
+                          onChanged: (v) => widget.onChanged(widget.row.copyWith(technicianName: v ?? '')),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppDimensions.s14),
+                const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
-                      child: _FormRow(
+                      child: _FormFieldWrapper(
                         label: 'Date of Work',
-                        child: _PersistentInput(
+                        child: _PersistentFieldInput(
                           controller: _dateCtrl,
-                          hint: 'dd/mm/yyyy',
-                          onChanged: (v) => widget.onChanged(
-                            widget.row.copyWith(dateOfWork: v),
-                          ),
+                          hint: 'YYYY-MM-DD',
+                          onChanged: (v) => widget.onChanged(widget.row.copyWith(dateOfWork: v)),
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppDimensions.s12),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: _FormRow(
-                        label: 'Std Time',
-                        child: _PersistentInput(
+                      child: _FormFieldWrapper(
+                        label: 'Standard Time',
+                        child: _PersistentFieldInput(
                           controller: _stdTimeCtrl,
-                          hint: '2h 30m',
-                          onChanged: (v) =>
-                              widget.onChanged(widget.row.copyWith(stdTime: v)),
+                          hint: 'e.g. 2.5 hrs',
+                          onChanged: (v) => widget.onChanged(widget.row.copyWith(stdTime: v)),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppDimensions.s14),
-                _FormRow(
-                  label: 'Status Completion: ${widget.row.statusPercent}%',
+                const SizedBox(height: 14),
+                _FormFieldWrapper(
+                  label: 'Task Progress: ${widget.row.statusPercent}%',
                   child: SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      trackHeight: 5,
-                      thumbShape: const RoundSliderThumbShape(
-                        enabledThumbRadius: 9,
-                      ),
-                      activeTrackColor: AppColors.accent,
-                      inactiveTrackColor: AppColors.borderMd,
-                      thumbColor: AppColors.accent,
-                      overlayColor: AppColors.accent.withValues(alpha: 0.12),
+                      trackHeight: 4,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                      activeTrackColor: colorScheme.primary,
+                      inactiveTrackColor: colorScheme.surfaceContainerHighest,
+                      thumbColor: colorScheme.primary,
+                      overlayColor: colorScheme.primary.withValues(alpha: 0.12),
                     ),
                     child: Slider(
                       value: widget.row.statusPercent.toDouble(),
                       max: 100,
                       divisions: 20,
-                      onChanged: (v) => widget.onChanged(
-                        widget.row.copyWith(statusPercent: v.toInt()),
-                      ),
+                      onChanged: (v) => widget.onChanged(widget.row.copyWith(statusPercent: v.toInt())),
                     ),
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.s14),
-                _FormRow(
-                  label: 'Remarks (optional)',
-                  child: _PersistentInput(
-                    controller: _remarksCtrl,
-                    hint: 'Add any notes...',
-                    maxLines: 2,
-                    onChanged: (v) =>
-                        widget.onChanged(widget.row.copyWith(remarks: v)),
                   ),
                 ),
               ],
@@ -336,31 +337,39 @@ class _AssignmentCardState extends State<_AssignmentCard> {
   }
 }
 
-class _FormRow extends StatelessWidget {
+class _FormFieldWrapper extends StatelessWidget {
   final String label;
   final Widget child;
-  const _FormRow({required this.label, required this.child});
+  const _FormFieldWrapper({required this.label, required this.child});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.subtitle(color: AppColors.text2)),
-        const SizedBox(height: 7),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w800,
+            fontSize: 10.5,
+          ),
+        ),
+        const SizedBox(height: 6),
         child,
       ],
     );
   }
 }
 
-class _PersistentInput extends StatelessWidget {
+class _PersistentFieldInput extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final int maxLines;
   final void Function(String) onChanged;
 
-  const _PersistentInput({
+  const _PersistentFieldInput({
     required this.controller,
     required this.hint,
     required this.onChanged,
@@ -369,168 +378,151 @@ class _PersistentInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return TextField(
       controller: controller,
       onChanged: onChanged,
       maxLines: maxLines,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+      style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.text3, fontSize: 13),
+        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         filled: true,
-        fillColor: AppColors.canvas,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 13,
-          vertical: 13,
-        ),
+        fillColor: colorScheme.surfaceContainerLow,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r11),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r11),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r11),
-          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
         ),
       ),
     );
   }
 }
 
-class _LightDropdown extends StatelessWidget {
+class _ThemePillDropdown extends StatelessWidget {
   final String? value;
   final String hint;
   final List<String> items;
   final void Function(String?) onChanged;
 
-  const _LightDropdown({
-    required this.value,
-    required this.hint,
-    required this.items,
-    required this.onChanged,
-  });
+  const _ThemePillDropdown({required this.value, required this.hint, required this.items, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       height: 46,
-      padding: const EdgeInsets.symmetric(horizontal: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: AppColors.canvas,
-        borderRadius: BorderRadius.circular(AppDimensions.r11),
-        border: Border.all(color: AppColors.border),
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          hint: Text(
-            hint,
-            style: const TextStyle(color: AppColors.text3, fontSize: 13),
-          ),
-          dropdownColor: AppColors.surface,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-          icon: const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: AppColors.text3,
-            size: 18,
-          ),
+          hint: Text(hint, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+          dropdownColor: colorScheme.surface,
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.onSurfaceVariant, size: 18),
           isExpanded: true,
           onChanged: onChanged,
-          items: items
-              .map((i) => DropdownMenuItem(value: i, child: Text(i)))
-              .toList(),
+          items: items.map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
         ),
       ),
     );
   }
 }
 
-class _SearchField extends StatelessWidget {
+class _ModernSearchField extends StatelessWidget {
   final String hint;
   final void Function(String) onChanged;
-  const _SearchField({required this.hint, required this.onChanged});
+  const _ModernSearchField({required this.hint, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return TextField(
       onChanged: onChanged,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+      style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.text3, fontSize: 13),
-        prefixIcon: const Icon(
-          Icons.search_rounded,
-          color: AppColors.text3,
-          size: 20,
-        ),
+        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+        prefixIcon: Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant, size: 20),
         filled: true,
-        fillColor: AppColors.canvas,
-        contentPadding: const EdgeInsets.symmetric(vertical: 13),
+        fillColor: colorScheme.surfaceContainerLow,
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r13),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r13),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r13),
-          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
         ),
       ),
     );
   }
 }
 
-class _TealChipButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _TealChipButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+class _PressScale extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  const _PressScale({required this.child, this.onTap});
+
+  @override
+  State<_PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<_PressScale> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      reverseDuration: const Duration(milliseconds: 140),
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.97,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.navy, AppColors.accent],
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.r22),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accent.withValues(alpha: 0.28),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: AppDimensions.iconSm),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      onTap: widget.onTap,
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }

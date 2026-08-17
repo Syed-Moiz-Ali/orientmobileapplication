@@ -1,7 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
-import 'advisor_status_badge.dart';
 
 class _StatusStyle {
   final String label;
@@ -80,102 +79,113 @@ class AdvisorJobCardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = _s;
-    return GestureDetector(
-      onTap: () => onTap(jc),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(13),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.r14),
-          border: Border.all(color: AppColors.line),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.navy.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 3,
-              height: 48,
-              decoration: BoxDecoration(
-                color: s.color,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(AppDimensions.r2),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: () => onTap(jc),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withValues(alpha: 0.05),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        jc.id,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const Spacer(),
-                      AdvisorStatusBadge(s.label, s.color, s.bg),
-                    ],
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: s.color,
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    jc.customerName,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.text2,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.directions_car_outlined,
-                        size: 11,
-                        color: AppColors.text3,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          jc.vehicleInfo,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.text3,
+                      Row(
+                        children: [
+                          Text(
+                            jc.id,
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: colorScheme.onSurface,
+                              letterSpacing: 0.3,
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
+                          const Spacer(),
+                          StatusPill(
+                            label: s.label,
+                            fg: s.color,
+                            bg: s.bg,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        jc.customerName,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Text(
-                        jc.time,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.text3,
-                        ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.directions_car_rounded,
+                            size: 14,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              jc.vehicleInfo,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            jc.time,
+                            style: textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: colorScheme.outlineVariant,
+                  size: 20,
+                ),
+              ],
             ),
-            const SizedBox(width: 6),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.stroke,
-              size: 16,
-            ),
-          ],
+          ),
         ),
       ),
     );

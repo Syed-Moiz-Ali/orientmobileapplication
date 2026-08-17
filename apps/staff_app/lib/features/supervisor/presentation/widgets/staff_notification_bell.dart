@@ -1,17 +1,15 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 
-/// Phase 6 — in-app notification feed for staff (supervisor/advisor/tech).
 class StaffNotificationBell extends ConsumerStatefulWidget {
   const StaffNotificationBell({super.key});
 
   @override
-  ConsumerState<StaffNotificationBell> createState() =>
-      _StaffNotificationBellState();
+  ConsumerState<StaffNotificationBell> createState() => _StaffNotificationBellState();
 }
 
 class _StaffNotificationBellState extends ConsumerState<StaffNotificationBell> {
@@ -20,10 +18,6 @@ class _StaffNotificationBellState extends ConsumerState<StaffNotificationBell> {
   @override
   void initState() {
     super.initState();
-    // FE-FIX (pre-deployment): poll for new notifications so the unread badge
-    // and the queue stay live without manual refreshes. The timer only ticks
-    // while the bell is actually visible (TickerMode is disabled for hidden
-    // IndexedStack tabs).
     _poll = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!TickerMode.of(context)) return;
       ref.read(supervisorDashboardProvider.notifier).loadNotifications();
@@ -38,14 +32,18 @@ class _StaffNotificationBellState extends ConsumerState<StaffNotificationBell> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final unread = notifier.unreadNotifications;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        GestureDetector(
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
           onTap: () async {
+            HapticFeedback.selectionClick();
             await notifier.loadNotifications();
             if (!context.mounted) return;
             showModalBottomSheet(
@@ -59,33 +57,27 @@ class _StaffNotificationBellState extends ConsumerState<StaffNotificationBell> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppDimensions.r10),
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colorScheme.outlineVariant),
             ),
-            child: const Icon(
-              Icons.notifications_none_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
+            child: Icon(Icons.notifications_none_rounded, color: colorScheme.onSurface, size: 20),
           ),
         ),
         if (unread > 0)
           Positioned(
-            right: -4,
-            top: -4,
+            right: -2,
+            top: -2,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.danger,
-                borderRadius: BorderRadius.circular(10),
+                color: colorScheme.error,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colorScheme.surface, width: 1.5),
               ),
               child: Text(
                 '$unread',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(color: colorScheme.onError, fontSize: 9, fontWeight: FontWeight.w900),
               ),
             ),
           ),
@@ -99,138 +91,125 @@ class _StaffNotificationsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final notifications = notifier.notifications;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
+      initialChildSize: 0.65,
       minChildSize: 0.4,
-      maxChildSize: 0.9,
+      maxChildSize: 0.92,
       builder: (_, ctrl) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.r28),
-          ),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 4),
-              child: Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 38,
+                height: 4,
+                decoration: BoxDecoration(color: colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2)),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
               child: Row(
                 children: [
                   Container(
-                    width: 4,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                    width: 3.5,
+                    height: 18,
+                    decoration: BoxDecoration(color: colorScheme.primary, borderRadius: BorderRadius.circular(2)),
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'Notifications',
-                    style: AppTextStyles.title(
-                      color: AppColors.textPrimary,
-                    ),
+                    'Staff Feed',
+                    style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
                   ),
                   const Spacer(),
                   TextButton(
                     onPressed: () async {
+                      HapticFeedback.selectionClick();
                       for (final n in notifications.where((n) => !n.isRead)) {
                         await notifier.markNotificationRead(n.id);
                       }
                     },
-                    child: const Text('Mark all read'),
+                    child: Text('Mark all read', style: TextStyle(color: colorScheme.primary)),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: colorScheme.outlineVariant),
             Expanded(
               child: notifications.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: EmptyState(
                         icon: Icons.notifications_none_rounded,
-                        message: 'No notifications yet',
+                        message: 'No notifications at this time',
                       ),
                     )
                   : ListView.builder(
                       controller: ctrl,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       itemCount: notifications.length,
                       itemBuilder: (_, i) {
                         final n = notifications[i];
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () => notifier.markNotificationRead(n.id),
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              notifier.markNotificationRead(n.id);
+                            },
                             child: Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: n.isRead
-                                    ? AppColors.surfaceAlt
-                                    : AppColors.primaryBg,
-                                borderRadius: BorderRadius.circular(12),
+                                color: n.isRead ? colorScheme.surface : colorScheme.surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: n.isRead
+                                      ? colorScheme.outlineVariant
+                                      : colorScheme.primary.withValues(alpha: 0.3),
+                                ),
                               ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Icon(
-                                    n.isRead
-                                        ? Icons.notifications_none_rounded
-                                        : Icons.notifications_active_rounded,
+                                    n.isRead ? Icons.notifications_none_rounded : Icons.notifications_active_rounded,
                                     size: 18,
-                                    color: n.isRead
-                                        ? AppColors.text4
-                                        : AppColors.accent,
+                                    color: n.isRead ? colorScheme.onSurfaceVariant : colorScheme.primary,
                                   ),
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           n.title,
-                                          style: TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontWeight: n.isRead
-                                                ? FontWeight.w600
-                                                : FontWeight.w800,
-                                            fontSize: 13.5,
+                                          style: textTheme.titleSmall?.copyWith(
+                                            color: colorScheme.onSurface,
+                                            fontWeight: n.isRead ? FontWeight.w600 : FontWeight.w800,
                                           ),
                                         ),
                                         if (n.body.isNotEmpty) ...[
-                                          const SizedBox(height: 3),
+                                          const SizedBox(height: 2),
                                           Text(
                                             n.body,
-                                            style: const TextStyle(
-                                              color: AppColors.text3,
-                                              fontSize: 12.5,
-                                            ),
+                                            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                                           ),
                                         ],
-                                        const SizedBox(height: 4),
+                                        const SizedBox(height: 6),
                                         Text(
                                           n.time,
-                                          style: const TextStyle(
-                                            color: AppColors.text4,
-                                            fontSize: 11,
+                                          style: textTheme.labelSmall?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                            fontSize: 10,
                                           ),
                                         ),
                                       ],

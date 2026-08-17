@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
@@ -8,9 +10,6 @@ class QcChecklistSheet extends ConsumerStatefulWidget {
   final String jobCardRef;
   final String customerName;
   final String vehicleInfo;
-
-  // FE-FLOW (seamless-flow integration): the checklist now reflects the
-  // ACTUAL completed work items instead of a hardcoded generic template.
   final List<String> workItems;
 
   const QcChecklistSheet({
@@ -38,7 +37,6 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
   ];
 
   late final List<String> _items;
-
   late final List<bool> _checked;
   final _notesCtrl = TextEditingController();
   bool _isLoading = false;
@@ -59,13 +57,16 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
   int get _checkedCount => _checked.where((c) => c).length;
   bool get _allChecked => _checkedCount == _items.length;
 
-  // FE-FLOW: two-step approval — QC review gate FIRST (qualityCheckPassed),
-  // then completion approval (completed + invoice).
   Future<void> _approve() async {
+    HapticFeedback.lightImpact();
     setState(() => _isLoading = true);
     final notifier = ref.read(supervisorDashboardProvider.notifier);
-    final qcMsg = await notifier.qcReview(widget.jobCardRef, 'approve',
-        checklistPassed: _allChecked, notes: _notesCtrl.text.trim());
+    final qcMsg = await notifier.qcReview(
+      widget.jobCardRef,
+      'approve',
+      checklistPassed: _allChecked,
+      notes: _notesCtrl.text.trim(),
+    );
     if (qcMsg.startsWith('Could not')) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -76,8 +77,7 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
     final msg = await notifier.approveCompletion(widget.jobCardId);
     if (mounted) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$qcMsg · $msg')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$qcMsg · $msg')));
     }
   }
 
@@ -85,17 +85,17 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
     final reason = _notesCtrl.text.trim();
     if (reason.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter a reason to send the job back')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Enter a reason to send the job back')));
       }
       return;
     }
+    HapticFeedback.heavyImpact();
     setState(() => _isLoading = true);
     final msg = await ref
         .read(supervisorDashboardProvider.notifier)
-        .qcReview(widget.jobCardRef, 'reject',
-            checklistPassed: false, notes: reason, rejectReason: reason);
+        .qcReview(widget.jobCardRef, 'reject', checklistPassed: false, notes: reason, rejectReason: reason);
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
@@ -104,114 +104,150 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.r24),
-        ),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
           const SizedBox(height: 12),
           Center(
             child: Container(
-              width: 40,
+              width: 38,
               height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
+              decoration: BoxDecoration(color: colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2)),
             ),
           ),
           const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Quality Control Review',
-                  style: AppTextStyles.title(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${widget.jobCardRef} · ${widget.customerName} · ${widget.vehicleInfo}',
-                  style: const TextStyle(color: AppColors.text3, fontSize: 13),
-                ),
-                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Checklist',
-                      style: AppTextStyles.title(
-                        color: AppColors.textPrimary,
+                      'Quality Control Review',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                        letterSpacing: -0.3,
                       ),
                     ),
-                    StatusPill(
-                      label: '$_checkedCount/${_items.length} items checked',
-                      bg: AppColors.primaryBg,
-                      fg: AppColors.primary,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$_checkedCount/${_items.length} items',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: _allChecked ? colorScheme.secondary : colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
+                Text(
+                  '${widget.jobCardRef} · ${widget.customerName} · ${widget.vehicleInfo}',
+                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 14),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: _checkedCount / _items.length,
-                    minHeight: 6,
-                    backgroundColor: AppColors.primaryBg,
-                    color: _allChecked ? AppColors.success : AppColors.accent,
+                    value: _items.isEmpty ? 0 : _checkedCount / _items.length,
+                    minHeight: 5,
+                    backgroundColor: colorScheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation(_allChecked ? colorScheme.secondary : colorScheme.primary),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s8),
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: _items.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 6),
               itemBuilder: (context, i) {
-                return CheckboxListTile(
-                  title: Text(
-                    _items[i],
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
+                final isChecked = _checked[i];
+                return InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _checked[i] = !isChecked);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isChecked ? colorScheme.surfaceContainerLow : colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isChecked ? colorScheme.primary.withValues(alpha: 0.3) : colorScheme.outlineVariant,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isChecked ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                          color: isChecked ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _items[i],
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: isChecked ? FontWeight.w700 : FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  value: _checked[i],
-                  activeColor: AppColors.success,
-                  checkColor: Colors.white,
-                  dense: true,
-                  onChanged: (v) {
-                    if (v != null) setState(() => _checked[i] = v);
-                  },
                 );
               },
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(AppDimensions.s16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
                   controller: _notesCtrl,
                   maxLines: 2,
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
                   decoration: InputDecoration(
-                    labelText: 'QC Notes (Optional)',
+                    labelText: 'QC Inspector Notes (Optional)',
+                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
                     filled: true,
-                    fillColor: AppColors.primaryBg,
+                    fillColor: colorScheme.surfaceContainerLow,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
                     ),
                   ),
                 ),
@@ -221,48 +257,26 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                     Expanded(
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.danger,
-                          side: const BorderSide(color: AppColors.danger),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.r12,
-                            ),
-                          ),
+                          foregroundColor: colorScheme.error,
+                          side: BorderSide(color: colorScheme.error),
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: _isLoading ? null : _reject,
-                        child: const Text(
-                          'Send Back for Revision',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
+                        child: const Text('Send Back', style: TextStyle(fontWeight: FontWeight.w800)),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.success,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.r12,
-                            ),
-                          ),
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        onPressed: (_isLoading || !_allChecked)
-                            ? null
-                            : _approve,
-                        child: const Text(
-                          'Approve & Close Job',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
+                        onPressed: (_isLoading || !_allChecked) ? null : _approve,
+                        child: const Text('Approve & Close', style: TextStyle(fontWeight: FontWeight.w800)),
                       ),
                     ),
                   ],

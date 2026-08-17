@@ -10,53 +10,54 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
   const SupervisorAppBar({super.key, required this.selectedIndex});
 
   static const _titles = [
-    'Dashboard',
-    'Assign Work',
-    'Work List',
-    'Queue',
-    'Review',
-    'Staff',
-    'Schedule',
-    'Reports',
+    'Command Center',
+    'Task Assignment',
+    'Active Job Cards',
+    'Dispatch Queue',
+    'QC Verification',
+    'Floor Specialists',
+    'Bay Schedule',
+    'Financial Intelligence',
   ];
+
   static const _subtitles = [
-    'Overview & Analytics',
-    'Assign Tasks to Technicians',
-    'All Job Assignments',
-    'Route bookings & breakdowns',
-    'Approve completed work',
-    'Team Overview',
-    'Today\'s Jobs',
-    'Job Statistics',
+    'Shift Telemetry & Velocity',
+    'Dispatch Tasks to Technicians',
+    'Live Workshop Operations',
+    'Incoming Bookings & Breakdowns',
+    'Sign-off Completed Repairs',
+    'Roster & Specialist Availability',
+    'Service Bay Timelines',
+    'Throughput & Analytics',
   ];
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 4);
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return AppBar(
       backgroundColor: colors.surface,
       foregroundColor: colors.onSurface,
       elevation: 0,
+      scrolledUnderElevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: theme.brightness == Brightness.dark ? Brightness.light : Brightness.dark,
       ),
       titleSpacing: 0,
       leading: Padding(
-        padding: const EdgeInsets.all(AppDimensions.s10),
+        padding: const EdgeInsets.all(10),
         child: Container(
           decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(AppDimensions.r10),
+            color: colors.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(
-            Icons.build_circle_rounded,
-            color: colors.primary,
-            size: AppDimensions.iconLg,
-          ),
+          child: Icon(Icons.speed_rounded, color: colors.primary, size: 20),
         ),
       ),
       title: Column(
@@ -65,22 +66,29 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
         children: [
           Text(
             _titles[selectedIndex],
-            style: AppTextStyles.subtitle(color: colors.onSurface),
+            style: textTheme.titleMedium?.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.2,
+            ),
           ),
+          const SizedBox(height: 1),
           Text(
             _subtitles[selectedIndex],
-            style: AppTextStyles.bodySmall(color: colors.onSurfaceVariant),
+            style: textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              fontSize: 10.5,
+            ),
           ),
         ],
       ),
       actions: [
         const StaffNotificationBell(),
+        const SizedBox(width: 6),
         Padding(
           padding: const EdgeInsets.only(right: 14),
-          child: UserAvatar(
-            initials: 'S',
-            onTap: () => showProfileSheet(context, _profileData(context)),
-          ),
+          child: UserAvatar(initials: 'S', onTap: () => showProfileSheet(context, _profileData(context))),
         ),
       ],
     );
@@ -90,8 +98,8 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
 ProfileSheetData _profileData(BuildContext context) => ProfileSheetData(
   name: 'Supervisor',
   initials: 'S',
-  roleLabel: 'Supervisor',
-  roleBadge: 'Admin \u2022 Auto Garage ERP',
+  roleLabel: 'Shift Lead',
+  roleBadge: 'Workshop ERP Control',
   menuItems: [
     ProfileSheetItem(
       icon: Icons.person_outline_rounded,
@@ -100,13 +108,9 @@ ProfileSheetData _profileData(BuildContext context) => ProfileSheetData(
     ),
     ProfileSheetItem(
       icon: Icons.calendar_month_outlined,
-      label: 'Shift Details',
+      label: 'Shift Timeline',
       onTap: () => context.push(AppRoutes.shiftDetails),
     ),
-    ProfileSheetItem(
-      icon: Icons.settings_outlined,
-      label: 'Settings',
-      onTap: () => context.push(AppRoutes.settings),
-    ),
+    ProfileSheetItem(icon: Icons.settings_outlined, label: 'Settings', onTap: () => context.push(AppRoutes.settings)),
   ],
 );

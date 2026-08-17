@@ -20,185 +20,185 @@ class SupervisorScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(supervisorDashboardProvider);
     final notifier = ref.read(supervisorDashboardProvider.notifier);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-    );
-
-    return DashboardShell(
+    return Scaffold(
       appBar: SupervisorAppBar(selectedIndex: state.selectedIndex),
-      body: IndexedStack(
-        index: state.selectedIndex,
-        children: const [
-          SupervisorDashboardTab(),
-          SupervisorAssignSheet(),
-          SupervisorJobsTab(),
-          SupervisorQueueTab(),
-          SupervisorReviewTab(),
-          SupervisorStaffTab(),
-          SupervisorScheduleTab(),
-          SupervisorReportsTab(),
+      extendBody: true,
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: state.selectedIndex,
+            children: const [
+              SupervisorDashboardTab(),
+              SupervisorAssignSheet(),
+              SupervisorJobsTab(),
+              SupervisorQueueTab(),
+              SupervisorReviewTab(),
+              SupervisorStaffTab(),
+              SupervisorScheduleTab(),
+              SupervisorReportsTab(),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _StreamlinedBottomNav(
+              selectedIndex: state.selectedIndex,
+              onTap: (index) {
+                HapticFeedback.selectionClick();
+                notifier.selectTab(index);
+              },
+              hasQueueBadge: notifier.bookings.isNotEmpty,
+            ),
+          ),
         ],
       ),
       floatingActionButton: state.selectedIndex == 1
           ? FloatingActionButton.extended(
               onPressed: () async {
+                HapticFeedback.mediumImpact();
                 await notifier.saveAndAssign();
                 if (context.mounted) {
                   final msg = state.assignWorkSuccess.isNotEmpty
                       ? state.assignWorkSuccess
                       : state.assignWorkError.isNotEmpty
                       ? state.assignWorkError
-                      : 'Assignments saved locally';
+                      : 'Assignments saved';
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(msg),
-                      backgroundColor: state.assignWorkError.isNotEmpty
-                          ? AppColors.danger
-                          : AppColors.success,
+                      backgroundColor: state.assignWorkError.isNotEmpty ? colorScheme.error : colorScheme.primary,
                       behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 84),
                     ),
                   );
                 }
               },
-              backgroundColor: AppColors.accent,
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
               elevation: 4,
               icon: state.isAssignWorkLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.5,
-                      ),
+                      child: CircularProgressIndicator(color: colorScheme.onPrimary, strokeWidth: 2.5),
                     )
-                  : const Icon(Icons.save_rounded, color: Colors.white),
-              label: const Text(
+                  : Icon(Icons.save_rounded, color: colorScheme.onPrimary),
+              label: Text(
                 'Save & Assign',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
-                ),
+                style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.w800),
               ),
             )
           : null,
-      bottomNavigationBar: _BottomNav(
-        selectedIndex: state.selectedIndex,
-        onTap: notifier.selectTab,
-        hasQueueBadge: notifier.bookings.isNotEmpty,
-      ),
     );
   }
 }
 
-class _BottomNav extends StatelessWidget {
+class _StreamlinedBottomNav extends StatelessWidget {
   final int selectedIndex;
   final void Function(int) onTap;
   final bool hasQueueBadge;
-  const _BottomNav({
-    required this.selectedIndex,
-    required this.onTap,
-    this.hasQueueBadge = false,
-  });
+
+  const _StreamlinedBottomNav({required this.selectedIndex, required this.onTap, this.hasQueueBadge = false});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    // Primary 4 Tabs mapped to their tab indices: 0: Dashboard, 1: Assign, 3: Queue, 4: Review
     const items = [
-      (Icons.dashboard_rounded, Icons.dashboard_outlined, 'Dashboard'),
-      (Icons.assignment_rounded, Icons.assignment_outlined, 'Assign'),
-      (Icons.list_alt_rounded, Icons.list_alt_outlined, 'Work List'),
-      (Icons.queue_rounded, Icons.queue_rounded, 'Queue'),
-      (Icons.verified_rounded, Icons.verified_outlined, 'Review'),
-      (Icons.groups_rounded, Icons.groups_outlined, 'Staff'),
-      (Icons.calendar_month_rounded, Icons.calendar_month_outlined, 'Schedule'),
-      (Icons.bar_chart_rounded, Icons.bar_chart_outlined, 'Reports'),
+      _NavDef(index: 0, selectedIcon: Icons.dashboard_rounded, icon: Icons.dashboard_outlined, label: 'Command'),
+      _NavDef(index: 1, selectedIcon: Icons.assignment_rounded, icon: Icons.assignment_outlined, label: 'Assign'),
+      _NavDef(index: 3, selectedIcon: Icons.alt_route_rounded, icon: Icons.alt_route_outlined, label: 'Queue'),
+      _NavDef(index: 4, selectedIcon: Icons.verified_rounded, icon: Icons.verified_outlined, label: 'Review'),
     ];
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: const Border(top: BorderSide(color: AppColors.border)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.07),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 74,
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        height: 64,
+        decoration: BoxDecoration(
+          color: colorScheme.surface.withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: colorScheme.outlineVariant),
+          boxShadow: [
+            BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.12), blurRadius: 20, offset: const Offset(0, 8)),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
           child: Row(
-            children: List.generate(items.length, (i) {
-              final sel = selectedIndex == i;
+            children: items.map((item) {
+              final isSelected = selectedIndex == item.index;
               return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onTap(i),
+                child: InkWell(
+                  onTap: () => onTap(item.index),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
+                        duration: const Duration(milliseconds: 180),
                         curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 6,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
                         decoration: BoxDecoration(
-                          color: sel ? AppColors.primaryBg : Colors.transparent,
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.r24,
-                          ),
+                          color: isSelected ? colorScheme.primary.withValues(alpha: 0.14) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Stack(
                           clipBehavior: Clip.none,
+                          alignment: Alignment.center,
                           children: [
                             Icon(
-                              sel ? items[i].$1 : items[i].$2,
-                              color: sel ? AppColors.accent : AppColors.text3,
-                              size: 26,
+                              isSelected ? item.selectedIcon : item.icon,
+                              color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                              size: 20,
                             ),
-                            if (i == 3 && hasQueueBadge)
+                            if (item.index == 3 && hasQueueBadge)
                               Positioned(
                                 top: -2,
-                                right: -2,
+                                right: -4,
                                 child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.danger,
-                                    shape: BoxShape.circle,
-                                  ),
+                                  width: 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(color: colorScheme.error, shape: BoxShape.circle),
                                 ),
                               ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
-                        items[i].$3,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: sel ? AppColors.accent : AppColors.text3,
-                          fontWeight: sel ? FontWeight.w800 : FontWeight.w500,
-                          letterSpacing: sel ? 0.2 : 0,
+                        item.label,
+                        style: textTheme.labelSmall?.copyWith(
+                          color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                          fontSize: 10.5,
                         ),
                       ),
                     ],
                   ),
                 ),
               );
-            }),
+            }).toList(),
           ),
         ),
       ),
     );
   }
+}
+
+class _NavDef {
+  final int index;
+  final IconData selectedIcon;
+  final IconData icon;
+  final String label;
+
+  const _NavDef({required this.index, required this.selectedIcon, required this.icon, required this.label});
 }

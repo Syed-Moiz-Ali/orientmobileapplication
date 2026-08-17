@@ -62,59 +62,58 @@ class _TechTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     const tabs = [
-      (Icons.dashboard_rounded, Icons.dashboard_outlined, 'Dashboard'),
-      (
-        Icons.assignment_turned_in_rounded,
-        Icons.assignment_outlined,
-        'My Jobs',
-      ),
+      AppNavItem(selectedIcon: Icons.dashboard_rounded, icon: Icons.dashboard_outlined, label: 'Dashboard'),
+      AppNavItem(selectedIcon: Icons.assignment_turned_in_rounded, icon: Icons.assignment_outlined, label: 'My Jobs'),
     ];
 
     return Container(
-      color: AppColors.surface,
+      color: colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: List.generate(tabs.length, (i) {
           final sel = selectedTab == i;
           return Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => onTap(i),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          sel ? tabs[i].$1 : tabs[i].$2,
-                          size: 19,
-                          color: sel ? AppColors.accent : AppColors.text3,
-                        ),
-                        SizedBox(width: AppDimensions.s6),
-                        Text(
-                          tabs[i].$3,
-                          style: sel
-                              ? AppTextStyles.bodyStrong(
-                                  color: AppColors.accent,
-                                )
-                              : AppTextStyles.button(color: AppColors.text3),
-                        ),
-                      ],
-                    ),
+            child: Semantics(
+              button: true,
+              selected: sel,
+              label: tabs[i].label,
+              child: InkWell(
+                onTap: () => onTap(i),
+                borderRadius: BorderRadius.circular(16),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: sel
+                        ? colorScheme.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: sel ? AppColors.accent : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppDimensions.r2),
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        sel ? tabs[i].selectedIcon : tabs[i].icon,
+                        size: 20,
+                        color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        tabs[i].label,
+                        style: textTheme.labelLarge?.copyWith(
+                          color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                          fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           );

@@ -10,119 +10,147 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = data;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.canvas,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'My Profile',
-          style: TextStyle(
-            fontSize: 18,
+          style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.navy, AppColors.accent],
-              ),
-              borderRadius: BorderRadius.circular(AppDimensions.r18),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    color: Colors.white24,
-                    shape: BoxShape.circle,
+      body: SafeArea(
+        child: AppResponsivePage(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [colorScheme.primary, colorScheme.secondary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: Center(
-                    child: Text(
-                      profile.avatarInitials,
-                      style: AppTextStyles.title(color: Colors.white),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.25),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        profile.name.isEmpty ? 'Staff Member' : profile.name,
-                        style: AppTextStyles.title(color: Colors.white),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white30, width: 1.5),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${profile.id} · ${profile.role}',
-                        style: AppTextStyles.bodySmall(
-                          color: Colors.white70,
+                      child: Center(
+                        child: Text(
+                          profile.avatarInitials,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            profile.name.isEmpty ? 'Staff Member' : profile.name,
+                            style: textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${profile.id} · ${profile.role}',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+              _row(context, Icons.business_outlined, 'Branch', profile.branch),
+              _row(context, Icons.schedule_outlined, 'Shift', profile.shift),
+              if (profile.email.isNotEmpty)
+                _row(context, Icons.email_outlined, 'Email', profile.email),
+              if (profile.phone.isNotEmpty)
+                _row(context, Icons.phone_outlined, 'Phone', profile.phone),
+              if (profile.totalJobs > 0)
+                _row(context, Icons.work_outline, 'Total Jobs', '${profile.totalJobs}'),
+              if (profile.completedJobs > 0)
+                _row(context, Icons.verified_outlined, 'Completed Jobs', '${profile.completedJobs}'),
+              if (profile.pendingJobs > 0)
+                _row(context, Icons.hourglass_empty, 'Pending Jobs', '${profile.pendingJobs}'),
+            ],
           ),
-          const SizedBox(height: 16),
-          _row(Icons.business_outlined, 'Branch', profile.branch),
-          _row(Icons.schedule_outlined, 'Shift', profile.shift),
-          if (profile.email.isNotEmpty)
-            _row(Icons.email_outlined, 'Email', profile.email),
-          if (profile.phone.isNotEmpty)
-            _row(Icons.phone_outlined, 'Phone', profile.phone),
-          if (profile.totalJobs > 0)
-            _row(Icons.work_outline, 'Total Jobs', '${profile.totalJobs}'),
-          if (profile.completedJobs > 0)
-            _row(
-              Icons.verified_outlined,
-              'Completed Jobs',
-              '${profile.completedJobs}',
-            ),
-          if (profile.pendingJobs > 0)
-            _row(
-              Icons.hourglass_empty,
-              'Pending Jobs',
-              '${profile.pendingJobs}',
-            ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _row(IconData icon, String label, String value) {
+  Widget _row(BuildContext context, IconData icon, String label, String value) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(color: AppColors.line),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.text3),
-          const SizedBox(width: 12),
+          Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 14),
           SizedBox(
-            width: 110,
+            width: 120,
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.text2,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -131,10 +159,9 @@ class ProfilePage extends StatelessWidget {
             child: Text(
               value.isEmpty ? '--' : value,
               textAlign: TextAlign.end,
-              style: const TextStyle(
-                fontSize: 13,
+              style: textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -153,56 +180,70 @@ class ShiftDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final map = data ?? const {};
     String get(String key) => (map[key] as String? ?? '--');
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.canvas,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Shift Details',
-          style: TextStyle(
-            fontSize: 18,
+          style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _row('Employee', get('name')),
-          _row('ID', get('id')),
-          _row('Shift', get('shift')),
-          _row('Start', get('start')),
-          _row('End', get('end')),
-          _row('Branch', get('branch')),
-        ],
+      body: SafeArea(
+        child: AppResponsivePage(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _row(context, 'Employee', get('name')),
+              _row(context, 'ID', get('id')),
+              _row(context, 'Shift', get('shift')),
+              _row(context, 'Start', get('start')),
+              _row(context, 'End', get('end')),
+              _row(context, 'Branch', get('branch')),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _row(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(color: AppColors.line),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
       child: Row(
         children: [
           SizedBox(
-            width: 110,
+            width: 120,
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.text2,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -211,10 +252,9 @@ class ShiftDetailsPage extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: const TextStyle(
-                fontSize: 13,
+              style: textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -232,67 +272,80 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final version = (data?['version'] as String?) ?? '1.0.0';
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.canvas,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Settings',
-          style: TextStyle(
-            fontSize: 18,
+          style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _row(Icons.info_outline_rounded, 'App Version', version),
-          _row(
-            Icons.sync_rounded,
-            'Sync',
-            HiveCleaner.hasPendingSync() ? 'Pending operations' : 'Up to date',
+      body: SafeArea(
+        child: AppResponsivePage(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _row(context, Icons.info_outline_rounded, 'App Version', version),
+              _row(
+                context,
+                Icons.sync_rounded,
+                'Sync Status',
+                HiveCleaner.hasPendingSync() ? 'Pending operations' : 'Up to date',
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _row(IconData icon, String label, String value) {
+  Widget _row(BuildContext context, IconData icon, String label, String value) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(color: AppColors.line),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.text3),
-          const SizedBox(width: 12),
+          Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 14),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.text2,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 13,
+            style: textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
         ],
