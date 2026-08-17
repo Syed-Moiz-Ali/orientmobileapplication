@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
@@ -39,27 +41,31 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
       context: context,
       builder: (_) {
         final ctrl = TextEditingController();
+        final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text('Damage on $area', style: const TextStyle(color: AppColors.textPrimary)),
+          backgroundColor: colorScheme.surface,
+          title: Text(
+            'Damage on $area',
+            style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
+          ),
           content: TextField(
             controller: ctrl,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Describe damage (e.g. scratch, dent)',
               filled: true,
-              fillColor: AppColors.primaryBg,
+              fillColor: colorScheme.surfaceContainerLow,
             ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 if (ctrl.text.trim().isNotEmpty) {
                   setState(() => _damages.add('$area: ${ctrl.text.trim()}'));
                 }
                 Navigator.pop(context);
               },
-              child: const Text('Add'),
+              child: const Text('Add Damage'),
             ),
           ],
         );
@@ -96,26 +102,29 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => _step == 0 ? Navigator.pop(context) : setState(() => _step = 0),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Vehicle Check-In',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+            Text(
+              'Vehicle Intake',
+              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
             ),
             Text(
               '${widget.vehicleInfo} · ${widget.customerName}',
-              style: const TextStyle(fontSize: 13, color: AppColors.text3),
+              style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -125,33 +134,22 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
   }
 
   Widget _buildStep0() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return ListView(
-      padding: const EdgeInsets.all(AppDimensions.s16),
+      padding: const EdgeInsets.all(16),
       children: [
-        const Text(
-          'Vehicle Intake',
-          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
-        ),
-        const SizedBox(height: 16),
         TextField(
           controller: _odometerCtrl,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText: 'Odometer Reading (km)',
             filled: true,
-            fillColor: AppColors.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.r12),
-              borderSide: BorderSide.none,
-            ),
+            fillColor: colorScheme.surface,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Fuel Level',
-          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
         SegmentedButton<String>(
           segments: const [
             ButtonSegment(value: '1/4', label: Text('1/4')),
@@ -161,14 +159,6 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
           ],
           selected: {_fuelLevel},
           onSelectionChanged: (set) => setState(() => _fuelLevel = set.first),
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return AppColors.accent.withValues(alpha: 0.2);
-              }
-              return AppColors.surface;
-            }),
-          ),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -177,25 +167,16 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
           decoration: InputDecoration(
             labelText: 'Customer Notes',
             filled: true,
-            fillColor: AppColors.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.r12),
-              borderSide: BorderSide.none,
-            ),
+            fillColor: colorScheme.surface,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
         const SizedBox(height: 40),
         SizedBox(
-          width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
-            ),
             onPressed: () => setState(() => _step = 1),
-            child: const Text('Next', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Next: Document Condition'),
           ),
         ),
       ],
@@ -203,85 +184,53 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
   }
 
   Widget _buildStep1() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return ListView(
-      padding: const EdgeInsets.all(AppDimensions.s16),
+      padding: const EdgeInsets.all(16),
       children: [
-        const Text(
-          'Document Existing Condition',
-          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
-        ),
-        const SizedBox(height: 8),
-        const Text('Tap an area to add damage notes', style: TextStyle(color: AppColors.text3, fontSize: 13)),
-        const SizedBox(height: 24),
         GridView.count(
           shrinkWrap: true,
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 2.5,
+          childAspectRatio: 2.4,
           physics: const NeverScrollableScrollPhysics(),
           children: [
             _damageBtn('Front'),
             _damageBtn('Rear'),
             _damageBtn('Left Side'),
             _damageBtn('Right Side'),
-            _damageBtn('Roof/Top'),
+            _damageBtn('Roof'),
           ],
         ),
-        const SizedBox(height: 24),
-        if (_damages.isNotEmpty) ...[
-          const Text(
-            'Noted Damages:',
-            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _damages
-                .map(
-                  (d) => Chip(
-                    label: Text(d, style: const TextStyle(fontSize: 12)),
-                    onDeleted: () => setState(() => _damages.remove(d)),
-                    backgroundColor: AppColors.dangerBg,
-                    deleteIconColor: AppColors.danger,
-                  ),
-                )
-                .toList(),
-          ),
-        ],
+        const SizedBox(height: 20),
+        Wrap(
+          spacing: 8,
+          children: _damages
+              .map(
+                (d) => Chip(
+                  label: Text(d),
+                  onDeleted: () => setState(() => _damages.remove(d)),
+                  backgroundColor: colorScheme.error.withValues(alpha: 0.12),
+                ),
+              )
+              .toList(),
+        ),
         const SizedBox(height: 40),
         SizedBox(
-          width: double.infinity,
           height: 48,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
-            ),
-            onPressed: _isLoading ? null : _submit,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('Proceed to Check-In', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
+          child: ElevatedButton(onPressed: _isLoading ? null : _submit, child: const Text('Complete Intake')),
         ),
       ],
     );
   }
 
   Widget _damageBtn(String label) {
+    final colorScheme = Theme.of(context).colorScheme;
     return OutlinedButton(
       onPressed: () => _addDamage(label),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.textPrimary,
-        side: const BorderSide(color: AppColors.border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r8)),
-      ),
+      style: OutlinedButton.styleFrom(side: BorderSide(color: colorScheme.outlineVariant)),
       child: Text(label),
     );
   }

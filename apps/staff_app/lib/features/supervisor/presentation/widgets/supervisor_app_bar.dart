@@ -12,23 +12,17 @@ class SupervisorAppBar extends StatelessWidget implements PreferredSizeWidget {
   static const _titles = [
     'Command Center',
     'Task Assignment',
-    'Active Job Cards',
     'Dispatch Queue',
     'QC Verification',
-    'Floor Specialists',
-    'Bay Schedule',
-    'Financial Intelligence',
+    'Staff Profile',
   ];
 
   static const _subtitles = [
     'Shift Telemetry & Velocity',
     'Dispatch Tasks to Technicians',
-    'Live Workshop Operations',
     'Incoming Bookings & Breakdowns',
     'Sign-off Completed Repairs',
-    'Roster & Specialist Availability',
-    'Service Bay Timelines',
-    'Throughput & Analytics',
+    'Personal & Shift Settings',
   ];
 
   @override

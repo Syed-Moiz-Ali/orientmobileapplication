@@ -1,8 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 
@@ -429,14 +429,40 @@ class _SettingsRow extends StatelessWidget {
 }
 
 // ─── 5. LOGOUT BUTTON ────────────────────────────────────────────────────────
-class _LogoutButton extends StatelessWidget {
+class _LogoutButton extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return _PressScale(
-      onTap: () {
+      onTap: () async {
         HapticFeedback.heavyImpact();
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to end your shift and log out?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.error,
+                  foregroundColor: colorScheme.onError,
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Logout'),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed == true) {
+          ref.read(authNotifierProvider.notifier).logout();
+        }
       },
       child: Container(
         width: double.infinity,

@@ -13,12 +13,7 @@ class ChooseInspectionView extends ConsumerWidget {
   final VoidCallback onSkip;
   final VoidCallback onBack;
 
-  const ChooseInspectionView({
-    super.key,
-    required this.onSelect,
-    required this.onSkip,
-    required this.onBack,
-  });
+  const ChooseInspectionView({super.key, required this.onSelect, required this.onSkip, required this.onBack});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,11 +31,7 @@ class ChooseInspectionView extends ConsumerWidget {
         ),
         title: const Text(
           'Choose Inspection',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
         ),
         actions: [
           Center(
@@ -48,22 +39,11 @@ class ChooseInspectionView extends ConsumerWidget {
               padding: const EdgeInsets.only(right: 16),
               child: GestureDetector(
                 onTap: () {
-                  context.push(
-                    AppRoutes.repairOrder,
-                    extra: {
-                      'onBack': () => context.pop(),
-                      'fromInspection': true,
-                    },
-                  );
+                  context.push(AppRoutes.repairOrder, extra: {'onBack': () => context.pop(), 'fromInspection': true});
                 },
                 child: const Text(
                   'SKIP INSPECTION',
-                  style: TextStyle(
-                    color: IC.text3,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
+                  style: TextStyle(color: IC.text3, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.3),
                 ),
               ),
             ),
@@ -84,15 +64,9 @@ class ChooseInspectionView extends ConsumerWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: IC.tealBg,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(AppDimensions.r8),
-                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
                 ),
-                child: const Icon(
-                  Icons.assignment_turned_in_outlined,
-                  color: IC.accent,
-                  size: 20,
-                ),
+                child: const Icon(Icons.assignment_turned_in_outlined, color: IC.accent, size: 20),
               ),
 
               const SizedBox(width: 12),
@@ -106,17 +80,10 @@ class ChooseInspectionView extends ConsumerWidget {
                   children: const [
                     Text(
                       'Vehicle Inspection Sheet',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: IC.text1,
-                      ),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: IC.text1),
                     ),
                     SizedBox(height: 4),
-                    Text(
-                      '4 sections · 24 items',
-                      style: TextStyle(fontSize: 11, color: IC.text2),
-                    ),
+                    Text('4 sections · 24 items', style: TextStyle(fontSize: 11, color: IC.text2)),
                   ],
                 ),
               ),

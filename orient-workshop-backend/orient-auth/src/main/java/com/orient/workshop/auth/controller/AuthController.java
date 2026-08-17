@@ -33,8 +33,9 @@ public class AuthController {
 
 
     @PostMapping("/send-otp")
-    public ApiResponse<Void> sendOtp(@Valid @RequestBody SendOtpRequest request) {
-        authService.sendOtp(request.getType(), request.getPhone(), request.getEmail());
+    public ApiResponse<Void> sendOtp(@Valid @RequestBody SendOtpRequest request,
+                                    @RequestHeader(value = "X-App-Name", required = false) String appName) {
+        authService.sendOtp(request.getType(), request.getPhone(), request.getEmail(), appName);
         return ApiResponse.success("OTP sent", null);
     }
 

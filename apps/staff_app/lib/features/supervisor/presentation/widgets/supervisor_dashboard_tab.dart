@@ -4,7 +4,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/common/presentation/staff_shimmer_skeletons.dart';
@@ -51,17 +53,12 @@ class SupervisorDashboardTab extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // ── 3. MASONRY BENTO QUICK ACCESS MATRIX ─────────────────────
-              _MasonryBentoMatrix(
-                onNavigateTab: (index) {
-                  HapticFeedback.selectionClick();
-                  notifier.selectTab(index);
-                },
-              ),
+              _MasonryBentoMatrix(),
               const SizedBox(height: 28),
 
               // ── 4. LIVE SERVICE BAY HUD (ACTIVE RADAR) ───────────────────
               if (activeBooking != null) ...[
-                _ActiveBayLiveTracker(booking: activeBooking, onTap: () => notifier.selectTab(3)),
+                _ActiveBayLiveTracker(booking: activeBooking, onTap: () => notifier.selectTab(2)),
                 const SizedBox(height: 28),
               ],
 
@@ -73,7 +70,7 @@ class SupervisorDashboardTab extends ConsumerWidget {
               _SectionHeadingWithAction(
                 title: 'Technician Workload Roster',
                 actionText: 'Manage Team',
-                onAction: () => notifier.selectTab(5),
+                onAction: () => context.push(AppRoutes.supervisorStaff),
               ),
               const SizedBox(height: 16),
               _AdvisorWorkloadCarousel(data: notifier.advisorJobData),
@@ -89,7 +86,7 @@ class SupervisorDashboardTab extends ConsumerWidget {
               _SectionHeadingWithAction(
                 title: 'Revenue Telemetry',
                 actionText: 'Full Breakdown',
-                onAction: () => notifier.selectTab(7),
+                onAction: () => context.push(AppRoutes.supervisorReports),
               ),
               const SizedBox(height: 16),
               _RevenueGrid(metrics: notifier.revenueMetrics),
@@ -101,7 +98,7 @@ class SupervisorDashboardTab extends ConsumerWidget {
               _SectionHeadingWithAction(
                 title: 'Bottleneck Status Radar',
                 actionText: 'Resolve Queue',
-                onAction: () => notifier.selectTab(4),
+                onAction: () => notifier.selectTab(3),
               ),
               const SizedBox(height: 16),
               _PendingGrid(statuses: notifier.pendingStatuses),
@@ -273,9 +270,7 @@ class _SupervisorSearchPill extends StatelessWidget {
 
 // ─── 3. MASONRY BENTO MATRIX (SECONDARY SCREEN ACCESS) ───────────────────────
 class _MasonryBentoMatrix extends StatelessWidget {
-  final void Function(int) onNavigateTab;
-
-  const _MasonryBentoMatrix({required this.onNavigateTab});
+  const _MasonryBentoMatrix();
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +287,10 @@ class _MasonryBentoMatrix extends StatelessWidget {
                   subtitle: 'Real-time job logs',
                   icon: Icons.table_chart_rounded,
                   isPrimary: true,
-                  onTap: () => onNavigateTab(2),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    context.push(AppRoutes.supervisorJobs);
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -303,7 +301,10 @@ class _MasonryBentoMatrix extends StatelessWidget {
                   subtitle: 'Specialists',
                   icon: Icons.groups_rounded,
                   isPrimary: false,
-                  onTap: () => onNavigateTab(5),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    context.push(AppRoutes.supervisorStaff);
+                  },
                 ),
               ),
             ],
@@ -318,7 +319,10 @@ class _MasonryBentoMatrix extends StatelessWidget {
                   subtitle: 'Timelines',
                   icon: Icons.calendar_month_rounded,
                   isPrimary: false,
-                  onTap: () => onNavigateTab(6),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    context.push(AppRoutes.supervisorSchedule);
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -329,7 +333,10 @@ class _MasonryBentoMatrix extends StatelessWidget {
                   subtitle: 'Throughput & graphs',
                   icon: Icons.bar_chart_rounded,
                   isPrimary: false,
-                  onTap: () => onNavigateTab(7),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    context.push(AppRoutes.supervisorReports);
+                  },
                 ),
               ),
             ],

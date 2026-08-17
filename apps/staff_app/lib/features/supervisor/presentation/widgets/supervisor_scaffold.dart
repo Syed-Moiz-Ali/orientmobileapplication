@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/features/common/presentation/profile_screen.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_app_bar.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart';
-import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
-import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_staff_tab.dart';
-import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_schedule_tab.dart';
-import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_reports_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_queue_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_review_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
@@ -23,22 +20,22 @@ class SupervisorScaffold extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    // Clamp state.selectedIndex if it exceeds our 5 main tabs
+    final effectiveIndex = state.selectedIndex < 5 ? state.selectedIndex : 0;
+
     return Scaffold(
-      appBar: SupervisorAppBar(selectedIndex: state.selectedIndex),
+      appBar: SupervisorAppBar(selectedIndex: effectiveIndex),
       extendBody: true,
       body: Stack(
         children: [
           IndexedStack(
-            index: state.selectedIndex,
+            index: effectiveIndex,
             children: const [
               SupervisorDashboardTab(),
               SupervisorAssignSheet(),
-              SupervisorJobsTab(),
               SupervisorQueueTab(),
               SupervisorReviewTab(),
-              SupervisorStaffTab(),
-              SupervisorScheduleTab(),
-              SupervisorReportsTab(),
+              StaffProfileScreen(),
             ],
           ),
           Positioned(
@@ -46,7 +43,7 @@ class SupervisorScaffold extends ConsumerWidget {
             right: 0,
             bottom: 0,
             child: _StreamlinedBottomNav(
-              selectedIndex: state.selectedIndex,
+              selectedIndex: effectiveIndex,
               onTap: (index) {
                 HapticFeedback.selectionClick();
                 notifier.selectTab(index);
@@ -56,7 +53,7 @@ class SupervisorScaffold extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: state.selectedIndex == 1
+      floatingActionButton: effectiveIndex == 1
           ? FloatingActionButton.extended(
               onPressed: () async {
                 HapticFeedback.mediumImpact();
@@ -111,12 +108,13 @@ class _StreamlinedBottomNav extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    // Primary 4 Tabs mapped to their tab indices: 0: Dashboard, 1: Assign, 3: Queue, 4: Review
+    // Primary 5 Tabs: 0: Command, 1: Assign, 2: Queue, 3: Review, 4: Profile
     const items = [
       _NavDef(index: 0, selectedIcon: Icons.dashboard_rounded, icon: Icons.dashboard_outlined, label: 'Command'),
       _NavDef(index: 1, selectedIcon: Icons.assignment_rounded, icon: Icons.assignment_outlined, label: 'Assign'),
-      _NavDef(index: 3, selectedIcon: Icons.alt_route_rounded, icon: Icons.alt_route_outlined, label: 'Queue'),
-      _NavDef(index: 4, selectedIcon: Icons.verified_rounded, icon: Icons.verified_outlined, label: 'Review'),
+      _NavDef(index: 2, selectedIcon: Icons.alt_route_rounded, icon: Icons.alt_route_outlined, label: 'Queue'),
+      _NavDef(index: 3, selectedIcon: Icons.verified_rounded, icon: Icons.verified_outlined, label: 'Review'),
+      _NavDef(index: 4, selectedIcon: Icons.person_rounded, icon: Icons.person_outlined, label: 'Profile'),
     ];
 
     return SafeArea(
@@ -160,7 +158,7 @@ class _StreamlinedBottomNav extends StatelessWidget {
                               color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
                               size: 20,
                             ),
-                            if (item.index == 3 && hasQueueBadge)
+                            if (item.index == 2 && hasQueueBadge)
                               Positioned(
                                 top: -2,
                                 right: -4,

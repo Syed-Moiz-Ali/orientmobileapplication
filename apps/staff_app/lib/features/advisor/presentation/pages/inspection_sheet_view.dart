@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,61 +17,90 @@ import 'package:staff_app/features/advisor/inspection_pages/data/models/inspecti
 import 'package:staff_app/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
 import 'inspection_provider.dart';
 
-class InspectionSheetView extends ConsumerWidget {
+class InspectionSheetView extends ConsumerStatefulWidget {
   final InspectionCallbacks callbacks;
   const InspectionSheetView({super.key, required this.callbacks});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InspectionSheetView> createState() => _InspectionSheetViewState();
+}
+
+class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
+  String _selectedSectionId = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     final state = ref.watch(inspectionProvider);
+    final notifier = ref.read(inspectionProvider.notifier);
     final pct = state.progressPercent;
+    final sections = state.filteredSections;
+
+    if (_selectedSectionId.isEmpty && sections.isNotEmpty) {
+      _selectedSectionId = sections.first.id;
+    }
+
+    final activeSection = sections.firstWhere(
+      (s) => s.id == _selectedSectionId,
+      orElse: () => sections.isNotEmpty ? sections.first : const InspectionSection(id: '', label: '', items: []),
+    );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        backgroundColor: AppColors.navy,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: callbacks.onBack,
+        scrolledUnderElevation: 0,
+        leading: _PressScale(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            widget.callbacks.onBack();
+          },
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              shape: BoxShape.circle,
+              border: Border.all(color: colorScheme.outlineVariant),
+            ),
+            child: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface, size: 20),
+          ),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Vehicle Inspection',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+            Text(
+              'Inspection Sheet',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: colorScheme.onSurface,
+                letterSpacing: -0.3,
               ),
             ),
             Text(
-              '${state.completedCount} of ${state.totalItems} items completed',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
+              '${state.completedCount} of ${state.totalItems} checkpoints evaluated',
+              style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11.5),
             ),
           ],
         ),
         actions: [
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppDimensions.rPill),
-              ),
-              child: Text(
-                '${(pct * 100).round()}%',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(100),
+              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.25)),
+            ),
+            child: Text(
+              '${(pct * 100).round()}%',
+              style: TextStyle(
+                color: colorScheme.primary,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w900,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ),
@@ -78,437 +108,234 @@ class InspectionSheetView extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          const _ProgressHeader(),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+          // ── 1. REAL-TIME PROGRESS & SEARCH ───────────────────────────────
+          Container(
+            color: colorScheme.surface,
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Column(
               children: [
-                ...state.filteredSections.map(
-                  (sec) => _SectionCard(section: sec),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: pct,
+                    minHeight: 6,
+                    backgroundColor: colorScheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: colorScheme.outlineVariant),
+                  ),
+                  child: TextField(
+                    onChanged: (q) => notifier.setGlobalSearch(q),
+                    style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
+                    decoration: InputDecoration(
+                      hintText: 'Quick find checkpoint...',
+                      hintStyle: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
+                      prefixIcon: Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant, size: 18),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          _Footer(callbacks: callbacks),
-        ],
-      ),
-    );
-  }
-}
 
-class _ProgressHeader extends ConsumerWidget {
-  const _ProgressHeader();
+          // ── 2. QUICK SECTION SWITCHER PILLS ──────────────────────────────
+          Container(
+            height: 48,
+            color: colorScheme.surface,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              scrollDirection: Axis.horizontal,
+              itemCount: sections.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (ctx, i) {
+                final sec = sections[i];
+                final isSelected = sec.id == _selectedSectionId;
+                final rated = sec.items
+                    .asMap()
+                    .entries
+                    .where((e) => state.statuses.containsKey('${sec.id}_${e.key}'))
+                    .length;
+                final isDone = rated == sec.items.length && sec.items.isNotEmpty;
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(inspectionProvider);
-    final notifier = ref.read(inspectionProvider.notifier);
-    final pct = state.progressPercent;
-
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        _chip(
-                          state.showAll ? 'Collapse All' : 'Expand All',
-                          state.showAll ? AppColors.primary : AppColors.text3,
-                          () {
-                            if (state.showAll) {
-                              notifier.setCollapseAll();
-                            } else {
-                              notifier.setShowAll();
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBg,
-                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                ),
-                child: Text(
-                  '${state.completedCount}/${state.totalItems}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _searchField(notifier),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: pct,
-                    minHeight: 5,
-                    backgroundColor: const Color(0xFFE8ECF0),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '${(pct * 100).round()}%',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chip(String label, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(AppDimensions.rPill),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _searchField(InspectionNotifier notifier) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FA),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE4E7EE)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: TextField(
-        onChanged: (q) => notifier.setGlobalSearch(q),
-        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-        decoration: const InputDecoration(
-          hintText: 'Search inspection items...',
-          hintStyle: TextStyle(fontSize: 13, color: AppColors.text3),
-          prefixIcon: Icon(Icons.search, color: AppColors.text3, size: 18),
-          isDense: true,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 10),
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionCard extends ConsumerStatefulWidget {
-  final InspectionSection section;
-  const _SectionCard({required this.section});
-
-  @override
-  ConsumerState<_SectionCard> createState() => _SectionCardState();
-}
-
-class _SectionCardState extends ConsumerState<_SectionCard> {
-  bool _searching = false;
-  final _searchCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  int _ratedCount(Map<String, ItemStatus> statuses, InspectionSection sec) {
-    return sec.items
-        .asMap()
-        .entries
-        .where((e) => statuses.containsKey('${sec.id}_${e.key}'))
-        .length;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(inspectionProvider);
-    final notifier = ref.read(inspectionProvider.notifier);
-    final sec = widget.section;
-    final isCollapsed = state.collapsed[sec.id] ?? false;
-    final rated = _ratedCount(state.statuses, sec);
-
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => notifier.toggleCollapse(sec.id),
-            borderRadius: BorderRadius.circular(AppDimensions.r14),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Container(
-                    width: 6,
-                    height: 28,
+                return _PressScale(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedSectionId = sec.id);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(3),
+                      color: isSelected
+                          ? colorScheme.primary
+                          : isDone
+                          ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                          : colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(100),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.transparent
+                            : isDone
+                            ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                            : colorScheme.outlineVariant,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          sec.label,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          '${sec.items.length} items · $rated rated',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.text3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (rated > 0)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.successBg,
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.rPill,
-                              ),
-                            ),
-                            child: Text(
-                              '$rated/${sec.items.length}',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.success,
-                              ),
-                            ),
+                        if (isDone && !isSelected) ...[
+                          const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF10B981)),
+                          const SizedBox(width: 6),
+                        ],
+                        Text(
+                          sec.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: isSelected
+                                ? colorScheme.onPrimary
+                                : isDone
+                                ? const Color(0xFF10B981)
+                                : colorScheme.onSurface,
                           ),
-                        const SizedBox(width: 8),
-                        AnimatedRotation(
-                          turns: isCollapsed ? -0.25 : 0,
-                          duration: const Duration(milliseconds: 200),
-                          child: const Icon(
-                            Icons.keyboard_arrow_down,
-                            color: AppColors.text3,
-                            size: 20,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '$rated/${sec.items.length}',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: isSelected
+                                ? colorScheme.onPrimary.withValues(alpha: 0.8)
+                                : colorScheme.onSurfaceVariant,
+                            fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
-          if (!isCollapsed)
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Column(
-                children: [
-                  if (_searching) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F7FA),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE4E7EE)),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: TextField(
-                        controller: _searchCtrl,
-                        autofocus: true,
-                        onChanged: (q) => notifier.setSectionSearch(sec.id, q),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textPrimary,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Search in section...',
-                          hintStyle: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.text3,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            size: 16,
-                            color: AppColors.text3,
-                          ),
-                          suffixIcon: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _searching = false;
-                                _searchCtrl.clear();
-                              });
-                              notifier.setSectionSearch(sec.id, '');
-                            },
-                            child: const Icon(
-                              Icons.close,
-                              size: 16,
-                              color: AppColors.text3,
-                            ),
-                          ),
-                          isDense: true,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                  ...sec.items.asMap().entries.map((e) {
-                    final index = e.key;
-                    final itemName = e.value;
-                    final itemId = '${sec.id}_$index';
-                    return _ItemRow(
-                      itemId: itemId,
-                      itemName: itemName,
-                      index: index,
-                      total: sec.items.length,
-                      onSearchToggle: () =>
-                          setState(() => _searching = !_searching),
-                    );
-                  }),
-                ],
-              ),
-            ),
+          Divider(height: 1, color: colorScheme.outlineVariant),
+
+          // ── 3. INTUITIVE CHECKPOINT CARDS LIST ───────────────────────────
+          Expanded(
+            child: activeSection.items.isEmpty
+                ? const Center(
+                    child: EmptyState(icon: Icons.search_off_rounded, message: 'No matching checkpoints found'),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 100),
+                    itemCount: activeSection.items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (ctx, idx) {
+                      final itemName = activeSection.items[idx];
+                      final itemId = '${activeSection.id}_$idx';
+                      return _IntuitiveCheckpointCard(itemId: itemId, itemName: itemName, index: idx + 1);
+                    },
+                  ),
+          ),
+
+          // ── 4. STICKY FOOTER ─────────────────────────────────────────────
+          _StickyFooter(callbacks: widget.callbacks),
         ],
       ),
     );
   }
 }
 
-class _ItemRow extends ConsumerWidget {
+// ─── INTUITIVE CHECKPOINT CARD ───────────────────────────────────────────────
+class _IntuitiveCheckpointCard extends ConsumerStatefulWidget {
   final String itemId;
   final String itemName;
   final int index;
-  final int total;
-  final VoidCallback onSearchToggle;
 
-  const _ItemRow({
-    required this.itemId,
-    required this.itemName,
-    required this.index,
-    required this.total,
-    required this.onSearchToggle,
-  });
+  const _IntuitiveCheckpointCard({required this.itemId, required this.itemName, required this.index});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_IntuitiveCheckpointCard> createState() => _IntuitiveCheckpointCardState();
+}
+
+class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCard> {
+  bool _showMediaDrawer = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     final state = ref.watch(inspectionProvider);
     final notifier = ref.read(inspectionProvider.notifier);
-    final status = state.statuses[itemId];
-    final sc = status != null ? statusColors(status) : null;
-    final itemMedia = state.media[itemId];
-    final hasPhotos = (itemMedia?.photoPaths.isNotEmpty ?? false);
-    final hasVideos = (itemMedia?.videoPaths.isNotEmpty ?? false);
-    final hasAudio = (itemMedia?.audioPath.isNotEmpty ?? false);
-    final hasNote = (itemMedia?.note.isNotEmpty ?? false);
-    final hasMedia = hasPhotos || hasVideos || hasAudio || hasNote;
+    final status = state.statuses[widget.itemId];
+    final media = state.media[widget.itemId];
+
+    final hasPhotos = (media?.photoPaths.isNotEmpty ?? false);
+    final hasVideos = (media?.videoPaths.isNotEmpty ?? false);
+    final hasAudio = (media?.audioPath.isNotEmpty ?? false);
+    final hasNote = (media?.note.isNotEmpty ?? false);
+    final totalFiles =
+        (media?.photoPaths.length ?? 0) + (media?.videoPaths.length ?? 0) + (hasAudio ? 1 : 0) + (hasNote ? 1 : 0);
+
+    final statusColor = status == ItemStatus.good
+        ? const Color(0xFF10B981)
+        : status == ItemStatus.fair
+        ? colorScheme.secondary
+        : status == ItemStatus.poor
+        ? colorScheme.error
+        : Colors.transparent;
+
+    final isRated = status != null;
 
     return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: status != null
-            ? const Color(0xFFFAFCFE)
-            : const Color(0xFFF8F9FB),
-        borderRadius: BorderRadius.circular(AppDimensions.r12),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: status != null
-              ? sc!.color.withValues(alpha: 0.15)
-              : const Color(0xFFE8ECF0),
-          width: status != null ? 1.2 : 1,
+          color: isRated ? statusColor.withValues(alpha: 0.4) : colorScheme.outlineVariant,
+          width: isRated ? 1.5 : 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isRated ? statusColor.withValues(alpha: 0.04) : colorScheme.shadow.withValues(alpha: 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 26,
                 height: 26,
                 decoration: BoxDecoration(
-                  color: sc?.bg ?? const Color(0xFFE8ECF0),
+                  color: isRated ? statusColor.withValues(alpha: 0.14) : colorScheme.surfaceContainerHighest,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: sc?.color ?? const Color(0xFFCDD1DB),
-                    width: 1.5,
-                  ),
                 ),
                 child: Center(
                   child: Text(
-                    '${index + 1}',
+                    '${widget.index}',
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: sc?.color ?? AppColors.text3,
+                      fontWeight: FontWeight.w900,
+                      color: isRated ? statusColor : colorScheme.onSurfaceVariant,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),
@@ -516,522 +343,186 @@ class _ItemRow extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  itemName,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: status != null
-                        ? AppColors.textPrimary
-                        : AppColors.text2,
+                  widget.itemName,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                    height: 1.25,
                   ),
                 ),
               ),
-              if (sc != null)
+              if (totalFiles > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: sc.bg,
-                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                    border: Border.all(color: sc.color.withValues(alpha: 0.2)),
+                    color: colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(100),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: sc.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
+                      Icon(Icons.attachment_rounded, size: 12, color: colorScheme.primary),
+                      const SizedBox(width: 4),
                       Text(
-                        sc.label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: sc.color,
-                        ),
+                        '$totalFiles',
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: colorScheme.primary),
                       ),
                     ],
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
+
+          // ── 3-WAY LARGE SEGMENTED CONDITION SELECTOR ─────────────────────
           Row(
             children: [
-              _mediaBtn(
-                Icons.camera_alt_outlined,
-                'Camera',
-                hasPhotos,
-                AppColors.primary,
-                () => _pickPhoto(context, notifier, itemId, fromCamera: true),
+              _ConditionSegmentBtn(
+                label: 'Good',
+                icon: Icons.check_circle_outline_rounded,
+                isSelected: status == ItemStatus.good,
+                activeColor: const Color(0xFF10B981),
+                onTap: () => notifier.setStatus(widget.itemId, status == ItemStatus.good ? null : ItemStatus.good),
               ),
-              const SizedBox(width: 4),
-              _mediaBtn(
-                Icons.photo_library_outlined,
-                'Gallery',
-                hasPhotos,
-                AppColors.primary,
-                () => _pickPhoto(context, notifier, itemId, fromCamera: false),
+              const SizedBox(width: 8),
+              _ConditionSegmentBtn(
+                label: 'Fair',
+                icon: Icons.error_outline_rounded,
+                isSelected: status == ItemStatus.fair,
+                activeColor: colorScheme.secondary,
+                onTap: () => notifier.setStatus(widget.itemId, status == ItemStatus.fair ? null : ItemStatus.fair),
               ),
-              const SizedBox(width: 4),
-              _mediaBtn(
-                Icons.videocam_outlined,
-                'Video',
-                hasVideos,
-                AppColors.primary,
-                () => _pickVideo(context, notifier, itemId),
+              const SizedBox(width: 8),
+              _ConditionSegmentBtn(
+                label: 'Poor',
+                icon: Icons.cancel_outlined,
+                isSelected: status == ItemStatus.poor,
+                activeColor: colorScheme.error,
+                onTap: () => notifier.setStatus(widget.itemId, status == ItemStatus.poor ? null : ItemStatus.poor),
               ),
-              const SizedBox(width: 4),
-              _mediaBtn(
-                Icons.mic_outlined,
-                'Audio',
-                hasAudio,
-                AppColors.warning,
-                () => _showAudioDialog(context, state, notifier, itemId),
-              ),
-              const SizedBox(width: 4),
-              _mediaBtn(
-                Icons.edit_outlined,
-                'Note',
-                hasNote,
-                AppColors.info,
-                () => _showNoteDialog(
-                  context,
-                  notifier,
-                  itemId,
-                  itemMedia?.note ?? '',
-                ),
-              ),
-              const Spacer(),
-              if (hasMedia)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // ── TOGGLE EVIDENCE DRAWER BUTTON ────────────────────────────────
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _showMediaDrawer = !_showMediaDrawer);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBg,
-                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                    color: totalFiles > 0
+                        ? colorScheme.primary.withValues(alpha: 0.1)
+                        : colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: totalFiles > 0 ? colorScheme.primary.withValues(alpha: 0.3) : colorScheme.outlineVariant,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      Icon(
+                        totalFiles > 0 ? Icons.inventory_2_rounded : Icons.add_photo_alternate_outlined,
+                        size: 14,
+                        color: totalFiles > 0 ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 6),
                       Text(
-                        '${(itemMedia?.photoPaths.length ?? 0) + (itemMedia?.videoPaths.length ?? 0) + (itemMedia?.audioPath.isNotEmpty == true ? 1 : 0) + (itemMedia?.note.isNotEmpty == true ? 1 : 0)} files',
+                        totalFiles > 0 ? 'Manage Evidence ($totalFiles)' : '+ Add Photo / Voice Note',
                         style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: totalFiles > 0 ? colorScheme.primary : colorScheme.onSurfaceVariant,
                         ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        _showMediaDrawer ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: totalFiles > 0 ? colorScheme.primary : colorScheme.onSurfaceVariant,
                       ),
                     ],
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _statusChip(
-                'Good',
-                ItemStatus.good,
-                itemId,
-                state.statuses,
-                notifier,
-                AppColors.primary,
-                AppColors.primaryBg,
               ),
-              const SizedBox(width: 6),
-              _statusChip(
-                'Fair',
-                ItemStatus.fair,
-                itemId,
-                state.statuses,
-                notifier,
-                AppColors.warning,
-                AppColors.warningBg,
-              ),
-              const SizedBox(width: 6),
-              _statusChip(
-                'Poor',
-                ItemStatus.poor,
-                itemId,
-                state.statuses,
-                notifier,
-                AppColors.danger,
-                AppColors.dangerBg,
-              ),
-              if (status != null) ...[
+              if (isRated) ...[
                 const Spacer(),
                 GestureDetector(
-                  onTap: () => notifier.setStatus(itemId, null),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.dangerBg,
-                      borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.close, size: 10, color: AppColors.danger),
-                        SizedBox(width: 3),
-                        Text(
-                          'Clear',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.danger,
-                          ),
-                        ),
-                      ],
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    notifier.setStatus(widget.itemId, null);
+                  },
+                  child: Text(
+                    'Clear Rating',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
               ],
             ],
           ),
-          if (hasMedia && itemMedia != null) ...[
+
+          // ── EVIDENCE DRAWER EXPANSION ────────────────────────────────────
+          if (_showMediaDrawer) ...[
             const SizedBox(height: 12),
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppDimensions.r10),
-                border: Border.all(color: const Color(0xFFE8ECF0)),
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: colorScheme.outlineVariant),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(
-                        Icons.attachment_rounded,
-                        size: 14,
-                        color: AppColors.text2,
+                      _MediaPickerSquare(
+                        icon: Icons.camera_alt_outlined,
+                        label: 'Camera',
+                        onTap: () => _pickPhoto(context, notifier, widget.itemId, fromCamera: true),
                       ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        'Attachments',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.text2,
-                          letterSpacing: 0.5,
-                        ),
+                      const SizedBox(width: 8),
+                      _MediaPickerSquare(
+                        icon: Icons.photo_library_outlined,
+                        label: 'Gallery',
+                        onTap: () => _pickPhoto(context, notifier, widget.itemId, fromCamera: false),
                       ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => _confirmClearAllMedia(
-                          context,
-                          notifier,
-                          itemId,
-                          itemMedia,
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.dangerBg,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.rPill,
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.delete_sweep_outlined,
-                                size: 12,
-                                color: AppColors.danger,
-                              ),
-                              SizedBox(width: 3),
-                              Text(
-                                'Clear all',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.danger,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      const SizedBox(width: 8),
+                      _MediaPickerSquare(
+                        icon: Icons.videocam_outlined,
+                        label: 'Video',
+                        onTap: () => _pickVideo(context, notifier, widget.itemId),
+                      ),
+                      const SizedBox(width: 8),
+                      _MediaPickerSquare(
+                        icon: Icons.mic_rounded,
+                        label: 'Audio',
+                        active: hasAudio,
+                        onTap: () => _showAudioDialog(context, state, notifier, widget.itemId),
+                      ),
+                      const SizedBox(width: 8),
+                      _MediaPickerSquare(
+                        icon: Icons.edit_note_rounded,
+                        label: 'Note',
+                        active: hasNote,
+                        onTap: () =>
+                            _showNoteDialog(context, notifier, widget.itemId, widget.itemName, media?.note ?? ''),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-
-                  // ── Photos ──────────────────────────────────────────
-                  if (itemMedia.photoPaths.isNotEmpty) ...[
-                    _mediaLabel(
-                      Icons.image_outlined,
-                      'Photos',
-                      itemMedia.photoPaths.length,
-                    ),
-                    const SizedBox(height: 6),
-                    SizedBox(
-                      height: 72,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: itemMedia.photoPaths.length,
-                        itemBuilder: (_, i) => GestureDetector(
-                          onTap: () => _showFullScreenMedia(
-                            context,
-                            itemMedia.photoPaths[i],
-                            isVideo: false,
-                          ),
-                          child: Stack(
-                            children: [
-                              Container(
-                                width: 72,
-                                height: 72,
-                                margin: const EdgeInsets.only(right: 8),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimensions.r8,
-                                  ),
-                                  border: Border.all(
-                                    color: const Color(0xFFE4E7EE),
-                                  ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimensions.r7,
-                                  ),
-                                  child: localImage(
-                                    itemMedia.photoPaths[i],
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 3,
-                                right: 11,
-                                child: GestureDetector(
-                                  onTap: () => notifier.removePhoto(itemId, i),
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-
-                  // ── Videos ──────────────────────────────────────────
-                  if (itemMedia.videoPaths.isNotEmpty) ...[
-                    _mediaLabel(
-                      Icons.videocam_outlined,
-                      'Videos',
-                      itemMedia.videoPaths.length,
-                    ),
-                    const SizedBox(height: 6),
-                    ...itemMedia.videoPaths.asMap().entries.map((e) {
-                      final vi = e.key;
-                      final vp = e.value;
-                      final fileName = vp.split('/').last;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () => _showFullScreenMedia(
-                                context,
-                                vp,
-                                isVideo: true,
-                              ),
-                              child: Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryBg,
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimensions.r8,
-                                  ),
-                                  border: Border.all(
-                                    color: const Color(0xFFE4E7EE),
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.play_circle_filled,
-                                  color: AppColors.primary,
-                                  size: 28,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    fileName,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => _showFullScreenMedia(
-                                      context,
-                                      vp,
-                                      isVideo: true,
-                                    ),
-                                    child: const Text(
-                                      'Tap to play',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => notifier.removeVideo(itemId, vi),
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: AppColors.dangerBg,
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimensions.r8,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.delete_outline,
-                                  color: AppColors.danger,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 8),
-                  ],
-
-                  // ── Audio ───────────────────────────────────────────
-                  if (itemMedia.audioPath.isNotEmpty) ...[
-                    _mediaLabel(Icons.audiotrack, 'Audio Note', null),
-                    const SizedBox(height: 4),
-                    _AudioPlayerRow(audioPath: itemMedia.audioPath),
-                    GestureDetector(
-                      onTap: () {
-                        notifier.setAudio(itemId, '');
-                        deleteLocalFile(itemMedia.audioPath);
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.only(top: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.delete_outline,
-                              size: 14,
-                              color: AppColors.text3,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Remove audio',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.text3,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-
-                  // ── Note ────────────────────────────────────────────
-                  if (itemMedia.note.isNotEmpty) ...[
-                    _mediaLabel(Icons.notes_rounded, 'Note', null),
-                    const SizedBox(height: 4),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F7FA),
-                        borderRadius: BorderRadius.circular(AppDimensions.r8),
-                        border: Border.all(color: const Color(0xFFE4E7EE)),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              itemMedia.note,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.text2,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () => _showNoteDialog(
-                              context,
-                              notifier,
-                              itemId,
-                              itemMedia.note,
-                            ),
-                            child: const Icon(
-                              Icons.edit_outlined,
-                              size: 16,
-                              color: AppColors.text3,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () => notifier.setNote(itemId, ''),
-                            child: const Icon(
-                              Icons.delete_outline,
-                              size: 16,
-                              color: AppColors.danger,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  if (totalFiles > 0) ...[
+                    const SizedBox(height: 12),
+                    _AttachmentsThumbnailRow(itemId: widget.itemId, media: media!),
                   ],
                 ],
               ),
@@ -1040,219 +531,6 @@ class _ItemRow extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Widget _mediaLabel(IconData icon, String label, int? count) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: AppColors.text2),
-        const SizedBox(width: 6),
-        Text(
-          count != null ? '$label ($count)' : label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColors.text2,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showFullScreenMedia(
-    BuildContext context,
-    String path, {
-    required bool isVideo,
-  }) {
-    if (isVideo) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => _VideoPlayerPage(filePath: path)),
-      );
-    } else {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => Scaffold(
-            backgroundColor: Colors.black,
-            appBar: AppBar(
-              backgroundColor: Colors.black,
-              iconTheme: const IconThemeData(color: Colors.white),
-              elevation: 0,
-            ),
-            body: Center(
-              child: InteractiveViewer(
-                child: localImage(path, fit: BoxFit.contain),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-  }
-
-  void _confirmClearAllMedia(
-    BuildContext context,
-    InspectionNotifier notifier,
-    String itemId,
-    ItemMedia media,
-  ) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r16),
-        ),
-        title: const Text(
-          'Clear all attachments?',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: const Text(
-          'This will remove all photos, videos, audio and notes for this item.',
-          style: TextStyle(fontSize: 13, color: AppColors.text2, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                color: AppColors.text3,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r10),
-              ),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              for (final p in media.photoPaths) {
-                deleteLocalFile(p);
-              }
-              for (final v in media.videoPaths) {
-                deleteLocalFile(v);
-              }
-              if (media.audioPath.isNotEmpty) {
-                deleteLocalFile(media.audioPath);
-              }
-              notifier.setMedia(itemId, const ItemMedia());
-            },
-            child: const Text(
-              'Clear All',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _mediaBtn(
-    IconData icon,
-    String tooltip,
-    bool active,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return Tooltip(
-      message: tooltip,
-      child: Semantics(
-        button: true,
-        label: tooltip,
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: active ? color.withValues(alpha: 0.1) : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: active
-                    ? color.withValues(alpha: 0.3)
-                    : const Color(0xFFD4D9E6),
-                width: 1.2,
-              ),
-            ),
-            child: Icon(
-              icon,
-              size: 18,
-              color: active ? color : AppColors.text3,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _statusChip(
-    String label,
-    ItemStatus value,
-    String itemId,
-    Map<String, ItemStatus> statuses,
-    InspectionNotifier notifier,
-    Color color,
-    Color bg,
-  ) {
-    final sel = statuses[itemId] == value;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        notifier.setStatus(itemId, sel ? null : value);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: sel ? color : bg,
-          borderRadius: BorderRadius.circular(AppDimensions.rPill),
-          border: Border.all(
-            color: sel ? color : color.withValues(alpha: 0.2),
-            width: sel ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (sel) ...[
-              const Icon(Icons.check, size: 12, color: Colors.white),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: sel ? Colors.white : color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<String> _persistFile(String sourcePath, String prefix) async {
-    if (kIsWeb) return sourcePath;
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      final ext = sourcePath.split('.').last;
-      final fileName =
-          '${prefix}_${DateTime.now().millisecondsSinceEpoch}.$ext';
-      final destPath = '${dir.path}/$fileName';
-      return await persistMediaFile(sourcePath, destPath);
-    } catch (_) {
-      return sourcePath;
-    }
   }
 
   Future<void> _pickPhoto(
@@ -1261,6 +539,7 @@ class _ItemRow extends ConsumerWidget {
     String itemId, {
     required bool fromCamera,
   }) async {
+    final colorScheme = Theme.of(context).colorScheme;
     try {
       final picker = ImagePicker();
       final XFile? file = await picker.pickImage(
@@ -1269,53 +548,43 @@ class _ItemRow extends ConsumerWidget {
         maxWidth: 1200,
       );
       if (file != null) {
-        final persistedPath = await _persistFile(file.path, 'photo');
-        notifier.addPhoto(itemId, persistedPath);
+        final dir = await getApplicationDocumentsDirectory();
+        final ext = file.path.split('.').last;
+        final destPath = '${dir.path}/photo_${DateTime.now().millisecondsSinceEpoch}.$ext';
+        final saved = await persistMediaFile(file.path, destPath);
+        notifier.addPhoto(itemId, saved);
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Could not open ${fromCamera ? "camera" : "gallery"}: $e',
-            ),
-            backgroundColor: AppColors.danger,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Camera error: $e'), backgroundColor: colorScheme.error));
       }
     }
   }
 
-  Future<void> _pickVideo(
-    BuildContext context,
-    InspectionNotifier notifier,
-    String itemId,
-  ) async {
+  Future<void> _pickVideo(BuildContext context, InspectionNotifier notifier, String itemId) async {
+    final colorScheme = Theme.of(context).colorScheme;
     try {
       final picker = ImagePicker();
       final XFile? file = await picker.pickVideo(source: ImageSource.camera);
       if (file != null) {
-        final persistedPath = await _persistFile(file.path, 'video');
-        notifier.addVideo(itemId, persistedPath);
+        final dir = await getApplicationDocumentsDirectory();
+        final ext = file.path.split('.').last;
+        final destPath = '${dir.path}/video_${DateTime.now().millisecondsSinceEpoch}.$ext';
+        final saved = await persistMediaFile(file.path, destPath);
+        notifier.addVideo(itemId, saved);
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not open camera: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Video recording error: $e'), backgroundColor: colorScheme.error));
       }
     }
   }
 
-  void _showAudioDialog(
-    BuildContext context,
-    InspectionState state,
-    InspectionNotifier notifier,
-    String itemId,
-  ) {
+  void _showAudioDialog(BuildContext context, InspectionState state, InspectionNotifier notifier, String itemId) {
     showDialog(
       context: context,
       builder: (_) => _AudioDialog(
@@ -1330,101 +599,52 @@ class _ItemRow extends ConsumerWidget {
     BuildContext context,
     InspectionNotifier notifier,
     String itemId,
+    String itemName,
     String existing,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     final ctrl = TextEditingController(text: existing);
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r16),
-        ),
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: AppColors.primaryBg,
-                borderRadius: BorderRadius.circular(AppDimensions.r8),
-              ),
-              child: const Icon(
-                Icons.edit_outlined,
-                color: AppColors.primary,
-                size: 15,
-              ),
-            ),
-            const SizedBox(width: 10),
+            Icon(Icons.edit_note_rounded, color: colorScheme.primary, size: 22),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 itemName,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: colorScheme.onSurface),
               ),
             ),
           ],
         ),
         content: TextField(
           controller: ctrl,
-          maxLines: 5,
+          maxLines: 4,
           autofocus: true,
-          style: const TextStyle(
-            fontSize: 13,
-            color: AppColors.textPrimary,
-            height: 1.5,
-          ),
+          style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           decoration: InputDecoration(
-            hintText: 'Add a note about this item...',
-            hintStyle: const TextStyle(color: AppColors.text3),
+            hintText: 'Add checkpoint notes...',
             filled: true,
-            fillColor: const Color(0xFFF5F7FA),
+            fillColor: colorScheme.surfaceContainerLow,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.r10),
-              borderSide: const BorderSide(color: Color(0xFFE4E7EE)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.r10),
-              borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colorScheme.outlineVariant),
             ),
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                color: AppColors.text3,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r10),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
             onPressed: () {
               notifier.setNote(itemId, ctrl.text.trim());
               Navigator.pop(context);
             },
-            child: const Text(
-              'Save Note',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            child: const Text('Save Note'),
           ),
         ],
       ),
@@ -1432,844 +652,377 @@ class _ItemRow extends ConsumerWidget {
   }
 }
 
-class _AudioPlayerRow extends StatefulWidget {
-  final String audioPath;
-  const _AudioPlayerRow({required this.audioPath});
+// ─── LARGE CONDITION SEGMENT BUTTON ──────────────────────────────────────────
+class _ConditionSegmentBtn extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final Color activeColor;
+  final VoidCallback onTap;
 
-  @override
-  State<_AudioPlayerRow> createState() => _AudioPlayerRowState();
-}
-
-class _AudioPlayerRowState extends State<_AudioPlayerRow> {
-  final AudioPlayer _player = AudioPlayer();
-  bool _playing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _player.onPlayerComplete.listen((_) {
-      if (mounted) setState(() => _playing = false);
-    });
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
-  Future<void> _togglePlay() async {
-    try {
-      if (_playing) {
-        await _player.pause();
-        setState(() => _playing = false);
-      } else {
-        await _player.play(DeviceFileSource(widget.audioPath));
-        setState(() => _playing = true);
-      }
-    } catch (_) {}
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.warningBg,
-        borderRadius: BorderRadius.circular(AppDimensions.r8),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: _togglePlay,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: _playing ? AppColors.warning : AppColors.primary,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                _playing ? Icons.pause : Icons.play_arrow,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _playing ? 'Playing...' : 'Tap to listen',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _playing ? AppColors.warning : AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  widget.audioPath.split('/').last,
-                  style: const TextStyle(fontSize: 10, color: AppColors.text3),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AudioDialog extends StatefulWidget {
-  final String itemId;
-  final String existing;
-  final void Function(String) onSave;
-  const _AudioDialog({
-    required this.itemId,
-    required this.existing,
-    required this.onSave,
+  const _ConditionSegmentBtn({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.activeColor,
+    required this.onTap,
   });
 
   @override
-  State<_AudioDialog> createState() => _AudioDialogState();
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Expanded(
+      child: _PressScale(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? activeColor : colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isSelected ? Colors.transparent : colorScheme.outlineVariant),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: isSelected ? Colors.white : colorScheme.onSurfaceVariant),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : colorScheme.onSurface,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _AudioDialogState extends State<_AudioDialog>
-    with SingleTickerProviderStateMixin {
-  bool _recording = false;
-  int _seconds = 0;
-  late final String _existingPath;
-  Timer? _timer;
+// ─── MEDIA PICKER ICON BUTTON ────────────────────────────────────────────────
+class _MediaPickerSquare extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
 
-  final AudioRecorderService _recorder = AudioRecorderService();
-  String? _recordedPath;
-  bool _permissionDenied = false;
-  late AnimationController _pulseCtrl;
-  late Animation<double> _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _existingPath = widget.existing;
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    )..repeat(reverse: true);
-    _pulse = Tween<double>(
-      begin: 0.95,
-      end: 1.05,
-    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _pulseCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _startRecording() async {
-    final hasMic = await Permission.microphone.request();
-    if (!hasMic.isGranted) {
-      setState(() => _permissionDenied = true);
-      return;
-    }
-
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      final fileName =
-          'audio_${widget.itemId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      _recordedPath = '${dir.path}/$fileName';
-
-      final started = await _recorder.startRecording(_recordedPath!);
-      if (!started) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not start recording'),
-              backgroundColor: AppColors.danger,
-            ),
-          );
-        }
-        return;
-      }
-
-      setState(() {
-        _recording = true;
-        _seconds = 0;
-      });
-
-      _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-        if (!mounted || !_recording) {
-          t.cancel();
-          return;
-        }
-        setState(() => _seconds++);
-        if (_seconds >= 60) {
-          _stopRecording();
-        }
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not start recording: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _stopRecording() async {
-    _timer?.cancel();
-    try {
-      final path = await _recorder.stopRecording();
-      setState(() => _recording = false);
-      if (path != null && path.isNotEmpty && localFileExists(path) && mounted) {
-        widget.onSave(path);
-        Navigator.pop(context);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Recording was empty, please try again'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _recording = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error stopping recording: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _playExisting() async {
-    if (_existingPath.isEmpty || !localFileExists(_existingPath)) return;
-    final player = AudioPlayer();
-    try {
-      await player.play(DeviceFileSource(_existingPath));
-    } catch (_) {}
-  }
-
-  void _deleteExisting() {
-    if (_existingPath.isNotEmpty) {
-      deleteLocalFile(_existingPath);
-    }
-    widget.onSave('');
-    setState(() {
-      _existingPath = '';
-    });
-  }
+  const _MediaPickerSquare({required this.icon, required this.label, this.active = false, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
-      ),
-      title: const Row(
-        children: [
-          Icon(Icons.mic_outlined, color: AppColors.primary, size: 22),
-          SizedBox(width: 10),
-          Text(
-            'Audio Note',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Expanded(
+      child: _PressScale(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: active ? colorScheme.primary.withValues(alpha: 0.15) : colorScheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: active ? colorScheme.primary : colorScheme.outlineVariant),
           ),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_permissionDenied) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.dangerBg,
-                borderRadius: BorderRadius.circular(AppDimensions.r10),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.mic_off, color: AppColors.danger, size: 18),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Microphone permission denied. Please enable in settings.',
-                      style: TextStyle(
-                        color: AppColors.danger,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (_existingPath.isNotEmpty) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primaryBg,
-                borderRadius: BorderRadius.circular(AppDimensions.r10),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.audio_file,
-                    color: AppColors.primary,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Audio recording saved',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _playExisting,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  GestureDetector(
-                    onTap: _deleteExisting,
-                    child: const Icon(
-                      Icons.delete_outline,
-                      color: AppColors.danger,
-                      size: 18,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-          Text(
-            _recording
-                ? 'Recording... tap stop when done'
-                : 'Tap the microphone to start recording',
-            style: const TextStyle(fontSize: 13, color: AppColors.text2),
-          ),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: () async {
-              if (_recording) {
-                await _stopRecording();
-              } else if (!_permissionDenied) {
-                await _startRecording();
-              }
-            },
-            child: ScaleTransition(
-              scale: _recording ? _pulse : const AlwaysStoppedAnimation(1.0),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: _recording ? AppColors.danger : AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_recording ? AppColors.danger : AppColors.primary)
-                          .withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  _recording ? Icons.stop : Icons.mic,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-            ),
-          ),
-          if (_recording) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.dangerBg,
-                borderRadius: BorderRadius.circular(AppDimensions.rPill),
-              ),
-              child: Text(
-                '$_seconds s',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.danger,
+          child: Column(
+            children: [
+              Icon(icon, size: 18, color: active ? colorScheme.primary : colorScheme.onSurface),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9.5,
                   fontWeight: FontWeight.w700,
+                  color: active ? colorScheme.primary : colorScheme.onSurfaceVariant,
                 ),
               ),
-            ),
-          ],
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            if (_recording) {
-              _stopRecording();
-            }
-            Navigator.pop(context);
-          },
-          child: const Text(
-            'Cancel',
-            style: TextStyle(
-              color: AppColors.text3,
-              fontWeight: FontWeight.w600,
-            ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─── ATTACHMENTS THUMBNAIL ROW ───────────────────────────────────────────────
+class _AttachmentsThumbnailRow extends ConsumerWidget {
+  final String itemId;
+  final ItemMedia media;
+
+  const _AttachmentsThumbnailRow({required this.itemId, required this.media});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final notifier = ref.read(inspectionProvider.notifier);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (media.photoPaths.isNotEmpty)
+          SizedBox(
+            height: 56,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: media.photoPaths.length,
+              itemBuilder: (_, i) => Stack(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: localImage(media.photoPaths[i], fit: BoxFit.cover),
+                    ),
+                  ),
+                  Positioned(
+                    top: 2,
+                    right: 10,
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        notifier.removePhoto(itemId, i);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(color: Colors.black87, shape: BoxShape.circle),
+                        child: const Icon(Icons.close, color: Colors.white, size: 10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (media.audioPath.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.audiotrack_rounded, size: 14, color: colorScheme.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  media.audioPath.split('/').last,
+                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => notifier.setAudio(itemId, ''),
+                child: Icon(Icons.delete_outline_rounded, size: 16, color: colorScheme.error),
+              ),
+            ],
+          ),
+        ],
+        if (media.note.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Note: "${media.note}"',
+            style: TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: colorScheme.onSurface),
+          ),
+        ],
       ],
     );
   }
 }
 
-class _VideoPlayerPage extends StatefulWidget {
-  final String filePath;
-  const _VideoPlayerPage({required this.filePath});
+// ─── AUDIO DIALOG ────────────────────────────────────────────────────────────
+class _AudioDialog extends StatefulWidget {
+  final String itemId;
+  final String existing;
+  final void Function(String) onSave;
+  const _AudioDialog({required this.itemId, required this.existing, required this.onSave});
 
   @override
-  State<_VideoPlayerPage> createState() => _VideoPlayerPageState();
+  State<_AudioDialog> createState() => _AudioDialogState();
 }
 
-class _VideoPlayerPageState extends State<_VideoPlayerPage> {
-  late VideoPlayerController _controller;
-  bool _initialized = false;
+class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderStateMixin {
+  bool _recording = false;
+  int _seconds = 0;
+  Timer? _timer;
+  final AudioRecorderService _recorder = AudioRecorderService();
+  String? _recordedPath;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _start() async {
+    final hasMic = await Permission.microphone.request();
+    if (!hasMic.isGranted) return;
+
+    final dir = await getApplicationDocumentsDirectory();
+    _recordedPath = '${dir.path}/audio_${widget.itemId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _recorder.startRecording(_recordedPath!);
+
+    setState(() {
+      _recording = true;
+      _seconds = 0;
+    });
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted || !_recording) return;
+      setState(() => _seconds++);
+      if (_seconds >= 60) _stop();
+    });
+  }
+
+  Future<void> _stop() async {
+    _timer?.cancel();
+    final path = await _recorder.stopRecording();
+    setState(() => _recording = false);
+    if (path != null && mounted) {
+      widget.onSave(path);
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return AlertDialog(
+      backgroundColor: colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Voice Log', style: TextStyle(fontWeight: FontWeight.w900)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(_recording ? 'Recording... $_seconds s' : 'Tap to start recording note'),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: _recording ? _stop : _start,
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: _recording ? colorScheme.error : colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(_recording ? Icons.stop : Icons.mic, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── STICKY FOOTER ───────────────────────────────────────────────────────────
+class _StickyFooter extends ConsumerWidget {
+  final InspectionCallbacks callbacks;
+  const _StickyFooter({required this.callbacks});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final state = ref.watch(inspectionProvider);
+    final notifier = ref.read(inspectionProvider.notifier);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: Row(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.notifications_active_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              const Text('Notify Owner', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 6),
+              Switch.adaptive(
+                value: state.notifyOwner,
+                activeColor: colorScheme.primary,
+                onChanged: (_) {
+                  HapticFeedback.selectionClick();
+                  notifier.toggleNotifyOwner();
+                },
+              ),
+            ],
+          ),
+          const Spacer(),
+          ElevatedButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              callbacks.onPreview();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Review Sheet', style: TextStyle(fontWeight: FontWeight.w900)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── SPRING INTERACTION HELPER ───────────────────────────────────────────────
+class _PressScale extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  const _PressScale({required this.child, this.onTap});
+
+  @override
+  State<_PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<_PressScale> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) return;
-    _controller = createVideoController(widget.filePath);
-    _controller.initialize().then((_) {
-      if (mounted) {
-        setState(() => _initialized = true);
-        _controller.play();
-      }
-    });
-    _controller.addListener(() {
-      if (mounted) setState(() {});
-    });
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      reverseDuration: const Duration(milliseconds: 140),
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.97,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic));
   }
 
   @override
   void dispose() {
-    if (!kIsWeb && _initialized) {
-      _controller.dispose();
-    }
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 0,
-        title: Text(
-          widget.filePath.split('/').last,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      body: Center(
-        child: _initialized
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AspectRatio(
-                    aspectRatio: _controller.value.aspectRatio,
-                    child: VideoPlayer(_controller),
-                  ),
-                ],
-              )
-            : const CircularProgressIndicator(color: AppColors.primary),
-      ),
-      bottomNavigationBar: _initialized
-          ? Container(
-              color: Colors.black,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      _controller.seekTo(
-                        _controller.value.position -
-                            const Duration(seconds: 10),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.replay_10,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  GestureDetector(
-                    onTap: () {
-                      if (_controller.value.isPlaying) {
-                        _controller.pause();
-                      } else {
-                        _controller.play();
-                      }
-                      setState(() {});
-                    },
-                    child: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: const BoxDecoration(
-                        color: Colors.white24,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _controller.value.isPlaying
-                            ? Icons.pause
-                            : Icons.play_arrow,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  GestureDetector(
-                    onTap: () {
-                      _controller.seekTo(
-                        _controller.value.position +
-                            const Duration(seconds: 10),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.forward_10,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : null,
-    );
-  }
-}
-
-class _Footer extends ConsumerWidget {
-  final InspectionCallbacks callbacks;
-  const _Footer({required this.callbacks});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(inspectionProvider);
-    final notifier = ref.read(inspectionProvider.notifier);
-
-    void handlePreview() {
-      final violations = <String, String>{};
-      for (final sec in kInspectionSections) {
-        for (var i = 0; i < sec.items.length; i++) {
-          final itemId = '${sec.id}_$i';
-          final m = state.media[itemId];
-          final hasStatus = state.statuses.containsKey(itemId);
-          final hasMedia =
-              m != null &&
-              (m.photoPaths.isNotEmpty ||
-                  m.videoPaths.isNotEmpty ||
-                  m.audioPath.isNotEmpty ||
-                  m.note.isNotEmpty);
-          if (hasMedia && !hasStatus) {
-            violations[sec.items[i]] = sec.label.replaceFirst(
-              RegExp(r'^\d+\.\s*'),
-              '',
-            );
-          }
-        }
-      }
-      if (violations.isNotEmpty) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.r16),
-            ),
-            title: const Row(
-              children: [
-                Icon(
-                  Icons.warning_amber_rounded,
-                  color: AppColors.danger,
-                  size: 22,
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Conditions Required',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Items with attachments must have a condition (Good/Fair/Poor):',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.text2,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ...violations.entries.map(
-                    (e) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 3),
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: AppColors.danger,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  height: 1.4,
-                                  color: AppColors.textPrimary,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: e.key,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: '  -  ${e.value}',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.text3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r10),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
-                    "OK, I'll Set Conditions",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-        return;
-      }
-      callbacks.onPreview();
-    }
-
-    void handleSaveDraft() {
-      callbacks.onSaveDraft();
-    }
-
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE4E7EE))),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: state.notifyOwner
-                          ? AppColors.primaryBg
-                          : const Color(0xFFF5F7FA),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.notifications_outlined,
-                      size: 16,
-                      color: state.notifyOwner
-                          ? AppColors.primary
-                          : AppColors.text3,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Notify Owner',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              GestureDetector(
-                onTap: () => notifier.toggleNotifyOwner(),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 44,
-                  height: 24,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: state.notifyOwner
-                        ? AppColors.primary
-                        : const Color(0xFFD4D9E6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: state.notifyOwner
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: handleSaveDraft,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.text2,
-                    side: const BorderSide(color: Color(0xFFD4D9E6)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
-                    'Save Draft',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: handlePreview,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
-                    'Preview',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      onTap: widget.onTap,
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }

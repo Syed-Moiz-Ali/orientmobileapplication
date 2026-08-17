@@ -125,6 +125,34 @@ public class AuthService {
     // ========== OTP (unified sms + email) ==========
 
     public void sendOtp(String type, String phone, String email) {
+        sendOtp(type, phone, email, null);
+    }
+
+    public void sendOtp(String type, String phone, String email, String appName) {
+        // Validate user existence and role eligibility if appName is specified
+        if (appName != null && !appName.isBlank()) {
+            User user = null;
+            if ("sms".equalsIgnoreCase(type) && phone != null && !phone.isBlank()) {
+                String normalized = PhoneUtil.normalize(phone);
+                user = userMapper.findByPhone(normalized).orElse(null);
+            } else if ("email".equalsIgnoreCase(type) && email != null && !email.isBlank()) {
+                user = userMapper.findByEmail(email.trim().toLowerCase()).orElse(null);
+            }
+
+            if ("staff".equalsIgnoreCase(appName.trim())) {
+                if (user == null) {
+                    throw new ForbiddenException("Invalid credentials for staff application");
+                }
+                // Check if user is associated with staff
+                Staff staff = staffMapper.findByUserId(user.getId()).orElse(null);
+                if (staff == null && !appAccessPolicy.isAllowed("staff", user.getRole())) {
+                    throw new ForbiddenException("This account is not registered as staff");
+                }
+            } else if (user != null) {
+                ensureAppAccess(appName, user.getRole());
+            }
+        }
+
         switch (type) {
             case "sms" -> {
                 if (phone == null || phone.isBlank())
@@ -163,17 +191,27 @@ public class AuthService {
                     throw new BadRequestException("Invalid phone number");
                 }
                 otpService.verifySmsOtp(normalizedPhone, otpCode);
-                yield findOrCreateUserByPhone(normalizedPhone);
+                yield findOrCreateUserByPhone(normalizedPhone, appName);
             }
             case "email" -> {
                 if (email == null || email.isBlank())
                     throw new BadRequestException("Email is required for email OTP");
                 String normalizedEmail = email.trim().toLowerCase();
                 otpService.verifyEmailOtp(normalizedEmail, otpCode);
-                yield findOrCreateUserByEmail(normalizedEmail);
+                yield findOrCreateUserByEmail(normalizedEmail, appName);
             }
             default -> throw new BadRequestException("Invalid OTP type. Use 'sms' or 'email'");
         };
+
+        if ("staff".equalsIgnoreCase(appName != null ? appName.trim() : "")) {
+            Staff staff = staffMapper.findByUserId(user.getId()).orElse(null);
+            if (staff != null && staff.getRole() != null && !staff.getRole().isBlank()) {
+                // Dual profile / staff entry present: align user role to staff role
+                user.setRole(staff.getRole());
+                userMapper.updateById(user);
+            }
+        }
+
         ensureAppAccess(appName, user.getRole());
         return jwtService.createTokenPair(user);
     }
@@ -331,11 +369,15 @@ public class AuthService {
     }
 
     private User findOrCreateUserByPhone(String phone) {
+        return findOrCreateUserByPhone(phone, null);
+    }
+
+    private User findOrCreateUserByPhone(String phone, String appName) {
         return userMapper.findByPhone(phone)
                 .orElseGet(() -> {
-                    // S-2: OTP self-service accounts are ALWAYS customers.
-                    // Privileged roles (advisor/supervisor/technician/owner/crm)
-                    // require an existing staff record provisioned by an admin flow.
+                    if ("staff".equalsIgnoreCase(appName != null ? appName.trim() : "")) {
+                        throw new ForbiddenException("Account does not exist for staff application");
+                    }
                     User newUser = User.builder()
                             .phone(phone)
                             .name("")
@@ -347,8 +389,15 @@ public class AuthService {
     }
 
     private User findOrCreateUserByEmail(String email) {
+        return findOrCreateUserByEmail(email, null);
+    }
+
+    private User findOrCreateUserByEmail(String email, String appName) {
         return userMapper.findByEmail(email)
                 .orElseGet(() -> {
+                    if ("staff".equalsIgnoreCase(appName != null ? appName.trim() : "")) {
+                        throw new ForbiddenException("Account does not exist for staff application");
+                    }
                     User newUser = User.builder()
                             .email(email)
                             .name("")

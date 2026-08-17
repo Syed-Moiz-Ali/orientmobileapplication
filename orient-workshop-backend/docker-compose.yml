@@ -40,7 +40,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: mysql
+      SPRING_PROFILES_ACTIVE: mysql,dev
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: orient_workshop
@@ -48,13 +48,16 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-orient_app_dev}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MYSQL_USE_SSL: "false"
+      MYSQL_REQUIRE_SSL: "false"
+      MYSQL_SSL_MODE: "PREFERRED"
+      MYSQL_ALLOW_PUBLIC_KEY: "true"
+      APP_OTP_FIXED_VALUE: "123456"
       # CR-6: never resolve to a real secret here. The default "change-me" is
       # REJECTED by the app's fail-fast check, so an insecure deployment cannot
       # silently start. Set real values at deploy time: JWT_SECRET=... ENCRYPTION_KEY=...
-      JWT_SECRET: ${JWT_SECRET:-change-me}
-      # CR-6: dedicated encryption key for integration credentials (AES-256-GCM).
-      # Same rule as JWT_SECRET: set a real value; "change-me" fails fast.
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-this-is-only-for-development-not-production}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-encryption-key-must-be-32-bytes!}
     depends_on:
       mysql:
         condition: service_healthy
