@@ -1,0 +1,1919 @@
+You are working as the Lead Flutter Engineer, Senior Flutter Architect,
+Senior UI/UX Engineer, Responsive Design Engineer,
+Mobile Accessibility Engineer, API Integration Engineer,
+State Management Engineer, and Senior QA Automation Engineer.
+
+PROJECT:
+Orient Workshop Management System
+
+FLUTTER APPS:
+- apps/customer_app
+- apps/staff_app
+- apps/owner_app
+- apps/crm_app
+
+SHARED PACKAGES:
+- packages/shared_core
+- packages/shared_auth
+- packages/shared_models
+
+BACKEND:
+- orient-workshop-backend
+
+IMPORTANT:
+
+This is NOT a code-review-only task.
+
+You MUST actually:
+
+1. Inspect the complete current Flutter source.
+2. Inspect backend DTO/controller contracts used by Flutter.
+3. Fix API integration mismatches.
+4. Fix incorrect error handling.
+5. Fix false-success UI.
+6. Fix validation.
+7. Fix routing/navigation.
+8. Fix provider/state consistency.
+9. Fix responsive layouts.
+10. Fix accessibility.
+11. Add automated tests.
+12. Run tests.
+13. Fix failing tests.
+14. Run static analysis.
+15. Test multiple viewport sizes.
+16. Test text scaling.
+17. Update QA documentation only AFTER real verification.
+
+DO NOT rely on:
+
+- existing QA reports
+- existing bug reports
+- comments claiming code works
+- existing screen registry statuses
+- previous test-result documents
+- old screenshots
+
+The CURRENT SOURCE CODE and CURRENT TEST RUNS are the source of truth.
+
+==================================================
+PRIMARY GOAL
+==================================================
+
+Make all Flutter applications production-ready for:
+
+- API correctness
+- error handling
+- loading/empty/error/offline states
+- form validation
+- navigation
+- deep linking
+- role guards
+- state consistency
+- offline behavior
+- responsive UI
+- tablet
+- desktop/web
+- landscape
+- accessibility
+- automated regression testing
+
+Target apps:
+
+Customer
+Advisor
+Supervisor
+Technician
+Owner
+CRM
+
+==================================================
+FIRST PHASE — FULL CURRENT-SOURCE INVENTORY
+==================================================
+
+Before changing code, inspect every production Dart file under:
+
+apps/customer_app/lib
+apps/staff_app/lib
+apps/owner_app/lib
+apps/crm_app/lib
+
+packages/shared_core/lib
+packages/shared_auth/lib
+packages/shared_models/lib
+
+Also inspect:
+
+all Flutter tests
+all routers
+all API datasources
+repositories
+providers/notifiers
+entities/models
+DTO mapping
+forms
+validators
+shared widgets
+responsive helpers
+theme
+navigation shells
+offline sync integration
+lifecycle listeners
+
+Do NOT only inspect files mentioned in this prompt.
+
+Search the entire repository for patterns such as:
+
+_client.get(
+_client.post(
+_client.put(
+_client.patch(
+_client.delete(
+
+Result<
+Success
+Failure
+
+try {
+await remote...
+} catch
+
+failure: (_) => []
+
+failure: (_) => SomeDefault()
+
+onPressed: () {}
+onTap: () {}
+onChanged: (_) {}
+
+state.extra
+
+Navigator
+context.go
+context.push
+
+TextEditingController
+TextFormField
+validator
+
+fontSize:
+width:
+height:
+
+GestureDetector
+InkWell
+
+showModalBottomSheet
+showDialog
+
+Image.network
+
+Create a fresh implementation tracker:
+
+docs/qa/FLUTTER_PRODUCTION_AUDIT.md
+
+Columns:
+
+ID
+Severity
+App
+Module
+File
+Issue
+Root Cause
+Fix
+Automated Test
+Runtime Test
+Status
+
+Statuses:
+
+TODO
+IN_PROGRESS
+FIXED
+VERIFIED
+BLOCKED
+
+Do NOT mark VERIFIED without an actual passing test.
+
+==================================================
+P0-01 — STANDARDIZE API Result<T> HANDLING
+==================================================
+
+Inspect:
+
+packages/shared_core/lib/src/network/api_client.dart
+
+Current architecture returns:
+
+Future<Result<T>>
+
+where failures are returned as:
+
+Failure(...)
+
+rather than always thrown.
+
+Many Flutter datasources currently do things like:
+
+await _client.post(...);
+
+and discard the returned Result.
+
+This creates false-success behavior.
+
+Choose ONE architecture and enforce it project-wide.
+
+Preferred options:
+
+OPTION A:
+
+Datasource returns Result<T>
+and provider/repository handles:
+
+switch (result) {
+  case Success():
+  case Failure():
+}
+
+OR:
+
+OPTION B:
+
+Datasource unwraps Result and throws typed exceptions:
+
+final result = await _client.post(...);
+
+return result.when(
+  success: (data) => data,
+  failure: (error) => throw error,
+);
+
+Then upper layers use try/catch consistently.
+
+DO NOT mix the two patterns randomly.
+
+Create reusable helper if useful:
+
+extension ResultUnwrap<T> on Result<T> {
+  T unwrapOrThrow() ...
+}
+
+or equivalent.
+
+==================================================
+P0-02 — FIX EVERY DISCARDED MUTATION RESULT
+==================================================
+
+Fresh source scanning previously identified approximately 29 write API calls
+whose Result was discarded.
+
+DO NOT trust that number blindly.
+
+Rescan current code after any prior changes.
+
+Inspect every write request:
+
+POST
+PUT
+PATCH
+DELETE
+
+For every write ensure:
+
+server failure
+network failure
+timeout
+401
+403
+409
+422
+429
+500
+
+cannot be interpreted as success.
+
+Business actions must NEVER show:
+
+Saved
+Submitted
+Deleted
+Completed
+Assigned
+Escalated
+Requested
+
+unless the operation actually succeeded
+or was explicitly persisted as an offline/pending operation.
+
+==================================================
+P0-03 — FIX FALSE OFFLINE FALLBACK
+==================================================
+
+Inspect Customer and Technician flows where code does:
+
+try {
+  await remote.operation();
+} catch (...) {
+  queueOffline();
+}
+
+If remote.operation internally converts failure to Result and does not throw,
+the catch never executes.
+
+Fix all such paths.
+
+Important examples:
+
+Customer:
+- vehicle delete/update
+- booking actions
+- profile actions
+- notification actions
+
+Technician:
+- start task
+- complete task
+- complete job
+- note
+- parts request
+- escalation
+- attendance/status actions
+
+Advisor:
+- check-in
+- inspection
+- repair order
+- assignment
+
+Supervisor:
+- assignment
+- QC
+- completion
+- queue actions
+
+Owner:
+- operational mutations
+
+CRM:
+- lead/task/integration mutations
+
+Offline fallback should distinguish:
+
+SUCCESS
+QUEUED_OFFLINE
+FAILED_NOT_RETRYABLE
+AUTH_FAILURE
+
+Do not display the same success message for all cases.
+
+==================================================
+P0-04 — STOP CONVERTING API ERRORS INTO FAKE EMPTY DATA
+==================================================
+
+Fresh scan previously found many patterns like:
+
+failure: (_) => []
+
+failure: (_) => const SomeResponse()
+
+failure: (_) => 0
+
+Rescan current project.
+
+Do not hide errors as empty data.
+
+Every API-backed UI state should distinguish:
+
+INITIAL
+LOADING
+REFRESHING
+SUCCESS_DATA
+SUCCESS_EMPTY
+OFFLINE_CACHED
+ERROR_NETWORK
+ERROR_AUTH
+ERROR_FORBIDDEN
+ERROR_SERVER
+
+Prefer typed state.
+
+Example:
+
+sealed class LoadState<T> {}
+
+or Riverpod AsyncValue<T> where appropriate.
+
+Do not show:
+
+"No jobs"
+
+when actual result was:
+
+HTTP 500.
+
+Do not show:
+
+₹0 revenue
+
+when API failed.
+
+==================================================
+P0-05 — FIX FLUTTER ↔ BACKEND CONTRACTS
+==================================================
+
+For every Flutter request/response DTO,
+compare directly against the CURRENT Java backend DTO.
+
+Do not trust comments.
+
+Audit:
+
+field names
+types
+nested structures
+required fields
+nullable fields
+IDs
+refs
+enum values
+dates
+numbers
+booleans
+
+High-priority known areas:
+
+Advisor Vehicle Check-In
+
+Flutter currently/previously sent concepts like:
+
+odometer as String
+existingDamages as List<String>
+customerNote
+
+while backend expected concepts like:
+
+Integer odometer
+String existingDamages
+notes
+
+Fix using typed Dart DTOs.
+
+Do NOT construct critical business requests as large anonymous Map literals.
+
+Create:
+
+CheckInRequest
+CheckInResponse
+
+with JSON serialization/mapping.
+
+==================================================
+P0-06 — PRESERVE SERVER IDENTITIES
+==================================================
+
+Never replace backend identifiers with display indexes.
+
+Audit Technician task mapping and all other entity mapping.
+
+Bad:
+
+id: int.tryParse(serverRef) ?? index + 1
+
+if that id is later used for an API mutation.
+
+Instead model:
+
+databaseId
+ref
+displayIndex
+
+separately.
+
+Example:
+
+class TechnicianTask {
+  final int? id;
+  final String taskRef;
+  final int displayIndex;
+}
+
+All mutations must send canonical server IDs/refs.
+
+Audit:
+
+booking IDs
+job-card IDs
+job refs
+technician task IDs
+repair-order IDs
+invoice IDs
+notification IDs
+lead IDs
+task IDs
+employee IDs
+
+==================================================
+P0-07 — FIX SUPERVISOR ASSIGNMENT DTO
+==================================================
+
+Inspect:
+
+supervisor_providers.dart
+Supervisor assignment UI
+backend WorkAssignmentRequest
+canonical backend assignment API
+
+Ensure Flutter request exactly matches current backend.
+
+Previously jobCardId was computed but not included per assignment item.
+
+Fix all fields.
+
+However:
+
+Do NOT just patch one missing field if backend workflow was already migrated
+to canonical Technician WorkItems.
+
+Align Flutter with the NEW canonical backend assignment architecture.
+
+One assignment action should result in the Technician app seeing the work item.
+
+==================================================
+P0-08 — REMOVE/MIGRATE LEGACY ADVISOR ASSIGN TASK FLOW
+==================================================
+
+Inspect Advisor Assign Tasks Flutter UI.
+
+Previously Flutter put technicianId at top-level while backend expected
+technicianEmpId per task.
+
+If canonical backend assignment has changed,
+migrate this screen.
+
+Do not maintain duplicate old DTOs.
+
+If screen is obsolete:
+
+remove or redirect it to the canonical assignment workflow.
+
+==================================================
+P0-09 — FIX SUPERVISOR QC FLUTTER FLOW
+==================================================
+
+Flutter must NOT orchestrate:
+
+qcReview
+then
+approveCompletion
+
+as two separate business-state requests.
+
+Use the canonical backend command created by backend work.
+
+Example:
+
+POST /supervisor/jobs/{id}/qc/approve
+
+and:
+
+POST /supervisor/jobs/{id}/qc/reject
+
+Flutter should send one typed request and receive one typed response.
+
+For approve:
+
+show success only after atomic backend success.
+
+For reject:
+
+show task rework state and invalidate appropriate providers.
+
+==================================================
+P0-10 — TYPED CHECK-IN RESPONSE
+==================================================
+
+Do not convert rich server check-in response into bool.
+
+Use:
+
+CheckInResult {
+  jobCardId
+  jobCardRef
+  status
+}
+
+After success:
+
+invalidate/update:
+
+advisor bookings
+job-card provider
+customer service tracking where applicable
+supervisor queue if applicable
+
+Navigate using canonical jobCard ID/ref.
+
+==================================================
+P0-11 — FIX CUSTOMER NOTIFICATION READ SYNC
+==================================================
+
+If Flutter has:
+
+markRead()
+markAllRead()
+
+they must persist on backend where backend endpoints exist.
+
+Do not only mutate local provider state.
+
+Flow:
+
+tap notification
+→ backend mark read
+→ update local state
+
+If offline:
+
+queue or mark local pending if supported.
+
+On refresh:
+
+read state must remain consistent.
+
+==================================================
+P0-12 — FIX CRM INITIALIZATION RACE
+==================================================
+
+Inspect CRM repository initialization.
+
+Do not:
+
+adapter.loadAll();
+
+fire-and-forget while providers synchronously read empty lists.
+
+Use Riverpod async lifecycle.
+
+Recommended:
+
+AsyncNotifier
+FutureProvider
+or explicit initialization state.
+
+CRM initial load should be:
+
+loading
+→ success data
+or
+→ empty
+or
+→ error
+
+not:
+
+empty
+while loading invisibly.
+
+Do not mutate internal adapter lists without provider notification.
+
+==================================================
+VALIDATION ARCHITECTURE
+==================================================
+
+Create reusable validation utilities where useful.
+
+Do not scatter inconsistent regex and null checks across every screen.
+
+Potential shared validators:
+
+required
+name
+phone
+email
+VIN
+registration/plate
+year
+mileage
+odometer
+money
+positive number
+date
+future date
+notes max length
+employee selection
+
+Return localized/user-friendly errors.
+
+Do not silently coerce invalid data.
+
+==================================================
+P1-01 — CUSTOMER ADD VEHICLE VALIDATION
+==================================================
+
+Audit Add Vehicle.
+
+Validate:
+
+brand required
+model required
+plate required
+year valid integer
+reasonable year range
+mileage numeric and non-negative
+VIN optional/required according to business rules
+
+If VIN used:
+
+17 characters when complete VIN is expected
+reject invalid VIN characters appropriately
+
+Do NOT say "17-digit VIN".
+
+VIN is alphanumeric.
+
+Do NOT convert:
+
+"abc"
+
+year into:
+
+currentYear.
+
+Show:
+
+"Enter a valid year."
+
+==================================================
+P1-02 — ADVISOR CHECK-IN VALIDATION
+==================================================
+
+Validate:
+
+odometer required if business requires
+integer
+non-negative
+reasonable upper bound
+
+fuel level required
+
+existing damage model valid
+
+notes max length
+
+Use typed request.
+
+Do not send raw text for integer backend fields.
+
+==================================================
+P1-03 — CRM LEAD VALIDATION
+==================================================
+
+Validate:
+
+customer name
+phone format if provided
+email format if provided
+lead value numeric/non-negative
+follow-up date using real DateTime picker
+source
+status
+assignee stable identity
+
+Do not turn invalid amount into 0.
+
+Do not close the form if API fails.
+
+==================================================
+P1-04 — CRM TASK VALIDATION
+==================================================
+
+Validate:
+
+title
+description length
+assignee stable employee ID
+due date using DatePicker
+priority
+status
+
+Do not store only assignee display name.
+
+==================================================
+P1-05 — CUSTOMER FEEDBACK VALIDATION
+==================================================
+
+Do not submit zero ratings unless zero is a valid explicit value.
+
+Require actual rating selection where appropriate.
+
+Do not default:
+
+wouldRecommend = true
+
+when user never answered.
+
+Require explicit yes/no if required.
+
+==================================================
+P1-06 — BREAKDOWN VALIDATION
+==================================================
+
+Emergency/breakdown form must handle:
+
+GPS loading
+GPS success
+GPS permission denied
+GPS unavailable
+manual location fallback
+
+Do not display placeholder text as if real coordinates/location were obtained.
+
+Require:
+
+actionable location
+vehicle selection where appropriate
+issue selection
+contact information if needed
+
+==================================================
+NAVIGATION ARCHITECTURE
+==================================================
+
+Use GoRouter as centralized navigation authority.
+
+Prefer typed/structured route definitions.
+
+Critical entity screens should encode identity in the URL/path.
+
+Avoid depending entirely on:
+
+state.extra
+
+for screens that must support:
+
+deep link
+push notification
+browser refresh
+process recreation
+desktop/web
+restoration
+
+==================================================
+P1-07 — STAFF PER-ROLE ROUTE GUARDS
+==================================================
+
+Create centralized permission mapping.
+
+Example:
+
+enum AppPermission {
+  supervisorQueue,
+  advisorInspection,
+  technicianWorkItems,
+}
+
+or:
+
+RoutePermission(
+  path,
+  allowedRoles,
+)
+
+Staff router must prevent:
+
+Advisor → Supervisor screens
+Technician → Advisor screens
+Supervisor → Technician-only screens
+
+where inappropriate.
+
+Backend remains final security authority,
+but Flutter must fail closed for UX.
+
+Add automated router tests.
+
+==================================================
+P1-08 — ROUTE ENTITY IDs
+==================================================
+
+Migrate critical routes such as:
+
+booking detail
+invoice detail
+job-card detail
+inspection
+repair order
+vehicle check-in
+lead detail
+task detail
+
+toward paths like:
+
+/bookings/:bookingId
+/invoices/:invoiceId
+/jobs/:jobCardId
+/jobs/:jobCardId/inspection
+/jobs/:jobCardId/repair-order
+/crm/leads/:leadId
+
+Pages should load their own entity by canonical ID/ref.
+
+Do not pass entire critical models only through state.extra.
+
+==================================================
+P1-09 — CRM REAL ROUTING
+==================================================
+
+CRM sections should be URL-addressable.
+
+Use routes approximately:
+
+/crm
+/crm/leads
+/crm/leads/:id
+/crm/conversations
+/crm/team
+/crm/tasks
+/crm/reports
+/crm/integrations
+/crm/settings
+
+Browser back/forward should work.
+
+Desktop/web refresh should retain intended page.
+
+==================================================
+P1-10 — ROLE-AWARE APP RESUME
+==================================================
+
+Inspect staff_app lifecycle.
+
+Do not refresh Supervisor + Advisor APIs for every role.
+
+Use authenticated role.
+
+Advisor:
+refresh advisor data
+
+Supervisor:
+refresh supervisor data
+
+Technician:
+refresh technician work items/jobs
+
+Invalidate only relevant providers.
+
+Add lifecycle tests.
+
+==================================================
+STATE CONSISTENCY
+==================================================
+
+Never modify UI locally and pretend persisted business state changed.
+
+Audit:
+
+setState(status = ...)
+local list delete
+optimistic completion
+local notification read
+offline assignment
+CRM adapter cache
+
+For optimistic updates:
+
+keep previous state
+perform operation
+on success confirm
+on failure rollback
+show error
+
+For offline-capable operations:
+
+show explicit:
+
+Pending sync
+
+not generic:
+
+Completed
+
+until business semantics justify it.
+
+==================================================
+UI STATE REQUIREMENTS
+==================================================
+
+Every API-backed major screen must explicitly support:
+
+Loading
+Refreshing
+Success
+Empty
+Error
+Offline cached
+
+Create reusable UI components if appropriate:
+
+AppLoadingState
+AppEmptyState
+AppErrorState
+AppOfflineBanner
+AppRetryView
+
+Do not show spinner forever.
+
+Do not show empty screen for server failure.
+
+Do not hide errors silently.
+
+==================================================
+RESPONSIVE DESIGN FOUNDATION
+==================================================
+
+Inspect existing:
+
+AppResponsive
+AppResponsivePage
+AppAdaptiveNavigationFrame
+AppAdaptiveGrid
+AppSplitView
+AppDimensions
+theme/design system
+
+Reuse and improve these.
+
+Do NOT build another responsive engine.
+
+==================================================
+P1-11 — STAFF RESPONSIVE MIGRATION
+==================================================
+
+Staff is the largest Flutter app and currently underuses shared responsive components.
+
+Migrate major screens:
+
+Advisor dashboard
+Advisor bookings
+Vehicle/customer
+Inspection
+Repair order
+Job details
+
+Supervisor dashboard
+Assign
+Queue
+Review
+
+Technician dashboard
+Work items
+Job detail
+Profile
+
+Use:
+
+AppResponsivePage
+AppAdaptiveNavigationFrame
+AppAdaptiveGrid
+AppSplitView
+
+where appropriate.
+
+Phone:
+compact navigation.
+
+Tablet/Desktop:
+rail/side navigation and wider content where appropriate.
+
+Do NOT stretch phone layout across 1440/1920 width.
+
+==================================================
+P1-12 — CRM RESPONSIVE CONTENT
+==================================================
+
+CRM currently adapts navigation more than page content.
+
+Improve:
+
+Dashboard
+Leads
+Tasks
+Conversations
+Team
+Reports
+Integrations
+Settings
+
+Desktop Leads:
+
+master-detail layout.
+
+Desktop forms:
+
+constrained modal/dialog rather than huge bottom sheet.
+
+Tablet:
+
+adaptive columns.
+
+==================================================
+P1-13 — FIX SHORT-LANDSCAPE NAVIGATION
+==================================================
+
+Responsive navigation must consider:
+
+width
+height
+orientation
+destination count
+
+Do not use:
+
+width >= breakpoint
+
+alone.
+
+A device around:
+
+780x360
+
+must not automatically receive an overflowing NavigationRail with 8 destinations.
+
+Add tests for:
+
+landscape phone
+short-height tablet/window
+desktop
+
+==================================================
+P1-14 — FIX FAB / BOTTOM-NAV OVERLAPS
+==================================================
+
+Audit:
+
+CustomerScaffold
+CustomerHomeTab
+SupervisorScaffold
+other nested Scaffold patterns
+
+Application shell should own:
+
+bottom navigation
+FAB slot
+Snackbar inset
+safe area
+keyboard inset
+
+Do not solve with scattered magic values like:
+
+bottom padding = 84
+bottom padding = 88
+
+Centralize it.
+
+==================================================
+TYPOGRAPHY / DESIGN SYSTEM
+==================================================
+
+Staff and CRM have many hardcoded font sizes.
+
+Do not mechanically remove all numbers.
+
+Migrate key screens toward semantic typography:
+
+Theme.of(context).textTheme
+
+Roles:
+
+display
+pageTitle
+sectionTitle
+cardTitle
+body
+bodySecondary
+label
+caption
+button
+
+Use centralized spacing/radius/design tokens.
+
+==================================================
+ACCESSIBILITY
+==================================================
+
+Audit every interactive:
+
+GestureDetector
+InkWell
+IconButton
+custom container
+checkbox
+navigation item
+
+Touch target should generally be approximately 48x48 logical pixels.
+
+Visible icon can be 18/20/24.
+
+Add:
+
+Semantics
+Tooltip
+
+to icon-only actions.
+
+Examples:
+
+Refresh
+Edit
+Delete
+Back
+Retry
+Notifications
+Profile
+Complete
+Assign
+Escalate
+
+Do not disable text scaling globally.
+
+==================================================
+TEXT SCALE TESTING
+==================================================
+
+Critical screens must survive:
+
+1.0
+1.3
+1.5
+2.0
+
+Do not use fixed-height text containers that clip.
+
+Test:
+
+navigation
+buttons
+cards
+tables
+repair order
+CRM filters
+forms
+status labels
+
+==================================================
+KEYBOARD / FORM RESPONSIVENESS
+==================================================
+
+For every form verify:
+
+keyboard does not hide focused field
+submit button remains reachable
+bottom sheet scrolls
+viewInsets respected
+safe area works
+
+Test:
+
+login
+vehicle
+booking
+breakdown
+check-in
+inspection
+repair order
+CRM lead
+CRM task
+profile/settings forms
+
+==================================================
+NO-OP UI CONTROLS
+==================================================
+
+Search production source for:
+
+onPressed: () {}
+onTap: () {}
+onChanged: (_) {}
+
+Do not ship clickable-looking controls with no effect.
+
+For each:
+
+implement
+remove
+disable visibly
+or feature-flag.
+
+==================================================
+INCOMPLETE "COMING SOON" ACTIONS
+==================================================
+
+Audit visible actions such as:
+
+Payment coming soon
+PDF download coming soon
+Branch switching coming soon
+Document upload coming soon
+
+If out of release scope:
+
+hide/feature-flag or clearly disable.
+
+If in release scope:
+
+implement and test.
+
+==================================================
+AUTOMATED TEST ARCHITECTURE
+==================================================
+
+Create real Flutter test coverage.
+
+Use:
+
+unit tests
+widget tests
+integration_test
+router tests
+API mock tests
+provider tests
+responsive tests
+semantics tests
+golden tests for stable screens
+
+Do not only test data entities.
+
+==================================================
+API MOCK TEST SUITE
+==================================================
+
+Create fake/mock API layer.
+
+For every critical mutation test:
+
+200 success
+400 validation
+401 auth
+403 forbidden
+409 conflict
+422 business validation
+429 rate limit
+500 server
+timeout
+offline
+
+Example:
+
+Tap "Submit Parts Request"
+Mock API = HTTP 500
+
+Assert:
+
+sheet remains open
+loading stops
+error shown
+NO success Snackbar
+NO local success state
+operation queued only if offline policy says so
+
+Repeat for critical mutations.
+
+==================================================
+API CONTRACT TESTS
+==================================================
+
+Create tests ensuring Flutter DTO JSON matches backend expectation.
+
+High priority:
+
+CheckInRequest
+Supervisor assignment
+Advisor task assignment
+Technician complete task
+Technician complete job
+QC approve/reject
+booking actions
+customer approvals
+CRM lead/task requests
+
+If OpenAPI/spec can be generated reliably,
+consider contract-driven validation.
+
+Do not depend only on Map<String, dynamic>.
+
+==================================================
+ROUTER TESTS
+==================================================
+
+Automate:
+
+unauthenticated → protected route
+customer → customer routes
+advisor → advisor routes
+advisor → supervisor route blocked
+technician → advisor route blocked
+supervisor → technician restricted route blocked
+owner → owner route
+invalid entity ID
+missing route
+deep link
+route restoration
+
+==================================================
+LIFECYCLE TESTS
+==================================================
+
+Test:
+
+app background
+new assignment/change on backend/mock
+app resume
+
+Expected:
+
+correct role provider refreshes
+new data appears
+unrelated role API not called
+
+==================================================
+RESPONSIVE WIDGET TEST MATRIX
+==================================================
+
+Create reusable test harness.
+
+Viewport sizes:
+
+320x568
+360x640
+375x667
+390x844
+412x915
+430x932
+
+600x960
+800x1280
+1280x800
+
+1366x768
+1440x900
+1920x1080
+
+Text scales:
+
+1.0
+1.3
+1.5
+2.0
+
+For selected critical screens fail on:
+
+RenderFlex overflow
+Flutter exception
+off-screen primary action
+unreachable controls
+
+==================================================
+CRITICAL SCREEN TEST ORDER
+==================================================
+
+Prioritize:
+
+CUSTOMER
+1. Login
+2. Home
+3. Add Vehicle
+4. Book Service
+5. Booking Detail
+6. Service Status
+7. Approval
+8. Breakdown
+9. Invoice
+10. Notifications
+11. Feedback
+
+ADVISOR
+12. Dashboard
+13. Bookings
+14. Vehicle Check-In
+15. Vehicle/Customer
+16. Inspection
+17. Repair Order
+18. Job Detail
+19. Assignment
+
+SUPERVISOR
+20. Dashboard
+21. Assign
+22. Queue
+23. Review
+24. QC
+
+TECHNICIAN
+25. Dashboard
+26. Work Items
+27. Job Detail
+28. Parts Request
+29. Escalation
+30. Completion
+
+OWNER
+31. Dashboard
+32. Job Cards
+33. Job Detail
+34. Reports
+35. Payments/Invoices
+
+CRM
+36. Dashboard
+37. Leads
+38. Lead Form
+39. Lead Detail
+40. Tasks
+41. Task Form
+42. Reports
+43. Integrations
+44. Settings
+
+==================================================
+GOLDEN TESTING
+==================================================
+
+Add golden tests only for stable high-value screens.
+
+Suggested:
+
+Customer Home
+Customer Service Status
+Advisor Inspection
+Repair Order
+Supervisor Dashboard
+Technician Dashboard
+Owner Dashboard
+CRM Leads
+CRM Tasks
+
+Use:
+
+phone
+tablet
+desktop
+
+where useful.
+
+Do not create hundreds of brittle goldens.
+
+==================================================
+SEMANTICS TESTS
+==================================================
+
+Test semantic labels for important controls.
+
+Expected semantic actions/labels may include:
+
+Book Service
+Emergency Help
+Check In Vehicle
+Save Inspection
+Send Estimate
+Approve Estimate
+Reject Estimate
+Assign Technician
+Start Task
+Complete Task
+Submit for QC
+Approve QC
+Reject QC
+Refresh Leads
+Add Lead
+Add Task
+Delete Task
+
+==================================================
+PERFORMANCE QA
+==================================================
+
+Inspect:
+
+Riverpod watch scope
+unnecessary rebuilds
+large ListViews
+nested scrolling
+Image.network
+timers
+subscriptions
+controllers
+focus nodes
+Dio duplication
+refresh storms
+
+Ensure disposal of:
+
+TextEditingController
+AnimationController
+ScrollController
+FocusNode
+StreamSubscription
+Timer
+
+Avoid loading the same API multiple times unnecessarily.
+
+==================================================
+CI REQUIREMENTS
+==================================================
+
+Integrate Flutter QA into CI.
+
+Minimum:
+
+dart format check
+flutter analyze
+unit tests
+widget tests
+router tests
+API mock tests
+responsive widget tests
+
+Where environment supports:
+
+integration tests
+goldens
+
+Separate emulator/device workflow is acceptable.
+
+Production build should depend on critical Flutter test gates.
+
+==================================================
+TEST COVERAGE PRIORITIES
+==================================================
+
+Do not chase meaningless 100%.
+
+Target:
+
+shared API/error handling:
+95%+
+
+auth/navigation:
+90%+
+
+critical provider/business UI state:
+90%+
+
+validation:
+90%+
+
+critical screens:
+automated interaction coverage
+
+role routing:
+100% behavioral coverage
+
+critical mutation error paths:
+100%
+
+==================================================
+WORKING METHOD
+==================================================
+
+For each issue:
+
+INSPECT CURRENT SOURCE
+↓
+TRACE SCREEN
+↓
+TRACE PROVIDER
+↓
+TRACE REPOSITORY/DATASOURCE
+↓
+COMPARE BACKEND CONTRACT
+↓
+REPRODUCE WITH TEST
+↓
+FIX
+↓
+RUN TEST
+↓
+TEST FAILURE PATH
+↓
+TEST NAVIGATION
+↓
+TEST RESPONSIVE
+↓
+TEST ACCESSIBILITY
+↓
+REGRESSION TEST
+↓
+MARK VERIFIED
+
+Do not stop after creating docs.
+
+==================================================
+IMPORTANT RULES
+==================================================
+
+DO NOT:
+
+- rely on old QA reports
+- claim a test passed without running it
+- hide errors as empty data
+- swallow Result failures
+- show success after failed requests
+- use frontend-only fake business state
+- preserve mismatched anonymous JSON maps
+- replace server IDs with local indexes
+- use state.extra as sole identity for critical routes
+- create a second responsive system
+- disable accessibility text scaling
+- make unrelated backend domain changes unless needed for contract alignment
+- redesign working screens without reason
+- fix problems using arbitrary magic padding everywhere
+
+==================================================
+IMPLEMENTATION ORDER
+==================================================
+
+Work in this exact order:
+
+1. Standardize Result<T> handling
+2. Fix discarded write Results
+3. Fix read APIs hiding failures
+4. Fix offline/failure propagation
+5. Introduce typed critical API DTOs
+6. Fix Check-In contract
+7. Fix Supervisor assignment contract
+8. Fix Advisor assignment contract
+9. Fix Technician server IDs
+10. Fix QC Flutter API orchestration
+11. Fix notification read persistence
+12. Fix CRM async initialization
+13. Build centralized validators
+14. Fix Customer validation
+15. Fix Staff validation
+16. Fix CRM validation
+17. Add Staff role route guards
+18. Move critical routes to ID/ref paths
+19. Add CRM URL routing
+20. Fix role-aware resume
+21. Fix false/local-only optimistic states
+22. Implement explicit loading/error/empty/offline UI
+23. Migrate Staff responsiveness
+24. Migrate CRM responsiveness
+25. Fix short-landscape navigation
+26. Fix FAB/nav layout architecture
+27. Fix typography consistency
+28. Fix accessibility/touch targets
+29. Remove no-op/incomplete release controls
+30. Add API mock tests
+31. Add router tests
+32. Add validation tests
+33. Add lifecycle tests
+34. Add responsive tests
+35. Add semantics tests
+36. Add selected golden tests
+37. Add integration_test flows
+38. Integrate CI
+39. Final regression
+
+==================================================
+COMMANDS / VERIFICATION
+==================================================
+
+Run from repository root where applicable:
+
+melos bootstrap
+
+dart format .
+
+melos run analyze
+
+melos run test
+
+Then app-specific tests as needed:
+
+flutter test
+
+flutter test integration_test
+
+Run golden tests.
+
+Run responsive test matrix.
+
+Build:
+
+customer_app
+staff_app
+owner_app
+crm_app
+
+in appropriate configurations.
+
+If Flutter SDK/emulator/device/browser support is unavailable:
+
+mark tests BLOCKED.
+
+State:
+
+exact command attempted
+exact error
+required environment
+
+Never mark BLOCKED as PASS.
+
+==================================================
+FINAL QA DOCUMENT
+==================================================
+
+Create/update:
+
+docs/qa/FLUTTER_PRODUCTION_READINESS.md
+
+Include:
+
+1. Executive summary
+2. API integration issues found
+3. API integration fixes
+4. Result/error handling fixes
+5. DTO contract fixes
+6. Validation fixes
+7. Navigation fixes
+8. Lifecycle/state fixes
+9. UI/UX fixes
+10. Responsive fixes
+11. Accessibility fixes
+12. Tests added
+13. Tests actually run
+14. Tests passed
+15. Tests failed
+16. Tests blocked
+17. Remaining production blockers
+18. Files changed
+19. Final GO / NO-GO
+
+Also update/create:
+
+docs/qa/FLUTTER_TEST_MATRIX.md
+
+Columns:
+
+ID
+App
+Screen/Module
+Scenario
+Viewport
+Text Scale
+API Result
+Expected UI
+Expected Navigation
+Accessibility
+Automation
+Status
+
+==================================================
+FINAL ACCEPTANCE CRITERIA
+==================================================
+
+Do not call Flutter production-ready until:
+
+- critical API write failures cannot show false success
+- read API failures do not appear as empty data
+- offline queues trigger correctly
+- critical request DTOs match backend
+- stable server IDs are preserved
+- Customer/Staff/Owner/CRM validation is correct
+- per-role route guards exist
+- critical deep links are ID/ref based
+- CRM browser navigation works
+- app resume is role-aware
+- loading/empty/error/offline states exist
+- Staff is genuinely responsive
+- CRM is genuinely responsive
+- short landscape has safe navigation
+- FABs do not overlap navigation
+- text scale 2.0 works
+- critical touch targets are accessible
+- icon-only controls expose semantics
+- no critical no-op buttons remain
+- API failure tests exist
+- router tests exist
+- responsive tests exist
+- validation tests exist
+- major integration flows exist
+- all P0 Flutter issues are VERIFIED
+
+START NOW.
+
+Do not start from reports or docs.
+
+Start by reading:
+
+ApiClient
+Result<T>
+all Flutter datasources
+all routers
+all providers/notifiers
+all validation forms
+
+Then mechanically find every API caller and repair the error-handling architecture first.
+
+DO NOT stop after analysis.
+Actually modify the code, test it, fix failures, and continue until the Flutter production-readiness gates are satisfied or genuinely BLOCKED.

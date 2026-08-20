@@ -1,0 +1,1967 @@
+You are working as the Lead Flutter Engineer, Senior Java/Spring Boot Engineer,
+Distributed Workflow Engineer, Domain Architect, Integration Engineer,
+Security Engineer, and Senior QA Automation Engineer.
+
+PROJECT:
+Orient Workshop Management System
+
+APPLICATIONS:
+- apps/customer_app
+- apps/staff_app
+- apps/owner_app
+- apps/crm_app
+
+SHARED PACKAGES:
+- packages/shared_core
+- packages/shared_auth
+- packages/shared_models
+
+BACKEND:
+- orient-workshop-backend
+
+IMPORTANT:
+This is NOT a review-only task.
+
+You MUST actually inspect, modify, test, and verify the current code.
+
+Do NOT rely on:
+- existing QA reports
+- old bug reports
+- old test results
+- comments claiming something works
+- documentation claiming a flow is complete
+
+The CURRENT SOURCE CODE and CURRENT TEST RESULTS are the source of truth.
+
+You MUST inspect the implementation code path-by-path.
+
+==================================================
+PRIMARY OBJECTIVE
+==================================================
+
+Make the entire multi-application workshop workflow seamless,
+consistent, transaction-safe, role-safe, branch-safe, and production-ready.
+
+The full intended workflow is approximately:
+
+CUSTOMER
+↓
+BOOK SERVICE
+
+SUPERVISOR
+↓
+ASSIGN ADVISOR
+
+ADVISOR
+↓
+CHECK IN VEHICLE
+↓
+INSPECTION
+↓
+REPAIR ORDER / ESTIMATE
+
+CUSTOMER
+↓
+APPROVE / REJECT / REQUEST REVISION
+
+ADVISOR / SUPERVISOR
+↓
+ASSIGN TECHNICIAN WORK ITEMS
+
+TECHNICIAN
+↓
+START WORK
+↓
+UPDATE TASKS
+↓
+COMPLETE TASKS
+
+SUPERVISOR
+↓
+QUALITY CHECK
+
+IF FAILED:
+↓
+RETURN TO TECHNICIAN
+
+IF PASSED:
+↓
+COMPLETE JOB
+↓
+GENERATE INVOICE
+↓
+NOTIFY CUSTOMER
+
+CUSTOMER
+↓
+VIEW STATUS
+↓
+VIEW/PAY INVOICE
+↓
+COLLECT VEHICLE
+
+ADVISOR / STAFF
+↓
+DELIVER VEHICLE
+
+OWNER
+↓
+VIEW CORRECT OPERATIONAL DATA
+
+CRM
+↓
+RECEIVE OR LINK RELEVANT CUSTOMER/LEAD/LIFECYCLE DATA
+IF CRM IS INTENDED TO PARTICIPATE
+
+==================================================
+ABSOLUTE ARCHITECTURE RULE
+==================================================
+
+There must be ONE AUTHORITATIVE BACKEND BUSINESS WORKFLOW.
+
+Flutter applications must NOT directly decide or manufacture final business states.
+
+The backend must be the source of truth.
+
+There must NOT be multiple unrelated ways of doing:
+
+card.setStatus(...)
+booking.setStatus(...)
+task.setStatus(...)
+
+that bypass required workflow side effects.
+
+Centralize workflow transitions.
+
+==================================================
+PHASE 1 — INSPECT CURRENT CODE
+==================================================
+
+Before modifying anything, inspect all current implementations for:
+
+BOOKING
+- customer booking creation
+- booking cancellation
+- supervisor booking queue
+- advisor assignment
+- check-in
+
+JOB CARD
+- creation
+- linking
+- current state
+- transition ownership
+
+INSPECTION
+- inspection creation
+- job-card linking
+
+REPAIR ORDER
+- repair order creation
+- estimate lifecycle
+- approval lifecycle
+
+CUSTOMER APPROVAL
+- approve
+- reject
+- revise
+
+TECHNICIAN ASSIGNMENT
+- JobCard.technician
+- TechnicianTask.empId
+- WorkAssignment
+- Advisor assign task flow
+- Supervisor assignment flow
+
+TECHNICIAN WORK
+- assigned jobs
+- work items
+- start
+- pause
+- complete
+- complete job
+
+SUPERVISOR
+- queue
+- completion review
+- QC review
+- approval
+- rejection
+
+INVOICE
+- creation
+- duplicate prevention
+- customer listing
+
+DELIVERY
+- allowed state
+- delivery transition
+
+OWNER
+- job status mutations
+- force completion
+
+BREAKDOWN
+- customer request
+- supervisor dispatch
+- advisor action
+- completion
+
+CRM
+- lead lifecycle
+- customer linking
+- operational integration
+
+FLUTTER
+- providers
+- datasources
+- DTO mapping
+- refresh/invalidation
+- resume behavior
+- navigation after state transition
+
+Do not assume endpoint names mean the flows are connected.
+
+Trace:
+
+Flutter action
+→ request payload
+→ controller
+→ DTO
+→ service
+→ database mutation
+→ next app query
+→ next app mapping
+→ next app UI state
+
+==================================================
+P0-01 — CREATE ONE JOB WORKFLOW STATE MACHINE
+==================================================
+
+There are currently too many components directly changing JobCard.status.
+
+Create a centralized backend domain service.
+
+Example:
+
+JobWorkflowService
+
+This service must become the only normal business authority for JobCard state transitions.
+
+Suggested canonical states:
+
+BOOKING_PENDING
+BOOKING_CONFIRMED
+VEHICLE_RECEIVED
+INSPECTION_IN_PROGRESS
+WAITING_CUSTOMER_APPROVAL
+REVISION_REQUESTED
+WORK_IN_PROGRESS
+WAITING_PARTS
+AWAITING_QC
+QC_REJECTED
+QC_PASSED
+READY_FOR_COLLECTION
+DELIVERED
+CANCELLED
+
+Use current naming if changing database enums/strings would be overly disruptive,
+but centralize their semantic behavior.
+
+Define allowed transitions.
+
+Example:
+
+BOOKING_CONFIRMED
+→ VEHICLE_RECEIVED
+
+VEHICLE_RECEIVED
+→ INSPECTION_IN_PROGRESS
+
+INSPECTION_IN_PROGRESS
+→ WAITING_CUSTOMER_APPROVAL
+
+WAITING_CUSTOMER_APPROVAL
+→ WORK_IN_PROGRESS
+only after customer approval
+
+WAITING_CUSTOMER_APPROVAL
+→ REVISION_REQUESTED
+
+WORK_IN_PROGRESS
+→ WAITING_PARTS
+
+WORK_IN_PROGRESS
+→ AWAITING_QC
+only when all required work items are completed
+
+AWAITING_QC
+→ WORK_IN_PROGRESS
+if QC rejected
+
+AWAITING_QC
+→ READY_FOR_COLLECTION
+if QC approved
+
+READY_FOR_COLLECTION
+→ DELIVERED
+
+Disallow invalid transitions.
+
+Example:
+
+WORK_IN_PROGRESS → DELIVERED
+must fail.
+
+AWAITING_QC → DELIVERED
+must fail.
+
+CUSTOMER directly setting completed
+must fail.
+
+TECHNICIAN directly setting completed parent JobCard
+must fail.
+
+==================================================
+P0-02 — REMOVE RAW STATUS MUTATION ENDPOINTS
+==================================================
+
+Audit endpoints/services where callers can pass arbitrary:
+
+status
+
+Examples to inspect:
+
+Technician job status
+Advisor update status
+Owner status mutation
+Customer booking status
+
+Replace raw status updates with COMMAND endpoints.
+
+Examples:
+
+POST /jobs/{id}/check-in
+POST /jobs/{id}/send-estimate
+POST /jobs/{id}/start-work
+POST /jobs/{id}/submit-qc
+POST /jobs/{id}/qc/approve
+POST /jobs/{id}/qc/reject
+POST /jobs/{id}/deliver
+
+Business intent must be explicit.
+
+Do not allow Flutter to send:
+
+{
+  "status": "completed"
+}
+
+for critical lifecycle transitions.
+
+==================================================
+P0-03 — FIX SUPERVISOR QC APPROVAL
+==================================================
+
+Inspect:
+
+qc_checklist_sheet.dart
+
+SupervisorQueueService
+qcReview
+approveCompletion
+rejectCompletion
+
+Current problem:
+
+Flutter calls:
+
+qcReview(... approve ...)
+then
+approveCompletion(...)
+
+But qcReview changes state from awaitingSupervisor
+to qualityCheckPassed.
+
+approveCompletion then requires awaitingSupervisor.
+
+That sequence fails.
+
+FIX:
+
+Create ONE atomic backend endpoint/service operation for QC approval.
+
+Example:
+
+POST /supervisor/jobs/{jobCardId}/qc/approve
+
+Request:
+
+{
+  "checklistPassed": true,
+  "notes": "...",
+  "items": [...]
+}
+
+Backend transaction should:
+
+1. Load JobCard.
+2. Validate authenticated supervisor + branch.
+3. Validate current state = AWAITING_QC.
+4. Validate checklist.
+5. Validate all required technician work complete.
+6. Mark QC approved.
+7. Move job to READY_FOR_COLLECTION or canonical equivalent.
+8. Generate invoice EXACTLY ONCE.
+9. Notify customer.
+10. Write activity/audit event.
+11. Dispatch webhook/event if supported.
+12. Commit atomically.
+
+Flutter must call ONE operation.
+
+Do not orchestrate state machine with two HTTP requests.
+
+==================================================
+P0-04 — FIX QC REJECTION
+==================================================
+
+Create one proper QC reject operation.
+
+Example:
+
+POST /supervisor/jobs/{id}/qc/reject
+
+Request:
+
+{
+  "reason": "...",
+  "affectedTaskIds": [...]
+}
+
+Backend transaction:
+
+1. Require state = AWAITING_QC.
+2. Validate supervisor branch.
+3. Persist QC rejection.
+4. Move job back to WORK_IN_PROGRESS.
+5. Reset affected tasks appropriately.
+6. Persist rejection reason.
+7. Notify assigned technicians.
+8. Record activity/audit.
+9. Prevent customer-ready/invoice completion state.
+
+Do NOT have one reject endpoint that changes only JobCard state
+while another unused endpoint contains the real task-reset logic.
+
+Consolidate.
+
+==================================================
+P0-05 — FIX TECHNICIAN "COMPLETE JOB"
+==================================================
+
+Inspect:
+
+technician_providers.dart
+TaskService.completeJob()
+TechnicianTask identifiers
+
+Current mismatch:
+
+Backend sends task reference as task response ID.
+
+Flutter converts it into a local integer and later sends the integer.
+
+Backend searches task_ref using that integer.
+
+Fix identity handling.
+
+Every server entity should retain a stable server identity.
+
+Flutter models should not replace:
+
+T-ABC123
+
+with:
+
+1
+
+for API mutations.
+
+Use fields like:
+
+serverId
+taskRef
+localSortIndex
+
+appropriately.
+
+Then fix bulk Complete Job.
+
+Preferred approach:
+
+Do not maintain two separate completion implementations.
+
+Reuse one canonical backend function.
+
+Bulk Complete Job should:
+
+for each assigned work item:
+validate technician ownership
+complete task
+
+then:
+
+evaluate all work items
+
+if all required tasks completed:
+JobWorkflowService.submitForQc(jobCardId)
+
+The final transition must happen exactly once.
+
+==================================================
+P0-06 — REMOVE TECHNICIAN PARENT JOB "COMPLETED" BYPASS
+==================================================
+
+Inspect Technician Assigned Jobs UI and backend update-status API.
+
+A technician must NOT be allowed to directly set:
+
+JobCard.status = completed
+
+Remove/replace the control.
+
+Technician owns WORK ITEMS, not final job lifecycle.
+
+Allowed technician actions might be:
+
+Start Task
+Pause Task
+Complete Task
+Add Note
+Add Media
+Request Part
+Submit remaining work
+
+When all required tasks complete:
+
+backend automatically transitions:
+
+WORK_IN_PROGRESS
+→ AWAITING_QC
+
+Technician should never directly create:
+
+completed
+readyForCollection
+delivered
+
+==================================================
+P0-07 — UNIFY TECHNICIAN ASSIGNMENT MODEL
+==================================================
+
+There are currently multiple competing systems:
+
+1. JobCard.technician
+2. TechnicianTask.empId
+3. WorkAssignment
+4. legacy Advisor assign-task payload
+
+Choose ONE canonical assignment model.
+
+Preferred:
+
+TechnicianTask / WorkItem assignment
+
+Each task contains:
+
+task id/ref
+jobCardId
+technician empId
+description
+status
+priority
+estimated hours
+actual hours
+timestamps
+etc.
+
+This supports multiple technicians per job.
+
+Example:
+
+Job JC001
+
+Oil change
+→ Technician A
+
+Brake repair
+→ Technician B
+
+Alignment
+→ Technician C
+
+Do NOT use technician NAME as relational identity.
+
+Use stable:
+
+employee ID / empId / user ID
+
+Technician Flutter should load work from the canonical endpoint:
+
+GET /technicians/work-items
+
+or a properly designed equivalent.
+
+Do NOT rely primarily on:
+
+JobCard.technician == technicianName
+
+==================================================
+P0-08 — MIGRATE / REMOVE LEGACY ASSIGNMENT FLOWS
+==================================================
+
+Inspect:
+
+Advisor Assign Tasks screen
+Supervisor Save & Assign
+JobCard.assignTechnician
+WorkAssignmentService
+
+Current implementations write different storage models.
+
+Refactor all assignment actions to use the canonical WorkItem assignment service.
+
+Supervisor / Advisor assignment UI should ultimately call the SAME backend domain service.
+
+If old endpoints must temporarily remain:
+
+make them adapters to the canonical service.
+
+Do NOT continue writing separate assignment tables/entities that Technician app does not read.
+
+Remove or deprecate unreachable/legacy UI paths.
+
+==================================================
+P0-09 — FIX SUPERVISOR SAVE & ASSIGN DTO
+==================================================
+
+Inspect:
+
+supervisor_providers.dart
+WorkAssignmentRequest
+WorkAssignmentService
+
+Current Flutter payload omits jobCardId per assignment item while backend expects it.
+
+Fix the DTO contract.
+
+However, do NOT stop at adding a missing field.
+
+The final endpoint must integrate with the canonical TechnicianTask/WorkItem assignment system.
+
+Acceptance:
+
+Supervisor assigns Technician A
+→ Technician A sees the exact work item
+→ Technician B does not see it
+→ Job progress reflects that assignment
+→ no duplicate assignment object exists in disconnected storage
+
+==================================================
+P0-10 — FIX ADVISOR LEGACY ASSIGN TASK PAYLOAD
+==================================================
+
+Inspect:
+
+advisor_assign_tasks_view.dart
+BatchTaskRequest
+JobCardService.assignTasks()
+
+Current Flutter sends technicianId at top-level,
+while backend expects technicianEmpId inside each task.
+
+Fix/remove this mismatch.
+
+Prefer migrating the screen to canonical per-work-item assignment.
+
+Do not allow:
+
+task.empId = null
+
+while job becomes inProgress.
+
+An assignment must fail atomically if technician identity is missing/invalid.
+
+==================================================
+P0-11 — ENFORCE CUSTOMER APPROVAL BEFORE WORK
+==================================================
+
+Repair order creation can generate tasks before customer approval.
+
+That is acceptable only if tasks are locked.
+
+Backend must enforce:
+
+Technician start/complete actions are NOT allowed until estimate is approved.
+
+Before:
+
+start task
+complete task
+bulk complete job
+
+validate:
+
+JobCard workflow state == WORK_IN_PROGRESS
+and
+customer approval status == APPROVED
+
+If not:
+
+return 409/422 with useful error.
+
+Do not rely on Flutter hiding a button.
+
+Add tests:
+
+TECH-PREAPPROVAL-001
+start task before approval
+=> rejected
+
+TECH-PREAPPROVAL-002
+complete task before approval
+=> rejected
+
+TECH-PREAPPROVAL-003
+after approval
+=> allowed
+
+==================================================
+P0-12 — FIX CUSTOMER SERVICE TRACKING STATES
+==================================================
+
+Inspect:
+
+JobCardMapper.findActiveByCustomerId
+ServiceTrackingService
+Customer Service Status Flutter UI
+
+Current query does not include several actual workflow states.
+
+Create one canonical customer tracking projection.
+
+Customer should see meaningful stages for all active lifecycle states.
+
+Map backend internal states to customer-friendly stages.
+
+Example:
+
+BOOKING_CONFIRMED
+→ Booking Confirmed
+
+VEHICLE_RECEIVED
+→ Vehicle Received
+
+INSPECTION_IN_PROGRESS
+→ Inspection
+
+WAITING_CUSTOMER_APPROVAL
+→ Approval Required
+
+REVISION_REQUESTED
+→ Estimate Revision
+
+WORK_IN_PROGRESS
+→ Repair In Progress
+
+WAITING_PARTS
+→ Waiting for Parts
+
+AWAITING_QC
+→ Quality Check
+
+READY_FOR_COLLECTION
+→ Ready for Collection
+
+DELIVERED
+→ Delivered
+
+Do not make job disappear because SQL omitted a state.
+
+==================================================
+P0-13 — CREATE EXACTLY ONE JOB CARD PER BOOKING
+==================================================
+
+Audit:
+
+AdvisorBookingService.checkIn()
+InspectionService.createInspection()
+all JobCard creation paths
+
+Current code can create multiple JobCards for one booking.
+
+Create a canonical intake rule:
+
+One booking
+→ one JobCard
+
+Use:
+
+DB uniqueness constraint
+and/or
+transactional lookup + locking
+
+Recommended:
+
+bookings.job_card_id unique relationship where appropriate
+
+Check-in should be idempotent.
+
+If booking already has a JobCard:
+
+return existing JobCard
+or reject duplicate operation appropriately.
+
+Inspection must attach to the existing JobCard.
+
+It must NOT create a second JobCard for the same booking.
+
+==================================================
+P0-14 — RETURN CANONICAL JOB CARD TO FLUTTER
+==================================================
+
+Inspect Advisor check-in datasource.
+
+Current backend returns:
+
+jobCardId
+jobCardRef
+status
+
+but Flutter converts response to bool.
+
+Fix DTO/model.
+
+Return typed:
+
+CheckInResult {
+  jobCardId
+  jobCardRef
+  status
+}
+
+After successful check-in:
+
+update/invalidate relevant providers immediately.
+
+Do not force the user to wait for resume/poll refresh.
+
+==================================================
+P0-15 — RESTRICT CUSTOMER BOOKING MUTATIONS
+==================================================
+
+Customer must NOT be allowed to set:
+
+confirmed
+vehicle_received
+in_service
+completed
+
+through a generic booking status endpoint.
+
+Customer-owned actions should be explicit:
+
+cancel booking
+request reschedule
+etc.
+
+Workshop/staff actions should own:
+
+confirm
+vehicle received
+service started
+completed
+
+Backend must enforce this.
+
+Do not trust Flutter.
+
+==================================================
+P0-16 — FIX CANCELLED BOOKING RACES
+==================================================
+
+Inspect:
+
+BookingMapper.findUnassigned()
+BookingMapper.findByAdvisor()
+SupervisorQueueService.assignBooking()
+AdvisorBookingService.checkIn()
+customer cancellation
+
+Current queries can include cancelled bookings.
+
+Fix queue queries.
+
+Supervisor queue should only include actionable states.
+
+Advisor queue should only include currently assigned/actionable bookings.
+
+Assignment must use conditional atomic mutation.
+
+Example:
+
+UPDATE bookings
+SET advisor_id = ?,
+    status = 'confirmed'
+WHERE id = ?
+AND status = 'pending'
+AND advisor_id IS NULL
+
+Check affected-row count.
+
+If 0:
+return conflict.
+
+Likewise cancellation should use allowed source states.
+
+Add concurrency test:
+
+Customer cancels
+and
+Supervisor assigns
+
+at the same moment.
+
+Exactly ONE operation must succeed.
+
+Never resurrect a cancelled booking.
+
+==================================================
+P0-17 — FIX CUSTOMER APPROVE / REJECT / REVISE HANDOFF
+==================================================
+
+Create complete workflows.
+
+APPROVE:
+
+Customer
+→ approve estimate
+→ backend validates ownership/current state
+→ job moves to WORK_IN_PROGRESS
+→ Advisor/Supervisor notified as needed
+→ technicians can now start
+
+REJECT:
+
+Customer
+→ reject
+→ approval state rejected
+→ JobWorkflow moves to defined rejected/cancelled/hold state
+→ Advisor notified
+→ Supervisor optionally notified
+→ technicians remain blocked
+
+REVISE:
+
+Customer
+→ request revision
+→ state REVISION_REQUESTED
+→ Advisor receives actionable queue/event
+→ Advisor edits/reissues estimate
+→ Customer sees new revision
+
+Do NOT notify only the customer who just performed the action.
+
+Implement staff-facing notifications/events.
+
+Flutter must expose revision if the business supports it.
+
+==================================================
+P0-18 — FIX DELIVERY STATE
+==================================================
+
+Delivery must only be possible after successful QC.
+
+Do NOT allow:
+
+AWAITING_QC → DELIVERED
+
+Do NOT allow:
+
+WORK_IN_PROGRESS → DELIVERED
+
+Require:
+
+READY_FOR_COLLECTION
+
+or canonical equivalent.
+
+Delivery operation:
+
+validate staff role
+validate branch
+validate state
+mark delivered
+record deliveredAt
+record deliveredBy
+notify customer
+write audit/activity
+
+==================================================
+P0-19 — FIX OWNER WORKFLOW BYPASS
+==================================================
+
+Inspect OwnerJobCardService.
+
+Owner should not use arbitrary status mutation to bypass critical lifecycle events.
+
+If Owner needs override capability:
+
+create explicit administrative override operation.
+
+Example:
+
+POST /owner/jobs/{id}/override
+
+Require:
+
+reason
+target action
+audit record
+
+and decide whether business side effects must occur.
+
+Do not silently:
+
+card.setStatus("completed")
+
+without:
+
+QC/invoice/notification/integrity handling.
+
+==================================================
+P1-01 — REMOVE ADVISOR LOCAL-ONLY UPDATE STATUS
+==================================================
+
+Inspect Advisor job-detail Update Status UI.
+
+Current UI changes local state without backend mutation.
+
+Remove this false-success behavior.
+
+Do not show a user that a persisted action succeeded when only local widget state changed.
+
+Replace with real backend commands.
+
+If no valid backend transition exists, remove/disable the option.
+
+==================================================
+P1-02 — COMPLETE BREAKDOWN FLOW
+==================================================
+
+Trace breakdown end-to-end.
+
+Current intended flow:
+
+Customer
+→ raise breakdown
+
+Supervisor
+→ see request
+→ assign Advisor
+
+Advisor
+→ receive request
+→ accept
+→ travel/respond
+→ update status
+→ resolve / vehicle recovered
+→ convert to workshop JobCard if required
+
+Customer
+→ see live/current breakdown status
+
+Implement missing operational screens/APIs only if breakdown is a required feature.
+
+Canonical states may be:
+
+PENDING
+DISPATCHED
+ACCEPTED
+EN_ROUTE
+ARRIVED
+RECOVERED
+CONVERTED_TO_JOB
+RESOLVED
+CANCELLED
+
+Do not leave the workflow ending at "notification received".
+
+==================================================
+P1-03 — TECHNICIAN REFRESH / INVALIDATION
+==================================================
+
+Inspect staff_app app lifecycle.
+
+On app resume, refresh data based on authenticated role.
+
+Current implementation refreshes Supervisor and Advisor but not Technician.
+
+Implement role-aware refresh:
+
+Advisor
+→ advisor providers only
+
+Supervisor
+→ supervisor providers only
+
+Technician
+→ technician work-items/jobs providers only
+
+Avoid unnecessary 403-producing cross-role requests.
+
+Also invalidate providers immediately after important cross-app mutations.
+
+==================================================
+P1-04 — IMPROVE MULTI-APP EVENT PROPAGATION
+==================================================
+
+Current system relies significantly on polling/resume refresh.
+
+At minimum:
+
+after successful mutation:
+invalidate/refetch affected local providers.
+
+For better production connectivity,
+design event-driven invalidation.
+
+Possible events:
+
+booking.created
+booking.cancelled
+booking.assigned
+vehicle.checked_in
+inspection.completed
+estimate.created
+estimate.approved
+estimate.rejected
+estimate.revision_requested
+task.assigned
+task.started
+task.completed
+job.awaiting_qc
+qc.rejected
+qc.approved
+invoice.created
+vehicle.ready
+vehicle.delivered
+
+You may use:
+
+FCM
+SSE
+WebSocket
+
+if the existing architecture supports it.
+
+Do not add unnecessary complexity if provider invalidation + polling meets current requirements.
+
+But accurately document whether behavior is:
+
+real-time
+near-real-time
+polling
+
+==================================================
+P1-05 — CRM INTEGRATION DECISION
+==================================================
+
+Inspect actual product intent and existing code.
+
+Determine whether CRM is:
+
+A. deliberately independent
+
+OR
+
+B. intended to participate in the unified customer/workshop lifecycle.
+
+Do not assume.
+
+If B:
+
+create clear integration boundaries.
+
+Examples:
+
+CRM Lead WON
+→ link/create Customer
+
+Customer books service
+→ CRM customer timeline/activity
+
+Completed workshop job
+→ CRM customer service-history activity
+
+Invoice/payment
+→ CRM revenue/customer timeline
+
+Do not duplicate entire workshop database inside CRM.
+
+Use shared IDs/events/read models.
+
+If CRM is intentionally independent,
+document it clearly and do NOT fake connectivity.
+
+==================================================
+P1-06 — COMPLETE CUSTOMER PAYMENT FLOW IF IN SCOPE
+==================================================
+
+Inspect:
+
+Customer invoice UI
+PaymentService
+Owner payment data
+existing payment backend
+
+If customer payment is intended in current release:
+
+implement:
+
+invoice
+→ initiate payment
+→ gateway result
+→ backend verification
+→ invoice paid
+→ owner sees payment
+→ customer receipt
+
+Do not mark Pay Now complete while screen says:
+
+Payment coming soon.
+
+If payment is out of release scope:
+
+feature-flag/remove the action.
+
+==================================================
+ONE DOMAIN IDENTITY MODEL
+==================================================
+
+Audit identifiers across all app/backend boundaries.
+
+Do not ambiguously mix:
+
+database numeric ID
+human-readable ref
+empId
+userId
+staff name
+local integer index
+
+Define clear model fields.
+
+Example:
+
+JobCard:
+id
+ref
+
+TechnicianTask:
+id
+ref
+jobCardId
+technicianEmpId
+
+Staff:
+userId
+empId
+name
+
+Flutter should preserve stable server identifiers.
+
+Do not generate fake local integer IDs for API calls.
+
+==================================================
+TRANSACTION REQUIREMENTS
+==================================================
+
+Every multi-write transition must be transactional.
+
+Especially:
+
+check-in
+repair order creation
+approval
+assignment
+all-work-completed transition
+QC approval
+QC rejection
+invoice creation
+delivery
+
+Failure at any step must roll back the whole operation.
+
+No partial state.
+
+==================================================
+IDEMPOTENCY REQUIREMENTS
+==================================================
+
+Apply correct idempotency to important handoff operations.
+
+Examples:
+
+check-in
+approve estimate
+assign technician
+complete task
+submit QC
+approve QC
+generate invoice
+deliver
+
+Retries must not create:
+
+duplicate JobCards
+duplicate tasks
+duplicate invoice
+duplicate notifications
+duplicate assignments
+
+==================================================
+NOTIFICATION REQUIREMENTS
+==================================================
+
+Every lifecycle transition should notify the correct actor(s).
+
+Examples:
+
+Booking assigned:
+Advisor + Customer
+
+Estimate ready:
+Customer
+
+Customer approval:
+Advisor/Supervisor if needed
+
+Customer rejection/revision:
+Advisor
+
+Task assigned:
+Technician
+
+All work completed:
+Supervisor
+
+QC rejected:
+Technician
+
+QC approved:
+Customer
+
+Invoice generated:
+Customer
+
+Vehicle ready:
+Customer
+
+Do not send "workshop has been informed" if no workshop notification exists.
+
+==================================================
+FLUTTER STATE CONSISTENCY
+==================================================
+
+After every successful mutation:
+
+update or invalidate the correct providers.
+
+Avoid:
+
+local optimistic state claiming success
+while backend has different state.
+
+Important areas:
+
+Advisor check-in
+estimate creation
+customer approval
+task assignment
+technician completion
+QC decision
+delivery
+
+Use typed API responses.
+
+Do not reduce rich responses to bool where the returned IDs/state are needed.
+
+==================================================
+AUTOMATED CROSS-APP TEST SUITE
+==================================================
+
+Create a dedicated automated integration suite.
+
+Suggested location:
+
+backend integration tests
+and/or
+scripts/qa_multi_app_flow.*
+and Flutter integration tests
+
+Do not rely only on UI clicks.
+
+Assert:
+
+HTTP response
+database state
+notification rows
+next-app API visibility
+side effects
+
+==================================================
+MANDATORY TEST CASES
+==================================================
+
+FLOW-001
+Customer creates booking.
+Supervisor sees same booking.
+
+FLOW-002
+Supervisor assigns Advisor.
+Advisor sees booking.
+Customer sees assigned state.
+
+FLOW-003
+Customer cancels before assignment.
+Supervisor cannot assign.
+
+FLOW-004
+Customer cancel and Supervisor assign concurrently.
+Exactly one succeeds.
+
+FLOW-005
+Advisor check-in.
+Exactly one JobCard created.
+
+FLOW-006
+Repeat/double check-in.
+No duplicate JobCard.
+
+FLOW-007
+Inspection attaches to same JobCard.
+
+FLOW-008
+Estimate created.
+Customer sees approval request.
+
+FLOW-009
+Technician attempts task before approval.
+Rejected.
+
+FLOW-010
+Customer approves.
+Job becomes executable.
+
+FLOW-011
+Customer rejects.
+Advisor receives actionable state.
+
+FLOW-012
+Customer requests revision.
+Advisor receives revision request.
+
+FLOW-013
+Advisor reissues revised estimate.
+Customer sees revision.
+
+FLOW-014
+Advisor/Supervisor assigns Technician A.
+Technician A sees work item.
+
+FLOW-015
+Technician B cannot see/mutate Technician A work.
+
+FLOW-016
+Multiple technicians on same JobCard.
+Each sees only own items.
+
+FLOW-017
+Individual task complete.
+Progress correct.
+
+FLOW-018
+Bulk Complete Job.
+Uses valid server task refs.
+
+FLOW-019
+Last required task complete.
+Job transitions to AWAITING_QC exactly once.
+
+FLOW-020
+Two final tasks complete concurrently.
+Only one QC-transition side effect.
+
+FLOW-021
+Supervisor QC reject.
+Job returns to work.
+Affected tasks reopen.
+Technician notified.
+
+FLOW-022
+Supervisor QC approve.
+Job becomes ready for collection.
+Exactly one invoice.
+
+FLOW-023
+Double QC approval.
+Still only one invoice and one completion transition.
+
+FLOW-024
+Customer tracking displays AWAITING_QC.
+
+FLOW-025
+Customer tracking displays READY_FOR_COLLECTION.
+
+FLOW-026
+Delivery before QC.
+Rejected.
+
+FLOW-027
+Delivery after QC.
+Allowed.
+
+FLOW-028
+Technician raw completed status attempt.
+Rejected.
+
+FLOW-029
+Customer raw completed booking attempt.
+Rejected.
+
+FLOW-030
+Owner normal complete bypass.
+Rejected or routed through audited override.
+
+FLOW-031
+Technician resumes app after new assignment.
+New work is visible.
+
+FLOW-032
+Advisor resumes after customer revision.
+Revision is visible.
+
+FLOW-033
+Breakdown raised.
+Supervisor sees it.
+
+FLOW-034
+Breakdown assigned.
+Advisor sees actionable request.
+
+FLOW-035
+Breakdown lifecycle completes.
+
+FLOW-036
+Invoice appears in Customer app after QC.
+
+FLOW-037
+Invoice/payment status appears correctly in Owner.
+
+FLOW-038
+Branch A users cannot affect Branch B flow.
+
+FLOW-039
+Duplicate task assignment retry.
+No duplicate work item.
+
+FLOW-040
+Lost HTTP response + retry.
+Business operation occurs once.
+
+==================================================
+MULTI-APP TEST USERS
+==================================================
+
+Where test infrastructure allows, create fixtures:
+
+Customer A
+Customer B
+
+Supervisor Branch A
+Supervisor Branch B
+
+Advisor A
+Advisor B
+
+Technician A
+Technician B
+
+Owner
+
+CRM user
+
+Use them to test actual role boundaries and state visibility.
+
+==================================================
+DATABASE ASSERTIONS
+==================================================
+
+Do NOT call an E2E test successful only because API returns 200.
+
+For every critical flow assert relevant tables.
+
+Examples:
+
+booking
+job_card
+inspection
+repair_order
+approval
+technician_task
+invoice
+notification
+activity/audit
+payment
+breakdown
+
+Check:
+
+correct row count
+correct IDs
+correct references
+correct state
+no duplicates
+correct branch
+correct owner
+
+==================================================
+TEST FAILURE INJECTION
+==================================================
+
+Force failures during:
+
+check-in
+repair order
+task assignment
+QC approval
+invoice creation
+delivery
+
+Verify full rollback.
+
+Example:
+
+QC approval:
+
+set state AWAITING_QC
+→ change state
+→ invoice insert fails
+
+Expected:
+
+state remains AWAITING_QC
+no completion notification
+no partial invoice
+no webhook
+
+==================================================
+CONCURRENCY TESTING
+==================================================
+
+Test simultaneously:
+
+cancel vs assign
+
+double check-in
+
+two supervisors assign same booking
+
+two advisors create estimate
+
+customer double approve
+
+two technicians finish last tasks
+
+double QC approve
+
+double deliver
+
+No duplicated or invalid state should occur.
+
+==================================================
+CODE CLEANUP
+==================================================
+
+After canonical workflow is working:
+
+remove or deprecate:
+
+legacy task assignment paths
+unused status update functions
+duplicated assignment models
+local-only fake update controls
+unused endpoints that bypass workflow
+
+Do not leave dangerous legacy endpoints active just because UI no longer calls them.
+
+==================================================
+API CONTRACT TESTING
+==================================================
+
+For every Flutter request model compare against backend DTO.
+
+Automate this where practical.
+
+Specifically inspect:
+
+field names
+nullable/non-null
+ID/ref types
+enum/status values
+nested objects
+dates
+numbers
+
+No silent payload mismatch.
+
+==================================================
+CI INTEGRATION
+==================================================
+
+Add multi-app flow tests as release gates.
+
+Production artifact should not be created if:
+
+multi-app integration test fails
+workflow test fails
+security/branch test fails
+backend integration test fails
+
+Recommended:
+
+unit
+→ backend integration
+→ API contract
+→ multi-app seamless flow
+→ Flutter integration
+→ release
+
+==================================================
+PRODUCTION AUDIT DOCUMENTATION
+==================================================
+
+Create/update:
+
+docs/qa/MULTI_APP_FLOW_AUDIT.md
+
+Include columns:
+
+ID
+Severity
+Flow
+Source App
+Target App
+Backend Component
+Issue
+Root Cause
+Fix
+Test
+Status
+
+Statuses:
+
+TODO
+IN_PROGRESS
+FIXED
+VERIFIED
+BLOCKED
+
+Also create/update:
+
+docs/qa/MULTI_APP_TEST_MATRIX.md
+
+Columns:
+
+Test ID
+Precondition
+Actor
+Action
+Expected Backend State
+Expected Next App State
+Expected Notification
+Automation
+Result
+
+==================================================
+WORKING METHOD
+==================================================
+
+For every issue:
+
+TRACE CURRENT CODE
+↓
+REPRODUCE THROUGH TEST IF POSSIBLE
+↓
+IDENTIFY ROOT CAUSE
+↓
+FIX DOMAIN LOGIC
+↓
+FIX API CONTRACT
+↓
+FIX FLUTTER CALLER
+↓
+ADD TEST
+↓
+RUN TEST
+↓
+VERIFY NEXT APP VISIBILITY
+↓
+VERIFY DATABASE
+↓
+REGRESSION TEST
+↓
+MARK VERIFIED
+
+Do not stop after producing documentation.
+
+==================================================
+VERY IMPORTANT
+==================================================
+
+Do NOT:
+
+- merely rename statuses
+- hide broken buttons
+- patch Flutter only
+- trust frontend state
+- create another workflow service beside existing ones without consolidating
+- preserve three technician assignment systems
+- create duplicate JobCards
+- allow direct "completed" state writes
+- mark tests passed without running them
+- rely on existing QA reports
+- rewrite unrelated UI
+- make broad architecture changes without preserving working functionality
+
+==================================================
+IMPLEMENTATION ORDER
+==================================================
+
+Work in this exact order:
+
+1. JobWorkflowService/state machine
+2. Remove raw state mutation bypasses
+3. QC approve atomic flow
+4. QC reject flow
+5. Technician task identifier bug
+6. Complete Job flow
+7. Technician direct parent-complete bypass
+8. Canonical technician WorkItem assignment
+9. Migrate Supervisor Save & Assign
+10. Migrate Advisor Assign Tasks
+11. Enforce customer approval gate
+12. Single JobCard per booking
+13. Check-in typed response
+14. Customer service tracking projection
+15. Customer booking action restrictions
+16. cancellation/assignment race
+17. reject/revision handoff
+18. delivery restriction
+19. Owner override handling
+20. app refresh/provider invalidation
+21. breakdown end-to-end
+22. CRM integration decision/implementation
+23. payment if in release scope
+24. concurrency tests
+25. cross-app E2E
+26. CI release gate
+27. final cleanup
+
+==================================================
+FINAL VERIFICATION
+==================================================
+
+Run all available:
+
+Flutter:
+melos bootstrap
+dart format .
+melos run analyze
+melos run test
+
+Backend:
+./mvnw test
+./mvnw verify
+
+Then run:
+
+API contract tests
+workflow tests
+multi-role tests
+branch tests
+multi-app E2E
+concurrency tests
+
+If Flutter SDK/device/emulator/database/test container is unavailable:
+
+mark that test:
+
+BLOCKED
+
+State:
+
+- command attempted
+- exact error
+- environment required
+
+Never claim BLOCKED tests passed.
+
+==================================================
+FINAL REPORT
+==================================================
+
+At completion state clearly:
+
+1. Which flows were broken initially.
+2. Which flows were fixed.
+3. Which legacy paths were removed.
+4. Which assignment architecture is now canonical.
+5. Which JobCard states are canonical.
+6. Which Flutter apps were changed.
+7. Which backend modules were changed.
+8. Which API contracts changed.
+9. Which automated tests were added.
+10. Which tests passed.
+11. Which tests failed.
+12. Which tests remain blocked.
+13. Which feature flows remain incomplete.
+14. Whether Customer → Supervisor → Advisor → Technician → Supervisor → Customer is VERIFIED.
+15. Whether Owner integration is VERIFIED.
+16. Whether CRM integration is VERIFIED or intentionally separate.
+17. Final GO / NO-GO recommendation.
+
+START NOW.
+
+Do not start from documentation.
+
+Start by reading the actual source for:
+
+JobCard status writers
+Supervisor QC
+Technician task assignment
+Technician complete-job
+Advisor check-in
+Inspection creation
+Customer approval
+Booking cancellation/assignment
+Customer tracking
+Delivery
+Owner status mutation
+
+Then implement the central workflow architecture and fix the P0 issues first.
+
+Do NOT stop at analysis.
+Actually modify, test, and verify the repository.

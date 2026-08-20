@@ -1,0 +1,1571 @@
+You are working as the Lead Flutter Engineer, Senior Java/Spring Boot Engineer,
+Security Engineer, DevOps Engineer, and Senior QA Automation Engineer for this project.
+
+PROJECT:
+Orient Workshop Management System
+
+STACK:
+- Flutter
+- Dart
+- Riverpod
+- GoRouter
+- Dio
+- Hive / offline storage
+- Melos monorepo
+- Java 17
+- Spring Boot
+- Spring Security
+- MyBatis / MyBatis Plus
+- MySQL
+- Flyway
+- JWT
+- Maven
+- Docker
+- GitHub Actions
+
+APPLICATIONS:
+- apps/customer_app
+- apps/staff_app
+- apps/owner_app
+- apps/crm_app
+
+SHARED PACKAGES:
+- packages/shared_core
+- packages/shared_auth
+- packages/shared_models
+
+BACKEND:
+- orient-workshop-backend
+
+IMPORTANT:
+This is NOT a code-review-only task.
+
+You MUST actually:
+1. Inspect the complete repository.
+2. Understand the existing architecture.
+3. Reproduce problems where possible.
+4. Modify the code.
+5. Write tests.
+6. Run tests.
+7. Fix failing tests.
+8. Run static analysis.
+9. Build applications where possible.
+10. Verify backend + Flutter contracts.
+11. Update CI/CD.
+12. Continue until the repository is production-ready or every remaining blocker is explicitly documented.
+
+DO NOT simply generate a report and stop.
+
+==================================================
+PRIMARY OBJECTIVE
+==================================================
+
+Take this project from its current state to a production-grade,
+security-hardened, heavily-tested workshop-management platform.
+
+Prioritize:
+
+P0
+- Data corruption
+- Cross-user data leakage
+- Cross-branch access
+- Authorization bypass
+- Offline sync corruption
+- Idempotency problems
+- Transaction failures
+- Incorrect successful API responses
+
+P1
+- Authentication/session bugs
+- Local cache leakage
+- release signing
+- CI/CD release safety
+- booking concurrency
+- routing authorization
+- offline retry/data-loss issues
+
+P2
+- Missing automated tests
+- performance
+- accessibility
+- responsiveness
+- observability
+- dependency/security scanning
+- code quality
+
+Do NOT spend time polishing UI until P0/P1 issues are fixed.
+
+==================================================
+PHASE 1 — REPOSITORY ANALYSIS
+==================================================
+
+First inspect:
+
+- melos.yaml
+- root pubspec
+- all Flutter app pubspecs
+- shared package pubspecs
+- analysis_options.yaml
+- GitHub Actions
+- Android/iOS configs
+- environment configuration
+- authentication
+- networking
+- Hive/local persistence
+- offline sync
+- role management
+- routing
+- API repositories/data sources
+- Java Spring Security
+- controllers
+- services
+- repositories/mappers
+- Flyway migrations
+- transaction boundaries
+- Docker
+- Maven
+- current tests
+- QA scripts
+- Postman collections
+
+Create/update:
+
+docs/production_audit.md
+
+with:
+
+- issue ID
+- severity
+- status
+- affected files
+- root cause
+- solution
+- tests added
+- verification result
+
+Use statuses:
+
+TODO
+IN_PROGRESS
+FIXED
+VERIFIED
+BLOCKED
+
+Do not rely on the report as evidence.
+The code and tests must prove each fix.
+
+==================================================
+P0-01 — FIX IDEMPOTENCY ARCHITECTURE
+==================================================
+
+Inspect:
+
+packages/shared_core/lib/src/local/helpers/id_generator.dart
+
+and backend IdempotencyFilter implementation.
+
+Current risk:
+
+Client-generated sequential/local IDs such as:
+
+BK-YYYY-MM-DD-0001
+
+can collide between different devices/users.
+
+Backend currently must NOT treat only the raw idempotency key as globally unique.
+
+Replace operation-level identifiers with a collision-resistant identifier:
+
+Preferred:
+- UUID v7
+or
+- ULID
+or
+- UUID v4 if required.
+
+Do NOT use device-local sequential counters as globally unique request IDs.
+
+Backend idempotency identity should incorporate appropriate dimensions such as:
+
+authenticated user
+tenant/workshop
+branch where applicable
+HTTP method
+endpoint
+idempotency key
+
+Example conceptual key:
+
+SHA256(
+  userId +
+  branchId +
+  method +
+  normalizedPath +
+  idempotencyKey
+)
+
+Do NOT allow:
+
+User A:
+POST /sync/repair-orders
+key abc
+
+to collide with:
+
+User B:
+POST /sync/repair-orders
+key abc
+
+or:
+
+User A:
+POST /sync/bookings
+key abc
+
+Add DB migration if required.
+
+Add automated tests:
+
+SYNC-IDEM-001
+same user + same endpoint + same key
+=> response replayed safely
+
+SYNC-IDEM-002
+different users + same key
+=> separate operations
+
+SYNC-IDEM-003
+same user + different endpoints + same key
+=> separate operations
+
+SYNC-IDEM-004
+different branches + same key
+=> separate operations
+
+SYNC-IDEM-005
+same retry sent multiple times concurrently
+=> exactly one business mutation
+
+==================================================
+P0-02 — FIX OFFLINE SYNC FALSE SUCCESS
+==================================================
+
+Inspect SyncController and all sync mutation paths.
+
+Look specifically for patterns such as:
+
+try {
+    performDatabaseChanges();
+} catch (...) {
+    log...
+}
+
+followed by:
+
+return ApiResponse.success(...)
+
+This is unacceptable for business mutations.
+
+If the business mutation fails:
+
+- do NOT swallow the exception
+- do NOT return HTTP success
+- do NOT tell Flutter the operation synced
+- do NOT remove the queued operation
+
+Return correct failure semantics.
+
+Flutter must keep the operation queued/retryable.
+
+Use typed backend exceptions and centralized exception handling.
+
+Add tests that simulate failures halfway through operations.
+
+Example:
+
+RepairOrder creation:
+
+create repair order
+create services
+create parts
+update job card
+create approval
+
+If ANY step fails:
+
+NO partial state may remain.
+
+==================================================
+P0-03 — FIX SPRING TRANSACTION BOUNDARIES
+==================================================
+
+Inspect SyncController methods containing @Transactional.
+
+Do NOT depend on @Transactional methods being called internally from
+the same Spring bean/controller.
+
+Move business mutations from controller into proper application/service classes.
+
+Example architecture:
+
+SyncController
+      ↓
+SyncApplicationService
+      ↓
+@Transactional
+applyRepairOrder()
+
+Controllers must only:
+
+- validate request
+- resolve authenticated user
+- invoke service
+- return response
+
+Business transactions belong in services.
+
+Ensure exceptions propagate through transactional proxy.
+
+Add rollback tests.
+
+Example test:
+
+Insert repair order
+Insert service item
+force exception
+verify:
+
+repair_order count unchanged
+service count unchanged
+part count unchanged
+job card unchanged
+approval unchanged
+
+==================================================
+P0-04 — HARDEN /sync/** AUTHORIZATION
+==================================================
+
+Inspect Spring Security configuration.
+
+Do NOT use one broad rule such as:
+
+/sync/**
+→ advisor/supervisor/technician/owner/admin
+
+Create endpoint-specific authorization.
+
+Example:
+
+/sync/inspections/**
+ADVISOR
+SUPERVISOR
+OWNER
+ADMIN
+
+/sync/repair-orders/**
+ADVISOR
+SUPERVISOR
+OWNER
+ADMIN
+
+/sync/jobs/complete/**
+TECHNICIAN
+SUPERVISOR
+OWNER
+ADMIN
+
+/sync/supervisor/**
+SUPERVISOR
+OWNER
+ADMIN
+
+But role checking alone is NOT enough.
+
+Every mutation must validate object ownership/scope.
+
+Validate:
+
+authenticated user
+role
+branch
+workshop
+job
+booking
+customer
+technician
+advisor
+repair order
+
+Never trust IDs supplied by Flutter.
+
+Create reusable authorization/domain-policy services where appropriate.
+
+==================================================
+P0-05 — FIX BRANCH / TENANT ISOLATION
+==================================================
+
+Audit EVERY backend API for branch isolation.
+
+Pay special attention to:
+
+SupervisorDashboardController
+SupervisorKpiService
+Supervisor queue
+Advisor APIs
+Technician APIs
+Owner APIs
+CRM APIs
+Sync APIs
+Booking assignment APIs
+Job-card APIs
+Inspection APIs
+Repair-order APIs
+
+Look for dangerous queries like:
+
+selectList(null)
+countOpen()
+countCompletedToday()
+findUnassigned()
+
+without authenticated branch filtering.
+
+Every non-global operation must be scoped by branch/workshop.
+
+Example forbidden scenario:
+
+Supervisor Branch A
+
+requests:
+
+Branch B booking
+Branch B job
+Branch B technician
+Branch B advisor
+
+Expected:
+
+403 or 404
+
+Never return data from another branch.
+
+Do not implement authorization only in Flutter.
+Backend is authoritative.
+
+Add complete branch-isolation integration tests.
+
+==================================================
+P1-01 — FIX LOGOUT / LOCAL DATA ISOLATION
+==================================================
+
+Audit all logout paths.
+
+Currently some screens may call AuthNotifier.logout() directly.
+
+Create ONE centralized logout/session termination mechanism.
+
+Example:
+
+SessionManager.logout()
+
+Responsibilities:
+
+1. block new sync operations
+2. resolve pending sync decision
+3. resolve pending media
+4. cancel background requests
+5. cancel refresh operations
+6. clear access token
+7. clear refresh token
+8. clear user-specific secure storage
+9. clear user-specific Hive data
+10. invalidate Riverpod providers
+11. reset navigation
+12. return to login
+
+No screen should implement logout independently.
+
+Search the repository for every:
+
+logout(
+AuthNotifier.logout
+Hive.clear
+token delete
+router logout redirect
+
+and centralize behavior.
+
+Add tests:
+
+SESSION-001
+User A login
+cache data
+logout
+User B login
+=> zero User-A data
+
+SESSION-002
+logout with queued offline operation
+=> explicit safe handling
+
+SESSION-003
+logout with pending media
+=> media cannot silently disappear
+
+SESSION-004
+logout during token refresh
+
+SESSION-005
+logout during sync
+
+==================================================
+P1-02 — FIX PENDING MEDIA LOGIC
+==================================================
+
+Inspect HiveCleaner.hasPendingSync() and related logic.
+
+Pending work should consider:
+
+sync_queue
+sync_failed
+pending_media
+and any other locally persisted unsent business data.
+
+Do not allow logout/cache clearing to destroy unsent media.
+
+==================================================
+P1-03 — ADD REAL DEAD LETTER QUEUE
+==================================================
+
+Inspect sync_engine.dart.
+
+Never permanently delete a failed business operation just because:
+
+retryCount >= 3
+
+Instead implement:
+
+sync_queue
+     ↓
+retry
+     ↓
+sync_failed / dead_letter
+
+Failed operations must remain recoverable.
+
+Store:
+
+operation ID
+payload
+type
+createdAt
+lastAttemptAt
+retryCount
+lastError
+HTTP status
+server correlation ID
+user
+branch where safe/appropriate
+
+Expose an appropriate recovery mechanism.
+
+Actions may include:
+
+Retry
+Retry All
+Inspect
+Discard with confirmation
+
+No silent deletion.
+
+==================================================
+P1-04 — FIX BOOKING CAPACITY + CONCURRENCY
+==================================================
+
+Audit workshop booking availability.
+
+If:
+
+workshopCapacity = 8
+
+one booking at 10:00 must NOT make the entire 10:00 slot unavailable.
+
+Track capacity count per slot.
+
+Example:
+
+capacity = 8
+booked = 3
+remaining = 5
+
+Most importantly:
+
+capacity enforcement must happen atomically in backend/database.
+
+Do NOT rely on:
+
+Flutter availability
+or
+read-count → insert
+
+without concurrency protection.
+
+Handle concurrent requests safely.
+
+Use appropriate:
+
+transaction isolation
+row locking
+unique/constraint design
+atomic update
+or other proper concurrency mechanism.
+
+Add concurrency test:
+
+20 simultaneous users request a slot with capacity 8.
+
+Expected:
+
+8 successful
+12 rejected
+
+Never > 8.
+
+==================================================
+P1-05 — HARDEN FLUTTER ROLE ROUTING
+==================================================
+
+Audit GoRouter configuration across all apps.
+
+Staff app contains multiple roles.
+
+Do not check only:
+
+"is staff role"
+
+Define a centralized route authorization matrix.
+
+Example:
+
+RoutePermission(
+ path: supervisorQueue,
+ roles: {
+   UserRole.supervisor,
+   UserRole.owner,
+   UserRole.admin,
+ },
+)
+
+Deep links must also respect permissions.
+
+Tests:
+
+Advisor → supervisor route => blocked
+
+Technician → advisor restricted route => blocked
+
+Customer → staff route => blocked
+
+Unauthenticated user → protected route => login
+
+Expired session → protected deep link => login
+
+Remember:
+Flutter restrictions are UX defense.
+Backend authorization remains mandatory.
+
+==================================================
+P1-06 — RELEASE SIGNING MUST FAIL CLOSED
+==================================================
+
+Inspect Android Gradle configs and GitHub Actions.
+
+Production release artifacts must NEVER silently use debug signing.
+
+Current desired behavior:
+
+if release keystore missing:
+
+production build
+=> FAIL
+
+Internal/debug CI builds may explicitly use debug signing.
+
+Separate clearly:
+
+development
+staging
+production
+
+For production:
+
+require:
+
+KEYSTORE
+KEY_ALIAS
+KEY_PASSWORD
+STORE_PASSWORD
+
+Never commit secrets.
+
+Add CI validation before build.
+
+Prefer AAB for Play Store production releases.
+
+==================================================
+P1-07 — FIX CI RELEASE DEPENDENCIES
+==================================================
+
+Inspect:
+
+.github/workflows/ci.yml
+
+Release artifact generation must depend on ALL critical gates.
+
+Target pipeline:
+
+secret-scan
+      ↓
+static-analysis
+      ↓
+flutter-tests
+      ↓
+backend-tests
+      ↓
+api-contract-tests
+      ↓
+security-tests
+      ↓
+DB/integration-tests
+      ↓
+cross-role-e2e
+      ↓
+release-build
+
+A failure in:
+
+backend
+E2E
+security
+integration
+
+must prevent production artifacts.
+
+Do not allow:
+
+Flutter tests pass
+backend fails
+release APK still created
+
+Add coverage artifacts/reports.
+
+==================================================
+P1-08 — INTEGRATE EXISTING QA AUTOMATION INTO CI
+==================================================
+
+The repository already contains useful scripts such as:
+
+scripts/qa_api_suite.ps1
+scripts/qa_ui_responsive.ps1
+scripts/test_seamless_flow.ps1
+scripts/loadtest.js
+
+Inspect them first.
+
+Do not duplicate them unnecessarily.
+
+Improve them and integrate appropriate suites into CI.
+
+qa_api_suite should act as an API regression gate.
+
+Responsive tests should run where Android/emulator infrastructure is available.
+
+Load tests do not necessarily need to run on every commit,
+but must be available in a staging/performance workflow.
+
+==================================================
+P1-09 — FIX ENVIRONMENT CONFIGURATION
+==================================================
+
+Inspect:
+
+packages/shared_core/pubspec.yaml
+
+and:
+
+assets/.env
+
+Clean repository setup must be deterministic.
+
+Do not require an untracked mandatory Flutter asset that makes:
+
+git clone
+flutter pub get
+flutter run
+
+fail unexpectedly.
+
+Provide:
+
+.env.example
+
+if env files are kept.
+
+Prefer properly separated build environments/flavors.
+
+Production must NEVER silently default to:
+
+localhost
+dev
+test backend
+
+Backend must also fail safely if production configuration is missing.
+
+Do not default deployments to dev profile.
+
+==================================================
+P1-10 — MELOS / WORKSPACE HARDENING
+==================================================
+
+Inspect the installed/expected Melos version and configuration.
+
+Do not use:
+
+dart pub global activate melos
+
+without version control if project configuration depends on a specific Melos version.
+
+Either:
+
+A. migrate correctly to current supported Melos workspace architecture
+
+OR
+
+B. pin a compatible Melos version.
+
+Make bootstrap deterministic locally and in CI.
+
+Update README commands.
+
+==================================================
+TESTING REQUIREMENTS
+==================================================
+
+The current automated test coverage is too low,
+especially for:
+
+staff_app
+customer_app
+owner_app
+crm_app
+shared_auth
+Java backend
+
+Expand tests aggressively.
+
+Use:
+
+Flutter unit tests
+Flutter widget tests
+Flutter integration_test
+repository tests
+Riverpod provider tests
+router tests
+Dio/interceptor tests
+Hive tests
+offline tests
+Java unit tests
+Spring integration tests
+Testcontainers
+MockMvc
+concurrency tests
+security tests
+API contract tests
+E2E tests
+
+==================================================
+FLUTTER TEST AREAS
+==================================================
+
+AUTH
+
+Test:
+
+valid login
+invalid login
+empty fields
+malformed phone/email
+API timeout
+API 400
+API 401
+API 403
+API 404
+API 409
+API 422
+API 429
+API 500
+no internet
+slow internet
+double tap
+token expiry
+refresh success
+refresh failure
+concurrent refresh requests
+logout
+logout offline
+logout during sync
+logout during refresh
+
+NETWORK
+
+Test:
+
+timeouts
+retry rules
+request cancellation
+401 interceptor
+refresh-token race
+multiple simultaneous 401s
+server malformed JSON
+empty response
+unexpected fields
+null fields
+500
+502
+503
+504
+
+HIVE / OFFLINE
+
+Test:
+
+restart persistence
+schema migration
+corrupted value
+failed sync
+duplicate sync
+retry
+dead-letter queue
+logout cleanup
+account switch
+pending media
+device restart
+network transition offline→online
+
+ROUTING
+
+Test:
+
+authentication guard
+role guard
+deep linking
+back button
+logout navigation
+invalid URL
+missing entity
+expired entity
+direct supervisor routes
+direct owner routes
+direct technician routes
+
+UI
+
+Test every major screen for:
+
+loading
+success
+empty
+failure
+retry
+offline
+partial data
+very long text
+large accessibility font
+small mobile
+large phone
+tablet
+landscape
+keyboard opened
+rapid tapping
+double submission
+
+==================================================
+BACKEND TEST AREAS
+==================================================
+
+AUTHORIZATION
+
+For every protected endpoint test:
+
+no token
+invalid token
+expired token
+wrong role
+correct role
+wrong branch
+wrong workshop
+object from another branch
+deleted object
+nonexistent object
+tampered ID
+
+IDOR
+
+Attempt changing every ID in API paths:
+
+bookingId
+jobCardId
+advisorId
+technicianId
+customerId
+inspectionId
+repairOrderId
+invoiceId
+branchId
+workshopId
+
+The backend must validate authorization, not just existence.
+
+INPUT VALIDATION
+
+Test:
+
+null
+empty
+max length
+over max length
+negative values
+zero
+very large values
+invalid enum
+malformed date
+past/future invalid date
+malformed JSON
+duplicate request
+unexpected JSON properties
+SQL injection strings
+XSS strings
+Unicode
+emoji
+
+TRANSACTIONS
+
+Inject failures at every stage of multi-write business flows.
+
+Ensure full rollback.
+
+CONCURRENCY
+
+Test:
+
+booking capacity
+repair-order updates
+job completion
+assignment
+approval
+invoice creation
+sync duplicate retries
+same operation from multiple requests
+
+==================================================
+CROSS-APPLICATION END-TO-END TESTS
+==================================================
+
+Create real automated workflow coverage.
+
+FLOW 1 — SERVICE BOOKING
+
+Customer:
+login
+add vehicle
+book service
+
+Supervisor:
+see booking
+assign advisor
+
+Advisor:
+open booking
+check-in
+inspection
+repair estimate/order
+
+Customer:
+review estimate
+approve/reject
+
+Supervisor:
+assign technician
+
+Technician:
+start job
+update work
+complete job
+
+Supervisor:
+review/QC
+
+Invoice:
+generated
+
+Customer:
+view invoice/service status
+
+Assert database state after every stage.
+
+==================================================
+
+FLOW 2 — BREAKDOWN
+
+Customer:
+raise breakdown
+
+Advisor/Supervisor:
+receive request
+
+Assignment
+Repair workflow
+Completion
+
+Test:
+
+offline
+duplicate submission
+reconnection
+cancellation
+
+==================================================
+
+FLOW 3 — MULTI-BRANCH SECURITY
+
+Create:
+
+Branch A
+Branch B
+
+Users in both.
+
+Attempt every cross-branch mutation and read.
+
+Expected:
+
+NO cross-branch access.
+
+==================================================
+
+FLOW 4 — OFFLINE FIRST
+
+Disconnect staff device.
+
+Create:
+
+inspection
+repair order
+job update
+media
+
+Restart app.
+
+Reconnect.
+
+Assert:
+
+operations remain
+operations sync exactly once
+media syncs
+no duplicates
+no data loss
+server state correct
+
+==================================================
+PERFORMANCE TESTING
+==================================================
+
+Inspect Flutter rebuild behavior.
+
+Check:
+
+unnecessary rebuilds
+large widgets
+Riverpod watch scope
+ListView rendering
+images
+memory
+timers
+streams
+controllers
+Dio requests
+duplicate API requests
+background sync
+
+Fix:
+
+undisposed controllers
+timers
+subscriptions
+focus nodes
+
+Test backend with k6 or existing loadtest.js.
+
+Measure:
+
+p50
+p95
+p99
+error %
+requests/sec
+
+Test critical APIs.
+
+==================================================
+SECURITY HARDENING
+==================================================
+
+Inspect:
+
+JWT configuration
+refresh token lifecycle
+password hashing
+CORS
+Swagger exposure
+actuator endpoints
+rate limiting
+file upload
+MIME validation
+path traversal
+SQL queries
+logs
+sensitive data
+PII
+exception responses
+stack traces
+Docker secrets
+.env
+Git history exposure
+Android backup
+clear-text HTTP
+WebView if any
+local storage
+
+Production Swagger should not simply be public unless deliberately required.
+
+Do not expose stack traces or internal SQL errors.
+
+==================================================
+MOBILE STORAGE SECURITY
+==================================================
+
+Audit what is stored in Hive.
+
+Classify data:
+
+non-sensitive
+PII
+business-sensitive
+authentication-sensitive
+
+Tokens must remain in secure platform storage.
+
+Consider encryption for sensitive offline Hive databases.
+
+Review Android:
+
+allowBackup
+dataExtractionRules
+networkSecurityConfig
+
+Configure production-safe policies.
+
+Review equivalent iOS behavior.
+
+==================================================
+OBSERVABILITY
+==================================================
+
+Production apps should have:
+
+structured logging
+request/correlation IDs
+crash reporting
+backend error tracking
+health monitoring
+
+Do not log:
+
+tokens
+passwords
+OTP
+sensitive customer data
+
+Implement a centralized logging abstraction.
+
+Use Crashlytics/Sentry or another supported production solution if project requirements allow it.
+
+==================================================
+ACCESSIBILITY / RESPONSIVE QA
+==================================================
+
+Use and improve the existing responsive QA tooling.
+
+Test:
+
+320px
+360px
+375px
+390px
+412px
+480px
+tablet
+landscape
+
+Text scale:
+
+1.0
+1.3
+1.5
+2.0
+
+Check:
+
+overflow
+clipping
+touch targets >= appropriate accessibility guidelines
+scrollability
+keyboard obstruction
+screen reader semantics
+contrast
+focus behavior
+
+==================================================
+COVERAGE TARGETS
+==================================================
+
+Do NOT artificially test meaningless lines just to increase percentages.
+
+Targets:
+
+Auth/session/token:
+90%+
+
+Sync engine:
+95%+
+
+Critical domain/business rules:
+90%+
+
+Backend services:
+85%+
+
+Repositories/data sources:
+75-85%
+
+Security/branch policy:
+100% behavior coverage
+
+Critical E2E journeys:
+100%
+
+Add CI coverage thresholds where reasonable.
+
+==================================================
+CODE QUALITY RULES
+==================================================
+
+Do not:
+
+- rewrite the entire architecture unnecessarily
+- duplicate shared logic
+- add massive god classes
+- hardcode roles throughout widgets
+- hardcode URLs
+- expose secrets
+- suppress exceptions
+- silently ignore failures
+- add fake successful responses
+- delete failed business operations automatically
+- trust frontend authorization
+- make unrelated visual changes
+
+Prefer:
+
+small services
+domain policies
+centralized auth
+centralized routing permissions
+centralized error handling
+typed failures
+clear transaction boundaries
+testable repositories/services
+
+==================================================
+VERIFICATION LOOP
+==================================================
+
+After each major set of changes run:
+
+melos bootstrap
+
+dart format .
+
+melos run analyze
+
+melos run test
+
+Backend:
+
+./mvnw test
+
+and where suitable:
+
+./mvnw verify
+
+Then run:
+
+API QA
+E2E tests
+security tests
+integration tests
+
+Run Flutter integration tests where supported.
+
+Build each app:
+
+customer_app
+staff_app
+owner_app
+crm_app
+
+Use production/release configuration.
+
+Never mark something VERIFIED unless the relevant test/build actually passed.
+
+==================================================
+FINAL QA REPORT
+==================================================
+
+Update:
+
+docs/production_audit.md
+
+Create:
+
+docs/qa/PRODUCTION_READINESS_REPORT.md
+
+Include:
+
+1. Executive summary
+2. P0 issues
+3. P1 issues
+4. P2 issues
+5. Files modified
+6. Security improvements
+7. Backend improvements
+8. Flutter improvements
+9. Sync improvements
+10. Authentication improvements
+11. CI/CD improvements
+12. Tests added
+13. Tests passed
+14. Tests failed
+15. Blocked tests
+16. Coverage
+17. Known limitations
+18. Production checklist
+
+Also create:
+
+docs/qa/TEST_MATRIX.md
+
+Columns:
+
+ID
+Application
+Module
+Scenario
+Preconditions
+Steps
+Expected Result
+Automation Type
+Priority
+Status
+
+==================================================
+IMPORTANT WORKING STYLE
+==================================================
+
+Do not stop after finding problems.
+
+Use this loop:
+
+INSPECT
+↓
+IDENTIFY
+↓
+REPRODUCE
+↓
+FIX
+↓
+WRITE TEST
+↓
+RUN TEST
+↓
+FIX TEST/IMPLEMENTATION
+↓
+RETEST
+↓
+REGRESSION TEST
+↓
+MARK VERIFIED
+
+Continue module-by-module.
+
+Do not claim the project is production-ready until all P0 issues are resolved and verified.
+
+If an external dependency/environment prevents a test:
+
+mark it:
+
+BLOCKED
+
+and state:
+
+exact command attempted
+exact reason
+what environment is required
+
+Never mark blocked tests as passed.
+
+==================================================
+STARTING PRIORITY
+==================================================
+
+Start work in this exact order:
+
+1. Idempotency
+2. Sync transaction boundaries
+3. Sync error propagation
+4. Sync RBAC
+5. Branch isolation
+6. Logout/user cache isolation
+7. Pending media
+8. Dead-letter queue
+9. Booking concurrency
+10. Route role guards
+11. CI release gates
+12. Release signing
+13. Environment configuration
+14. Melos/workspace consistency
+15. Flutter automated tests
+16. Java integration/security tests
+17. Cross-role E2E
+18. Performance
+19. Accessibility/responsive QA
+20. Observability
+
+Begin by inspecting the current implementation of items 1-5.
+
+Do NOT ask me to manually identify files that can be discovered from the repository.
+
+Do NOT give me a plan and stop.
+
+Actually modify, test, iterate, and finish as much as possible.
