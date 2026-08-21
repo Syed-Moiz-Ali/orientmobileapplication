@@ -2,6 +2,8 @@ package com.orient.workshop.sync.filter;
 
 import com.orient.workshop.sync.model.entity.IdempotencyRecord;
 import com.orient.workshop.sync.repository.IdempotencyKeyMapper;
+import com.orient.workshop.sync.service.IdempotencyScope;
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,22 +11,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.HexFormat;
 import java.util.Optional;
 
 /**
  * H-6: idempotency for write requests (POST/PUT/PATCH) carrying an Idempotency-Key.
  *
  * - /auth/** and /media/** are excluded entirely (never cache credentials/media).
- * - Keys are stored as a SHA-256 hash, never the raw value.
+ * - Keys are stored as a SHA-256 hash of user + branch + method + path + key,
+ *   never the raw value.
  * - Lookups respect the TTL (7 days by default).
  * - Insert is atomic: the unique index on idempotency_key resolves races; a
  *   duplicate insert replays the already-stored response instead of re-executing.
@@ -60,7 +62,13 @@ public class IdempotencyFilter implements Filter {
             return;
         }
 
-        String hashedKey = sha256Hex(idempotencyKey.trim());
+        JwtUserPrincipal principal = currentPrincipal();
+        String hashedKey = IdempotencyScope.scopedHash(
+                principal,
+                httpReq.getMethod(),
+                httpReq.getRequestURI().substring(httpReq.getContextPath().length()),
+                idempotencyKey,
+                branchId(principal, httpReq));
         LocalDateTime cutoff = LocalDateTime.now().minusDays(ttlDays);
 
         Optional<IdempotencyRecord> existing = idempotencyKeyMapper.findByKeyWithinTtl(hashedKey, cutoff);
@@ -110,6 +118,25 @@ public class IdempotencyFilter implements Filter {
         return path.contains("/auth/") || path.contains("/media/");
     }
 
+    private JwtUserPrincipal currentPrincipal() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof JwtUserPrincipal principal) {
+            return principal;
+        }
+        return null;
+    }
+
+    private Long branchId(JwtUserPrincipal principal, HttpServletRequest request) {
+        if (principal != null && principal.getBranchId() != null) return principal.getBranchId();
+        String branchHeader = request.getHeader("X-Branch-Id");
+        if (branchHeader == null || branchHeader.isBlank()) return null;
+        try {
+            return Long.parseLong(branchHeader);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private void replay(IdempotencyRecord record, HttpServletResponse httpRes) throws IOException {
         httpRes.setStatus(record.getHttpStatus() != null ? record.getHttpStatus() : 200);
         httpRes.setContentType("application/json");
@@ -118,12 +145,4 @@ public class IdempotencyFilter implements Filter {
         }
     }
 
-    private String sha256Hex(String value) {
-        try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
-                    .digest(value.getBytes(StandardCharsets.UTF_8)));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 unavailable", e);
-        }
-    }
 }

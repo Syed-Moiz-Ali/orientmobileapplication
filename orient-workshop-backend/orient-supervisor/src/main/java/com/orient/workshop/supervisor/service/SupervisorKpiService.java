@@ -1,6 +1,7 @@
 package com.orient.workshop.supervisor.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.core.model.entity.JobCard;
 import com.orient.workshop.core.model.entity.Staff;
 import com.orient.workshop.core.repository.JobCardMapper;
@@ -26,14 +27,20 @@ public class SupervisorKpiService {
     private final StaffMapper staffMapper;
     private final SupervisorStatsMapper statsMapper;
 
-    public List<KpiResponse> getKpis() {
-        long pending = jobCardMapper.countOpen();
-        long completedToday = jobCardMapper.countCompletedToday();
+    public List<KpiResponse> getKpis(JwtUserPrincipal principal) {
+        Long branchId = branchId(principal);
+        long pending = branchId != null ? jobCardMapper.countOpenByBranch(branchId) : jobCardMapper.countOpen();
+        long completedToday = branchId != null
+                ? jobCardMapper.countCompletedTodayByBranch(branchId)
+                : jobCardMapper.countCompletedToday();
         long advisors = staffMapper.selectCount(
-                new QueryWrapper<Staff>().eq("role", "advisor").eq("is_active", true));
+                staffQuery("advisor", branchId));
         long technicians = staffMapper.selectCount(
-                new QueryWrapper<Staff>().eq("role", "technician").eq("is_active", true));
-        long idleTechnicians = Math.max(technicians - statsMapper.countActiveAssignments(), 0);
+                staffQuery("technician", branchId));
+        long activeAssignments = branchId != null
+                ? statsMapper.countActiveAssignmentsByBranch(branchId)
+                : statsMapper.countActiveAssignments();
+        long idleTechnicians = Math.max(technicians - activeAssignments, 0);
 
         return List.of(
             kpi(String.valueOf(pending), "Total Job Cards Pending", "Open job cards"),
@@ -43,8 +50,9 @@ public class SupervisorKpiService {
         );
     }
 
-    public List<AdvisorJobCountResponse> getAdvisorJobs() {
-        return jobCardMapper.selectList(null).stream()
+    public List<AdvisorJobCountResponse> getAdvisorJobs(JwtUserPrincipal principal) {
+        Long branchId = branchId(principal);
+        return jobCardMapper.selectList(jobCardQuery(branchId)).stream()
                 .filter(c -> c.getTechnician() != null && !c.getTechnician().isBlank())
                 .collect(Collectors.groupingBy(JobCard::getTechnician, Collectors.counting()))
                 .entrySet().stream()
@@ -53,8 +61,9 @@ public class SupervisorKpiService {
                 .collect(Collectors.toList());
     }
 
-    public List<JobTypeResponse> getJobTypes() {
-        return jobCardMapper.selectList(null).stream()
+    public List<JobTypeResponse> getJobTypes(JwtUserPrincipal principal) {
+        Long branchId = branchId(principal);
+        return jobCardMapper.selectList(jobCardQuery(branchId)).stream()
                 .filter(c -> c.getTag() != null && !c.getTag().isBlank())
                 .collect(Collectors.groupingBy(JobCard::getTag, Collectors.counting()))
                 .entrySet().stream()
@@ -63,10 +72,11 @@ public class SupervisorKpiService {
                 .collect(Collectors.toList());
     }
 
-    public List<RevenueMetricResponse> getRevenueMetrics() {
-        BigDecimal total = statsMapper.sumRepairGrand();
-        BigDecimal service = statsMapper.sumRepairServices();
-        BigDecimal parts = statsMapper.sumRepairParts();
+    public List<RevenueMetricResponse> getRevenueMetrics(JwtUserPrincipal principal) {
+        Long branchId = branchId(principal);
+        BigDecimal total = branchId != null ? statsMapper.sumRepairGrandByBranch(branchId) : statsMapper.sumRepairGrand();
+        BigDecimal service = branchId != null ? statsMapper.sumRepairServicesByBranch(branchId) : statsMapper.sumRepairServices();
+        BigDecimal parts = branchId != null ? statsMapper.sumRepairPartsByBranch(branchId) : statsMapper.sumRepairParts();
         // FIX (audit P0): removed the two fabricated "$0" revenue cards
         // ("Labour Revenue" / "Other Revenue") — no separate data source exists.
         return List.of(
@@ -76,19 +86,44 @@ public class SupervisorKpiService {
         );
     }
 
-    public List<PendingStatusResponse> getPendingStatuses() {
+    public List<PendingStatusResponse> getPendingStatuses(JwtUserPrincipal principal) {
+        Long branchId = branchId(principal);
         long waitingParts = jobCardMapper.selectCount(
-                new QueryWrapper<JobCard>().eq("status", "waitingParts"));
+                jobCardQuery(branchId).eq("status", "waitingParts"));
         long completed = jobCardMapper.selectCount(
-                new QueryWrapper<JobCard>().eq("status", "completed"));
-        long invoiced = statsMapper.invoicedJobCardIds().stream().distinct().count();
+                jobCardQuery(branchId).eq("status", "completed"));
+        long invoiced = (branchId != null
+                ? statsMapper.invoicedJobCardIdsByBranch(branchId)
+                : statsMapper.invoicedJobCardIds()).stream().distinct().count();
         long completedNotInvoiced = Math.max(completed - invoiced, 0);
         return List.of(
             pending(String.valueOf(waitingParts), "Waiting for Parts"),
             pending(String.valueOf(completedNotInvoiced), "Job Completed Not Invoiced"),
-            pending(String.valueOf(statsMapper.countDraftInspections()), "Waiting for Inspection"),
-            pending(String.valueOf(statsMapper.countPendingApprovals()), "Waiting for Approval")
+            pending(String.valueOf(branchId != null
+                    ? statsMapper.countDraftInspectionsByBranch(branchId)
+                    : statsMapper.countDraftInspections()), "Waiting for Inspection"),
+            pending(String.valueOf(branchId != null
+                    ? statsMapper.countPendingApprovalsByBranch(branchId)
+                    : statsMapper.countPendingApprovals()), "Waiting for Approval")
         );
+    }
+
+    private QueryWrapper<Staff> staffQuery(String role, Long branchId) {
+        QueryWrapper<Staff> query = new QueryWrapper<Staff>()
+                .eq("role", role)
+                .eq("is_active", true);
+        if (branchId != null) query.eq("branch_id", branchId);
+        return query;
+    }
+
+    private QueryWrapper<JobCard> jobCardQuery(Long branchId) {
+        QueryWrapper<JobCard> query = new QueryWrapper<>();
+        if (branchId != null) query.eq("branch_id", branchId);
+        return query;
+    }
+
+    private Long branchId(JwtUserPrincipal principal) {
+        return principal != null ? principal.getBranchId() : null;
     }
 
     private KpiResponse kpi(String value, String label, String sub) {

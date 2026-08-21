@@ -7,6 +7,7 @@ import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.model.entity.JobCard;
 import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.JobCardMapper;
+import com.orient.workshop.core.service.JobInvoiceGateway;
 import com.orient.workshop.core.service.NotificationService;
 import com.orient.workshop.owner.model.dto.InvoiceResponse;
 import com.orient.workshop.owner.model.entity.Invoice;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class InvoiceService {
+public class InvoiceService implements JobInvoiceGateway {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     // P3 (audit): UAE VAT 5%.
@@ -72,6 +73,7 @@ public class InvoiceService {
      * the supervisor has approved completion.
      */
     @Transactional
+    @Override
     public String createFromJobCard(Long jobCardId) {
         JobCard card = jobCardId != null ? jobCardMapper.selectById(jobCardId) : null;
         if (card == null) return null;

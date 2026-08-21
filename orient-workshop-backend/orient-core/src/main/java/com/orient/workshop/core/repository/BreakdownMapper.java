@@ -14,6 +14,14 @@ public interface BreakdownMapper extends BaseMapper<Breakdown> {
     @Select("SELECT * FROM breakdowns WHERE advisor_id IS NULL ORDER BY created_at DESC")
     List<Breakdown> findUnassigned();
 
+    @Select("""
+            SELECT b.* FROM breakdowns b
+            JOIN customers c ON c.id = b.customer_id
+            WHERE b.advisor_id IS NULL AND c.branch_id = #{branchId}
+            ORDER BY b.created_at DESC
+            """)
+    List<Breakdown> findUnassignedByBranch(@Param("branchId") Long branchId);
+
     @Select("SELECT * FROM breakdowns WHERE advisor_id = #{advisorId} ORDER BY created_at DESC")
     List<Breakdown> findByAdvisorId(@Param("advisorId") Long advisorId);
 }

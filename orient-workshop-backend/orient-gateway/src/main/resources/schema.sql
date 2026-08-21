@@ -422,6 +422,7 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
 CREATE TABLE IF NOT EXISTS sync_logs (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     idempotency_key VARCHAR(100) DEFAULT '',
+    idempotency_key_unique VARCHAR(100) GENERATED ALWAYS AS (NULLIF(idempotency_key, '')) STORED UNIQUE,
     endpoint        VARCHAR(200) NOT NULL,
     method          VARCHAR(10) NOT NULL,
     request_body    TEXT,

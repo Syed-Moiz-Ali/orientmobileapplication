@@ -10,6 +10,10 @@ sealed class Result<T> {
       Failure(error: final error) => failure(error),
     };
   }
+
+  T unwrapOrThrow() {
+    return when(success: (data) => data, failure: (error) => throw error);
+  }
 }
 
 final class Success<T> extends Result<T> {

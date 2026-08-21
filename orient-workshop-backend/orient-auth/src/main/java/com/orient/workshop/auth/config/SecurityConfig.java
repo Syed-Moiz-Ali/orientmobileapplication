@@ -38,7 +38,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * /inspections/**, /repair-orders/**  ADVISOR, SUPERVISOR, OWNER, ADMIN
  * /bookings/**, /services/types, /feedback/**  CUSTOMER + staff
  * /work-assignments, /jobs/complete, /departments  TECHNICIAN, SUPERVISOR, OWNER, ADMIN
- * /sync/**                        ADVISOR, SUPERVISOR, TECHNICIAN, OWNER, ADMIN (staff only)
+ * /sync/inspections/**, /sync/repair-orders/**, /sync/bookings  ADVISOR, SUPERVISOR, OWNER, ADMIN
+ * /sync/jobs/complete/**          TECHNICIAN, SUPERVISOR, OWNER, ADMIN
+ * /sync/work-assignments          SUPERVISOR, OWNER, ADMIN
  * /whatsapp/send, /whatsapp/messages  ADVISOR, SUPERVISOR, OWNER, ADMIN
  * /owner/**                       OWNER, ADMIN
  * /supervisor/**                  SUPERVISOR, OWNER, ADMIN
@@ -136,9 +138,14 @@ public class SecurityConfig {
                                 role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
                         // S-5: /sync/** mutates job cards and inspections — staff only,
                         // never customers (was any-authenticated).
-                        .requestMatchers("/sync/**")
+                        .requestMatchers("/sync/inspections/**", "/sync/repair-orders/**", "/sync/bookings")
                         .hasAnyRole(role(RoleConstants.ADVISOR), role(RoleConstants.SUPERVISOR),
-                                role(RoleConstants.TECHNICIAN), role(RoleConstants.OWNER),
+                                role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
+                        .requestMatchers("/sync/jobs/complete/**")
+                        .hasAnyRole(role(RoleConstants.TECHNICIAN), role(RoleConstants.SUPERVISOR),
+                                role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
+                        .requestMatchers("/sync/work-assignments")
+                        .hasAnyRole(role(RoleConstants.SUPERVISOR), role(RoleConstants.OWNER),
                                 role(RoleConstants.ADMIN))
                         // WhatsApp business-initiated sends and history are staff-only;
                         // the signature-verified webhook remains permitAll (handled above).

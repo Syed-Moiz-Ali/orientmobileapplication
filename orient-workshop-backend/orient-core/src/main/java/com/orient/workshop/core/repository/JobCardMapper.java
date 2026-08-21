@@ -57,8 +57,14 @@ public interface JobCardMapper extends BaseMapper<JobCard> {
     @Select("SELECT COUNT(*) FROM job_cards WHERE status IN ('inProgress','pendingApproval','qualityCheck','waitingParts','pending')")
     int countOpen();
 
+    @Select("SELECT COUNT(*) FROM job_cards WHERE status IN ('inProgress','pendingApproval','qualityCheck','waitingParts','pending') AND branch_id = #{branchId}")
+    int countOpenByBranch(@Param("branchId") Long branchId);
+
     @Select("SELECT COUNT(*) FROM job_cards WHERE status = 'completed' AND DATE(created_at) = CURDATE()")
     int countCompletedToday();
+
+    @Select("SELECT COUNT(*) FROM job_cards WHERE status = 'completed' AND DATE(created_at) = CURDATE() AND branch_id = #{branchId}")
+    int countCompletedTodayByBranch(@Param("branchId") Long branchId);
 
     @Select("SELECT COUNT(*) FROM job_cards WHERE status = 'inProgress'")
     int countInProgress();

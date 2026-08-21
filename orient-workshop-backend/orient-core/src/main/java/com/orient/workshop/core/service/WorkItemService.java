@@ -36,6 +36,7 @@ public class WorkItemService {
     private final JobCardMapper jobCardMapper;
     private final StaffMapper staffMapper;
     private final NotificationService notificationService;
+    private final JobWorkflowService jobWorkflowService;
 
     // ---------- Listing ----------
 
@@ -149,11 +150,11 @@ public class WorkItemService {
         JobCard card = jobCardMapper.selectOne(
                 new LambdaQueryWrapper<JobCard>().eq(JobCard::getJobCardRef, jobCardRef));
         if (card == null) return;
-        moveToAwaitingIfComplete(card);
+        jobWorkflowService.submitForQcIfAllWorkComplete(card);
     }
 
     private void checkJobCompletion(TechnicianTask task) {
-        moveToAwaitingIfComplete(jobCard(task.getJobCardNo()));
+        jobWorkflowService.submitForQcIfAllWorkComplete(jobCard(task.getJobCardNo()));
     }
 
     private JobCard jobCard(String jobCardRef) {

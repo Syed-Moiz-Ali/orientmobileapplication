@@ -167,9 +167,37 @@ class SecurityMatrixTest {
     }
 
     @Test
-    void technicianCanAccessSync() throws Exception {
+    void technicianCannotSyncInspections() throws Exception {
         mockMvc.perform(post("/sync/inspections/1").with(user("u").roles("TECHNICIAN")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void technicianCanSyncJobCompletion() throws Exception {
+        mockMvc.perform(post("/sync/jobs/complete/1").with(user("u").roles("TECHNICIAN")))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void advisorCannotSyncJobCompletion() throws Exception {
+        mockMvc.perform(post("/sync/jobs/complete/1").with(user("u").roles("ADVISOR")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void advisorCanSyncInspectionsAndRepairOrdersAndBookings() throws Exception {
+        mockMvc.perform(post("/sync/inspections/1").with(user("u").roles("ADVISOR")))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/sync/repair-orders/1").with(user("u").roles("ADVISOR")))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/sync/bookings").with(user("u").roles("ADVISOR")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void advisorCannotSyncWorkAssignments() throws Exception {
+        mockMvc.perform(post("/sync/work-assignments").with(user("u").roles("ADVISOR")))
+                .andExpect(status().isForbidden());
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.orient.workshop.core.model.entity.Vehicle;
 import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.core.repository.VehicleMapper;
+import com.orient.workshop.core.service.JobWorkflowService;
 import com.orient.workshop.owner.model.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class OwnerJobCardService {
     private final CustomerMapper customerMapper;
     private final VehicleMapper vehicleMapper;
     private final RepairOrderMapper repairOrderMapper;
+    private final JobWorkflowService jobWorkflowService;
 
     public List<OwnerJobCardResponse> getJobCards() {
         return toOwnerCards(jobCardMapper.findRecent(50, 0));
@@ -118,8 +120,16 @@ public class OwnerJobCardService {
         if (card == null) {
             throw new com.orient.workshop.common.exception.NotFoundException("Job card not found: " + id);
         }
-        card.setStatus(status);
-        jobCardMapper.updateById(card);
+        if ("completed".equals(status)) {
+            jobWorkflowService.approveQc(card.getId(), null, null);
+        } else if ("delivered".equals(status)) {
+            jobWorkflowService.deliverById(card.getId(), null, null);
+        } else if ("cancelled".equals(status)) {
+            jobWorkflowService.cancel(card.getId(), null, null);
+        } else {
+            throw new com.orient.workshop.common.exception.BadRequestException(
+                    "Owner status changes must use completed, delivered, or cancelled workflow commands");
+        }
     }
 
     // FIX (audit P1): owner job cards previously returned blank customer,

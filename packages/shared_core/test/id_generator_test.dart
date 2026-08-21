@@ -25,15 +25,20 @@ void main() {
 
   test('generates prefixed, zero-padded ids', () async {
     final id = await IdGenerator.nextId('INS');
-    expect(RegExp(r'^INS-\d{4}-\d{2}-\d{2}-\d{4}$').hasMatch(id), isTrue);
+    expect(
+      RegExp(
+        r'^INS-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+      ).hasMatch(id),
+      isTrue,
+    );
   });
 
-  test('increments within the same day', () async {
+  test('generates collision-resistant ids instead of local counters', () async {
     final a = await IdGenerator.nextId('JC');
     final b = await IdGenerator.nextId('JC');
-    final suffixA = int.parse(a.split('-').last);
-    final suffixB = int.parse(b.split('-').last);
-    expect(suffixB, suffixA + 1);
+    expect(a, isNot(b));
+    expect(a, isNot(contains(RegExp(r'\d{4}-\d{2}-\d{2}-\d{4}$'))));
+    expect(b, isNot(contains(RegExp(r'\d{4}-\d{2}-\d{2}-\d{4}$'))));
   });
 
   test('counters are separate per prefix', () async {

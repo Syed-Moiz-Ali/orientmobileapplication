@@ -40,6 +40,7 @@ public class JobCardService {
     private final TechnicianTaskMapper technicianTaskMapper;
     private final com.orient.workshop.core.service.ActivityService activityService;
     private final com.orient.workshop.core.service.WebhookService webhookService;
+    private final com.orient.workshop.core.service.JobWorkflowService jobWorkflowService;
 
     public PageResponse<JobCardResponse> listJobCards(String status, String search, int page, int limit,
                                                       JwtUserPrincipal principal) {
@@ -96,12 +97,7 @@ public class JobCardService {
             throw new BadRequestException("Invalid status '" + status + "'. Allowed values: "
                     + String.join(", ", VALID_STATUSES));
         }
-        JobCard card = findByIdOrRef(id);
-        if (card == null || !inScope(card, principal)) {
-            throw new NotFoundException("Job card not found");
-        }
-        card.setStatus(status);
-        jobCardMapper.updateById(card);
+        jobWorkflowService.advisorOperationalStatus(id, status, scopedBranchId(principal));
     }
 
     @Transactional
@@ -151,6 +147,11 @@ public class JobCardService {
 
     @Transactional
     public void deliver(String jobCardRef, DeliveryRequest request, JwtUserPrincipal principal) {
+        if (jobWorkflowService != null) {
+            jobWorkflowService.deliverByRef(jobCardRef, scopedBranchId(principal),
+                    principal != null ? principal.getUserId() : null);
+            return;
+        }
         JobCard card = jobCardMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<JobCard>().eq("job_card_ref", jobCardRef));
         if (card == null || !inScope(card, principal)) {
             throw new NotFoundException("Job card not found");

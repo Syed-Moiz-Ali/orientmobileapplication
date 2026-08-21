@@ -2,6 +2,7 @@ package com.orient.workshop.technician.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.core.model.entity.JobCard;
@@ -59,6 +60,9 @@ public class TechnicianJobService {
         if (card == null) throw new NotFoundException("Job card not found");
         if (!ownsJob(card, staff)) {
             throw new ForbiddenException("Job card is not assigned to the current user");
+        }
+        if (!List.of("inProgress", "waitingParts").contains(status)) {
+            throw new BadRequestException("Technicians must complete work items; parent job completion is supervisor-controlled");
         }
         card.setStatus(status);
         jobCardMapper.updateById(card);

@@ -1,10 +1,13 @@
 package com.orient.workshop.supervisor.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.exception.BadRequestException;
+import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.core.model.entity.*;
 import com.orient.workshop.core.repository.*;
+import com.orient.workshop.core.service.JobWorkflowService;
 import com.orient.workshop.core.service.NotificationService;
 import com.orient.workshop.owner.service.InvoiceService;
 import com.orient.workshop.supervisor.model.dto.*;
@@ -41,11 +44,13 @@ public class SupervisorQueueService {
     private final InvoiceService invoiceService;
     private final com.orient.workshop.core.service.ActivityService activityService;
     private final com.orient.workshop.core.service.WebhookService webhookService;
+    private final JobWorkflowService jobWorkflowService;
 
     // ---------- Booking queue ----------
 
-    public List<BookingQueueResponse> getBookingQueue() {
-        List<Booking> bookings = bookingMapper.findUnassigned();
+    public List<BookingQueueResponse> getBookingQueue(JwtUserPrincipal principal) {
+        Long branchId = branchId(principal);
+        List<Booking> bookings = branchId != null ? bookingMapper.findUnassignedByBranch(branchId) : bookingMapper.findUnassigned();
         if (bookings.isEmpty()) return List.of();
         Map<Long, Customer> customers = customersByIds(bookings.stream()
                 .map(Booking::getCustomerId).collect(Collectors.toSet()));
@@ -68,10 +73,11 @@ public class SupervisorQueueService {
     }
 
     @Transactional
-    public void assignBooking(Long bookingId, AssignAdvisorRequest req) {
-        Staff advisor = resolveAdvisor(req);
+    public void assignBooking(JwtUserPrincipal principal, Long bookingId, AssignAdvisorRequest req) {
+        Staff advisor = resolveAdvisor(principal, req);
         Booking booking = bookingMapper.selectById(bookingId);
         if (booking == null) throw new NotFoundException("Booking not found");
+        requireBranchAccess(principal, booking.getBranchId(), "Booking is outside the authenticated branch");
 
         booking.setAdvisorId(advisor.getId());
         booking.setStatus("confirmed");
@@ -98,8 +104,9 @@ public class SupervisorQueueService {
 
     // ---------- Breakdown queue ----------
 
-    public List<BreakdownQueueResponse> getBreakdownQueue() {
-        List<Breakdown> breakdowns = breakdownMapper.findUnassigned();
+    public List<BreakdownQueueResponse> getBreakdownQueue(JwtUserPrincipal principal) {
+        Long branchId = branchId(principal);
+        List<Breakdown> breakdowns = branchId != null ? breakdownMapper.findUnassignedByBranch(branchId) : breakdownMapper.findUnassigned();
         if (breakdowns.isEmpty()) return List.of();
         Map<Long, Customer> customers = customersByIds(breakdowns.stream()
                 .map(Breakdown::getCustomerId).collect(Collectors.toSet()));
@@ -120,10 +127,14 @@ public class SupervisorQueueService {
     }
 
     @Transactional
-    public void assignBreakdown(Long breakdownId, AssignAdvisorRequest req) {
-        Staff advisor = resolveAdvisor(req);
+    public void assignBreakdown(JwtUserPrincipal principal, Long breakdownId, AssignAdvisorRequest req) {
+        Staff advisor = resolveAdvisor(principal, req);
         Breakdown breakdown = breakdownMapper.selectById(breakdownId);
         if (breakdown == null) throw new NotFoundException("Breakdown not found");
+        Customer breakdownCustomer = breakdown.getCustomerId() != null
+                ? customerMapper.selectById(breakdown.getCustomerId()) : null;
+        requireBranchAccess(principal, breakdownCustomer != null ? breakdownCustomer.getBranchId() : null,
+                "Breakdown is outside the authenticated branch");
 
         breakdown.setAdvisorId(advisor.getId());
         breakdown.setStatus("dispatched");
@@ -146,8 +157,11 @@ public class SupervisorQueueService {
 
     // ---------- Completion review ----------
 
-    public List<AwaitingCompletionResponse> getAwaitingCompletion() {
-        List<JobCard> cards = jobCardMapper.findAwaitingSupervisor();
+    public List<AwaitingCompletionResponse> getAwaitingCompletion(JwtUserPrincipal principal) {
+        Long branchId = branchId(principal);
+        List<JobCard> cards = branchId != null
+                ? jobCardMapper.findAwaitingSupervisorByBranch(branchId)
+                : jobCardMapper.findAwaitingSupervisor();
         if (cards.isEmpty()) return List.of();
         Map<Long, Customer> customers = customersByIds(cards.stream()
                 .map(JobCard::getCustomerId).collect(Collectors.toSet()));
@@ -190,8 +204,13 @@ public class SupervisorQueueService {
     }
 
     @Transactional
-    public void approveCompletion(Long jobCardId) {
-        JobCard card = requireAwaiting(jobCardId);
+    public void approveCompletion(JwtUserPrincipal principal, Long jobCardId) {
+        if (jobWorkflowService != null) {
+            jobWorkflowService.approveQc(jobCardId, branchId(principal),
+                    principal != null ? principal.getUserId() : null);
+            return;
+        }
+        JobCard card = requireAwaiting(principal, jobCardId);
         card.setStatus("completed");
         jobCardMapper.updateById(card);
 
@@ -214,8 +233,14 @@ public class SupervisorQueueService {
     }
 
     @Transactional
-    public void rejectCompletion(Long jobCardId, RejectCompletionRequest req) {
-        JobCard card = requireAwaiting(jobCardId);
+    public void rejectCompletion(JwtUserPrincipal principal, Long jobCardId, RejectCompletionRequest req) {
+        if (jobWorkflowService != null) {
+            String reason = req != null && req.getReason() != null ? req.getReason().trim() : "";
+            jobWorkflowService.rejectQc(jobCardId, branchId(principal),
+                    principal != null ? principal.getUserId() : null, reason);
+            return;
+        }
+        JobCard card = requireAwaiting(principal, jobCardId);
         String reason = req != null && req.getReason() != null ? req.getReason().trim() : "";
         if (reason.isBlank()) reason = "Work needs revision";
 
@@ -238,11 +263,27 @@ public class SupervisorQueueService {
     }
 
     @Transactional
-    public void qcReview(String jobCardRef, QcReviewRequest req) {
+    public void qcReview(JwtUserPrincipal principal, String jobCardRef, QcReviewRequest req) {
+        if (jobWorkflowService != null) {
+            if ("approve".equalsIgnoreCase(req.getAction())) {
+                if (!req.isChecklistPassed()) {
+                    throw new BadRequestException("QC approval requires a passed checklist");
+                }
+                jobWorkflowService.approveQcByRef(jobCardRef, branchId(principal),
+                        principal != null ? principal.getUserId() : null);
+            } else if ("reject".equalsIgnoreCase(req.getAction())) {
+                jobWorkflowService.rejectQcByRef(jobCardRef, branchId(principal),
+                        principal != null ? principal.getUserId() : null, req.getRejectReason());
+            } else {
+                throw new BadRequestException("Invalid action. Must be 'approve' or 'reject'.");
+            }
+            return;
+        }
         JobCard card = jobCardMapper.selectOne(new LambdaQueryWrapper<JobCard>().eq(JobCard::getJobCardRef, jobCardRef));
         if (card == null) {
             throw new NotFoundException("Job card not found");
         }
+        requireBranchAccess(principal, card.getBranchId(), "Job card is outside the authenticated branch");
 
         // Fix: 'qualityCheckPassed' is now a valid ENUM value (V6) — the QC
         // approve action previously crashed with 409 on every call.
@@ -263,16 +304,17 @@ public class SupervisorQueueService {
 
     // ---------- helpers ----------
 
-    public List<AssignableStaffResponse> getAssignableAdvisors() {
-        List<Staff> advisors = staffMapper.selectList(
-                new LambdaQueryWrapper<Staff>()
-                        .eq(Staff::getRole, "advisor")
-                        .eq(Staff::getIsActive, true)
-                        .orderByAsc(Staff::getName));
+    public List<AssignableStaffResponse> getAssignableAdvisors(JwtUserPrincipal principal) {
+        LambdaQueryWrapper<Staff> query = new LambdaQueryWrapper<Staff>()
+                .eq(Staff::getRole, "advisor")
+                .eq(Staff::getIsActive, true)
+                .orderByAsc(Staff::getName);
+        if (branchId(principal) != null) query.eq(Staff::getBranchId, branchId(principal));
+        List<Staff> advisors = staffMapper.selectList(query);
         return AssignableStaffResponse.ofList(advisors);
     }
 
-    private Staff resolveAdvisor(AssignAdvisorRequest req) {
+    private Staff resolveAdvisor(JwtUserPrincipal principal, AssignAdvisorRequest req) {
         if (req == null || req.getAdvisorId() == null) {
             throw new BadRequestException("advisorId is required");
         }
@@ -280,16 +322,29 @@ public class SupervisorQueueService {
         if (advisor == null) {
             throw new BadRequestException("Advisor not found with id: " + req.getAdvisorId());
         }
+        requireBranchAccess(principal, advisor.getBranchId(), "Advisor is outside the authenticated branch");
         return advisor;
     }
 
-    private JobCard requireAwaiting(Long jobCardId) {
+    private JobCard requireAwaiting(JwtUserPrincipal principal, Long jobCardId) {
         JobCard card = jobCardMapper.selectById(jobCardId);
         if (card == null) throw new NotFoundException("Job card not found");
+        requireBranchAccess(principal, card.getBranchId(), "Job card is outside the authenticated branch");
         if (!"awaitingSupervisor".equals(card.getStatus())) {
             throw new BadRequestException("Job card is not awaiting supervisor review");
         }
         return card;
+    }
+
+    private void requireBranchAccess(JwtUserPrincipal principal, Long entityBranchId, String message) {
+        Long principalBranchId = branchId(principal);
+        if (principalBranchId != null && !principalBranchId.equals(entityBranchId)) {
+            throw new ForbiddenException(message);
+        }
+    }
+
+    private Long branchId(JwtUserPrincipal principal) {
+        return principal != null ? principal.getBranchId() : null;
     }
 
     private Map<Long, Customer> customersByIds(java.util.Set<Long> ids) {

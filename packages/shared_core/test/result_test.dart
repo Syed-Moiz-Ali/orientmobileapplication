@@ -21,6 +21,16 @@ void main() {
       expect(message, 'boom');
     });
 
+    test('unwrapOrThrow returns success data', () {
+      const result = Success<int>(42);
+      expect(result.unwrapOrThrow(), 42);
+    });
+
+    test('unwrapOrThrow throws failure error', () {
+      const result = Failure<int>(NetworkException('boom'));
+      expect(result.unwrapOrThrow, throwsA(isA<NetworkException>()));
+    });
+
     test('Exception subtypes keep their message', () {
       expect(const CacheException('c').message, 'c');
       expect(const ValidationException('v').message, 'v');

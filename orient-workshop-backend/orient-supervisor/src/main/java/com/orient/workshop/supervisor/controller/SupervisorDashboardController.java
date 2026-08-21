@@ -3,9 +3,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 
 import com.orient.workshop.common.response.ApiResponse;
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.supervisor.model.dto.*;
 import com.orient.workshop.supervisor.service.SupervisorKpiService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,28 +21,28 @@ public class SupervisorDashboardController {
     private final SupervisorKpiService kpiService;
 
     @GetMapping("/kpis")
-    public ApiResponse<List<KpiResponse>> getKpis() {
-        return ApiResponse.success(kpiService.getKpis());
+    public ApiResponse<List<KpiResponse>> getKpis(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(kpiService.getKpis(principal));
     }
 
     @GetMapping("/advisor-jobs")
-    public ApiResponse<List<AdvisorJobCountResponse>> getAdvisorJobs() {
-        return ApiResponse.success(kpiService.getAdvisorJobs());
+    public ApiResponse<List<AdvisorJobCountResponse>> getAdvisorJobs(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(kpiService.getAdvisorJobs(principal));
     }
 
     @GetMapping("/job-types")
-    public ApiResponse<List<JobTypeResponse>> getJobTypes() {
-        return ApiResponse.success(kpiService.getJobTypes());
+    public ApiResponse<List<JobTypeResponse>> getJobTypes(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(kpiService.getJobTypes(principal));
     }
 
     @GetMapping("/revenue-metrics")
-    public ApiResponse<List<RevenueMetricResponse>> getRevenueMetrics() {
-        return ApiResponse.success(kpiService.getRevenueMetrics());
+    public ApiResponse<List<RevenueMetricResponse>> getRevenueMetrics(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(kpiService.getRevenueMetrics(principal));
     }
 
     @GetMapping("/pending-statuses")
-    public ApiResponse<List<PendingStatusResponse>> getPendingStatuses() {
-        return ApiResponse.success(kpiService.getPendingStatuses());
+    public ApiResponse<List<PendingStatusResponse>> getPendingStatuses(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(kpiService.getPendingStatuses(principal));
     }
 }
 

@@ -1,34 +1,26 @@
-import 'package:hive/hive.dart';
-import 'package:intl/intl.dart';
+import 'dart:math';
 
 class IdGenerator {
-  static int _lastCounter = -1;
-  static String _lastPrefix = '';
-  static String _lastDate = '';
+  static final Random _secureRandom = Random.secure();
 
   static Future<String> nextId(String prefix) async {
-    final box = Hive.box<int>('id_counters');
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final key = '${prefix}_$today';
-
-    int next;
-    if (_lastPrefix == prefix && _lastDate == today && _lastCounter > 0) {
-      next = _lastCounter + 1;
-    } else {
-      next = (box.get(key, defaultValue: 0) ?? 0) + 1;
-    }
-
-    await box.put(key, next);
-    _lastCounter = next;
-    _lastPrefix = prefix;
-    _lastDate = today;
-
-    return '$prefix-$today-${next.toString().padLeft(4, '0')}';
+    return '$prefix-${_uuidV4()}';
   }
 
   static Future<void> resetCache() async {
-    _lastCounter = -1;
-    _lastPrefix = '';
-    _lastDate = '';
+    // Kept for backwards compatibility with older tests/callers. UUID based
+    // generation has no process-local cache to reset.
+  }
+
+  static String _uuidV4() {
+    final bytes = List<int>.generate(16, (_) => _secureRandom.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex.substring(0, 8)}-'
+        '${hex.substring(8, 12)}-'
+        '${hex.substring(12, 16)}-'
+        '${hex.substring(16, 20)}-'
+        '${hex.substring(20)}';
   }
 }
