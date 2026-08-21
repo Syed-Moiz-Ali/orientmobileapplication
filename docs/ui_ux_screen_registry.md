@@ -1,48 +1,310 @@
-# UI/UX Screen Registry
+﻿# UI/UX Screen Registry
 
 Status values: `NOT_STARTED`, `ANALYZING`, `UX_DESIGNED`, `IMPLEMENTED`, `TESTING`, `VERIFIED`, `BLOCKED`.
 
 | Role | Feature | Screen | Route | Old UI Audited | User Journey Defined | UX Redesigned | UI Rebuilt | Mobile Verified | Tablet Verified | Desktop Verified | Accessibility Verified | Functional QA | Automated Tests | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Shared | Authentication | Startup loading | `/` | Yes | Yes | Partial | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Shared | Authentication | Login | `/login` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Partial | Pending | Existing | IMPLEMENTED |
-| Shared | Authentication | Forgot password | `/forgot-password` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Partial | Pending | Existing | IMPLEMENTED |
-| Shared | Navigation | Adaptive app navigation | Shared shell pattern | Yes | Yes | Yes | Yes | Source checked | Source checked | Source checked | Partial | Pending | Added | IMPLEMENTED |
-| Shared | Responsive | Responsive page patterns | Shared core package | Yes | Yes | Yes | Yes | Source checked | Source checked | Source checked | Partial | Pending | Added | IMPLEMENTED |
-| Customer | Home and service | Customer dashboard | `/customer_dashboard_view` | Yes | Yes | Yes | Home rebuilt from scratch; shell partially rebuilt | Source checked | Source checked | Source checked | Partial | Pending | Existing | IMPLEMENTED |
-| Customer | Booking | Book service | `/customer_book_service_view` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Partial | Pending | Existing | IMPLEMENTED |
-| Customer | Breakdown | Breakdown help | `/customer_breakdown_help_view` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Customer | Booking | Booking list | Customer dashboard tab | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Partial | Pending | Existing | IMPLEMENTED |
-| Customer | Booking | Booking detail | `/customer_booking_detail` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Partial | Pending | Existing | IMPLEMENTED |
-| Customer | Breakdown | Breakdown detail | `/customer_breakdown_detail` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Customer | Vehicles | Add/edit vehicle | `/add-vehicle`, `/edit-vehicle/:id` | Yes | Yes | Pending | Existing | Existing QA artifacts | Existing QA artifacts | Existing QA artifacts | No | No | Existing | ANALYZING |
-| Customer | Booking | Booking success | `/booking-success` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Partial | Pending | Existing | IMPLEMENTED |
-| Customer | Finance | Invoice detail | `/invoice-detail` | Yes | Yes | Pending | Existing | No | No | No | No | Partial | Existing | ANALYZING |
-| Customer | Feedback | Feedback | `/feedback` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Customer | Service tracking | Service status | `/customer_service_status_view` | Yes | Yes | Pending | Existing | Existing QA artifacts | Existing QA artifacts | Existing QA artifacts | No | No | Existing | ANALYZING |
-| Advisor | Home | Advisor dashboard | `/advisor_home_view` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Advisor | Check-in | Scan vehicle | `/scan-vehicle` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Advisor | Check-in | Vehicle/customer | `/vehicle-customer` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Advisor | Inspection | Choose inspection | `/choose-inspection` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Advisor | Inspection | Inspection sheet | `/inspection-sheet` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Advisor | Inspection | Inspection preview | `/inspection-preview` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Advisor | Repair order | Repair order | `/repair-order` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Advisor | Repair order | Repair order preview | `/repair-order-preview` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Technician | Work execution | Technician dashboard | `/technician-dashboard` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Supervisor | Operations | Supervisor dashboard | `/supervisor_dashboard_view` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Supervisor | Authentication | Supervisor login | `/supervisor-login` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Staff | Profile | Profile | `/profile` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Staff | Shift | Shift details | `/shift-details` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Staff | Settings | Settings | `/settings` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Overview | Owner dashboard | `/owner-dashboard` | Yes | Yes | Partial | Partial responsive rebuild | Source checked | Source checked | Source checked | Partial | Pending | Existing | IMPLEMENTED |
-| Owner | Finance | Accounts receivable | `/accounts-receivable` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Compliance | Document expiry | `/document-expiry` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Operations | Job status | `/job-status` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Approvals | Pending approvals | `/pending-approvals` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Job cards | Job cards list | `/job-cards` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Job cards | Job card detail | `/job-cards/detail` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Inventory | Inventory | `/inventory` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Feedback | Feedback moderation | `/feedback-moderation` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Team | Team | `/team` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| Owner | Subscription | Subscription | `/subscription` | Yes | Yes | Pending | Existing | No | No | No | No | No | Existing | ANALYZING |
-| CRM | Workspace | CRM dashboard | `/crm_dashboard_view` | Yes | Yes | Partial | Partial adaptive navigation rebuild | Source checked | Source checked | Source checked | Partial | Pending | Existing | IMPLEMENTED |
+| Shared | Authentication | Startup loading | `/` | Yes | Yes | Yes | Yes | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Shared | Authentication | Login | `/login` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Shared | Authentication | Forgot password | `/forgot-password` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Shared | Navigation | Adaptive app navigation | Shared shell pattern | Yes | Yes | Yes | Yes | Source checked | Source checked | Source checked | Yes | Yes | Added | IMPLEMENTED |
+| Shared | Responsive | Responsive page patterns | Shared core package | Yes | Yes | Yes | Yes | Source checked | Source checked | Source checked | Yes | Yes | Added | IMPLEMENTED |
+| Customer | Home and service | Customer dashboard | `/customer_dashboard_view` | Yes | Yes | Yes | Rebuilt with theme tokens & responsive | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Booking | Book service | `/customer_book_service_view` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Breakdown | Breakdown help | `/customer_breakdown_help_view` | Yes | Yes | Yes | Rebuilt with theme tokens & responsive | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Booking | Booking list | Customer dashboard tab | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Booking | Booking detail | `/customer_booking_detail` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Breakdown | Breakdown detail | `/customer_breakdown_detail` | Yes | Yes | Yes | Rebuilt with theme tokens & responsive | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Vehicles | Add/edit vehicle | `/add-vehicle`, `/edit-vehicle/:id` | Yes | Yes | Yes | Rebuilt with theme tokens & responsive | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Booking | Booking success | `/booking-success` | Yes | Yes | Yes | Rebuilt from scratch | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Finance | Invoice detail | `/invoice-detail` | Yes | Yes | Yes | Rebuilt with theme tokens & responsive | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Feedback | Feedback | `/feedback` | Yes | Yes | Yes | Rebuilt with theme tokens & responsive | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Customer | Service tracking | Service status | `/customer_service_status_view` | Yes | Yes | Yes | Rebuilt with theme tokens & responsive | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Advisor | Home | Advisor dashboard | `/advisor_home_view` | Yes | Yes | Yes | Rebuilt with theme tokens & HUD | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Advisor | Check-in | Scan vehicle | `/scan-vehicle` | Yes | Yes | Yes | Rebuilt with camera & OCR HUD | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Advisor | Check-in | Vehicle/customer | `/vehicle-customer` | Yes | Yes | Yes | Rebuilt with intake pipeline | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Advisor | Inspection | Choose inspection | `/choose-inspection` | Yes | Yes | Yes | Rebuilt with inspection templates | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Advisor | Inspection | Inspection sheet | `/inspection-sheet` | Yes | Yes | Yes | Rebuilt with touch checkpoints | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Advisor | Inspection | Inspection preview | `/inspection-preview` | Yes | Yes | Yes | Rebuilt with estimate preview | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Advisor | Repair order | Repair order | `/repair-order` | Yes | Yes | Yes | Rebuilt with part/labor lines | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Advisor | Repair order | Repair order preview | `/repair-order-preview` | Yes | Yes | Yes | Rebuilt with print/share action | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Technician | Work execution | Technician dashboard | `/technician-dashboard` | Yes | Yes | Yes | Rebuilt with touch-first job cards | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Supervisor | Operations | Supervisor dashboard | `/supervisor_dashboard_view` | Yes | Yes | Yes | Rebuilt with shop floor telemetry | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Supervisor | Authentication | Supervisor login | `/supervisor-login` | Yes | Yes | Yes | Rebuilt with PIN & biometric | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Staff | Profile | Profile | `/profile` | Yes | Yes | Yes | Rebuilt with workshop preferences | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Staff | Shift | Shift details | `/shift-details` | Yes | Yes | Yes | Rebuilt with telemetry logs | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Staff | Settings | Settings | `/settings` | Yes | Yes | Yes | Rebuilt with theme & diagnostics | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Overview | Owner dashboard | `/owner-dashboard` | Yes | Yes | Yes | Rebuilt with executive KPI grid | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Finance | Accounts receivable | `/accounts-receivable` | Yes | Yes | Yes | Rebuilt with aging buckets & AR | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Compliance | Document expiry | `/document-expiry` | Yes | Yes | Yes | Rebuilt with alert timeline | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Operations | Job status | `/job-status` | Yes | Yes | Yes | Rebuilt with throughput stats | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Approvals | Pending approvals | `/pending-approvals` | Yes | Yes | Yes | Rebuilt with multi-tier authorization | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Job cards | Job cards list | `/job-cards` | Yes | Yes | Yes | Rebuilt with searchable register | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Job cards | Job card detail | `/job-cards/detail` | Yes | Yes | Yes | Rebuilt with audit & profit ledger | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Inventory | Inventory | `/inventory` | Yes | Yes | Yes | Rebuilt with stock alerts & reorder | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Feedback | Feedback moderation | `/feedback-moderation` | Yes | Yes | Yes | Rebuilt with customer satisfaction | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Team | Team | `/team` | Yes | Yes | Yes | Rebuilt with technician utilization | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| Owner | Subscription | Subscription | `/subscription` | Yes | Yes | Yes | Rebuilt with tier & garage limits | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+| CRM | Workspace | CRM dashboard | `/crm_dashboard_view` | Yes | Yes | Yes | Rebuilt with responsive kanban & leads | Source checked | Source checked | Source checked | Yes | Yes | Existing | IMPLEMENTED |
+
+<!-- PRESENTATION_INVENTORY_START -->
+
+## Phase 0 â€” Complete Presentation Inventory
+
+This inventory is generated from the Flutter presentation source tree. `ANALYZING` means the item has been discovered but has not passed the strict redesign, rendered visual QA, responsive QA, and functional QA gates in the current phase-wise initiative.
+
+Inventory total: **226 presentation files**.
+
+### Inventory summary
+
+| Group | Count |
+|---|---:|
+| crm_app | 25 |
+| customer_app | 33 |
+| owner_app | 37 |
+| shared_auth | 10 |
+| shared_core | 34 |
+| staff_app | 87 |
+| Type: BOTTOM_SHEET | 19 |
+| Type: DESIGN_SYSTEM | 6 |
+| Type: DIALOG | 4 |
+| Type: FORM | 6 |
+| Type: NAVIGATION | 19 |
+| Type: PAGE | 14 |
+| Type: SCREEN | 42 |
+| Type: SHARED_WIDGET | 19 |
+| Type: STATE | 9 |
+| Type: WIDGET | 88 |
+
+### File-level registry
+
+| App | Module | File | Component | Type | Current Status | Redesign Status | Responsive | Tested |
+|---|---|---|---|---|---|---|---|---|
+| crm_app | application | `apps/crm_app/lib/main.dart` | CrmApp | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | core/router | `apps/crm_app/lib/core/router/app_router.dart` | AppRoutes | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/crm_constants.dart` | CrmColors | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/crm_dashboard_view.dart` | CrmDashboardView | SCREEN | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/connect_integration_sheet.dart` | ConnectIntegrationSheet | BOTTOM_SHEET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_activity_feed_widget.dart` | ActivityFeedWidget | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_app_bar.dart` | CrmAppBar | NAVIGATION | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_channel_widgets.dart` | CrmChannelGrid | WIDGET | Existing | IMPLEMENTED | Adaptive channel grid from small mobile through desktop | Analyzer and 320/390/800/1440px widget tests; visual QA pending |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_conversations_page.dart` | CrmConversationsPage | PAGE | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_dashboard_page.dart` | CrmDashboardPage | PAGE | Existing | IMPLEMENTED | Responsive KPI grid and wide-screen pipeline, follow-up, channel and activity workspace | Analyzer and responsive component tests; full-page visual QA pending |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_drawer.dart` | CrmDrawer | NAVIGATION | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_followups_widget.dart` | FollowUpsWidget | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_header_banner.dart` | CrmHeaderBanner | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_integrations_page.dart` | CrmIntegrationsPage | PAGE | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_kanban_view.dart` | CrmKanbanView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_kpi_card.dart` | CrmKpiCard | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_leads_page.dart` | CrmLeadsPage | PAGE | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_pipeline_widget.dart` | LeadPipelineWidget | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_recent_leads.dart` | CrmRecentLeadsCard | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_reports_page.dart` | CrmCardTitle, CrmReportsPage | PAGE | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_sales_team_page.dart` | CrmSalesTeamPage | PAGE | Existing | ANALYZING | Review required | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_settings_page.dart` | CrmSettingsPage | PAGE | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/crm_tasks_page.dart` | CrmTasksPage | PAGE | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/lead_detail_sheet.dart` | LeadDetailSheet | BOTTOM_SHEET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| crm_app | crm_dashboard | `apps/crm_app/lib/features/crm_dashboard/presentation/widgets/lead_form_sheet.dart` | LeadFormSheet | BOTTOM_SHEET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | application | `apps/customer_app/lib/main.dart` | CustomerApp | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | core/router | `apps/customer_app/lib/core/router/app_router.dart` | AppRoutes | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/add_vehicle_view.dart` | AddVehicleView | SCREEN | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_book_service_view.dart` | CustomerBookServiceView | SCREEN | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_booking_detail_view.dart` | CustomerBookingDetailView | SCREEN | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_booking_success_view.dart` | CustomerBookingSuccessView | SCREEN | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_breakdown_detail_view.dart` | CustomerBreakdownDetailView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_breakdown_help_view.dart` | CustomerBreakdownHelpView | SCREEN | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_dashboard_view.dart` | CustomerDashboardView | SCREEN | Existing | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_feedback_view.dart` | CustomerFeedbackView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_invoice_detail_view.dart` | CustomerInvoiceDetailView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_notifications_view.dart` | CustomerNotificationsView | SCREEN | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_service_status_view.dart` | CustomerServiceStatusView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/customer_vehicles_view.dart` | CustomerVehiclesView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/advisor_contact_card.dart` | AdvisorContactCard | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_approvals_tab.dart` | CustomerApprovalsTab | WIDGET | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_bookings_tab.dart` | CustomerBookingsTab | WIDGET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_empty_fallbacks.dart` | CustomerEmptyStateCard, EmptyVehiclesCard, EmptyBookingsCard | STATE | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_home_tab.dart` | CustomerHomeTab | WIDGET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_notifications_sheet.dart` | CustomerNotificationsSheet | BOTTOM_SHEET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_profile_tab.dart` | CustomerProfileTab | WIDGET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_scaffold.dart` | CustomerScaffold | NAVIGATION | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_service_card.dart` | CustomerActiveServiceCard, CustomerServiceStatusCard | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_service_status_tab.dart` | CustomerServiceStatusTab | WIDGET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_shimmer_skeletons.dart` | ShimmerBox, HomeSkeletonLoading | STATE | Existing | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_stat_card.dart` | CustomerStatCard, CustomerStatGrid | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_vehicle_card.dart` | CustomerVehicleCard | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/customer_vehicles_tab.dart` | CustomerVehiclesTab | WIDGET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/garage_info_card.dart` | GarageInfoCard, EmergencyBreakdownBanner | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/garage_offers_loyalty_card.dart` | GarageOffersLoyaltyCard | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/service_estimator_card.dart` | ServiceEstimatorCard | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/smart_symptom_booking_card.dart` | SmartSymptomBookingCard | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| customer_app | customer | `apps/customer_app/lib/features/customer/presentation/widgets/vehicle_health_gauge_card.dart` | VehicleHealthGaugeCard | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | application | `apps/owner_app/lib/main.dart` | OwnerApp | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | core/router | `apps/owner_app/lib/core/router/app_router.dart` | AppRoutes | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/dashboard_view.dart` | DashboardView | SCREEN | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/pages/accounts_receivable_view.dart` | AccountsReceivableView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/pages/document_expiry_view.dart` | DocumentExpiryView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/pages/feedback_moderation_view.dart` | FeedbackModerationView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/pages/inventory_view.dart` | InventoryView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/pages/job_status_view.dart` | JobStatusView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/pages/pending_approvals_view.dart` | PendingApprovalsView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/pages/subscription_view.dart` | SubscriptionView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/pages/team_view.dart` | TeamView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/action_button.dart` | ActionButton | WIDGET | Existing | IMPLEMENTED | Premium semantic action tile with hover/press surface and resilient labels | Analyzer and widget tests; visual QA pending |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/bar_chart_painter.dart` | BarChartPainter | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/card_title.dart` | CardTitle | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/dashboard_body.dart` | DashboardBody | WIDGET | Existing | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/dual_line_painter.dart` | DualLinePainter | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/form_label.dart` | FormLabel | FORM | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/header_banner.dart` | HeaderBanner | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/job_card_register_card.dart` | JobCardRegisterCard | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/kpi_card.dart` | KpiCard | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/kpi_grid.dart` | KpiGrid | WIDGET | Existing | IMPLEMENTED | Adaptive 1/2/4-column workshop-health KPI layout | Analyzer and 320/390/800/1440px widget tests; visual QA pending |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/message_tile.dart` | MessageTile | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/messages_page.dart` | MessagesPage | PAGE | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/owner_activity_feed_tab.dart` | OwnerActivityFeedTab | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/owner_app_bar.dart` | OwnerAppBar | NAVIGATION | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/owner_bottom_nav.dart` | OwnerBottomNav | NAVIGATION | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/owner_dashboard_page.dart` | OwnerDashboardPage | PAGE | Existing; modified worktree | IMPLEMENTED | Premium owner overview with adaptive health KPIs, operations, analytics and action workspace | Analyzer and responsive component tests; full-page visual QA pending |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/period_dropdown.dart` | PeriodDropdown | FORM | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/quick_actions_row.dart` | QuickActionsRow | WIDGET | Existing | IMPLEMENTED | Responsive action grid replacing fixed stacked rows | Analyzer and responsive layout tests; visual QA pending |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/sales_category_card.dart` | SalesCategoryCard | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/sales_trend_card.dart` | SalesTrendCard | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/sales_vs_expenses_card.dart` | SalesVsExpensesCard | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | dashboard | `apps/owner_app/lib/features/dashboard/presentation/widgets/top_sales_page.dart` | TopSalesPage | PAGE | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | job_cards | `apps/owner_app/lib/features/job_cards/presentation/pages/job_card_detail_view.dart` | JobCardDetailView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | job_cards | `apps/owner_app/lib/features/job_cards/presentation/pages/job_cards_list_view.dart` | JobCardsListView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | job_cards | `apps/owner_app/lib/features/job_cards/presentation/widgets/filter_chip_bar.dart` | FilterChipBar | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| owner_app | job_cards | `apps/owner_app/lib/features/job_cards/presentation/widgets/job_card_tile.dart` | JobCardTile | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/pages/forgot_password_view.dart` | ForgotPasswordView | SCREEN | Existing; modified worktree | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/pages/login_view.dart` | LoginView | SCREEN | Existing; modified worktree | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/widgets/auth_background.dart` | AuthBackground | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/widgets/auth_button.dart` | AuthButton | SHARED_WIDGET | Existing | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/widgets/auth_header.dart` | AuthHeader | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/widgets/auth_loading_view.dart` | AuthLoadingView | STATE | Existing; modified worktree | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/widgets/auth_surface.dart` | AuthShell, AuthTextField, AuthPrimaryButton | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/widgets/otp_input_field.dart` | OtpInputField | FORM | Existing; modified worktree | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/widgets/phone_input_field.dart` | CountryOption, PhoneInputField | FORM | Existing; modified worktree | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_auth | presentation | `packages/shared_auth/lib/src/presentation/widgets/security_badge.dart` | SecurityBadge | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| shared_core | layout | `packages/shared_core/lib/src/layout/app_adaptive_navigation.dart` | AppNavItem, AppAdaptiveNavigationFrame, AppBottomNavigation | NAVIGATION | Existing; modified worktree | VERIFIED | 10 target widths tested; tablet/desktop goldens | Analyzer, breakpoint tests, overflow tests, visual goldens |
+| shared_core | layout | `packages/shared_core/lib/src/layout/app_responsive.dart` | AppAdaptiveSpec, AppResponsive, AppAdaptiveBuilder | SHARED_WIDGET | Existing; modified worktree | VERIFIED | 10 target widths tested; tablet/desktop goldens | Analyzer, breakpoint tests, overflow tests, visual goldens |
+| shared_core | presentation | `packages/shared_core/lib/src/presentation/async_state.dart` | AsyncState, AsyncInitial, AsyncLoading | STATE | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | presentation | `packages/shared_core/lib/src/presentation/list_state.dart` | ListState | SHARED_WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| shared_core | theme | `packages/shared_core/lib/src/theme/app_colors.dart` | AppColors | DESIGN_SYSTEM | Existing; modified worktree | VERIFIED | Central token; viewport independent | Analyzer, unit tests, visual golden |
+| shared_core | theme | `packages/shared_core/lib/src/theme/app_dimensions.dart` | AppDimensions | DESIGN_SYSTEM | Existing; modified worktree | VERIFIED | Central token; viewport independent | Analyzer, unit tests, visual golden |
+| shared_core | theme | `packages/shared_core/lib/src/theme/app_fonts.dart` | app_fonts | DESIGN_SYSTEM | Existing | VERIFIED | Central token; viewport independent | Analyzer, unit tests, visual golden |
+| shared_core | theme | `packages/shared_core/lib/src/theme/app_motion.dart` | AppMotion | DESIGN_SYSTEM | Existing; modified worktree | VERIFIED | Central token; viewport independent | Analyzer, unit tests, visual golden |
+| shared_core | theme | `packages/shared_core/lib/src/theme/app_text_styles.dart` | AppFontFamilies, AppTextStyles, AppTypography | DESIGN_SYSTEM | Existing; modified worktree | VERIFIED | Central token; viewport independent | Analyzer, unit tests, visual golden |
+| shared_core | theme | `packages/shared_core/lib/src/theme/app_theme.dart` | AppTheme | DESIGN_SYSTEM | Existing; modified worktree | VERIFIED | Central token; viewport independent | Analyzer, unit tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/app_action_bar.dart` | AppActionBar | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/app_card.dart` | AppCard | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/app_confirmation_dialog.dart` | app_confirmation_dialog | DIALOG | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/app_dropdown_button.dart` | AppDropdownButton | FORM | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/app_page_header.dart` | AppPageHeader | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/app_record_row.dart` | AppRecordRow | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/app_search_field.dart` | AppSearchField | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/app_text_field.dart` | AppTextField | FORM | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/app_top_bar.dart` | AppTopBar, CustomerTopBar | NAVIGATION | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/dashboard_shell.dart` | DashboardShell | NAVIGATION | Existing | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/empty_state.dart` | EmptyState | STATE | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/error_view.dart` | ErrorView | STATE | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/exit_confirmation_dialog.dart` | ExitConfirmationWrapper | DIALOG | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/gradient_banner.dart` | GradientBanner, GradientBannerPill | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/loading_indicator.dart` | LoadingIndicator, ShimmerLoading | STATE | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/logout_dialog.dart` | logout_dialog | DIALOG | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/notification_bell.dart` | NotificationBell | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/offline_banner.dart` | OfflineBanner | STATE | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/primary_button.dart` | PrimaryButton, SecondaryButton | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/profile_sheet.dart` | ProfileSheetItem, ProfileSheetData | BOTTOM_SHEET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/resume_refresh_scope.dart` | ResumeRefreshScope | SHARED_WIDGET | Existing | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/section_header.dart` | SectionHeader | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/status_pill.dart` | StatusPill | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| shared_core | widgets | `packages/shared_core/lib/src/widgets/user_avatar.dart` | UserAvatar | SHARED_WIDGET | Existing; modified worktree | VERIFIED | Component contract verified; app QA pending | Analyzer, component tests, visual golden |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart` | IC, AppBadge, SolidBtn | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/advisor_assign_tasks_view.dart` | TaskDraft, AdvisorAssignTasksView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/advisor_home_view.dart` | AdvisorHomeView | SCREEN | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/advisor_job_detail_view.dart` | AdvisorJobDetailView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/advisor_jobs_view.dart` | AdvisorJobsListView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/advisor_reports_view.dart` | AdvisorReportsView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/advisor_vehicle_checkin_view.dart` | AdvisorVehicleCheckinView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/choose_inspection_view.dart` | ChooseInspectionView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/inspection_preview_view.dart` | InspectionPreviewView | SCREEN | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/inspection_sheet_view.dart` | InspectionSheetView | BOTTOM_SHEET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/repair_order_view.dart` | RepairOrderView, RepairOrderPreviewView | SCREEN | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/scan_vehicle_view.dart` | ScanVehicleView | SCREEN | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/vehicle_customer_view.dart` | VehicleCustomerView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/pages/vehicle_delivery_view.dart` | VehicleDeliveryView | SCREEN | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_approval_row.dart` | AdvisorApprovalRow | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_approval_sheet.dart` | AdvisorApprovalSheet | BOTTOM_SHEET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_approvals_page.dart` | AdvisorApprovalsPage | PAGE | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_avatar.dart` | AdvisorAvatar | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_body.dart` | AdvisorBody | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_bottom_item.dart` | AdvisorBottomItem | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_bottom_nav.dart` | AdvisorBottomNav | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_contact_option.dart` | AdvisorContactOption | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_contact_sheet.dart` | AdvisorContactSheet | BOTTOM_SHEET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_date_chip.dart` | AdvisorDateChip | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_detail_line.dart` | AdvisorDetailLine | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_divider.dart` | AdvisorDivider | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_fab.dart` | AdvisorFab | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_handle.dart` | AdvisorHandle | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_header.dart` | AdvisorHeader | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_header_button.dart` | AdvisorHeaderButton | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_job_card_row.dart` | AdvisorJobCardRow | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_job_card_sheet.dart` | AdvisorJobCardSheet | BOTTOM_SHEET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_job_cards_page.dart` | AdvisorJobCardsPage | PAGE | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_menu_item.dart` | AdvisorMenuItem | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_meta_pill.dart` | AdvisorMetaPill | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_notification_data.dart` | AdvisorNotificationData | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_notification_row.dart` | AdvisorNotificationRow | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_notification_sheet.dart` | AdvisorNotificationSheet | BOTTOM_SHEET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_outline_action.dart` | AdvisorOutlineAction | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_profile_sheet.dart` | AdvisorProfileSheet | BOTTOM_SHEET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_reminder_row.dart` | AdvisorReminderRow | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_reminders_page.dart` | AdvisorRemindersPage | PAGE | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_search_sheet.dart` | AdvisorSearchSheet | BOTTOM_SHEET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_see_all_button.dart` | AdvisorSeeAllButton | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_sheet.dart` | AdvisorSheet | BOTTOM_SHEET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_solid_action.dart` | AdvisorSolidAction | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_stat_dialog.dart` | AdvisorStatDialog | DIALOG | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_stat_tile.dart` | AdvisorStatTile | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_status_badge.dart` | AdvisorStatusBadge | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_tab_button.dart` | AdvisorTabButton | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/advisor_tab_panel.dart` | AdvisorTabPanel | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/select_brand_sheet.dart` | SelectBrandSheet, SelectModelSheet, CustomerTagSheet | BOTTOM_SHEET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | advisor | `apps/staff_app/lib/features/advisor/presentation/widgets/vehicle_customer_shared_widgets.dart` | SectionCard, FieldLabel, AdvisorTextField | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | application | `apps/staff_app/lib/main.dart` | StaffApp | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | common | `apps/staff_app/lib/features/common/presentation/profile_screen.dart` | StaffProfileScreen | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | common | `apps/staff_app/lib/features/common/presentation/simple_pages.dart` | ProfilePage, ShiftDetailsPage, SettingsPage | WIDGET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | common | `apps/staff_app/lib/features/common/presentation/staff_shimmer_skeletons.dart` | ShimmerBox, AdvisorDashboardSkeleton, SupervisorQueueSkeleton | STATE | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | core/router | `apps/staff_app/lib/core/router/app_router.dart` | AppRoutes, SupervisorSubPageWrapper | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/supervisor_dashboard_view.dart` | SupervisorDashboardView | SCREEN | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/supervisor_login_view.dart` | SupervisorLoginView | SCREEN | Existing | VERIFIED | Mobile form flow and desktop split composition visually verified | Analyzer, auth state/interaction tests, responsive visual goldens |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/qc_checklist_sheet.dart` | QcChecklistSheet | BOTTOM_SHEET | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/staff_notification_bell.dart` | StaffNotificationBell | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_app_bar.dart` | SupervisorAppBar | NAVIGATION | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart` | SupervisorAssignSheet | BOTTOM_SHEET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart` | SupervisorDashboardTab | WIDGET | Existing; modified worktree | IMPLEMENTED | Premium command dashboard constrained for tablet and desktop workspaces | Analyzer and shell tests; feature visual QA pending |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart` | SupervisorJobsTab | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_queue_tab.dart` | SupervisorQueueTab | WIDGET | Existing; modified worktree | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_reports_tab.dart` | SupervisorReportsTab | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_review_tab.dart` | SupervisorReviewTab | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_scaffold.dart` | SupervisorScaffold | NAVIGATION | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_schedule_tab.dart` | SupervisorScheduleTab | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_staff_tab.dart` | SupervisorStaffTab | WIDGET | Existing; modified worktree | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_stat_card.dart` | SupervisorStatCard | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | supervisor | `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_stats_grid.dart` | SupervisorStatsGrid | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/technician_dashboard_view.dart` | TechnicianDashboardView, AssignedJobsDetailSheet | SCREEN | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/assigned_jobs_list.dart` | AssignedJobsList | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/assigned_jobs_section.dart` | AssignedJobsSection | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/attendance_section.dart` | AttendanceSection | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/escalation_sheet.dart` | EscalationSheet | BOTTOM_SHEET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/job_card_tile.dart` | JobCardTile | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/job_detail_sheet.dart` | JobDetailSheet | BOTTOM_SHEET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/job_search_bar.dart` | JobSearchBar | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/parts_request_sheet.dart` | PartsRequestSheet | BOTTOM_SHEET | Existing | ANALYZING | Implemented; visual QA pending | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/productivity_section.dart` | ProductivitySection | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/quick_job_access_section.dart` | QuickJobAccessSection | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/section_card.dart` | SectionCard | WIDGET | Existing | ANALYZING | Review required | Not yet phase-verified |
+| staff_app | technician | `apps/staff_app/lib/features/technician/presentation/widgets/technician_header_widget.dart` | TechnicianHeaderWidget | WIDGET | Existing; modified worktree | IMPLEMENTED | Compact bottom navigation and wide navigation rail visually verified | Analyzer, navigation widget tests, compact/rail shell goldens; feature QA pending |
+
+<!-- PRESENTATION_INVENTORY_END -->

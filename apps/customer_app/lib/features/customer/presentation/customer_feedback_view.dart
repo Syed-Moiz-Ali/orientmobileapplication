@@ -62,6 +62,9 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     if (_submitted) {
       return _SubmittedView(
         onBook: () => context.go(AppRoutes.customerBookService),
@@ -70,7 +73,7 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -89,12 +92,12 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
                 icon: const Icon(Icons.close_rounded),
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: colorScheme.outlineVariant),
             LinearProgressIndicator(
               value: (_page + 1) / 3,
               minHeight: 4,
-              backgroundColor: AppColors.surface,
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              backgroundColor: colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation(colorScheme.primary),
             ),
             Expanded(
               child: AppResponsivePage(
@@ -164,10 +167,12 @@ class _SubmittedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: AppResponsivePage(
           child: Column(
@@ -176,13 +181,13 @@ class _SubmittedView extends StatelessWidget {
               Container(
                 width: 80,
                 height: 80,
-                decoration: const BoxDecoration(
-                  color: AppColors.successBg,
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.favorite_rounded,
-                  color: AppColors.success,
+                  color: colorScheme.primary,
                   size: 40,
                 ),
               ),
@@ -191,7 +196,7 @@ class _SubmittedView extends StatelessWidget {
                 'Thank You',
                 style: textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: AppDimensions.s12),
@@ -199,7 +204,7 @@ class _SubmittedView extends StatelessWidget {
                 'Your feedback helps us improve our service.',
                 textAlign: TextAlign.center,
                 style: textTheme.bodyLarge?.copyWith(
-                  color: AppColors.text3,
+                  color: colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
               ),
@@ -229,7 +234,9 @@ class _OverallStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -239,7 +246,7 @@ class _OverallStep extends StatelessWidget {
           textAlign: TextAlign.center,
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: AppDimensions.s32),
@@ -255,7 +262,7 @@ class _OverallStep extends StatelessWidget {
                   index < value
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
-                  color: index < value ? AppColors.warning : AppColors.border,
+                  color: index < value ? const Color(0xFFFFB800) : colorScheme.outlineVariant,
                 ),
               ),
           ],
@@ -288,7 +295,9 @@ class _CategoryStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +306,7 @@ class _CategoryStep extends StatelessWidget {
           'Rate specific areas',
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: AppDimensions.s24),
@@ -306,19 +315,19 @@ class _CategoryStep extends StatelessWidget {
           value: workQuality,
           onChanged: onWorkQuality,
         ),
-        const Divider(height: AppDimensions.s32),
+        Divider(height: AppDimensions.s32, color: colorScheme.outlineVariant),
         _CategoryRating(
           label: 'Communication',
           value: communication,
           onChanged: onCommunication,
         ),
-        const Divider(height: AppDimensions.s32),
+        Divider(height: AppDimensions.s32, color: colorScheme.outlineVariant),
         _CategoryRating(
           label: 'Timeliness',
           value: timeliness,
           onChanged: onTimeliness,
         ),
-        const Divider(height: AppDimensions.s32),
+        Divider(height: AppDimensions.s32, color: colorScheme.outlineVariant),
         _CategoryRating(
           label: 'Value for Money',
           value: valueForMoney,
@@ -342,7 +351,9 @@ class _CategoryRating extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Row(
       children: [
@@ -351,7 +362,7 @@ class _CategoryRating extends StatelessWidget {
             label,
             style: textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
         ),
@@ -364,7 +375,7 @@ class _CategoryRating extends StatelessWidget {
                   index < value
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
-                  color: index < value ? AppColors.warning : AppColors.border,
+                  color: index < value ? const Color(0xFFFFB800) : colorScheme.outlineVariant,
                 ),
               ),
           ],
@@ -387,7 +398,9 @@ class _CommentStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,19 +409,21 @@ class _CommentStep extends StatelessWidget {
           'Any other comments?',
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: AppDimensions.s16),
         AppCard(
           padding: EdgeInsets.zero,
+          color: colorScheme.surface,
+          borderColor: colorScheme.outlineVariant,
           child: TextField(
             controller: controller,
             maxLines: 4,
-            style: textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
+            style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
             decoration: InputDecoration(
               hintText: 'Tell us more (optional)',
-              hintStyle: textTheme.bodyLarge?.copyWith(color: AppColors.text4),
+              hintStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(AppDimensions.s16),
             ),
@@ -419,7 +434,7 @@ class _CommentStep extends StatelessWidget {
           'Would you recommend us?',
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: AppDimensions.s16),
@@ -430,13 +445,13 @@ class _CommentStep extends StatelessWidget {
             _RecommendOption(
               label: 'Yes',
               selected: wouldRecommend == true,
-              color: AppColors.primary,
+              color: colorScheme.primary,
               onTap: () => onRecommend(true),
             ),
             _RecommendOption(
               label: 'No',
               selected: wouldRecommend == false,
-              color: AppColors.danger,
+              color: colorScheme.error,
               onTap: () => onRecommend(false),
             ),
           ],
@@ -461,18 +476,20 @@ class _RecommendOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return AppCard(
       onTap: onTap,
-      color: selected ? color.withValues(alpha: 0.1) : AppColors.surface,
-      borderColor: selected ? color : AppColors.border,
+      color: selected ? color.withValues(alpha: 0.1) : colorScheme.surface,
+      borderColor: selected ? color : colorScheme.outlineVariant,
       child: Center(
         child: Text(
           label,
           style: textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w800,
-            color: selected ? color : AppColors.textPrimary,
+            color: selected ? color : colorScheme.onSurface,
           ),
         ),
       ),
@@ -495,8 +512,10 @@ class _BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      color: AppColors.surface,
+      color: colorScheme.surface,
       padding: const EdgeInsets.all(AppDimensions.s20),
       child: SafeArea(
         top: false,
@@ -505,12 +524,12 @@ class _BottomBar extends StatelessWidget {
           child: FilledButton(
             onPressed: !enabled || loading ? null : onTap,
             child: loading
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: colorScheme.onPrimary,
                     ),
                   )
                 : Text(label),

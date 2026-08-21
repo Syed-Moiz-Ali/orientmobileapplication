@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 
 class StaffProfileScreen extends ConsumerWidget {
   const StaffProfileScreen({super.key});
@@ -301,7 +299,7 @@ class _PreferencesBentoGroup extends StatelessWidget {
             subtitle: 'Real-time emergency & booking cues',
             trailing: Switch.adaptive(
               value: true,
-              activeColor: colorScheme.primary,
+              activeTrackColor: colorScheme.primary,
               onChanged: (_) => HapticFeedback.selectionClick(),
             ),
           ),
@@ -312,7 +310,7 @@ class _PreferencesBentoGroup extends StatelessWidget {
             subtitle: 'Display raw sensor feeds on active jobs',
             trailing: Switch.adaptive(
               value: true,
-              activeColor: colorScheme.primary,
+              activeTrackColor: colorScheme.primary,
               onChanged: (_) => HapticFeedback.selectionClick(),
             ),
           ),
@@ -323,7 +321,7 @@ class _PreferencesBentoGroup extends StatelessWidget {
             subtitle: 'Optimized for low-light shop floor',
             trailing: Switch.adaptive(
               value: true,
-              activeColor: colorScheme.primary,
+              activeTrackColor: colorScheme.primary,
               onChanged: (_) => HapticFeedback.selectionClick(),
             ),
           ),

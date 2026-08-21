@@ -1,8 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 
 class AdvisorVehicleCheckinView extends ConsumerStatefulWidget {

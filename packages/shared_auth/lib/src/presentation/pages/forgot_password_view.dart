@@ -156,14 +156,15 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   @override
   Widget build(BuildContext context) {
     return AuthShell(
+      top: _RecoveryProgress(step: _otpSent ? 2 : 1),
       title: _otpSent ? 'New password' : 'Recover access',
       subtitle: _otpSent
           ? 'Enter the code and choose a new password.'
           : 'Use your registered email or mobile number.',
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
+        duration: AppMotion.standard,
+        switchInCurve: AppMotion.enter,
+        switchOutCurve: AppMotion.exit,
         child: KeyedSubtree(
           key: ValueKey(_otpSent),
           child: _otpSent
@@ -242,10 +243,7 @@ class _RequestStep extends StatelessWidget {
           onPressed: onSubmit,
         ),
         const SizedBox(height: AppDimensions.s12),
-        AuthLinkButton(
-          label: 'Back to sign in',
-          onPressed: onBackToLogin,
-        ),
+        AuthLinkButton(label: 'Back to sign in', onPressed: onBackToLogin),
       ],
     );
   }
@@ -287,7 +285,7 @@ class _ResetStep extends StatelessWidget {
           identifier,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: AppDimensions.s16),
@@ -329,11 +327,43 @@ class _ResetStep extends StatelessWidget {
                   : 'Resend code',
               onPressed: resendCooldown > 0 ? () {} : onResend,
             ),
-            AuthLinkButton(
-              label: 'Back to sign in',
-              onPressed: onBackToLogin,
-            ),
+            AuthLinkButton(label: 'Back to sign in', onPressed: onBackToLogin),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class _RecoveryProgress extends StatelessWidget {
+  final int step;
+
+  const _RecoveryProgress({required this.step});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Row(
+      children: [
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppDimensions.rPill),
+            child: LinearProgressIndicator(
+              value: step / 2,
+              minHeight: 4,
+              backgroundColor: colors.surfaceContainerHighest,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppDimensions.s12),
+        Text(
+          'Step $step of 2',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: colors.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
+import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_lead_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_analytics_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
@@ -26,7 +27,12 @@ class CrmDashboardPage extends ConsumerWidget {
     final anyConnected = integrations.any((i) => i.connected);
 
     if (ui.isLoading) {
-      return const Center(child: CircularProgressIndicator(color: CrmColors.accent, strokeWidth: 2.5));
+      return const Center(
+        child: CircularProgressIndicator(
+          color: CrmColors.accent,
+          strokeWidth: 2.5,
+        ),
+      );
     }
 
     final hasData = leads.isNotEmpty || ui.channels.isNotEmpty;
@@ -37,86 +43,105 @@ class CrmDashboardPage extends ConsumerWidget {
         await ref.read(leadAnalyticsProvider.notifier).refresh();
       },
       color: CrmColors.accent,
-      child: SingleChildScrollView(
+      child: AppResponsivePage(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const CrmHeaderBanner(),
-            if (!anyConnected) _connectBanner(context) else if (!hasData) _emptyBanner(context, ui.refresh),
-            Padding(
-              padding: const EdgeInsets.all(AppDimensions.s16),
-              child: Column(
+            if (!anyConnected)
+              _connectBanner(context)
+            else if (!hasData)
+              _emptyBanner(context, ui.refresh),
+            SizedBox(height: context.adaptive.sectionSpacing),
+            _sectionLabel('Sales pulse'),
+            const SizedBox(height: AppDimensions.s12),
+            _kpiGrid(context, ui.kpis),
+            SizedBox(height: context.adaptive.sectionSpacing),
+            _sectionLabel('Attention queue'),
+            const SizedBox(height: AppDimensions.s12),
+            AppSplitView(
+              primary: analytics.stats.total > 0
+                  ? LeadPipelineWidget(stats: analytics.stats)
+                  : _emptySection(
+                      Icons.filter_alt_outlined,
+                      'No pipeline data',
+                      'Leads will build your pipeline here',
+                    ),
+              secondary: FollowUpsWidget(followUps: analytics.followUps),
+              primaryFlex: 1.15,
+            ),
+            SizedBox(height: context.adaptive.sectionSpacing),
+            AppSplitView(
+              primary: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _sectionLabel('KPI Overview'),
-                  const SizedBox(height: AppDimensions.s12),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.35,
-                    ),
-                    itemCount: ui.kpis.length,
-                    itemBuilder: (_, i) => CrmKpiCard(kpi: ui.kpis[i]),
-                  ),
-                  const SizedBox(height: 2),
-                  _sectionLabel('Lead Pipeline'),
-                  const SizedBox(height: AppDimensions.s12),
-                  analytics.stats.total > 0
-                      ? LeadPipelineWidget(stats: analytics.stats)
-                      : _emptySection(
-                          Icons.filter_alt_outlined,
-                          'No pipeline data',
-                          'Leads will build your pipeline here',
-                        ),
-                  const SizedBox(height: 2),
-                  _sectionLabel('Upcoming Follow-ups'),
-                  const SizedBox(height: AppDimensions.s12),
-                  FollowUpsWidget(followUps: analytics.followUps),
-                  const SizedBox(height: 2),
-                  _sectionLabel('Incoming Messages Breakdown'),
+                  _sectionLabel('Channel performance'),
                   const SizedBox(height: AppDimensions.s12),
                   if (ui.channels.isEmpty)
                     _emptySection(
                       Icons.chat_bubble_outline_rounded,
                       'No channel data yet',
-                      'Messages from your connected platforms will appear here',
+                      'Messages from connected platforms will appear here',
                     )
                   else
                     CrmChannelGrid(channels: ui.channels),
-                  const SizedBox(height: 2),
-                  _sectionLabel('Recent Activity'),
+                ],
+              ),
+              secondary: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _sectionLabel('Recent activity'),
                   const SizedBox(height: AppDimensions.s12),
                   ActivityFeedWidget(feed: analytics.feed),
-                  const SizedBox(height: 2),
-                  _sectionLabel('Recent Leads'),
-                  const SizedBox(height: AppDimensions.s12),
-                  if (leads.isEmpty)
-                    _emptySection(
-                      Icons.people_outline_rounded,
-                      'No leads yet',
-                      anyConnected
-                          ? 'Sync your connected CRM to fetch leads'
-                          : 'Connect a CRM to start receiving leads',
-                    )
-                  else
-                    CrmRecentLeadsCard(leads: leads.take(5).toList()),
                 ],
               ),
             ),
+            SizedBox(height: context.adaptive.sectionSpacing),
+            _sectionLabel('Recent leads'),
+            const SizedBox(height: AppDimensions.s12),
+            if (leads.isEmpty)
+              _emptySection(
+                Icons.people_outline_rounded,
+                'No leads yet',
+                anyConnected
+                    ? 'Sync your connected CRM to fetch leads'
+                    : 'Connect a CRM to start receiving leads',
+              )
+            else
+              CrmRecentLeadsCard(leads: leads.take(5).toList()),
+            const SizedBox(height: AppDimensions.s24),
           ],
         ),
       ),
     );
   }
 
+  Widget _kpiGrid(BuildContext context, List<CrmKpiEntity> kpis) {
+    final adaptive = context.adaptive;
+    final columns = adaptive.isSmallMobile
+        ? 1
+        : adaptive.pick(compact: 2, medium: 2, expanded: 4, large: 4);
+    return AppAdaptiveGrid(
+      columns: columns,
+      minChildWidth: adaptive.isCompact ? 142 : 190,
+      spacing: adaptive.itemSpacing,
+      runSpacing: adaptive.itemSpacing,
+      childAspectRatio: adaptive.isSmallMobile
+          ? 2.65
+          : adaptive.pick(
+              compact: 1.35,
+              medium: 1.75,
+              expanded: 2.05,
+              large: 2.15,
+            ),
+      children: [for (final kpi in kpis) CrmKpiCard(kpi: kpi)],
+    );
+  }
+
   Widget _connectBanner(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      margin: const EdgeInsets.only(top: AppDimensions.s16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -135,7 +160,11 @@ class CrmDashboardPage extends ConsumerWidget {
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.link_rounded, color: Colors.white, size: 22),
+            child: const Icon(
+              Icons.link_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -144,7 +173,11 @@ class CrmDashboardPage extends ConsumerWidget {
               children: [
                 Text(
                   'No CRMs connected',
-                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 SizedBox(height: 2),
                 Text(
@@ -158,10 +191,17 @@ class CrmDashboardPage extends ConsumerWidget {
             onTap: () => ConnectIntegrationSheet.show(context),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: const Text(
                 'Connect',
-                style: TextStyle(color: CrmColors.primary, fontSize: 12, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  color: CrmColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -172,7 +212,7 @@ class CrmDashboardPage extends ConsumerWidget {
 
   Widget _emptyBanner(BuildContext context, VoidCallback onSync) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      margin: const EdgeInsets.only(top: AppDimensions.s16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: CrmColors.accentLight,
@@ -181,7 +221,11 @@ class CrmDashboardPage extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.sync_problem_rounded, color: CrmColors.accent, size: 22),
+          const Icon(
+            Icons.sync_problem_rounded,
+            color: CrmColors.accent,
+            size: 22,
+          ),
           const SizedBox(width: 12),
           const Expanded(
             child: Column(
@@ -189,10 +233,17 @@ class CrmDashboardPage extends ConsumerWidget {
               children: [
                 Text(
                   'Syncing leads...',
-                  style: TextStyle(color: CrmColors.textH, fontSize: 13, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    color: CrmColors.textH,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 SizedBox(height: 2),
-                Text('Your CRM is connected but no leads yet', style: TextStyle(color: CrmColors.textM, fontSize: 11)),
+                Text(
+                  'Your CRM is connected but no leads yet',
+                  style: TextStyle(color: CrmColors.textM, fontSize: 11),
+                ),
               ],
             ),
           ),
@@ -200,10 +251,17 @@ class CrmDashboardPage extends ConsumerWidget {
             onTap: onSync,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(color: CrmColors.primary, borderRadius: BorderRadius.circular(20)),
+              decoration: BoxDecoration(
+                color: CrmColors.primary,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: const Text(
                 'Sync Now',
-                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -227,7 +285,11 @@ class CrmDashboardPage extends ConsumerWidget {
           const SizedBox(height: 10),
           Text(
             title,
-            style: const TextStyle(color: CrmColors.textH, fontSize: 13, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              color: CrmColors.textH,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -245,12 +307,20 @@ class CrmDashboardPage extends ConsumerWidget {
       Container(
         width: 4,
         height: 20,
-        decoration: BoxDecoration(color: CrmColors.accent, borderRadius: BorderRadius.circular(AppDimensions.r2)),
+        decoration: BoxDecoration(
+          color: CrmColors.accent,
+          borderRadius: BorderRadius.circular(AppDimensions.r2),
+        ),
       ),
       const SizedBox(width: AppDimensions.s10),
       Text(
         text,
-        style: const TextStyle(color: CrmColors.textH, fontSize: 19, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+        style: const TextStyle(
+          color: CrmColors.textH,
+          fontSize: 19,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        ),
       ),
     ],
   );

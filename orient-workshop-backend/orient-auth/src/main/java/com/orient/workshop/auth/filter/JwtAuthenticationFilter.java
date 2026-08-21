@@ -6,6 +6,7 @@ import com.orient.workshop.auth.repository.UserMapper;
 import com.orient.workshop.auth.security.AppAccessPolicy;
 import com.orient.workshop.auth.util.JwtUtil;
 import com.orient.workshop.common.constant.ApiConstants;
+import com.orient.workshop.common.context.BranchContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -73,6 +74,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         .userId(userId).phone(phone).role(role).branchId(branchId)
                         .build();
 
+                // H-1: publish the effective branch scope for the MyBatis tenant interceptor.
+                // Super-user roles (owner/admin/crmDashboard) with no single branch get a
+                // global (null) view; all other roles are pinned to their branch claim.
+                BranchContext.set(resolveBranchView(branchId, role));
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(principal, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -84,7 +90,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        filterChain.doFilter(request, response);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            BranchContext.clear();
+        }
+    }
+
+    private Long resolveBranchView(Long branchId, String role) {
+        if (role == null) return branchId;
+        String r = role.toLowerCase();
+        if ("owner".equals(r) || "admin".equals(r) || "crmdashboard".equals(r)) {
+            return null;
+        }
+        return branchId;
     }
 
     private void sendUnauthorized(HttpServletResponse response) throws IOException {

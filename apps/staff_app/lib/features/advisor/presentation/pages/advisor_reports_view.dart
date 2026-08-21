@@ -1,10 +1,7 @@
 import 'dart:math';
-import 'dart:ui';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_reports_provider.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
@@ -16,7 +13,6 @@ class AdvisorReportsView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
 
     final data = ref.watch(advisorReportDataProvider).value ?? const AdvisorReportData();
     final range = ref.watch(advisorReportRangeProvider);

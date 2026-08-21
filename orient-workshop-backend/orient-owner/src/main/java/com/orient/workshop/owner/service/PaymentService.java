@@ -55,6 +55,14 @@ public class PaymentService {
             throw new NotFoundException("Invoice not found with id: " + req.getInvoiceId());
         }
 
+        // H-1 (tenant isolation): the caller must belong to the invoice's branch.
+        // Super-users (owner/admin with null branch scope) may record any payment.
+        if (invoice.getBranchId() != null && principal != null && principal.getBranchId() != null
+                && !invoice.getBranchId().equals(principal.getBranchId())) {
+            throw new com.orient.workshop.common.exception.ForbiddenException(
+                    "Invoice does not belong to your branch");
+        }
+
         BigDecimal outstanding = outstanding(invoice);
         if (req.getAmount().compareTo(outstanding) > 0) {
             throw new BadRequestException("Payment exceeds the outstanding amount ("

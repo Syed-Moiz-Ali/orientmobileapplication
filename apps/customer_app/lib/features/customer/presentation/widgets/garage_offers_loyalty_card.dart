@@ -8,61 +8,35 @@ class GarageOffersLoyaltyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppDimensions.s18),
       decoration: BoxDecoration(
-        color: AppColors.darkNavy,
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppDimensions.r24),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.stars_rounded,
-                      size: 14,
-                      color: Color(0xFFD97706),
-                    ),
-                    const SizedBox(width: AppDimensions.s4),
-                    Text(
-                      'GARAGE REWARDS',
-                      style: textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFFD97706),
-                      ),
-                    ),
-                  ],
-                ),
+              StatusPill(
+                label: 'GARAGE REWARDS',
+                icon: Icons.stars_rounded,
+                bg: const Color(0xFFD97706).withValues(alpha: 0.15),
+                fg: const Color(0xFFD97706),
               ),
               const Spacer(),
               Text(
                 '450 Points',
                 style: textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -72,14 +46,14 @@ class GarageOffersLoyaltyCard extends StatelessWidget {
             'Summer AC & Battery Health Check',
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w900,
-              color: Colors.white,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: AppDimensions.s6),
           Text(
             'Complimentary 15-point inspection with any full service this month.',
             style: textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFFBFDBFE),
+              color: colorScheme.onSurfaceVariant,
               height: 1.35,
             ),
           ),
@@ -91,18 +65,20 @@ class GarageOffersLoyaltyCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
+                  horizontal: 12,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(AppDimensions.r8),
+                  color: colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
                 child: Text(
                   'CODE: ORIENT2026',
                   style: textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    color: colorScheme.primary,
+                    fontFamily: AppFontFamilies.mono,
                   ),
                 ),
               ),
@@ -119,7 +95,12 @@ class GarageOffersLoyaltyCard extends StatelessWidget {
                         ),
                       );
                     },
-                child: const Text('Claim Offer'),
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+                  ),
+                ),
+                child: const Text('Claim Offer', style: TextStyle(fontWeight: FontWeight.w800)),
               ),
             ],
           ),

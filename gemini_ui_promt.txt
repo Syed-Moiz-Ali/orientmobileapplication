@@ -1,0 +1,2218 @@
+# ORIENT WORKSHOP — EXISTING PROJECT UI/UX ENHANCEMENT
+
+You are working inside the EXISTING repository:
+
+`orientmobileapplication`
+
+This is NOT a greenfield project.
+
+This is NOT a request to create a new Flutter application.
+
+This is NOT a request to rewrite the backend.
+
+Your responsibility is:
+
+> **Inspect the existing Orient Workshop Flutter applications and significantly enhance/rebuild their UI/UX where required while preserving the existing architecture, APIs, state management, business logic and working functionality.**
+
+The goal is to transform the existing UI into a:
+
+# PREMIUM 2026 COMMERCIAL AUTO GARAGE / WORKSHOP MANAGEMENT PLATFORM
+
+The final product should look good enough to sell to real garages, workshops and service centres.
+
+---
+
+# 1. ACTUAL PROJECT STRUCTURE
+
+The repository already contains a Melos monorepo.
+
+Flutter applications:
+
+```text
+apps/customer_app
+apps/staff_app
+apps/owner_app
+apps/crm_app
+```
+
+Shared packages:
+
+```text
+packages/shared_core
+packages/shared_auth
+packages/shared_models
+```
+
+There is also an existing Java backend:
+
+```text
+orient-workshop-backend
+```
+
+## IMPORTANT
+
+This task is specifically for:
+
+# FLUTTER UI/UX ENHANCEMENT
+
+Do NOT redesign or refactor the Java backend unless a UI issue absolutely requires understanding an API contract.
+
+The backend is primarily a dependency to understand existing data and functionality.
+
+---
+
+# 2. EXISTING DESIGN WORK ALREADY EXISTS
+
+Before touching the UI, READ:
+
+```text
+docs/design_system.md
+docs/product_ux.md
+docs/ui_ux_screen_registry.md
+```
+
+These documents already define important design and UX principles.
+
+DO NOT ignore them.
+
+DO NOT create a completely separate competing design system.
+
+Instead:
+
+> Audit → Improve → Extend → Standardize the existing system.
+
+---
+
+# 3. EXISTING SHARED UI FOUNDATION
+
+The project already contains important UI infrastructure inside:
+
+```text
+packages/shared_core
+```
+
+Including:
+
+```text
+app_theme.dart
+app_colors.dart
+app_dimensions.dart
+app_fonts.dart
+app_text_styles.dart
+app_responsive.dart
+app_adaptive_navigation.dart
+```
+
+Existing shared components include things such as:
+
+```text
+DashboardShell
+AppCard
+AppTopBar
+AppTextField
+PrimaryButton
+AppDropdownButton
+SectionHeader
+StatusPill
+UserAvatar
+NotificationBell
+EmptyState
+ErrorView
+LoadingIndicator
+OfflineBanner
+ProfileSheet
+```
+
+## CRITICAL RULE
+
+DO NOT create:
+
+```text
+NewTheme
+NewColors
+NewResponsive
+NewButton
+ModernCard
+CustomCard2
+PremiumTextField
+```
+
+just because it is easier.
+
+First inspect existing shared components.
+
+Improve them if necessary.
+
+Extend them if necessary.
+
+Create a new shared component only when there is a genuine missing pattern.
+
+The target should remain:
+
+```text
+packages/shared_core
+```
+
+as the centralized UI foundation for all four applications.
+
+---
+
+# 4. EXISTING RESPONSIVE ENGINE
+
+The project already defines responsive concepts including:
+
+```dart
+context.windowClass
+context.isCompact
+context.isMedium
+context.isExpanded
+context.isLarge
+context.pagePadding
+context.contentMaxWidth
+context.gridColumns
+```
+
+and patterns such as:
+
+```text
+AppResponsive
+AppResponsivePage
+AppSplitView
+AppAdaptiveNavigation
+```
+
+USE THEM.
+
+Do not scatter new arbitrary:
+
+```dart
+MediaQuery.of(context).size.width > 700
+```
+
+conditions throughout the project.
+
+If the current responsive engine is insufficient:
+
+> Improve the centralized engine.
+
+Do NOT create independent responsive logic screen-by-screen.
+
+---
+
+# 5. THEME RULE
+
+UI colors and text styling should flow primarily through:
+
+```dart
+Theme.of(context)
+```
+
+and existing shared tokens.
+
+The existing project already supports:
+
+```text
+AppColors
+AppTypography
+AppDimensions
+BrandConfig
+```
+
+Maintain that architecture.
+
+Avoid random hardcoded:
+
+```dart
+Color(0xFF...)
+```
+
+and screen-specific:
+
+```dart
+TextStyle(...)
+```
+
+unless genuinely unavoidable.
+
+---
+
+# 6. THIS IS AN ENHANCEMENT OF EXISTING SCREENS
+
+VERY IMPORTANT:
+
+Do NOT replace existing functioning applications with newly generated demo interfaces.
+
+Do NOT create fake static versions of screens.
+
+Do NOT disconnect existing providers.
+
+Do NOT remove API integrations.
+
+Do NOT replace real data with dummy data.
+
+Do NOT rebuild screens without first understanding them.
+
+For every screen:
+
+```text
+Existing screen
+      ↓
+Understand functionality
+      ↓
+Understand providers/state/API
+      ↓
+Visually inspect existing UI
+      ↓
+Identify UX problems
+      ↓
+Design improved structure
+      ↓
+Modify existing implementation
+      ↓
+Run application
+      ↓
+Visually inspect result
+      ↓
+Fix issues
+      ↓
+Responsive test
+      ↓
+Functional verification
+```
+
+---
+
+# 7. GEMINI — USE YOUR VISUAL REASONING
+
+Do NOT treat this as only a source-code refactoring task.
+
+You are being selected specifically because of strong visual and spatial reasoning.
+
+Where the development environment allows it:
+
+# RENDER → INSPECT → REDESIGN → RENDER → COMPARE → IMPROVE
+
+When looking at a screen analyze:
+
+### Visual hierarchy
+
+Can I immediately understand what this screen is about?
+
+### Primary action
+
+Is the most important action obvious?
+
+### Information priority
+
+Is important information visually stronger than secondary information?
+
+### Density
+
+Is information too sparse or too crowded?
+
+### Alignment
+
+Are elements visually aligned?
+
+### Spacing
+
+Is whitespace intentional?
+
+### Typography
+
+Is there a clear type hierarchy?
+
+### Components
+
+Are buttons/cards/forms consistent?
+
+### Responsiveness
+
+Does the screen genuinely adapt or simply shrink?
+
+### Business usability
+
+Could a garage worker understand this immediately?
+
+---
+
+# 8. DO NOT MAKE GENERIC AI UI
+
+Avoid the typical AI-generated dashboard:
+
+```text
+Huge Welcome Banner
+
+↓
+
+4 gradient cards
+
+↓
+
+Random chart
+
+↓
+
+Recent Activities
+```
+
+unless those elements actually benefit that user.
+
+Avoid excessive:
+
+* gradients
+* glassmorphism
+* glowing borders
+* giant rounded cards
+* colorful metric cards
+* excessive shadows
+* decorative illustrations
+* useless charts
+
+This is a:
+
+# PROFESSIONAL GARAGE OPERATING SYSTEM
+
+It should feel operational, premium and trustworthy.
+
+---
+
+# 9. DO NOT PUT EVERYTHING IN CARDS
+
+The existing design documentation correctly states that the application should not become:
+
+> a collection of unrelated rounded cards.
+
+Follow that principle.
+
+Use:
+
+* typography
+* alignment
+* sections
+* whitespace
+* dividers
+* surfaces
+* tables
+* lists
+* master/detail layouts
+
+before automatically adding another container.
+
+Cards should exist only when grouping actually helps.
+
+---
+
+# 10. APPLICATION #1 — CUSTOMER APP
+
+Path:
+
+```text
+apps/customer_app
+```
+
+Important existing screens include:
+
+```text
+customer_dashboard_view.dart
+customer_book_service_view.dart
+customer_booking_detail_view.dart
+customer_booking_success_view.dart
+customer_service_status_view.dart
+customer_vehicles_view.dart
+add_vehicle_view.dart
+customer_breakdown_help_view.dart
+customer_breakdown_detail_view.dart
+customer_invoice_detail_view.dart
+customer_feedback_view.dart
+customer_notifications_view.dart
+```
+
+## CUSTOMER UX GOAL
+
+The customer should quickly understand:
+
+```text
+What is happening with my vehicle?
+
+When is my service?
+
+What does the workshop need from me?
+
+Do I need to approve something?
+
+How much do I need to pay?
+
+When will my vehicle be ready?
+```
+
+The application should NOT feel like workshop ERP software.
+
+Customer-facing UI should be:
+
+* simpler
+* calmer
+* more visual
+* less dense
+* more explanatory
+
+---
+
+# CUSTOMER HOME PRIORITY
+
+The customer dashboard should prioritize something similar to:
+
+```text
+Current vehicle / active service
+
+Current service status
+
+Important action
+    Approve estimate
+    Make payment
+    Contact workshop
+
+Upcoming booking
+
+Vehicles
+
+Recent activity
+```
+
+Avoid meaningless statistics.
+
+---
+
+# SERVICE STATUS
+
+`customer_service_status_view.dart`
+
+This is a critical customer experience.
+
+Service progress should be extremely understandable.
+
+Conceptually:
+
+```text
+Vehicle Checked In
+        ↓
+Inspection
+        ↓
+Estimate
+        ↓
+Approved
+        ↓
+Repair In Progress
+        ↓
+Quality Check
+        ↓
+Ready for Delivery
+```
+
+Use the statuses actually supported by the backend.
+
+DO NOT fake stages.
+
+Make:
+
+* current stage
+* completed stages
+* next stage
+
+obvious.
+
+---
+
+# BOOKING
+
+`customer_book_service_view.dart`
+
+Make booking effortless.
+
+Avoid one massive technical form.
+
+Create a decision-oriented flow around:
+
+```text
+Vehicle
+
+Service
+
+Date
+
+Time
+
+Additional concern
+
+Review
+
+Confirm
+```
+
+Use progressive disclosure where appropriate.
+
+---
+
+# BREAKDOWN HELP
+
+The breakdown workflow is urgent.
+
+Design for:
+
+```text
+Speed
+
+Clarity
+
+Location
+
+Contact
+
+Emergency status
+
+Confirmation
+```
+
+Do not use the same visual density as a normal CRUD screen.
+
+---
+
+# 11. APPLICATION #2 — STAFF APP
+
+Path:
+
+```text
+apps/staff_app
+```
+
+The app supports multiple roles:
+
+```text
+Advisor
+Technician
+Supervisor
+Common Staff
+```
+
+This app requires more operational density than the customer app.
+
+---
+
+# ADVISOR
+
+Existing screens include:
+
+```text
+advisor_home_view.dart
+advisor_jobs_view.dart
+advisor_job_detail_view.dart
+advisor_vehicle_checkin_view.dart
+scan_vehicle_view.dart
+vehicle_customer_view.dart
+choose_inspection_view.dart
+inspection_sheet_view.dart
+inspection_preview_view.dart
+repair_order_view.dart
+advisor_assign_tasks_view.dart
+vehicle_delivery_view.dart
+advisor_reports_view.dart
+advisor_breakdowns_view.dart
+```
+
+The advisor journey should feel connected:
+
+```text
+Customer arrives
+       ↓
+Vehicle lookup/scan
+       ↓
+Customer verification
+       ↓
+Check-in
+       ↓
+Inspection
+       ↓
+Repair order
+       ↓
+Approval
+       ↓
+Assign work
+       ↓
+Track job
+       ↓
+Delivery
+```
+
+DO NOT make these feel like 10 disconnected screens.
+
+Create visual continuity.
+
+Known information should remain visible or be automatically populated.
+
+Avoid forcing users to repeatedly enter the same information.
+
+---
+
+# ADVISOR HOME
+
+The advisor should immediately see:
+
+```text
+What requires my attention now?
+
+Vehicles arriving
+
+Waiting inspections
+
+Approval pending
+
+Active jobs
+
+Ready for delivery
+
+Breakdown requests
+```
+
+Make actionable queues more important than decorative statistics.
+
+---
+
+# TECHNICIAN
+
+Existing major screen:
+
+```text
+technician_dashboard_view.dart
+```
+
+Technician UX should emphasize:
+
+```text
+My next job
+
+Current job
+
+Priority
+
+Tasks
+
+Approved work
+
+Parts
+
+Blockers
+
+Progress
+```
+
+Technicians should not need to navigate through owner-level financial data.
+
+Use large enough tap targets for workshop usage.
+
+---
+
+# SUPERVISOR
+
+Existing screens include:
+
+```text
+supervisor_dashboard_view.dart
+supervisor_login_view.dart
+```
+
+Supervisor dashboard should prioritize:
+
+```text
+Workshop queue
+
+Technician allocation
+
+Blocked jobs
+
+Delayed work
+
+Quality control
+
+Capacity
+
+Exceptions
+```
+
+The supervisor needs operational visibility.
+
+---
+
+# 12. APPLICATION #3 — OWNER APP
+
+Path:
+
+```text
+apps/owner_app
+```
+
+Existing screens include:
+
+```text
+dashboard_view.dart
+owner_dashboard_page.dart
+
+accounts_receivable_view.dart
+document_expiry_view.dart
+job_status_view.dart
+pending_approvals_view.dart
+
+job_cards_list_view.dart
+job_card_detail_view.dart
+
+inventory_view.dart
+team_view.dart
+feedback_moderation_view.dart
+subscription_view.dart
+
+messages_page.dart
+top_sales_page.dart
+```
+
+---
+
+# OWNER EXPERIENCE
+
+The owner does NOT need another generic analytics dashboard.
+
+The dashboard should answer:
+
+# "Is my workshop healthy today?"
+
+Prioritize:
+
+```text
+Today's business
+
+Active jobs
+
+Blocked/delayed jobs
+
+Ready for delivery
+
+Revenue
+
+Receivables
+
+Pending approvals
+
+Low stock
+
+Documents/compliance requiring attention
+
+Team/workload
+```
+
+---
+
+# OWNER ATTENTION SYSTEM
+
+Important problems should surface automatically.
+
+For example:
+
+```text
+8 overdue invoices
+
+3 vehicles delayed
+
+4 approvals waiting
+
+6 parts below minimum stock
+
+2 documents expiring
+```
+
+Only when real data supports them.
+
+These should be actionable.
+
+---
+
+# FINANCIAL INFORMATION
+
+Financial values must have excellent visual hierarchy.
+
+For example:
+
+```text
+₹1,42,500
+
+Outstanding
+```
+
+should be easier to read than surrounding metadata.
+
+Use consistent currency formatting.
+
+---
+
+# JOB CARDS
+
+For:
+
+```text
+job_cards_list_view.dart
+job_card_detail_view.dart
+```
+
+focus strongly on:
+
+```text
+Vehicle registration
+
+Customer
+
+Job status
+
+Advisor/technician
+
+Expected delivery
+
+Estimate
+
+Amount
+
+Current blocker
+
+Next action
+```
+
+The job detail screen should feel like an operational record rather than a random collection of widgets.
+
+---
+
+# INVENTORY
+
+`inventory_view.dart`
+
+Desktop/tablet:
+
+Use professional data-dense layouts where helpful.
+
+Mobile:
+
+Transform into readable condensed rows/cards.
+
+Important states:
+
+```text
+Available
+
+Low Stock
+
+Out of Stock
+```
+
+should be immediately visible.
+
+---
+
+# 13. APPLICATION #4 — CRM APP
+
+Path:
+
+```text
+apps/crm_app
+```
+
+Existing CRM components/screens include:
+
+```text
+crm_dashboard_view.dart
+crm_dashboard_page.dart
+crm_leads_page.dart
+crm_kanban_view.dart
+crm_tasks_page.dart
+crm_conversations_page.dart
+crm_sales_team_page.dart
+crm_reports_page.dart
+crm_integrations_page.dart
+crm_settings_page.dart
+```
+
+There are already several reusable CRM widgets.
+
+Inspect and improve them rather than rebuilding everything from zero.
+
+---
+
+# CRM UX
+
+CRM users primarily need:
+
+```text
+Leads requiring action
+
+Follow-ups
+
+Pipeline
+
+Tasks
+
+Conversations
+
+Sales team
+
+Reports
+```
+
+Prioritize action over decoration.
+
+---
+
+# CRM KANBAN
+
+`crm_kanban_view.dart`
+
+Desktop/tablet:
+
+Use available horizontal space effectively.
+
+Mobile:
+
+Do NOT try to display a giant desktop Kanban board unchanged.
+
+Use an intelligent mobile representation.
+
+Possible approaches:
+
+```text
+Stage selector + cards
+
+or
+
+Horizontal stage paging
+```
+
+depending on what best fits the current code.
+
+---
+
+# CRM LEADS
+
+Lead cards/list rows should quickly expose:
+
+```text
+Name
+
+Contact
+
+Source
+
+Stage
+
+Priority
+
+Last activity
+
+Next follow-up
+
+Assigned user
+```
+
+Do not make users open each lead merely to know what action is required.
+
+---
+
+# 14. AUTHENTICATION
+
+The existing screen registry indicates authentication has already received substantial UI work.
+
+DO NOT automatically rebuild:
+
+```text
+Login
+Forgot Password
+Authentication Shell
+```
+
+First visually inspect them.
+
+If they are already aligned with the new design system:
+
+> Preserve them.
+
+Only correct genuine inconsistencies or UX issues.
+
+---
+
+# 15. EXISTING UI/UX REGISTRY MUST BE USED
+
+The repository already contains:
+
+```text
+docs/ui_ux_screen_registry.md
+```
+
+Use this file as the SINGLE UI migration registry.
+
+DO NOT create:
+
+```text
+ui_registry_v2.md
+new_ui_progress.md
+gemini_ui_status.md
+```
+
+Update the existing registry.
+
+Statuses already exist:
+
+```text
+NOT_STARTED
+ANALYZING
+UX_DESIGNED
+IMPLEMENTED
+TESTING
+VERIFIED
+BLOCKED
+```
+
+Maintain them.
+
+---
+
+# 16. DO NOT REDESIGN COMPLETED SCREENS BLINDLY
+
+The registry already marks some screens as:
+
+```text
+IMPLEMENTED
+```
+
+This does NOT automatically mean they are perfect.
+
+But it also does NOT mean they should be rebuilt again.
+
+For an existing implemented screen:
+
+```text
+Visually inspect
+        ↓
+Compare against design system
+        ↓
+If good → preserve
+        ↓
+If inconsistent → improve surgically
+```
+
+Avoid creating unnecessary churn.
+
+---
+
+# 17. ESTABLISH ONE VISUAL LANGUAGE FIRST
+
+Before touching every screen, establish the visual language using a few representative screens.
+
+Recommended:
+
+### Customer
+
+```text
+customer_dashboard_view.dart
+```
+
+### Staff
+
+```text
+advisor_home_view.dart
+```
+
+### Owner
+
+```text
+owner_dashboard_page.dart
+```
+
+### CRM
+
+```text
+crm_dashboard_page.dart
+```
+
+Use these as role-specific reference implementations.
+
+Once approved internally through visual inspection:
+
+> Propagate the same design system to remaining screens.
+
+---
+
+# 18. CENTRALIZED COMPONENT IMPROVEMENTS
+
+Audit existing components inside:
+
+```text
+packages/shared_core/lib/src/widgets
+```
+
+Check:
+
+```text
+AppCard
+PrimaryButton
+AppTextField
+AppDropdownButton
+SectionHeader
+AppTopBar
+StatusPill
+DashboardShell
+EmptyState
+ErrorView
+LoadingIndicator
+NotificationBell
+UserAvatar
+```
+
+For each determine:
+
+```text
+KEEP
+
+IMPROVE
+
+EXTEND
+
+REPLACE INTERNALLY
+
+DEPRECATE
+```
+
+Do not duplicate them unnecessarily.
+
+---
+
+# 19. POSSIBLE SHARED COMPONENTS
+
+ONLY if genuinely missing, consider adding reusable patterns such as:
+
+```text
+AppMetricTile
+
+AppPageHeader
+
+AppSearchField
+
+AppFilterBar
+
+AppEntityHeader
+
+AppInfoRow
+
+AppActionBar
+
+AppDataTable
+
+AppMobileRecordCard
+
+AppTimeline
+
+AppAttentionItem
+
+AppFormSection
+
+AppAdaptiveDialog
+```
+
+But first search for an existing equivalent.
+
+---
+
+# 20. RESPONSIVE TARGET
+
+The project supports multiple platforms.
+
+Design intelligently for:
+
+```text
+Small mobile
+
+Normal mobile
+
+Large mobile
+
+Tablet
+
+Desktop/Web
+```
+
+where each app/platform supports them.
+
+DO NOT simply scale everything.
+
+---
+
+# MOBILE
+
+Focus on:
+
+```text
+Single-column layouts
+
+Touch usability
+
+Bottom navigation
+
+Bottom sheets
+
+Condensed entity cards
+
+Sticky important actions
+
+Progressive disclosure
+```
+
+---
+
+# TABLET
+
+Use:
+
+```text
+Navigation rail
+
+2-column layouts
+
+List/detail
+
+Wider operational views
+```
+
+when useful.
+
+---
+
+# DESKTOP / WEB
+
+Use:
+
+```text
+Persistent navigation
+
+Tables
+
+Multi-column dashboards
+
+Master/detail
+
+Persistent filters
+
+Context panels
+```
+
+when appropriate.
+
+Do not show an unnecessarily narrow mobile screen in the middle of a desktop monitor.
+
+---
+
+# 21. FORMS
+
+Inspect all important forms.
+
+Improve:
+
+```text
+Field grouping
+
+Labels
+
+Validation presentation
+
+Input formatting
+
+Spacing
+
+Required indicators
+
+Keyboard types
+
+Dropdown usability
+
+Searchable selections
+
+Loading states
+
+Submission states
+```
+
+Group fields based on user decisions rather than backend models.
+
+---
+
+# 22. LOADING / EMPTY / ERROR / OFFLINE STATES
+
+The project already has:
+
+```text
+LoadingIndicator
+EmptyState
+ErrorView
+OfflineBanner
+```
+
+USE and improve these consistently.
+
+Every important data screen should deliberately handle:
+
+```text
+Loading
+
+Loaded
+
+Empty
+
+Error
+
+Offline
+
+Refreshing
+
+Submitting
+```
+
+Avoid blank screens.
+
+Avoid exposing:
+
+```text
+DioException
+SocketException
+StackTrace
+```
+
+to normal users.
+
+---
+
+# 23. BUTTON STATES
+
+Important actions need:
+
+```text
+Normal
+
+Hovered
+
+Focused
+
+Pressed
+
+Disabled
+
+Loading
+```
+
+Prevent duplicate submissions while requests are in progress.
+
+---
+
+# 24. MICRO-INTERACTIONS
+
+Use subtle motion for:
+
+```text
+Navigation selection
+
+Button feedback
+
+Loading transitions
+
+Expand/collapse
+
+Status changes
+
+Dialog/sheet presentation
+
+List updates
+```
+
+Keep motion functional.
+
+Approximately:
+
+```text
+150–300 ms
+```
+
+where appropriate.
+
+No gaming-style animations.
+
+---
+
+# 25. TYPOGRAPHY
+
+The repository currently specifies:
+
+```text
+Inter
+```
+
+as the primary product font.
+
+Preserve the centralized typography architecture.
+
+Create clear hierarchy:
+
+```text
+Page title
+
+Section title
+
+Entity identity
+
+Metric
+
+Card/list title
+
+Body
+
+Label
+
+Metadata
+
+Caption
+```
+
+Do not make secondary text so small that workshop employees struggle to read it.
+
+---
+
+# 26. ACCESSIBILITY
+
+Check:
+
+```text
+Color contrast
+
+Touch target size
+
+Font scaling
+
+Keyboard navigation
+
+Focus states
+
+Screen reader semantics
+
+Status representation
+```
+
+Never represent critical status using color alone.
+
+---
+
+# 27. LONG DATA
+
+Test UI with realistic difficult values.
+
+Examples:
+
+```text
+Mohammed Abdul Rahman Siddiqui
+
+TS09AB123456
+
+Mercedes-Benz GLE 450 4MATIC
+
+₹12,45,789.50
+
+Very long garage/customer address
+
+Very long job description
+
+Very long repair notes
+```
+
+Make layouts resilient.
+
+---
+
+# 28. PERFORMANCE
+
+Do not sacrifice Flutter performance for appearance.
+
+Watch for:
+
+```text
+Unnecessary rebuilds
+
+Over-watching providers
+
+Huge widget trees
+
+Nested scrolling
+
+Large shadows
+
+Expensive blur
+
+Large unoptimized images
+
+Poor list virtualization
+
+Unnecessary animation
+```
+
+Keep UI smooth.
+
+---
+
+# 29. DO NOT CHANGE BUSINESS LOGIC
+
+Unless absolutely necessary to fix a UI integration bug, do NOT rewrite:
+
+```text
+Repositories
+
+Datasources
+
+API clients
+
+Domain entities
+
+Backend APIs
+
+State management architecture
+
+Authentication architecture
+
+Database handling
+```
+
+Your scope is:
+
+# UI + UX + PRESENTATION ARCHITECTURE
+
+---
+
+# 30. DO NOT FAKE FEATURES
+
+If backend currently does not provide:
+
+```text
+Revenue growth percentage
+
+Mechanic efficiency
+
+AI predictions
+
+Live maps
+
+Some analytics metric
+```
+
+do NOT create a fake UI value just because it looks attractive.
+
+UI must represent real available product functionality.
+
+---
+
+# 31. UI IMPLEMENTATION PROCESS
+
+For EACH module:
+
+## A. DISCOVER
+
+Inspect current implementation.
+
+## B. UNDERSTAND
+
+Understand the user and workflow.
+
+## C. VISUAL AUDIT
+
+Run/preview where possible.
+
+## D. UX PLAN
+
+Determine what needs improvement.
+
+## E. CENTRAL COMPONENT CHECK
+
+Determine whether shared components need improvement first.
+
+## F. IMPLEMENT
+
+Modify the actual existing files.
+
+## G. RUN
+
+Run the affected app.
+
+## H. VISUAL QA
+
+Inspect the actual result.
+
+## I. RESPONSIVE QA
+
+Check relevant screen classes.
+
+## J. FUNCTIONAL QA
+
+Verify buttons, navigation and states.
+
+## K. UPDATE REGISTRY
+
+Update:
+
+```text
+docs/ui_ux_screen_registry.md
+```
+
+---
+
+# 32. IMPLEMENTATION ORDER
+
+Use this order:
+
+## PHASE 1 — PROJECT UI AUDIT
+
+Read:
+
+```text
+docs/design_system.md
+docs/product_ux.md
+docs/ui_ux_screen_registry.md
+```
+
+Inspect all existing shared components.
+
+---
+
+## PHASE 2 — SHARED DESIGN SYSTEM
+
+Improve only what is necessary in:
+
+```text
+packages/shared_core
+```
+
+Establish final:
+
+```text
+Colors
+Typography
+Spacing
+Radius
+Surfaces
+Navigation
+Buttons
+Forms
+Status
+Responsive behaviour
+```
+
+---
+
+## PHASE 3 — CUSTOMER REFERENCE UI
+
+Enhance:
+
+```text
+customer_dashboard_view.dart
+```
+
+until it establishes the quality level.
+
+Then migrate remaining customer screens.
+
+---
+
+## PHASE 4 — STAFF / ADVISOR
+
+Start:
+
+```text
+advisor_home_view.dart
+```
+
+Then prioritize:
+
+```text
+vehicle check-in
+inspection
+repair order
+job details
+delivery
+```
+
+These are critical garage workflows.
+
+---
+
+## PHASE 5 — TECHNICIAN + SUPERVISOR
+
+Optimize each UI specifically for its role.
+
+---
+
+## PHASE 6 — OWNER
+
+Start with:
+
+```text
+owner_dashboard_page.dart
+```
+
+Then:
+
+```text
+Job Cards
+Receivables
+Inventory
+Approvals
+Team
+Documents
+Subscription
+```
+
+---
+
+## PHASE 7 — CRM
+
+Start with:
+
+```text
+crm_dashboard_page.dart
+```
+
+Then:
+
+```text
+Leads
+Kanban
+Tasks
+Conversations
+Sales Team
+Reports
+Integrations
+Settings
+```
+
+---
+
+## PHASE 8 — CROSS-APP CONSISTENCY
+
+Inspect all four applications together.
+
+Make sure they clearly belong to:
+
+# ONE ORIENT WORKSHOP PRODUCT FAMILY
+
+They may have different information density by role, but must share:
+
+```text
+Brand
+
+Typography
+
+Status system
+
+Spacing philosophy
+
+Form system
+
+Buttons
+
+Navigation principles
+
+Interaction behaviour
+```
+
+---
+
+## PHASE 9 — RESPONSIVE AUDIT
+
+Test representative and critical screens across supported viewport sizes.
+
+---
+
+## PHASE 10 — VISUAL POLISH
+
+Fix:
+
+```text
+Alignment
+
+Spacing
+
+Typography hierarchy
+
+Density
+
+Icon consistency
+
+Border inconsistency
+
+Radius inconsistency
+
+Button inconsistency
+
+Form inconsistency
+
+Empty/error/loading states
+```
+
+---
+
+# 33. RUN EXISTING MELOS COMMANDS
+
+This repository already defines Melos commands.
+
+Use them.
+
+For analysis:
+
+```bash
+melos run analyze
+```
+
+Or individually:
+
+```bash
+melos run analyze:customer
+melos run analyze:staff
+melos run analyze:owner
+melos run analyze:crm
+```
+
+Tests:
+
+```bash
+melos run test
+```
+
+Or relevant app-specific tests.
+
+Do not claim the UI is complete while new analyzer errors exist because of your changes.
+
+---
+
+# 34. VISUAL QA IS REQUIRED
+
+`flutter analyze` passing does NOT prove the UI looks good.
+
+For important screens:
+
+> Run the application and visually inspect the rendered result.
+
+Look specifically for:
+
+```text
+RenderFlex overflow
+
+Text clipping
+
+Unnecessary scrolling
+
+Bad hierarchy
+
+Huge empty spaces
+
+Tiny content
+
+Broken alignment
+
+Inconsistent radius
+
+Poor tablet layouts
+
+Mobile table overflow
+
+Bad desktop width usage
+```
+
+Fix these issues.
+
+---
+
+# 35. DO NOT STOP AFTER DASHBOARDS
+
+A common AI-agent failure is:
+
+```text
+Redesign dashboard
+Redesign login
+Create theme
+Declare project complete
+```
+
+DO NOT DO THIS.
+
+Use:
+
+```text
+docs/ui_ux_screen_registry.md
+```
+
+to determine what actually remains.
+
+Continue through important screens.
+
+---
+
+# 36. DO NOT CLAIM COMPLETION FALSELY
+
+A screen is only:
+
+# VERIFIED
+
+when:
+
+```text
+UI implemented
++
+analyzed
++
+rendered/visually checked where possible
++
+responsive behaviour checked
++
+important interactions still work
+```
+
+Otherwise leave the correct status.
+
+---
+
+# 37. FINAL DESIGN TEST
+
+For every role ask:
+
+### CUSTOMER
+
+Can I understand my vehicle/service without calling the garage?
+
+### ADVISOR
+
+Can I move a vehicle from arrival → repair → delivery quickly?
+
+### TECHNICIAN
+
+Can I immediately understand what I need to work on?
+
+### SUPERVISOR
+
+Can I immediately identify blocked/delayed work?
+
+### OWNER
+
+Can I understand the health of my workshop within seconds?
+
+### CRM USER
+
+Can I immediately identify which lead/follow-up needs attention?
+
+If the answer is no:
+
+> Improve the UX further.
+
+---
+
+# 38. COMMERCIAL QUALITY BAR
+
+The application must NOT look like:
+
+```text
+Flutter demo
+
+College project
+
+Generic Material app
+
+Template dashboard
+
+Collection of cards
+
+Developer-only interface
+
+AI-generated admin panel
+```
+
+It should look like:
+
+# A POLISHED COMMERCIAL AUTO WORKSHOP SOFTWARE PRODUCT.
+
+Think:
+
+```text
+Operational
+Calm
+Fast
+Premium
+Dense where needed
+Simple where needed
+Consistent
+Trustworthy
+```
+
+---
+
+# 39. MOST IMPORTANT RULE
+
+Be:
+
+# AGGRESSIVE WITH VISUAL IMPROVEMENT
+
+but:
+
+# CONSERVATIVE WITH FUNCTIONALITY.
+
+You are allowed to significantly change:
+
+```text
+Layout
+
+Visual hierarchy
+
+Component arrangement
+
+Navigation presentation
+
+Cards
+
+Tables
+
+Forms
+
+Spacing
+
+Typography
+
+Responsive behaviour
+
+Page structure
+
+Interaction design
+```
+
+while keeping:
+
+```text
+APIs
+
+Business logic
+
+State
+
+Providers
+
+Repositories
+
+Navigation behaviour
+
+Models
+
+Backend integration
+```
+
+working.
+
+---
+
+# 40. FINAL OUTPUT
+
+When the UI enhancement work is complete, provide:
+
+## Applications
+
+```text
+Customer App
+Staff App
+Owner App
+CRM App
+```
+
+For each report:
+
+```text
+Screens inspected
+Screens redesigned
+Screens preserved
+Screens verified
+Screens remaining
+```
+
+Then provide:
+
+### Shared components improved
+
+### Shared components added
+
+### Design-system changes
+
+### Responsive-system changes
+
+### UX improvements
+
+### Remaining UI debt
+
+### Analyzer/test results
+
+### Known visual issues
+
+---
+
+# UI/UX SCORE
+
+Score:
+
+```text
+Visual Design        /10
+Visual Hierarchy     /10
+Consistency          /10
+Navigation           /10
+Forms                /10
+Responsiveness       /10
+Role-specific UX     /10
+Accessibility        /10
+Workflow Efficiency  /10
+Commercial Quality   /10
+```
+
+Then:
+
+# OVERALL UI/UX READINESS: XX / 100
+
+Choose:
+
+🟢 COMMERCIAL UI READY
+
+🟡 MORE UI WORK REQUIRED
+
+🔴 NOT PRESENTABLE TO PAYING CUSTOMERS
+
+Do not inflate the rating.
+
+---
+
+# ULTIMATE OBJECTIVE
+
+I am NOT asking you to make individual screenshots pretty.
+
+I am asking you to transform the EXISTING:
+
+`orientmobileapplication_FULL_REPAIRED_v3`
+
+Flutter applications into a cohesive, premium commercial product.
+
+The entire system should feel like it was designed by:
+
+> **one experienced product-design team and one senior Flutter engineering team.**
+
+Do not start a new project.
+
+Do not create duplicate architecture.
+
+Do not fake functionality.
+
+Do not stop at recommendations.
+
+# INSPECT THE EXISTING CODE → IMPROVE IT → RUN IT → VISUALLY REVIEW IT → ITERATE → TEST IT.

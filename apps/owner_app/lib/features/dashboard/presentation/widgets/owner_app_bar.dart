@@ -10,7 +10,12 @@ import 'package:owner_app/features/dashboard/presentation/widgets/period_dropdow
 class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const OwnerAppBar({super.key});
 
-  static const _titles = ['Owner Dashboard', 'Top Sales', 'Messages', 'Activity'];
+  static const _titles = [
+    'Owner Dashboard',
+    'Top Sales',
+    'Messages',
+    'Activity',
+  ];
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
@@ -19,41 +24,22 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(dashboardUiProvider);
     final notifier = ref.read(dashboardUiProvider.notifier);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return AppBar(
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [AppColors.navy, AppColors.accent]),
-        ),
-      ),
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      systemOverlayStyle: const SystemUiOverlayStyle(
+      backgroundColor: colors.surface,
+      systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+        statusBarIconBrightness: theme.brightness == Brightness.dark
+            ? Brightness.light
+            : Brightness.dark,
       ),
-      titleSpacing: 0,
       leading: state.selectedIndex == 0
-          ? Padding(
-              padding: const EdgeInsets.all(10),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(AppDimensions.r10),
-                ),
-                child: const Icon(
-                  Icons.directions_car_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-            )
+          ? Icon(Icons.directions_car_rounded, color: colors.primary, size: 24)
           : IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
+              tooltip: 'Back to overview',
+              icon: const Icon(Icons.arrow_back_rounded),
               onPressed: () => notifier.selectTab(0),
             ),
       title: Column(
@@ -62,13 +48,15 @@ class OwnerAppBar extends ConsumerWidget implements PreferredSizeWidget {
         children: [
           Text(
             _titles[state.selectedIndex],
-            style: AppTextStyles.button(color: Colors.white),
+            style: theme.textTheme.titleMedium,
           ),
           Text(
             state.selectedIndex == 0
                 ? ownerProfileData.branch
                 : _subtitles(state.selectedIndex),
-            style: AppTextStyles.bodySmall(color: Colors.white70),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
           ),
         ],
       ),

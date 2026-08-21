@@ -2,6 +2,7 @@ package com.orient.workshop.auth.filter;
 
 import com.orient.workshop.core.model.entity.ApiKey;
 import com.orient.workshop.core.repository.ApiKeyMapper;
+import com.orient.workshop.common.context.BranchContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -58,18 +59,34 @@ public class ApiKeyFilter extends OncePerRequestFilter {
                         .keyId(key.getId())
                         .name(key.getName())
                         .role(role)
+                        .branchId(key.getBranchId())
                         .build();
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(principal, null,
                                 List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase())));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                // H-1: publish the API key's branch scope for the tenant interceptor.
+                // A null branchId on the key (org-level key) yields a global view.
+                BranchContext.set(resolveBranchView(key.getBranchId(), role));
             } else {
                 log.warn("API key rejected: prefix {}", apiKey.length() > 12 ? apiKey.substring(0, 12) : "?");
             }
         } catch (Exception e) {
             log.warn("API key validation failed: {}", e.getMessage());
+        } finally {
+            BranchContext.clear();
         }
         filterChain.doFilter(request, response);
+    }
+
+    private Long resolveBranchView(Long branchId, String role) {
+        if (role == null) return branchId;
+        String r = role.toLowerCase();
+        if ("owner".equals(r) || "admin".equals(r) || "crmdashboard".equals(r)) {
+            return null;
+        }
+        return branchId;
     }
 
     public static String hash(String raw) {

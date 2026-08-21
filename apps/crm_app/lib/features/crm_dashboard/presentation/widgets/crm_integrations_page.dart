@@ -11,37 +11,41 @@ class CrmIntegrationsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(crmUiProvider);
+    ref.watch(crmUiProvider.select((state) => state.revision));
     final ui = ref.read(crmUiProvider.notifier);
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.s16),
+    final integrations = ui.integrations;
+    final connected = integrations.where((item) => item.connected).length;
+
+    return AppResponsivePage(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _sectionLabel('Integrations'),
-          const SizedBox(height: 4),
-          const Text(
-            'Connect Meta, Zoho and other platforms to fetch leads automatically',
-            style: TextStyle(color: CrmColors.textM, fontSize: 12),
+          AppPageHeader(
+            eyebrow: 'Data sources',
+            title: 'Integrations',
+            subtitle: connected == 0
+                ? 'Connect a source to bring leads and customer messages into this workspace.'
+                : '$connected of ${integrations.length} sources connected and available to sync.',
+            leading: const Icon(Icons.hub_outlined),
           ),
-          const SizedBox(height: AppDimensions.s16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.45,
+          SizedBox(height: context.adaptive.sectionSpacing),
+          AppAdaptiveGrid(
+            minChildWidth: 250,
+            childAspectRatio: context.adaptive.pick(
+              compact: 3.0,
+              medium: 2.35,
+              expanded: 2.15,
+              large: 2.0,
             ),
-            itemCount: ui.integrations.length,
-            itemBuilder: (_, i) {
-              final integration = ui.integrations[i];
-              return _CrmIntegrationCard(
-                integration: integration,
-                onTap: () => _showIntegrationSheet(context, ref, integration),
-              );
-            },
+            children: integrations
+                .map(
+                  (integration) => _CrmIntegrationCard(
+                    integration: integration,
+                    onTap: () =>
+                        _showIntegrationSheet(context, ref, integration),
+                  ),
+                )
+                .toList(),
           ),
         ],
       ),
@@ -49,7 +53,10 @@ class CrmIntegrationsPage extends ConsumerWidget {
   }
 
   Future<void> _showIntegrationSheet(
-      BuildContext context, WidgetRef ref, IntegrationEntity integration) async {
+    BuildContext context,
+    WidgetRef ref,
+    IntegrationEntity integration,
+  ) async {
     if (!integration.connected) {
       await ConnectIntegrationSheet.show(context, platform: integration.name);
       return;
@@ -64,29 +71,6 @@ class CrmIntegrationsPage extends ConsumerWidget {
       builder: (ctx) => _ConnectedSheet(integration: integration),
     );
   }
-
-  Widget _sectionLabel(String text) => Row(
-    children: [
-      Container(
-        width: 4,
-        height: 20,
-        decoration: BoxDecoration(
-          color: CrmColors.accent,
-          borderRadius: BorderRadius.circular(AppDimensions.r2),
-        ),
-      ),
-      const SizedBox(width: AppDimensions.s10),
-      Text(
-        text,
-        style: const TextStyle(
-          color: CrmColors.textH,
-          fontSize: 19,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-        ),
-      ),
-    ],
-  );
 }
 
 class _CrmIntegrationCard extends StatelessWidget {
@@ -110,95 +94,72 @@ class _CrmIntegrationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final theme = Theme.of(context);
+    return AppCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppDimensions.r14),
-          border: Border.all(
-            color: integration.connected
-                ? integration.color.withValues(alpha: 0.25)
-                : CrmColors.border,
+      padding: const EdgeInsets.all(AppDimensions.s14),
+      borderColor: integration.connected
+          ? integration.color.withValues(alpha: 0.30)
+          : theme.colorScheme.outline,
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: integration.color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppDimensions.r10),
+            ),
+            child: Icon(integration.icon, color: integration.color, size: 22),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: CrmColors.primary.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(integration.icon, color: integration.color, size: 24),
-                const Spacer(),
-                if (integration.connected)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: CrmColors.greenBg,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '${integration.leadCount}',
-                      style: const TextStyle(
-                        color: CrmColors.green,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            Column(
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   integration.name,
-                  style: const TextStyle(
-                    color: CrmColors.textH,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: theme.textTheme.titleSmall,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 5),
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: _statusColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        _statusLabel,
-                        style: TextStyle(
-                          color: _statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: AppDimensions.s6),
+                StatusPill(
+                  label: _statusLabel,
+                  fg: _statusColor,
+                  bg: _statusColor.withValues(alpha: 0.10),
+                  showDot: true,
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppDimensions.s8),
+          if (integration.connected)
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${integration.leadCount}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  'leads',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(width: AppDimensions.s8),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
       ),
     );
   }
@@ -221,7 +182,11 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
     final result = await notifier.syncIntegration(widget.integration.name);
     if (!mounted) return;
     setState(() => _isBusy = false);
-    _toast(result.hasError ? 'Sync failed. Check credentials.' : 'Sync completed - leads updated');
+    _toast(
+      result.hasError
+          ? 'Sync failed. Check credentials.'
+          : 'Sync completed - leads updated',
+    );
   }
 
   Future<void> _disconnect() async {
@@ -282,13 +247,19 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
                     ),
                     Text(
                       'Connected & syncing leads',
-                      style: const TextStyle(color: CrmColors.textM, fontSize: 12),
+                      style: const TextStyle(
+                        color: CrmColors.textM,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: CrmColors.greenBg,
                   borderRadius: BorderRadius.circular(20),
@@ -305,13 +276,22 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
             ],
           ),
           const SizedBox(height: 20),
-          _infoRow(Icons.people_alt_outlined, 'Leads fetched', '${integration.leadCount}'),
-          if (integration.lastSyncAt != null && integration.lastSyncAt!.isNotEmpty)
+          _infoRow(
+            Icons.people_alt_outlined,
+            'Leads fetched',
+            '${integration.leadCount}',
+          ),
+          if (integration.lastSyncAt != null &&
+              integration.lastSyncAt!.isNotEmpty)
             _infoRow(Icons.sync_rounded, 'Last sync', integration.lastSyncAt!),
           _infoRow(
             Icons.circle,
             'Status',
-            integration.isSyncing ? 'Syncing...' : integration.hasError ? 'Sync error' : 'Ready',
+            integration.isSyncing
+                ? 'Syncing...'
+                : integration.hasError
+                ? 'Sync error'
+                : 'Ready',
           ),
           const SizedBox(height: 16),
           Row(
@@ -362,7 +342,10 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
         children: [
           Icon(icon, size: 15, color: CrmColors.textM),
           const SizedBox(width: 8),
-          Text(label, style: const TextStyle(color: CrmColors.textM, fontSize: 12)),
+          Text(
+            label,
+            style: const TextStyle(color: CrmColors.textM, fontSize: 12),
+          ),
           const Spacer(),
           Text(
             value,
@@ -377,4 +360,3 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
     );
   }
 }
-

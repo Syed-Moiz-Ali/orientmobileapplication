@@ -4,163 +4,186 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/subscription_providers.dart';
 
-/// P3 (audit): SaaS subscription screen — current plan + plan switcher.
 class SubscriptionView extends ConsumerWidget {
   const SubscriptionView({super.key});
 
   static const _plans = [
-    ('starter', 'Starter', 'For single-branch workshops'),
-    ('pro', 'Pro', 'Multi-branch + CRM + inventory'),
-    ('enterprise', 'Enterprise', 'SSO, SLAs, dedicated support'),
+    ('starter', 'Starter Tier', 'For single-branch workshops & garages', 'AED 499 / mo'),
+    ('pro', 'Professional Hub', 'Multi-branch operations + CRM + inventory', 'AED 1,299 / mo'),
+    ('enterprise', 'Enterprise Fleet', 'Custom integrations, SSO, SLAs, dedicated AM', 'AED 2,499 / mo'),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final state = ref.watch(subscriptionProvider);
     final notifier = ref.read(subscriptionProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.gray700),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Subscription',
-          style: TextStyle(color: AppColors.gray900, fontSize: 17, fontWeight: FontWeight.w700),
+        title: Text(
+          'Subscription & Billing',
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: colorScheme.onSurface,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.gray700),
+            icon: Icon(Icons.refresh_rounded, color: colorScheme.onSurface),
             onPressed: notifier.load,
           ),
         ],
       ),
       body: state.isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.navy, AppColors.accent],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                AppCard(
+                  padding: const EdgeInsets.all(20),
+                  borderRadius: AppDimensions.r24,
+                  color: colorScheme.surface,
+                  borderColor: colorScheme.outlineVariant,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('CURRENT PLAN',
-                          style: TextStyle(color: Colors.white70, fontSize: 11, letterSpacing: 1)),
-                      const SizedBox(height: 6),
-                      Text(state.plan.toUpperCase(),
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Status: ${state.status.toUpperCase()}'
-                        '${state.renewsAt.isNotEmpty ? '  ·  Renews: ${state.renewsAt}' : ''}',
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'CURRENT TIER',
+                            style: textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: colorScheme.onSurfaceVariant,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          StatusPill(
+                            label: state.status.toUpperCase(),
+                            showDot: true,
+                            bg: const Color(0xFF10B981).withValues(alpha: 0.12),
+                            fg: const Color(0xFF10B981),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 10),
+                      Text(
+                        state.plan.toUpperCase(),
+                        style: textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: colorScheme.primary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      if (state.renewsAt.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Next billing cycle renewal: ${state.renewsAt}',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Text('Choose a plan',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.gray900)),
-                const SizedBox(height: 10),
+                const SizedBox(height: 24),
+                Text(
+                  'AVAILABLE WORKSHOP PLANS',
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.onSurfaceVariant,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 ..._plans.map((p) {
                   final selected = state.plan == p.$1;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: selected ? const Color(0xFFEFF6FF) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: selected ? AppColors.primary : AppColors.gray200,
-                          width: selected ? 1.5 : 1,
-                        ),
-                      ),
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: AppCard(
+                      padding: const EdgeInsets.all(18),
+                      borderRadius: AppDimensions.r20,
+                      color: selected
+                          ? colorScheme.primary.withValues(alpha: 0.06)
+                          : colorScheme.surface,
+                      borderColor: selected
+                          ? colorScheme.primary
+                          : colorScheme.outlineVariant,
                       child: Row(
                         children: [
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(p.$2,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.gray900)),
-                                const SizedBox(height: 2),
-                                Text(p.$3, style: const TextStyle(fontSize: 12, color: AppColors.gray500)),
+                                Row(
+                                  children: [
+                                    Text(
+                                      p.$2,
+                                      style: textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w900,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      p.$4,
+                                      style: textTheme.labelSmall?.copyWith(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  p.$3,
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
+                          const SizedBox(width: 12),
                           if (selected)
-                            const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 22),
+                            Icon(Icons.check_circle_rounded, color: colorScheme.primary, size: 24)
+                          else
+                            OutlinedButton(
+                              onPressed: () async {
+                                final err = await notifier.setPlan(p.$1);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(err ?? 'Plan updated to ${p.$2}'),
+                                  ));
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              ),
+                              child: const Text('Select', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                            ),
                         ],
                       ),
                     ),
                   );
                 }),
-                const SizedBox(height: 8),
-                const Text(
-                  'Billing/payment integration arrives with the billing module; the plan state is recorded now.',
-                  style: TextStyle(fontSize: 11, color: AppColors.gray400),
-                ),
               ],
             ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () async {
-                final current = state.plan;
-                final chosen = await showModalBottomSheet<String>(
-                  context: context,
-                  builder: (ctx) => SafeArea(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: _plans
-                          .where((p) => p.$1 != current)
-                          .map((p) => ListTile(
-                                title: Text('${p.$2} (${p.$1})'),
-                                subtitle: Text(p.$3),
-                                onTap: () => Navigator.pop(ctx, p.$1),
-                              ))
-                          .toList(),
-                    ),
-                  ),
-                );
-                if (chosen != null) {
-                  final err = await notifier.setPlan(chosen);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(err ?? 'Plan updated to $chosen'),
-                    ));
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text('Change Plan', style: TextStyle(fontWeight: FontWeight.w700)),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

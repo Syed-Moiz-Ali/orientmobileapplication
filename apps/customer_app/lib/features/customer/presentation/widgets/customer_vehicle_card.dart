@@ -23,76 +23,60 @@ class CustomerVehicleCard extends StatelessWidget {
   }
 
   Widget _buildCompact(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
-    return Container(
+    return AppCard(
       width: 200,
       padding: const EdgeInsets.all(AppDimensions.s14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      borderRadius: AppDimensions.r18,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  color: AppColors.cyanLight,
-                  borderRadius: BorderRadius.circular(AppDimensions.r8),
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppDimensions.r10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.directions_car_rounded,
-                  color: AppColors.accent,
-                  size: 16,
+                  color: colorScheme.primary,
+                  size: 18,
                 ),
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.s8,
-                  vertical: AppDimensions.s4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.cyanLight,
-                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                ),
-                child: Text(
-                  'ACTIVE',
-                  style: textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.accent,
-                  ),
-                ),
+              StatusPill(
+                label: 'REGISTERED',
+                bg: colorScheme.primary.withValues(alpha: 0.1),
+                fg: colorScheme.primary,
               ),
             ],
           ),
           const Spacer(),
           Text(
             vehicle.displayName,
-            style: AppTextStyles.bodyStrong(color: AppColors.textPrimary),
+            style: textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onSurface,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: AppDimensions.s4),
-          // Styled plate badge
+          const SizedBox(height: AppDimensions.s6),
+          // UAE License Plate
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: const Color(0xFFFACC15),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.black54, width: 1),
+              borderRadius: BorderRadius.circular(AppDimensions.r6),
+              border: Border.all(color: Colors.black87, width: 1),
             ),
             child: Text(
               vehicle.plateNumber.toUpperCase(),
@@ -109,23 +93,15 @@ class CustomerVehicleCard extends StatelessWidget {
   }
 
   Widget _buildFull(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.s16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppDimensions.s18),
+      borderRadius: AppDimensions.r22,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -135,12 +111,12 @@ class CustomerVehicleCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.cyanLight,
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppDimensions.r14),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.directions_car_filled_rounded,
-                  color: AppColors.accent,
+                  color: colorScheme.primary,
                   size: 24,
                 ),
               ),
@@ -152,27 +128,26 @@ class CustomerVehicleCard extends StatelessWidget {
                     Text(
                       vehicle.displayName,
                       style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        // Yellow UK Plate Badge
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
+                            horizontal: 8,
+                            vertical: 3,
                           ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFACC15),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.black, width: 1),
+                            borderRadius: BorderRadius.circular(AppDimensions.r6),
+                            border: Border.all(color: Colors.black87, width: 1),
                           ),
                           child: Text(
                             vehicle.plateNumber.toUpperCase(),
-                            style: textTheme.labelMedium?.copyWith(
+                            style: textTheme.labelSmall?.copyWith(
                               fontWeight: FontWeight.w900,
                               color: Colors.black,
                               fontFamily: AppFontFamilies.mono,
@@ -182,9 +157,9 @@ class CustomerVehicleCard extends StatelessWidget {
                         if (vehicle.year > 0) ...[
                           const SizedBox(width: 8),
                           Text(
-                            'Year ${vehicle.year}',
+                            'Model ${vehicle.year}',
                             style: textTheme.bodySmall?.copyWith(
-                              color: AppColors.text3,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -197,60 +172,59 @@ class CustomerVehicleCard extends StatelessWidget {
               IconButton(
                 onPressed: () =>
                     context.push(AppRoutes.customerEditVehicle(vehicle.id)),
-                icon: const Icon(
+                icon: Icon(
                   Icons.edit_rounded,
                   size: 20,
-                  color: AppColors.text3,
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 tooltip: 'Edit Vehicle',
               ),
             ],
           ),
           const SizedBox(height: AppDimensions.s14),
-          const Divider(height: 1),
+          Divider(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: AppDimensions.s12),
           Row(
             children: [
               if (vehicle.color.isNotEmpty) ...[
-                const Icon(
+                Icon(
                   Icons.palette_outlined,
-                  size: 14,
-                  color: AppColors.text3,
+                  size: 15,
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   vehicle.color,
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.text3),
+                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(width: 14),
               ],
               if (vehicle.mileage.isNotEmpty) ...[
-                const Icon(
+                Icon(
                   Icons.speed_outlined,
-                  size: 14,
-                  color: AppColors.text3,
+                  size: 15,
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   vehicle.mileage,
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.text3),
+                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
               ],
               const Spacer(),
-              ElevatedButton.icon(
+              FilledButton.icon(
                 onPressed: () => context.push(AppRoutes.customerBookService),
-                icon: const Icon(Icons.calendar_month_rounded, size: 14),
-                label: const Text('Book Service'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
+                icon: const Icon(Icons.calendar_month_rounded, size: 15),
+                label: const Text('Book Service', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
+                    horizontal: 14,
                     vertical: 8,
                   ),
-                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.r8),
+                    borderRadius: BorderRadius.circular(AppDimensions.r10),
                   ),
                 ),
               ),

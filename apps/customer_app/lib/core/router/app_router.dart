@@ -90,7 +90,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.customerDashboard,
         name: AppRoutes.customerDashboard,
-        builder: (context, state) => const CustomerDashboardView(),
+        builder: (context, state) {
+          final requestedTab =
+              int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0;
+          return CustomerDashboardView(initialTab: requestedTab.clamp(0, 4));
+        },
       ),
       GoRoute(
         path: AppRoutes.customerBookService,

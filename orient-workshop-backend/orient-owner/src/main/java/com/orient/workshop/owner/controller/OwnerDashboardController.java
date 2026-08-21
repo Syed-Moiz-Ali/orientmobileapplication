@@ -2,11 +2,14 @@ package com.orient.workshop.owner.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 
+import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.common.response.ApiResponse;
 import com.orient.workshop.owner.model.dto.*;
 import com.orient.workshop.owner.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,18 +31,18 @@ public class OwnerDashboardController {
     private final ActivityService activityService;
 
     @GetMapping("/dashboard/kpis")
-    public ApiResponse<List<KpiCardResponse>> getKpis() {
-        return ApiResponse.success(dashboardService.getKpis());
+    public ApiResponse<List<KpiCardResponse>> getKpis(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(dashboardService.getKpis(resolveBranchId(principal)));
     }
 
     @GetMapping("/dashboard/sales-trend")
-    public ApiResponse<List<TrendPointResponse>> getSalesTrend() {
-        return ApiResponse.success(dashboardService.getSalesTrend());
+    public ApiResponse<List<TrendPointResponse>> getSalesTrend(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(dashboardService.getSalesTrend(resolveBranchId(principal)));
     }
 
     @GetMapping("/dashboard/profit-trend")
-    public ApiResponse<List<TrendPointResponse>> getProfitTrend() {
-        return ApiResponse.success(dashboardService.getProfitTrend());
+    public ApiResponse<List<TrendPointResponse>> getProfitTrend(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(dashboardService.getProfitTrend(resolveBranchId(principal)));
     }
 
     @GetMapping("/dashboard/expenses-trend")
@@ -48,18 +51,18 @@ public class OwnerDashboardController {
     }
 
     @GetMapping("/dashboard/forecast")
-    public ApiResponse<Map<String, Object>> getForecast() {
-        return ApiResponse.success(dashboardService.getForecast());
+    public ApiResponse<Map<String, Object>> getForecast(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(dashboardService.getForecast(resolveBranchId(principal)));
     }
 
     @GetMapping("/dashboard/job-card-register")
-    public ApiResponse<List<JobCardRegisterResponse>> getJobCardRegister() {
-        return ApiResponse.success(dashboardService.getJobCardRegister());
+    public ApiResponse<List<JobCardRegisterResponse>> getJobCardRegister(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(dashboardService.getJobCardRegister(resolveBranchId(principal)));
     }
 
     @GetMapping("/dashboard/top-sales")
-    public ApiResponse<List<TopSalesCategoryResponse>> getTopSales() {
-        return ApiResponse.success(dashboardService.getTopSales());
+    public ApiResponse<List<TopSalesCategoryResponse>> getTopSales(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return ApiResponse.success(dashboardService.getTopSales(resolveBranchId(principal)));
     }
 
     @GetMapping("/job-cards")
@@ -112,8 +115,9 @@ public class OwnerDashboardController {
     }
 
     @GetMapping("/invoices")
-    public ApiResponse<List<InvoiceResponse>> getInvoices(@RequestParam(required = false) String status) {
-        return ApiResponse.success(invoiceService.getInvoices(status));
+    public ApiResponse<List<InvoiceResponse>> getInvoices(@AuthenticationPrincipal JwtUserPrincipal principal,
+                                                          @RequestParam(required = false) String status) {
+        return ApiResponse.success(invoiceService.getInvoices(resolveBranchId(principal), status));
     }
 
     @GetMapping("/accounts-receivable/summary")
@@ -148,6 +152,22 @@ public class OwnerDashboardController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
         return ApiResponse.success(activityService.getActivity(page, limit));
+    }
+
+    /**
+     * Resolves the branch scope for the current request. Owners/admins with no single
+     * branch claim get a null (= global) view; all other roles are restricted to their
+     * own branch so cross-branch data leaks are impossible at the API boundary.
+     */
+    private Long resolveBranchId(JwtUserPrincipal principal) {
+        if (principal == null) {
+            throw new ForbiddenException("Authentication required");
+        }
+        String role = principal.getRole() != null ? principal.getRole().toLowerCase() : "";
+        if ("owner".equals(role) || "admin".equals(role) || "crmdashboard".equals(role)) {
+            return null;
+        }
+        return principal.getBranchId();
     }
 }
 

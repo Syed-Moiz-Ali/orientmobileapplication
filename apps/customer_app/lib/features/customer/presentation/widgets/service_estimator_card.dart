@@ -8,55 +8,60 @@ class ServiceEstimatorCard extends StatelessWidget {
 
   static const List<Map<String, String>> _services = [
     {
-      'name': 'Full Service',
-      'price': '\u00a3280',
+      'name': 'Major Service Package',
+      'price': 'AED 1,200',
       'duration': '~3 hrs',
-      'desc': 'Engine oil, filter, spark plugs & 40-point safety check',
+      'desc': 'Engine oil, filter, spark plugs & 40-point diagnostic scan',
     },
     {
-      'name': 'Oil & Filter Change',
-      'price': '\u00a365',
+      'name': 'Synthetic Oil & Filter',
+      'price': 'AED 280',
       'duration': '~45 mins',
-      'desc': 'Synthetic engine oil replacement + new oil filter',
+      'desc': 'Fully synthetic Mobil 1/Castrol engine oil + OEM filter',
     },
     {
       'name': 'Brake Pad Replacement',
-      'price': '\u00a3120',
+      'price': 'AED 450',
       'duration': '~1.5 hrs',
-      'desc': 'Front or rear OEM brake pads fitting + rotor inspection',
+      'desc': 'Front or rear Brembo/OEM brake pads fitting + rotor check',
     },
     {
-      'name': 'MOT Inspection Test',
-      'price': '\u00a354',
+      'name': 'RTA Inspection Prep',
+      'price': 'AED 200',
       'duration': '~1 hr',
-      'desc': 'Official vehicle roadworthiness inspection & certificate',
+      'desc': 'Official vehicle roadworthiness inspection & certification check',
     },
   ];
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return AppCard(
-      padding: const EdgeInsets.all(AppDimensions.s16),
+      padding: const EdgeInsets.all(AppDimensions.s18),
+      borderRadius: AppDimensions.r24,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.cyanLight,
-                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppDimensions.r12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.price_change_rounded,
-                  color: AppColors.accent,
+                  color: colorScheme.primary,
                   size: 20,
                 ),
               ),
-              const SizedBox(width: AppDimensions.s10),
+              const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,15 +69,15 @@ class ServiceEstimatorCard extends StatelessWidget {
                     Text(
                       'Popular Workshop Services',
                       style: textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Transparent pricing & turnaround times',
+                      'Transparent pricing & turnaround estimates',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.text3,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -81,7 +86,7 @@ class ServiceEstimatorCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimensions.s14),
-          const Divider(height: 1),
+          Divider(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: AppDimensions.s10),
           ..._services.map(
             (s) => Padding(
@@ -98,26 +103,14 @@ class ServiceEstimatorCard extends StatelessWidget {
                               s['name']!,
                               style: textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
+                                color: colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.bg,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                s['duration']!,
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: AppColors.text3,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                            StatusPill(
+                              label: s['duration']!,
+                              bg: colorScheme.surfaceContainerLow,
+                              fg: colorScheme.onSurfaceVariant,
                             ),
                           ],
                         ),
@@ -125,7 +118,7 @@ class ServiceEstimatorCard extends StatelessWidget {
                         Text(
                           s['desc']!,
                           style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.text3,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -139,29 +132,29 @@ class ServiceEstimatorCard extends StatelessWidget {
                         'From ${s['price']}',
                         style: textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w900,
-                          color: AppColors.accent,
+                          color: colorScheme.primary,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       SizedBox(
-                        height: 28,
-                        child: ElevatedButton(
+                        height: 32,
+                        child: FilledButton(
                           onPressed: () =>
                               context.push(AppRoutes.customerBookService),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.darkNavy,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(AppDimensions.r10),
                             ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Book',
-                            style: textTheme.labelSmall?.copyWith(
-                              color: Colors.white,
+                            style: TextStyle(
                               fontWeight: FontWeight.w800,
+                              fontSize: 12,
                             ),
                           ),
                         ),

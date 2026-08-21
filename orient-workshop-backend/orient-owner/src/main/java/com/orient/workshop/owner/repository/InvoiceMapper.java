@@ -16,4 +16,18 @@ public interface InvoiceMapper extends BaseMapper<Invoice> {
 
     @Select("SELECT * FROM invoices WHERE customer_id = #{customerId} ORDER BY issued_date DESC")
     List<Invoice> findByCustomerId(@Param("customerId") Long customerId);
+
+    /**
+     * H-1 (tenant isolation): returns invoices for a specific branch, or ALL invoices
+     * when branchId is null (super-user global view). Never returns an unfull scoped
+     * result set for an authenticated branch user.
+     */
+    @Select("<script>" +
+            "SELECT * FROM invoices" +
+            "<where>" +
+            "<if test='branchId != null'>branch_id = #{branchId}</if>" +
+            "</where>" +
+            "ORDER BY issued_date DESC" +
+            "</script>")
+    List<Invoice> findByBranchOrNull(@Param("branchId") Long branchId);
 }

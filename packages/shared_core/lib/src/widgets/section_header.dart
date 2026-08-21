@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
+import 'package:shared_core/src/theme/app_dimensions.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
@@ -15,28 +15,30 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppDimensions.s12),
       child: Row(
         children: [
           Text(
             title,
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const Spacer(),
           if (action != null)
-            GestureDetector(
-              onTap: onAction,
+            TextButton(
+              onPressed: onAction,
               child: Text(
                 action!,
                 style: textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.primary,
                 ),
               ),
             ),

@@ -12,8 +12,8 @@ class UserAvatar extends StatelessWidget {
   const UserAvatar({
     super.key,
     required this.initials,
-    this.size = 34,
-    this.borderWidth = 1.5,
+    this.size = 40,
+    this.borderWidth = 1,
     this.backgroundColor,
     this.foregroundColor,
     this.borderColor,
@@ -22,32 +22,39 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final avatar = Container(
       width: size,
       height: size,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.white.withValues(alpha: 0.20),
+        color: backgroundColor ?? colors.primaryContainer,
         shape: BoxShape.circle,
         border: Border.all(
-          color: borderColor ?? Colors.white.withValues(alpha: 0.5),
+          color: borderColor ?? colors.outline,
           width: borderWidth,
         ),
       ),
-      child: Center(
-        child: Text(
-          initials,
-          style: TextStyle(
-            color: foregroundColor ?? Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: size * 0.44,
-          ),
+      child: Text(
+        initials,
+        maxLines: 1,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: foregroundColor ?? colors.onPrimaryContainer,
+          fontSize: size * 0.36,
         ),
       ),
     );
 
-    if (onTap != null) {
-      return GestureDetector(onTap: onTap, child: avatar);
-    }
-    return avatar;
+    if (onTap == null) return avatar;
+    return Semantics(
+      button: true,
+      label: 'Open profile',
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(onTap: onTap, child: avatar),
+      ),
+    );
   }
 }

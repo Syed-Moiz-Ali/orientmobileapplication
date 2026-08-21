@@ -13,61 +13,20 @@ class AuthBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF090D16) : const Color(0xFFF7FAFC),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? const [Color(0xFF0A1220), Color(0xFF101A2B)]
-              : const [Color(0xFFF9FCFD), Color(0xFFEFF7F8)],
-        ),
-      ),
+    final colors = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: colors.surfaceContainerLowest,
       child: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              top: -110,
-              right: -80,
-              child: _Glow(color: accentColor, size: 280),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: accentColor.withValues(alpha: 0.28),
+                width: 3,
+              ),
             ),
-            Positioned(
-              bottom: -160,
-              left: -120,
-              child: _Glow(color: accentColor, size: 340),
-            ),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Glow extends StatelessWidget {
-  final Color color;
-  final double size;
-
-  const _Glow({required this.color, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.10),
-              blurRadius: 80,
-              spreadRadius: 30,
-            ),
-          ],
+          ),
+          child: child,
         ),
       ),
     );

@@ -1,159 +1,106 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 
 class CrmConversationsPage extends ConsumerWidget {
   const CrmConversationsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ui = ref.read(crmUiProvider.notifier);
-    return ListView.separated(
-      padding: const EdgeInsets.all(AppDimensions.s16),
-      itemCount: ui.conversations.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppDimensions.s10),
-      itemBuilder: (_, i) => _CrmConversationCard(conv: ui.conversations[i]),
+    ref.watch(crmUiProvider.select((state) => state.revision));
+    final conversations = ref.read(crmUiProvider.notifier).conversations;
+
+    return AppResponsivePage(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppPageHeader(
+            eyebrow: 'Inbox',
+            title: 'Conversations',
+            subtitle: conversations.isEmpty
+                ? 'Customer messages from connected channels will appear here.'
+                : '${conversations.length} active customer threads across every channel.',
+            leading: const Icon(Icons.forum_outlined),
+          ),
+          SizedBox(height: context.adaptive.sectionSpacing),
+          if (conversations.isEmpty)
+            const EmptyState(
+              icon: Icons.mark_chat_unread_outlined,
+              title: 'No conversations yet',
+              message:
+                  'Connect a messaging channel to bring customer conversations into one queue.',
+            )
+          else
+            ...conversations.map(
+              (conversation) => Padding(
+                padding: const EdgeInsets.only(bottom: AppDimensions.s10),
+                child: _ConversationRow(conversation: conversation),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
 
-class _CrmConversationCard extends StatelessWidget {
-  final ConversationEntity conv;
-  const _CrmConversationCard({required this.conv});
+class _ConversationRow extends StatelessWidget {
+  final ConversationEntity conversation;
+
+  const _ConversationRow({required this.conversation});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(
-          color: conv.unread > 0
-              ? CrmColors.accent.withValues(alpha: 0.3)
-              : CrmColors.border,
-          width: conv.unread > 0 ? 1.5 : 1,
+    final theme = Theme.of(context);
+    final unread = conversation.unread > 0;
+
+    return AppRecordRow(
+      emphasized: unread,
+      leading: CircleAvatar(
+        radius: 22,
+        backgroundColor: conversation.channelColor.withValues(alpha: 0.12),
+        foregroundColor: conversation.channelColor,
+        child: Text(
+          conversation.customerName.isEmpty
+              ? '?'
+              : conversation.customerName.characters.first.toUpperCase(),
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: conversation.channelColor,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: CrmColors.primary.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      title: conversation.customerName,
+      subtitle: conversation.lastMessage,
+      metadata: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: AppDimensions.s8,
+        runSpacing: AppDimensions.s4,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [conv.channelColor.withValues(alpha: 0.8), conv.channelColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                conv.customerName[0],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+          StatusPill(
+            label: conversation.channel,
+            bg: conversation.channelColor.withValues(alpha: 0.10),
+            fg: conversation.channelColor,
           ),
-          const SizedBox(width: AppDimensions.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      conv.customerName,
-                      style: const TextStyle(
-                        color: CrmColors.textH,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      conv.time,
-                      style: const TextStyle(
-                        color: CrmColors.textM,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  conv.lastMessage,
-                  style: const TextStyle(
-                    color: CrmColors.textM,
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppDimensions.s8),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: conv.channelColor.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r6)),
-                      ),
-                      child: Text(
-                        conv.channel,
-                        style: TextStyle(
-                          color: conv.channelColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (conv.unread > 0)
-                      Container(
-                        width: 20,
-                        height: 20,
-                        decoration: const BoxDecoration(
-                          color: CrmColors.accent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${conv.unread}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
+          Text(
+            conversation.time,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
       ),
+      trailing: unread
+          ? Semantics(
+              label: '${conversation.unread} unread messages',
+              child: Badge(label: Text('${conversation.unread}')),
+            )
+          : Icon(
+              Icons.chevron_right_rounded,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+      onTap: () {},
     );
   }
 }

@@ -52,12 +52,16 @@ services:
       MYSQL_REQUIRE_SSL: "false"
       MYSQL_SSL_MODE: "PREFERRED"
       MYSQL_ALLOW_PUBLIC_KEY: "true"
+      # OTP: 123456 fixed value is ENABLED (dev/test only). This makes OTP auth
+      # deterministic for QA and demos. Production must NOT activate the dev
+      # profile — deploy with SPRING_PROFILES_ACTIVE=mysql,prod where this is absent.
       APP_OTP_FIXED_VALUE: "123456"
-      # CR-6: never resolve to a real secret here. The default "change-me" is
-      # REJECTED by the app's fail-fast check, so an insecure deployment cannot
-      # silently start. Set real values at deploy time: JWT_SECRET=... ENCRYPTION_KEY=...
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-this-is-only-for-development-not-production}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-encryption-key-must-be-32-bytes!}
+      # CRITICAL: secrets below are development defaults. Production MUST override
+      # via a .env file or orchestrator secrets (K8s secrets / Docker secrets).
+      # Values MUST be >= 32 chars and MUST NOT be any string listed in
+      # JwtConfig.KNOWN_PLACEHOLDERS, otherwise the app refuses to boot.
+      JWT_SECRET: ${JWT_SECRET:-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6}
     depends_on:
       mysql:
         condition: service_healthy

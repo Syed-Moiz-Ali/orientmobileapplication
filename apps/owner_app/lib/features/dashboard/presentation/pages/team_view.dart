@@ -4,123 +4,143 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/team_providers.dart';
 
-/// P3 (audit): staff/role management screen for the owner.
 class TeamView extends ConsumerWidget {
   const TeamView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final state = ref.watch(teamProvider);
     final notifier = ref.read(teamProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.gray700),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Team & Roles',
-          style: TextStyle(color: AppColors.gray900, fontSize: 17, fontWeight: FontWeight.w700),
+        title: Text(
+          'Team & Permissions',
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: colorScheme.onSurface,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.gray700),
+            icon: Icon(Icons.refresh_rounded, color: colorScheme.onSurface),
             onPressed: notifier.load,
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        onPressed: () => _showAddStaffDialog(context, notifier),
-        child: const Icon(Icons.person_add_alt_1_rounded),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        elevation: 4,
+        onPressed: () => _showAddStaffSheet(context, notifier, colorScheme, textTheme),
+        icon: const Icon(Icons.person_add_alt_1_rounded),
+        label: const Text('Add Member', style: TextStyle(fontWeight: FontWeight.w800)),
       ),
       body: state.isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : state.error.isNotEmpty && state.staff.isEmpty
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(state.error, style: const TextStyle(color: AppColors.gray500)),
+                      Text(state.error, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
                       const SizedBox(height: 12),
                       ElevatedButton(onPressed: notifier.load, child: const Text('Retry')),
                     ],
                   ),
                 )
               : state.staff.isEmpty
-                  ? const Center(
-                      child: Text('No staff yet — add your first team member',
-                          style: TextStyle(color: AppColors.gray400)),
+                  ? Center(
+                      child: Text(
+                        'No staff members found. Add your first team member.',
+                        style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
                       itemCount: state.staff.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, i) {
                         final m = state.staff[i];
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: m.isActive ? AppColors.gray200 : const Color(0xFFFCA5A5),
-                            ),
-                          ),
+                        return AppCard(
+                          padding: const EdgeInsets.all(16),
+                          borderRadius: AppDimensions.r20,
+                          color: colorScheme.surface,
+                          borderColor: m.isActive ? colorScheme.outlineVariant : const Color(0xFFEF4444).withValues(alpha: 0.3),
                           child: Row(
                             children: [
                               CircleAvatar(
-                                radius: 18,
+                                radius: 22,
                                 backgroundColor: m.isActive
-                                    ? AppColors.primaryBg
-                                    : const Color(0xFFFEE2E2),
+                                    ? colorScheme.primary.withValues(alpha: 0.12)
+                                    : colorScheme.surfaceContainerHighest,
                                 child: Text(
                                   m.name.isNotEmpty ? m.name[0].toUpperCase() : '?',
-                                  style: TextStyle(
-                                    color: m.isActive ? AppColors.primary : AppColors.danger,
-                                    fontWeight: FontWeight.w700,
+                                  style: textTheme.titleSmall?.copyWith(
+                                    color: m.isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w900,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(m.name,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                            color: AppColors.gray900)),
-                                    const SizedBox(height: 2),
                                     Text(
-                                      '${m.role.toUpperCase()} \u00b7 ${m.empId}'
-                                      '${m.branch.isNotEmpty ? ' \u00b7 ${m.branch}' : ''}',
-                                      style: const TextStyle(fontSize: 11, color: AppColors.gray500),
+                                      m.name,
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        StatusPill(
+                                          label: m.role.toUpperCase(),
+                                          bg: colorScheme.surfaceContainerHighest,
+                                          fg: colorScheme.onSurfaceVariant,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          m.empId,
+                                          style: textTheme.bodySmall?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                            fontFamily: AppFontFamilies.mono,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-                              Text(
-                                m.isActive ? 'Active' : 'Inactive',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: m.isActive ? AppColors.success : AppColors.danger,
-                                ),
+                              StatusPill(
+                                label: m.isActive ? 'ACTIVE' : 'DISABLED',
+                                showDot: true,
+                                bg: m.isActive
+                                    ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                                    : const Color(0xFFEF4444).withValues(alpha: 0.12),
+                                fg: m.isActive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                               ),
+                              const SizedBox(width: 8),
                               IconButton(
                                 icon: Icon(
-                                  m.isActive
-                                      ? Icons.person_off_outlined
-                                      : Icons.person_outlined,
-                                  size: 20,
-                                  color: m.isActive ? AppColors.danger : AppColors.success,
+                                  m.isActive ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
+                                  size: 28,
+                                  color: m.isActive ? const Color(0xFF10B981) : colorScheme.onSurfaceVariant,
                                 ),
                                 onPressed: () => notifier.toggleActive(m),
                               ),
@@ -132,56 +152,117 @@ class TeamView extends ConsumerWidget {
     );
   }
 
-  void _showAddStaffDialog(BuildContext context, TeamNotifier notifier) {
+  void _showAddStaffSheet(BuildContext context, TeamNotifier notifier, ColorScheme colorScheme, TextTheme textTheme) {
     final nameCtrl = TextEditingController();
     final empIdCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     final roleCtrl = TextEditingController(text: 'advisor');
     const roles = ['advisor', 'supervisor', 'technician', 'sales'];
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Add Staff Member',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.gray900)),
-        content: SingleChildScrollView(
+      isScrollControlled: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+        ),
+        child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full name')),
-              TextField(controller: empIdCtrl, decoration: const InputDecoration(labelText: 'Employee ID (e.g. ADV002)')),
-              TextField(controller: phoneCtrl,
-                  decoration: const InputDecoration(labelText: 'Phone (for OTP login, e.g. 0501234567)'),
-                  keyboardType: TextInputType.phone),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Add Team Member',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, color: colorScheme.onSurfaceVariant),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameCtrl,
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                decoration: InputDecoration(
+                  labelText: 'Full Name',
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLow,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: empIdCtrl,
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                decoration: InputDecoration(
+                  labelText: 'Staff ID / Employee Code (e.g. ADV002)',
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLow,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                decoration: InputDecoration(
+                  labelText: 'Mobile Phone (for OTP auth)',
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLow,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: roleCtrl.text,
-                decoration: const InputDecoration(labelText: 'Role'),
-                items: roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                decoration: InputDecoration(
+                  labelText: 'Designated Role',
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLow,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+                items: roles.map((r) => DropdownMenuItem(value: r, child: Text(r.toUpperCase()))).toList(),
                 onChanged: (v) => roleCtrl.text = v ?? 'advisor',
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  onPressed: () async {
+                    final err = await notifier.addMember({
+                      'name': nameCtrl.text.trim(),
+                      'empId': empIdCtrl.text.trim(),
+                      'phone': phoneCtrl.text.trim(),
+                      'role': roleCtrl.text,
+                    });
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (err != null && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                    }
+                  },
+                  child: const Text('Add Staff Member', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                ),
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final err = await notifier.addMember({
-                'name': nameCtrl.text.trim(),
-                'empId': empIdCtrl.text.trim(),
-                'phone': phoneCtrl.text.trim(),
-                'role': roleCtrl.text,
-              });
-              if (ctx.mounted) Navigator.pop(ctx);
-              if (err != null && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-            child: const Text('Add'),
-          ),
-        ],
       ),
     );
   }

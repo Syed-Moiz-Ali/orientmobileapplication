@@ -14,13 +14,16 @@ class OwnerDashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final state = ref.watch(dashboardUiProvider);
     final notifier = ref.read(dashboardUiProvider.notifier);
 
     if (state.isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
-          color: AppColors.accent,
+          color: colorScheme.primary,
           strokeWidth: 2.5,
         ),
       );
@@ -28,7 +31,8 @@ class OwnerDashboardPage extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: notifier.refresh,
-      color: AppColors.accent,
+      color: colorScheme.primary,
+      backgroundColor: colorScheme.surface,
       child: AppResponsivePage(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
@@ -36,17 +40,17 @@ class OwnerDashboardPage extends ConsumerWidget {
           children: [
             const HeaderBanner(),
             const SizedBox(height: AppDimensions.s24),
-            _sectionLabel('KPI Overview'),
+            _sectionLabel('KPI Overview', colorScheme, textTheme),
             const SizedBox(height: AppDimensions.s12),
             KpiGrid(kpis: notifier.kpis),
             const SizedBox(height: AppDimensions.s28),
 
-            _sectionLabel('Job Card Register'),
+            _sectionLabel('Job Card Register', colorScheme, textTheme),
             const SizedBox(height: AppDimensions.s12),
             JobCardRegisterCard(items: notifier.registerItems),
             const SizedBox(height: AppDimensions.s28),
 
-            _sectionLabel('Analytics'),
+            _sectionLabel('Analytics', colorScheme, textTheme),
             const SizedBox(height: AppDimensions.s12),
             AppSplitView(
               primary: SalesTrendCard(
@@ -60,7 +64,7 @@ class OwnerDashboardPage extends ConsumerWidget {
             ),
             const SizedBox(height: AppDimensions.s28),
 
-            _sectionLabel('Quick Actions'),
+            _sectionLabel('Quick Actions', colorScheme, textTheme),
             const SizedBox(height: AppDimensions.s12),
             const QuickActionsRow(),
           ],
@@ -69,20 +73,23 @@ class OwnerDashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _sectionLabel(String text) => Row(
+  Widget _sectionLabel(String text, ColorScheme colorScheme, TextTheme textTheme) => Row(
     children: [
       Container(
         width: 4,
         height: 20,
         decoration: BoxDecoration(
-          color: AppColors.accent,
+          color: colorScheme.primary,
           borderRadius: BorderRadius.circular(AppDimensions.r2),
         ),
       ),
       const SizedBox(width: 10),
       Text(
         text,
-        style: AppTextStyles.title(color: AppColors.textPrimary),
+        style: textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w800,
+          color: colorScheme.onSurface,
+        ),
       ),
     ],
   );

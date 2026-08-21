@@ -70,11 +70,11 @@ public class RateLimitFilter implements Filter {
         HttpServletRequest httpReq = (HttpServletRequest) request;
         HttpServletResponse httpRes = (HttpServletResponse) response;
 
-        // P1: the client-supplied X-Username header is REMOVED from the bucket
-        // key — an attacker could rotate it per request for a fresh bucket and
-        // bypass the auth budget entirely. Identity comes from the IP and, for
-        // /auth/** JSON bodies, the parsed phone/email.
-        String key = httpReq.getRemoteAddr();
+        // H-2: resolve the real client IP. Behind a load balancer / reverse proxy the
+        // remote addr is the proxy, which would share one bucket across all clients.
+        // Read X-Forwarded-For (first = original client) but only trust it from a
+        // known proxy; fall back to the direct remote addr otherwise.
+        String key = clientIp(httpReq);
         if (shouldParseBody(httpReq)) {
             RepeatableReadRequestWrapper wrapper;
             try {
@@ -238,5 +238,21 @@ public class RateLimitFilter implements Filter {
         public BufferedReader getReader() {
             return new BufferedReader(new InputStreamReader(getInputStream(), StandardCharsets.UTF_8));
         }
+    }
+
+    /**
+     * H-2: resolve the real client IP from X-Forwarded-For when the request arrives
+     * from a trusted proxy, else fall back to the direct remote address. The first
+     * value in X-Forwarded-For is the original client.
+     */
+    private String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            String first = forwarded.split(",")[0].trim();
+            if (!first.isEmpty()) {
+                return first;
+            }
+        }
+        return request.getRemoteAddr();
     }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
+import 'package:shared_core/src/theme/app_dimensions.dart';
 
 class LoadingIndicator extends StatelessWidget {
   final String? message;
@@ -8,19 +8,23 @@ class LoadingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(color: AppColors.primary),
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+          ),
           if (message != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.s16),
             Text(
               message!,
               style: textTheme.bodyLarge?.copyWith(
-                color: AppColors.text3,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -37,8 +41,17 @@ class ShimmerLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: CircularProgressIndicator(color: AppColors.primary),
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: SizedBox(
+        width: 180,
+        child: LinearProgressIndicator(
+          color: colorScheme.primary,
+          backgroundColor: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+          minHeight: 4,
+        ),
+      ),
     );
   }
 }

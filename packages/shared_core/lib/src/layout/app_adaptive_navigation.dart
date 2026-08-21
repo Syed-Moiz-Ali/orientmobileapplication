@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 class AppNavItem {
@@ -44,7 +43,7 @@ class AppAdaptiveNavigationFrame extends StatelessWidget {
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.bg,
+            color: colorScheme.surface,
             border: Border(
               right: BorderSide(
                 color: colorScheme.outline.withValues(alpha: 0.14),
@@ -57,24 +56,22 @@ class AppAdaptiveNavigationFrame extends StatelessWidget {
             child: NavigationRail(
               minWidth: adaptive.navigationRailWidth,
               extended: adaptive.extendNavigationRail,
-              backgroundColor: AppColors.bg,
+              backgroundColor: colorScheme.surface,
               selectedIndex: selectedIndex,
               onDestinationSelected: onSelected,
               labelType: adaptive.extendNavigationRail
                   ? NavigationRailLabelType.none
                   : NavigationRailLabelType.selected,
-              indicatorColor: AppColors.darkNavy,
+              indicatorColor: colorScheme.primary.withValues(alpha: 0.12),
               indicatorShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.r14),
               ),
-              selectedIconTheme: const IconThemeData(
-                color: AppColors.cyanBright,
-              ),
+              selectedIconTheme: IconThemeData(color: colorScheme.primary),
               unselectedIconTheme: IconThemeData(
                 color: colorScheme.onSurfaceVariant,
               ),
               selectedLabelTextStyle: theme.textTheme.labelMedium?.copyWith(
-                color: AppColors.darkNavy,
+                color: colorScheme.primary,
                 fontWeight: FontWeight.w800,
               ),
               unselectedLabelTextStyle: theme.textTheme.labelMedium?.copyWith(
@@ -94,6 +91,49 @@ class AppAdaptiveNavigationFrame extends StatelessWidget {
         ),
         Expanded(child: child),
       ],
+    );
+  }
+}
+
+class AppBottomNavigation extends StatelessWidget {
+  final List<AppNavItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final Set<int> badgeIndices;
+
+  const AppBottomNavigation({
+    super.key,
+    required this.items,
+    required this.selectedIndex,
+    required this.onSelected,
+    this.badgeIndices = const {},
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.outline)),
+      ),
+      child: NavigationBar(
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onSelected,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: [
+          for (var index = 0; index < items.length; index++)
+            NavigationDestination(
+              icon: badgeIndices.contains(index)
+                  ? Badge(child: Icon(items[index].icon))
+                  : Icon(items[index].icon),
+              selectedIcon: badgeIndices.contains(index)
+                  ? Badge(child: Icon(items[index].selectedIcon))
+                  : Icon(items[index].selectedIcon),
+              label: items[index].label,
+            ),
+        ],
+      ),
     );
   }
 }

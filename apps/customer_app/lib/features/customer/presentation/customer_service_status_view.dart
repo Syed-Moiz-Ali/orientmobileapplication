@@ -49,15 +49,17 @@ class _CustomerServiceStatusViewState
     final svc = state.activeService;
     final textTheme = Theme.of(context).textTheme;
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (svc == null || !svc.hasActiveJob) {
       return Scaffold(
-        backgroundColor: AppColors.bg,
+        backgroundColor: colorScheme.surface,
         body: SafeArea(
           bottom: false,
           child: Column(
             children: [
               const AppTopBar(title: 'Job Tracker'),
-              const Divider(height: 1),
+              Divider(height: 1, color: colorScheme.outlineVariant),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(AppDimensions.s20),
@@ -82,20 +84,20 @@ class _CustomerServiceStatusViewState
         : '$diffMinutes minutes ago';
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            const AppTopBar(
+            AppTopBar(
               title: 'Job Tracker',
               trailing: StatusPill(
                 label: '\u25cf Live',
-                bg: AppColors.successBg,
-                fg: AppColors.success,
+                bg: colorScheme.primary.withValues(alpha: 0.12),
+                fg: colorScheme.primary,
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: colorScheme.outlineVariant),
             Expanded(
               child: AppResponsivePage(
                 child: Column(

@@ -9,17 +9,21 @@ class CrmChannelGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 2.2,
+    final adaptive = context.adaptive;
+    return AppAdaptiveGrid(
+      columns: adaptive.pick(compact: 2, medium: 2, expanded: 2, large: 2),
+      minChildWidth: adaptive.isCompact ? 140 : 210,
+      spacing: adaptive.itemSpacing,
+      runSpacing: adaptive.itemSpacing,
+      childAspectRatio: adaptive.pick(
+        compact: 2.15,
+        medium: 2.6,
+        expanded: 2.8,
+        large: 3.0,
       ),
-      itemCount: channels.length,
-      itemBuilder: (_, i) => _CrmChannelCard(channel: channels[i]),
+      children: [
+        for (final channel in channels) _CrmChannelCard(channel: channel),
+      ],
     );
   }
 }

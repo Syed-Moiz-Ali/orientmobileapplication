@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -366,14 +365,12 @@ class _FormFieldWrapper extends StatelessWidget {
 class _PersistentFieldInput extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
-  final int maxLines;
   final void Function(String) onChanged;
 
   const _PersistentFieldInput({
     required this.controller,
     required this.hint,
     required this.onChanged,
-    this.maxLines = 1,
   });
 
   @override
@@ -383,7 +380,6 @@ class _PersistentFieldInput extends StatelessWidget {
     return TextField(
       controller: controller,
       onChanged: onChanged,
-      maxLines: maxLines,
       style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
       decoration: InputDecoration(
         hintText: hint,

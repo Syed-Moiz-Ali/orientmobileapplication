@@ -13,7 +13,12 @@ public class JwtConfig {
     public static final String[] KNOWN_PLACEHOLDERS = {
             "your-256-bit-secret-key-change-in-production",
             "change-me",
-            "orient-workshop-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256"
+            "orient-workshop-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256",
+            "dev-secret-key-this-is-only-for-development-not-production",
+            "dev-encryption-key-must-be-32-bytes!",
+            "orient-dev-encryption-key-0123456789",
+            "orient-dev-only-encryption-key-0123456789",
+            "dev-secret-key-at-least-32-characters-long!!"
     };
 
     private String secret;

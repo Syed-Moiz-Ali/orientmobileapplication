@@ -18,28 +18,34 @@ class CustomerStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return AppCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r14)),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      borderRadius: AppDimensions.r20,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value, style: AppTextStyles.displayLarge(color: color)),
-          const SizedBox(height: 5),
+          Text(
+            value,
+            style: textTheme.headlineMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
           Text(
             label,
-            style: AppTextStyles.bodySmall(color: AppColors.text3),
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -55,30 +61,32 @@ class CustomerStatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final chips = <Widget>[
       CustomerStatCard(
         value: '${state.servicesThisYear}',
-        label: 'Services\nthis year',
-        color: AppColors.accent,
-        bg: AppColors.cyanLight,
+        label: 'Services\nThis Year',
+        color: colorScheme.primary,
+        bg: colorScheme.primary.withValues(alpha: 0.1),
       ),
       CustomerStatCard(
         value: '${state.vehicles.length}',
-        label: 'Vehicles\nregistered',
-        color: AppColors.info,
-        bg: AppColors.infoBg,
+        label: 'Vehicles\nRegistered',
+        color: const Color(0xFF3B82F6),
+        bg: const Color(0xFF3B82F6).withValues(alpha: 0.1),
       ),
       CustomerStatCard(
         value: '${state.unpaidInvoices}',
-        label: 'Unpaid\ninvoice',
-        color: AppColors.warning,
-        bg: AppColors.warningBg,
+        label: 'Unpaid\nInvoices',
+        color: const Color(0xFFD97706),
+        bg: const Color(0xFFD97706).withValues(alpha: 0.1),
       ),
     ];
 
     return AppAdaptiveGrid(
-      minChildWidth: 160,
-      childAspectRatio: 1.25,
+      minChildWidth: 140,
+      childAspectRatio: 1.3,
       children: chips,
     );
   }

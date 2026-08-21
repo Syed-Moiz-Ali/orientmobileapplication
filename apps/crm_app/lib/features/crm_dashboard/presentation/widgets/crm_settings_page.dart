@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 
 class CrmSettingsPage extends ConsumerWidget {
@@ -9,131 +8,95 @@ class CrmSettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ui = ref.read(crmUiProvider.notifier);
+    final state = ref.watch(crmUiProvider);
+    final notifier = ref.read(crmUiProvider.notifier);
+    final colors = Theme.of(context).colorScheme;
 
-    final items = [
-      (
-        'Push Notifications',
-        'Receive alerts for new leads and messages',
-        Icons.notifications_outlined,
-        ui.notificationsEnabled,
-        ui.toggleNotifications,
-      ),
-      (
-        'Dark Mode',
-        'Use dark theme across the application',
-        Icons.dark_mode_outlined,
-        ui.darkMode,
-        ui.toggleDarkMode,
-      ),
-      (
-        'Auto Assign Leads',
-        'Automatically assign incoming leads to team',
-        Icons.auto_awesome_outlined,
-        ui.autoAssign,
-        ui.toggleAutoAssign,
-      ),
-    ];
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.s16),
+    return AppResponsivePage(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _sectionLabel('Settings'),
-          const SizedBox(height: AppDimensions.s16),
-          ...items.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: AppDimensions.s10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimensions.r14),
-                  border: Border.all(color: CrmColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: CrmColors.primary.withValues(alpha: 0.04),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: CrmColors.accentLight,
-                        borderRadius: BorderRadius.circular(AppDimensions.r10),
-                      ),
-                      child: Icon(item.$3, color: CrmColors.accent, size: 20),
-                    ),
-                    const SizedBox(width: AppDimensions.s14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.$1,
-                            style: const TextStyle(
-                              color: CrmColors.textH,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            item.$2,
-                            style: const TextStyle(
-                              color: CrmColors.textM,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: item.$4,
-                      onChanged: (_) => item.$5(),
-                      activeThumbColor: CrmColors.accent,
-                      activeTrackColor: CrmColors.accentLight,
-                      inactiveThumbColor: CrmColors.textM,
-                      inactiveTrackColor: CrmColors.border,
-                    ),
-                  ],
-                ),
-              ),
+          const AppPageHeader(
+            eyebrow: 'Workspace',
+            title: 'Settings',
+            subtitle:
+                'Control how your team receives work and how new leads enter the queue.',
+            leading: Icon(Icons.tune_rounded),
+          ),
+          SizedBox(height: context.adaptive.sectionSpacing),
+          Text('Workflow', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppDimensions.s10),
+          AppRecordRow(
+            leading: _SettingIcon(
+              icon: Icons.notifications_outlined,
+              color: colors.primary,
             ),
+            title: 'Push notifications',
+            subtitle: 'Alert me when a new lead or customer message arrives.',
+            trailing: Switch.adaptive(
+              value: state.notificationsEnabled,
+              onChanged: (_) => notifier.toggleNotifications(),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s10),
+          AppRecordRow(
+            leading: _SettingIcon(
+              icon: Icons.alt_route_rounded,
+              color: colors.tertiary,
+            ),
+            title: 'Automatically assign leads',
+            subtitle:
+                'Route incoming leads to available salespeople using the team queue.',
+            trailing: Switch.adaptive(
+              value: state.autoAssign,
+              onChanged: (_) => notifier.toggleAutoAssign(),
+            ),
+          ),
+          SizedBox(height: context.adaptive.sectionSpacing),
+          Text('Appearance', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppDimensions.s10),
+          AppRecordRow(
+            leading: _SettingIcon(
+              icon: Icons.dark_mode_outlined,
+              color: colors.secondary,
+            ),
+            title: 'Dark appearance',
+            subtitle:
+                'Use the darker workspace palette when your app theme supports it.',
+            trailing: Switch.adaptive(
+              value: state.darkMode,
+              onChanged: (_) => notifier.toggleDarkMode(),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          Text(
+            'Appearance preferences are saved to this workspace profile.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _sectionLabel(String text) => Row(
-    children: [
-      Container(
-        width: 4,
-        height: 20,
-        decoration: BoxDecoration(
-          color: CrmColors.accent,
-          borderRadius: BorderRadius.circular(AppDimensions.r2),
-        ),
+class _SettingIcon extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+
+  const _SettingIcon({required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppDimensions.r10),
       ),
-      const SizedBox(width: AppDimensions.s10),
-      Text(
-        text,
-        style: const TextStyle(
-          color: CrmColors.textH,
-          fontSize: 19,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-        ),
-      ),
-    ],
-  );
+      child: Icon(icon, color: color, size: 20),
+    );
+  }
 }

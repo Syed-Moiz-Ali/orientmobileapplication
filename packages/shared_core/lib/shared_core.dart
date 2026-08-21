@@ -1,5 +1,6 @@
 export 'src/theme/app_colors.dart';
 export 'src/theme/app_dimensions.dart';
+export 'src/theme/app_motion.dart';
 export 'src/theme/app_text_styles.dart';
 export 'src/theme/app_fonts.dart';
 export 'src/theme/app_theme.dart';
@@ -8,9 +9,14 @@ export 'src/layout/app_adaptive_navigation.dart';
 export 'src/layout/app_responsive.dart';
 
 export 'src/widgets/app_card.dart';
+export 'src/widgets/app_action_bar.dart';
+export 'src/widgets/app_confirmation_dialog.dart';
 export 'src/widgets/app_text_field.dart';
 export 'src/widgets/app_dropdown_button.dart';
 export 'src/widgets/app_top_bar.dart';
+export 'src/widgets/app_page_header.dart';
+export 'src/widgets/app_record_row.dart';
+export 'src/widgets/app_search_field.dart';
 export 'src/widgets/dashboard_shell.dart';
 export 'src/widgets/empty_state.dart';
 export 'src/widgets/error_view.dart';

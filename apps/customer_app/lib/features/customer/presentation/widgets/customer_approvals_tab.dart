@@ -34,8 +34,8 @@ class CustomerApprovalsTab extends ConsumerWidget {
               content: Text(
                 ok
                     ? action == 'approve'
-                          ? 'Estimate approved - work will start shortly'
-                          : 'Estimate rejected'
+                        ? 'Estimate approved — workshop technicians will begin work'
+                        : 'Estimate rejected'
                     : 'Could not submit. Try again.',
               ),
               behavior: SnackBarBehavior.floating,
@@ -48,7 +48,9 @@ class CustomerApprovalsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final approvalsAsync = ref.watch(customerApprovalsProvider);
     final invoicesAsync = ref.watch(customerInvoicesProvider);
     final approvals =
@@ -60,6 +62,7 @@ class CustomerApprovalsTab extends ConsumerWidget {
         onRefresh: () async {
           ref.read(customerApprovalsRefreshProvider.notifier).state++;
         },
+        color: colorScheme.primary,
         child: AppResponsivePage(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
@@ -72,9 +75,9 @@ class CustomerApprovalsTab extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Approvals',
+                          'Approvals & Billing',
                           style: textTheme.headlineMedium?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: colorScheme.onSurface,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.7,
                           ),
@@ -85,8 +88,10 @@ class CustomerApprovalsTab extends ConsumerWidget {
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppColors.warning,
+                              decoration: BoxDecoration(
+                                color: approvals.isNotEmpty
+                                    ? const Color(0xFFD97706)
+                                    : const Color(0xFF10B981),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -94,7 +99,7 @@ class CustomerApprovalsTab extends ConsumerWidget {
                             Text(
                               '${approvals.length} ${approvals.length == 1 ? "estimate waiting" : "estimates waiting"}',
                               style: textTheme.bodySmall?.copyWith(
-                                color: AppColors.text3,
+                                color: colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -109,9 +114,9 @@ class CustomerApprovalsTab extends ConsumerWidget {
                           .read(customerApprovalsRefreshProvider.notifier)
                           .state++;
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.refresh_rounded,
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                     ),
                     tooltip: 'Refresh estimates',
                   ),
@@ -123,7 +128,7 @@ class CustomerApprovalsTab extends ConsumerWidget {
                   padding: EdgeInsets.symmetric(vertical: AppDimensions.s24),
                   child: EmptyState(
                     icon: Icons.fact_check_outlined,
-                    message: 'No estimates waiting for approval',
+                    message: 'No estimates waiting for your authorization.',
                   ),
                 )
               else
@@ -141,9 +146,9 @@ class CustomerApprovalsTab extends ConsumerWidget {
                 ),
               const SizedBox(height: AppDimensions.s32),
               const _SectionHeading(
-                title: 'Invoices',
-                subtitle: 'Your invoices from completed jobs.',
-                accent: Color(0xFF238636),
+                title: 'Settled Invoices',
+                subtitle: 'Download receipts & verified service breakdown.',
+                accent: Color(0xFF10B981),
               ),
               const SizedBox(height: AppDimensions.s16),
               if (invoices.isEmpty)
@@ -188,7 +193,9 @@ class _SectionHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,14 +217,14 @@ class _SectionHeading extends StatelessWidget {
               Text(
                 title,
                 style: textTheme.titleLarge?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: AppDimensions.s4),
               Text(
                 subtitle,
-                style: textTheme.bodyMedium?.copyWith(color: AppColors.text3),
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -235,22 +242,27 @@ class _ApprovalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return AppCard(
       padding: const EdgeInsets.all(AppDimensions.s16),
+      borderRadius: AppDimensions.r20,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Row(
         children: [
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.warningBg,
-              borderRadius: BorderRadius.circular(AppDimensions.r12),
+              color: const Color(0xFFD97706).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppDimensions.r14),
             ),
             child: const Icon(
               Icons.receipt_long_rounded,
-              color: AppColors.warning,
+              color: Color(0xFFD97706),
               size: 22,
             ),
           ),
@@ -262,20 +274,21 @@ class _ApprovalCard extends StatelessWidget {
                 Text(
                   approval.estimateId,
                   style: textTheme.titleSmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colorScheme.onSurface,
                     fontWeight: FontWeight.w800,
+                    fontFamily: AppFontFamilies.mono,
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s4),
                 Text(
-                  '${approval.customerName} - ${approval.createdAt}',
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.text3),
+                  '${approval.customerName} • ${approval.createdAt}',
+                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: AppDimensions.s4),
                 Text(
                   'AED ${approval.amount.toStringAsFixed(2)}',
                   style: textTheme.titleMedium?.copyWith(
-                    color: AppColors.accent,
+                    color: colorScheme.primary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -283,7 +296,17 @@ class _ApprovalCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppDimensions.s8),
-          FilledButton(onPressed: onReview, child: const Text('Review')),
+          FilledButton(
+            onPressed: onReview,
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.r10),
+              ),
+            ),
+            child: const Text('Review', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
         ],
       ),
     );
@@ -298,18 +321,23 @@ class _InvoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final paid = invoice.status == 'paid';
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final paid = invoice.status.toLowerCase() == 'paid';
 
     return GestureDetector(
       onTap: onTap,
       child: AppCard(
         padding: const EdgeInsets.all(AppDimensions.s16),
+        borderRadius: AppDimensions.r20,
+        color: colorScheme.surface,
+        borderColor: colorScheme.outlineVariant,
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.receipt_outlined,
-              color: AppColors.text3,
+              color: colorScheme.onSurfaceVariant,
               size: 22,
             ),
             const SizedBox(width: AppDimensions.s12),
@@ -320,15 +348,16 @@ class _InvoiceCard extends StatelessWidget {
                   Text(
                     invoice.id,
                     style: textTheme.titleSmall?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
+                      fontFamily: AppFontFamilies.mono,
                     ),
                   ),
                   const SizedBox(height: AppDimensions.s4),
                   Text(
                     invoice.date,
                     style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.text3,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -337,15 +366,17 @@ class _InvoiceCard extends StatelessWidget {
             Text(
               'AED ${invoice.amount.toStringAsFixed(2)}',
               style: textTheme.titleSmall?.copyWith(
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
                 fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(width: AppDimensions.s10),
             StatusPill(
-              label: paid ? 'Paid' : 'Unpaid',
-              bg: paid ? AppColors.successBg : AppColors.warningBg,
-              fg: paid ? AppColors.success : AppColors.warning,
+              label: paid ? 'PAID' : 'UNPAID',
+              bg: paid
+                  ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                  : const Color(0xFFD97706).withValues(alpha: 0.12),
+              fg: paid ? const Color(0xFF10B981) : const Color(0xFFD97706),
             ),
           ],
         ),
@@ -366,7 +397,9 @@ class _ApprovalDetailSheet extends StatelessWidget {
     List<ApprovalLineItem> items,
   ) {
     if (items.isEmpty) return const SizedBox.shrink();
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +408,7 @@ class _ApprovalDetailSheet extends StatelessWidget {
         Text(
           title,
           style: textTheme.titleSmall?.copyWith(
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -389,14 +422,14 @@ class _ApprovalDetailSheet extends StatelessWidget {
                   child: Text(
                     '${item.name} x ${item.qty}',
                     style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ),
                 Text(
                   'AED ${(item.qty * item.rate).toStringAsFixed(2)}',
                   style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.text2,
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -409,16 +442,18 @@ class _ApprovalDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (_, ctrl) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppDimensions.r28),
           ),
         ),
@@ -431,7 +466,7 @@ class _ApprovalDetailSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(AppDimensions.r2),
                   ),
                 ),
@@ -445,15 +480,17 @@ class _ApprovalDetailSheet extends StatelessWidget {
                     child: Text(
                       detail.estimateId,
                       style: textTheme.titleLarge?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: AppFontFamilies.mono,
                       ),
                     ),
                   ),
                   StatusPill(
-                    label: 'Pending approval',
-                    bg: AppColors.warningBg,
-                    fg: AppColors.warning,
+                    label: 'Awaiting Authorization',
+                    showDot: true,
+                    bg: const Color(0xFFD97706).withValues(alpha: 0.12),
+                    fg: const Color(0xFFD97706),
                   ),
                 ],
               ),
@@ -467,24 +504,25 @@ class _ApprovalDetailSheet extends StatelessWidget {
                     Text(
                       detail.vehicleInfo,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.text3,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
-                  _lineItems(context, 'Services', detail.services),
-                  _lineItems(context, 'Parts', detail.parts),
+                  _lineItems(context, 'Authorized Services', detail.services),
+                  _lineItems(context, 'Replacement Parts', detail.parts),
                   const SizedBox(height: AppDimensions.s16),
                   Container(
-                    padding: const EdgeInsets.all(AppDimensions.s14),
+                    padding: const EdgeInsets.all(AppDimensions.s16),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryBg,
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
+                      color: colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(AppDimensions.r16),
+                      border: Border.all(color: colorScheme.outlineVariant),
                     ),
                     child: Row(
                       children: [
                         Text(
-                          'Total',
+                          'Estimated Total',
                           style: textTheme.titleSmall?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: colorScheme.onSurface,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -492,7 +530,7 @@ class _ApprovalDetailSheet extends StatelessWidget {
                         Text(
                           'AED ${detail.grandTotal.toStringAsFixed(2)}',
                           style: textTheme.titleLarge?.copyWith(
-                            color: AppColors.accent,
+                            color: colorScheme.primary,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -511,45 +549,39 @@ class _ApprovalDetailSheet extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.danger,
-                          side: const BorderSide(color: AppColors.danger),
+                          foregroundColor: const Color(0xFFEF4444),
+                          side: const BorderSide(color: Color(0xFFEF4444)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                              AppDimensions.r12,
+                              AppDimensions.r14,
                             ),
                           ),
                         ),
                         onPressed: () => onAction('reject'),
-                        child: Text(
-                          'Reject',
-                          style: textTheme.labelLarge?.copyWith(
-                            color: AppColors.danger,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        child: const Text(
+                          'Reject Estimate',
+                          style: TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),
                     const SizedBox(width: AppDimensions.s12),
                     Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.accent,
-                          foregroundColor: Colors.white,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                              AppDimensions.r12,
+                              AppDimensions.r14,
                             ),
                           ),
                         ),
                         onPressed: () => onAction('approve'),
-                        child: Text(
-                          'Approve',
-                          style: textTheme.labelLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        child: const Text(
+                          'Authorize Work',
+                          style: TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),

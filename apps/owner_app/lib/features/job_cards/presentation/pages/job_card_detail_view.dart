@@ -11,47 +11,119 @@ class JobCardDetailView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final jobCard = ref.watch(selectedJobCardProvider);
-    if (jobCard == null) return const Scaffold(body: Center(child: Text('No job card selected')));
+
+    if (jobCard == null) {
+      return Scaffold(
+        backgroundColor: colorScheme.surface,
+        appBar: AppBar(backgroundColor: colorScheme.surface, elevation: 0),
+        body: const Center(child: Text('No job card selected')),
+      );
+    }
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0, centerTitle: true,
-        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 18), onPressed: () => context.pop()),
-        title: Text(jobCard.id, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+        backgroundColor: colorScheme.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          jobCard.id,
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: colorScheme.onSurface,
+            fontFamily: AppFontFamilies.mono,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.ios_share, color: AppColors.textPrimary, size: 22),
+            icon: Icon(Icons.ios_share_rounded, color: colorScheme.onSurface, size: 22),
             tooltip: 'Share job card',
             onPressed: () => _shareJobCard(jobCard),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _buildHeaderCard(jobCard),
-          const SizedBox(height: 14),
-          _buildSection(title: 'Services', icon: Icons.build_outlined, child: Column(children: jobCard.services.map((s) => _ServiceRow(service: s)).toList())),
-          const SizedBox(height: 14),
-          _buildSection(title: 'Job Details', icon: Icons.info_outline, child: Column(children: [
-            _DetailRow(label: 'Technician', value: jobCard.technician),
-            const Divider(height: 20, color: AppColors.line),
-            _DetailRow(label: 'Est. Completion', value: jobCard.estCompletion),
-            const Divider(height: 20, color: AppColors.line),
-            _DetailRow(label: 'Status', value: _statusLabel(jobCard.status), valueColor: _statusColor(jobCard.status)),
-          ])),
-          const SizedBox(height: 14),
-          _buildSection(title: 'Amount', icon: Icons.attach_money, child: Row(children: [
-            const Text('Total', style: TextStyle(fontSize: 13, color: AppColors.text3)),
-            const Spacer(),
-            Text(_formatAmount(jobCard.amount), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-          ])),
-          const SizedBox(height: 24),
-          _buildActions(context, ref, jobCard),
-          const SizedBox(height: 16),
-        ]),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeaderCard(context, jobCard, colorScheme, textTheme),
+            const SizedBox(height: 14),
+            _buildSection(
+              context: context,
+              title: 'Authorized Work & Services',
+              icon: Icons.build_circle_rounded,
+              child: Column(
+                children: jobCard.services.map((s) => _ServiceRow(service: s)).toList(),
+              ),
+            ),
+            const SizedBox(height: 14),
+            _buildSection(
+              context: context,
+              title: 'Workshop & Job Meta',
+              icon: Icons.info_outline_rounded,
+              child: Column(
+                children: [
+                  _DetailRow(label: 'Assigned Specialist', value: jobCard.technician),
+                  Divider(height: 20, color: colorScheme.outlineVariant),
+                  _DetailRow(label: 'Est. Handover Time', value: jobCard.estCompletion),
+                  Divider(height: 20, color: colorScheme.outlineVariant),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Current Stage',
+                        style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                      StatusPill(
+                        label: _statusLabel(jobCard.status).toUpperCase(),
+                        showDot: true,
+                        bg: _statusBg(jobCard.status),
+                        fg: _statusColor(jobCard.status),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            AppCard(
+              padding: const EdgeInsets.all(18),
+              borderRadius: AppDimensions.r20,
+              color: colorScheme.surface,
+              borderColor: colorScheme.outlineVariant,
+              child: Row(
+                children: [
+                  Text(
+                    'Total Job Estimate',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'AED ${jobCard.amount.toStringAsFixed(2)}',
+                    style: textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildActions(context, ref, jobCard, colorScheme),
+          ],
+        ),
       ),
     );
   }
@@ -65,130 +137,260 @@ Services: ${jc.services.join(', ')}
 Technician: ${jc.technician}
 Est. Completion: ${jc.estCompletion}
 Status: ${_statusLabel(jc.status)}
-Amount: ${_formatAmount(jc.amount)}
+Amount: AED ${jc.amount.toStringAsFixed(2)}
 ''';
     await Share.share(summary, subject: 'Job Card ${jc.id}');
   }
 
-  Widget _buildHeaderCard(JobCard jc) {
-    final color = _statusColor(jc.status);
-    return Container(
-      width: double.infinity, padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppDimensions.r12), border: Border(left: BorderSide(color: color, width: 4)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Expanded(child: Text(jc.customerName, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: AppColors.textPrimary))),
-          Container(padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s12, vertical: 5), decoration: BoxDecoration(color: _statusBg(jc.status), borderRadius: BorderRadius.circular(AppDimensions.r20)),
-            child: Text(_statusLabel(jc.status), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color))),
-        ]),
-        const SizedBox(height: 6),
-        Row(children: [const Icon(Icons.directions_car_outlined, size: 14, color: AppColors.text3), const SizedBox(width: 4),
-          Text(jc.vehicleDisplay, style: const TextStyle(fontSize: 13, color: AppColors.text3))]),
-      ]),
-    );
-  }
-
-  Widget _buildSection({required String title, required IconData icon, required Widget child}) {
-    return Container(padding: const EdgeInsets.all(AppDimensions.s16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppDimensions.r12),
-        border: Border.all(color: AppColors.border, width: 0.8), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [Icon(icon, size: 16, color: AppColors.primary), const SizedBox(width: 6),
-          Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text2))]),
-        const SizedBox(height: 12), const Divider(height: 1, color: AppColors.line), const SizedBox(height: 12), child,
-      ]),
-    );
-  }
-
-  Widget _buildActions(BuildContext context, WidgetRef ref, JobCard jobCard) {
-    return Column(children: [
-      SizedBox(width: double.infinity, child: ElevatedButton.icon(
-        onPressed: () async {
-          // FE-FIX (audit P1): completion now persists server-side; the
-          // snackbar only claims success when the backend accepted it.
-          final ok = await ref
-              .read(jobCardsProvider.notifier)
-              .markComplete(jobCard.id);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(ok
-                    ? 'Job card marked as completed'
-                    : 'Could not complete the job card. Try again.'),
-                backgroundColor: ok ? null : AppColors.danger,
-                behavior: SnackBarBehavior.floating,
+  Widget _buildHeaderCard(BuildContext context, JobCard jc, ColorScheme colorScheme, TextTheme textTheme) {
+    return AppCard(
+      padding: const EdgeInsets.all(18),
+      borderRadius: AppDimensions.r24,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  jc.customerName,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
               ),
-            );
-          }
-        },
-        icon: const Icon(Icons.check_circle_outline, size: 18),
-        label: const Text('Mark as Complete'), style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.s14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)), elevation: 0,
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)))),
-      const SizedBox(height: 10),
-      Row(children: [
-        Expanded(child: OutlinedButton.icon(onPressed: () => _shareJobCard(jobCard), icon: const Icon(Icons.print_outlined, size: 16), label: const Text('Print / Export'),
-          style: OutlinedButton.styleFrom(foregroundColor: AppColors.primary, side: const BorderSide(color: AppColors.primary),
-            padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
-            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)))),
-        const SizedBox(width: 10),
-        Expanded(child: OutlinedButton.icon(onPressed: () => _shareJobCard(jobCard), icon: const Icon(Icons.share_outlined, size: 16), label: const Text('Share'),
-          style: OutlinedButton.styleFrom(foregroundColor: AppColors.text3, side: const BorderSide(color: AppColors.border),
-            padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r10)),
-            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)))),
-      ]),
-    ]);
+              StatusPill(
+                label: _statusLabel(jc.status).toUpperCase(),
+                showDot: true,
+                bg: _statusBg(jc.status),
+                fg: _statusColor(jc.status),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.directions_car_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+              const SizedBox(width: 6),
+              Text(
+                jc.vehicleDisplay,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  String _formatAmount(double amount) {
-    final s = amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
-    return 'AED $s';
+  Widget _buildSection({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return AppCard(
+      padding: const EdgeInsets.all(18),
+      borderRadius: AppDimensions.r20,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Divider(height: 1, color: colorScheme.outlineVariant),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions(BuildContext context, WidgetRef ref, JobCard jobCard, ColorScheme colorScheme) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: FilledButton.icon(
+            onPressed: () async {
+              final ok = await ref
+                  .read(jobCardsProvider.notifier)
+                  .markComplete(jobCard.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(ok
+                        ? 'Job card marked as completed'
+                        : 'Could not complete the job card. Try again.'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.check_circle_rounded, size: 20),
+            label: const Text('Mark Job as Complete', style: TextStyle(fontWeight: FontWeight.w900)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.r16),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _shareJobCard(jobCard),
+                icon: const Icon(Icons.print_outlined, size: 18),
+                label: const Text('Print / Export', style: TextStyle(fontWeight: FontWeight.w800)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r16),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _shareJobCard(jobCard),
+                icon: const Icon(Icons.share_outlined, size: 18),
+                label: const Text('Share PDF', style: TextStyle(fontWeight: FontWeight.w800)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r16),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Color _statusColor(JobCardStatus s) => switch (s) {
-    JobCardStatus.inProgress => AppColors.primary, JobCardStatus.waitingParts => AppColors.warning,
-    JobCardStatus.qualityCheck => AppColors.info, JobCardStatus.completed => AppColors.success,
-    JobCardStatus.cancelled => AppColors.danger, JobCardStatus.pendingApproval => AppColors.warning,
-    JobCardStatus.pending => AppColors.warning, JobCardStatus.awaitingSupervisor => AppColors.warning,
-    JobCardStatus.vehicleReceived => AppColors.info, JobCardStatus.waitingCustomerApproval => AppColors.warning,
-    JobCardStatus.delivered => AppColors.success, JobCardStatus.qualityCheckPassed => AppColors.success,
-  };
+        JobCardStatus.inProgress => const Color(0xFF3B82F6),
+        JobCardStatus.waitingParts => const Color(0xFFD97706),
+        JobCardStatus.qualityCheck => const Color(0xFF8B5CF6),
+        JobCardStatus.completed => const Color(0xFF10B981),
+        JobCardStatus.cancelled => const Color(0xFFEF4444),
+        JobCardStatus.pendingApproval => const Color(0xFFD97706),
+        JobCardStatus.pending => const Color(0xFFD97706),
+        JobCardStatus.awaitingSupervisor => const Color(0xFFD97706),
+        JobCardStatus.vehicleReceived => const Color(0xFF3B82F6),
+        JobCardStatus.waitingCustomerApproval => const Color(0xFFD97706),
+        JobCardStatus.delivered => const Color(0xFF10B981),
+        JobCardStatus.qualityCheckPassed => const Color(0xFF10B981),
+      };
 
-  Color _statusBg(JobCardStatus s) => switch (s) {
-    JobCardStatus.inProgress => AppColors.primaryBg, JobCardStatus.waitingParts => AppColors.warningBg,
-    JobCardStatus.qualityCheck => AppColors.infoBg, JobCardStatus.completed => AppColors.successBg,
-    JobCardStatus.cancelled => AppColors.dangerBg, JobCardStatus.pendingApproval => AppColors.warningBg,
-    JobCardStatus.pending => AppColors.warningBg, JobCardStatus.awaitingSupervisor => AppColors.warningBg,
-    JobCardStatus.vehicleReceived => AppColors.infoBg, JobCardStatus.waitingCustomerApproval => AppColors.warningBg,
-    JobCardStatus.delivered => AppColors.successBg, JobCardStatus.qualityCheckPassed => AppColors.successBg,
-  };
+  Color _statusBg(JobCardStatus s) => _statusColor(s).withValues(alpha: 0.12);
 
   String _statusLabel(JobCardStatus s) => switch (s) {
-    JobCardStatus.inProgress => 'In Progress', JobCardStatus.waitingParts => 'Waiting Parts',
-    JobCardStatus.qualityCheck => 'Quality Check', JobCardStatus.completed => 'Completed',
-    JobCardStatus.cancelled => 'Cancelled', JobCardStatus.pendingApproval => 'Pending Approval',
-    JobCardStatus.pending => 'Pending', JobCardStatus.awaitingSupervisor => 'Awaiting Supervisor',
-    JobCardStatus.vehicleReceived => 'Vehicle Received', JobCardStatus.waitingCustomerApproval => 'Waiting Customer Approval',
-    JobCardStatus.delivered => 'Delivered', JobCardStatus.qualityCheckPassed => 'QC Passed',
-  };
+        JobCardStatus.inProgress => 'In Progress',
+        JobCardStatus.waitingParts => 'Waiting Parts',
+        JobCardStatus.qualityCheck => 'Quality Check',
+        JobCardStatus.completed => 'Completed',
+        JobCardStatus.cancelled => 'Cancelled',
+        JobCardStatus.pendingApproval => 'Pending Approval',
+        JobCardStatus.pending => 'Pending',
+        JobCardStatus.awaitingSupervisor => 'Awaiting Supervisor',
+        JobCardStatus.vehicleReceived => 'Vehicle Received',
+        JobCardStatus.waitingCustomerApproval => 'Waiting Customer Approval',
+        JobCardStatus.delivered => 'Delivered',
+        JobCardStatus.qualityCheckPassed => 'QC Passed',
+      };
 }
 
 class _ServiceRow extends StatelessWidget {
   final String service;
   const _ServiceRow({required this.service});
+
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
-    Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)), const SizedBox(width: 10),
-    Text(service, style: const TextStyle(fontSize: 13, color: AppColors.text2)),
-  ]));
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              service,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _DetailRow extends StatelessWidget {
-  final String label; final String value; final Color? valueColor;
-  const _DetailRow({required this.label, required this.value, this.valueColor});
+  final String label;
+  final String value;
+
+  const _DetailRow({required this.label, required this.value});
+
   @override
-  Widget build(BuildContext context) => Row(children: [
-    Text(label, style: const TextStyle(fontSize: 13, color: AppColors.text3)), const Spacer(),
-    Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: valueColor ?? AppColors.textPrimary)),
-  ]);
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      children: [
+        Text(
+          label,
+          style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
 }

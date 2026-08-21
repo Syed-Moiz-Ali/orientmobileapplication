@@ -107,9 +107,9 @@ class _LoginViewState extends ConsumerState<LoginView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
+            duration: AppMotion.standard,
+            switchInCurve: AppMotion.enter,
+            switchOutCurve: AppMotion.exit,
             child: _mode == _SignInMode.password
                 ? _PasswordForm(
                     key: const ValueKey('password'),
@@ -171,6 +171,14 @@ class _PasswordForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (state.error case final error?) ...[
+          _InlineNotice(
+            icon: Icons.error_outline_rounded,
+            text: error,
+            isError: true,
+          ),
+          const SizedBox(height: AppDimensions.s16),
+        ],
         if (state.isRegistering) ...[
           AuthTextField(
             controller: nameCtrl,
@@ -196,7 +204,6 @@ class _PasswordForm extends StatelessWidget {
           hint: 'Enter your password',
           icon: Icons.lock_outline_rounded,
           obscureText: true,
-          errorText: state.error,
           onChanged: notifier.setPassword,
           onSubmitted: (_) => onSubmit(),
         ),
@@ -320,9 +327,9 @@ class _CodeForm extends StatelessWidget {
         const SizedBox(height: AppDimensions.s8),
         Text(
           'No password needed.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.text3),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: AppDimensions.s24),
         AuthPrimaryButton(
@@ -346,34 +353,47 @@ class _CodeForm extends StatelessWidget {
 class _InlineNotice extends StatelessWidget {
   final IconData icon;
   final String text;
+  final bool isError;
 
-  const _InlineNotice({required this.icon, required this.text});
+  const _InlineNotice({
+    required this.icon,
+    required this.text,
+    this.isError = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final accent = isError ? colorScheme.error : colorScheme.primary;
 
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.s12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppDimensions.r12),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: colorScheme.primary),
-          const SizedBox(width: AppDimensions.s10),
-          Expanded(
-            child: Text(
-              text,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+    return Semantics(
+      liveRegion: isError,
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.s12),
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+            accent.withValues(alpha: 0.08),
+            colorScheme.surface,
+          ),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          border: Border.all(color: accent.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: accent),
+            const SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: Text(
+                text,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: isError ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

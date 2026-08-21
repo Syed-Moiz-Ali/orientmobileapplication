@@ -54,11 +54,20 @@ public interface JobCardMapper extends BaseMapper<JobCard> {
     @Select("SELECT COUNT(*) FROM job_cards WHERE DATE(created_at) = CURDATE()")
     int countToday();
 
+    @Select("SELECT COUNT(*) FROM job_cards WHERE DATE(created_at) = CURDATE() AND branch_id = #{branchId}")
+    int countTodayByBranch(@Param("branchId") Long branchId);
+
     @Select("SELECT COUNT(*) FROM job_cards WHERE status IN ('inProgress','pendingApproval','qualityCheck','waitingParts','pending')")
     int countOpen();
 
     @Select("SELECT COUNT(*) FROM job_cards WHERE status IN ('inProgress','pendingApproval','qualityCheck','waitingParts','pending') AND branch_id = #{branchId}")
     int countOpenByBranch(@Param("branchId") Long branchId);
+
+    @Select("SELECT COUNT(*) FROM job_cards WHERE status = 'cancelled'")
+    int countCancelled();
+
+    @Select("SELECT COUNT(*) FROM job_cards WHERE status = 'cancelled' AND branch_id = #{branchId}")
+    int countCancelledByBranch(@Param("branchId") Long branchId);
 
     @Select("SELECT COUNT(*) FROM job_cards WHERE status = 'completed' AND DATE(created_at) = CURDATE()")
     int countCompletedToday();
@@ -68,9 +77,6 @@ public interface JobCardMapper extends BaseMapper<JobCard> {
 
     @Select("SELECT COUNT(*) FROM job_cards WHERE status = 'inProgress'")
     int countInProgress();
-
-    @Select("SELECT COUNT(*) FROM job_cards WHERE status = 'cancelled'")
-    int countCancelled();
 
     @Select("SELECT * FROM job_cards WHERE status = 'awaitingSupervisor' ORDER BY updated_at DESC")
     List<JobCard> findAwaitingSupervisor();

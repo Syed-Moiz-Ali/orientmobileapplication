@@ -11,132 +11,88 @@ class QuickActionsRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(dashboardUiProvider.notifier);
+    final adaptive = context.adaptive;
+    final actions = <Widget>[
+      ActionButton(
+        icon: Icons.leaderboard_rounded,
+        label: 'View details',
+        gradient: const [AppColors.navy, AppColors.accent],
+        onTap: () => notifier.selectTab(1),
+      ),
+      ActionButton(
+        icon: Icons.send_rounded,
+        label: 'Send message',
+        gradient: const [Color(0xFF1A8754), Color(0xFF2AA889)],
+        onTap: () => notifier.selectTab(2),
+      ),
+      ActionButton(
+        icon: Icons.receipt_long_outlined,
+        label: 'Receivables',
+        gradient: const [Color(0xFF1F6FEB), Color(0xFF4F9DFF)],
+        onTap: () => context.push('/accounts-receivable'),
+      ),
+      ActionButton(
+        icon: Icons.event_note_outlined,
+        label: 'Document expiry',
+        gradient: const [Color(0xFFB83A36), Color(0xFFE7615C)],
+        onTap: () => context.push('/document-expiry'),
+      ),
+      ActionButton(
+        icon: Icons.fact_check_outlined,
+        label: 'Job status',
+        gradient: const [Color(0xFF6746B8), Color(0xFF916EDB)],
+        onTap: () => context.push('/job-status'),
+      ),
+      ActionButton(
+        icon: Icons.hourglass_top_rounded,
+        label: 'Approvals',
+        gradient: const [Color(0xFFB7791F), Color(0xFFE4A83B)],
+        onTap: () => context.push('/pending-approvals'),
+      ),
+      ActionButton(
+        icon: Icons.assignment_outlined,
+        label: 'Job cards',
+        gradient: const [Color(0xFF0E7490), Color(0xFF199DB8)],
+        onTap: () => context.push('/job-cards'),
+      ),
+      ActionButton(
+        icon: Icons.inventory_2_outlined,
+        label: 'Inventory',
+        gradient: const [Color(0xFF6D3BC1), Color(0xFF9167D8)],
+        onTap: () => context.push('/inventory'),
+      ),
+      ActionButton(
+        icon: Icons.rate_review_outlined,
+        label: 'Reviews',
+        gradient: const [Color(0xFFA86108), Color(0xFFD98C16)],
+        onTap: () => context.push('/feedback-moderation'),
+      ),
+      ActionButton(
+        icon: Icons.groups_outlined,
+        label: 'Team & roles',
+        gradient: const [Color(0xFF0F766E), Color(0xFF1B9B91)],
+        onTap: () => context.push('/team'),
+      ),
+      ActionButton(
+        icon: Icons.workspace_premium_outlined,
+        label: 'Subscription',
+        gradient: const [Color(0xFF56349C), Color(0xFF7F5CC2)],
+        onTap: () => context.push('/subscription'),
+      ),
+    ];
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: ActionButton(
-                icon: Icons.leaderboard_rounded,
-                label: 'View Details',
-                gradient: const [AppColors.navy, AppColors.accent],
-                onTap: () => notifier.selectTab(1),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ActionButton(
-                icon: Icons.send_rounded,
-                label: 'Send Message',
-                gradient: const [Color(0xFF1A8754), Color(0xFF2DD4BF)],
-                onTap: () => notifier.selectTab(2),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ActionButton(
-                icon: Icons.receipt_long_outlined,
-                label: 'Accounts Receivable',
-                gradient: const [Color(0xFF1F6FEB), Color(0xFF4F9DFF)],
-                onTap: () => context.push('/accounts-receivable'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ActionButton(
-                icon: Icons.event_note_outlined,
-                label: 'Document Expiry',
-                gradient: const [Color(0xFFDA3633), Color(0xFFFF6B66)],
-                onTap: () => context.push('/document-expiry'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ActionButton(
-                icon: Icons.fact_check_outlined,
-                label: 'Job Status',
-                gradient: const [Color(0xFF8957E5), Color(0xFFB18CFF)],
-                onTap: () => context.push('/job-status'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ActionButton(
-                icon: Icons.hourglass_top_rounded,
-                label: 'Pending Approvals',
-                gradient: const [Color(0xFFE3B341), Color(0xFFFFD976)],
-                onTap: () => context.push('/pending-approvals'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ActionButton(
-                icon: Icons.assignment_outlined,
-                label: 'Job Cards',
-                gradient: const [Color(0xFF0E7490), Color(0xFF22D3EE)],
-                onTap: () => context.push('/job-cards'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ActionButton(
-                icon: Icons.inventory_2_outlined,
-                label: 'Inventory',
-                gradient: const [Color(0xFF7C3AED), Color(0xFFA78BFA)],
-                onTap: () => context.push('/inventory'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ActionButton(
-                icon: Icons.rate_review_outlined,
-                label: 'Review Moderation',
-                gradient: const [Color(0xFFB45309), Color(0xFFF59E0B)],
-                onTap: () => context.push('/feedback-moderation'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ActionButton(
-                icon: Icons.groups_outlined,
-                label: 'Team & Roles',
-                gradient: const [Color(0xFF0F766E), Color(0xFF14B8A6)],
-                onTap: () => context.push('/team'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ActionButton(
-                icon: Icons.workspace_premium_outlined,
-                label: 'Subscription',
-                gradient: const [Color(0xFF7C3AED), Color(0xFFA78BFA)],
-                onTap: () => context.push('/subscription'),
-              ),
-            ),
-          ],
-        ),
-      ],
+    return AppAdaptiveGrid(
+      columns: adaptive.pick(compact: 2, medium: 3, expanded: 4, large: 4),
+      minChildWidth: adaptive.isCompact ? 142 : 190,
+      spacing: adaptive.itemSpacing,
+      runSpacing: adaptive.itemSpacing,
+      childAspectRatio: adaptive.pick(
+        compact: 2.65,
+        medium: 3.25,
+        expanded: 3.45,
+        large: 3.8,
+      ),
+      children: actions,
     );
   }
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_motion.dart';
 
-/// An Uber/Airbnb-grade, highly customizable card container supporting
-/// ambient diffuse drop shadows, dynamic responsive corner rounding, and tap feedback.
+/// A restrained grouped surface. Prefer page structure, rows, and dividers before
+/// reaching for a card.
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -25,12 +26,11 @@ class AppCard extends StatelessWidget {
     this.color,
     this.border,
     this.borderColor,
-    this.borderRadius = AppDimensions.r24,
+    this.borderRadius = AppDimensions.r14,
     this.boxShadow,
     this.elevation,
     this.width,
     this.height,
-    // Defaulting to antiAlias ensures images/backgrounds never bleed outside the luxury curved corners
     this.clipBehavior = Clip.antiAlias,
     this.onTap,
   });
@@ -42,7 +42,7 @@ class AppCard extends StatelessWidget {
     this.color,
     this.border,
     this.borderColor,
-    this.borderRadius = AppDimensions.r24,
+    this.borderRadius = AppDimensions.r14,
     this.boxShadow,
     this.elevation,
     this.width,
@@ -57,38 +57,33 @@ class AppCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final adaptive = context.adaptive;
 
-    // Resolve color system strictly via Theme.of(context)
     final effectiveBackgroundColor = color ?? colorScheme.surface;
-    final effectiveBorderColor = borderColor ?? colorScheme.outline.withValues(alpha: 0.12);
+    final effectiveBorderColor = borderColor ?? colorScheme.outline;
 
-    // Default corner radius handling: Adapts to layout unless overridden
-    final effectiveRadius = (borderRadius == AppDimensions.r14 || borderRadius == AppDimensions.r18)
+    final effectiveRadius = borderRadius == AppDimensions.r14
         ? adaptive.radius
         : borderRadius;
 
     final effectivePadding = padding ?? EdgeInsets.all(adaptive.itemSpacing);
 
-    // Uber/Airbnb-grade ambient diffuse drop shadow.
-    // Upgraded to a softer, deeper blur (24) and offset (8) to match the new "plush" UI.
     final List<BoxShadow>? effectiveShadows = elevation == 0
         ? null
-        : (boxShadow ??
-              [
-                BoxShadow(
-                  color: colorScheme.shadow.withValues(alpha: 0.06),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ]);
+        : boxShadow ??
+              (elevation == null
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]);
 
     final effectiveBorder = border ?? Border.all(color: effectiveBorderColor);
 
-    // CORE STRUCTURAL FIX:
-    // Container handles the Color, Border, and Shadows.
-    // Material is set to transparent inside it so the InkWell ripple works CORRECTLY on top of the background.
-    final Widget cardContent = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
+    return AnimatedContainer(
+      duration: AppMotion.standard,
+      curve: AppMotion.enter,
       width: width,
       height: height,
       clipBehavior: clipBehavior,
@@ -99,7 +94,7 @@ class AppCard extends StatelessWidget {
         boxShadow: effectiveShadows,
       ),
       child: Material(
-        color: Colors.transparent, // Allows the ripple to show over the Container's background
+        color: Colors.transparent,
         child: onTap != null
             ? InkWell(
                 onTap: onTap,
@@ -110,7 +105,5 @@ class AppCard extends StatelessWidget {
             : Padding(padding: effectivePadding, child: child),
       ),
     );
-
-    return cardContent;
   }
 }

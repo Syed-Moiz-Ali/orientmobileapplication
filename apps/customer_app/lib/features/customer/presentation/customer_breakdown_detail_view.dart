@@ -10,11 +10,11 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
   (Color, Color) _statusColors(String status) {
     switch (status) {
       case 'resolved':
-        return (AppColors.successBg, AppColors.success);
+        return (const Color(0xFF10B981).withValues(alpha: 0.12), const Color(0xFF10B981));
       case 'inProgress':
-        return (AppColors.infoBg, AppColors.info);
+        return (const Color(0xFF3B82F6).withValues(alpha: 0.12), const Color(0xFF3B82F6));
       default:
-        return (AppColors.warningBg, AppColors.warning);
+        return (const Color(0xFFD97706).withValues(alpha: 0.12), const Color(0xFFD97706));
     }
   }
 
@@ -22,7 +22,9 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final status = breakdown['status'] as String? ?? 'pending';
     final (bg, fg) = _statusColors(status);
     final issue = breakdown['issue'] as String? ?? 'Breakdown';
@@ -33,57 +35,57 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
     final resolved = status == 'resolved';
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
             const AppTopBar(title: 'Breakdown Request'),
-            const Divider(height: 1, color: AppColors.line),
+            Divider(height: 1, color: colorScheme.outlineVariant),
             Expanded(
               child: AppResponsivePage(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Compact Status Banner
+                    // Status Banner
                     Container(
-                      padding: const EdgeInsets.all(AppDimensions.s12),
+                      padding: const EdgeInsets.all(AppDimensions.s16),
                       decoration: BoxDecoration(
-                        color: AppColors.dangerBg,
-                        borderRadius: BorderRadius.circular(AppDimensions.r12),
-                        border: Border.all(color: AppColors.dangerBorder),
+                        color: colorScheme.errorContainer.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(AppDimensions.r16),
+                        border: Border.all(color: colorScheme.error.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            width: 38,
-                            height: 38,
-                            decoration: const BoxDecoration(
-                              color: AppColors.danger,
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: colorScheme.error,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.emergency_rounded,
-                              color: Colors.white,
-                              size: 20,
+                              color: colorScheme.onError,
+                              size: 24,
                             ),
                           ),
-                          const SizedBox(width: AppDimensions.s12),
+                          const SizedBox(width: AppDimensions.s14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   issue,
-                                  style: textTheme.titleSmall?.copyWith(
+                                  style: textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w900,
-                                    color: AppColors.textPrimary,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   _formatDate(createdAt),
                                   style: textTheme.bodySmall?.copyWith(
-                                    color: AppColors.text3,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -97,13 +99,14 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.s14),
+                    const SizedBox(height: AppDimensions.s16),
 
                     // Details Card
                     AppCard(
-                      padding: const EdgeInsets.all(AppDimensions.s14),
-                      color: AppColors.surface,
-                      borderColor: AppColors.border,
+                      padding: const EdgeInsets.all(AppDimensions.s16),
+                      borderRadius: AppDimensions.r20,
+                      color: colorScheme.surface,
+                      borderColor: colorScheme.outlineVariant,
                       child: Column(
                         children: [
                           _DetailRow(
@@ -114,11 +117,11 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                                 : 'Not specified',
                           ),
                           if (location.isNotEmpty) ...[
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: AppDimensions.s10,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppDimensions.s12,
                               ),
-                              child: Divider(height: 1, color: AppColors.line),
+                              child: Divider(height: 1, color: colorScheme.outlineVariant),
                             ),
                             _DetailRow(
                               icon: Icons.location_on_outlined,
@@ -126,11 +129,11 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                               value: location,
                             ),
                           ],
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: AppDimensions.s10,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppDimensions.s12,
                             ),
-                            child: Divider(height: 1, color: AppColors.line),
+                            child: Divider(height: 1, color: colorScheme.outlineVariant),
                           ),
                           _DetailRow(
                             icon: Icons.access_time_rounded,
@@ -140,20 +143,20 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.s14),
+                    const SizedBox(height: AppDimensions.s16),
 
                     // Resolution Info Box
                     Container(
-                      padding: const EdgeInsets.all(AppDimensions.s12),
+                      padding: const EdgeInsets.all(AppDimensions.s14),
                       decoration: BoxDecoration(
                         color: resolved
-                            ? AppColors.successBg
-                            : AppColors.warningBg,
-                        borderRadius: BorderRadius.circular(AppDimensions.r12),
+                            ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+                            : colorScheme.errorContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(AppDimensions.r16),
                         border: Border.all(
                           color: resolved
-                              ? AppColors.successBorder
-                              : AppColors.warningBorder,
+                              ? colorScheme.primary.withValues(alpha: 0.3)
+                              : colorScheme.error.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -163,11 +166,11 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                                 ? Icons.check_circle_rounded
                                 : Icons.info_outline_rounded,
                             color: resolved
-                                ? AppColors.success
-                                : AppColors.warning,
-                            size: 20,
+                                ? colorScheme.primary
+                                : colorScheme.error,
+                            size: 22,
                           ),
-                          const SizedBox(width: AppDimensions.s10),
+                          const SizedBox(width: AppDimensions.s12),
                           Expanded(
                             child: Text(
                               resolved
@@ -175,8 +178,8 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                                   : 'Dispatch team is en route. Contact helpline for emergency status.',
                               style: textTheme.bodySmall?.copyWith(
                                 color: resolved
-                                    ? AppColors.success
-                                    : AppColors.warning,
+                                    ? colorScheme.primary
+                                    : colorScheme.error,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -217,20 +220,22 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Row(
       children: [
         Container(
-          width: 36,
-          height: 36,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
-            color: AppColors.dangerBg,
-            borderRadius: BorderRadius.circular(AppDimensions.r10),
+            color: colorScheme.errorContainer.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(AppDimensions.r12),
           ),
-          child: Icon(icon, color: AppColors.danger, size: 18),
+          child: Icon(icon, color: colorScheme.error, size: 18),
         ),
-        const SizedBox(width: AppDimensions.s10),
+        const SizedBox(width: AppDimensions.s12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,7 +243,7 @@ class _DetailRow extends StatelessWidget {
               Text(
                 label,
                 style: textTheme.labelSmall?.copyWith(
-                  color: AppColors.text3,
+                  color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -246,7 +251,7 @@ class _DetailRow extends StatelessWidget {
               Text(
                 value,
                 style: textTheme.titleSmall?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                   fontWeight: FontWeight.w800,
                 ),
               ),

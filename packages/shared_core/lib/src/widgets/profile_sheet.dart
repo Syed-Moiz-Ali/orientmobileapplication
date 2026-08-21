@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
-import 'package:shared_core/src/theme/app_text_styles.dart';
+import 'package:shared_core/src/widgets/app_record_row.dart';
 import 'package:shared_core/src/widgets/logout_dialog.dart';
+import 'package:shared_core/src/widgets/status_pill.dart';
 
 class ProfileSheetItem {
   final IconData icon;
@@ -39,120 +39,127 @@ void showProfileSheet(
   ProfileSheetData data, {
   VoidCallback? onLogout,
 }) {
-  final textTheme = Theme.of(context).textTheme;
-
-  showModalBottomSheet(
+  showModalBottomSheet<void>(
     context: context,
-    backgroundColor: AppColors.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    builder: (_) => Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40, height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(AppDimensions.r2),
+    isScrollControlled: true,
+    builder: (sheetContext) =>
+        _ProfileSheetContent(data: data, onLogout: onLogout),
+  );
+}
+
+class _ProfileSheetContent extends StatelessWidget {
+  final ProfileSheetData data;
+  final VoidCallback? onLogout;
+
+  const _ProfileSheetContent({required this.data, this.onLogout});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s8,
+          AppDimensions.s20,
+          AppDimensions.s24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: colors.primaryContainer,
+                  foregroundColor: colors.onPrimaryContainer,
+                  child: Text(
+                    data.initials,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: colors.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(data.name, style: theme.textTheme.titleLarge),
+                      const SizedBox(height: AppDimensions.s4),
+                      Text(
+                        data.roleLabel,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                StatusPill(label: data.roleBadge),
+              ],
             ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            width: 68, height: 68,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.navy, AppColors.accent],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+            if (data.branch.isNotEmpty) ...[
+              const SizedBox(height: AppDimensions.s14),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 18,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: AppDimensions.s6),
+                  Expanded(
+                    child: Text(
+                      data.branch,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                data.initials,
-                style: textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+            ],
+            if (data.menuItems.isNotEmpty) ...[
+              const SizedBox(height: AppDimensions.s24),
+              ...data.menuItems.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+                  child: AppRecordRow(
+                    leading: Icon(item.icon, color: colors.onSurfaceVariant),
+                    title: item.label,
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: colors.onSurfaceVariant,
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      item.onTap();
+                    },
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(data.roleLabel, style: AppTextStyles.title(color: AppColors.textPrimary)),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primaryBg,
-              borderRadius: BorderRadius.circular(AppDimensions.r20),
-            ),
-            child: Text(data.roleBadge, style: AppTextStyles.bodySmall(color: AppColors.primary)),
-          ),
-          const SizedBox(height: 24),
-          for (final item in data.menuItems) ...[
-            _menuItem(context, icon: item.icon, label: item.label, onTap: () {
-              Navigator.pop(context);
-              item.onTap();
-            }),
-          ],
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity, height: 50,
-            child: OutlinedButton.icon(
+            ],
+            const SizedBox(height: AppDimensions.s16),
+            OutlinedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
                 showLogoutDialog(context, onLogout: onLogout);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.danger,
-                side: const BorderSide(color: AppColors.danger, width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.r14),
-                ),
+                foregroundColor: colors.error,
+                side: BorderSide(color: colors.error),
               ),
-              icon: const Icon(Icons.logout_rounded, size: 18),
-              label: Text(
-                'Logout',
-                style: textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              icon: const Icon(Icons.logout_rounded),
+              label: const Text('Sign out'),
             ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _menuItem(BuildContext context, {
-  required IconData icon,
-  required String label,
-  required VoidCallback onTap,
-}) {
-  return Padding(
-    padding: EdgeInsets.only(bottom: AppDimensions.s6),
-    child: Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.r12),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppDimensions.s12, vertical: AppDimensions.s14),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: AppColors.text2),
-              SizedBox(width: AppDimensions.s12),
-              Text(label, style: AppTextStyles.bodyStrong(color: AppColors.textPrimary)),
-              const Spacer(),
-              Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.text3),
-            ],
-          ),
+          ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }

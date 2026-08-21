@@ -1,47 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
+import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/widgets/primary_button.dart';
 
 class ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
 
-  const ErrorView({
-    super.key,
-    required this.message,
-    this.onRetry,
-  });
+  const ErrorView({super.key, required this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppDimensions.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: AppColors.danger,
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: colorScheme.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                size: 32,
+                color: colorScheme.error,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.s16),
             Text(
               message,
               textAlign: TextAlign.center,
               style: textTheme.bodyLarge?.copyWith(
-                color: AppColors.text2,
+                color: colorScheme.onSurfaceVariant,
                 height: 1.45,
               ),
             ),
             if (onRetry != null) ...[
-              const SizedBox(height: 24),
-              PrimaryButton(
-                label: 'Retry',
-                onPressed: onRetry,
-              ),
+              const SizedBox(height: AppDimensions.s24),
+              PrimaryButton(label: 'Retry', onPressed: onRetry),
             ],
           ],
         ),

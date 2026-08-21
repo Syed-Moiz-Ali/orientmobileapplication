@@ -9,14 +9,15 @@ class GarageInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return AppCard(
-      borderRadius: 24,
+      borderRadius: AppDimensions.r24,
       padding: const EdgeInsets.all(AppDimensions.s18),
-      color: AppColors.surface,
-      borderColor: AppColors.border,
-
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -26,33 +27,28 @@ class GarageInfoCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBg,
+                  color: colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primaryBorder),
                 ),
-                child: const Icon(Icons.garage_rounded, color: AppColors.primary, size: 26),
+                child: Icon(Icons.garage_rounded, color: colorScheme.primary, size: 26),
               ),
               const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Orient Auto Workshop',
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'Orient Auto Workshop',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Mon - Sat: 8:00 AM - 7:00 PM • Open Now',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.success,
+                        color: const Color(0xFF10B981),
                         fontWeight: FontWeight.w700,
                         fontSize: 11,
                       ),
@@ -60,53 +56,33 @@ class GarageInfoCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.successBg,
-                  borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                  border: Border.all(color: AppColors.successBorder),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'OPEN NOW',
-                      style: textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.success,
-                        fontSize: 9,
-                      ),
-                    ),
-                  ],
-                ),
+              StatusPill(
+                label: 'OPEN NOW',
+                showDot: true,
+                bg: const Color(0xFF10B981).withValues(alpha: 0.12),
+                fg: const Color(0xFF10B981),
               ),
             ],
           ),
           const SizedBox(height: AppDimensions.s14),
-          const Divider(height: 1, color: AppColors.line),
+          Divider(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: AppDimensions.s12),
           Row(
             children: [
-              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.primary),
+              Icon(Icons.location_on_outlined, size: 16, color: colorScheme.primary),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Bay 3, Unit 4 Industrial Estate, Main Highway',
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                  'Bay 3, Unit 4 Industrial Area, Dubai, UAE',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppDimensions.s12),
-
-          // Amenities Pills Bar
           Row(
             children: [
               _AmenityPill(icon: Icons.wifi_rounded, label: 'Free Wi-Fi'),
@@ -117,8 +93,6 @@ class GarageInfoCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimensions.s14),
-
-          // Action Buttons
           Row(
             children: [
               Expanded(
@@ -128,24 +102,24 @@ class GarageInfoCard extends StatelessWidget {
                       () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Calling Workshop Hotline: +1 800 555-AUTO'),
+                            content: Text('Calling Workshop Hotline: +971 4 800-AUTO'),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                       },
                   icon: const Icon(Icons.phone_rounded, size: 16),
-                  label: const Text('Call Workshop'),
+                  label: const Text('Call Workshop', style: TextStyle(fontWeight: FontWeight.w800)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primaryBorder),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.rPill)),
+                    foregroundColor: colorScheme.primary,
+                    side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
                   ),
                 ),
               ),
               const SizedBox(width: AppDimensions.s10),
               Expanded(
-                child: ElevatedButton.icon(
+                child: FilledButton.icon(
                   onPressed:
                       onMap ??
                       () {
@@ -157,13 +131,13 @@ class GarageInfoCard extends StatelessWidget {
                         );
                       },
                   icon: const Icon(Icons.directions_rounded, size: 16),
-                  label: const Text('Get Directions'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  label: const Text('Directions', style: TextStyle(fontWeight: FontWeight.w800)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.rPill)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
                   ),
                 ),
               ),
@@ -183,23 +157,28 @@ class _AmenityPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppDimensions.rPill),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: AppColors.text3),
+          Icon(icon, size: 13, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 4),
           Text(
             label,
-            style: Theme.of(
-              context,
-            ).textTheme.labelSmall?.copyWith(color: AppColors.text3, fontSize: 10, fontWeight: FontWeight.w600),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -214,22 +193,26 @@ class EmergencyBreakdownBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.s14),
+      padding: const EdgeInsets.all(AppDimensions.s16),
       decoration: BoxDecoration(
-        color: AppColors.dangerBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.dangerBorder),
+        color: const Color(0xFFEF4444).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppDimensions.r24),
+        border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
           Container(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEF4444),
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: const Icon(Icons.emergency_rounded, color: Colors.white, size: 22),
           ),
           const SizedBox(width: AppDimensions.s12),
@@ -239,27 +222,33 @@ class EmergencyBreakdownBanner extends StatelessWidget {
               children: [
                 Text(
                   '24/7 Roadside Assistance',
-                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900, color: AppColors.danger),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFFEF4444),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Stranded or car won\'t start? Request emergency breakdown tow',
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.text3, fontSize: 11),
+                  'Stranded or vehicle won\'t start? Request emergency recovery',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: AppDimensions.s8),
-          ElevatedButton(
+          FilledButton(
             onPressed: onTap,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.rPill)),
             ),
-            child: Text('Get Help', style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900)),
+            child: const Text('Get Help', style: TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),

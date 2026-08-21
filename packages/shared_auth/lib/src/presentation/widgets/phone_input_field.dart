@@ -88,14 +88,17 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   }
 
   void _showCountryPicker(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final accentColor = widget.accentColor;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppDimensions.radiusSheet),
+        ),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -112,14 +115,13 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                   ),
                   child: Text(
                     'Select Country',
-                    style: TextStyle(
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const Divider(height: 1),
+                Divider(height: 1, color: colors.outlineVariant),
                 Flexible(
                   child: ListView.builder(
                     shrinkWrap: true,
@@ -129,28 +131,28 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                       final isSelected = c.code == _selectedCountry.code;
                       return ListTile(
                         dense: true,
-                        leading: Text(
-                          c.flag,
-                          style: const TextStyle(fontSize: 20),
+                        leading: Icon(
+                          Icons.public_rounded,
+                          color: isSelected
+                              ? accentColor
+                              : colors.onSurfaceVariant,
                         ),
                         title: Text(
                           c.name,
-                          style: TextStyle(
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.textPrimary,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colors.onSurface,
                             fontWeight: isSelected
-                                ? FontWeight.w600
+                                ? FontWeight.w700
                                 : FontWeight.w400,
-                            fontSize: 15,
                           ),
                         ),
                         trailing: Text(
                           c.code,
-                          style: TextStyle(
-                            color: isSelected ? accentColor : AppColors.text4,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: isSelected
+                                ? accentColor
+                                : colors.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
-                            fontSize: 14,
                           ),
                         ),
                         onTap: () {
@@ -174,7 +176,8 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final accentColor = widget.accentColor;
 
     return Column(
@@ -182,49 +185,48 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
       children: [
         Text(
           'Mobile number',
-          style: TextStyle(
-            color: isDark ? const Color(0xFF94A3B8) : AppColors.text2,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: colors.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 8),
         Container(
-          height: 52,
+          constraints: const BoxConstraints(
+            minHeight: AppDimensions.touchTarget,
+          ),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF161E2E) : const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(12),
+            color: colors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
             border: Border.all(
               color: widget.error != null
-                  ? AppColors.danger
-                  : (_isFocused
-                        ? accentColor
-                        : (isDark
-                              ? const Color(0xFF26334D)
-                              : const Color(0xFFE2E8F0))),
+                  ? colors.error
+                  : (_isFocused ? accentColor : colors.outlineVariant),
               width: _isFocused ? 1.5 : 1.0,
             ),
           ),
           child: Row(
             children: [
-              GestureDetector(
+              InkWell(
                 onTap: () => _showCountryPicker(context),
-                behavior: HitTestBehavior.opaque,
+                borderRadius: BorderRadius.horizontal(
+                  left: Radius.circular(AppDimensions.radiusInput),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        _selectedCountry.flag,
-                        style: const TextStyle(fontSize: 18),
+                      Icon(
+                        Icons.public_rounded,
+                        size: 18,
+                        color: colors.onSurfaceVariant,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         _selectedCountry.code,
-                        style: TextStyle(
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                          fontSize: 15,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -232,28 +234,21 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                       Icon(
                         Icons.keyboard_arrow_down_rounded,
                         size: 18,
-                        color: isDark ? Colors.white54 : AppColors.text4,
+                        color: colors.onSurfaceVariant,
                       ),
                     ],
                   ),
                 ),
               ),
-              Container(
-                width: 1,
-                height: 24,
-                color: isDark
-                    ? const Color(0xFF26334D)
-                    : const Color(0xFFE2E8F0),
-              ),
+              Container(width: 1, height: 24, color: colors.outlineVariant),
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
                   controller: _controller,
                   focusNode: _focusNode,
                   keyboardType: TextInputType.phone,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                    fontSize: 16,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurface,
                     fontWeight: FontWeight.w500,
                   ),
                   inputFormatters: [
@@ -275,10 +270,8 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                     hintText: _selectedCountry.code == '+971'
                         ? '50 123 4567'
                         : 'Phone number',
-                    hintStyle: TextStyle(
-                      color: isDark ? Colors.white30 : AppColors.text4,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
+                    hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurfaceVariant.withValues(alpha: 0.65),
                     ),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
@@ -290,7 +283,8 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
               if (_controller.text.isNotEmpty)
                 IconButton(
                   icon: const Icon(Icons.cancel, size: 18),
-                  color: isDark ? Colors.white38 : AppColors.text4,
+                  color: colors.onSurfaceVariant,
+                  tooltip: 'Clear mobile number',
                   onPressed: () {
                     _controller.clear();
                     widget.onChanged('');
@@ -304,10 +298,9 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
           const SizedBox(height: 6),
           Text(
             widget.error!,
-            style: const TextStyle(
-              color: AppColors.danger,
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.error,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

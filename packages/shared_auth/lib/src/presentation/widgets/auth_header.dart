@@ -17,7 +17,8 @@ class AuthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -26,28 +27,25 @@ class AuthHeader extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             color: accentColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
           ),
           child: Icon(icon, color: accentColor, size: 22),
         ),
         const SizedBox(height: 24),
         Text(
           title,
-          style: TextStyle(
-            color: isDark ? Colors.white : AppColors.textPrimary,
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0,
+          style: theme.textTheme.headlineMedium?.copyWith(
+            color: colors.onSurface,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.4,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           subtitle,
-          style: TextStyle(
-            color: isDark ? const Color(0xFF94A3B8) : AppColors.text3,
-            fontSize: 15,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colors.onSurfaceVariant,
             height: 1.4,
-            fontWeight: FontWeight.w400,
           ),
         ),
       ],

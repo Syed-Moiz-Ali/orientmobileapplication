@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:video_player/video_player.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_core/shared_core.dart';
@@ -14,7 +10,6 @@ import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/core/services/audio_recorder_service.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
-import 'package:staff_app/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
 import 'inspection_provider.dart';
 
 class InspectionSheetView extends ConsumerStatefulWidget {
@@ -280,8 +275,6 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
     final status = state.statuses[widget.itemId];
     final media = state.media[widget.itemId];
 
-    final hasPhotos = (media?.photoPaths.isNotEmpty ?? false);
-    final hasVideos = (media?.videoPaths.isNotEmpty ?? false);
     final hasAudio = (media?.audioPath.isNotEmpty ?? false);
     final hasNote = (media?.note.isNotEmpty ?? false);
     final totalFiles =
@@ -951,7 +944,7 @@ class _StickyFooter extends ConsumerWidget {
               const SizedBox(width: 6),
               Switch.adaptive(
                 value: state.notifyOwner,
-                activeColor: colorScheme.primary,
+                activeTrackColor: colorScheme.primary,
                 onChanged: (_) {
                   HapticFeedback.selectionClick();
                   notifier.toggleNotifyOwner();

@@ -1,0 +1,1865 @@
+# ROLE
+
+Act as a combination of:
+
+* Senior Flutter Engineer
+* Senior Product Designer
+* UI/UX Designer
+* SaaS Dashboard Designer
+* Mobile App Designer
+* Responsive Design Specialist
+* Accessibility Reviewer
+* Flutter Architecture Engineer
+* Manual UI QA Engineer
+
+You are working on an existing **Auto Garage Management + CRM product**.
+
+The project contains:
+
+* Flutter applications
+* Melos monorepo
+* Shared Flutter packages
+* Java backend
+* Existing APIs
+* Existing business logic
+* Existing navigation
+* Existing state management
+* Existing screens and workflows
+
+Your task is NOT to rebuild the application blindly.
+
+Your task is to:
+
+> **Analyze the existing Flutter project and completely enhance/redesign the UI, UX, layout, visual hierarchy, responsiveness and usability while preserving all existing functionality and backend integrations.**
+
+The final product should look and feel like a **professional commercial SaaS product that I can confidently sell to real garages/workshops.**
+
+---
+
+# PRIMARY OBJECTIVE
+
+Transform the current application from:
+
+> Developer-built application
+
+into:
+
+> Production-quality commercial Garage Management SaaS.
+
+The product must feel:
+
+* Modern
+* Premium
+* Clean
+* Professional
+* Fast
+* Simple
+* Trustworthy
+* Consistent
+* Easy for non-technical garage staff
+* Optimized for daily repetitive use
+
+Do NOT make it unnecessarily flashy.
+
+This is business software.
+
+Usability is more important than decoration.
+
+---
+
+# IMPORTANT RULE
+
+DO NOT change:
+
+* Existing backend APIs
+* Existing API request/response contracts
+* Existing business logic
+* Existing database behavior
+* Existing working workflows
+* Existing authentication logic
+* Existing state-management architecture unless absolutely necessary
+* Existing domain models unnecessarily
+
+UI refactoring must NOT break functionality.
+
+Before editing any screen:
+
+1. Understand what the screen does.
+2. Understand the user workflow.
+3. Identify existing API/state dependencies.
+4. Understand reusable widgets already available.
+5. Then redesign it.
+
+---
+
+# FIRST — ANALYZE THE PROJECT
+
+Before changing UI, inspect the complete Melos workspace.
+
+Identify:
+
+* Every Flutter application
+* Shared packages
+* Theme package
+* Components/widgets package
+* Routing/navigation
+* State management
+* Feature modules
+* Existing responsive utilities
+* Existing design system
+* Existing colors
+* Typography
+* Forms
+* Cards
+* Tables
+* Dialogs
+* Buttons
+* Navigation bars
+* Sidebars
+* Bottom navigation
+* App bars
+
+Create a short UI architecture assessment.
+
+Do NOT immediately start creating random widgets.
+
+---
+
+# DESIGN DIRECTION
+
+Design the application as a modern **2026 B2B SaaS Garage Management Platform**.
+
+Take conceptual inspiration from high-quality SaaS products such as:
+
+* Stripe
+* Linear
+* Notion
+* Shopify Admin
+* Zoho
+* HubSpot
+* modern ERP dashboards
+
+but DO NOT clone them.
+
+Use these principles:
+
+### Clear hierarchy
+
+Users should instantly understand:
+
+* Where they are
+* What they can do
+* What needs attention
+* What actions are most important
+
+---
+
+# GARAGE USER CONTEXT
+
+Remember who will actually use this application.
+
+Potential users:
+
+* Garage owner
+* Workshop manager
+* Receptionist
+* Mechanic
+* Accountant
+* Inventory manager
+
+These users may not be highly technical.
+
+Avoid confusing interfaces.
+
+Common actions should require minimal clicks.
+
+---
+
+# CENTRALIZED DESIGN SYSTEM
+
+Create or improve a centralized UI design system.
+
+Do NOT hardcode styling independently inside every screen.
+
+Use:
+
+```dart
+Theme.of(context)
+```
+
+for colors, typography and theme-aware styling wherever appropriate.
+
+Centralize:
+
+* Colors
+* Typography
+* Spacing
+* Radius
+* Shadows
+* Borders
+* Breakpoints
+* Component heights
+* Icon sizing
+* Animation durations
+* Layout constraints
+
+---
+
+# DESIGN TOKENS
+
+Create a centralized token system similar to:
+
+```text
+AppSpacing
+AppRadius
+AppBreakpoints
+AppSizes
+AppDurations
+AppShadows
+```
+
+Example spacing scale:
+
+```text
+4
+8
+12
+16
+20
+24
+32
+40
+48
+64
+```
+
+Do NOT randomly use:
+
+```text
+13
+17
+21
+27
+```
+
+unless genuinely required.
+
+---
+
+# TYPOGRAPHY
+
+Build clear typography hierarchy.
+
+Example roles:
+
+```text
+display
+pageTitle
+sectionTitle
+cardTitle
+bodyLarge
+body
+bodySmall
+label
+caption
+button
+tableHeader
+```
+
+Important dashboard numbers should have strong visual weight.
+
+Avoid tiny text.
+
+Business users must be able to scan screens quickly.
+
+---
+
+# COLOR SYSTEM
+
+Use a restrained professional color palette.
+
+Have semantic colors for:
+
+```text
+Primary
+Secondary
+Success
+Warning
+Error
+Info
+Surface
+Background
+Border
+TextPrimary
+TextSecondary
+TextMuted
+Disabled
+```
+
+Examples:
+
+Green → completed / success
+
+Orange → pending / warning
+
+Red → overdue / failed / critical
+
+Blue → informational / active
+
+Do NOT use too many random colors.
+
+---
+
+# COMPONENT SYSTEM
+
+Create reusable enterprise components.
+
+Examples:
+
+```text
+AppButton
+AppIconButton
+AppTextField
+AppDropdown
+AppSearchField
+AppCard
+AppMetricCard
+AppStatusChip
+AppDataTable
+AppEmptyState
+AppErrorState
+AppLoadingState
+AppSectionHeader
+AppDialog
+AppBottomSheet
+AppFilterBar
+AppPagination
+AppAvatar
+AppBadge
+AppDatePicker
+AppTimePicker
+AppCurrencyText
+AppResponsivePage
+AppFormSection
+```
+
+Do NOT recreate the same UI in multiple modules.
+
+---
+
+# RESPONSIVE ENGINE
+
+Responsiveness must be centralized.
+
+Support:
+
+* Small Android phones
+* Large Android phones
+* iPhones
+* Foldables where reasonable
+* Tablets
+* Web
+* Windows/Desktop where the project supports them
+
+Example conceptual breakpoints:
+
+```text
+Mobile
+Large Mobile
+Tablet
+Desktop
+Large Desktop
+```
+
+Do NOT scatter:
+
+```dart
+MediaQuery.of(context).size.width
+```
+
+checks throughout hundreds of screens.
+
+Create centralized responsive utilities/components.
+
+---
+
+# RESPONSIVE BEHAVIOR
+
+### Mobile
+
+Prefer:
+
+* Bottom navigation where appropriate
+* Single-column layouts
+* Bottom sheets
+* Compact cards
+* Touch-friendly controls
+
+### Tablet
+
+Use:
+
+* Wider cards
+* Two-column layouts
+* Navigation rail where useful
+* Split views
+
+### Desktop/Web
+
+Use:
+
+* Sidebar navigation
+* Multi-column dashboards
+* Data tables
+* Larger analytics views
+* Persistent filters
+* Master/detail views
+
+Do NOT simply stretch the mobile UI across desktop.
+
+---
+
+# APP SHELL
+
+Create a strong consistent application shell.
+
+Desktop example:
+
+```text
+Sidebar
+    ↓
+
+Dashboard
+Customers
+Vehicles
+Jobs
+Inventory
+Invoices
+Payments
+Employees
+Reports
+CRM
+Settings
+```
+
+Top bar:
+
+```text
+Page Title
+
+Search
+
+Notifications
+
+Garage / Branch
+
+User Profile
+```
+
+Mobile navigation should adapt appropriately.
+
+---
+
+# DASHBOARD
+
+The dashboard must immediately show what matters today.
+
+Suggested layout:
+
+```text
+Good Morning / Garage Name
+
+Today's Overview
+
+Jobs Today
+Pending Jobs
+Completed Jobs
+Revenue
+Pending Payments
+Low Stock
+```
+
+Then sections such as:
+
+```text
+Today's Jobs
+
+Recent Customers
+
+Job Status
+
+Pending Payments
+
+Low Stock Parts
+
+Recent Activity
+```
+
+Avoid showing meaningless metrics.
+
+Every dashboard card should answer a real business question.
+
+---
+
+# METRIC CARDS
+
+Example:
+
+```text
+Today's Jobs
+18
++12% vs yesterday
+```
+
+or:
+
+```text
+Pending Payments
+₹24,500
+8 invoices
+```
+
+Metric cards should be:
+
+* readable
+* clickable where appropriate
+* compact
+* visually consistent
+
+---
+
+# JOB CARD / WORK ORDER
+
+This is one of the most important workflows.
+
+Redesign it carefully.
+
+User flow:
+
+```text
+Customer
+    ↓
+Vehicle
+    ↓
+Complaints
+    ↓
+Inspection
+    ↓
+Services
+    ↓
+Parts
+    ↓
+Mechanic
+    ↓
+Estimate
+    ↓
+Approval
+    ↓
+Work
+    ↓
+Invoice
+    ↓
+Payment
+    ↓
+Delivery
+```
+
+The user should always understand the current stage.
+
+Consider:
+
+* Progress stepper
+* Timeline
+* Status sections
+* Collapsible sections
+* Sticky primary action
+
+Avoid making users jump through many unrelated screens.
+
+---
+
+# JOB STATUS
+
+Make status visually understandable.
+
+Examples:
+
+```text
+New
+Inspection
+Estimate Pending
+Approval Pending
+In Progress
+Waiting for Parts
+Ready for Delivery
+Completed
+Cancelled
+```
+
+Use consistent semantic status chips.
+
+---
+
+# CUSTOMER SCREEN
+
+Customer screen should quickly show:
+
+```text
+Customer Name
+Phone
+Vehicles
+Outstanding Amount
+Last Visit
+Total Visits
+```
+
+Customer detail page:
+
+```text
+Overview
+Vehicles
+Job History
+Invoices
+Payments
+Notes
+Activity
+```
+
+---
+
+# VEHICLE SCREEN
+
+Vehicle profile should display:
+
+```text
+Registration Number
+Make
+Model
+Year
+Fuel Type
+Odometer
+Owner
+Last Service
+Next Service
+```
+
+Then:
+
+```text
+Service History
+Current Job
+Previous Repairs
+Parts Replaced
+Inspection History
+Documents
+```
+
+---
+
+# INVENTORY
+
+Inventory must behave like professional ERP software.
+
+Provide:
+
+```text
+Search
+
+Categories
+
+Filters
+
+Low Stock
+
+Out of Stock
+
+Available Stock
+```
+
+Useful columns:
+
+```text
+Part
+SKU
+Category
+Stock
+Purchase Price
+Selling Price
+Supplier
+Status
+```
+
+Highlight low stock clearly.
+
+---
+
+# INVOICES
+
+Invoices should feel trustworthy and professional.
+
+Screen hierarchy:
+
+```text
+Invoice Number
+
+Customer
+
+Vehicle
+
+Services
+
+Parts
+
+Subtotal
+
+Discount
+
+GST
+
+Grand Total
+
+Paid
+
+Outstanding
+```
+
+Primary actions:
+
+```text
+Collect Payment
+
+Download Invoice
+
+Share Invoice
+```
+
+---
+
+# PAYMENTS
+
+Make financial states obvious.
+
+Examples:
+
+```text
+PAID
+
+PARTIALLY PAID
+
+UNPAID
+
+OVERDUE
+
+REFUNDED
+```
+
+Avoid relying solely on color.
+
+Use text + icons + semantic styling.
+
+---
+
+# FORMS
+
+Forms currently often make business software frustrating.
+
+Improve them.
+
+Use:
+
+* Logical grouping
+* Proper labels
+* Helpful placeholders
+* Required field markers
+* Inline validation
+* Auto-focus where useful
+* Input formatting
+* Keyboard types
+* Searchable dropdowns
+* Date pickers
+* Currency formatting
+
+Avoid huge forms containing 20 unrelated fields.
+
+Break them into sections.
+
+---
+
+# FORM STRUCTURE
+
+Example:
+
+```text
+Customer Information
+
+Name
+Phone
+Email
+
+Address
+
+Street
+City
+State
+PIN
+```
+
+Use sections rather than one giant form.
+
+---
+
+# PRIMARY ACTION
+
+Every screen should have a clear primary action.
+
+Examples:
+
+Customers:
+
+```text
++ Add Customer
+```
+
+Jobs:
+
+```text
++ Create Job
+```
+
+Inventory:
+
+```text
++ Add Part
+```
+
+Invoices:
+
+```text
++ Create Invoice
+```
+
+Avoid showing five equally prominent buttons.
+
+---
+
+# TABLES
+
+Desktop/web business applications need professional tables.
+
+Support:
+
+* Search
+* Sort
+* Filter
+* Pagination
+* Status
+* Row actions
+* Selection if useful
+
+Avoid overcrowding.
+
+Use responsive transformations.
+
+Desktop:
+
+```text
+Data Table
+```
+
+Mobile:
+
+```text
+Cards / condensed rows
+```
+
+---
+
+# SEARCH
+
+Provide global or contextual search where useful.
+
+Users should be able to search:
+
+```text
+Customer name
+
+Phone
+
+Vehicle number
+
+Job number
+
+Invoice
+
+Part
+```
+
+Search must be obvious and fast.
+
+---
+
+# FILTER UX
+
+Avoid huge filter dialogs.
+
+Common filters should be quickly accessible.
+
+Example:
+
+```text
+All
+
+Today
+
+Pending
+
+In Progress
+
+Completed
+```
+
+Advanced filters can use a drawer/dialog/bottom sheet.
+
+---
+
+# EMPTY STATES
+
+Never display a blank screen.
+
+Example:
+
+```text
+No customers yet
+
+Add your first customer to start creating job cards.
+
+[Add Customer]
+```
+
+---
+
+# LOADING STATES
+
+Avoid unnecessary full-screen spinners.
+
+Use:
+
+* Skeletons
+* Shimmer
+* Section loading
+* Button progress states
+
+Do not make the whole application disappear during minor API requests.
+
+---
+
+# ERROR STATES
+
+Do not display technical errors like:
+
+```text
+Exception: DioException...
+```
+
+Show:
+
+```text
+Unable to load customers.
+
+Check your connection and try again.
+
+[Retry]
+```
+
+Keep technical details in logs.
+
+---
+
+# OFFLINE / NETWORK UX
+
+Handle network problems gracefully.
+
+Show:
+
+```text
+You're offline
+```
+
+or:
+
+```text
+Unable to connect to server
+```
+
+Do not let users repeatedly submit forms accidentally.
+
+---
+
+# CONFIRMATION UX
+
+Use confirmation dialogs for destructive actions.
+
+Examples:
+
+```text
+Delete Customer?
+
+Cancel Job?
+
+Delete Invoice?
+```
+
+Clearly explain consequences.
+
+---
+
+# NOTIFICATIONS
+
+Design a notification center for:
+
+* Low stock
+* Pending approvals
+* Job completion
+* Payment reminders
+* Vehicle ready
+* Important system events
+
+Avoid notification spam.
+
+---
+
+# INTERACTION DESIGN
+
+Add subtle professional animations.
+
+Examples:
+
+* Page transitions
+* Card hover
+* Button states
+* Expand/collapse
+* Modal transitions
+* Skeleton loading
+* Navigation selection
+* Status updates
+
+Animation duration:
+
+roughly
+
+```text
+150–300ms
+```
+
+where appropriate.
+
+Do NOT make the application look like a gaming website.
+
+---
+
+# MICRO-INTERACTIONS
+
+Add useful feedback.
+
+Examples:
+
+Button tap:
+
+```text
+Saving...
+```
+
+Then:
+
+```text
+✓ Customer saved
+```
+
+Inventory update:
+
+```text
+✓ Stock updated
+```
+
+Payment:
+
+```text
+✓ Payment recorded
+```
+
+---
+
+# TOUCH TARGETS
+
+Ensure mobile controls are easy to tap.
+
+Avoid tiny:
+
+* icons
+* buttons
+* dropdowns
+* menu actions
+
+---
+
+# ACCESSIBILITY
+
+Review:
+
+* Text contrast
+* Font size
+* Touch targets
+* Screen reader labels
+* Keyboard navigation
+* Focus states
+* Color-only status indicators
+
+---
+
+# NAVIGATION
+
+Review the complete navigation architecture.
+
+Avoid:
+
+* Confusing nested screens
+* Duplicate routes
+* Unnecessary back-and-forth
+* Important features hidden in menus
+
+Group related features logically.
+
+Example:
+
+```text
+OPERATIONS
+
+Dashboard
+Jobs
+Customers
+Vehicles
+
+FINANCE
+
+Invoices
+Payments
+Expenses
+
+INVENTORY
+
+Parts
+Purchases
+Suppliers
+
+MANAGEMENT
+
+Employees
+Reports
+CRM
+
+SYSTEM
+
+Settings
+```
+
+---
+
+# INFORMATION DENSITY
+
+Garage software requires more data than consumer apps.
+
+Do NOT make everything unnecessarily huge.
+
+Find the right balance:
+
+```text
+Readable
+
+Compact
+
+Scannable
+```
+
+Users should process lots of information quickly.
+
+---
+
+# MOBILE UX
+
+On mobile:
+
+Avoid having:
+
+```text
+12-column tables
+
+tiny controls
+
+horizontal overflow
+
+desktop dialogs
+```
+
+Transform layouts intelligently.
+
+Example desktop table:
+
+```text
+Customer | Vehicle | Job | Status | Total
+```
+
+Mobile version:
+
+```text
+Customer Name
+TS09AB1234
+
+General Service
+
+₹4,500       In Progress
+```
+
+---
+
+# DESKTOP UX
+
+Desktop should feel like real business software.
+
+Use:
+
+* Side navigation
+* Keyboard-friendly forms
+* Multi-column layouts
+* Tables
+* Contextual panels
+* Responsive widths
+
+Do NOT show a narrow mobile page floating unnecessarily in the middle of desktop.
+
+---
+
+# SCREEN WIDTH
+
+Prevent excessively wide content.
+
+Use sensible max-width constraints where appropriate.
+
+Forms should not stretch across a 4K monitor.
+
+Dashboards and tables can use more available width.
+
+---
+
+# DESIGN CONSISTENCY
+
+Audit every screen for inconsistent:
+
+* Padding
+* Radius
+* Font size
+* Button size
+* Input height
+* Card style
+* Shadows
+* Colors
+* App bars
+* Icons
+
+Fix inconsistencies globally.
+
+---
+
+# ICONOGRAPHY
+
+Use one consistent icon family.
+
+Do not mix completely different icon styles.
+
+Icons should support comprehension.
+
+Avoid decorative icons without meaning.
+
+---
+
+# MODALS
+
+Use dialogs for:
+
+* confirmations
+* small forms
+* important decisions
+
+Use pages or larger sheets for complex workflows.
+
+Do not put massive forms inside tiny dialogs.
+
+---
+
+# GARAGE-SPECIFIC UX IMPROVEMENTS
+
+Design fast workflows for reception.
+
+A receptionist should ideally be able to:
+
+```text
+Search customer
+→ Select vehicle
+→ Create job
+```
+
+within seconds.
+
+Consider quick customer lookup by:
+
+```text
+Phone
+
+Vehicle Registration
+```
+
+---
+
+# QUICK ACTIONS
+
+Dashboard quick actions may include:
+
+```text
+New Job
+
+Add Customer
+
+Add Vehicle
+
+Create Invoice
+
+Record Payment
+```
+
+Keep only genuinely useful shortcuts.
+
+---
+
+# VEHICLE REGISTRATION
+
+Vehicle registration number is very important.
+
+Show it prominently.
+
+Example:
+
+```text
+TS09 AB 1234
+```
+
+Do not bury it among metadata.
+
+---
+
+# CUSTOMER PHONE
+
+Phone numbers are also key identifiers.
+
+Provide quick actions where appropriate:
+
+```text
+Call
+
+WhatsApp
+```
+
+only if the current project/business requirements support them.
+
+---
+
+# STATUS TIMELINE
+
+For job cards consider:
+
+```text
+Created
+   ↓
+Inspection
+   ↓
+Estimate
+   ↓
+Approved
+   ↓
+Repair
+   ↓
+Ready
+   ↓
+Delivered
+```
+
+This should be visually simple.
+
+---
+
+# ROLE-BASED UI
+
+Different users may need different interfaces.
+
+Example:
+
+Owner sees:
+
+```text
+Revenue
+Reports
+Employees
+Inventory
+Operations
+```
+
+Mechanic sees:
+
+```text
+Assigned Jobs
+Work Details
+Parts Required
+Update Status
+```
+
+Receptionist sees:
+
+```text
+Customers
+Vehicles
+Bookings
+Jobs
+Payments
+```
+
+Do NOT show unnecessary functionality to every role if permissions already support separation.
+
+---
+
+# UX PERFORMANCE
+
+The UI should feel responsive even if the API is slower.
+
+Use:
+
+* Optimistic UI only where safe
+* Cached content if existing architecture supports it
+* Skeletons
+* Lazy loading
+* Pagination
+* Debounced search
+
+Avoid unnecessary API calls.
+
+---
+
+# FLUTTER PERFORMANCE
+
+Inspect for:
+
+* Unnecessary rebuilds
+* Large widget trees
+* Nested scrolling issues
+* Expensive list rendering
+* Missing const
+* Improper state watching
+* Large image memory usage
+
+Improve performance where safe.
+
+---
+
+# CENTRALIZED RESPONSIVE COMPONENTS
+
+Prefer shared patterns such as:
+
+```dart
+AppResponsivePage(
+  mobile: ...,
+  tablet: ...,
+  desktop: ...,
+)
+```
+
+or equivalent architecture appropriate for the project.
+
+Do NOT redesign responsiveness independently in each feature.
+
+---
+
+# DO NOT HARDCODE EVERYTHING
+
+Avoid repeated:
+
+```dart
+EdgeInsets.all(17)
+```
+
+```dart
+Color(0xFF...)
+```
+
+```dart
+TextStyle(...)
+```
+
+throughout individual screens.
+
+Move these concerns into the centralized design system.
+
+---
+
+# SCREEN-BY-SCREEN REDESIGN PROCESS
+
+For every screen:
+
+### 1. Understand
+
+What is this screen used for?
+
+### 2. Identify problems
+
+Examples:
+
+* Poor hierarchy
+* Too many actions
+* Bad spacing
+* Poor responsiveness
+* Confusing navigation
+* Weak CTA
+* Bad forms
+
+### 3. Redesign
+
+Apply the design system.
+
+### 4. Preserve functionality
+
+All existing:
+
+* API calls
+* onTap
+* navigation
+* validation
+* state updates
+
+must continue working.
+
+### 5. Test
+
+Test the screen after modification.
+
+---
+
+# UI QA
+
+After redesigning every significant screen, test:
+
+```text
+Small Phone
+
+Normal Phone
+
+Large Phone
+
+Tablet
+
+Desktop/Web
+```
+
+where supported.
+
+Check for:
+
+* Overflow
+* Clipping
+* Misalignment
+* Broken scroll
+* Small touch areas
+* Long text
+* Empty states
+* Errors
+* Loading
+* Keyboard
+* Form validation
+
+---
+
+# FLUTTER ANALYSIS
+
+Run:
+
+```bash
+flutter analyze
+```
+
+for relevant apps/packages.
+
+Fix UI-related warnings introduced by your changes.
+
+Run relevant tests.
+
+---
+
+# VISUAL REGRESSION MINDSET
+
+After redesigning shared components, review screens using them.
+
+Example:
+
+Changing:
+
+```text
+AppTextField
+```
+
+may affect:
+
+```text
+Login
+Customer Form
+Vehicle Form
+Job Card
+Invoice
+Inventory
+Settings
+```
+
+Verify all affected screens.
+
+---
+
+# WORK IN PHASES
+
+Do NOT randomly edit 100 files.
+
+Use this order:
+
+## Phase 1
+
+Design system
+
+## Phase 2
+
+App shell/navigation
+
+## Phase 3
+
+Dashboard
+
+## Phase 4
+
+Customers + Vehicles
+
+## Phase 5
+
+Job Cards / Work Orders
+
+## Phase 6
+
+Inventory
+
+## Phase 7
+
+Invoices + Payments
+
+## Phase 8
+
+Employees / CRM
+
+## Phase 9
+
+Reports
+
+## Phase 10
+
+Settings
+
+## Phase 11
+
+Loading/Error/Empty states
+
+## Phase 12
+
+Responsive QA
+
+## Phase 13
+
+Final consistency audit
+
+---
+
+# KEEP A UI MIGRATION REGISTRY
+
+Because this is a large project, create a UI migration tracking document.
+
+Example:
+
+| App | Module | Screen | Old UI Reviewed | Redesigned | Responsive Tested | Functionality Tested | Status |
+| --- | ------ | ------ | --------------- | ---------- | ----------------- | -------------------- | ------ |
+
+Statuses:
+
+```text
+NOT_STARTED
+
+IN_PROGRESS
+
+REDESIGNED
+
+QA_PENDING
+
+COMPLETE
+
+BLOCKED
+```
+
+This prevents already completed screens from being unnecessarily redesigned again.
+
+---
+
+# DO NOT STOP AT RECOMMENDATIONS
+
+Very important:
+
+Do NOT simply tell me:
+
+```text
+You should improve your dashboard.
+```
+
+Actually modify the dashboard.
+
+Do NOT tell me:
+
+```text
+You should create reusable components.
+```
+
+Actually create them and migrate screens.
+
+Do NOT just provide mockups.
+
+Implement the UI improvements in the actual Flutter codebase.
+
+---
+
+# DO NOT BREAK FUNCTIONALITY
+
+After modifying every major workflow verify:
+
+```text
+Button taps
+
+Navigation
+
+Forms
+
+API requests
+
+Validation
+
+Loading states
+
+Errors
+
+Success states
+```
+
+A beautiful UI with broken functionality is a failed result.
+
+---
+
+# FINAL DESIGN STANDARD
+
+Ask yourself:
+
+> If I show this application to a garage owner tomorrow and ask ₹1,000–₹5,000/month for it, does the UI look professional enough for them to trust it with their business?
+
+The answer should eventually be:
+
+> YES.
+
+The application must NOT look like:
+
+* Flutter demo
+* College project
+* Generic admin template
+* Random Material components
+* Developer-designed UI
+
+It should look like:
+
+> A polished commercial garage management platform built by a professional SaaS product team.
+
+---
+
+# FINAL REPORT
+
+After implementing the redesign, provide:
+
+## UI/UX Readiness Score
+
+```text
+Visual Design: X/10
+UX: X/10
+Navigation: X/10
+Design Consistency: X/10
+Responsiveness: X/10
+Forms: X/10
+Business Workflow UX: X/10
+Accessibility: X/10
+Performance Feel: X/10
+Commercial UI Readiness: X/10
+```
+
+Then:
+
+```text
+OVERALL UI/UX SCORE: XX/100
+```
+
+---
+
+# FINAL VERDICT
+
+Choose:
+
+🟢 COMMERCIAL UI READY
+
+🟡 ALMOST READY — SOME UI WORK REMAINS
+
+🔴 NOT READY FOR CUSTOMERS
+
+Also provide:
+
+### Completed screens
+
+### Remaining screens
+
+### Remaining UX problems
+
+### Responsive issues
+
+### Technical UI debt
+
+### Top 10 remaining improvements
+
+---
+
+# MOST IMPORTANT PRINCIPLE
+
+Never redesign something simply because you can.
+
+Every UI decision should improve at least one of:
+
+* Speed
+* Clarity
+* Readability
+* Discoverability
+* Efficiency
+* Error prevention
+* User confidence
+* Professional appearance
+
+The ultimate goal is:
+
+> **Make the Auto Garage CRM look, feel and behave like a premium commercial product that garage owners and their employees can comfortably use every day.**

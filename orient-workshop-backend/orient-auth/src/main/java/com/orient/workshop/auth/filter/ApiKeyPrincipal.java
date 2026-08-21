@@ -12,4 +12,5 @@ public class ApiKeyPrincipal {
     private Long keyId;
     private String name;
     private String role;
+    private Long branchId;
 }

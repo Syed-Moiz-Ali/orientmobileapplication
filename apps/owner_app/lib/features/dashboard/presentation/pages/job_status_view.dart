@@ -7,6 +7,7 @@ import 'package:owner_app/features/dashboard/presentation/providers/dashboard_pr
 
 class JobStatusView extends ConsumerStatefulWidget {
   const JobStatusView({super.key});
+
   @override
   ConsumerState<JobStatusView> createState() => _JobStatusViewState();
 }
@@ -14,32 +15,79 @@ class JobStatusView extends ConsumerStatefulWidget {
 class _JobStatusViewState extends ConsumerState<JobStatusView> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final state = ref.watch(jobStatusProvider);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.gray700), onPressed: () => context.pop()),
-        title: const Text('Job Status Tracking', style: TextStyle(color: AppColors.gray900, fontSize: 17, fontWeight: FontWeight.w700)),
-        actions: [Padding(padding: const EdgeInsets.only(right: 12), child: IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: AppColors.gray700),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Notifications are not available yet'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
-        ))],
+        backgroundColor: colorScheme.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          'Live Job Pipeline',
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: colorScheme.onSurface,
+          ),
+        ),
       ),
       body: state.isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : Column(children: [
-              Padding(padding: const EdgeInsets.fromLTRB(12, 8, 12, 8), child: Container(height: 42, decoration: BoxDecoration(color: AppColors.gray100, borderRadius: BorderRadius.circular(AppDimensions.r8)), child: TextField(onChanged: (q) => ref.read(jobStatusProvider.notifier).onSearch(q), style: const TextStyle(fontSize: 14), decoration: const InputDecoration(hintText: 'Search job cards...', hintStyle: TextStyle(color: AppColors.gray400, fontSize: 13), prefixIcon: Icon(Icons.search, color: AppColors.gray400, size: 20), border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 12))))),
-              _FilterStrip(currentStage: state.filterStage, onFilter: (s) => ref.read(jobStatusProvider.notifier).setFilter(s)),
-              Expanded(child: ListView.separated(itemCount: state.filtered.length, separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.gray200), itemBuilder: (_, i) => _JobStatusItem(job: state.filtered[i]))),
-            ]),
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(AppDimensions.r16),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: TextField(
+                      onChanged: (q) => ref.read(jobStatusProvider.notifier).onSearch(q),
+                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                      decoration: InputDecoration(
+                        hintText: 'Search by job card #, customer, or vehicle...',
+                        hintStyle: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                        ),
+                        prefixIcon: Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant, size: 20),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ),
+                _FilterStrip(
+                  currentStage: state.filterStage,
+                  onFilter: (s) => ref.read(jobStatusProvider.notifier).setFilter(s),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: state.filtered.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No job cards in this stage',
+                            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                          itemCount: state.filtered.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (_, i) => _JobStatusItem(job: state.filtered[i]),
+                        ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -47,47 +95,210 @@ class _JobStatusViewState extends ConsumerState<JobStatusView> {
 class _FilterStrip extends StatelessWidget {
   final JobStage? currentStage;
   final void Function(JobStage?) onFilter;
+
   const _FilterStrip({required this.currentStage, required this.onFilter});
+
   @override
-  Widget build(BuildContext context) => SizedBox(height: 44, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12), children: [
-    _FilterChip(label: 'All', selected: currentStage == null, onTap: () => onFilter(null)),
-    _FilterChip(label: 'Inspection', selected: currentStage == JobStage.waitingInspection, onTap: () => onFilter(JobStage.waitingInspection)),
-    _FilterChip(label: 'Pre-Request', selected: currentStage == JobStage.waitingPreRequest, onTap: () => onFilter(JobStage.waitingPreRequest)),
-    _FilterChip(label: 'Estimation', selected: currentStage == JobStage.waitingEstimation, onTap: () => onFilter(JobStage.waitingEstimation)),
-    _FilterChip(label: 'Approval', selected: currentStage == JobStage.waitingApproval, onTap: () => onFilter(JobStage.waitingApproval)),
-    _FilterChip(label: 'Parts', selected: currentStage == JobStage.waitingParts, onTap: () => onFilter(JobStage.waitingParts)),
-    _FilterChip(label: 'WIP', selected: currentStage == JobStage.wip, onTap: () => onFilter(JobStage.wip)),
-    _FilterChip(label: 'Completed', selected: currentStage == JobStage.completed, onTap: () => onFilter(JobStage.completed)),
-    _FilterChip(label: 'Cancelled', selected: currentStage == JobStage.cancelled, onTap: () => onFilter(JobStage.cancelled)),
-  ]));
+  Widget build(BuildContext context) {
+    final stages = <(String, JobStage?)>[
+      ('All Jobs', null),
+      ('Inspection', JobStage.waitingInspection),
+      ('Pre-Request', JobStage.waitingPreRequest),
+      ('Estimation', JobStage.waitingEstimation),
+      ('Approval', JobStage.waitingApproval),
+      ('Parts', JobStage.waitingParts),
+      ('WIP', JobStage.wip),
+      ('Completed', JobStage.completed),
+      ('Cancelled', JobStage.cancelled),
+    ];
+
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: stages.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final (label, stage) = stages[i];
+          return _FilterChip(
+            label: label,
+            selected: currentStage == stage,
+            onTap: () => onFilter(stage),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _FilterChip extends StatelessWidget {
-  final String label; final bool selected; final VoidCallback onTap;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
   const _FilterChip({required this.label, required this.selected, required this.onTap});
+
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(right: 8), child: GestureDetector(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(color: selected ? AppColors.primary : AppColors.gray100, borderRadius: BorderRadius.circular(AppDimensions.r16)), child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: selected ? Colors.white : AppColors.gray500)))));
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.rPill),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? colorScheme.primary : colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(AppDimensions.rPill),
+          border: Border.all(
+            color: selected ? colorScheme.primary : colorScheme.outlineVariant,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _JobStatusItem extends StatelessWidget {
   final JobStatus job;
+
   const _JobStatusItem({required this.job});
+
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Row(children: [Text(job.jobCardId, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.gray900)), const Spacer(), _StatusLabel(stage: job.stage)]),
-    const SizedBox(height: 4), Text(job.customerName, style: const TextStyle(fontSize: 13, color: AppColors.gray700)),
-    const SizedBox(height: 2), Text('${job.vehicleInfo} • ${job.assignedTo}', style: const TextStyle(fontSize: 11, color: AppColors.gray500)),
-    const SizedBox(height: 8), ClipRRect(borderRadius: BorderRadius.circular(AppDimensions.r4), child: LinearProgressIndicator(value: _progress(job.stage), minHeight: 4, backgroundColor: AppColors.gray200, valueColor: AlwaysStoppedAnimation(_progressColor(job.stage)))),
-  ]));
-  double _progress(JobStage s) => switch (s) { JobStage.waitingInspection => 0.1, JobStage.waitingPreRequest => 0.2, JobStage.waitingEstimation => 0.3, JobStage.waitingApproval => 0.4, JobStage.waitingParts => 0.5, JobStage.wip => 0.6, JobStage.completed => 0.8, JobStage.invoice => 0.9, JobStage.gatePassOut => 1.0, JobStage.cancelled => 0.0 };
-  Color _progressColor(JobStage s) => switch (s) { JobStage.completed || JobStage.invoice || JobStage.gatePassOut => AppColors.success, JobStage.cancelled => AppColors.danger, _ => AppColors.primary };
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      borderRadius: AppDimensions.r20,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                job.jobCardId,
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
+                  fontFamily: AppFontFamilies.mono,
+                ),
+              ),
+              const Spacer(),
+              _StatusLabel(stage: job.stage),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            job.customerName,
+            style: textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${job.vehicleInfo} • Specialist: ${job.assignedTo}',
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppDimensions.rPill),
+            child: LinearProgressIndicator(
+              value: _progress(job.stage),
+              minHeight: 6,
+              backgroundColor: colorScheme.surfaceContainerLow,
+              valueColor: AlwaysStoppedAnimation(_progressColor(job.stage)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  double _progress(JobStage s) => switch (s) {
+        JobStage.waitingInspection => 0.1,
+        JobStage.waitingPreRequest => 0.2,
+        JobStage.waitingEstimation => 0.3,
+        JobStage.waitingApproval => 0.4,
+        JobStage.waitingParts => 0.5,
+        JobStage.wip => 0.65,
+        JobStage.completed => 0.85,
+        JobStage.invoice => 0.95,
+        JobStage.gatePassOut => 1.0,
+        JobStage.cancelled => 0.0,
+      };
+
+  Color _progressColor(JobStage s) => switch (s) {
+        JobStage.completed || JobStage.invoice || JobStage.gatePassOut => const Color(0xFF10B981),
+        JobStage.cancelled => const Color(0xFFEF4444),
+        _ => const Color(0xFF3B82F6),
+      };
 }
 
 class _StatusLabel extends StatelessWidget {
   final JobStage stage;
+
   const _StatusLabel({required this.stage});
+
   @override
-  Widget build(BuildContext context) => Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: _color(stage).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(AppDimensions.r4)), child: Text(_label(stage), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _color(stage))));
-  String _label(JobStage s) => switch (s) { JobStage.waitingInspection => 'Inspection', JobStage.waitingPreRequest => 'Pre-Request', JobStage.waitingEstimation => 'Estimation', JobStage.waitingApproval => 'Approval', JobStage.waitingParts => 'Parts', JobStage.wip => 'WIP', JobStage.completed => 'Completed', JobStage.invoice => 'Invoice', JobStage.gatePassOut => 'Gate Pass', JobStage.cancelled => 'Cancelled' };
-  Color _color(JobStage s) => switch (s) { JobStage.completed || JobStage.invoice || JobStage.gatePassOut => AppColors.success, JobStage.cancelled => AppColors.danger, JobStage.wip => AppColors.primary, _ => AppColors.warning };
+  Widget build(BuildContext context) {
+    final (bg, fg) = switch (stage) {
+      JobStage.completed || JobStage.invoice || JobStage.gatePassOut => (
+          const Color(0xFF10B981).withValues(alpha: 0.12),
+          const Color(0xFF10B981),
+        ),
+      JobStage.cancelled => (
+          const Color(0xFFEF4444).withValues(alpha: 0.12),
+          const Color(0xFFEF4444),
+        ),
+      JobStage.wip => (
+          const Color(0xFF3B82F6).withValues(alpha: 0.12),
+          const Color(0xFF3B82F6),
+        ),
+      _ => (
+          const Color(0xFFD97706).withValues(alpha: 0.12),
+          const Color(0xFFD97706),
+        ),
+    };
+
+    return StatusPill(
+      label: _label(stage).toUpperCase(),
+      showDot: true,
+      bg: bg,
+      fg: fg,
+    );
+  }
+
+  String _label(JobStage s) => switch (s) {
+        JobStage.waitingInspection => 'Inspection',
+        JobStage.waitingPreRequest => 'Pre-Request',
+        JobStage.waitingEstimation => 'Estimation',
+        JobStage.waitingApproval => 'Approval',
+        JobStage.waitingParts => 'Parts',
+        JobStage.wip => 'WIP',
+        JobStage.completed => 'Completed',
+        JobStage.invoice => 'Invoice',
+        JobStage.gatePassOut => 'Gate Pass',
+        JobStage.cancelled => 'Cancelled',
+      };
 }

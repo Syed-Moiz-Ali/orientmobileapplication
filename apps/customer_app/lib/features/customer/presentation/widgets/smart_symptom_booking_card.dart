@@ -9,9 +9,9 @@ class SmartSymptomBookingCard extends StatelessWidget {
   static const List<Map<String, dynamic>> _symptoms = [
     {
       'icon': Icons.warning_amber_rounded,
-      'color': AppColors.warning,
+      'color': Color(0xFFD97706),
       'title': 'Warning Light On',
-      'subtitle': 'Check engine, ABS, oil light',
+      'subtitle': 'Check engine, ABS, oil alert',
       'service': 'Diagnostic Check',
     },
     {
@@ -23,21 +23,21 @@ class SmartSymptomBookingCard extends StatelessWidget {
     },
     {
       'icon': Icons.ac_unit_rounded,
-      'color': AppColors.info,
+      'color': Color(0xFF3B82F6),
       'title': 'AC Not Cooling',
       'subtitle': 'Warm air, weak airflow, odor',
       'service': 'Air Conditioning Service',
     },
     {
       'icon': Icons.no_crash_rounded,
-      'color': AppColors.danger,
+      'color': Color(0xFFEF4444),
       'title': 'Brake Issue',
       'subtitle': 'Spongy pedal, squealing, vibration',
       'service': 'Brake Inspection',
     },
     {
       'icon': Icons.battery_charging_full_rounded,
-      'color': AppColors.accent,
+      'color': Color(0xFFF59E0B),
       'title': 'Battery / Starting',
       'subtitle': 'Slow crank, dead battery, no start',
       'service': 'Battery Replacement',
@@ -53,28 +53,33 @@ class SmartSymptomBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return AppCard(
-      padding: const EdgeInsets.all(AppDimensions.s16),
+      padding: const EdgeInsets.all(AppDimensions.s18),
+      borderRadius: AppDimensions.r24,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppDimensions.r12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.psychology_rounded,
-                  color: AppColors.accent,
+                  color: colorScheme.primary,
                   size: 20,
                 ),
               ),
-              const SizedBox(width: AppDimensions.s10),
+              const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,15 +87,15 @@ class SmartSymptomBookingCard extends StatelessWidget {
                     Text(
                       'Having a Car Issue?',
                       style: textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Select a symptom to find the right service & book',
+                      'Select a symptom to match the right repair & book',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.text3,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -99,39 +104,36 @@ class SmartSymptomBookingCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimensions.s14),
-          const Divider(height: 1),
+          Divider(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: AppDimensions.s14),
           AppAdaptiveGrid(
-            minChildWidth: 230,
-            childAspectRatio: 2.65,
+            minChildWidth: 220,
+            childAspectRatio: 2.6,
             children: [
               for (final item in _symptoms)
                 Builder(
                   builder: (context) {
                     final Color color = item['color'] as Color;
-                    return GestureDetector(
+                    return InkWell(
                       onTap: () {
                         context.push(AppRoutes.customerBookService);
                       },
+                      borderRadius: BorderRadius.circular(AppDimensions.r16),
                       child: Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.bg,
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.r12,
-                          ),
-                          border: Border.all(color: AppColors.border),
+                          color: colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(AppDimensions.r16),
+                          border: Border.all(color: colorScheme.outlineVariant),
                         ),
                         child: Row(
                           children: [
                             Container(
-                              width: 36,
-                              height: 36,
+                              width: 38,
+                              height: 38,
                               decoration: BoxDecoration(
                                 color: color.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(
-                                  AppDimensions.r8,
-                                ),
+                                borderRadius: BorderRadius.circular(AppDimensions.r10),
                               ),
                               child: Icon(
                                 item['icon'] as IconData,
@@ -139,7 +141,7 @@ class SmartSymptomBookingCard extends StatelessWidget {
                                 color: color,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -149,9 +151,9 @@ class SmartSymptomBookingCard extends StatelessWidget {
                                     item['title'] as String,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: textTheme.labelLarge?.copyWith(
+                                    style: textTheme.labelMedium?.copyWith(
                                       fontWeight: FontWeight.w800,
-                                      color: AppColors.textPrimary,
+                                      color: colorScheme.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -160,7 +162,8 @@ class SmartSymptomBookingCard extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: textTheme.bodySmall?.copyWith(
-                                      color: AppColors.text3,
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 11,
                                     ),
                                   ),
                                 ],

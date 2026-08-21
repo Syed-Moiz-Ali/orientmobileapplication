@@ -4,7 +4,8 @@ import 'package:shared_core/shared_core.dart';
 class OwnerBottomNav extends StatelessWidget {
   final List<AppNavItem> items;
   final int selectedIndex;
-  final void Function(int) onTap;
+  final ValueChanged<int> onTap;
+
   const OwnerBottomNav({
     super.key,
     required this.items,
@@ -14,78 +15,10 @@ class OwnerBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: const Border(top: BorderSide(color: AppColors.border)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.07),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 74,
-          child: Row(
-            children: List.generate(items.length, (i) {
-              final sel = selectedIndex == i;
-              return Expanded(
-                // P3 (audit): accessibility — labelled nav item.
-                child: Semantics(
-                  button: true,
-                  selected: sel,
-                  label: items[i].label,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => onTap(i),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutCubic,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: sel
-                                ? AppColors.accent.withValues(alpha: 0.12)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.r24,
-                            ),
-                          ),
-                          child: Icon(
-                            sel ? items[i].selectedIcon : items[i].icon,
-                            color: sel ? AppColors.accent : AppColors.text3,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          items[i].label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: sel ? AppColors.accent : AppColors.text3,
-                            fontWeight:
-                                sel ? FontWeight.w800 : FontWeight.w500,
-                            letterSpacing: sel ? 0.2 : 0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
+    return AppBottomNavigation(
+      items: items,
+      selectedIndex: selectedIndex,
+      onSelected: onTap,
     );
   }
 }

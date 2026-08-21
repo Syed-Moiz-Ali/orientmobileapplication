@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/widgets/notification_bell.dart';
 
 class AppTopBar extends StatelessWidget {
   final String title;
@@ -16,31 +16,26 @@ class AppTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Container(
-      color: AppColors.surface,
+      color: colorScheme.surface,
       height: 60,
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s18),
       child: Row(
         children: [
           if (showBack)
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.bg,
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: AppDimensions.iconSm,
-                  color: AppColors.text3,
-                ),
+            IconButton(
+              onPressed: () => Navigator.maybePop(context),
+              tooltip: 'Back',
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.surfaceContainerLow,
+                side: BorderSide(color: colorScheme.outline),
+                minimumSize: const Size.square(AppDimensions.touchTarget),
               ),
+              icon: const Icon(Icons.arrow_back_rounded),
             ),
           if (showBack) const SizedBox(width: AppDimensions.s12),
           Expanded(
@@ -48,7 +43,7 @@ class AppTopBar extends StatelessWidget {
               title,
               style: textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -75,10 +70,12 @@ class CustomerTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Container(
-      color: AppColors.surface,
+      color: colorScheme.surface,
       height: AppDimensions.s64,
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s18),
       child: Row(
@@ -87,17 +84,19 @@ class CustomerTopBar extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primaryBg,
+              color: colorScheme.primary.withValues(alpha: 0.12),
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primaryBorder),
+              border: Border.all(
+                color: colorScheme.primary.withValues(alpha: 0.25),
+              ),
             ),
             child: Center(
               child: Text(
                 avatarInitials,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppDimensions.s14,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+                  color: colorScheme.primary,
                 ),
               ),
             ),
@@ -111,7 +110,7 @@ class CustomerTopBar extends StatelessWidget {
                 Text(
                   'Welcome back,',
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.text3,
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -119,56 +118,17 @@ class CustomerTopBar extends StatelessWidget {
                   name,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ],
             ),
           ),
-          GestureDetector(
-            onTap: onNotif,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.bg,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: const Icon(
-                    Icons.notifications_outlined,
-                    size: AppDimensions.iconMd,
-                    color: AppColors.text2,
-                  ),
-                ),
-                if (notifCount > 0)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      width: AppDimensions.s16,
-                      height: AppDimensions.s16,
-                      decoration: const BoxDecoration(
-                        color: AppColors.danger,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$notifCount',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          NotificationBell(
+            showBadge: notifCount > 0,
+            badgeCount: notifCount,
+            foregroundColor: colorScheme.onSurfaceVariant,
+            onPressed: onNotif,
           ),
         ],
       ),

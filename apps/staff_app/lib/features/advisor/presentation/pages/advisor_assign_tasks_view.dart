@@ -79,160 +79,265 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     final techniciansAsync = ref.watch(advisorTechniciansProvider);
     final technicians = techniciansAsync.value ?? [];
 
+    final validTasksCount = _tasks.where((t) => t.selected && t.description.trim().isNotEmpty).length;
+
     return Scaffold(
-      backgroundColor: AppColors.canvas,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Assign Tasks',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+            Text(
+              'Technician Task Allocation',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: colorScheme.onSurface,
+              ),
             ),
-            Text(widget.jobCardRef, style: const TextStyle(fontSize: 13, color: AppColors.text3)),
+            Text(
+              widget.jobCardRef,
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontFamily: AppFontFamilies.mono,
+              ),
+            ),
           ],
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppDimensions.s16),
-        children: [
-          const Text(
-            'Assigned Technician',
-            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-                borderSide: BorderSide.none,
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(AppDimensions.s20),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                disabledBackgroundColor: colorScheme.surfaceContainerHighest,
+                disabledForegroundColor: colorScheme.onSurfaceVariant,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.r16),
+                ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              onPressed: (_isLoading || _selectedTechnicianId == null || validTasksCount == 0) ? null : _assignTasks,
+              child: _isLoading
+                  ? SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: colorScheme.onPrimary,
+                      ),
+                    )
+                  : Text(
+                      'Dispatch $validTasksCount Task${validTasksCount == 1 ? '' : 's'} to Bay',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                    ),
             ),
-            hint: const Text('Select Technician'),
-            initialValue: _selectedTechnicianId,
-            items: technicians
-                .map(
-                  (tech) => DropdownMenuItem(
-                    value: tech.empId,
-                    child: Text(tech.name, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14)),
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: AppResponsivePage(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              // ── 1. SELECT TECHNICIAN CARD ────────────────────────────────
+              Text(
+                'Assignee Technician',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 10),
+              AppCard(
+                padding: const EdgeInsets.all(16),
+                borderRadius: AppDimensions.r20,
+                color: colorScheme.surface,
+                borderColor: colorScheme.outlineVariant,
+                child: DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.person_pin_rounded, color: colorScheme.primary),
+                    filled: true,
+                    fillColor: colorScheme.surfaceContainerLow,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppDimensions.r14),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
-                )
-                .toList(),
-            onChanged: (v) => setState(() => _selectedTechnicianId = v),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Tasks to Perform',
-            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          ..._tasks.asMap().entries.map((e) {
-            final idx = e.key;
-            final task = e.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
+                  hint: Text(
+                    'Select Assigned Mechanic / Specialist',
+                    style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                  initialValue: _selectedTechnicianId,
+                  items: technicians
+                      .map(
+                        (tech) => DropdownMenuItem(
+                          value: tech.empId,
+                          child: Text(
+                            '${tech.name} (${tech.empId})',
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedTechnicianId = v),
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // ── 2. TASKS CHECKLIST ────────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Checkbox(
-                    value: task.selected,
-                    activeColor: AppColors.accent,
-                    onChanged: (v) => setState(() => task.selected = v ?? true),
+                  Text(
+                    'Work Item Tasks',
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
-                  Expanded(
-                    child: TextFormField(
-                      initialValue: task.description,
-                      decoration: InputDecoration(
-                        hintText: 'Task description',
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.r12),
-                          borderSide: BorderSide.none,
+                  TextButton.icon(
+                    onPressed: () => setState(() => _tasks.add(TaskDraft(description: ''))),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add Task', style: TextStyle(fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              AppCard(
+                padding: const EdgeInsets.all(16),
+                borderRadius: AppDimensions.r24,
+                color: colorScheme.surface,
+                borderColor: colorScheme.outlineVariant,
+                child: Column(
+                  children: [
+                    for (int idx = 0; idx < _tasks.length; idx++) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: _tasks[idx].selected,
+                              activeColor: colorScheme.primary,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                              onChanged: (v) => setState(() => _tasks[idx].selected = v ?? true),
+                            ),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: _tasks[idx].description,
+                                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                                decoration: InputDecoration(
+                                  hintText: 'e.g. Flush brake fluid, replace oil filter…',
+                                  hintStyle: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                                  filled: true,
+                                  fillColor: colorScheme.surfaceContainerLow,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                ),
+                                onChanged: (v) => _tasks[idx].description = v,
+                              ),
+                            ),
+                            if (_tasks.length > 1)
+                              IconButton(
+                                icon: Icon(Icons.close_rounded, size: 18, color: colorScheme.error),
+                                onPressed: () => setState(() => _tasks.removeAt(idx)),
+                              ),
+                          ],
                         ),
                       ),
-                      onChanged: (v) => task.description = v,
-                    ),
+                      if (idx < _tasks.length - 1)
+                        Divider(height: 16, color: colorScheme.outlineVariant),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // ── 3. ESTIMATED COMPLETION ───────────────────────────────────
+              Text(
+                'Estimated Target Completion (Optional)',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: _selectDateTime,
+                borderRadius: BorderRadius.circular(AppDimensions.r20),
+                child: AppCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  borderRadius: AppDimensions.r20,
+                  color: colorScheme.surface,
+                  borderColor: colorScheme.outlineVariant,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(AppDimensions.r12),
+                        ),
+                        child: Icon(Icons.event_available_rounded, color: colorScheme.primary, size: 20),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _estimatedCompletion == null
+                                  ? 'Tap to select delivery deadline'
+                                  : 'Target: ${_estimatedCompletion.toString().substring(0, 16)}',
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: _estimatedCompletion != null ? FontWeight.w800 : FontWeight.w500,
+                                color: _estimatedCompletion != null ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.schedule_rounded, color: colorScheme.onSurfaceVariant, size: 18),
+                    ],
                   ),
-                  if (_tasks.length > 1)
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, color: AppColors.danger),
-                      onPressed: () => setState(() => _tasks.removeAt(idx)),
-                    ),
-                ],
+                ),
               ),
-            );
-          }),
-          TextButton.icon(
-            onPressed: () => setState(() => _tasks.add(TaskDraft(description: ''))),
-            icon: const Icon(Icons.add, color: AppColors.accent),
-            label: const Text('Add Task', style: TextStyle(color: AppColors.accent)),
+              const SizedBox(height: 32),
+            ],
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'Estimated Completion (Optional)',
-            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          InkWell(
-            onTap: _selectDateTime,
-            borderRadius: BorderRadius.circular(AppDimensions.r12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today_rounded, color: AppColors.accent, size: 20),
-                  const SizedBox(width: 12),
-                  Text(
-                    _estimatedCompletion == null
-                        ? 'Select Date & Time'
-                        : _estimatedCompletion.toString().substring(0, 16),
-                    style: TextStyle(
-                      color: _estimatedCompletion == null ? AppColors.text4 : AppColors.textPrimary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
-              ),
-              onPressed: _isLoading ? null : _assignTasks,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Assign Tasks', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

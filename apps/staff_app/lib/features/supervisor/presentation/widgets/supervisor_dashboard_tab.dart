@@ -1,15 +1,14 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/common/presentation/staff_shimmer_skeletons.dart';
+import 'package:shared_core/shared_core.dart';
 
 class SupervisorDashboardTab extends ConsumerWidget {
   const SupervisorDashboardTab({super.key});
@@ -34,8 +33,9 @@ class SupervisorDashboardTab extends ConsumerWidget {
         onRefresh: notifier.refreshDashboard,
         color: colorScheme.primary,
         backgroundColor: colorScheme.surface,
-        child: SingleChildScrollView(
+        child: AppResponsivePage(
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -58,7 +58,10 @@ class SupervisorDashboardTab extends ConsumerWidget {
 
               // ── 4. LIVE SERVICE BAY HUD (ACTIVE RADAR) ───────────────────
               if (activeBooking != null) ...[
-                _ActiveBayLiveTracker(booking: activeBooking, onTap: () => notifier.selectTab(2)),
+                _ActiveBayLiveTracker(
+                  booking: activeBooking,
+                  onTap: () => notifier.selectTab(2),
+                ),
                 const SizedBox(height: 28),
               ],
 
@@ -116,7 +119,10 @@ class _SupervisorPremiumHeader extends StatelessWidget {
   final int unreadCount;
   final VoidCallback onNotificationTap;
 
-  const _SupervisorPremiumHeader({required this.unreadCount, required this.onNotificationTap});
+  const _SupervisorPremiumHeader({
+    required this.unreadCount,
+    required this.onNotificationTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +143,10 @@ class _SupervisorPremiumHeader extends StatelessWidget {
                   Container(
                     width: 7,
                     height: 7,
-                    decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -178,7 +187,11 @@ class _SupervisorPremiumHeader extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.notifications_none_rounded, color: colorScheme.onSurface, size: 20),
+                  Icon(
+                    Icons.notifications_none_rounded,
+                    color: colorScheme.onSurface,
+                    size: 20,
+                  ),
                   if (unreadCount > 0)
                     Positioned(
                       top: 11,
@@ -189,7 +202,10 @@ class _SupervisorPremiumHeader extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: colorScheme.error,
                           shape: BoxShape.circle,
-                          border: Border.all(color: colorScheme.surface, width: 1.5),
+                          border: Border.all(
+                            color: colorScheme.surface,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                     ),
@@ -227,7 +243,11 @@ class _SupervisorSearchPill extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: colorScheme.outlineVariant),
             boxShadow: [
-              BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6)),
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
             ],
           ),
           child: Row(
@@ -238,7 +258,11 @@ class _SupervisorSearchPill extends StatelessWidget {
                   color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.search_rounded, color: colorScheme.primary, size: 20),
+                child: Icon(
+                  Icons.search_rounded,
+                  color: colorScheme.primary,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -254,12 +278,18 @@ class _SupervisorSearchPill extends StatelessWidget {
                     ),
                     Text(
                       'Assign tasks, route break-downs & inspect',
-                      style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_rounded, color: colorScheme.onSurfaceVariant, size: 16),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: colorScheme.onSurfaceVariant,
+                size: 16,
+              ),
             ],
           ),
         ),
@@ -379,7 +409,9 @@ class _BentoCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isPrimary ? Colors.transparent : colorScheme.outlineVariant),
+          border: Border.all(
+            color: isPrimary ? Colors.transparent : colorScheme.outlineVariant,
+          ),
           boxShadow: isPrimary
               ? [
                   BoxShadow(
@@ -415,7 +447,9 @@ class _BentoCard extends StatelessWidget {
                 ),
                 Icon(
                   Icons.arrow_outward_rounded,
-                  color: isPrimary ? colorScheme.onPrimary.withValues(alpha: 0.6) : colorScheme.onSurfaceVariant,
+                  color: isPrimary
+                      ? colorScheme.onPrimary.withValues(alpha: 0.6)
+                      : colorScheme.onSurfaceVariant,
                   size: 16,
                 ),
               ],
@@ -425,13 +459,19 @@ class _BentoCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: textTheme.titleSmall?.copyWith(color: fgColor, fontWeight: FontWeight.w900, height: 1.1),
+                  style: textTheme.titleSmall?.copyWith(
+                    color: fgColor,
+                    fontWeight: FontWeight.w900,
+                    height: 1.1,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: textTheme.bodySmall?.copyWith(
-                    color: isPrimary ? colorScheme.onPrimary.withValues(alpha: 0.8) : colorScheme.onSurfaceVariant,
+                    color: isPrimary
+                        ? colorScheme.onPrimary.withValues(alpha: 0.8)
+                        : colorScheme.onSurfaceVariant,
                     fontSize: 10.5,
                   ),
                 ),
@@ -469,9 +509,15 @@ class _ActiveBayLiveTracker extends StatelessWidget {
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
+            border: Border.all(
+              color: colorScheme.primary.withValues(alpha: 0.35),
+            ),
             boxShadow: [
-              BoxShadow(color: colorScheme.primary.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: colorScheme.primary.withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: Column(
@@ -479,7 +525,10 @@ class _ActiveBayLiveTracker extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
@@ -489,7 +538,10 @@ class _ActiveBayLiveTracker extends StatelessWidget {
                         Container(
                           width: 6,
                           height: 6,
-                          decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -507,7 +559,10 @@ class _ActiveBayLiveTracker extends StatelessWidget {
                   const Spacer(),
                   Text(
                     'INSPECTION ACTIVE',
-                    style: textTheme.labelSmall?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.w800),
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.secondary,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ],
               ),
@@ -520,7 +575,11 @@ class _ActiveBayLiveTracker extends StatelessWidget {
                       color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(Icons.speed_rounded, color: colorScheme.primary, size: 24),
+                    child: Icon(
+                      Icons.speed_rounded,
+                      color: colorScheme.primary,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -538,12 +597,17 @@ class _ActiveBayLiveTracker extends StatelessWidget {
                         ),
                         Text(
                           'Customer: ${booking.customerName} · Bay Assigned',
-                          style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ],
               ),
             ],
@@ -585,7 +649,10 @@ class _SupervisorSpotlightBanner extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
                   gradient: LinearGradient(
-                    colors: [Colors.black.withValues(alpha: 0.85), Colors.black.withValues(alpha: 0.35)],
+                    colors: [
+                      Colors.black.withValues(alpha: 0.85),
+                      Colors.black.withValues(alpha: 0.35),
+                    ],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -600,7 +667,11 @@ class _SupervisorSpotlightBanner extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.verified_rounded, color: Colors.amberAccent, size: 16),
+                      const Icon(
+                        Icons.verified_rounded,
+                        color: Colors.amberAccent,
+                        size: 16,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'PRECISION FLOOR ERP',
@@ -615,7 +686,12 @@ class _SupervisorSpotlightBanner extends StatelessWidget {
                   const SizedBox(height: 8),
                   const Text(
                     'Peak Diagnostic Shift\n98.4% SLA Compliance.',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16, height: 1.2),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      height: 1.2,
+                    ),
                   ),
                 ],
               ),
@@ -697,7 +773,10 @@ class _AdvisorCard extends StatelessWidget {
                   advisor.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -710,7 +789,10 @@ class _AdvisorCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.secondary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(4),
@@ -747,10 +829,26 @@ class _JobTypeShowcase extends StatelessWidget {
     final activeTypes = types.isNotEmpty
         ? types
         : [
-            JobTypeEntity(label: 'Full Engine MOT', count: 18, color: colorScheme.primary),
-            JobTypeEntity(label: 'Brakes & Discs', count: 11, color: colorScheme.secondary),
-            const JobTypeEntity(label: 'Diagnostics & ECU', count: 8, color: Color(0xFF10B981)),
-            const JobTypeEntity(label: 'Emergency SOS', count: 4, color: Color(0xFFEF4444)),
+            JobTypeEntity(
+              label: 'Full Engine MOT',
+              count: 18,
+              color: colorScheme.primary,
+            ),
+            JobTypeEntity(
+              label: 'Brakes & Discs',
+              count: 11,
+              color: colorScheme.secondary,
+            ),
+            const JobTypeEntity(
+              label: 'Diagnostics & ECU',
+              count: 8,
+              color: Color(0xFF10B981),
+            ),
+            const JobTypeEntity(
+              label: 'Emergency SOS',
+              count: 4,
+              color: Color(0xFFEF4444),
+            ),
           ];
 
     return SizedBox(
@@ -781,7 +879,10 @@ class _JobTypeShowcase extends StatelessWidget {
                     Container(
                       width: 10,
                       height: 10,
-                      decoration: BoxDecoration(color: t.color, borderRadius: BorderRadius.circular(3)),
+                      decoration: BoxDecoration(
+                        color: t.color,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
                     Text(
                       '${t.count} UNITS',
@@ -798,7 +899,10 @@ class _JobTypeShowcase extends StatelessWidget {
                   t.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -826,7 +930,9 @@ class _RevenueGrid extends StatelessWidget {
           children: [
             Expanded(child: _RevenueMetricCard(metric: left)),
             const SizedBox(width: 12),
-            right != null ? Expanded(child: _RevenueMetricCard(metric: right)) : const Expanded(child: SizedBox()),
+            right != null
+                ? Expanded(child: _RevenueMetricCard(metric: right))
+                : const Expanded(child: SizedBox()),
           ],
         ),
       );
@@ -904,7 +1010,10 @@ class _RevenueMetricCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             metric.label,
-            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11),
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 11,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -941,7 +1050,10 @@ class _RevenueTrendCard extends StatelessWidget {
               children: [
                 Text(
                   'Throughput Velocity',
-                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
                 Text(
                   '+14.8% AVG',
@@ -977,7 +1089,11 @@ class _SparklinePainter extends CustomPainter {
   final Color fillColor;
   final List<double> points;
 
-  const _SparklinePainter({required this.lineColor, required this.fillColor, required this.points});
+  const _SparklinePainter({
+    required this.lineColor,
+    required this.fillColor,
+    required this.points,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1037,7 +1153,9 @@ class _PendingGrid extends StatelessWidget {
           children: [
             Expanded(child: _PendingCard(status: left)),
             const SizedBox(width: 12),
-            right != null ? Expanded(child: _PendingCard(status: right)) : const Expanded(child: SizedBox()),
+            right != null
+                ? Expanded(child: _PendingCard(status: right))
+                : const Expanded(child: SizedBox()),
           ],
         ),
       );
@@ -1094,7 +1212,10 @@ class _PendingCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             status.label,
-            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11),
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 11,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1107,8 +1228,7 @@ class _PendingCard extends StatelessWidget {
 // ─── HEADINGS & MOTION HELPERS ───────────────────────────────────────────────
 class _SectionHeading extends StatelessWidget {
   final String title;
-  final String? badge;
-  const _SectionHeading({required this.title, this.badge});
+  const _SectionHeading({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -1127,25 +1247,6 @@ class _SectionHeading extends StatelessWidget {
               letterSpacing: -0.4,
             ),
           ),
-          if (badge != null) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                badge!,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 9,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -1157,7 +1258,11 @@ class _SectionHeadingWithAction extends StatelessWidget {
   final String actionText;
   final VoidCallback onAction;
 
-  const _SectionHeadingWithAction({required this.title, required this.actionText, required this.onAction});
+  const _SectionHeadingWithAction({
+    required this.title,
+    required this.actionText,
+    required this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1184,7 +1289,10 @@ class _SectionHeadingWithAction extends StatelessWidget {
             },
             child: Text(
               actionText,
-              style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.primary),
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: colorScheme.primary,
+              ),
             ),
           ),
         ],
@@ -1203,7 +1311,8 @@ class _PressScale extends StatefulWidget {
   State<_PressScale> createState() => _PressScaleState();
 }
 
-class _PressScaleState extends State<_PressScale> with SingleTickerProviderStateMixin {
+class _PressScaleState extends State<_PressScale>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
 
@@ -1215,10 +1324,13 @@ class _PressScaleState extends State<_PressScale> with SingleTickerProviderState
       duration: const Duration(milliseconds: 100),
       reverseDuration: const Duration(milliseconds: 140),
     );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.97,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      ),
+    );
   }
 
   @override

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_core/src/branding/brand_config.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/widgets/status_pill.dart';
 
-class GradientBanner extends ConsumerWidget {
+/// A legacy-named contextual header retained for API compatibility. Its default
+/// treatment is now a calm operational surface; gradients are opt-in only.
+class GradientBanner extends StatelessWidget {
   final String title;
   final String greeting;
   final String? liveLabel;
@@ -15,7 +16,7 @@ class GradientBanner extends ConsumerWidget {
   const GradientBanner({
     super.key,
     required this.title,
-    this.greeting = 'Good Morning,',
+    this.greeting = 'Good morning',
     this.liveLabel = 'Live',
     this.liveDotColor,
     this.pills = const [],
@@ -24,75 +25,62 @@ class GradientBanner extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final brand = ref.watch(brandConfigProvider);
-    final textTheme = Theme.of(context).textTheme;
-    final effectiveGradient = gradient ?? LinearGradient(
-      colors: [brand.accentColor, brand.iconColor],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final onSurface = gradient == null ? colors.onSurface : colors.onPrimary;
+    final secondary = gradient == null
+        ? colors.onSurfaceVariant
+        : colors.onPrimary.withValues(alpha: 0.78);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 26),
+      padding: const EdgeInsets.all(AppDimensions.s20),
       decoration: BoxDecoration(
-        gradient: effectiveGradient,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+        color: gradient == null ? colors.surface : null,
+        gradient: gradient,
+        border: Border(bottom: BorderSide(color: colors.outline)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (liveLabel != null)
-                  Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        margin: const EdgeInsets.only(right: 6, top: 1),
-                        decoration: BoxDecoration(
-                          color: liveDotColor ?? brand.buttonColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      Text(
-                        liveLabel!,
-                        style: textTheme.labelMedium?.copyWith(
-                          color: liveDotColor ?? brand.buttonColor,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                if (liveLabel != null) ...[
+                  StatusPill(
+                    label: liveLabel!,
+                    fg: liveDotColor ?? colors.primary,
+                    bg: (liveDotColor ?? colors.primary).withValues(
+                      alpha: 0.10,
+                    ),
+                    showDot: true,
                   ),
-                const SizedBox(height: 6),
+                  const SizedBox(height: AppDimensions.s12),
+                ],
                 Text(
                   greeting,
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: secondary),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppDimensions.s4),
                 Text(
                   title,
-                  style: textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    height: 1.2,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: onSurface,
                   ),
                 ),
                 if (pills.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  Row(
+                  const SizedBox(height: AppDimensions.s14),
+                  Wrap(
+                    spacing: AppDimensions.s8,
+                    runSpacing: AppDimensions.s8,
                     children: pills
                         .map(
-                          (p) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: _pill(context, p.icon, p.label, p.accent),
+                          (pill) => StatusPill(
+                            label: pill.label,
+                            icon: pill.icon,
+                            fg: pill.accent,
+                            bg: pill.accent.withValues(alpha: 0.10),
                           ),
                         )
                         .toList(),
@@ -101,47 +89,18 @@ class GradientBanner extends ConsumerWidget {
               ],
             ),
           ),
-          if (icon != null)
+          if (icon != null) ...[
+            const SizedBox(width: AppDimensions.s16),
             Container(
-              width: 68,
-              height: 68,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.14),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  width: 1.5,
-                ),
+                color: colors.primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
               ),
-              child: Icon(icon, color: Colors.white, size: 32),
+              child: Icon(icon, color: colors.primary, size: 26),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _pill(BuildContext context, IconData icon, String label, Color accent) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppDimensions.r22),
-        border: Border.all(color: accent.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: accent, size: 14),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: textTheme.labelMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          ],
         ],
       ),
     );

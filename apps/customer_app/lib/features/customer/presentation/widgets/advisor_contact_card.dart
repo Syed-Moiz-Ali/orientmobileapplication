@@ -16,25 +16,30 @@ class AdvisorContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return AppCard(
       padding: const EdgeInsets.all(AppDimensions.s14),
+      borderRadius: AppDimensions.r20,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Row(
         children: [
           Container(
             width: 44,
             height: 44,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryBg,
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 advisorName.isNotEmpty ? advisorName.substring(0, 1) : 'A',
-                style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.primary,
                 ),
               ),
             ),
@@ -50,21 +55,21 @@ class AdvisorContactCard extends StatelessWidget {
                       advisorName,
                       style: textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.verified_rounded,
                       size: 14,
-                      color: AppColors.primary,
+                      color: colorScheme.primary,
                     ),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text(
                   advisorRole,
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.text3),
+                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -79,15 +84,15 @@ class AdvisorContactCard extends StatelessWidget {
               );
             },
             icon: Container(
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.12),
+                color: const Color(0xFF10B981).withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.phone_rounded,
-                color: AppColors.accent,
+                color: Color(0xFF10B981),
                 size: 18,
               ),
             ),

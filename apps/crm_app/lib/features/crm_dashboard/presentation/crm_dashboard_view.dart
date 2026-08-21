@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_app_bar.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_drawer.dart';
@@ -66,10 +64,6 @@ class CrmDashboardView extends ConsumerWidget {
     final notifier = ref.read(crmUiProvider.notifier);
     final state = ref.watch(crmUiProvider);
     final adaptive = context.adaptive;
-
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(statusBarColor: CrmColors.primary, statusBarIconBrightness: Brightness.light),
-    );
 
     final pages = <Widget>[
       const CrmDashboardPage(),

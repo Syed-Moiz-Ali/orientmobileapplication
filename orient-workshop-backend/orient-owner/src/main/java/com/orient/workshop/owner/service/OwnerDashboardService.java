@@ -35,36 +35,35 @@ public class OwnerDashboardService {
     private final CustomerMapper customerMapper;
     private final VehicleMapper vehicleMapper;
 
-    public List<KpiCardResponse> getKpis() {
-        int totalJobs = (int) jobCardMapper.countAll();
-        int activeJobs = jobCardMapper.countOpen();
-        int cancelled = jobCardMapper.countCancelled();
-        int newToday = jobCardMapper.countToday();
+    public List<KpiCardResponse> getKpis(Long branchId) {
+        // H-1: every KPI is scoped to the caller's branch. A null branchId means
+        // a super-user global view (owner/admin with no single branch) — only then
+        // do we aggregate across all branches.
+        int totalJobs = branchId != null ? (int) jobCardMapper.countAllByBranch(branchId) : (int) jobCardMapper.countAll();
+        int activeJobs = branchId != null ? jobCardMapper.countOpenByBranch(branchId) : jobCardMapper.countOpen();
+        int cancelled = branchId != null ? jobCardMapper.countCancelledByBranch(branchId) : jobCardMapper.countCancelled();
+        int newToday = branchId != null ? jobCardMapper.countTodayByBranch(branchId) : jobCardMapper.countToday();
 
-        BigDecimal invoiceRevenue = ownerStatsMapper.sumInvoiceAmount();
-        BigDecimal receivables = ownerStatsMapper.sumOutstandingAmount();
-        BigDecimal partsRevenue = ownerStatsMapper.sumPartsTotal();
-        BigDecimal labourRevenue = ownerStatsMapper.sumServicesTotal();
+        BigDecimal invoiceRevenue = branchId != null ? ownerStatsMapper.sumInvoiceAmountByBranch(branchId) : ownerStatsMapper.sumInvoiceAmount();
+        BigDecimal receivables = branchId != null ? ownerStatsMapper.sumOutstandingAmountByBranch(branchId) : ownerStatsMapper.sumOutstandingAmount();
+        BigDecimal partsRevenue = branchId != null ? ownerStatsMapper.sumPartsTotalByBranch(branchId) : ownerStatsMapper.sumPartsTotal();
+        BigDecimal labourRevenue = branchId != null ? ownerStatsMapper.sumServicesTotalByBranch(branchId) : ownerStatsMapper.sumServicesTotal();
 
-        // FIX (audit P0): removed 7 hardcoded "0" KPIs (purchases, payables,
-        // profit, cash, bank, inventory, commission) and the duplicated
-        // "Total Sales" card. Every card shown is now computed from real data;
-        // unbacked metrics are simply absent until their tables exist.
         return List.of(
-            kpi("Active Jobs", String.valueOf(activeJobs), "Open job cards"),
-            kpi("New Jobs", String.valueOf(newToday), "Today"),
-            kpi("Cancelled Jobs", String.valueOf(cancelled), "Total"),
-            kpi("Total Jobs", String.valueOf(totalJobs), "All time"),
-            kpi("Invoice Revenue", formatCurrency(invoiceRevenue), "All time"),
-            kpi("Receivables", formatCurrency(receivables), "Unpaid"),
-            kpi("Parts Revenue", formatCurrency(partsRevenue), "Repair orders"),
-            kpi("Labour Revenue", formatCurrency(labourRevenue), "Repair orders")
+                kpi("Active Jobs", String.valueOf(activeJobs), "Open job cards"),
+                kpi("New Jobs", String.valueOf(newToday), "Today"),
+                kpi("Cancelled Jobs", String.valueOf(cancelled), "Total"),
+                kpi("Total Jobs", String.valueOf(totalJobs), "All time"),
+                kpi("Invoice Revenue", formatCurrency(invoiceRevenue), "All time"),
+                kpi("Receivables", formatCurrency(receivables), "Unpaid"),
+                kpi("Parts Revenue", formatCurrency(partsRevenue), "Repair orders"),
+                kpi("Labour Revenue", formatCurrency(labourRevenue), "Repair orders")
         );
     }
 
-    public List<TrendPointResponse> getSalesTrend() {
+    public List<TrendPointResponse> getSalesTrend(Long branchId) {
         Map<LocalDate, BigDecimal> byDay = new HashMap<>();
-        for (Invoice inv : invoiceMapper.selectList(null)) {
+        for (Invoice inv : invoiceMapper.findByBranchOrNull(branchId)) {
             if (inv.getCreatedAt() == null || inv.getAmount() == null) continue;
             LocalDate day = inv.getCreatedAt().toLocalDate();
             byDay.merge(day, inv.getAmount(), BigDecimal::add);
@@ -78,9 +77,9 @@ public class OwnerDashboardService {
      * ledger there is no true profit; return daily invoice revenue instead
      * (real, computed data).
      */
-    public List<TrendPointResponse> getProfitTrend() {
+    public List<TrendPointResponse> getProfitTrend(Long branchId) {
         Map<LocalDate, BigDecimal> byDay = new HashMap<>();
-        for (Invoice inv : invoiceMapper.selectList(null)) {
+        for (Invoice inv : invoiceMapper.findByBranchOrNull(branchId)) {
             if (inv.getCreatedAt() == null || inv.getAmount() == null) continue;
             LocalDate day = inv.getCreatedAt().toLocalDate();
             byDay.merge(day, inv.getAmount(), BigDecimal::add);
@@ -98,9 +97,9 @@ public class OwnerDashboardService {
      * average of invoice revenue projected 30 days forward. Clearly labelled
      * as an estimate, not a promise.
      */
-    public Map<String, Object> getForecast() {
+    public Map<String, Object> getForecast(Long branchId) {
         Map<LocalDate, BigDecimal> byDay = new HashMap<>();
-        for (Invoice inv : invoiceMapper.selectList(null)) {
+        for (Invoice inv : invoiceMapper.findByBranchOrNull(branchId)) {
             if (inv.getCreatedAt() == null || inv.getAmount() == null) continue;
             byDay.merge(inv.getCreatedAt().toLocalDate(), inv.getAmount(), BigDecimal::add);
         }
@@ -127,8 +126,10 @@ public class OwnerDashboardService {
         return result;
     }
 
-    public List<JobCardRegisterResponse> getJobCardRegister() {
-        List<JobCard> cards = jobCardMapper.findRecent(50, 0);
+    public List<JobCardRegisterResponse> getJobCardRegister(Long branchId) {
+        List<JobCard> cards = branchId != null
+                ? jobCardMapper.findRecentByBranch(branchId, 50, 0)
+                : jobCardMapper.findRecent(50, 0);
         if (cards.isEmpty()) return List.of();
         return cards.stream()
                 .map(c -> {
@@ -140,8 +141,8 @@ public class OwnerDashboardService {
                 .collect(Collectors.toList());
     }
 
-    public List<TopSalesCategoryResponse> getTopSales() {
-        List<Invoice> invoices = invoiceMapper.selectList(null);
+    public List<TopSalesCategoryResponse> getTopSales(Long branchId) {
+        List<Invoice> invoices = invoiceMapper.findByBranchOrNull(branchId);
         Map<Long, String> customerNames = loadCustomerNames();
 
         List<TopSalesCategoryResponse.TopSalesItem> byCustomer = topByInvoiceField(invoices,

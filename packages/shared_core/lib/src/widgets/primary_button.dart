@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_motion.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String label;
@@ -39,8 +40,12 @@ class PrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: effectiveBackgroundColor,
           foregroundColor: effectiveForegroundColor,
-          disabledBackgroundColor: effectiveBackgroundColor.withValues(alpha: 0.5),
-          disabledForegroundColor: effectiveForegroundColor.withValues(alpha: 0.7),
+          disabledBackgroundColor: effectiveBackgroundColor.withValues(
+            alpha: 0.5,
+          ),
+          disabledForegroundColor: effectiveForegroundColor.withValues(
+            alpha: 0.7,
+          ),
           elevation: 0,
           shadowColor: Colors.transparent,
           minimumSize: Size(0, effectiveHeight),
@@ -49,9 +54,9 @@ class PrimaryButton extends StatelessWidget {
           ),
         ),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
+          duration: AppMotion.standard,
+          switchInCurve: AppMotion.enter,
+          switchOutCurve: AppMotion.exit,
           child: isLoading
               ? SizedBox(
                   key: const ValueKey('loading'),
@@ -59,7 +64,9 @@ class PrimaryButton extends StatelessWidget {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation<Color>(effectiveForegroundColor),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      effectiveForegroundColor,
+                    ),
                   ),
                 )
               : Row(
@@ -115,7 +122,8 @@ class SecondaryButton extends StatelessWidget {
     final adaptive = context.adaptive;
 
     final effectiveForegroundColor = foregroundColor ?? colorScheme.onSurface;
-    final effectiveBorderColor = borderColor ?? colorScheme.outline.withValues(alpha: 0.16);
+    final effectiveBorderColor =
+        borderColor ?? colorScheme.outline.withValues(alpha: 0.16);
     final effectiveHeight = height == 52.0 ? adaptive.controlHeight : height;
 
     return SizedBox(
@@ -125,7 +133,9 @@ class SecondaryButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: effectiveForegroundColor,
-          disabledForegroundColor: effectiveForegroundColor.withValues(alpha: 0.38),
+          disabledForegroundColor: effectiveForegroundColor.withValues(
+            alpha: 0.38,
+          ),
           side: BorderSide(color: effectiveBorderColor),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(adaptive.radius),
@@ -137,16 +147,27 @@ class SecondaryButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (leadingIcon != null) ...[
-              Icon(leadingIcon, size: AppDimensions.iconSm, color: effectiveForegroundColor),
+              Icon(
+                leadingIcon,
+                size: AppDimensions.iconSm,
+                color: effectiveForegroundColor,
+              ),
               const SizedBox(width: AppDimensions.s8),
             ],
             Text(
               label,
-              style: textTheme.labelLarge?.copyWith(color: effectiveForegroundColor, fontWeight: FontWeight.w600),
+              style: textTheme.labelLarge?.copyWith(
+                color: effectiveForegroundColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             if (trailingIcon != null) ...[
               const SizedBox(width: AppDimensions.s8),
-              Icon(trailingIcon, size: AppDimensions.iconSm, color: effectiveForegroundColor),
+              Icon(
+                trailingIcon,
+                size: AppDimensions.iconSm,
+                color: effectiveForegroundColor,
+              ),
             ],
           ],
         ),

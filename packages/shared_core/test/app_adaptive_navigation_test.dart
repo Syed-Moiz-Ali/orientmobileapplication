@@ -53,4 +53,25 @@ void main() {
     expect(find.text('Content'), findsOneWidget);
     expect(find.byType(NavigationRail), findsOneWidget);
   });
+
+  testWidgets('bottom navigation exposes every compact destination', (
+    tester,
+  ) async {
+    var selected = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: AppBottomNavigation(
+            items: items,
+            selectedIndex: selected,
+            onSelected: (value) => selected = value,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(NavigationDestination), findsNWidgets(items.length));
+    await tester.tap(find.text('Settings'));
+    expect(selected, 1);
+  });
 }

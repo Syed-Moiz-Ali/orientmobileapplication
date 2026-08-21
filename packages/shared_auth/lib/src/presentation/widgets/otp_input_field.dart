@@ -107,7 +107,8 @@ class _OtpInputFieldState extends State<OtpInputField> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final accentColor = widget.accentColor;
 
     return Column(
@@ -117,102 +118,96 @@ class _OtpInputFieldState extends State<OtpInputField> {
           children: [
             Text(
               widget.identifierLabel ?? widget.phone,
-              style: TextStyle(
-                color: isDark ? Colors.white : AppColors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: widget.onChangePhone,
-              child: Text(
-                'Edit',
-                style: TextStyle(
-                  color: isDark ? const Color(0xFF94A3B8) : AppColors.text3,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
+            const SizedBox(width: AppDimensions.s4),
+            TextButton(
+              onPressed: widget.onChangePhone,
+              child: const Text('Edit'),
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(6, (index) {
-            final isFocused = _focusNodes[index].hasFocus;
-            final isFilled = _controllers[index].text.isNotEmpty;
+        const SizedBox(height: AppDimensions.s16),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = ((constraints.maxWidth - AppDimensions.s40) / 6)
+                .clamp(40.0, 52.0)
+                .toDouble();
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(6, (index) {
+                final isFocused = _focusNodes[index].hasFocus;
+                final isFilled = _controllers[index].text.isNotEmpty;
 
-            return Container(
-              width: 44,
-              height: 52,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF161E2E)
-                    : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: widget.error != null
-                      ? AppColors.danger
-                      : (isFocused
-                            ? accentColor
-                            : (isFilled
-                                  ? accentColor.withValues(alpha: 0.5)
-                                  : (isDark
-                                        ? const Color(0xFF26334D)
-                                        : const Color(0xFFE2E8F0)))),
-                  width: isFocused ? 1.5 : 1.0,
-                ),
-              ),
-              child: TextField(
-                controller: _controllers[index],
-                focusNode: _focusNodes[index],
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-                maxLength: 1,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: TextStyle(
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: const InputDecoration(
-                  counterText: '',
-                  border: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                onChanged: (value) => _onDigitChanged(index, value),
-              ),
+                return AnimatedContainer(
+                  duration: AppMotion.fast,
+                  width: width,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusInput,
+                    ),
+                    border: Border.all(
+                      color: widget.error != null
+                          ? colors.error
+                          : (isFocused
+                                ? accentColor
+                                : isFilled
+                                ? accentColor.withValues(alpha: 0.5)
+                                : colors.outlineVariant),
+                      width: isFocused ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _controllers[index],
+                    focusNode: _focusNodes[index],
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    maxLength: 1,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    decoration: const InputDecoration(
+                      counterText: '',
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onChanged: (value) => _onDigitChanged(index, value),
+                  ),
+                );
+              }),
             );
-          }),
+          },
         ),
         if (widget.error != null) ...[
           const SizedBox(height: 8),
           Text(
             widget.error!,
-            style: const TextStyle(
-              color: AppColors.danger,
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.error,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
-        const SizedBox(height: 20),
-        GestureDetector(
-          onTap: widget.resendCooldown > 0 ? null : widget.onResend,
+        const SizedBox(height: AppDimensions.s12),
+        TextButton(
+          onPressed: widget.resendCooldown > 0 ? null : widget.onResend,
           child: Text(
             widget.resendCooldown > 0
                 ? 'Resend code in ${widget.resendCooldown}s'
                 : 'Didn\'t receive a code? Resend code',
-            style: TextStyle(
+            style: theme.textTheme.labelLarge?.copyWith(
               color: widget.resendCooldown > 0
-                  ? (isDark ? Colors.white38 : AppColors.text4)
+                  ? colors.onSurfaceVariant
                   : accentColor,
-              fontSize: 14,
               fontWeight: widget.resendCooldown > 0
                   ? FontWeight.w400
                   : FontWeight.w600,

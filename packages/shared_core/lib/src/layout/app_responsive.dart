@@ -3,8 +3,18 @@ import 'package:shared_core/src/theme/app_dimensions.dart';
 
 enum AppWindowClass { compact, medium, expanded, large }
 
+enum AppDeviceClass {
+  smallMobile,
+  mobile,
+  largeMobile,
+  tablet,
+  desktop,
+  largeDesktop,
+}
+
 class AppAdaptiveSpec {
   final AppWindowClass windowClass;
+  final AppDeviceClass deviceClass;
   final Size size;
   final EdgeInsets safeArea;
   final EdgeInsets viewInsets;
@@ -28,6 +38,7 @@ class AppAdaptiveSpec {
 
   const AppAdaptiveSpec({
     required this.windowClass,
+    required this.deviceClass,
     required this.size,
     required this.safeArea,
     required this.viewInsets,
@@ -54,6 +65,12 @@ class AppAdaptiveSpec {
   bool get isMedium => windowClass == AppWindowClass.medium;
   bool get isExpanded => windowClass == AppWindowClass.expanded;
   bool get isLarge => windowClass == AppWindowClass.large;
+  bool get isSmallMobile => deviceClass == AppDeviceClass.smallMobile;
+  bool get isMobile => deviceClass == AppDeviceClass.mobile;
+  bool get isLargeMobile => deviceClass == AppDeviceClass.largeMobile;
+  bool get isTablet => deviceClass == AppDeviceClass.tablet;
+  bool get isDesktop => deviceClass == AppDeviceClass.desktop;
+  bool get isLargeDesktop => deviceClass == AppDeviceClass.largeDesktop;
 
   T pick<T>({required T compact, T? medium, T? expanded, T? large}) {
     return switch (windowClass) {
@@ -69,6 +86,8 @@ extension AppResponsiveContext on BuildContext {
   AppWindowClass get windowClass => AppResponsive.classOf(this);
 
   AppAdaptiveSpec get adaptive => AppResponsive.specOf(this);
+
+  AppDeviceClass get deviceClass => adaptive.deviceClass;
 
   bool get isCompact => windowClass == AppWindowClass.compact;
 
@@ -99,6 +118,15 @@ abstract final class AppResponsive {
     return AppWindowClass.large;
   }
 
+  static AppDeviceClass deviceClassForWidth(double width) {
+    if (width < 360) return AppDeviceClass.smallMobile;
+    if (width < 430) return AppDeviceClass.mobile;
+    if (width < 600) return AppDeviceClass.largeMobile;
+    if (width < 1024) return AppDeviceClass.tablet;
+    if (width < 1600) return AppDeviceClass.desktop;
+    return AppDeviceClass.largeDesktop;
+  }
+
   static AppWindowClass classOf(BuildContext context) {
     return classForWidth(MediaQuery.sizeOf(context).width);
   }
@@ -107,26 +135,33 @@ abstract final class AppResponsive {
     return specFor(context, size: MediaQuery.sizeOf(context));
   }
 
-  static AppAdaptiveSpec specFor(BuildContext context, {Size? size, BoxConstraints? constraints}) {
+  static AppAdaptiveSpec specFor(
+    BuildContext context, {
+    Size? size,
+    BoxConstraints? constraints,
+  }) {
     final media = MediaQuery.maybeOf(context);
     final fallbackSize = media?.size ?? Size.zero;
-    final resolvedSize = size ?? _sizeFromConstraints(constraints) ?? fallbackSize;
+    final resolvedSize =
+        size ?? _sizeFromConstraints(constraints) ?? fallbackSize;
     final width = resolvedSize.width;
     final height = resolvedSize.height;
     final windowClass = classForWidth(width);
+    final deviceClass = deviceClassForWidth(width);
     final isShort = height > 0 && height < 680;
     final viewInsets = media?.viewInsets ?? EdgeInsets.zero;
     final keyboardOpen = viewInsets.bottom > 0;
 
     return AppAdaptiveSpec(
       windowClass: windowClass,
+      deviceClass: deviceClass,
       size: resolvedSize,
       safeArea: media?.padding ?? EdgeInsets.zero,
       viewInsets: viewInsets,
       isShort: isShort,
       keyboardOpen: keyboardOpen,
       pagePadding: _pagePaddingFor(windowClass, width),
-      contentMaxWidth: _contentMaxWidthFor(windowClass),
+      contentMaxWidth: _contentMaxWidthFor(windowClass, width),
       formMaxWidth: _formMaxWidthFor(windowClass),
       dialogMaxWidth: _dialogMaxWidthFor(windowClass),
       gutter: _gutterFor(windowClass),
@@ -139,7 +174,9 @@ abstract final class AppResponsive {
       extendNavigationRail: windowClass == AppWindowClass.large,
       navigationRailWidth: _navigationRailWidthFor(windowClass),
       pageAlignment: Alignment.topCenter,
-      focusedFlowAlignment: keyboardOpen || isShort ? Alignment.topCenter : _focusedFlowAlignmentFor(windowClass),
+      focusedFlowAlignment: keyboardOpen || isShort
+          ? Alignment.topCenter
+          : _focusedFlowAlignmentFor(windowClass),
     );
   }
 
@@ -166,21 +203,34 @@ abstract final class AppResponsive {
   static EdgeInsets _pagePaddingFor(AppWindowClass windowClass, double width) {
     return switch (windowClass) {
       AppWindowClass.compact => EdgeInsets.symmetric(
-        horizontal: width < 360 ? AppDimensions.s16 : AppDimensions.s20,
+        horizontal: width < 360
+            ? AppDimensions.s12
+            : width < 430
+            ? AppDimensions.s16
+            : AppDimensions.s20,
         vertical: AppDimensions.s16,
       ),
-      AppWindowClass.medium => const EdgeInsets.symmetric(horizontal: AppDimensions.s28, vertical: AppDimensions.s24),
-      AppWindowClass.expanded => const EdgeInsets.symmetric(horizontal: AppDimensions.s40, vertical: AppDimensions.s28),
-      AppWindowClass.large => const EdgeInsets.symmetric(horizontal: AppDimensions.s48, vertical: AppDimensions.s32),
+      AppWindowClass.medium => const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s28,
+        vertical: AppDimensions.s24,
+      ),
+      AppWindowClass.expanded => const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s40,
+        vertical: AppDimensions.s28,
+      ),
+      AppWindowClass.large => const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s48,
+        vertical: AppDimensions.s32,
+      ),
     };
   }
 
-  static double _contentMaxWidthFor(AppWindowClass windowClass) {
+  static double _contentMaxWidthFor(AppWindowClass windowClass, double width) {
     return switch (windowClass) {
       AppWindowClass.compact => double.infinity,
       AppWindowClass.medium => 860,
-      AppWindowClass.expanded => 1180,
-      AppWindowClass.large => 1320,
+      AppWindowClass.expanded => AppDimensions.contentStandard,
+      AppWindowClass.large => width >= 1600 ? 1440 : AppDimensions.contentWide,
     };
   }
 
@@ -284,7 +334,10 @@ class AppAdaptiveBuilder extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return builder(context, AppResponsive.specFor(context, constraints: constraints));
+        return builder(
+          context,
+          AppResponsive.specFor(context, constraints: constraints),
+        );
       },
     );
   }
@@ -297,6 +350,7 @@ class AppResponsivePage extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final Color? backgroundColor;
   final ScrollPhysics? physics;
+  final double? maxContentWidth;
 
   const AppResponsivePage({
     super.key,
@@ -306,6 +360,7 @@ class AppResponsivePage extends StatelessWidget {
     this.padding,
     this.backgroundColor,
     this.physics,
+    this.maxContentWidth,
   });
 
   @override
@@ -320,7 +375,9 @@ class AppResponsivePage extends StatelessWidget {
       content = Align(
         alignment: adaptive.pageAlignment,
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: adaptive.contentMaxWidth),
+          constraints: BoxConstraints(
+            maxWidth: maxContentWidth ?? adaptive.contentMaxWidth,
+          ),
           child: content,
         ),
       );
@@ -368,9 +425,19 @@ class AppAdaptiveGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final minWidth = minChildWidth ?? adaptive.pick(compact: 220.0, medium: 240.0, expanded: 260.0, large: 280.0);
+        final minWidth =
+            minChildWidth ??
+            adaptive.pick(
+              compact: 220.0,
+              medium: 240.0,
+              expanded: 260.0,
+              large: 280.0,
+            );
         final autoColumns = width.isFinite
-            ? ((width + resolvedSpacing) / (minWidth! + resolvedSpacing)).floor().clamp(1, resolvedColumns).toInt()
+            ? ((width + resolvedSpacing) / (minWidth! + resolvedSpacing))
+                  .floor()
+                  .clamp(1, resolvedColumns)
+                  .toInt()
             : resolvedColumns;
 
         return GridView.builder(
@@ -412,7 +479,9 @@ class AppSplitView extends StatelessWidget {
   Widget build(BuildContext context) {
     final adaptive = context.adaptive;
     final stacked = forceStacked || adaptive.isCompact;
-    final resolvedSpacing = spacing == AppDimensions.s20 ? adaptive.gutter : spacing;
+    final resolvedSpacing = spacing == AppDimensions.s20
+        ? adaptive.gutter
+        : spacing;
 
     if (stacked) {
       return Column(

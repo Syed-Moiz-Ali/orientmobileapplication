@@ -4,6 +4,7 @@ import com.orient.workshop.customer.model.dto.BookingAvailabilityResponse;
 
 
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
+import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.common.response.ApiResponse;
 import com.orient.workshop.customer.model.dto.BookingResponse;
 import com.orient.workshop.customer.model.dto.CreateBookingRequest;
@@ -40,10 +41,15 @@ public class BookingController {
 
     @GetMapping("/bookings/availability")
     public ApiResponse<BookingAvailabilityResponse> getAvailability(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestParam String date,
             @RequestParam(required = false) String serviceType,
             @RequestParam(required = false) Long branchId) {
-        return ApiResponse.success(bookingService.getAvailability(date, serviceType, branchId));
+        // H-1 (tenant isolation): a customer may only inspect availability for their OWN
+        // branch. The client-supplied branchId is ignored for customer roles to prevent
+        // cross-branch information disclosure; staff/owner may request any branch.
+        Long resolved = resolveBranchId(principal, branchId);
+        return ApiResponse.success(bookingService.getAvailability(date, serviceType, resolved));
     }
 
     @PutMapping("/customers/bookings/{bookingId}/status")
@@ -59,6 +65,22 @@ public class BookingController {
                 ? body.get("status")
                 : status;
         return ApiResponse.success(bookingService.updateStatus(bookingId, resolved, principal));
+    }
+
+    /**
+     * For customer roles, availability is always scoped to their own branch regardless
+     * of any client-supplied branchId. Staff/owner/admin may inspect any branch.
+     */
+    private Long resolveBranchId(JwtUserPrincipal principal, Long requestedBranchId) {
+        if (principal == null) {
+            throw new ForbiddenException("Authentication required");
+        }
+        String role = principal.getRole() != null ? principal.getRole().toLowerCase() : "";
+        if ("owner".equals(role) || "admin".equals(role) || "crmdashboard".equals(role)
+                || "advisor".equals(role) || "supervisor".equals(role)) {
+            return requestedBranchId;
+        }
+        return principal.getBranchId();
     }
 }
 

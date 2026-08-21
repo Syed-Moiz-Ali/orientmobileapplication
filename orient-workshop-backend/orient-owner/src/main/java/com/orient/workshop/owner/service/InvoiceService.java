@@ -54,10 +54,11 @@ public class InvoiceService implements JobInvoiceGateway {
                 .build();
     }
 
-    public List<InvoiceResponse> getInvoices(String status) {
+    public List<InvoiceResponse> getInvoices(Long branchId, String status) {
+        // H-1: scope to the caller's branch. Null branchId = super-user global view.
         Map<Long, Customer> customers = customerMapper.selectList(null).stream()
                 .collect(Collectors.toMap(Customer::getId, Function.identity()));
-        return invoiceMapper.selectList(null).stream()
+        return invoiceMapper.findByBranchOrNull(branchId).stream()
                 .filter(inv -> status == null || status.isBlank() || status.equalsIgnoreCase(inv.getStatus()))
                 .map(inv -> {
                     Customer customer = customers.get(inv.getCustomerId());

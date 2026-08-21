@@ -1,13 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
-import 'package:staff_app/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
 import 'inspection_provider.dart';
 import 'package:staff_app/core/router/app_router.dart';
 

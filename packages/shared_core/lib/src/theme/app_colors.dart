@@ -6,6 +6,8 @@ class AppColors {
   static const Color bg = Color(0xFFF5F7FB);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceAlt = Color(0xFFEEF3F8);
+  static const Color surfaceRaised = Color(0xFFFFFFFF);
+  static const Color surfaceSunken = Color(0xFFF0F3F8);
 
   static const Color border = Color(0xFFE5EAF1);
   static const Color borderMd = Color(0xFFCCD6E2);
@@ -16,10 +18,16 @@ class AppColors {
   static const Color text2 = Color(0xFF394150);
   static const Color text3 = Color(0xFF677182);
   static const Color text4 = Color(0xFF9AA4B2);
+  static const Color textDisabled = Color(0xFF98A2B3);
 
   static const Color primary = Color(0xFF3157D5);
   static const Color primaryBg = Color(0xFFEEF3FF);
   static const Color primaryBorder = Color(0xFFC8D6FF);
+  static const Color selected = Color(0xFFE8EEFF);
+  static const Color hover = Color(0xFFF0F4FF);
+  static const Color pressed = Color(0xFFDCE5FF);
+  static const Color focus = Color(0xFF3157D5);
+  static const Color disabled = Color(0xFFE4E7EC);
 
   static const Color success = Color(0xFF0F8B5F);
   static const Color successBg = Color(0xFFE9F7F1);

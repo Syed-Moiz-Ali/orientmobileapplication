@@ -1,6 +1,17 @@
 class AppDimensions {
   AppDimensions._();
 
+  // Semantic radii. New presentation code should use these names so that a
+  // control, record, panel, and modal do not all share the same silhouette.
+  static const double radiusControl = 8;
+  static const double radiusInput = 10;
+  static const double radiusButton = 10;
+  static const double radiusCard = 12;
+  static const double radiusPanel = 16;
+  static const double radiusDialog = 18;
+  static const double radiusSheet = 22;
+  static const double radiusPill = 999;
+
   static const double r2 = 2;
   static const double r3 = 3;
   static const double r4 = 4;
@@ -43,4 +54,9 @@ class AppDimensions {
   static const double iconMd = 20;
   static const double iconLg = 24;
   static const double iconXl = 34;
+
+  static const double touchTarget = 48;
+  static const double contentNarrow = 560;
+  static const double contentStandard = 1180;
+  static const double contentWide = 1320;
 }

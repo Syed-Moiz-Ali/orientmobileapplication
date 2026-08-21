@@ -114,6 +114,20 @@ class AppTextStyles {
   static TextStyle monoMetric({Color? color}) => mono(color: color);
   static TextStyle monoCode({Color? color}) => mono(color: color);
   static TextStyle monoTable({Color? color}) => mono(color: color);
+
+  static TextStyle pageTitle({Color? color}) => displaySmall(color: color);
+  static TextStyle sectionTitle({Color? color}) => title(color: color);
+  static TextStyle entityTitle({Color? color}) => subtitle(color: color);
+  static TextStyle metric({Color? color}) => displayMedium(
+    color: color,
+  ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
+  static TextStyle metadata({Color? color}) =>
+      label(color: color).copyWith(fontWeight: FontWeight.w500);
+  static TextStyle caption({Color? color}) =>
+      bodySmall(color: color).copyWith(fontSize: 12);
+  static TextStyle tableHeader({Color? color}) => label(
+    color: color,
+  ).copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.4);
 }
 
 class AppTypography {

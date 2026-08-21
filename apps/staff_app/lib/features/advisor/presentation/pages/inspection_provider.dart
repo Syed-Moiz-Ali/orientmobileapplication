@@ -189,7 +189,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
     try {
       final local = ref.read(advisorLocalDataSourceProvider);
       final draft = local.getDraft();
-      if (draft != null && draft is Map) {
+      if (draft != null) {
         return InspectionState.fromPersistableMap(draft);
       }
     } catch (_) {}

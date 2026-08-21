@@ -11,10 +11,12 @@ class CustomerVehiclesView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final vehicles = ref.watch(customerDashboardProvider).vehicles;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -27,7 +29,7 @@ class CustomerVehiclesView extends ConsumerWidget {
                 label: const Text('Add'),
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: colorScheme.outlineVariant),
             Expanded(
               child: AppResponsivePage(
                 child: Column(
@@ -35,22 +37,24 @@ class CustomerVehiclesView extends ConsumerWidget {
                   children: [
                     if (vehicles.isEmpty)
                       AppCard(
+                        borderRadius: AppDimensions.r24,
+                        color: colorScheme.surface,
+                        borderColor: colorScheme.outlineVariant,
                         onTap: () => context.push(AppRoutes.customerAddVehicle),
                         child: Column(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.add_circle_outline_rounded,
-                              color: AppColors.text4,
+                              color: colorScheme.onSurfaceVariant,
                               size: 34,
                             ),
                             const SizedBox(height: AppDimensions.s10),
                             Text(
                               'Add your first vehicle',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.textPrimary,
-                                  ),
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: colorScheme.onSurface,
+                              ),
                             ),
                           ],
                         ),
@@ -92,10 +96,15 @@ class _VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return AppCard(
       padding: EdgeInsets.zero,
+      borderRadius: AppDimensions.r24,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
         children: [
           Padding(
@@ -106,12 +115,12 @@ class _VehicleCard extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBg,
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+                    color: colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppDimensions.r16),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.directions_car_rounded,
-                    color: AppColors.primary,
+                    color: colorScheme.primary,
                   ),
                 ),
                 const SizedBox(width: AppDimensions.s14),
@@ -125,7 +134,7 @@ class _VehicleCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
-                          color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: AppDimensions.s6),
@@ -135,13 +144,13 @@ class _VehicleCard extends StatelessWidget {
                         children: [
                           StatusPill(
                             label: vehicle.plateNumber,
-                            bg: AppColors.bg,
-                            fg: AppColors.text2,
+                            bg: colorScheme.surfaceContainerLow,
+                            fg: colorScheme.onSurface,
                           ),
                           Text(
                             '${vehicle.year}',
                             style: textTheme.bodySmall?.copyWith(
-                              color: AppColors.text3,
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -158,7 +167,7 @@ class _VehicleCard extends StatelessWidget {
                       CircularProgressIndicator(
                         value: vehicle.healthScore / 100,
                         strokeWidth: 4,
-                        backgroundColor: AppColors.border,
+                        backgroundColor: colorScheme.outlineVariant,
                         valueColor: AlwaysStoppedAnimation(_scoreColor),
                         strokeCap: StrokeCap.round,
                       ),
@@ -175,8 +184,9 @@ class _VehicleCard extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(
+          Divider(
             height: 1,
+            color: colorScheme.outlineVariant,
             indent: AppDimensions.s16,
             endIndent: AppDimensions.s16,
           ),
@@ -192,13 +202,13 @@ class _VehicleCard extends StatelessWidget {
                   icon: Icons.speed_rounded,
                   label: 'Mileage',
                   value: vehicle.mileage,
-                  color: AppColors.primary,
+                  color: colorScheme.primary,
                 ),
                 _InfoTile(
                   icon: Icons.palette_outlined,
                   label: 'Color',
                   value: vehicle.color,
-                  color: AppColors.info,
+                  color: colorScheme.secondary,
                 ),
                 _InfoTile(
                   icon: Icons.history_rounded,
@@ -211,8 +221,8 @@ class _VehicleCard extends StatelessWidget {
                   label: 'Next due',
                   value: vehicle.nextDue,
                   color: vehicle.healthScore < 70
-                      ? AppColors.danger
-                      : AppColors.warning,
+                      ? colorScheme.error
+                      : const Color(0xFFFFB800),
                 ),
               ],
             ),
@@ -243,7 +253,7 @@ class _VehicleCard extends StatelessWidget {
                           content: Text(
                             'Last service: ${vehicle.lastService} - Next due: ${vehicle.nextDue}',
                           ),
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: colorScheme.primary,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -276,13 +286,15 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Container(
       padding: const EdgeInsets.all(AppDimensions.s10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AppDimensions.r10),
+        borderRadius: BorderRadius.circular(AppDimensions.r12),
         border: Border.all(color: color.withValues(alpha: 0.15)),
       ),
       child: Row(
@@ -296,7 +308,7 @@ class _InfoTile extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: textTheme.labelSmall?.copyWith(color: AppColors.text3),
+                  style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
                 Text(
                   value,
@@ -304,7 +316,7 @@ class _InfoTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: AppColors.text2,
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -323,23 +335,28 @@ class _AddVehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return AppCard(
       onTap: onTap,
+      borderRadius: AppDimensions.r24,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.add_circle_outline_rounded,
-            color: AppColors.text4,
+            color: colorScheme.onSurfaceVariant,
             size: 34,
           ),
           const SizedBox(height: AppDimensions.s10),
           Text(
             'Add new vehicle',
             style: textTheme.titleSmall?.copyWith(
-              color: AppColors.text3,
+              color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w800,
             ),
           ),

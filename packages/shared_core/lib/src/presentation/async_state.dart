@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
-import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/widgets/error_view.dart';
+import 'package:shared_core/src/widgets/loading_indicator.dart';
 
 sealed class AsyncState<T> {
   const AsyncState();
@@ -63,52 +63,13 @@ class AsyncValueWidget<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return state.when(
       initial: () => initialWidget ?? const SizedBox.shrink(),
-      loading: () => loadingWidget ?? _defaultLoading(),
+      loading: () => loadingWidget ?? LoadingIndicator(message: loadingMessage),
       data: (data) => builder(data),
       error: (message, onRetry) => _defaultError(message, onRetry),
     );
   }
 
-  Widget _defaultLoading() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(),
-          if (loadingMessage != null) ...[
-            const SizedBox(height: 16),
-            Text(loadingMessage!, style: const TextStyle(color: AppColors.text3)),
-          ],
-        ],
-      ),
-    );
-  }
-
   Widget _defaultError(String message, VoidCallback? onRetry) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.s24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.danger),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.text2, fontSize: 15),
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Retry'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+    return ErrorView(message: message, onRetry: onRetry);
   }
 }

@@ -30,14 +30,19 @@ public class FeedbackController {
     }
 
     @GetMapping("/feedback")
-    public ApiResponse<List<Feedback>> list(@RequestParam(required = false) Long branchId,
+    public ApiResponse<List<Feedback>> list(@AuthenticationPrincipal JwtUserPrincipal principal,
                                              @RequestParam(defaultValue = "1") int page,
                                              @RequestParam(defaultValue = "20") int size) {
+        // H-1 (tenant isolation): never trust a client-supplied branchId. Scope to the
+        // authenticated user's own branch so customers cannot enumerate other branches'
+        // feedback. Staff roles with no branch (owner/admin) get a null = global view.
+        Long branchId = resolveBranchId(principal);
         return ApiResponse.success(feedbackService.getAll(branchId, page, size));
     }
 
     @GetMapping("/feedback/stats")
-    public ApiResponse<Map<String, Object>> stats(@RequestParam(required = false) Long branchId) {
+    public ApiResponse<Map<String, Object>> stats(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        Long branchId = resolveBranchId(principal);
         return ApiResponse.success(feedbackService.getStats(branchId));
     }
 
@@ -63,5 +68,16 @@ public class FeedbackController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "50") int size) {
         return ApiResponse.success(feedbackService.getPendingModeration(page, size));
+    }
+
+    private Long resolveBranchId(JwtUserPrincipal principal) {
+        if (principal == null) {
+            throw new com.orient.workshop.common.exception.ForbiddenException("Authentication required");
+        }
+        String role = principal.getRole() != null ? principal.getRole().toLowerCase() : "";
+        if ("owner".equals(role) || "admin".equals(role) || "crmdashboard".equals(role)) {
+            return null;
+        }
+        return principal.getBranchId();
     }
 }

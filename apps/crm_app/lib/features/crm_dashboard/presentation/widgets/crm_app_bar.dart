@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 
 class CrmAppBar extends StatelessWidget implements PreferredSizeWidget {
   final CrmUiNotifier notifier;
+
   const CrmAppBar({super.key, required this.notifier});
 
   static const _titles = [
-    'CRM Dashboard',
+    'Sales workspace',
     'Leads',
     'Conversations',
-    'Sales Team',
+    'Sales team',
     'Tasks',
-    'Reports & Analytics',
+    'Reports',
     'Integrations',
     'Settings',
   ];
@@ -24,101 +24,70 @@ class CrmAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final useRail = context.adaptive.useNavigationRail;
+
     return AppBar(
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(gradient: LinearGradient(colors: [CrmColors.gStart, CrmColors.gEnd])),
-      ),
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      systemOverlayStyle: const SystemUiOverlayStyle(
+      backgroundColor: colors.surface,
+      systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+        statusBarIconBrightness: theme.brightness == Brightness.dark
+            ? Brightness.light
+            : Brightness.dark,
       ),
-      leading: Builder(
-        builder: (ctx) => InkWell(
-          onTap: () => Scaffold.of(ctx).openDrawer(),
-          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
-          child: const SizedBox(
-            width: 56,
-            height: 56,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _HamburgerLine(width: 20),
-                  SizedBox(height: 4),
-                  _HamburgerLine(width: 14, faded: true),
-                  SizedBox(height: 4),
-                  _HamburgerLine(width: 18, faded: true),
-                ],
+      leading: useRail
+          ? Icon(Icons.hub_outlined, color: colors.primary)
+          : Builder(
+              builder: (scaffoldContext) => IconButton(
+                tooltip: 'Open navigation',
+                onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
+                icon: const Icon(Icons.menu_rounded),
               ),
             ),
-          ),
-        ),
-      ),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             _titles[notifier.selectedIndex],
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+            style: theme.textTheme.titleMedium,
           ),
-          const Text(
-            'CRM \u2014 Bircon, Hifri',
-            style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.4),
+          Text(
+            'Orient CRM · Bircon, Hifri',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
           ),
         ],
       ),
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 6),
-          child: GestureDetector(
-            onTap: () => notifier.refresh(),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.refresh_rounded, color: Colors.white, size: 19),
-            ),
-          ),
+        IconButton(
+          tooltip: 'Refresh workspace',
+          onPressed: notifier.refresh,
+          icon: const Icon(Icons.refresh_rounded),
         ),
         const NotificationBell(),
         Padding(
-          padding: const EdgeInsets.only(right: 14),
-          child: UserAvatar(initials: 'A', onTap: () => showProfileSheet(context, _profileData)),
+          padding: const EdgeInsets.only(right: AppDimensions.s12),
+          child: UserAvatar(
+            initials: 'A',
+            onTap: () => showProfileSheet(context, _profileData),
+          ),
         ),
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: Colors.white.withValues(alpha: 0.12)),
+        child: Divider(color: colors.outline),
       ),
     );
   }
 }
 
-final _profileData = ProfileSheetData(
+const _profileData = ProfileSheetData(
   name: 'Admin',
   initials: 'A',
-  roleLabel: 'Admin',
-  roleBadge: 'Super Admin \u2022 CRM',
+  roleLabel: 'CRM administrator',
+  roleBadge: 'Admin',
+  branch: 'Bircon, Hifri',
 );
-
-class _HamburgerLine extends StatelessWidget {
-  final double width;
-  final bool faded;
-  const _HamburgerLine({required this.width, this.faded = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 2,
-      width: width,
-      decoration: BoxDecoration(color: faded ? Colors.white70 : Colors.white, borderRadius: BorderRadius.circular(1)),
-    );
-  }
-}

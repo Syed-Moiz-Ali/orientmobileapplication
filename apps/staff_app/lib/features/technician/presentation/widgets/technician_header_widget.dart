@@ -30,17 +30,16 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.20),
+                  color: colors.primaryContainer,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    width: 1.5,
-                  ),
+                  border: Border.all(color: colors.outlineVariant, width: 1.5),
                 ),
                 child: Center(
                   child: Text(
                     profile.avatarInitials,
-                    style: AppTextStyles.button(color: colors.onSurface),
+                    style: AppTextStyles.button(
+                      color: colors.onPrimaryContainer,
+                    ),
                   ),
                 ),
               ),
@@ -51,7 +50,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                   children: [
                     Text(
                       profile.name,
-                      style: AppTextStyles.button(color: Colors.white),
+                      style: AppTextStyles.button(color: colors.onSurface),
                     ),
                     SizedBox(height: AppDimensions.s4),
                     Text(
@@ -82,7 +81,7 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                                   ? colors.primary
                                   : status == AttendanceStatus.onBreak
                                   ? AppColors.warning
-                                  : Colors.white54,
+                                  : colors.onSurfaceVariant,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -99,26 +98,32 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                   ],
                 ),
               ),
-              GestureDetector(
+              InkResponse(
                 onTap: () => _showProfile(context, ref),
-                child: Semantics(
-                  button: true,
-                  label: 'Open profile',
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.10),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colors.primary.withValues(alpha: 0.30),
-                        width: 1.5,
+                radius: 24,
+                child: Tooltip(
+                  message: 'Open profile',
+                  child: Semantics(
+                    button: true,
+                    label: 'Open profile',
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.10),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: colors.primary.withValues(alpha: 0.30),
+                          width: 1.5,
+                        ),
                       ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        profile.avatarInitials.substring(0, 1),
-                        style: AppTextStyles.bodyStrong(color: colors.primary),
+                      child: Center(
+                        child: Text(
+                          profile.avatarInitials.substring(0, 1),
+                          style: AppTextStyles.bodyStrong(
+                            color: colors.primary,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -132,12 +137,13 @@ class TechnicianHeaderWidget extends ConsumerWidget {
   }
 
   void _showProfile(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
     final notifier = ref.read(technicianDashboardProvider.notifier);
     final profile = notifier.profile;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: colors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppDimensions.r28),
@@ -152,34 +158,25 @@ class TechnicianHeaderWidget extends ConsumerWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: colors.outlineVariant,
                 borderRadius: BorderRadius.circular(AppDimensions.r2),
               ),
             ),
             SizedBox(height: AppDimensions.s24),
-            Container(
-              width: 68,
-              height: 68,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.navy, AppColors.accent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  profile.avatarInitials,
-                  style: AppTextStyles.title(color: Colors.white),
-                ),
+            CircleAvatar(
+              radius: 34,
+              backgroundColor: colors.primaryContainer,
+              foregroundColor: colors.onPrimaryContainer,
+              child: Text(
+                profile.avatarInitials,
+                style: AppTextStyles.title(color: colors.onPrimaryContainer),
               ),
             ),
             SizedBox(height: AppDimensions.s14),
             Text(
               profile.name,
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: colors.onSurface,
                 fontSize: 19,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0,
@@ -192,18 +189,18 @@ class TechnicianHeaderWidget extends ConsumerWidget {
                 vertical: AppDimensions.s4,
               ),
               decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.12),
+                color: colors.primaryContainer,
                 borderRadius: BorderRadius.circular(AppDimensions.r20),
               ),
               child: Text(
                 '${profile.role} \u2022 ${profile.branch}',
-                style: AppTextStyles.subtitle(color: AppColors.accent),
+                style: AppTextStyles.subtitle(color: colors.onPrimaryContainer),
               ),
             ),
             SizedBox(height: AppDimensions.s6),
             Text(
               'Shift: ${profile.shift}',
-              style: AppTextStyles.bodySmall(color: AppColors.text3),
+              style: AppTextStyles.bodySmall(color: colors.onSurfaceVariant),
             ),
             SizedBox(height: AppDimensions.s24),
             _menuItem(

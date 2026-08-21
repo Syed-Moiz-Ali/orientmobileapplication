@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pinput/pinput.dart';
+import 'package:shared_auth/src/presentation/widgets/security_badge.dart';
 import 'package:shared_core/shared_core.dart';
 
 class AuthShell extends StatelessWidget {
@@ -25,108 +26,266 @@ class AuthShell extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        systemNavigationBarColor: AppColors.bg,
+        statusBarIconBrightness: theme.brightness == Brightness.dark
+            ? Brightness.light
+            : Brightness.dark,
+        systemNavigationBarColor: colorScheme.surface,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.bg,
+        backgroundColor: colorScheme.surfaceContainerLowest,
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final adaptive = AppResponsive.specFor(
-                context,
-                constraints: constraints,
+              final desktop = constraints.maxWidth >= 900;
+              final form = _AuthFormPane(
+                title: title,
+                subtitle: subtitle,
+                top: top,
+                footer: footer,
+                showCompactBrand: !desktop,
+                child: child,
               );
-              final horizontal = adaptive.pagePadding.horizontal / 2;
-              final topInset = adaptive.pagePadding.top;
-              final contentWidth = adaptive.formMaxWidth;
 
-              return SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: EdgeInsets.fromLTRB(
-                  horizontal,
-                  topInset,
-                  horizontal,
-                  AppDimensions.s24,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight:
-                        constraints.maxHeight - topInset - AppDimensions.s24,
+              if (!desktop) return form;
+
+              return Row(
+                children: [
+                  const Expanded(flex: 5, child: _AuthIdentityPanel()),
+                  VerticalDivider(
+                    width: 1,
+                    thickness: 1,
+                    color: colorScheme.outlineVariant,
                   ),
-                  child: Align(
-                    alignment: adaptive.focusedFlowAlignment,
-                    child: SizedBox(
-                      width: contentWidth,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (top != null) ...[
-                            top!,
-                            SizedBox(height: adaptive.itemSpacing),
-                          ],
-                          Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: colorScheme.primary,
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.rPill,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: adaptive.itemSpacing),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: contentWidth),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  title,
-                                  style: theme.textTheme.displayMedium
-                                      ?.copyWith(
-                                        color: colorScheme.onSurface,
-                                        fontWeight: FontWeight.w800,
-                                        height: 1.08,
-                                      ),
-                                ),
-                                const SizedBox(height: AppDimensions.s6),
-                                Text(
-                                  subtitle,
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    color: AppColors.text3,
-                                    height: 1.45,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: adaptive.sectionSpacing),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: contentWidth,
-                              ),
-                              child: child,
-                            ),
-                          ),
-                          if (footer != null) ...[
-                            const SizedBox(height: AppDimensions.s20),
-                            footer!,
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                  Expanded(flex: 6, child: form),
+                ],
               );
             },
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AuthIdentityPanel extends StatelessWidget {
+  const _AuthIdentityPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return ColoredBox(
+      color: colors.surfaceContainerLow,
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.s40),
+        child: Align(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _AuthBrandMark(),
+                const SizedBox(height: AppDimensions.s40),
+                Text(
+                  'One secure workspace for every workshop role.',
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1,
+                    height: 1.08,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s16),
+                Text(
+                  'Access bookings, job progress, approvals, and customer communication with the account assigned to you.',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.55,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s32),
+                const _AuthTrustPoint(
+                  icon: Icons.verified_user_outlined,
+                  label: 'Role-aware access',
+                ),
+                const SizedBox(height: AppDimensions.s12),
+                const _AuthTrustPoint(
+                  icon: Icons.sync_rounded,
+                  label: 'Protected session continuity',
+                ),
+                const SizedBox(height: AppDimensions.s12),
+                const _AuthTrustPoint(
+                  icon: Icons.support_agent_rounded,
+                  label: 'Workshop support when you need it',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthFormPane extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget? top;
+  final Widget child;
+  final Widget? footer;
+  final bool showCompactBrand;
+
+  const _AuthFormPane({
+    required this.title,
+    required this.subtitle,
+    required this.top,
+    required this.child,
+    required this.footer,
+    required this.showCompactBrand,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final adaptive = context.adaptive;
+    final horizontal = adaptive.pagePadding.horizontal / 2;
+
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontal,
+        vertical: AppDimensions.s24,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.sizeOf(context).height - AppDimensions.s48,
+        ),
+        child: Align(
+          alignment: showCompactBrand ? Alignment.topCenter : Alignment.center,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: adaptive.formMaxWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (showCompactBrand) ...[
+                  const _AuthBrandMark(),
+                  const SizedBox(height: AppDimensions.s40),
+                ],
+                if (top != null) ...[
+                  top!,
+                  const SizedBox(height: AppDimensions.s20),
+                ],
+                Text(
+                  'SECURE WORKSHOP ACCESS',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.9,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s8),
+                Text(
+                  title,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s8),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s32),
+                child,
+                const SizedBox(height: AppDimensions.s24),
+                footer ?? const SecurityBadge(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthBrandMark extends StatelessWidget {
+  const _AuthBrandMark();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: colors.primaryContainer,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          ),
+          child: Icon(
+            Icons.build_rounded,
+            color: colors.onPrimaryContainer,
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: AppDimensions.s12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'ORIENT',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
+            Text(
+              'WORKSHOP',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _AuthTrustPoint extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _AuthTrustPoint({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: colors.primary),
+        const SizedBox(width: AppDimensions.s12),
+        Text(label, style: theme.textTheme.bodyMedium),
+      ],
     );
   }
 }
@@ -180,86 +339,40 @@ class _AuthTextFieldState extends State<AuthTextField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
-
-    return Focus(
-      onFocusChange: (_) => setState(() {}),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.label,
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: AppColors.text3,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s4),
-          TextField(
-            controller: widget.controller,
-            keyboardType: widget.keyboardType,
-            obscureText: _hidden,
-            cursorColor: colorScheme.primary,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: colorScheme.onSurface,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: InputDecoration(
-              hintText: widget.hint,
-              suffixIcon: widget.obscureText
-                  ? IconButton(
-                      onPressed: () => setState(() => _hidden = !_hidden),
-                      icon: Icon(
-                        _hidden
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        size: 20,
-                      ),
-                      tooltip: _hidden ? 'Show password' : 'Hide password',
-                    )
-                  : null,
-              filled: false,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: AppDimensions.s12,
-              ),
-              border: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: hasError ? colorScheme.error : AppColors.borderMd,
-                ),
-              ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: hasError ? colorScheme.error : AppColors.borderMd,
-                ),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: hasError ? colorScheme.error : colorScheme.primary,
-                  width: 1.4,
-                ),
-              ),
-              hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                color: AppColors.text4,
-                fontSize: 17,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            onChanged: widget.onChanged,
-            onSubmitted: widget.onSubmitted,
-          ),
-          if (hasError) ...[
-            const SizedBox(height: AppDimensions.s8),
-            Text(
-              widget.errorText!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.error,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ],
+    return TextField(
+      controller: widget.controller,
+      keyboardType: widget.keyboardType,
+      obscureText: _hidden,
+      cursorColor: colorScheme.primary,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: colorScheme.onSurface,
+        fontWeight: FontWeight.w600,
       ),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        hintText: widget.hint,
+        errorText: widget.errorText,
+        prefixIcon: Icon(
+          widget.icon,
+          size: 20,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                onPressed: () => setState(() => _hidden = !_hidden),
+                icon: Icon(
+                  _hidden
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  size: 20,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                tooltip: _hidden ? 'Show password' : 'Hide password',
+              )
+            : null,
+      ),
+      onChanged: widget.onChanged,
+      onSubmitted: widget.onSubmitted,
     );
   }
 }
@@ -286,24 +399,27 @@ class AuthPrimaryButton extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: AppDimensions.touchTarget + AppDimensions.s4,
       child: FilledButton(
         onPressed: disabled ? null : onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: colorScheme.primary,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.border,
-          disabledForegroundColor: AppColors.text3,
+          foregroundColor: colorScheme.onPrimary,
+          disabledBackgroundColor: colorScheme.surfaceContainerHighest,
+          disabledForegroundColor: colorScheme.onSurfaceVariant,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.r10),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
           ),
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2.4),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  valueColor: AlwaysStoppedAnimation(colorScheme.onPrimary),
+                ),
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -312,14 +428,14 @@ class AuthPrimaryButton extends StatelessWidget {
                   Text(
                     label,
                     style: theme.textTheme.labelLarge?.copyWith(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   if (icon != null) ...[
                     const SizedBox(width: AppDimensions.s8),
-                    Icon(icon, size: 18),
+                    Icon(icon, size: 18, color: colorScheme.onPrimary),
                   ],
                 ],
               ),
@@ -349,7 +465,7 @@ class AuthLinkButton extends StatelessWidget {
         foregroundColor: colorScheme.primary,
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.s8,
-          vertical: AppDimensions.s12,
+          vertical: AppDimensions.s10,
         ),
         minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
@@ -358,7 +474,7 @@ class AuthLinkButton extends StatelessWidget {
         label,
         style: theme.textTheme.labelLarge?.copyWith(
           color: colorScheme.primary,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );
@@ -395,23 +511,25 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
+
     PinTheme pinTheme({
       required double width,
       required Color borderColor,
+      required Color fillColor,
       double borderWidth = 1,
     }) {
       return PinTheme(
         width: width,
-        height: 54,
+        height: 56,
         textStyle: theme.textTheme.titleMedium?.copyWith(
-          color: AppColors.textPrimary,
-          fontSize: 19,
-          fontWeight: FontWeight.w800,
+          color: colorScheme.onSurface,
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
         ),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: borderColor, width: borderWidth),
-          ),
+          color: fillColor,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+          border: Border.all(color: borderColor, width: borderWidth),
         ),
       );
     }
@@ -420,9 +538,9 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Verification code',
-          style: theme.textTheme.titleSmall?.copyWith(
-            color: AppColors.text3,
+          'Verification Code',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -430,11 +548,12 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
         LayoutBuilder(
           builder: (context, constraints) {
             final fieldWidth = ((constraints.maxWidth - 40) / 6)
-                .clamp(42.0, 52.0)
+                .clamp(42.0, 54.0)
                 .toDouble();
             final defaultTheme = pinTheme(
               width: fieldWidth,
-              borderColor: AppColors.borderMd,
+              borderColor: colorScheme.outlineVariant,
+              fillColor: colorScheme.surfaceContainerLow,
             );
 
             return Pinput(
@@ -446,15 +565,18 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
               focusedPinTheme: pinTheme(
                 width: fieldWidth,
                 borderColor: colorScheme.primary,
-                borderWidth: 1.5,
+                fillColor: colorScheme.surface,
+                borderWidth: 1.8,
               ),
               submittedPinTheme: pinTheme(
                 width: fieldWidth,
-                borderColor: colorScheme.primary,
+                borderColor: colorScheme.primary.withValues(alpha: 0.5),
+                fillColor: colorScheme.surfaceContainerLow,
               ),
               errorPinTheme: pinTheme(
                 width: fieldWidth,
                 borderColor: colorScheme.error,
+                fillColor: colorScheme.errorContainer.withValues(alpha: 0.2),
                 borderWidth: 1.5,
               ),
               forceErrorState: hasError,

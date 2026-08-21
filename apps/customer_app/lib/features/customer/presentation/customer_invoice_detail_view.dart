@@ -9,50 +9,55 @@ class CustomerInvoiceDetailView extends StatelessWidget {
   (Color, Color) _getStatusColors() {
     switch (invoice.status.toLowerCase()) {
       case 'paid':
-        return (AppColors.success, AppColors.successBg);
+        return (const Color(0xFF10B981), const Color(0xFF10B981).withValues(alpha: 0.12));
       case 'overdue':
-        return (AppColors.danger, AppColors.dangerBg);
+        return (const Color(0xFFEF4444), const Color(0xFFEF4444).withValues(alpha: 0.12));
       default:
-        return (AppColors.warning, AppColors.warningBg);
+        return (const Color(0xFFD97706), const Color(0xFFD97706).withValues(alpha: 0.12));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final (statusColor, statusBg) = _getStatusColors();
     final total = invoice.grandTotal > 0 ? invoice.grandTotal : invoice.amount;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             const AppTopBar(title: 'Invoice Detail'),
-            const Divider(height: 1),
+            Divider(height: 1, color: colorScheme.outlineVariant),
             Expanded(
               child: AppResponsivePage(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     AppCard(
+                      borderRadius: AppDimensions.r24,
+                      color: colorScheme.surface,
+                      borderColor: colorScheme.outlineVariant,
                       child: Column(
                         children: [
                           Container(
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.1),
+                              color: colorScheme.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.accent.withValues(alpha: 0.22),
+                                color: colorScheme.primary.withValues(alpha: 0.22),
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.receipt_long_rounded,
                               size: 30,
-                              color: AppColors.accent,
+                              color: colorScheme.primary,
                             ),
                           ),
                           const SizedBox(height: AppDimensions.s16),
@@ -61,7 +66,7 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w900,
-                              color: AppColors.textPrimary,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: AppDimensions.s10),
@@ -88,6 +93,9 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                     ),
                     const SizedBox(height: AppDimensions.s16),
                     AppCard(
+                      borderRadius: AppDimensions.r20,
+                      color: colorScheme.surface,
+                      borderColor: colorScheme.outlineVariant,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -95,14 +103,14 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                             'Line Items',
                             style: textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: AppDimensions.s10),
                           Text(
                             'Itemised breakdown is not available yet.',
                             style: textTheme.bodyMedium?.copyWith(
-                              color: AppColors.text3,
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -110,6 +118,9 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                     ),
                     const SizedBox(height: AppDimensions.s16),
                     AppCard(
+                      borderRadius: AppDimensions.r20,
+                      color: colorScheme.surface,
+                      borderColor: colorScheme.outlineVariant,
                       child: Column(
                         children: [
                           _AmountRow(label: 'Subtotal', amount: invoice.amount),
@@ -121,11 +132,11 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                               amount: invoice.taxAmount,
                             ),
                           ],
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
                               vertical: AppDimensions.s14,
                             ),
-                            child: Divider(height: 1, color: AppColors.border),
+                            child: Divider(height: 1, color: colorScheme.outlineVariant),
                           ),
                           Row(
                             children: [
@@ -133,7 +144,7 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                                 'Total',
                                 style: textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               const Spacer(),
@@ -141,7 +152,7 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                                 'AED ${total.toStringAsFixed(2)}',
                                 style: textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.w900,
-                                  color: AppColors.accent,
+                                  color: colorScheme.primary,
                                 ),
                               ),
                             ],
@@ -169,9 +180,13 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return AppCard(
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -180,7 +195,7 @@ class _InfoCard extends StatelessWidget {
             label,
             style: textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.text3,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: AppDimensions.s6),
@@ -190,7 +205,7 @@ class _InfoCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
         ],
@@ -207,20 +222,22 @@ class _AmountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Row(
       children: [
         Text(
           label,
-          style: textTheme.bodyMedium?.copyWith(color: AppColors.text2),
+          style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const Spacer(),
         Text(
           'AED ${amount.toStringAsFixed(2)}',
           style: textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
       ],
@@ -235,13 +252,15 @@ class _InvoiceActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final unpaid = invoice.status.toLowerCase() != 'paid';
 
     return Container(
       padding: const EdgeInsets.all(AppDimensions.s20),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: SafeArea(
         top: false,

@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
+import 'package:shared_core/src/theme/app_dimensions.dart';
 
 final connectivityStatusProvider = StreamProvider<ConnectivityResult>((ref) {
   return Connectivity().onConnectivityChanged.map((results) {
@@ -19,28 +20,47 @@ class OfflineBanner extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final background = Color.alphaBlend(
+      AppColors.warning.withValues(alpha: 0.12),
+      colors.surface,
+    );
 
-    return Container(
-      width: double.infinity,
-      color: AppColors.warningBorder.withValues(alpha: 0.9),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.cloud_off_rounded, size: 14, color: Colors.white),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              'Offline - your actions will sync when you reconnect',
-              textAlign: TextAlign.center,
-              style: textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+    return Semantics(
+      liveRegion: true,
+      label: 'Offline mode. Changes will sync when connection is restored.',
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: background,
+          border: const Border(bottom: BorderSide(color: AppColors.warning)),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.s16,
+          vertical: AppDimensions.s8,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 16,
+              color: AppColors.warning,
+            ),
+            const SizedBox(width: AppDimensions.s8),
+            Flexible(
+              child: Text(
+                'Offline mode — changes will sync when connection is restored',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.onSurface,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

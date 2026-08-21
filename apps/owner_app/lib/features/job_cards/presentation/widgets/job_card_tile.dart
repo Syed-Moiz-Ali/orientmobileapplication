@@ -14,112 +14,88 @@ class JobCardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.r12),
-        border: Border.all(color: AppColors.border, width: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      borderRadius: AppDimensions.r20,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                jobCard.id,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontFamily: AppFontFamilies.mono,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              _StatusBadge(jobCard: jobCard),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            jobCard.customerName,
+            style: textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            jobCard.vehicleDisplay,
+            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 10),
+          Divider(height: 1, color: colorScheme.outlineVariant),
+          const SizedBox(height: 10),
+          _InfoRow(label: 'Services:', value: jobCard.services.join(', ')),
+          const SizedBox(height: 4),
+          _InfoRow(label: 'Specialist:', value: jobCard.technician),
+          const SizedBox(height: 4),
+          _InfoRow(label: 'Est. Completion:', value: jobCard.estCompletion),
+          const SizedBox(height: 12),
+          Divider(height: 1, color: colorScheme.outlineVariant),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text(
+                'AED ${jobCard.amount.toStringAsFixed(2)}',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const Spacer(),
+              FilledButton(
+                onPressed: onViewDetails,
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.r10),
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('View Details', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+              ),
+            ],
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  jobCard.id,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.text3,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const Spacer(),
-                _StatusBadge(jobCard: jobCard),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              jobCard.customerName,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              jobCard.vehicleDisplay,
-              style: const TextStyle(fontSize: 12, color: AppColors.text3),
-            ),
-            const SizedBox(height: 10),
-            const Divider(height: 1, color: AppColors.line),
-            const SizedBox(height: 10),
-            _InfoRow(label: 'Services:', value: jobCard.services.join(', ')),
-            const SizedBox(height: 5),
-            _InfoRow(label: 'Technician:', value: jobCard.technician),
-            const SizedBox(height: 5),
-            _InfoRow(label: 'Est. Completion:', value: jobCard.estCompletion),
-            const SizedBox(height: 12),
-            const Divider(height: 1, color: AppColors.line),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Text(
-                  _formatAmount(jobCard.amount),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const Spacer(),
-                OutlinedButton(
-                  onPressed: onViewDetails,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.s14,
-                      vertical: 7,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r8),
-                    ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  child: const Text('View Details'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
-  }
-
-  String _formatAmount(double amount) {
-    final s = amount
-        .toStringAsFixed(0)
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
-    return 'AED $s';
   }
 }
 

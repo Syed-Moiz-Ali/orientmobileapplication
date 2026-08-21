@@ -1,200 +1,252 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/lead_detail_sheet.dart';
 
-class CrmKanbanView extends StatelessWidget {
+class CrmKanbanView extends StatefulWidget {
   final List<CrmLeadEntity> leads;
+
   const CrmKanbanView({super.key, required this.leads});
 
-  // FIX (audit P2): NO_RESPONSE leads were silently dropped from the kanban
-  // (and the taxonomy missed NEW/CONTACTED/QUALIFIED/PROPOSAL). The kanban now
-  // renders every status that actually appears in the data.
-  static const _columns = ['ACTIVE', 'NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'WON', 'LOST', 'UNANSWERED', 'NO_RESPONSE'];
+  @override
+  State<CrmKanbanView> createState() => _CrmKanbanViewState();
+}
+
+class _CrmKanbanViewState extends State<CrmKanbanView> {
+  static const _knownStages = <String>[
+    'ACTIVE',
+    'NEW',
+    'CONTACTED',
+    'QUALIFIED',
+    'PROPOSAL',
+    'WON',
+    'LOST',
+    'UNANSWERED',
+    'NO_RESPONSE',
+  ];
+
+  int _selectedStage = 0;
+
+  List<String> get _stages {
+    final present = widget.leads
+        .map((lead) => lead.status.toUpperCase())
+        .toSet();
+    return [
+      ..._knownStages.where(present.contains),
+      ...present.where((stage) => !_knownStages.contains(stage)),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
-    final presentStatuses = leads.map((l) => l.status.toUpperCase()).toSet();
-    final columns = [..._columns, ...presentStatuses.where((s) => !_columns.contains(s))];
-    return SizedBox(
-      height: MediaQuery.of(context).size.height - 250,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: columns.map((status) {
-            final columnLeads = leads.where((l) => l.status.toUpperCase() == status).toList();
-            return _column(context, status, columnLeads);
-          }).toList(),
+    final stages = _stages;
+    if (stages.isEmpty) {
+      return const EmptyState(
+        icon: Icons.view_kanban_outlined,
+        title: 'No pipeline stages',
+        message: 'New leads will appear here as they enter the pipeline.',
+      );
+    }
+
+    if (context.isCompact) return _buildCompact(context, stages);
+    return _buildBoard(context, stages);
+  }
+
+  Widget _buildCompact(BuildContext context, List<String> stages) {
+    final selectedIndex = _selectedStage.clamp(0, stages.length - 1);
+    final selected = stages[selectedIndex];
+    final leads = _leadsFor(selected);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.s16,
+            AppDimensions.s12,
+            AppDimensions.s16,
+            AppDimensions.s8,
+          ),
+          child: Row(
+            children: List.generate(stages.length, (index) {
+              final stage = stages[index];
+              final selected = index == selectedIndex;
+              return Padding(
+                padding: const EdgeInsets.only(right: AppDimensions.s8),
+                child: ChoiceChip(
+                  selected: selected,
+                  onSelected: (_) => setState(() => _selectedStage = index),
+                  label: Text('${_stageLabel(stage)}  ${_leadsFor(stage).length}'),
+                ),
+              );
+            }),
+          ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.s16,
+            AppDimensions.s8,
+            AppDimensions.s16,
+            AppDimensions.s10,
+          ),
+          child: Text(
+            '${_stageLabel(selected)} · ${leads.length} ${leads.length == 1 ? 'lead' : 'leads'}',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+        ),
+        Expanded(
+          child: leads.isEmpty
+              ? const Center(child: Text('No leads in this stage'))
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.s16,
+                    0,
+                    AppDimensions.s16,
+                    AppDimensions.s16,
+                  ),
+                  itemCount: leads.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppDimensions.s8),
+                  itemBuilder: (_, index) => _LeadRecord(lead: leads[index]),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBoard(BuildContext context, List<String> stages) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.all(context.adaptive.gutter),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: stages.map((stage) {
+          final leads = _leadsFor(stage);
+          final color = _stageColor(context, stage);
+          return Container(
+            width: context.isLarge ? 300 : 270,
+            margin: const EdgeInsets.only(right: AppDimensions.s12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(AppDimensions.r12),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(AppDimensions.s14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.s8),
+                      Expanded(
+                        child: Text(
+                          _stageLabel(stage),
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ),
+                      Badge(
+                        backgroundColor: color,
+                        label: Text('${leads.length}'),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: Theme.of(context).colorScheme.outline),
+                Expanded(
+                  child: leads.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No leads',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(AppDimensions.s8),
+                          itemCount: leads.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: AppDimensions.s8),
+                          itemBuilder: (_, index) =>
+                              _LeadRecord(lead: leads[index]),
+                        ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _column(BuildContext context, String status, List<CrmLeadEntity> columnLeads) {
-    final (color, bg) = switch (status) {
-      'WON' => (CrmColors.green, CrmColors.greenBg),
-      'LOST' => (CrmColors.red, CrmColors.redBg),
-      'UNANSWERED' || 'NO_RESPONSE' => (CrmColors.amber, CrmColors.amberBg),
-      'NEW' || 'CONTACTED' => (CrmColors.blue, CrmColors.blueBg),
-      _ => (CrmColors.accent, CrmColors.accentLight),
-    };
+  List<CrmLeadEntity> _leadsFor(String stage) => widget.leads
+      .where((lead) => lead.status.toUpperCase() == stage)
+      .toList();
 
-    return Container(
-      width: 240,
-      height: double.infinity,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: bg.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  String _stageLabel(String stage) => stage
+      .toLowerCase()
+      .split('_')
+      .map((word) => word.isEmpty
+          ? word
+          : '${word.characters.first.toUpperCase()}${word.substring(1)}')
+      .join(' ');
+
+  Color _stageColor(BuildContext context, String stage) {
+    final colors = Theme.of(context).colorScheme;
+    return switch (stage) {
+      'WON' => AppColors.success,
+      'LOST' => colors.error,
+      'UNANSWERED' || 'NO_RESPONSE' => AppColors.warning,
+      'NEW' || 'CONTACTED' => colors.secondary,
+      _ => colors.primary,
+    };
+  }
+}
+
+class _LeadRecord extends StatelessWidget {
+  final CrmLeadEntity lead;
+
+  const _LeadRecord({required this.lead});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final contact = lead.phone.isNotEmpty ? lead.phone : lead.email;
+
+    return AppRecordRow(
+      padding: const EdgeInsets.all(AppDimensions.s12),
+      title: lead.customerName,
+      subtitle: contact.isEmpty ? 'No contact information' : contact,
+      metadata: Wrap(
+        spacing: AppDimensions.s8,
+        runSpacing: AppDimensions.s4,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  status,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '${columnLeads.length}',
-                    style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ],
-            ),
+          StatusPill(
+            label: lead.source,
+            bg: lead.sourceColor.withValues(alpha: 0.10),
+            fg: lead.sourceColor,
           ),
-          Expanded(
-            child: columnLeads.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No leads',
-                      style: TextStyle(color: CrmColors.textM, fontSize: 11),
-                    ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    children: columnLeads.map((l) => _card(context, l)).toList(),
-                  ),
+          Text(
+            lead.assignedTo.isEmpty ? 'Unassigned' : lead.assignedTo,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _card(BuildContext context, CrmLeadEntity lead) {
-    return GestureDetector(
-      onTap: () => LeadDetailSheet.show(context, lead),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: CrmColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: CrmColors.primary.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    lead.customerName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: CrmColors.textH,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: lead.sourceColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    lead.source,
-                    style: TextStyle(color: lead.sourceColor, fontSize: 9, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (lead.phone.isNotEmpty)
-              Row(
-                children: [
-                  const Icon(Icons.phone_outlined, size: 11, color: CrmColors.textM),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      lead.phone,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: CrmColors.textB, fontSize: 11),
-                    ),
-                  ),
-                ],
-              ),
-            if (lead.email.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(Icons.email_outlined, size: 11, color: CrmColors.textM),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      lead.email,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: CrmColors.textB, fontSize: 11),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 8),
-            Text(
-              lead.assignedTo.isEmpty ? 'Unassigned' : lead.assignedTo,
-              style: const TextStyle(color: CrmColors.textM, fontSize: 10),
-            ),
-          ],
-        ),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        color: theme.colorScheme.onSurfaceVariant,
       ),
+      onTap: () => LeadDetailSheet.show(context, lead),
     );
   }
 }

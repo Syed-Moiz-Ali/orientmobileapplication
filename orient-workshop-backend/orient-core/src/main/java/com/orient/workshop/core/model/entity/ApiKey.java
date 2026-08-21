@@ -21,6 +21,7 @@ public class ApiKey {
     private String keyHash;
     private String keyPrefix;
     private String role;
+    private Long branchId;
     private Boolean isActive;
     private Long createdBy;
     private LocalDateTime lastUsedAt;

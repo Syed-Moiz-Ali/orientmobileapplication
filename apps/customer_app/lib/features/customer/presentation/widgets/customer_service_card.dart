@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 
-const Color _navy = AppColors.darkNavy;
-
 class CustomerActiveServiceCard extends StatelessWidget {
   final CustomerServiceEntity svc;
   final VoidCallback onTap;
@@ -16,24 +14,24 @@ class CustomerActiveServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.r24),
       child: Container(
-        padding: const EdgeInsets.all(AppDimensions.s18),
+        padding: const EdgeInsets.all(AppDimensions.s20),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [_navy, AppColors.accent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.r18),
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.r24),
+          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.35), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: _navy.withValues(alpha: 0.30),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: colorScheme.primary.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -42,45 +40,36 @@ class CustomerActiveServiceCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
-                  ),
-                  child: Text(
-                    'LIVE',
-                    style: textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.s8),
-                Text(
-                  'Current Service',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w600,
-                  ),
+                StatusPill(
+                  label: 'LIVE TRACKER',
+                  showDot: true,
+                  bg: colorScheme.primary.withValues(alpha: 0.12),
+                  fg: colorScheme.primary,
                 ),
                 const Spacer(),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.white70,
-                  size: 20,
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: colorScheme.onSurfaceVariant,
+                  size: 16,
                 ),
               ],
             ),
-            const SizedBox(height: AppDimensions.s12),
-            Text(svc.service, style: AppTextStyles.title(color: Colors.white)),
+            const SizedBox(height: AppDimensions.s14),
+            Text(
+              svc.service,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: colorScheme.onSurface,
+                fontSize: 17,
+              ),
+            ),
             const SizedBox(height: AppDimensions.s4),
             Text(
-              '${svc.vehicleName}  \u00b7  ${svc.plateNumber}',
-              style: textTheme.bodyMedium?.copyWith(color: Colors.white70),
+              '${svc.vehicleName} • ${svc.plateNumber}',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: AppDimensions.s16),
             Row(
@@ -89,41 +78,64 @@ class CustomerActiveServiceCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Progress',
-                        style: textTheme.labelMedium?.copyWith(
-                          color: Colors.white60,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Workshop Progress',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            '${svc.progressPercent}%',
+                            style: textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 7),
+                      const SizedBox(height: 8),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.rPill,
-                        ),
+                        borderRadius: BorderRadius.circular(AppDimensions.rPill),
                         child: LinearProgressIndicator(
                           value: svc.progressPercent / 100,
-                          minHeight: 7,
-                          backgroundColor: Colors.white24,
-                          valueColor: const AlwaysStoppedAnimation(
-                            Colors.white,
-                          ),
+                          minHeight: 8,
+                          backgroundColor: colorScheme.surfaceContainerLow,
+                          valueColor: AlwaysStoppedAnimation(colorScheme.primary),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: AppDimensions.s16),
-                Text(
-                  '${svc.progressPercent}%',
-                  style: AppTextStyles.displayLarge(color: Colors.white),
-                ),
               ],
             ),
-            const SizedBox(height: AppDimensions.s10),
-            Text(
-              '\u23f1  Est. ready by ${svc.estCompletion}',
-              style: textTheme.bodySmall?.copyWith(color: Colors.white70),
+            const SizedBox(height: AppDimensions.s12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Estimated handover: ${svc.estCompletion}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -140,23 +152,14 @@ class CustomerServiceStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r14)),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppDimensions.s18),
+      borderRadius: AppDimensions.r20,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -168,43 +171,38 @@ class CustomerServiceStatusCard extends StatelessWidget {
                   children: [
                     Text(
                       svc.service,
-                      style: AppTextStyles.title(color: AppColors.textPrimary),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                     const SizedBox(height: AppDimensions.s4),
                     Text(
-                      '${svc.vehicleName}  \u00b7  ${svc.plateNumber}',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.text3,
+                      '${svc.vehicleName} • ${svc.plateNumber}',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.s12,
-                  vertical: AppDimensions.s6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.cyanLight,
-                  borderRadius: BorderRadius.circular(AppDimensions.r20),
-                ),
-                child: Text(
-                  'In Progress',
-                  style: textTheme.labelMedium?.copyWith(
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+              StatusPill(
+                label: 'IN PROGRESS',
+                showDot: true,
+                bg: colorScheme.primary.withValues(alpha: 0.12),
+                fg: colorScheme.primary,
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.s20),
+          const SizedBox(height: AppDimensions.s16),
           Row(
             children: [
               Text(
                 '${svc.progressPercent}%',
-                style: AppTextStyles.displayLarge(color: AppColors.accent),
+                style: textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.primary,
+                ),
               ),
               const SizedBox(width: AppDimensions.s14),
               Expanded(
@@ -212,22 +210,20 @@ class CustomerServiceStatusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Completion',
-                      style: textTheme.labelMedium?.copyWith(
-                        color: AppColors.text3,
-                        fontWeight: FontWeight.w600,
+                      'Job Completion',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 6),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(AppDimensions.rPill),
                       child: LinearProgressIndicator(
                         value: svc.progressPercent / 100,
-                        minHeight: 10,
-                        backgroundColor: AppColors.cyanLight,
-                        valueColor: const AlwaysStoppedAnimation(
-                          AppColors.accent,
-                        ),
+                        minHeight: 8,
+                        backgroundColor: colorScheme.surfaceContainerLow,
+                        valueColor: AlwaysStoppedAnimation(colorScheme.primary),
                       ),
                     ),
                   ],
@@ -235,26 +231,26 @@ class CustomerServiceStatusCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.s16),
+          const SizedBox(height: AppDimensions.s14),
           Container(
             padding: const EdgeInsets.all(AppDimensions.s12),
             decoration: BoxDecoration(
-              color: AppColors.surfaceAlt,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(AppDimensions.r12),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.schedule_rounded,
-                  color: AppColors.text3,
+                  color: colorScheme.onSurfaceVariant,
                   size: 16,
                 ),
                 const SizedBox(width: AppDimensions.s8),
                 Text(
-                  'Est. ready by ${svc.estCompletion}',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.text3,
-                    fontWeight: FontWeight.w600,
+                  'Estimated Ready: ${svc.estCompletion}',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],

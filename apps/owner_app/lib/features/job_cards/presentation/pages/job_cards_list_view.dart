@@ -24,47 +24,53 @@ class _JobCardsListViewState extends ConsumerState<JobCardsListView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final state = ref.watch(jobCardsProvider);
     final notifier = ref.read(jobCardsProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Job Cards',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+        title: Text(
+          'Job Card Register',
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: colorScheme.onSurface,
           ),
         ),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Container(
-              height: 42,
+              height: 48,
               decoration: BoxDecoration(
-                color: AppColors.gray100,
-                borderRadius: BorderRadius.circular(AppDimensions.r8),
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(AppDimensions.r16),
+                border: Border.all(color: colorScheme.outlineVariant),
               ),
               child: TextField(
                 controller: _searchCtrl,
                 onChanged: notifier.onSearch,
-                style: const TextStyle(fontSize: 14),
-                decoration: const InputDecoration(
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                decoration: InputDecoration(
                   hintText: 'Search by customer, job card ID, vehicle...',
-                  hintStyle: TextStyle(color: AppColors.gray400, fontSize: 13),
-                  prefixIcon: Icon(Icons.search, color: AppColors.gray400, size: 20),
+                  hintStyle: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                  ),
+                  prefixIcon: Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant, size: 20),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
@@ -75,39 +81,27 @@ class _JobCardsListViewState extends ConsumerState<JobCardsListView> {
           ),
           Expanded(
             child: state.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  )
+                ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
                 : RefreshIndicator(
                     onRefresh: notifier.refresh,
-                    color: AppColors.primary,
+                    color: colorScheme.primary,
                     child: state.filtered.isEmpty
                         ? ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             children: const [
-                              SizedBox(height: 120),
-                              Icon(
-                                Icons.assignment_outlined,
-                                size: 48,
-                                color: AppColors.gray400,
-                              ),
-                              SizedBox(height: 12),
-                              Center(
-                                child: Text(
-                                  'No job cards found',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.gray500,
-                                  ),
-                                ),
+                              SizedBox(height: 80),
+                              EmptyState(
+                                message: 'No matching job cards found in the system.',
+                                title: 'No Job Cards',
+                                icon: Icons.assignment_outlined,
                               ),
                             ],
                           )
-                        : ListView.builder(
+                        : ListView.separated(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                             itemCount: state.filtered.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
                             itemBuilder: (_, i) {
                               final jc = state.filtered[i];
                               return JobCardTile(

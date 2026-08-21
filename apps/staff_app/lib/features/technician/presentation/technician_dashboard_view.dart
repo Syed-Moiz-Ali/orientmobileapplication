@@ -23,16 +23,33 @@ class _TechBody extends ConsumerWidget {
   const _TechBody();
 
   static const _pages = <Widget>[_DashboardTab(), _EfficiencyTab()];
+  static const _navItems = <AppNavItem>[
+    AppNavItem(
+      selectedIcon: Icons.dashboard_rounded,
+      icon: Icons.dashboard_outlined,
+      label: 'Today',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.assignment_turned_in_rounded,
+      icon: Icons.assignment_outlined,
+      label: 'My jobs',
+    ),
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final state = ref.watch(technicianDashboardProvider);
     final notifier = ref.read(technicianDashboardProvider.notifier);
+    final adaptive = context.adaptive;
 
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
+      SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: theme.brightness == Brightness.dark
+            ? Brightness.light
+            : Brightness.dark,
       ),
     );
 
@@ -40,14 +57,21 @@ class _TechBody extends ConsumerWidget {
       body: Column(
         children: [
           const TechnicianHeaderWidget(),
-          Container(height: 1, color: AppColors.border),
-          _TechTabBar(
-            selectedTab: state.selectedTab,
-            onTap: notifier.selectTab,
-          ),
-          Container(height: 1, color: AppColors.border),
+          Divider(height: 1, color: colorScheme.outlineVariant),
+          if (!adaptive.useNavigationRail) ...[
+            _TechTabBar(
+              selectedTab: state.selectedTab,
+              onTap: notifier.selectTab,
+            ),
+            Divider(height: 1, color: colorScheme.outlineVariant),
+          ],
           Expanded(
-            child: IndexedStack(index: state.selectedTab, children: _pages),
+            child: AppAdaptiveNavigationFrame(
+              items: _navItems,
+              selectedIndex: state.selectedTab,
+              onSelected: notifier.selectTab,
+              child: IndexedStack(index: state.selectedTab, children: _pages),
+            ),
           ),
         ],
       ),
@@ -67,8 +91,16 @@ class _TechTabBar extends StatelessWidget {
     final textTheme = theme.textTheme;
 
     const tabs = [
-      AppNavItem(selectedIcon: Icons.dashboard_rounded, icon: Icons.dashboard_outlined, label: 'Dashboard'),
-      AppNavItem(selectedIcon: Icons.assignment_turned_in_rounded, icon: Icons.assignment_outlined, label: 'My Jobs'),
+      AppNavItem(
+        selectedIcon: Icons.dashboard_rounded,
+        icon: Icons.dashboard_outlined,
+        label: 'Dashboard',
+      ),
+      AppNavItem(
+        selectedIcon: Icons.assignment_turned_in_rounded,
+        icon: Icons.assignment_outlined,
+        label: 'My Jobs',
+      ),
     ];
 
     return Container(
@@ -101,13 +133,17 @@ class _TechTabBar extends StatelessWidget {
                       Icon(
                         sel ? tabs[i].selectedIcon : tabs[i].icon,
                         size: 20,
-                        color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                        color: sel
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         tabs[i].label,
                         style: textTheme.labelLarge?.copyWith(
-                          color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                          color: sel
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
                           fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
                         ),
                       ),
@@ -134,60 +170,64 @@ class _DashboardTab extends ConsumerWidget {
     return RefreshIndicator(
       color: AppColors.accent,
       onRefresh: notifier.refresh,
-      child: ListView(
+      child: AppResponsivePage(
         padding: EdgeInsets.zero,
-        children: [
-          Container(
-            color: AppColors.surface,
-            padding: EdgeInsets.symmetric(
-              horizontal: AppDimensions.s16,
-              vertical: AppDimensions.s12,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(AppDimensions.r2),
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              color: AppColors.surface,
+              padding: EdgeInsets.symmetric(
+                horizontal: AppDimensions.s16,
+                vertical: AppDimensions.s12,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(AppDimensions.r2),
+                    ),
                   ),
-                ),
-                SizedBox(width: AppDimensions.s10),
-                Text(
-                  'Technician Dashboard',
-                  style: AppTextStyles.title(color: AppColors.textPrimary),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: notifier.refresh,
-                  child: state.isLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: AppColors.accent,
+                  SizedBox(width: AppDimensions.s10),
+                  Text(
+                    'Technician Dashboard',
+                    style: AppTextStyles.title(color: AppColors.textPrimary),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: notifier.refresh,
+                    child: state.isLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppColors.accent,
+                            ),
+                          )
+                        : Icon(
+                            Icons.refresh_rounded,
+                            color: AppColors.text3,
+                            size: 20,
                           ),
-                        )
-                      : Icon(
-                          Icons.refresh_rounded,
-                          color: AppColors.text3,
-                          size: 20,
-                        ),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(height: 1, color: AppColors.border),
-          SizedBox(height: AppDimensions.s14),
-          const AttendanceSection(),
-          SizedBox(height: AppDimensions.s16),
-          const ProductivitySection(),
-          SizedBox(height: AppDimensions.s16),
-          const AssignedJobsSection(),
-          SizedBox(height: AppDimensions.s24),
-        ],
+            Container(height: 1, color: AppColors.border),
+            SizedBox(height: AppDimensions.s14),
+            const AttendanceSection(),
+            SizedBox(height: AppDimensions.s16),
+            const ProductivitySection(),
+            SizedBox(height: AppDimensions.s16),
+            const AssignedJobsSection(),
+            SizedBox(height: AppDimensions.s24),
+          ],
+        ),
       ),
     );
   }
@@ -204,203 +244,211 @@ class _EfficiencyTab extends ConsumerWidget {
     return RefreshIndicator(
       color: AppColors.accent,
       onRefresh: notifier.refresh,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Row(
-                children: [
-                  _KpiChip(
-                    label: 'Total',
-                    value: '${notifier.totalJobs}',
-                    color: AppColors.accent,
-                    bg: AppColors.accent.withValues(alpha: 0.12),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Row(
+                    children: [
+                      _KpiChip(
+                        label: 'Total',
+                        value: '${notifier.totalJobs}',
+                        color: AppColors.accent,
+                        bg: AppColors.accent.withValues(alpha: 0.12),
+                      ),
+                      SizedBox(width: AppDimensions.s8),
+                      _KpiChip(
+                        label: 'In Progress',
+                        value: '${notifier.inProgressJobs}',
+                        color: AppColors.warning,
+                        bg: AppColors.warningBg,
+                      ),
+                      SizedBox(width: AppDimensions.s8),
+                      _KpiChip(
+                        label: 'Done',
+                        value: '${notifier.completedJobs}',
+                        color: AppColors.success,
+                        bg: AppColors.successBg,
+                      ),
+                      SizedBox(width: AppDimensions.s8),
+                      _KpiChip(
+                        label: 'Delayed',
+                        value: '${notifier.delayedJobs}',
+                        color: AppColors.danger,
+                        bg: AppColors.dangerBg,
+                      ),
+                    ],
                   ),
-                  SizedBox(width: AppDimensions.s8),
-                  _KpiChip(
-                    label: 'In Progress',
-                    value: '${notifier.inProgressJobs}',
-                    color: AppColors.warning,
-                    bg: AppColors.warningBg,
-                  ),
-                  SizedBox(width: AppDimensions.s8),
-                  _KpiChip(
-                    label: 'Done',
-                    value: '${notifier.completedJobs}',
-                    color: AppColors.success,
-                    bg: AppColors.successBg,
-                  ),
-                  SizedBox(width: AppDimensions.s8),
-                  _KpiChip(
-                    label: 'Delayed',
-                    value: '${notifier.delayedJobs}',
-                    color: AppColors.danger,
-                    bg: AppColors.dangerBg,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      onChanged: notifier.updateSearch,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Search job card, vehicle, plate...',
-                        hintStyle: AppTextStyles.subtitle(
-                          color: AppColors.text3,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          color: AppColors.text3,
-                          size: 18,
-                        ),
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 11,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.r12,
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          onChanged: notifier.updateSearch,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 13,
                           ),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.r12,
-                          ),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.r12,
-                          ),
-                          borderSide: BorderSide(
-                            color: AppColors.accent,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: AppDimensions.s10),
-                  Container(
-                    height: 44,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppDimensions.s10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.filter_list_rounded,
-                          color: AppColors.text3,
-                          size: 16,
-                        ),
-                        SizedBox(width: AppDimensions.s4),
-                        DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: state.selectedFilter,
-                            dropdownColor: AppColors.surface,
-                            style: AppTextStyles.bodySmall(
-                              color: AppColors.textPrimary,
+                          decoration: InputDecoration(
+                            hintText: 'Search job card, vehicle, plate...',
+                            hintStyle: AppTextStyles.subtitle(
+                              color: AppColors.text3,
                             ),
-                            icon: Icon(
-                              Icons.keyboard_arrow_down_rounded,
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: AppColors.text3,
+                              size: 18,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.surface,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 11,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r12,
+                              ),
+                              borderSide: BorderSide(color: AppColors.border),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r12,
+                              ),
+                              borderSide: BorderSide(color: AppColors.border),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r12,
+                              ),
+                              borderSide: BorderSide(
+                                color: AppColors.accent,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: AppDimensions.s10),
+                      Container(
+                        height: 44,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppDimensions.s10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.r12,
+                          ),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.filter_list_rounded,
                               color: AppColors.text3,
                               size: 16,
                             ),
-                            onChanged: (v) =>
-                                notifier.updateFilter(v ?? 'All Status'),
-                            items: notifier.filterOptions
-                                .map(
-                                  (f) => DropdownMenuItem(
-                                    value: f,
-                                    child: Text(f),
-                                  ),
-                                )
-                                .toList(),
-                          ),
+                            SizedBox(width: AppDimensions.s4),
+                            DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: state.selectedFilter,
+                                dropdownColor: AppColors.surface,
+                                style: AppTextStyles.bodySmall(
+                                  color: AppColors.textPrimary,
+                                ),
+                                icon: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: AppColors.text3,
+                                  size: 16,
+                                ),
+                                onChanged: (v) =>
+                                    notifier.updateFilter(v ?? 'All Status'),
+                                items: notifier.filterOptions
+                                    .map(
+                                      (f) => DropdownMenuItem(
+                                        value: f,
+                                        child: Text(f),
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              padding: EdgeInsets.symmetric(vertical: AppDimensions.s10),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.12),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppDimensions.r12),
                 ),
-                border: Border.all(color: AppColors.border),
               ),
-              child: const Row(
-                children: [
-                  Expanded(flex: 3, child: _ColHead('JOB CARD #')),
-                  Expanded(flex: 2, child: _ColHead('DATE')),
-                  Expanded(flex: 2, child: _ColHead('BRAND')),
-                  Expanded(flex: 2, child: _ColHead('MODEL')),
-                  Expanded(flex: 2, child: _ColHead('PLATE')),
-                  Expanded(flex: 2, child: _ColHead('STATUS')),
-                ],
-              ),
-            ),
-          ),
-          notifier.filteredJobs.isEmpty
-              ? SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off_rounded,
-                          size: 48,
-                          color: AppColors.text3,
-                        ),
-                        SizedBox(height: AppDimensions.s12),
-                        Text(
-                          'No jobs found',
-                          style: AppTextStyles.bodyStrong(
-                            color: AppColors.text3,
-                          ),
-                        ),
-                      ],
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                  padding: EdgeInsets.symmetric(vertical: AppDimensions.s10),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.12),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(AppDimensions.r12),
                     ),
+                    border: Border.all(color: AppColors.border),
                   ),
-                )
-              : SliverList(
-                  delegate: SliverChildBuilderDelegate((context, i) {
-                    final job = notifier.filteredJobs[i];
-                    return _JobRow(
-                      job: job,
-                      isEven: i % 2 == 0,
-                      onTap: () => _openDetail(context, ref, job),
-                    );
-                  }, childCount: notifier.filteredJobs.length),
+                  child: const Row(
+                    children: [
+                      Expanded(flex: 3, child: _ColHead('JOB CARD #')),
+                      Expanded(flex: 2, child: _ColHead('DATE')),
+                      Expanded(flex: 2, child: _ColHead('BRAND')),
+                      Expanded(flex: 2, child: _ColHead('MODEL')),
+                      Expanded(flex: 2, child: _ColHead('PLATE')),
+                      Expanded(flex: 2, child: _ColHead('STATUS')),
+                    ],
+                  ),
                 ),
-          const SliverToBoxAdapter(child: SizedBox(height: 32)),
-        ],
+              ),
+              notifier.filteredJobs.isEmpty
+                  ? SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 48,
+                              color: AppColors.text3,
+                            ),
+                            SizedBox(height: AppDimensions.s12),
+                            Text(
+                              'No jobs found',
+                              style: AppTextStyles.bodyStrong(
+                                color: AppColors.text3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate((context, i) {
+                        final job = notifier.filteredJobs[i];
+                        return _JobRow(
+                          job: job,
+                          isEven: i % 2 == 0,
+                          onTap: () => _openDetail(context, ref, job),
+                        );
+                      }, childCount: notifier.filteredJobs.length),
+                    ),
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            ],
+          ),
+        ),
       ),
     );
   }

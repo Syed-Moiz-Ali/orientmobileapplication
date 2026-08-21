@@ -7,6 +7,7 @@ import 'package:owner_app/features/dashboard/presentation/providers/dashboard_pr
 
 class PendingApprovalsView extends ConsumerStatefulWidget {
   const PendingApprovalsView({super.key});
+
   @override
   ConsumerState<PendingApprovalsView> createState() => _PendingApprovalsViewState();
 }
@@ -14,42 +15,180 @@ class PendingApprovalsView extends ConsumerStatefulWidget {
 class _PendingApprovalsViewState extends ConsumerState<PendingApprovalsView> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final state = ref.watch(pendingApprovalsProvider);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.gray700), onPressed: () => context.pop()),
-        title: const Text('Pending Approvals', style: TextStyle(color: AppColors.gray900, fontSize: 17, fontWeight: FontWeight.w700)),
-        actions: [Padding(padding: const EdgeInsets.only(right: 12), child: Stack(clipBehavior: Clip.none, children: [IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: AppColors.gray700),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Notifications are not available yet'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
-        ), if (state.totalPending > 0) Positioned(right: 6, top: 6, child: Container(width: 16, height: 16, decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle), child: Center(child: Text('${state.totalPending}', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800)))))]))],
+        backgroundColor: colorScheme.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          'Pending Authorizations',
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: colorScheme.onSurface,
+          ),
+        ),
       ),
       body: state.isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : Column(children: [
-              Container(width: double.infinity, padding: const EdgeInsets.all(16), color: AppColors.dangerBg, child: Column(children: [const Text('Total Pending', style: TextStyle(fontSize: 12, color: AppColors.danger)), const SizedBox(height: 4), Text('${state.totalPending}', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.danger))])),
-              const Padding(padding: EdgeInsets.fromLTRB(16, 12, 16, 8), child: Align(alignment: Alignment.centerLeft, child: Text('CATEGORIES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.gray400)))),
-              Expanded(child: ListView.separated(itemCount: state.categories.length, separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.gray200), itemBuilder: (_, i) => _CategoryItem(category: state.categories[i]))),
-            ]),
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: state.totalPending > 0
+                          ? const Color(0xFFEF4444).withValues(alpha: 0.08)
+                          : colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(AppDimensions.r24),
+                      border: Border.all(
+                        color: state.totalPending > 0
+                            ? const Color(0xFFEF4444).withValues(alpha: 0.25)
+                            : colorScheme.outlineVariant,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: state.totalPending > 0
+                                ? const Color(0xFFEF4444)
+                                : colorScheme.primary,
+                            borderRadius: BorderRadius.circular(AppDimensions.r16),
+                          ),
+                          child: const Icon(
+                            Icons.gavel_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Awaiting Owner Approval',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${state.totalPending} Requests Pending',
+                                style: textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: state.totalPending > 0
+                                      ? const Color(0xFFEF4444)
+                                      : colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'APPROVAL CATEGORIES',
+                    style: textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurfaceVariant,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.categories.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, i) => _CategoryItem(category: state.categories[i]),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
 
 class _CategoryItem extends StatelessWidget {
   final ApprovalCategory category;
+
   const _CategoryItem({required this.category});
+
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), child: Row(children: [
-    Container(width: 44, height: 44, decoration: BoxDecoration(color: category.iconBg, borderRadius: BorderRadius.circular(AppDimensions.r10)), child: Icon(category.icon, color: AppColors.gray700, size: 22)),
-    const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(category.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.gray900)), Text(category.subtitle, style: const TextStyle(fontSize: 11, color: AppColors.gray500))])), const SizedBox(width: 8), Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: AppColors.primaryBg, borderRadius: BorderRadius.circular(AppDimensions.r8)), child: Text('${category.count}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary))), const SizedBox(width: 4), const Icon(Icons.chevron_right, color: AppColors.gray400, size: 20),
-  ]));
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      borderRadius: AppDimensions.r20,
+      color: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant,
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: category.iconBg,
+              borderRadius: BorderRadius.circular(AppDimensions.r14),
+            ),
+            child: Icon(category.icon, color: colorScheme.onSurface, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  category.title,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  category.subtitle,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          StatusPill(
+            label: '${category.count}',
+            bg: category.count > 0
+                ? colorScheme.primary.withValues(alpha: 0.12)
+                : colorScheme.surfaceContainerLow,
+            fg: category.count > 0 ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 6),
+          Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant, size: 20),
+        ],
+      ),
+    );
+  }
 }
