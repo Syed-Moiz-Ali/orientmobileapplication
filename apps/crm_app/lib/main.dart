@@ -13,6 +13,7 @@ void main() async {
   AppErrorHandler.init(logger);
 
   await HiveRegistry.initHive();
+  await PushNotificationService.instance.initialize();
 
   runApp(
     ProviderScope(
@@ -40,11 +41,13 @@ class CrmApp extends ConsumerWidget {
     // WhatsApp conversations appear without a manual refresh.
     return ResumeRefreshScope(
       onResumed: () => ref.read(crmUiProvider.notifier).refresh(),
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        routerConfig: router,
-        title: brand.appName,
-        theme: AppTheme.light(brand),
+      child: AuthenticatedPushNotificationScope(
+        child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          routerConfig: router,
+          title: brand.appName,
+          theme: AppTheme.light(brand),
+        ),
       ),
     );
   }

@@ -13,6 +13,7 @@ void main() async {
   AppErrorHandler.init(logger);
 
   await HiveRegistry.initHive();
+  await PushNotificationService.instance.initialize();
 
   runApp(
     ProviderScope(
@@ -46,13 +47,15 @@ class CustomerApp extends ConsumerWidget {
         ref.invalidate(customerBookingsProvider);
         ref.invalidate(customerApprovalsProvider);
       },
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        routerConfig: router,
-        title: brand.appName,
-        theme: AppTheme.light(brand),
-        darkTheme: AppTheme.dark(brand),
-        themeMode: ThemeMode.light,
+      child: AuthenticatedPushNotificationScope(
+        child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          routerConfig: router,
+          title: brand.appName,
+          theme: AppTheme.light(brand),
+          darkTheme: AppTheme.dark(brand),
+          themeMode: ThemeMode.light,
+        ),
       ),
     );
   }

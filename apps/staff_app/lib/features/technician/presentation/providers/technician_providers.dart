@@ -17,6 +17,7 @@ class TechnicianState {
   final AttendanceSummaryEntity attendanceSummary;
   final List<AssignedJobEntity> assignedJobs;
   final String quickJobError;
+  final String dashboardError;
   final String searchQuery;
   final String selectedFilter;
   final TechnicianJobEntity? selectedJob;
@@ -29,6 +30,7 @@ class TechnicianState {
     required this.attendanceSummary,
     required this.assignedJobs,
     this.quickJobError = '',
+    this.dashboardError = '',
     this.searchQuery = '',
     this.selectedFilter = 'All Status',
     this.selectedJob,
@@ -42,6 +44,7 @@ class TechnicianState {
     AttendanceSummaryEntity? attendanceSummary,
     List<AssignedJobEntity>? assignedJobs,
     String? quickJobError,
+    String? dashboardError,
     String? searchQuery,
     String? selectedFilter,
     TechnicianJobEntity? selectedJob,
@@ -55,6 +58,7 @@ class TechnicianState {
       attendanceSummary: attendanceSummary ?? this.attendanceSummary,
       assignedJobs: assignedJobs ?? this.assignedJobs,
       quickJobError: quickJobError ?? this.quickJobError,
+      dashboardError: dashboardError ?? this.dashboardError,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedFilter: selectedFilter ?? this.selectedFilter,
       selectedJob: clearSelectedJob ? null : (selectedJob ?? this.selectedJob),
@@ -157,8 +161,9 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       );
       // Persist the resolved identity so offline Hive keys are user-correct.
       try {
-        Hive.box<dynamic>('technician_jobs')
-            .put('technician_profile', profile.toJson());
+        Hive.box<dynamic>(
+          'technician_jobs',
+        ).put('technician_profile', profile.toJson());
       } catch (_) {}
 
       final empId = profile.empId;
@@ -205,11 +210,17 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       }
 
       ref.read(technicianRefreshProvider.notifier).state++;
+      state = state.copyWith(dashboardError: '');
     } catch (e, st) {
       logger.e(
         'Failed to load technician data from remote',
         error: e,
         stackTrace: st,
+      );
+      state = state.copyWith(
+        dashboardError: _allJobs.isEmpty
+            ? 'Could not load live workshop data. Tap to retry.'
+            : 'Showing saved jobs while the workshop service reconnects.',
       );
     }
   }
@@ -432,7 +443,10 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     // punch state. Key by empId + date.
     final box = Hive.box<dynamic>('technician_jobs');
     box.put('attendance_${profile.empId}_${payload['date']}', payload);
-    await _enqueueSync('attendance_${profile.empId}_${payload['date']}', payload);
+    await _enqueueSync(
+      'attendance_${profile.empId}_${payload['date']}',
+      payload,
+    );
   }
 
   Future<void> updateAssignedJobStatus(

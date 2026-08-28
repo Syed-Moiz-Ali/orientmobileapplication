@@ -49,26 +49,22 @@ final advisorReportDataProvider = FutureProvider<AdvisorReportData>((
   ref.watch(advisorReportRangeProvider);
   final range = ref.watch(advisorReportRangeProvider);
   final remote = ref.read(advisorRemoteDataSourceProvider);
-  try {
-    final r = await remote.getReports(_rangeParam(range));
-    return AdvisorReportData(
-      totalJobs: r.totalJobs,
-      completedJobs: r.completedJobs,
-      pendingJobs:
-          r.totalJobs - r.completedJobs - r.inProgressJobs - r.cancelledJobs,
-      inProgressJobs: r.inProgressJobs,
-      cancelledJobs: r.cancelledJobs,
-      statusBreakdown: [
-        StatusCount('Completed', r.completedJobs, const Color(0xFF16A34A)),
-        StatusCount('In Progress', r.inProgressJobs, const Color(0xFF1B9AAA)),
-        StatusCount('Cancelled', r.cancelledJobs, const Color(0xFFDC2626)),
-      ],
-      weeklyActivity: r.weeklyActivity.map((w) => w.count).toList(),
-      weekLabels: r.weeklyActivity.map((w) => w.day).toList(),
-    );
-  } catch (_) {
-    return const AdvisorReportData();
-  }
+  final r = await remote.getReports(_rangeParam(range));
+  return AdvisorReportData(
+    totalJobs: r.totalJobs,
+    completedJobs: r.completedJobs,
+    pendingJobs:
+        r.totalJobs - r.completedJobs - r.inProgressJobs - r.cancelledJobs,
+    inProgressJobs: r.inProgressJobs,
+    cancelledJobs: r.cancelledJobs,
+    statusBreakdown: [
+      StatusCount('Completed', r.completedJobs, const Color(0xFF16A34A)),
+      StatusCount('In Progress', r.inProgressJobs, const Color(0xFF1B9AAA)),
+      StatusCount('Cancelled', r.cancelledJobs, const Color(0xFFDC2626)),
+    ],
+    weeklyActivity: r.weeklyActivity.map((w) => w.count).toList(),
+    weekLabels: r.weeklyActivity.map((w) => w.day).toList(),
+  );
 });
 
 String _rangeParam(ReportRange range) {

@@ -46,7 +46,14 @@ class SupervisorDashboardTab extends ConsumerWidget {
                 unreadCount: notifier.unreadNotifications,
                 onNotificationTap: () => notifier.loadNotifications(),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
+              if (state.dashboardError.isNotEmpty) ...[
+                _SupervisorDataNotice(
+                  message: state.dashboardError,
+                  onRetry: notifier.refreshDashboard,
+                ),
+                const SizedBox(height: 14),
+              ],
 
               // ── 2. UBER-STYLE QUICK DISPATCH SEARCH ──────────────────────
               _SupervisorSearchPill(onTap: () => notifier.selectTab(1)),
@@ -66,9 +73,6 @@ class SupervisorDashboardTab extends ConsumerWidget {
               ],
 
               // ── 5. PHOTOGRAPHIC SPOTLIGHT HERO BANNER ────────────────────
-              const _SupervisorSpotlightBanner(),
-              const SizedBox(height: 32),
-
               // ── 6. TECHNICIAN WORKLOAD ROSTER CAROUSEL ───────────────────
               _SectionHeadingWithAction(
                 title: 'Technician Workload Roster',
@@ -80,11 +84,6 @@ class SupervisorDashboardTab extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // ── 7. JOB CATEGORY BREAKDOWN ────────────────────────────────
-              const _SectionHeading(title: 'Active Job Card Categories'),
-              const SizedBox(height: 16),
-              _JobTypeShowcase(types: notifier.jobTypes),
-              const SizedBox(height: 32),
-
               // ── 8. REVENUE TELEMETRY & SPARKLINES ────────────────────────
               _SectionHeadingWithAction(
                 title: 'Revenue Telemetry',
@@ -93,8 +92,8 @@ class SupervisorDashboardTab extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _RevenueGrid(metrics: notifier.revenueMetrics),
-              const SizedBox(height: 16),
-              const _RevenueTrendCard(),
+              const SizedBox(height: 12),
+              _SupervisorInsightsExpansion(types: notifier.jobTypes),
               const SizedBox(height: 32),
 
               // ── 9. BOTTLENECK RADAR HUD ──────────────────────────────────
@@ -115,6 +114,45 @@ class SupervisorDashboardTab extends ConsumerWidget {
 }
 
 // ─── 1. PREMIUM COMMAND HEADER ───────────────────────────────────────────────
+class _SupervisorDataNotice extends StatelessWidget {
+  final String message;
+  final Future<void> Function() onRetry;
+
+  const _SupervisorDataNotice({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: colors.errorContainer,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onRetry,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(Icons.cloud_off_rounded, color: colors.onErrorContainer),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onErrorContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Icon(Icons.refresh_rounded, color: colors.onErrorContainer),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SupervisorPremiumHeader extends StatelessWidget {
   final int unreadCount;
   final VoidCallback onNotificationTap;
@@ -619,90 +657,6 @@ class _ActiveBayLiveTracker extends StatelessWidget {
 }
 
 // ─── 5. PHOTOGRAPHIC OPERATIONAL BANNER ──────────────────────────────────────
-class _SupervisorSpotlightBanner extends StatelessWidget {
-  const _SupervisorSpotlightBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        height: 150,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: colorScheme.outlineVariant),
-          image: const DecorationImage(
-            image: NetworkImage(
-              'https://images.unsplash.com/photo-1613214149922-f1809c99b414?q=80&w=800&auto=format&fit=crop',
-            ),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.black.withValues(alpha: 0.85),
-                      Colors.black.withValues(alpha: 0.35),
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.verified_rounded,
-                        color: Colors.amberAccent,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'PRECISION FLOOR ERP',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: Colors.amberAccent,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Peak Diagnostic Shift\n98.4% SLA Compliance.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ─── 6. TECHNICIAN ROSTER CAROUSEL ───────────────────────────────────────────
 class _AdvisorWorkloadCarousel extends StatelessWidget {
   final List<AdvisorJobEntity> data;
@@ -1018,6 +972,43 @@ class _RevenueMetricCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SupervisorInsightsExpansion extends StatelessWidget {
+  final List<JobTypeEntity> types;
+
+  const _SupervisorInsightsExpansion({required this.types});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        child: ExpansionTile(
+          shape: const Border(),
+          collapsedShape: const Border(),
+          leading: Icon(Icons.analytics_outlined, color: colors.primary),
+          title: const Text('More operational insights'),
+          subtitle: const Text('Job categories and throughput trend'),
+          childrenPadding: const EdgeInsets.only(bottom: 18),
+          children: [
+            const SizedBox(height: 8),
+            const _SectionHeading(title: 'Active job categories'),
+            const SizedBox(height: 12),
+            _JobTypeShowcase(types: types),
+            const SizedBox(height: 16),
+            const _RevenueTrendCard(),
+          ],
+        ),
       ),
     );
   }

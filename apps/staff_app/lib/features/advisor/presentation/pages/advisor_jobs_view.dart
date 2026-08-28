@@ -11,12 +11,20 @@ class AdvisorJobsListView extends ConsumerStatefulWidget {
   final void Function(JobCardEntity) onJobCard;
   const AdvisorJobsListView({super.key, required this.onJobCard});
   @override
-  ConsumerState<AdvisorJobsListView> createState() => _AdvisorJobsListViewState();
+  ConsumerState<AdvisorJobsListView> createState() =>
+      _AdvisorJobsListViewState();
 }
 
 class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
   final _searchCtrl = TextEditingController();
-  final _filterChips = ['All', 'In Progress', 'Completed', 'Pending', 'QC Check', 'Cancelled'];
+  final _filterChips = [
+    'All',
+    'In Progress',
+    'Completed',
+    'Pending',
+    'QC Check',
+    'Cancelled',
+  ];
 
   @override
   void dispose() {
@@ -30,7 +38,9 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    final jobCards = ref.watch(advisorRecentJobCardsProvider).value ?? const <JobCardEntity>[];
+    final jobsAsync = ref.watch(advisorRecentJobCardsProvider);
+    final bookingsAsync = ref.watch(advisorAssignedBookingsProvider);
+    final jobCards = jobsAsync.value ?? const <JobCardEntity>[];
     final selectedFilter = ref.watch(_jobsFilterProvider);
 
     return Scaffold(
@@ -50,6 +60,15 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
       ),
       body: Column(
         children: [
+          if (jobsAsync.isLoading || bookingsAsync.isLoading)
+            const LinearProgressIndicator(minHeight: 3),
+          if (jobsAsync.hasError || bookingsAsync.hasError)
+            _JobsDataNotice(
+              onRetry: () {
+                ref.invalidate(advisorRecentJobCardsProvider);
+                ref.invalidate(advisorAssignedBookingsProvider);
+              },
+            ),
           // ── SEARCH PILL ──────────────────────────────────────────────────
           Container(
             color: colorScheme.surface,
@@ -65,13 +84,21 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                 controller: _searchCtrl,
                 decoration: InputDecoration(
                   hintText: 'Search by registration, customer, or ID...',
-                  hintStyle: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
-                  prefixIcon: Icon(Icons.search_rounded, size: 18, color: colorScheme.onSurfaceVariant),
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    size: 18,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
-                onChanged: (v) => ref.read(_jobsSearchProvider.notifier).state = v,
+                onChanged: (v) =>
+                    ref.read(_jobsSearchProvider.notifier).state = v,
               ),
             ),
           ),
@@ -92,18 +119,29 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                       ref.read(_jobsFilterProvider.notifier).state = f;
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: active ? colorScheme.primary : colorScheme.surface,
+                        color: active
+                            ? colorScheme.primary
+                            : colorScheme.surface,
                         borderRadius: BorderRadius.circular(100),
-                        border: Border.all(color: active ? Colors.transparent : colorScheme.outlineVariant),
+                        border: Border.all(
+                          color: active
+                              ? Colors.transparent
+                              : colorScheme.outlineVariant,
+                        ),
                       ),
                       child: Text(
                         f,
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w800,
-                          color: active ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                          color: active
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -118,7 +156,8 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
             child: RefreshIndicator(
               color: colorScheme.primary,
               backgroundColor: colorScheme.surface,
-              onRefresh: () async => ref.read(advisorRefreshProvider.notifier).state++,
+              onRefresh: () async =>
+                  ref.read(advisorRefreshProvider.notifier).state++,
               child: _buildJobList(jobCards, selectedFilter),
             ),
           ),
@@ -129,11 +168,15 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
 
   Widget _buildJobList(List<JobCardEntity> allCards, String filter) {
     final query = ref.watch(_jobsSearchProvider).toLowerCase();
-    final bookings = ref.watch(advisorAssignedBookingsProvider).value ?? const <AdvisorBookingResponse>[];
-    final showBookings = query.isEmpty && filter == 'All' && bookings.isNotEmpty;
+    final bookings =
+        ref.watch(advisorAssignedBookingsProvider).value ??
+        const <AdvisorBookingResponse>[];
+    final showBookings =
+        query.isEmpty && filter == 'All' && bookings.isNotEmpty;
 
     final filtered = allCards.where((jc) {
-      final matchesFilter = filter == 'All' || _statusLabel(jc.status) == filter;
+      final matchesFilter =
+          filter == 'All' || _statusLabel(jc.status) == filter;
       final matchesSearch =
           query.isEmpty ||
           jc.id.toLowerCase().contains(query) ||
@@ -144,19 +187,24 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
 
     if (filtered.isEmpty && !showBookings) {
       return const Center(
-        child: EmptyState(icon: Icons.assignment_outlined, message: 'No matching job cards located'),
+        child: EmptyState(
+          icon: Icons.assignment_outlined,
+          message: 'No matching job cards located',
+        ),
       );
     }
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
-      itemCount: filtered.length + (showBookings ? bookings.length + 1 : 0),
+      itemCount: filtered.length + (showBookings ? 1 : 0),
       itemBuilder: (_, i) {
         if (showBookings && i == 0) {
           return _buildAssignedBookingsSection(bookings);
         }
-        final index = showBookings ? i - 1 - bookings.length : i;
-        if (index < 0 || index >= filtered.length) return const SizedBox.shrink();
+        final index = showBookings ? i - 1 : i;
+        if (index < 0 || index >= filtered.length) {
+          return const SizedBox.shrink();
+        }
         return AdvisorJobCardRow(jc: filtered[index], onTap: widget.onJobCard);
       },
     );
@@ -178,13 +226,28 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
         children: [
           Row(
             children: [
-              Icon(Icons.event_available_rounded, size: 18, color: colorScheme.primary),
+              Icon(
+                Icons.event_available_rounded,
+                size: 18,
+                color: colorScheme.primary,
+              ),
               const SizedBox(width: 8),
-              const Text('Assigned Intake Queue', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-              const Spacer(),
+              const Expanded(
+                child: Text(
+                  'Assigned intake queue',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+              ),
+              const SizedBox(width: 8),
               Text(
                 '${bookings.length} Pending',
-                style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.primary, fontSize: 11),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: colorScheme.primary,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),
@@ -236,3 +299,46 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
 
 final _jobsSearchProvider = StateProvider<String>((ref) => '');
 final _jobsFilterProvider = StateProvider<String>((ref) => 'All');
+
+class _JobsDataNotice extends StatelessWidget {
+  final VoidCallback onRetry;
+
+  const _JobsDataNotice({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      padding: const EdgeInsets.fromLTRB(13, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: colors.errorContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.cloud_off_rounded,
+            color: colors.onErrorContainer,
+            size: 20,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              'Some live workshop data could not be loaded.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colors.onErrorContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Retry',
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -44,7 +44,8 @@ class AdvisorJobCardRow extends StatelessWidget {
       'Cancelled',
       AppColors.text3,
       AppColors.surfaceAlt,
-    ),    JobCardStatus.pending => _StatusStyle(
+    ),
+    JobCardStatus.pending => _StatusStyle(
       'Pending',
       AppColors.warning,
       AppColors.warningBg,
@@ -123,19 +124,25 @@ class AdvisorJobCardRow extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            jc.id,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurface,
-                              letterSpacing: 0.3,
+                          Expanded(
+                            child: Text(
+                              jc.id,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: colorScheme.onSurface,
+                                letterSpacing: 0.3,
+                              ),
                             ),
                           ),
-                          const Spacer(),
-                          StatusPill(
-                            label: s.label,
-                            fg: s.color,
-                            bg: s.bg,
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: StatusPill(
+                              label: s.label,
+                              fg: s.color,
+                              bg: s.bg,
+                            ),
                           ),
                         ],
                       ),
@@ -191,4 +198,3 @@ class AdvisorJobCardRow extends StatelessWidget {
     );
   }
 }
-

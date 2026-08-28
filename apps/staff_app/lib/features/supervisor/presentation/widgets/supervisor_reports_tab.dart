@@ -9,12 +9,45 @@ class SupervisorReportsTab extends ConsumerStatefulWidget {
   const SupervisorReportsTab({super.key});
 
   @override
-  ConsumerState<SupervisorReportsTab> createState() => _SupervisorReportsTabState();
+  ConsumerState<SupervisorReportsTab> createState() =>
+      _SupervisorReportsTabState();
+}
+
+class _ReportEmpty extends StatelessWidget {
+  final IconData icon;
+  final String message;
+
+  const _ReportEmpty({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: colors.onSurfaceVariant, size: 28),
+          const SizedBox(height: 9),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SupervisorReportsTabState extends ConsumerState<SupervisorReportsTab> {
-  int _selectedPeriod = 0; // 0: Week, 1: Month, 2: Quarter
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -22,19 +55,13 @@ class _SupervisorReportsTabState extends ConsumerState<SupervisorReportsTab> {
     final textTheme = theme.textTheme;
 
     final notifier = ref.read(supervisorDashboardProvider.notifier);
-    final jobTypes = notifier.jobTypes.isNotEmpty
-        ? notifier.jobTypes
-        : [
-            JobTypeEntity(label: 'Major Service', count: 24, color: colorScheme.primary),
-            JobTypeEntity(label: 'Diagnostics', count: 18, color: colorScheme.secondary),
-            const JobTypeEntity(label: 'Brakes & Suspension', count: 12, color: Color(0xFF10B981)),
-            const JobTypeEntity(label: 'Emergency SOS', count: 6, color: Color(0xFFEF4444)),
-          ];
+    final state = ref.watch(supervisorDashboardProvider);
+    final jobTypes = notifier.jobTypes;
 
     final metrics = notifier.revenueMetrics;
-    final total = notifier.totalAssigned > 0 ? notifier.totalAssigned : 48;
-    final inProgress = notifier.inProgressCount > 0 ? notifier.inProgressCount : 18;
-    final completed = notifier.completedCount > 0 ? notifier.completedCount : 30;
+    final total = notifier.totalAssigned;
+    final inProgress = notifier.inProgressCount;
+    final completed = notifier.completedCount;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -58,34 +85,33 @@ class _SupervisorReportsTabState extends ConsumerState<SupervisorReportsTab> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: colorScheme.outlineVariant),
+            if (state.dashboardError.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                  color: colorScheme.errorContainer.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.cloud_off_rounded,
+                      color: colorScheme.onErrorContainer,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Live report data is unavailable. No placeholder figures are being shown.',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                children: [
-                  _PeriodFilterChip(
-                    label: '7 Days',
-                    isSelected: _selectedPeriod == 0,
-                    onTap: () => setState(() => _selectedPeriod = 0),
-                  ),
-                  _PeriodFilterChip(
-                    label: '30 Days',
-                    isSelected: _selectedPeriod == 1,
-                    onTap: () => setState(() => _selectedPeriod = 1),
-                  ),
-                  _PeriodFilterChip(
-                    label: 'Quarter',
-                    isSelected: _selectedPeriod == 2,
-                    onTap: () => setState(() => _selectedPeriod = 2),
-                  ),
-                ],
-              ),
-            ),
+            ],
             const SizedBox(height: 20),
 
             // ── 2. STATS OVERVIEW CARDS ───────────────────────────────────
@@ -116,26 +142,30 @@ class _SupervisorReportsTabState extends ConsumerState<SupervisorReportsTab> {
             const SizedBox(height: 24),
 
             // ── 3. INTERACTIVE REVENUE VELOCITY CHART ─────────────────────
-            _SectionHeader(title: 'Revenue Trajectory', badge: '+18.4% RUN RATE'),
-            const SizedBox(height: 12),
-            _RevenueAreaChartCard(periodIndex: _selectedPeriod),
-            const SizedBox(height: 28),
-
             // ── 4. THROUGHPUT & EFFICIENCY DUAL BAR GRAPH ──────────────────
-            _SectionHeader(title: 'Daily Bay Throughput', badge: 'CAPACITY VS COMPLETED'),
-            const SizedBox(height: 12),
-            _ThroughputBarChartCard(primaryColor: colorScheme.primary, secondaryColor: colorScheme.secondary),
-            const SizedBox(height: 28),
-
             // ── 5. JOB CATEGORY DONUT DISTRIBUTION ─────────────────────────
-            _SectionHeader(title: 'Job Category Distribution', badge: '${jobTypes.length} CATEGORIES'),
+            _SectionHeader(
+              title: 'Job Category Distribution',
+              badge: '${jobTypes.length} CATEGORIES',
+            ),
             const SizedBox(height: 12),
-            _JobCategoryDonutCard(jobTypes: jobTypes),
+            if (jobTypes.isEmpty)
+              const _ReportEmpty(
+                icon: Icons.donut_large_outlined,
+                message: 'No job-category data available',
+              )
+            else
+              _JobCategoryDonutCard(jobTypes: jobTypes),
             const SizedBox(height: 28),
 
             // ── 6. REVENUE FINANCIAL BREAKDOWN ────────────────────────────
             _SectionHeader(title: 'Financial Telemetry Logs'),
             const SizedBox(height: 12),
+            if (metrics.isEmpty)
+              const _ReportEmpty(
+                icon: Icons.receipt_long_outlined,
+                message: 'No financial metrics have been reported yet',
+              ),
             ...metrics.map(
               (m) => Container(
                 margin: const EdgeInsets.only(bottom: 10),
@@ -160,20 +190,30 @@ class _SupervisorReportsTabState extends ConsumerState<SupervisorReportsTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(m.label, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                          Text(
+                            m.label,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                           Text(
                             m.amount,
                             style: textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w900,
                               color: colorScheme.onSurface,
-                              fontFeatures: const [FontFeature.tabularFigures()],
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: colorScheme.secondary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6),
@@ -199,6 +239,8 @@ class _SupervisorReportsTabState extends ConsumerState<SupervisorReportsTab> {
 }
 
 // ─── 1. REVENUE AREA CHART ───────────────────────────────────────────────────
+// Kept for future use when the backend exposes real time-series data.
+// ignore: unused_element
 class _RevenueAreaChartCard extends StatelessWidget {
   final int periodIndex;
 
@@ -229,7 +271,11 @@ class _RevenueAreaChartCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
-          BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 14, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -251,7 +297,9 @@ class _RevenueAreaChartCard extends StatelessWidget {
                   ),
                   Text(
                     'Net Gross Inflow (Real-Time)',
-                    style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -263,7 +311,11 @@ class _RevenueAreaChartCard extends StatelessWidget {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.trending_up_rounded, color: Color(0xFF10B981), size: 16),
+                    Icon(
+                      Icons.trending_up_rounded,
+                      color: Color(0xFF10B981),
+                      size: 16,
+                    ),
                     SizedBox(width: 4),
                     Text(
                       '+24.6%',
@@ -287,7 +339,10 @@ class _RevenueAreaChartCard extends StatelessWidget {
               painter: _AreaChartPainter(
                 lineColor: colorScheme.primary,
                 fillGradient: LinearGradient(
-                  colors: [colorScheme.primary.withValues(alpha: 0.35), colorScheme.primary.withValues(alpha: 0.0)],
+                  colors: [
+                    colorScheme.primary.withValues(alpha: 0.35),
+                    colorScheme.primary.withValues(alpha: 0.0),
+                  ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -320,7 +375,11 @@ class _AreaChartPainter extends CustomPainter {
   final Gradient fillGradient;
   final List<double> points;
 
-  const _AreaChartPainter({required this.lineColor, required this.fillGradient, required this.points});
+  const _AreaChartPainter({
+    required this.lineColor,
+    required this.fillGradient,
+    required this.points,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -348,7 +407,10 @@ class _AreaChartPainter extends CustomPainter {
     fillPath.lineTo(size.width, size.height);
     fillPath.close();
 
-    final fillPaint = Paint()..shader = fillGradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    final fillPaint = Paint()
+      ..shader = fillGradient.createShader(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+      );
     canvas.drawPath(fillPath, fillPaint);
 
     final linePaint = Paint()
@@ -370,15 +432,21 @@ class _AreaChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _AreaChartPainter oldDelegate) => oldDelegate.points != points;
+  bool shouldRepaint(covariant _AreaChartPainter oldDelegate) =>
+      oldDelegate.points != points;
 }
 
 // ─── 2. THROUGHPUT DUAL-BAR CHART ────────────────────────────────────────────
+// Kept for future use when the backend exposes real capacity history.
+// ignore: unused_element
 class _ThroughputBarChartCard extends StatelessWidget {
   final Color primaryColor;
   final Color secondaryColor;
 
-  const _ThroughputBarChartCard({required this.primaryColor, required this.secondaryColor});
+  const _ThroughputBarChartCard({
+    required this.primaryColor,
+    required this.secondaryColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -407,18 +475,34 @@ class _ThroughputBarChartCard extends StatelessWidget {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: BoxDecoration(color: primaryColor, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 6),
-                  Text('Assigned', style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Assigned',
+                    style: textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(width: 14),
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: BoxDecoration(color: secondaryColor, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: secondaryColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 6),
-                  Text('Completed', style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Completed',
+                    style: textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
               Text(
@@ -459,7 +543,10 @@ class _ThroughputBarChartCard extends StatelessWidget {
                         Container(
                           width: 10,
                           height: 100 * fFrac,
-                          decoration: BoxDecoration(color: secondaryColor, borderRadius: BorderRadius.circular(4)),
+                          decoration: BoxDecoration(
+                            color: secondaryColor,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ),
                       ],
                     ),
@@ -512,7 +599,10 @@ class _JobCategoryDonutCard extends StatelessWidget {
               children: [
                 CustomPaint(
                   size: const Size(110, 110),
-                  painter: _DonutChartPainter(jobTypes, holeColor: colorScheme.surface),
+                  painter: _DonutChartPainter(
+                    jobTypes,
+                    holeColor: colorScheme.surface,
+                  ),
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
@@ -542,7 +632,9 @@ class _JobCategoryDonutCard extends StatelessWidget {
           Expanded(
             child: Column(
               children: jobTypes.map((t) {
-                final pct = total > 0 ? (t.count / total * 100).toStringAsFixed(0) : '0';
+                final pct = total > 0
+                    ? (t.count / total * 100).toStringAsFixed(0)
+                    : '0';
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
@@ -550,7 +642,10 @@ class _JobCategoryDonutCard extends StatelessWidget {
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: BoxDecoration(color: t.color, borderRadius: BorderRadius.circular(2)),
+                        decoration: BoxDecoration(
+                          color: t.color,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -601,20 +696,31 @@ class _DonutChartPainter extends CustomPainter {
       canvas.drawArc(rect, start, sweep, true, Paint()..color = t.color);
       start += sweep;
     }
-    canvas.drawCircle(size.center(Offset.zero), size.width * 0.35, Paint()..color = holeColor);
+    canvas.drawCircle(
+      size.center(Offset.zero),
+      size.width * 0.35,
+      Paint()..color = holeColor,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _DonutChartPainter oldDelegate) => oldDelegate.holeColor != holeColor;
+  bool shouldRepaint(covariant _DonutChartPainter oldDelegate) =>
+      oldDelegate.holeColor != holeColor;
 }
 
 // ─── 4. HELPER COMPONENTS & CHIPS ────────────────────────────────────────────
+// Kept with the chart primitives; hidden until period-aware APIs are available.
+// ignore: unused_element
 class _PeriodFilterChip extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _PeriodFilterChip({required this.label, required this.isSelected, required this.onTap});
+  const _PeriodFilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -639,7 +745,9 @@ class _PeriodFilterChip extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                color: isSelected
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurfaceVariant,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 fontSize: 12,
               ),
@@ -657,7 +765,12 @@ class _QuickStatCard extends StatelessWidget {
   final Color color;
   final IconData icon;
 
-  const _QuickStatCard({required this.label, required this.value, required this.color, required this.icon});
+  const _QuickStatCard({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {

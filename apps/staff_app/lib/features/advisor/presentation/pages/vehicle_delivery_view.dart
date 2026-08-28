@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
 
 class VehicleDeliveryView extends ConsumerStatefulWidget {
   final String jobCardRef;
@@ -80,10 +81,7 @@ class _VehicleDeliveryViewState extends ConsumerState<VehicleDeliveryView> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: colorScheme.onSurface,
-          ),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -138,8 +136,13 @@ class _VehicleDeliveryViewState extends ConsumerState<VehicleDeliveryView> {
                       ),
                     )
                   : Text(
-                      _allChecked ? 'Complete & Finalize Handover' : 'Complete All ${ _checklist.length - checkedCount } Remaining Checks',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                      _allChecked
+                          ? 'Complete & Finalize Handover'
+                          : 'Complete All ${_checklist.length - checkedCount} Remaining Checks',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
                     ),
             ),
           ),
@@ -152,6 +155,8 @@ class _VehicleDeliveryViewState extends ConsumerState<VehicleDeliveryView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
+              const AdvisorWorkflowIndicator(currentStep: 4),
+              const SizedBox(height: 16),
               // ── PROTOCOL PROGRESS BANNER ──────────────────────────────────
               Container(
                 padding: const EdgeInsets.all(20),
@@ -170,8 +175,12 @@ class _VehicleDeliveryViewState extends ConsumerState<VehicleDeliveryView> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: colorScheme.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(AppDimensions.r12),
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.r12,
+                                ),
                               ),
                               child: Icon(
                                 Icons.key_rounded,
@@ -194,7 +203,9 @@ class _VehicleDeliveryViewState extends ConsumerState<VehicleDeliveryView> {
                           bg: _allChecked
                               ? const Color(0xFF10B981).withValues(alpha: 0.15)
                               : colorScheme.primary.withValues(alpha: 0.12),
-                          fg: _allChecked ? const Color(0xFF10B981) : colorScheme.primary,
+                          fg: _allChecked
+                              ? const Color(0xFF10B981)
+                              : colorScheme.primary,
                         ),
                       ],
                     ),
@@ -206,7 +217,9 @@ class _VehicleDeliveryViewState extends ConsumerState<VehicleDeliveryView> {
                         minHeight: 6,
                         backgroundColor: colorScheme.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation(
-                          _allChecked ? const Color(0xFF10B981) : colorScheme.primary,
+                          _allChecked
+                              ? const Color(0xFF10B981)
+                              : colorScheme.primary,
                         ),
                       ),
                     ),
@@ -234,18 +247,28 @@ class _VehicleDeliveryViewState extends ConsumerState<VehicleDeliveryView> {
                   children: [
                     for (int i = 0; i < _checklist.length; i++) ...[
                       CheckboxListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         title: Text(
                           _checklist[i],
                           style: textTheme.bodyMedium?.copyWith(
-                            fontWeight: _checked[i] ? FontWeight.w800 : FontWeight.w500,
-                            color: _checked[i] ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                            fontWeight: _checked[i]
+                                ? FontWeight.w800
+                                : FontWeight.w500,
+                            color: _checked[i]
+                                ? colorScheme.onSurface
+                                : colorScheme.onSurfaceVariant,
                           ),
                         ),
                         value: _checked[i],
                         activeColor: const Color(0xFF10B981),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                        onChanged: (v) => setState(() => _checked[i] = v ?? false),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        onChanged: (v) =>
+                            setState(() => _checked[i] = v ?? false),
                       ),
                       if (i < _checklist.length - 1)
                         Divider(height: 1, color: colorScheme.outlineVariant),
@@ -271,10 +294,15 @@ class _VehicleDeliveryViewState extends ConsumerState<VehicleDeliveryView> {
                 child: TextField(
                   controller: _notesCtrl,
                   maxLines: 3,
-                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
                   decoration: InputDecoration(
-                    hintText: 'Customer feedback, return requests, warranty notes…',
-                    hintStyle: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                    hintText:
+                        'Customer feedback, return requests, warranty notes…',
+                    hintStyle: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.all(AppDimensions.s16),
                   ),

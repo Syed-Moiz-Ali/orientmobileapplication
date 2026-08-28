@@ -14,7 +14,8 @@ class AdvisorReportsView extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final data = ref.watch(advisorReportDataProvider).value ?? const AdvisorReportData();
+    final report = ref.watch(advisorReportDataProvider);
+    final data = report.value ?? const AdvisorReportData();
     final range = ref.watch(advisorReportRangeProvider);
 
     return Scaffold(
@@ -23,7 +24,8 @@ class AdvisorReportsView extends ConsumerWidget {
         child: RefreshIndicator(
           color: colorScheme.primary,
           backgroundColor: colorScheme.surface,
-          onRefresh: () async => ref.read(advisorRefreshProvider.notifier).state++,
+          onRefresh: () async =>
+              ref.read(advisorRefreshProvider.notifier).state++,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -31,21 +33,29 @@ class AdvisorReportsView extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _header(context, range, ref),
-                const SizedBox(height: 20),
-                _summaryRow(context, data),
-                const SizedBox(height: 28),
-
-                _sectionLabel(context, 'Throughput Analytics'),
-                const SizedBox(height: 12),
-                _barChartSection(context, data),
-                const SizedBox(height: 28),
-
-                _sectionLabel(context, 'Status Allocation'),
-                const SizedBox(height: 12),
-                _pieChartSection(context, data),
-                const SizedBox(height: 32),
-
-                _exportButton(context, data),
+                if (report.isLoading) ...[
+                  const SizedBox(height: 14),
+                  const LinearProgressIndicator(minHeight: 3),
+                ],
+                if (report.hasError) ...[
+                  const SizedBox(height: 18),
+                  _ReportNotice(
+                    onRetry: () => ref.invalidate(advisorReportDataProvider),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 20),
+                  _summaryRow(context, data),
+                  const SizedBox(height: 28),
+                  _sectionLabel(context, 'Throughput Analytics'),
+                  const SizedBox(height: 12),
+                  _barChartSection(context, data),
+                  const SizedBox(height: 28),
+                  _sectionLabel(context, 'Status Allocation'),
+                  const SizedBox(height: 12),
+                  _pieChartSection(context, data),
+                  const SizedBox(height: 32),
+                  _exportButton(context, data),
+                ],
               ],
             ),
           ),
@@ -80,14 +90,29 @@ class AdvisorReportsView extends ConsumerWidget {
             child: DropdownButton<ReportRange>(
               value: range,
               dropdownColor: colorScheme.surface,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurface,
+              ),
               items: const [
-                DropdownMenuItem(value: ReportRange.today, child: Text('Today')),
-                DropdownMenuItem(value: ReportRange.week, child: Text('This Week')),
-                DropdownMenuItem(value: ReportRange.month, child: Text('This Month')),
+                DropdownMenuItem(
+                  value: ReportRange.today,
+                  child: Text('Today'),
+                ),
+                DropdownMenuItem(
+                  value: ReportRange.week,
+                  child: Text('This Week'),
+                ),
+                DropdownMenuItem(
+                  value: ReportRange.month,
+                  child: Text('This Month'),
+                ),
               ],
               onChanged: (v) {
-                if (v != null) ref.read(advisorReportRangeProvider.notifier).state = v;
+                if (v != null) {
+                  ref.read(advisorReportRangeProvider.notifier).state = v;
+                }
               },
             ),
           ),
@@ -99,58 +124,89 @@ class AdvisorReportsView extends ConsumerWidget {
   Widget _summaryRow(BuildContext context, AdvisorReportData data) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Row(
-      children: [
-        _summaryCard(context, 'Total', '${data.totalJobs}', colorScheme.primary, Icons.assignment_outlined),
-        const SizedBox(width: 8),
-        _summaryCard(context, 'Done', '${data.completedJobs}', const Color(0xFF10B981), Icons.verified_outlined),
-        const SizedBox(width: 8),
-        _summaryCard(
-          context,
-          'In Progress',
-          '${data.inProgressJobs}',
-          colorScheme.secondary,
-          Icons.build_circle_outlined,
-        ),
-        const SizedBox(width: 8),
-        _summaryCard(context, 'Cancelled', '${data.cancelledJobs}', colorScheme.error, Icons.cancel_outlined),
-      ],
+    final cards = [
+      _summaryCard(
+        context,
+        'Total jobs',
+        '${data.totalJobs}',
+        colorScheme.primary,
+        Icons.assignment_outlined,
+      ),
+      _summaryCard(
+        context,
+        'Completed',
+        '${data.completedJobs}',
+        const Color(0xFF10B981),
+        Icons.verified_outlined,
+      ),
+      _summaryCard(
+        context,
+        'In progress',
+        '${data.inProgressJobs}',
+        colorScheme.secondary,
+        Icons.build_circle_outlined,
+      ),
+      _summaryCard(
+        context,
+        'Cancelled',
+        '${data.cancelledJobs}',
+        colorScheme.error,
+        Icons.cancel_outlined,
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) => GridView.count(
+        crossAxisCount: constraints.maxWidth >= 640 ? 4 : 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: constraints.maxWidth >= 640 ? 1.25 : 1.55,
+        children: cards,
+      ),
     );
   }
 
-  Widget _summaryCard(BuildContext context, String label, String count, Color color, IconData icon) {
+  Widget _summaryCard(
+    BuildContext context,
+    String label,
+    String count,
+    Color color,
+    IconData icon,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: colorScheme.outlineVariant),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(height: 8),
-            Text(
-              count,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: color,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(height: 8),
+          Text(
+            count,
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: color,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 10),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 10,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -162,7 +218,10 @@ class AdvisorReportsView extends ConsumerWidget {
         Container(
           width: 3.5,
           height: 18,
-          decoration: BoxDecoration(color: colorScheme.primary, borderRadius: BorderRadius.circular(2)),
+          decoration: BoxDecoration(
+            color: colorScheme.primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
         const SizedBox(width: 8),
         Text(
@@ -199,7 +258,12 @@ class AdvisorReportsView extends ConsumerWidget {
                 centerSpaceRadius: 28,
                 sections: data.statusBreakdown.map((s) {
                   final p = total > 0 ? s.count / total : 0.0;
-                  return PieChartSectionData(value: p * 100, color: s.color, radius: 26, showTitle: false);
+                  return PieChartSectionData(
+                    value: p * 100,
+                    color: s.color,
+                    radius: 26,
+                    showTitle: false,
+                  );
                 }).toList(),
               ),
             ),
@@ -216,11 +280,20 @@ class AdvisorReportsView extends ConsumerWidget {
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: BoxDecoration(color: s.color, shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                          color: s.color,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(s.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                        child: Text(
+                          s.label,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                       Text(
                         '${s.count} (${p.round()}%)',
@@ -268,7 +341,9 @@ class AdvisorReportsView extends ConsumerWidget {
                   showTitles: true,
                   getTitlesWidget: (v, _) {
                     final i = v.toInt();
-                    if (i < 0 || i >= data.weekLabels.length) return const SizedBox();
+                    if (i < 0 || i >= data.weekLabels.length) {
+                      return const SizedBox();
+                    }
                     return Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
@@ -314,11 +389,16 @@ class AdvisorReportsView extends ConsumerWidget {
       child: ElevatedButton.icon(
         onPressed: () => _exportCsv(context, data),
         icon: const Icon(Icons.download_rounded, size: 18),
-        label: const Text('Export Telemetry Report', style: TextStyle(fontWeight: FontWeight.w800)),
+        label: const Text(
+          'Export Telemetry Report',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
     );
@@ -332,5 +412,44 @@ class AdvisorReportsView extends ConsumerWidget {
       ..writeln('In Progress,${data.inProgressJobs}')
       ..writeln('Cancelled,${data.cancelledJobs}');
     await Share.share(buffer.toString(), subject: 'Advisor Report');
+  }
+}
+
+class _ReportNotice extends StatelessWidget {
+  final VoidCallback onRetry;
+
+  const _ReportNotice({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.errorContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.cloud_off_rounded, color: colors.onErrorContainer),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Report data is unavailable right now. Your job data has not been replaced with zeros.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colors.onErrorContainer,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            tooltip: 'Retry',
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
+    );
   }
 }

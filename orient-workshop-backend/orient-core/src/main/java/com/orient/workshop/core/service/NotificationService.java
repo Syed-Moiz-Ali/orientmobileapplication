@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationMapper notificationMapper;
+    private final FcmNotificationService fcmNotificationService;
 
     @Transactional
     public void emit(Long userId, String type, String title, String body) {
@@ -36,5 +37,6 @@ public class NotificationService {
                 .body(body)
                 .isRead(false)
                 .build());
+        fcmNotificationService.sendToUser(userId, type, title, body);
     }
 }

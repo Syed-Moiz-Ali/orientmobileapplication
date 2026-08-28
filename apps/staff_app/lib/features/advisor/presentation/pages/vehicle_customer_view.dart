@@ -6,11 +6,13 @@ import 'package:staff_app/core/router/app_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:hive/hive.dart';
+import 'package:image_picker/image_picker.dart';
 import 'inspection_provider.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/vehicle_customer_provider.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/vehicle_customer_shared_widgets.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/select_brand_sheet.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
 import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.dart';
 import 'scan_vehicle_view.dart';
 
@@ -33,6 +35,8 @@ class _Body extends ConsumerStatefulWidget {
 
 class _BodyState extends ConsumerState<_Body> {
   String? _savedJobId;
+  XFile? _registrationDocument;
+  XFile? _insuranceDocument;
 
   @override
   void initState() {
@@ -77,6 +81,8 @@ class _BodyState extends ConsumerState<_Body> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const AdvisorWorkflowIndicator(currentStep: 0),
+                const SizedBox(height: 16),
                 // ── Hint text ───────────────────────────────────────────
                 const Text(
                   'Type VIN/License Plate no./Customer Name If not found create new vehicle.',
@@ -137,6 +143,10 @@ class _BodyState extends ConsumerState<_Body> {
                   state: state,
                   ref: ref,
                   onScanVin: () => _scanAndSetVin(context, ref),
+                  registrationDocumentName: _registrationDocument?.name,
+                  insuranceDocumentName: _insuranceDocument?.name,
+                  onRegistrationUpload: () => _pickDocument(true),
+                  onInsuranceUpload: () => _pickDocument(false),
                 ),
 
                 // ── Additional Information (Image 15) ────────────────────
@@ -184,6 +194,9 @@ class _BodyState extends ConsumerState<_Body> {
                     'odometerReading': formState.odometerReading,
                     'fuelLevel': formState.fuelLevel,
                     'customerConsent': formState.customerConsent,
+                    'registrationDocumentPath':
+                        _registrationDocument?.path ?? '',
+                    'insuranceDocumentPath': _insuranceDocument?.path ?? '',
                     'status': 'inProgress',
                     'createdDate': createdDate,
                     'lastUpdated': createdDate,
@@ -400,6 +413,58 @@ class _BodyState extends ConsumerState<_Body> {
     }
   }
 
+  Future<void> _pickDocument(bool registration) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                registration
+                    ? 'Add registration certificate'
+                    : 'Add insurance document',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 14),
+              FilledButton.tonalIcon(
+                onPressed: () => Navigator.pop(context, ImageSource.camera),
+                icon: const Icon(Icons.photo_camera_outlined),
+                label: const Text('Take a photo'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.pop(context, ImageSource.gallery),
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Choose from gallery'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source == null) return;
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 86,
+      maxWidth: 2200,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      if (registration) {
+        _registrationDocument = picked;
+      } else {
+        _insuranceDocument = picked;
+      }
+    });
+  }
+
   void _showInspectionPrompt(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -528,15 +593,6 @@ class _BodyState extends ConsumerState<_Body> {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SEARCH MODE SECTION (Image 1)
 // ─────────────────────────────────────────────────────────────────────────────
-void _showComingSoon(BuildContext context) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Document upload coming soon'),
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
-}
-
 class _SearchModeSection extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
@@ -1132,10 +1188,18 @@ class _VehicleDetailsSection extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
   final VoidCallback onScanVin;
+  final String? registrationDocumentName;
+  final String? insuranceDocumentName;
+  final VoidCallback onRegistrationUpload;
+  final VoidCallback onInsuranceUpload;
   const _VehicleDetailsSection({
     required this.state,
     required this.ref,
     required this.onScanVin,
+    required this.registrationDocumentName,
+    required this.insuranceDocumentName,
+    required this.onRegistrationUpload,
+    required this.onInsuranceUpload,
   });
 
   @override
@@ -1288,15 +1352,17 @@ class _VehicleDetailsSection extends StatelessWidget {
 
             const FieldLabel('Registration Certificate'),
             _ImageUploadButton(
-              label: 'Images',
-              onTap: () => _showComingSoon(context),
+              label: registrationDocumentName ?? 'Add document',
+              selected: registrationDocumentName != null,
+              onTap: onRegistrationUpload,
             ),
             kGap12,
 
             const FieldLabel('Insurance'),
             _ImageUploadButton(
-              label: 'Images',
-              onTap: () => _showComingSoon(context),
+              label: insuranceDocumentName ?? 'Add document',
+              selected: insuranceDocumentName != null,
+              onTap: onInsuranceUpload,
             ),
           ],
 
@@ -1463,33 +1529,34 @@ class _ModelYearSelector extends StatelessWidget {
 
 class _ImageUploadButton extends StatelessWidget {
   final String label;
+  final bool selected;
   final VoidCallback onTap;
-  const _ImageUploadButton({required this.label, required this.onTap});
+  const _ImageUploadButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: kFieldBg,
-          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
-          border: Border.all(color: kBorderColor),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.add_circle, color: AppColors.primary, size: 18),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(50),
+        alignment: Alignment.centerLeft,
+      ),
+      icon: Icon(
+        selected ? Icons.check_circle_rounded : Icons.add_a_photo_outlined,
+        color: selected ? AppColors.success : AppColors.primary,
+      ),
+      label: Expanded(
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: selected ? AppColors.textPrimary : AppColors.primary,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );

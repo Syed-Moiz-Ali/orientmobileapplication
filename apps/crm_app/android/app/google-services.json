@@ -1,0 +1,122 @@
+{
+  "project_info": {
+    "project_number": "240104992036",
+    "project_id": "orient-a843b",
+    "storage_bucket": "orient-a843b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240104992036:android:d9e843053834e7e5d657b1",
+        "android_client_info": {
+          "package_name": "com.orient.crm_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArVF-zThZxRfmRN5xLs4_uB6TJtGWV8ak"
+        },
+        {
+          "current_key": "AIzaSyBUpZJvUobgoFsKqzdn9v8FXhqx8arNMw8"
+        },
+        {
+          "current_key": "AIzaSyBFjO0RTj3lH6ejmgB5_iRRgY9v3hN0lbY"
+        },
+        {
+          "current_key": "AIzaSyC41ZxeMoAM2mHzN9w1PC2NbjIWd7ApOgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240104992036:android:1c591d51b9dc76a5d657b1",
+        "android_client_info": {
+          "package_name": "com.orient.customer_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArVF-zThZxRfmRN5xLs4_uB6TJtGWV8ak"
+        },
+        {
+          "current_key": "AIzaSyBUpZJvUobgoFsKqzdn9v8FXhqx8arNMw8"
+        },
+        {
+          "current_key": "AIzaSyBFjO0RTj3lH6ejmgB5_iRRgY9v3hN0lbY"
+        },
+        {
+          "current_key": "AIzaSyC41ZxeMoAM2mHzN9w1PC2NbjIWd7ApOgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240104992036:android:535ef0da742b8f17d657b1",
+        "android_client_info": {
+          "package_name": "com.orient.owner_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArVF-zThZxRfmRN5xLs4_uB6TJtGWV8ak"
+        },
+        {
+          "current_key": "AIzaSyBUpZJvUobgoFsKqzdn9v8FXhqx8arNMw8"
+        },
+        {
+          "current_key": "AIzaSyBFjO0RTj3lH6ejmgB5_iRRgY9v3hN0lbY"
+        },
+        {
+          "current_key": "AIzaSyC41ZxeMoAM2mHzN9w1PC2NbjIWd7ApOgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240104992036:android:d424a4736fd5b20dd657b1",
+        "android_client_info": {
+          "package_name": "com.orient.staff_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArVF-zThZxRfmRN5xLs4_uB6TJtGWV8ak"
+        },
+        {
+          "current_key": "AIzaSyBUpZJvUobgoFsKqzdn9v8FXhqx8arNMw8"
+        },
+        {
+          "current_key": "AIzaSyBFjO0RTj3lH6ejmgB5_iRRgY9v3hN0lbY"
+        },
+        {
+          "current_key": "AIzaSyC41ZxeMoAM2mHzN9w1PC2NbjIWd7ApOgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

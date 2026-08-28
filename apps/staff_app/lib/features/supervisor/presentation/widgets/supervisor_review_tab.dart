@@ -29,20 +29,26 @@ class SupervisorReviewTab extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Text(
-                  'Quality Control Verification',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.onSurface,
-                    letterSpacing: -0.4,
+                Expanded(
+                  child: Text(
+                    'Quality control verification',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                      letterSpacing: -0.4,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 if (state.isReviewLoading)
                   SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.primary),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.primary,
+                    ),
                   )
                 else
                   IconButton(
@@ -50,15 +56,29 @@ class SupervisorReviewTab extends ConsumerWidget {
                       HapticFeedback.selectionClick();
                       notifier.refreshReview();
                     },
-                    icon: Icon(Icons.refresh_rounded, color: colorScheme.onSurfaceVariant, size: 20),
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      color: colorScheme.onSurfaceVariant,
+                      size: 20,
+                    ),
                   ),
               ],
             ),
             const SizedBox(height: 16),
+            if (state.reviewError.isNotEmpty) ...[
+              _ReviewNotice(
+                message: state.reviewError,
+                onRetry: notifier.refreshReview,
+              ),
+              const SizedBox(height: 16),
+            ],
             if (awaiting.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 48),
-                child: EmptyState(icon: Icons.verified_outlined, message: 'No completed repairs awaiting QC sign-off'),
+                child: EmptyState(
+                  icon: Icons.verified_outlined,
+                  message: 'No completed repairs awaiting QC sign-off',
+                ),
               )
             else
               ...awaiting.map(
@@ -83,18 +103,30 @@ class SupervisorReviewTab extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            job.jobCardRef,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: colorScheme.onSurface,
-                              fontFeatures: const [FontFeature.tabularFigures()],
+                          Expanded(
+                            child: Text(
+                              job.jobCardRef,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: colorScheme.onSurface,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3.5,
+                            ),
                             decoration: BoxDecoration(
-                              color: colorScheme.secondary.withValues(alpha: 0.12),
+                              color: colorScheme.secondary.withValues(
+                                alpha: 0.12,
+                              ),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -102,7 +134,9 @@ class SupervisorReviewTab extends ConsumerWidget {
                               style: textTheme.labelSmall?.copyWith(
                                 color: colorScheme.secondary,
                                 fontWeight: FontWeight.w900,
-                                fontFeatures: const [FontFeature.tabularFigures()],
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
                               ),
                             ),
                           ),
@@ -111,7 +145,9 @@ class SupervisorReviewTab extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(
                         '${job.customerName} · ${job.vehicleInfo}',
-                        style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 14),
                       ClipRRect(
@@ -120,7 +156,9 @@ class SupervisorReviewTab extends ConsumerWidget {
                           value: job.total > 0 ? job.done / job.total : 0,
                           minHeight: 5,
                           backgroundColor: colorScheme.surfaceContainerHighest,
-                          valueColor: AlwaysStoppedAnimation(colorScheme.primary),
+                          valueColor: AlwaysStoppedAnimation(
+                            colorScheme.primary,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -131,7 +169,9 @@ class SupervisorReviewTab extends ConsumerWidget {
                             backgroundColor: colorScheme.primary,
                             foregroundColor: colorScheme.onPrimary,
                             minimumSize: const Size(0, 48),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                           onPressed: () {
                             HapticFeedback.lightImpact();
@@ -144,12 +184,18 @@ class SupervisorReviewTab extends ConsumerWidget {
                                 jobCardRef: job.jobCardRef,
                                 customerName: job.customerName,
                                 vehicleInfo: job.vehicleInfo,
-                                workItems: job.items.map((e) => e.description).where((d) => d.isNotEmpty).toList(),
+                                workItems: job.items
+                                    .map((e) => e.description)
+                                    .where((d) => d.isNotEmpty)
+                                    .toList(),
                               ),
                             );
                           },
                           icon: const Icon(Icons.fact_check_rounded, size: 18),
-                          label: const Text('Initiate QC Inspection', style: TextStyle(fontWeight: FontWeight.w800)),
+                          label: const Text(
+                            'Initiate QC Inspection',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
                         ),
                       ),
                     ],
@@ -158,6 +204,43 @@ class SupervisorReviewTab extends ConsumerWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ReviewNotice extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ReviewNotice({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(13, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: colors.errorContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.cloud_off_rounded,
+            color: colors.onErrorContainer,
+            size: 20,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(message, style: Theme.of(context).textTheme.bodySmall),
+          ),
+          IconButton(
+            tooltip: 'Retry',
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
       ),
     );
   }

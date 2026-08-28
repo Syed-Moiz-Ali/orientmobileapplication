@@ -54,31 +54,22 @@ final advisorRecentJobCardsProvider = FutureProvider<List<JobCardEntity>>((
 ) async {
   ref.watch(advisorRefreshProvider);
   final remote = ref.read(advisorRemoteDataSourceProvider);
-  try {
-    final page = await remote.getJobCards(page: 1, size: 50);
-    final jobs = page.content;
-    final parsed = jobs.map((j) {
-      return JobCardEntity(
-        id: j.id,
-        customerName: j.customerName,
-        vehicleInfo: j.vehicleInfo,
-        time: j.time,
-        createdDate: j.createdDate,
-        lastUpdated: j.lastUpdated,
-        status: JobCardStatus.values.firstWhere(
-          (e) => e.name == j.status,
-          orElse: () => JobCardStatus.inProgress,
-        ),
-        technician: j.technician,
-      );
-    }).toList();
-    return parsed;
-  } catch (e, st) {
-    ref
-        .read(loggerProvider)
-        .e('Failed to load advisor job cards', error: e, stackTrace: st);
-    return const [];
-  }
+  final page = await remote.getJobCards(page: 1, size: 50);
+  return page.content.map((job) {
+    return JobCardEntity(
+      id: job.id,
+      customerName: job.customerName,
+      vehicleInfo: job.vehicleInfo,
+      time: job.time,
+      createdDate: job.createdDate,
+      lastUpdated: job.lastUpdated,
+      status: JobCardStatus.values.firstWhere(
+        (status) => status.name == job.status,
+        orElse: () => JobCardStatus.inProgress,
+      ),
+      technician: job.technician,
+    );
+  }).toList();
 });
 
 final advisorPendingApprovalsProvider =
@@ -265,14 +256,7 @@ final advisorAssignedBookingsProvider =
     FutureProvider<List<AdvisorBookingResponse>>((ref) async {
       ref.watch(advisorRefreshProvider);
       final remote = ref.read(advisorRemoteDataSourceProvider);
-      try {
-        return await remote.getAssignedBookings();
-      } catch (e, st) {
-        ref
-            .read(loggerProvider)
-            .e('Failed to load assigned bookings', error: e, stackTrace: st);
-        return const [];
-      }
+      return remote.getAssignedBookings();
     });
 
 /// Seamless flow — technicians available for per-item work assignment.

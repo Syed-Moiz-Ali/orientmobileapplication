@@ -13,16 +13,15 @@ class AdvisorRemoteDataSource {
   Future<PageResponse<JobCardResponse>> getJobCards({
     int page = 1,
     int size = 20,
-  }) async =>
-      (await _client.get<Map<String, dynamic>>(
-        ApiEndpoints.advisorJobCards,
-        queryParams: {'page': '$page', 'size': '$size'},
-        fromJson: (d) => d as Map<String, dynamic>,
-      )).when(
-        success: (m) =>
-            PageResponse.fromJson(m, (j) => JobCardResponse.fromJson(j)),
-        failure: (_) => const PageResponse(),
-      );
+  }) async {
+    final result = await _client.get<Map<String, dynamic>>(
+      ApiEndpoints.advisorJobCards,
+      queryParams: {'page': '$page', 'size': '$size'},
+      fromJson: (data) => data as Map<String, dynamic>,
+    );
+    final data = result.unwrapOrThrow();
+    return PageResponse.fromJson(data, JobCardResponse.fromJson);
+  }
 
   Future<JobCardDetailResponse> getJobCard(String id) async =>
       (await _client.get<JobCardDetailResponse>(
@@ -150,15 +149,20 @@ class AdvisorRemoteDataSource {
 
   // ---------- Seamless flows ----------
 
-  Future<List<AdvisorBookingResponse>> getAssignedBookings() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.advisorBookings,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) =>
-            l.map((e) => AdvisorBookingResponse.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<AdvisorBookingResponse>> getAssignedBookings() async {
+    final result = await _client.get<List<dynamic>>(
+      ApiEndpoints.advisorBookings,
+      fromJson: (data) => data as List<dynamic>,
+    );
+    return result
+        .unwrapOrThrow()
+        .map(
+          (item) => AdvisorBookingResponse.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
+        .toList();
+  }
 
   Future<List<WorkItemResponse>> getWorkItems(String jobCardRef) async =>
       (await _client.get<List<dynamic>>(

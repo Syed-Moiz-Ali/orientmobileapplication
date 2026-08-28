@@ -21,6 +21,7 @@ dependencies:
   shared_models:
     path: ../../packages/shared_models
   url_launcher: ^6.3.2
+  firebase_core: ^4.14.0
 
 dev_dependencies:
   flutter_test:

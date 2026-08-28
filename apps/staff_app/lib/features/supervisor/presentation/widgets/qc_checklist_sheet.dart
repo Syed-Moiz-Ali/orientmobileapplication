@@ -68,14 +68,18 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
     if (qcMsg.startsWith('Could not')) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(qcMsg)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(qcMsg)));
       }
       return;
     }
     final msg = await notifier.approveCompletion(widget.jobCardId);
     if (mounted) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$qcMsg · $msg')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$qcMsg · $msg')));
     }
   }
 
@@ -83,9 +87,9 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
     final reason = _notesCtrl.text.trim();
     if (reason.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Enter a reason to send the job back')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Enter a reason to send the job back')),
+        );
       }
       return;
     }
@@ -93,7 +97,13 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
     setState(() => _isLoading = true);
     final msg = await ref
         .read(supervisorDashboardProvider.notifier)
-        .qcReview(widget.jobCardRef, 'reject', checklistPassed: false, notes: reason, rejectReason: reason);
+        .qcReview(
+          widget.jobCardRef,
+          'reject',
+          checklistPassed: false,
+          notes: reason,
+          rejectReason: reason,
+        );
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
@@ -119,7 +129,10 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
             child: Container(
               width: 38,
               height: 4,
-              decoration: BoxDecoration(color: colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(
+                color: colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -129,18 +142,25 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Quality Control Review',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: colorScheme.onSurface,
-                        letterSpacing: -0.3,
+                    Expanded(
+                      child: Text(
+                        'Quality control review',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface,
+                          letterSpacing: -0.3,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 10),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
@@ -148,7 +168,9 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                       child: Text(
                         '$_checkedCount/${_items.length} items',
                         style: textTheme.labelSmall?.copyWith(
-                          color: _allChecked ? colorScheme.secondary : colorScheme.primary,
+                          color: _allChecked
+                              ? colorScheme.secondary
+                              : colorScheme.primary,
                           fontWeight: FontWeight.w800,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
@@ -159,7 +181,9 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                 const SizedBox(height: 4),
                 Text(
                   '${widget.jobCardRef} · ${widget.customerName} · ${widget.vehicleInfo}',
-                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 ClipRRect(
@@ -168,7 +192,9 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                     value: _items.isEmpty ? 0 : _checkedCount / _items.length,
                     minHeight: 5,
                     backgroundColor: colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation(_allChecked ? colorScheme.secondary : colorScheme.primary),
+                    valueColor: AlwaysStoppedAnimation(
+                      _allChecked ? colorScheme.secondary : colorScheme.primary,
+                    ),
                   ),
                 ),
               ],
@@ -189,19 +215,30 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
-                      color: isChecked ? colorScheme.surfaceContainerLow : colorScheme.surface,
+                      color: isChecked
+                          ? colorScheme.surfaceContainerLow
+                          : colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isChecked ? colorScheme.primary.withValues(alpha: 0.3) : colorScheme.outlineVariant,
+                        color: isChecked
+                            ? colorScheme.primary.withValues(alpha: 0.3)
+                            : colorScheme.outlineVariant,
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          isChecked ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                          color: isChecked ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                          isChecked
+                              ? Icons.check_circle_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          color: isChecked
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -210,7 +247,9 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                             _items[i],
                             style: textTheme.bodyMedium?.copyWith(
                               color: colorScheme.onSurface,
-                              fontWeight: isChecked ? FontWeight.w700 : FontWeight.w500,
+                              fontWeight: isChecked
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                             ),
                           ),
                         ),
@@ -232,7 +271,10 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                   style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'QC Inspector Notes (Optional)',
-                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                    labelStyle: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
                     filled: true,
                     fillColor: colorScheme.surfaceContainerLow,
                     border: OutlineInputBorder(
@@ -245,7 +287,10 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+                      borderSide: BorderSide(
+                        color: colorScheme.primary,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -258,10 +303,15 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                           foregroundColor: colorScheme.error,
                           side: BorderSide(color: colorScheme.error),
                           minimumSize: const Size(0, 48),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: _isLoading ? null : _reject,
-                        child: const Text('Send Back', style: TextStyle(fontWeight: FontWeight.w800)),
+                        child: const Text(
+                          'Send Back',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -271,10 +321,17 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
                           backgroundColor: colorScheme.primary,
                           foregroundColor: colorScheme.onPrimary,
                           minimumSize: const Size(0, 48),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        onPressed: (_isLoading || !_allChecked) ? null : _approve,
-                        child: const Text('Approve & Close', style: TextStyle(fontWeight: FontWeight.w800)),
+                        onPressed: (_isLoading || !_allChecked)
+                            ? null
+                            : _approve,
+                        child: const Text(
+                          'Approve & Close',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ),
                   ],

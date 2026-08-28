@@ -32,6 +32,7 @@ export 'src/widgets/profile_sheet.dart';
 export 'src/widgets/section_header.dart';
 export 'src/widgets/status_pill.dart';
 export 'src/widgets/user_avatar.dart';
+export 'src/notifications/push_notification_service.dart';
 
 export 'src/network/api_client.dart';
 export 'src/network/api_response.dart';

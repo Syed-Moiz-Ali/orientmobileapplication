@@ -110,30 +110,6 @@ class AdvisorProfileSheet extends ConsumerWidget {
               );
             },
           ),
-          AdvisorMenuItem(
-            icon: Icons.swap_horiz_rounded,
-            label: 'Switch Branch',
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text(
-                    'Branch switching coming soon',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  backgroundColor: AppColors.accent,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  ),
-                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                ),
-              );
-            },
-          ),
           const AdvisorDivider(),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),

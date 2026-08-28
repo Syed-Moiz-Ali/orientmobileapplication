@@ -4,112 +4,76 @@ class SupervisorRemoteDataSource {
   final ApiClient _client;
   SupervisorRemoteDataSource(this._client);
 
-  Future<List<KpiResponse>> getKpis() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.supervisorKpis,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) => l.map((e) => KpiResponse.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<T>> _getObjects<T>(
+    String path,
+    T Function(Map<String, dynamic> json) fromJson,
+  ) async {
+    final result = await _client.get<List<dynamic>>(
+      path,
+      fromJson: (data) => data as List<dynamic>,
+    );
+    return result
+        .unwrapOrThrow()
+        .map((item) => fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+  }
 
-  Future<List<AdvisorJobCountResponse>> getAdvisorJobs() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.supervisorAdvisorJobs,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) =>
-            l.map((e) => AdvisorJobCountResponse.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<String>> _getStrings(String path) async {
+    final result = await _client.get<List<dynamic>>(
+      path,
+      fromJson: (data) => data as List<dynamic>,
+    );
+    return result.unwrapOrThrow().map((value) => value.toString()).toList();
+  }
 
-  Future<List<JobTypeResponse>> getJobTypes() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.supervisorJobTypes,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) => l.map((e) => JobTypeResponse.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<KpiResponse>> getKpis() =>
+      _getObjects(ApiEndpoints.supervisorKpis, KpiResponse.fromJson);
 
-  Future<List<RevenueMetricResponse>> getRevenueMetrics() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.supervisorRevenueMetrics,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) =>
-            l.map((e) => RevenueMetricResponse.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<AdvisorJobCountResponse>> getAdvisorJobs() => _getObjects(
+    ApiEndpoints.supervisorAdvisorJobs,
+    AdvisorJobCountResponse.fromJson,
+  );
 
-  Future<List<PendingStatusResponse>> getPendingStatuses() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.supervisorPendingStatuses,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) =>
-            l.map((e) => PendingStatusResponse.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<JobTypeResponse>> getJobTypes() =>
+      _getObjects(ApiEndpoints.supervisorJobTypes, JobTypeResponse.fromJson);
 
-  Future<List<String>> getDepartments() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.departments,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) => l.map((e) => e.toString()).toList(),
-        failure: (_) => [],
-      );
+  Future<List<RevenueMetricResponse>> getRevenueMetrics() => _getObjects(
+    ApiEndpoints.supervisorRevenueMetrics,
+    RevenueMetricResponse.fromJson,
+  );
 
-  Future<List<String>> getTechnicians() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.technicians,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) => l.map((e) => e.toString()).toList(),
-        failure: (_) => [],
-      );
+  Future<List<PendingStatusResponse>> getPendingStatuses() => _getObjects(
+    ApiEndpoints.supervisorPendingStatuses,
+    PendingStatusResponse.fromJson,
+  );
 
-  Future<List<SupervisorAssignedJob>> getAssignedJobs() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.supervisorAssignedJobs,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) =>
-            l.map((e) => SupervisorAssignedJob.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<String>> getDepartments() =>
+      _getStrings(ApiEndpoints.departments);
+
+  Future<List<String>> getTechnicians() =>
+      _getStrings(ApiEndpoints.technicians);
+
+  Future<List<SupervisorAssignedJob>> getAssignedJobs() => _getObjects(
+    ApiEndpoints.supervisorAssignedJobs,
+    SupervisorAssignedJob.fromJson,
+  );
 
   // ---------- Seamless flows: booking / breakdown routing ----------
 
-  Future<List<BookingQueueResponse>> getBookingQueue() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.supervisorBookings,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) => l.map((e) => BookingQueueResponse.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<BookingQueueResponse>> getBookingQueue() => _getObjects(
+    ApiEndpoints.supervisorBookings,
+    BookingQueueResponse.fromJson,
+  );
 
-  Future<List<BreakdownQueueResponse>> getBreakdownQueue() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.supervisorBreakdowns,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) =>
-            l.map((e) => BreakdownQueueResponse.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<BreakdownQueueResponse>> getBreakdownQueue() => _getObjects(
+    ApiEndpoints.supervisorBreakdowns,
+    BreakdownQueueResponse.fromJson,
+  );
 
-  Future<List<AssignableStaffResponse>> getAssignableAdvisors() async =>
-      (await _client.get<List<dynamic>>(
-        ApiEndpoints.supervisorAssignableAdvisors,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) =>
-            l.map((e) => AssignableStaffResponse.fromJson(e)).toList(),
-        failure: (_) => [],
-      );
+  Future<List<AssignableStaffResponse>> getAssignableAdvisors() => _getObjects(
+    ApiEndpoints.supervisorAssignableAdvisors,
+    AssignableStaffResponse.fromJson,
+  );
 
   Future<bool> assignBooking(int id, int advisorId) async {
     final r = await _client.put(
@@ -129,14 +93,10 @@ class SupervisorRemoteDataSource {
 
   // ---------- Seamless flows: completion review ----------
 
-  Future<List<AwaitingCompletionResponse>> getAwaitingCompletions() async =>
-      (await _client.get<List<dynamic>>(
+  Future<List<AwaitingCompletionResponse>> getAwaitingCompletions() =>
+      _getObjects(
         ApiEndpoints.supervisorAwaiting,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) =>
-            l.map((e) => AwaitingCompletionResponse.fromJson(e)).toList(),
-        failure: (_) => [],
+        AwaitingCompletionResponse.fromJson,
       );
 
   Future<bool> approveCompletion(int jobCardId) async {
@@ -156,8 +116,13 @@ class SupervisorRemoteDataSource {
 
   // FE-FLOW (seamless-flow integration): the QC review gate — previously the
   // frontend had NO call to this endpoint (it was "entirely UI-less").
-  Future<bool> qcReview(String jobCardRef, String action,
-      {bool checklistPassed = true, String notes = '', String rejectReason = ''}) async {
+  Future<bool> qcReview(
+    String jobCardRef,
+    String action, {
+    bool checklistPassed = true,
+    String notes = '',
+    String rejectReason = '',
+  }) async {
     final r = await _client.post(
       ApiEndpoints.supervisorQcReview(jobCardRef),
       data: {
@@ -172,14 +137,10 @@ class SupervisorRemoteDataSource {
 
   // ---------- Seamless flows: staff notifications ----------
 
-  Future<List<StaffNotificationResponse>> getStaffNotifications() async =>
-      (await _client.get<List<dynamic>>(
+  Future<List<StaffNotificationResponse>> getStaffNotifications() =>
+      _getObjects(
         ApiEndpoints.staffNotifications,
-        fromJson: (d) => d as List<dynamic>,
-      )).when(
-        success: (l) =>
-            l.map((e) => StaffNotificationResponse.fromJson(e)).toList(),
-        failure: (_) => [],
+        StaffNotificationResponse.fromJson,
       );
 
   Future<bool> markStaffNotificationRead(String id) async {

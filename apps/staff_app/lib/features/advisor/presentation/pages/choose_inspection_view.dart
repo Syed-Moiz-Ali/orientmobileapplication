@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/router/app_router.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
 import 'inspection_provider.dart';
 
 class ChooseInspectionView extends ConsumerWidget {
@@ -18,7 +19,11 @@ class ChooseInspectionView extends ConsumerWidget {
     required this.onBack,
   });
 
-  void _startInspection(BuildContext context, WidgetRef ref, {required String templateName}) {
+  void _startInspection(
+    BuildContext context,
+    WidgetRef ref, {
+    required String templateName,
+  }) {
     HapticFeedback.mediumImpact();
     ref.read(inspectionProvider.notifier).reset();
     final cb = InspectionCallbacks(
@@ -92,6 +97,8 @@ class ChooseInspectionView extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
+              const AdvisorWorkflowIndicator(currentStep: 1),
+              const SizedBox(height: 16),
               // ── HERO HEADER BANNER ─────────────────────────────────────────
               Container(
                 width: double.infinity,
@@ -162,7 +169,8 @@ class ChooseInspectionView extends ConsumerWidget {
               // ── TEMPLATE 1: MASTER 24-POINT DIGITAL CHECK ──────────────────
               _InspectionTemplateCard(
                 title: 'Comprehensive 24-Point Health Check',
-                subtitle: 'Full under-hood, brakes, suspension, battery, tires & exterior inspection',
+                subtitle:
+                    'Full under-hood, brakes, suspension, battery, tires & exterior inspection',
                 sectionsCount: 4,
                 checkpointsCount: 24,
                 estimatedMinutes: 15,
@@ -171,14 +179,19 @@ class ChooseInspectionView extends ConsumerWidget {
                 icon: Icons.checklist_rtl_rounded,
                 colorScheme: colorScheme,
                 textTheme: textTheme,
-                onTap: () => _startInspection(context, ref, templateName: 'Comprehensive 24-Point'),
+                onTap: () => _startInspection(
+                  context,
+                  ref,
+                  templateName: 'Comprehensive 24-Point',
+                ),
               ),
               const SizedBox(height: 16),
 
               // ── TEMPLATE 2: EXPRESS BAY SCAN ───────────────────────────────
               _InspectionTemplateCard(
                 title: 'Express Bay Safety Scan',
-                subtitle: 'Rapid fluid levels, tire pressure, lighting, wiper blades & battery voltage check',
+                subtitle:
+                    'Rapid fluid levels, tire pressure, lighting, wiper blades & battery voltage check',
                 sectionsCount: 2,
                 checkpointsCount: 10,
                 estimatedMinutes: 5,
@@ -187,14 +200,19 @@ class ChooseInspectionView extends ConsumerWidget {
                 icon: Icons.speed_rounded,
                 colorScheme: colorScheme,
                 textTheme: textTheme,
-                onTap: () => _startInspection(context, ref, templateName: 'Express Bay Safety Scan'),
+                onTap: () => _startInspection(
+                  context,
+                  ref,
+                  templateName: 'Express Bay Safety Scan',
+                ),
               ),
               const SizedBox(height: 16),
 
               // ── TEMPLATE 3: BRAKES & CHASSIS DIAGNOSTIC ─────────────────────
               _InspectionTemplateCard(
                 title: 'Brake, Steering & Suspension Audit',
-                subtitle: 'Pad/rotor depth measurements, shock absorber leak check, alignment & bushings',
+                subtitle:
+                    'Pad/rotor depth measurements, shock absorber leak check, alignment & bushings',
                 sectionsCount: 3,
                 checkpointsCount: 14,
                 estimatedMinutes: 10,
@@ -203,7 +221,11 @@ class ChooseInspectionView extends ConsumerWidget {
                 icon: Icons.car_repair_rounded,
                 colorScheme: colorScheme,
                 textTheme: textTheme,
-                onTap: () => _startInspection(context, ref, templateName: 'Brake & Suspension Audit'),
+                onTap: () => _startInspection(
+                  context,
+                  ref,
+                  templateName: 'Brake & Suspension Audit',
+                ),
               ),
               const SizedBox(height: 32),
             ],
@@ -247,7 +269,9 @@ class _InspectionTemplateCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: AppDimensions.r24,
       color: colorScheme.surface,
-      borderColor: isRecommended ? colorScheme.primary.withValues(alpha: 0.5) : colorScheme.outlineVariant,
+      borderColor: isRecommended
+          ? colorScheme.primary.withValues(alpha: 0.5)
+          : colorScheme.outlineVariant,
       padding: const EdgeInsets.all(20),
       boxShadow: [
         BoxShadow(
@@ -273,7 +297,9 @@ class _InspectionTemplateCard extends StatelessWidget {
                 ),
                 child: Icon(
                   icon,
-                  color: isRecommended ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  color: isRecommended
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
                   size: 22,
                 ),
               ),
@@ -289,7 +315,9 @@ class _InspectionTemplateCard extends StatelessWidget {
                           bg: isRecommended
                               ? colorScheme.primary.withValues(alpha: 0.12)
                               : colorScheme.surfaceContainerHighest,
-                          fg: isRecommended ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                          fg: isRecommended
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
                         ),
                         if (isRecommended) ...[
                           const SizedBox(width: 8),
@@ -304,7 +332,11 @@ class _InspectionTemplateCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ],
           ),
           const SizedBox(height: 16),

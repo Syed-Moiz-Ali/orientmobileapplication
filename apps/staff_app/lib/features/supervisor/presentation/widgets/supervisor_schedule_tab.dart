@@ -13,6 +13,7 @@ class SupervisorScheduleTab extends ConsumerWidget {
     final textTheme = theme.textTheme;
 
     final notifier = ref.read(supervisorDashboardProvider.notifier);
+    final state = ref.watch(supervisorDashboardProvider);
     final bookings = notifier.bookings;
 
     return Scaffold(
@@ -29,18 +30,25 @@ class SupervisorScheduleTab extends ConsumerWidget {
             children: [
               // ── 1. TIMELINE HEADER ─────────────────────────────────────────
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Bay Schedule & Slots',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.onSurface,
-                      letterSpacing: -0.4,
+                  Expanded(
+                    child: Text(
+                      'Bay schedule and slots',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
+                        letterSpacing: -0.4,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
@@ -57,6 +65,33 @@ class SupervisorScheduleTab extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 16),
+              if (state.queueError.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(13),
+                  decoration: BoxDecoration(
+                    color: colorScheme.errorContainer.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.cloud_off_rounded,
+                        color: colorScheme.onErrorContainer,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          state.queueError,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
 
               // ── 2. SCHEDULE SLOTS ──────────────────────────────────────────
               if (bookings.isEmpty)
@@ -105,7 +140,11 @@ class _BaySlotCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
-          BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 14, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(

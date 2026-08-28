@@ -17,9 +17,9 @@ class SupervisorQueueTab extends ConsumerWidget {
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final advisors = notifier.advisors;
     if (advisors.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No active advisors available to assign')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No active advisors available to assign')),
+      );
       return;
     }
 
@@ -35,11 +35,15 @@ class SupervisorQueueTab extends ConsumerWidget {
           final textTheme = theme.textTheme;
 
           return Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: Container(
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
               ),
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -58,29 +62,48 @@ class SupervisorQueueTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    isBooking ? 'Route Booking to Service Advisor' : 'Dispatch Breakdown Unit',
-                    style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
+                    isBooking
+                        ? 'Route Booking to Service Advisor'
+                        : 'Dispatch Breakdown Unit',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Text(label, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                  Text(
+                    label,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
                     initialValue: selectedId,
                     dropdownColor: colorScheme.surface,
-                    style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 14,
+                    ),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: colorScheme.surfaceContainerLow,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: colorScheme.outlineVariant),
+                        borderSide: BorderSide(
+                          color: colorScheme.outlineVariant,
+                        ),
                       ),
                       labelText: 'Select Advisor',
                     ),
                     items: advisors.map((a) {
-                      return DropdownMenuItem<int>(value: a.id, child: Text(a.name));
+                      return DropdownMenuItem<int>(
+                        value: a.id,
+                        child: Text(a.name),
+                      );
                     }).toList(),
-                    onChanged: (v) => setSheetState(() => selectedId = v ?? selectedId),
+                    onChanged: (v) =>
+                        setSheetState(() => selectedId = v ?? selectedId),
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
@@ -90,7 +113,9 @@ class SupervisorQueueTab extends ConsumerWidget {
                         backgroundColor: colorScheme.primary,
                         foregroundColor: colorScheme.onPrimary,
                         minimumSize: const Size(0, 50),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       onPressed: () async {
                         HapticFeedback.lightImpact();
@@ -99,9 +124,12 @@ class SupervisorQueueTab extends ConsumerWidget {
                             ? await notifier.assignBooking(id, selectedId)
                             : await notifier.assignBreakdown(id, selectedId);
                         if (context.mounted) {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(msg),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
                         }
                       },
                       child: Text(
@@ -127,7 +155,8 @@ class SupervisorQueueTab extends ConsumerWidget {
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final bookings = notifier.bookings;
     final breakdowns = notifier.breakdowns;
-    final isLoading = ref.watch(supervisorDashboardProvider).isQueueLoading;
+    final state = ref.watch(supervisorDashboardProvider);
+    final isLoading = state.isQueueLoading;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -140,20 +169,26 @@ class SupervisorQueueTab extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Text(
-                  'Incoming Dispatch Queue',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.onSurface,
-                    letterSpacing: -0.4,
+                Expanded(
+                  child: Text(
+                    'Incoming dispatch queue',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                      letterSpacing: -0.4,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 if (isLoading)
                   SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.primary),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.primary,
+                    ),
                   )
                 else
                   IconButton(
@@ -161,10 +196,21 @@ class SupervisorQueueTab extends ConsumerWidget {
                       HapticFeedback.selectionClick();
                       notifier.refreshQueue();
                     },
-                    icon: Icon(Icons.refresh_rounded, color: colorScheme.onSurfaceVariant, size: 20),
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      color: colorScheme.onSurfaceVariant,
+                      size: 20,
+                    ),
                   ),
               ],
             ),
+            if (state.queueError.isNotEmpty) ...[
+              _QueueNotice(
+                message: state.queueError,
+                onRetry: notifier.refreshQueue,
+              ),
+              const SizedBox(height: 16),
+            ],
             const SizedBox(height: 16),
 
             _sectionTitle(context, 'Appointments', bookings.length),
@@ -172,7 +218,10 @@ class SupervisorQueueTab extends ConsumerWidget {
             if (bookings.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
-                child: EmptyState(icon: Icons.event_available_outlined, message: 'No unassigned appointments'),
+                child: EmptyState(
+                  icon: Icons.event_available_outlined,
+                  message: 'No unassigned appointments',
+                ),
               )
             else
               ...bookings.map(
@@ -180,11 +229,18 @@ class SupervisorQueueTab extends ConsumerWidget {
                   icon: Icons.event_rounded,
                   iconColor: colorScheme.primary,
                   title: '${b.serviceType} · ${b.vehicleName}',
-                  subtitle: '${b.customerName} · ${b.plateNumber}\n${b.bookingDate}',
+                  subtitle:
+                      '${b.customerName} · ${b.plateNumber}\n${b.bookingDate}',
                   trailingLabel: b.status,
                   bookingDateStr: b.bookingDate,
                   isNew: b.status.toLowerCase() == 'pending',
-                  onAssign: () => _assign(context, ref, id: b.id, isBooking: true, label: b.serviceType),
+                  onAssign: () => _assign(
+                    context,
+                    ref,
+                    id: b.id,
+                    isBooking: true,
+                    label: b.serviceType,
+                  ),
                 ),
               ),
 
@@ -194,7 +250,10 @@ class SupervisorQueueTab extends ConsumerWidget {
             if (breakdowns.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
-                child: EmptyState(icon: Icons.emergency_outlined, message: 'No emergency breakdown signals'),
+                child: EmptyState(
+                  icon: Icons.emergency_outlined,
+                  message: 'No emergency breakdown signals',
+                ),
               )
             else
               ...breakdowns.map(
@@ -202,11 +261,18 @@ class SupervisorQueueTab extends ConsumerWidget {
                   icon: Icons.emergency_rounded,
                   iconColor: colorScheme.error,
                   title: b.issue,
-                  subtitle: '${b.customerName} · ${b.vehicleName} ${b.vehiclePlate}\n${b.location}',
+                  subtitle:
+                      '${b.customerName} · ${b.vehicleName} ${b.vehiclePlate}\n${b.location}',
                   trailingLabel: b.status,
                   bookingDateStr: '',
                   isNew: b.status.toLowerCase() == 'pending',
-                  onAssign: () => _assign(context, ref, id: b.id, isBooking: false, label: b.issue),
+                  onAssign: () => _assign(
+                    context,
+                    ref,
+                    id: b.id,
+                    isBooking: false,
+                    label: b.issue,
+                  ),
                 ),
               ),
           ],
@@ -221,11 +287,19 @@ class SupervisorQueueTab extends ConsumerWidget {
 
     return Row(
       children: [
-        Text(label, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+        Text(
+          label,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-          decoration: BoxDecoration(color: colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(6)),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(6),
+          ),
           child: Text(
             '$count',
             style: theme.textTheme.labelSmall?.copyWith(
@@ -275,49 +349,102 @@ class _QueueCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
-          BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 14, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(height: 3),
-                Text(subtitle, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-              ],
-            ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          ElevatedButton(
+          const SizedBox(height: 14),
+          FilledButton.icon(
             onPressed: () {
               HapticFeedback.lightImpact();
               onAssign();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
-              minimumSize: const Size(0, 38),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(46),
             ),
-            child: const Text('Assign', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+            icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+            label: const Text('Assign advisor'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QueueNotice extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _QueueNotice({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(13, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: colors.errorContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.cloud_off_rounded,
+            color: colors.onErrorContainer,
+            size: 20,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(message, style: Theme.of(context).textTheme.bodySmall),
+          ),
+          IconButton(
+            tooltip: 'Retry',
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
           ),
         ],
       ),

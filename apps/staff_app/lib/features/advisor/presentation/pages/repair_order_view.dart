@@ -17,13 +17,18 @@ import 'package:hive/hive.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
 import 'inspection_provider.dart';
 
 class RepairOrderView extends ConsumerStatefulWidget {
   final VoidCallback onBack;
   final bool fromInspection;
 
-  const RepairOrderView({super.key, required this.onBack, this.fromInspection = false});
+  const RepairOrderView({
+    super.key,
+    required this.onBack,
+    this.fromInspection = false,
+  });
 
   @override
   ConsumerState<RepairOrderView> createState() => _RepairOrderViewState();
@@ -38,10 +43,17 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
 
   // P3 (audit): auto-pricing — suggest a rate from historical quotes for the
   // same service name. A convenience, never a blocker.
-  Future<void> _suggestPrice(BuildContext context, int index, ServiceLineItem item, InspectionNotifier notifier) async {
+  Future<void> _suggestPrice(
+    BuildContext context,
+    int index,
+    ServiceLineItem item,
+    InspectionNotifier notifier,
+  ) async {
     final name = item.name.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a service name first')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a service name first')),
+      );
       return;
     }
     final client = ref.read(apiClientProvider);
@@ -57,16 +69,24 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
           if (rate is num && rate > 0) {
             notifier.updateServiceLine(index, rate: rate.toDouble());
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Suggested AED ${rate.toStringAsFixed(2)} (from ${data['samples']} quote(s))')),
+              SnackBar(
+                content: Text(
+                  'Suggested AED ${rate.toStringAsFixed(2)} (from ${data['samples']} quote(s))',
+                ),
+              ),
             );
           } else {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('No pricing history for this service yet')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No pricing history for this service yet'),
+              ),
+            );
           }
         },
         failure: (_) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not fetch suggested price')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not fetch suggested price')),
+          );
         },
       );
     } catch (_) {
@@ -83,7 +103,10 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
   void _loadCustomerData() {
     try {
       final box = Hive.box<dynamic>('inspections');
-      final all = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+      final all = box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
       final state = ref.read(inspectionProvider);
       final jid = state.jobCardId;
       _customerData = all.cast<Map<String, dynamic>?>().firstWhere(
@@ -105,7 +128,9 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
         notifier: notifier,
         selected: _pendingServices,
         onToggle: (s) => setState(() {
-          _pendingServices.contains(s) ? _pendingServices.remove(s) : _pendingServices.add(s);
+          _pendingServices.contains(s)
+              ? _pendingServices.remove(s)
+              : _pendingServices.add(s);
         }),
         onBack: () => setState(() {
           _showServices = false;
@@ -119,7 +144,9 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
         notifier: notifier,
         selected: _pendingParts,
         onToggle: (p) => setState(() {
-          _pendingParts.contains(p) ? _pendingParts.remove(p) : _pendingParts.add(p);
+          _pendingParts.contains(p)
+              ? _pendingParts.remove(p)
+              : _pendingParts.add(p);
         }),
         onBack: () => setState(() {
           _showParts = false;
@@ -139,14 +166,22 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
         ),
         title: const Text(
           'Repair Order',
-          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => notifier.reset(),
             child: const Text(
               'RESET',
-              style: TextStyle(color: IC.accent, fontWeight: FontWeight.w700, fontSize: 13),
+              style: TextStyle(
+                color: IC.accent,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -154,6 +189,8 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
         children: [
+          const SizedBox(height: 12),
+          const AdvisorWorkflowIndicator(currentStep: 2),
           // ── Inspection attached banner ──────────────────────────────────
           if (widget.fromInspection) ...[
             const SizedBox(height: 16),
@@ -161,7 +198,9 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: IC.tealBg,
-                borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+                borderRadius: BorderRadius.all(
+                  Radius.circular(AppDimensions.r10),
+                ),
                 border: Border.all(color: IC.accent),
               ),
               child: const Row(
@@ -170,7 +209,11 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                   SizedBox(width: 8),
                   Text(
                     'Inspection completed and attached',
-                    style: TextStyle(fontSize: 12, color: IC.accent, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: IC.accent,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -189,13 +232,23 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Customer', style: TextStyle(fontSize: 11, color: IC.text3)),
+                          Text(
+                            'Customer',
+                            style: TextStyle(fontSize: 11, color: IC.text3),
+                          ),
                           SizedBox(height: 2),
                           Text(
                             _getVal('customerName'),
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: IC.text1),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: IC.text1,
+                            ),
                           ),
-                          Text(_getVal('phoneNumber'), style: TextStyle(fontSize: 11, color: IC.text2)),
+                          Text(
+                            _getVal('phoneNumber'),
+                            style: TextStyle(fontSize: 11, color: IC.text2),
+                          ),
                         ],
                       ),
                     ),
@@ -203,15 +256,25 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Vehicle', style: TextStyle(fontSize: 11, color: IC.text3)),
+                          Text(
+                            'Vehicle',
+                            style: TextStyle(fontSize: 11, color: IC.text3),
+                          ),
                           SizedBox(height: 2),
                           Text(
                             _getVal('registrationNumber').isEmpty
                                 ? '${_getVal('make')} ${_getVal('model')}'
                                 : _getVal('registrationNumber'),
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: IC.text1),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: IC.text1,
+                            ),
                           ),
-                          Text(_getVal('vin'), style: TextStyle(fontSize: 11, color: IC.text2)),
+                          Text(
+                            _getVal('vin'),
+                            style: TextStyle(fontSize: 11, color: IC.text2),
+                          ),
                         ],
                       ),
                     ),
@@ -222,10 +285,16 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                 SizedBox(height: 10),
                 Row(
                   children: [
-                    Text('Service Advisor', style: TextStyle(fontSize: 11, color: IC.text3)),
+                    Text(
+                      'Service Advisor',
+                      style: TextStyle(fontSize: 11, color: IC.text3),
+                    ),
                     SizedBox(width: 8),
                     // FIX (audit P0): 'swami' was a hardcoded developer name.
-                    Text('You', style: TextStyle(fontSize: 12, color: IC.text1)),
+                    Text(
+                      'You',
+                      style: TextStyle(fontSize: 12, color: IC.text1),
+                    ),
                     SizedBox(width: 4),
                     Icon(Icons.edit_outlined, size: 12, color: IC.text3),
                   ],
@@ -241,7 +310,10 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Reference Number', style: TextStyle(fontSize: 11, color: IC.text3)),
+                const Text(
+                  'Reference Number',
+                  style: TextStyle(fontSize: 11, color: IC.text3),
+                ),
                 const SizedBox(height: 6),
                 TextField(
                   onChanged: notifier.setReferenceNumber,
@@ -264,23 +336,37 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: ['Choose from Packages', 'Maintenance Contract', 'Select from History']
-                  .map(
-                    (l) => Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: IC.tealBg,
-                        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
-                        border: Border.all(color: IC.accent),
-                      ),
-                      child: Text(
-                        l,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: IC.accent),
-                      ),
-                    ),
-                  )
-                  .toList(),
+              children:
+                  [
+                        'Choose from Packages',
+                        'Maintenance Contract',
+                        'Select from History',
+                      ]
+                      .map(
+                        (l) => Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: IC.tealBg,
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(AppDimensions.r8),
+                            ),
+                            border: Border.all(color: IC.accent),
+                          ),
+                          child: Text(
+                            l,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: IC.accent,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
             ),
           ),
 
@@ -291,7 +377,10 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
-                Text('Place Of Supply', style: TextStyle(fontSize: 12, color: IC.text2)),
+                Text(
+                  'Place Of Supply',
+                  style: TextStyle(fontSize: 12, color: IC.text2),
+                ),
                 Icon(Icons.keyboard_arrow_down, color: IC.text3, size: 18),
               ],
             ),
@@ -314,7 +403,8 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                     index: e.key,
                     item: e.value,
                     notifier: notifier,
-                    onSuggest: () => _suggestPrice(context, e.key, e.value, notifier),
+                    onSuggest: () =>
+                        _suggestPrice(context, e.key, e.value, notifier),
                   ),
                 )
                 .toList(),
@@ -332,7 +422,13 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
             children: state.partLines
                 .asMap()
                 .entries
-                .map((e) => _PartLineRow(index: e.key, item: e.value, notifier: notifier))
+                .map(
+                  (e) => _PartLineRow(
+                    index: e.key,
+                    item: e.value,
+                    notifier: notifier,
+                  ),
+                )
                 .toList(),
           ),
 
@@ -348,9 +444,17 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                   children: [
                     const Text(
                       'Pre Service Media',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: IC.text1),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: IC.text1,
+                      ),
                     ),
-                    SolidBtn(label: '+ ADD', onTap: () => _addPreServiceMedia(), small: true),
+                    SolidBtn(
+                      label: '+ ADD',
+                      onTap: () => _addPreServiceMedia(),
+                      small: true,
+                    ),
                   ],
                 ),
                 if (state.preServicePhotos.isNotEmpty) ...[
@@ -365,12 +469,19 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                         height: 64,
                         margin: const EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(AppDimensions.r8),
+                          ),
                           border: Border.all(color: IC.line),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r7)),
-                          child: localImage(state.preServicePhotos[i], fit: BoxFit.cover),
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(AppDimensions.r7),
+                          ),
+                          child: localImage(
+                            state.preServicePhotos[i],
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     ),
@@ -404,9 +515,17 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
               children: [
                 const Text(
                   'Tag',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: IC.text1),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: IC.text1,
+                  ),
                 ),
-                SolidBtn(label: '+ ADD', small: true, onTap: () => _showTagDialog(context, notifier, state.tag)),
+                SolidBtn(
+                  label: '+ ADD',
+                  small: true,
+                  onTap: () => _showTagDialog(context, notifier, state.tag),
+                ),
               ],
             ),
           ),
@@ -420,7 +539,11 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
               children: [
                 const Text(
                   'Customer Requests/Complaints',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: IC.text1),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: IC.text1,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -433,18 +556,30 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                     filled: true,
                     fillColor: IC.canvas,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r8),
+                      ),
                       borderSide: const BorderSide(color: IC.line),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r8),
+                      ),
                       borderSide: const BorderSide(color: IC.line),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
-                      borderSide: const BorderSide(color: IC.accent, width: 1.5),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r8),
+                      ),
+                      borderSide: const BorderSide(
+                        color: IC.accent,
+                        width: 1.5,
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                   ),
                 ),
               ],
@@ -460,7 +595,11 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
               children: [
                 const Text(
                   'Garage Recommendations',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: IC.text1),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: IC.text1,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -473,18 +612,30 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                     filled: true,
                     fillColor: IC.canvas,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r8),
+                      ),
                       borderSide: const BorderSide(color: IC.line),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r8),
+                      ),
                       borderSide: const BorderSide(color: IC.line),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
-                      borderSide: const BorderSide(color: IC.accent, width: 1.5),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r8),
+                      ),
+                      borderSide: const BorderSide(
+                        color: IC.accent,
+                        width: 1.5,
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                   ),
                 ),
               ],
@@ -500,29 +651,45 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                 const Expanded(
                   child: Text(
                     'Estimated delivery time',
-                    style: TextStyle(fontSize: 13, color: IC.text1, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: IC.text1,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
                 GestureDetector(
                   onTap: () async {
                     final d = await showDatePicker(
                       context: context,
-                      initialDate: state.estimatedDelivery ?? DateTime.now().add(const Duration(days: 1)),
+                      initialDate:
+                          state.estimatedDelivery ??
+                          DateTime.now().add(const Duration(days: 1)),
                       firstDate: DateTime.now(),
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                     );
                     if (d != null) {
-                      final t = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                      final t = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
                       if (t != null) {
-                        notifier.setEstimatedDelivery(DateTime(d.year, d.month, d.day, t.hour, t.minute));
+                        notifier.setEstimatedDelivery(
+                          DateTime(d.year, d.month, d.day, t.hour, t.minute),
+                        );
                       }
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: IC.canvas,
-                      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r8),
+                      ),
                       border: Border.all(color: IC.line),
                     ),
                     child: Text(
@@ -546,10 +713,17 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                 const Expanded(
                   child: Text(
                     'Notify Owner (SMS & e-mail)?',
-                    style: TextStyle(fontSize: 13, color: IC.text1, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: IC.text1,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-                TealSwitch(value: state.notifyOwnerSmsEmail, onToggle: notifier.toggleNotifyOwnerSmsEmail),
+                TealSwitch(
+                  value: state.notifyOwnerSmsEmail,
+                  onToggle: notifier.toggleNotifyOwnerSmsEmail,
+                ),
               ],
             ),
           ),
@@ -559,7 +733,10 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
           // ── CONTINUE ──────────────────────────────────────────────────
           SolidBtn(
             label: 'CONTINUE',
-            onTap: () => context.push(AppRoutes.repairOrderPreview, extra: {'onBack': () => context.pop()}),
+            onTap: () => context.push(
+              AppRoutes.repairOrderPreview,
+              extra: {'onBack': () => context.pop()},
+            ),
           ),
         ],
       ),
@@ -585,17 +762,35 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 color: IC.stroke,
-                borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r2)),
+                borderRadius: BorderRadius.all(
+                  Radius.circular(AppDimensions.r2),
+                ),
               ),
             ),
             const Text(
               'Add Pre-Service Media',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: IC.text1),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: IC.text1,
+              ),
             ),
             const SizedBox(height: 16),
-            _MediaOption(icon: Icons.camera_alt_outlined, label: 'Take Photo', value: 'camera'),
-            _MediaOption(icon: Icons.photo_library_outlined, label: 'Choose from Gallery', value: 'gallery'),
-            _MediaOption(icon: Icons.videocam_outlined, label: 'Record Video', value: 'video'),
+            _MediaOption(
+              icon: Icons.camera_alt_outlined,
+              label: 'Take Photo',
+              value: 'camera',
+            ),
+            _MediaOption(
+              icon: Icons.photo_library_outlined,
+              label: 'Choose from Gallery',
+              value: 'gallery',
+            ),
+            _MediaOption(
+              icon: Icons.videocam_outlined,
+              label: 'Record Video',
+              value: 'video',
+            ),
           ],
         ),
       ),
@@ -604,12 +799,18 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
     try {
       final picker = ImagePicker();
       if (choice == 'camera') {
-        final f = await picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+        final f = await picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 80,
+        );
         if (f != null) {
           ref.read(inspectionProvider.notifier).addPreServicePhoto(f.path);
         }
       } else if (choice == 'gallery') {
-        final f = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+        final f = await picker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 80,
+        );
         if (f != null) {
           ref.read(inspectionProvider.notifier).addPreServicePhoto(f.path);
         }
@@ -621,12 +822,27 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: IC.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: IC.red),
+        );
       }
     }
   }
 
-  String _month(int m) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1];
+  String _month(int m) => [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][m - 1];
   String _time(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
@@ -638,7 +854,11 @@ class _MediaOption extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  const _MediaOption({required this.icon, required this.label, required this.value});
+  const _MediaOption({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -657,7 +877,11 @@ class _MediaOption extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: IC.text1),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: IC.text1,
+            ),
           ),
         ],
       ),
@@ -688,7 +912,11 @@ class _TotalRow extends StatelessWidget {
       ),
       Text(
         'AED ${amount.toStringAsFixed(2)}',
-        style: TextStyle(fontSize: 12, color: IC.text1, fontWeight: bold ? FontWeight.w700 : FontWeight.w500),
+        style: TextStyle(
+          fontSize: 12,
+          color: IC.text1,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+        ),
       ),
     ],
   );
@@ -701,7 +929,11 @@ class _LineItemsCard extends StatelessWidget {
   final String title;
   final VoidCallback onAdd;
   final List<Widget> children;
-  const _LineItemsCard({required this.title, required this.onAdd, required this.children});
+  const _LineItemsCard({
+    required this.title,
+    required this.onAdd,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) => InfoCard(
@@ -713,7 +945,11 @@ class _LineItemsCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: IC.text1),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: IC.text1,
+              ),
             ),
             SolidBtn(label: '+ ADD', onTap: onAdd, small: true),
           ],
@@ -722,20 +958,28 @@ class _LineItemsCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Apply Discount to all', style: TextStyle(fontSize: 11, color: IC.text2)),
+            const Text(
+              'Apply Discount to all',
+              style: TextStyle(fontSize: 11, color: IC.text2),
+            ),
             Container(
               width: 36,
               height: 20,
               decoration: BoxDecoration(
                 color: IC.stroke,
-                borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+                borderRadius: BorderRadius.all(
+                  Radius.circular(AppDimensions.r10),
+                ),
               ),
               padding: const EdgeInsets.all(3),
               alignment: Alignment.centerLeft,
               child: Container(
                 width: 14,
                 height: 14,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
           ],
@@ -754,27 +998,51 @@ void _showItemInfo(BuildContext context, String name) {
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r14)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.r14),
+      ),
       title: const Text(
         'Line Item',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
       ),
-      content: Text(name, style: const TextStyle(fontSize: 13, color: AppColors.text2)),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
+      content: Text(
+        name,
+        style: const TextStyle(fontSize: 13, color: AppColors.text2),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Close'),
+        ),
+      ],
     ),
   );
 }
 
-void _showTagDialog(BuildContext context, InspectionNotifier notifier, String currentTag) {
+void _showTagDialog(
+  BuildContext context,
+  InspectionNotifier notifier,
+  String currentTag,
+) {
   final controller = TextEditingController(text: currentTag);
   showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r14)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.r14),
+      ),
       title: const Text(
         'Tag',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
       ),
       content: TextField(
         controller: controller,
@@ -789,7 +1057,10 @@ void _showTagDialog(BuildContext context, InspectionNotifier notifier, String cu
         },
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
         ElevatedButton(
           onPressed: () {
             notifier.setTag(controller.text.trim());
@@ -807,7 +1078,12 @@ class _ServiceLineRow extends StatelessWidget {
   final ServiceLineItem item;
   final InspectionNotifier notifier;
   final VoidCallback onSuggest;
-  const _ServiceLineRow({required this.index, required this.item, required this.notifier, required this.onSuggest});
+  const _ServiceLineRow({
+    required this.index,
+    required this.item,
+    required this.notifier,
+    required this.onSuggest,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -825,12 +1101,20 @@ class _ServiceLineRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.name,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: IC.accent),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: IC.accent,
+                  ),
                 ),
               ),
               GestureDetector(
                 onTap: () => _showItemInfo(context, item.name),
-                child: const Icon(Icons.info_outline, size: 14, color: IC.text3),
+                child: const Icon(
+                  Icons.info_outline,
+                  size: 14,
+                  color: IC.text3,
+                ),
               ),
             ],
           ),
@@ -839,19 +1123,31 @@ class _ServiceLineRow extends StatelessWidget {
           Row(
             children: const [
               Expanded(
-                child: Text('Qty', style: TextStyle(fontSize: 9, color: IC.text3)),
+                child: Text(
+                  'Qty',
+                  style: TextStyle(fontSize: 9, color: IC.text3),
+                ),
               ),
               SizedBox(width: 6),
               Expanded(
-                child: Text('Selling Price', style: TextStyle(fontSize: 9, color: IC.text3)),
+                child: Text(
+                  'Selling Price',
+                  style: TextStyle(fontSize: 9, color: IC.text3),
+                ),
               ),
               SizedBox(width: 6),
               Expanded(
-                child: Text('Disc %', style: TextStyle(fontSize: 9, color: IC.text3)),
+                child: Text(
+                  'Disc %',
+                  style: TextStyle(fontSize: 9, color: IC.text3),
+                ),
               ),
               SizedBox(width: 6),
               Expanded(
-                child: Text('Amount', style: TextStyle(fontSize: 9, color: IC.text3)),
+                child: Text(
+                  'Amount',
+                  style: TextStyle(fontSize: 9, color: IC.text3),
+                ),
               ),
             ],
           ),
@@ -912,7 +1208,11 @@ class _ServiceLineRow extends StatelessWidget {
                   children: [
                     Text(
                       'AED ${item.amount.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 11, color: IC.text1, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: IC.text1,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -932,7 +1232,11 @@ class _PartLineRow extends StatelessWidget {
   final int index;
   final PartLineItem item;
   final InspectionNotifier notifier;
-  const _PartLineRow({required this.index, required this.item, required this.notifier});
+  const _PartLineRow({
+    required this.index,
+    required this.item,
+    required this.notifier,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -950,12 +1254,20 @@ class _PartLineRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.name,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: IC.accent),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: IC.accent,
+                  ),
                 ),
               ),
               GestureDetector(
                 onTap: () => _showItemInfo(context, item.name),
-                child: const Icon(Icons.info_outline, size: 14, color: IC.text3),
+                child: const Icon(
+                  Icons.info_outline,
+                  size: 14,
+                  color: IC.text3,
+                ),
               ),
             ],
           ),
@@ -964,19 +1276,31 @@ class _PartLineRow extends StatelessWidget {
           Row(
             children: const [
               Expanded(
-                child: Text('Qty', style: TextStyle(fontSize: 9, color: IC.text3)),
+                child: Text(
+                  'Qty',
+                  style: TextStyle(fontSize: 9, color: IC.text3),
+                ),
               ),
               SizedBox(width: 6),
               Expanded(
-                child: Text('Selling Price', style: TextStyle(fontSize: 9, color: IC.text3)),
+                child: Text(
+                  'Selling Price',
+                  style: TextStyle(fontSize: 9, color: IC.text3),
+                ),
               ),
               SizedBox(width: 6),
               Expanded(
-                child: Text('Disc %', style: TextStyle(fontSize: 9, color: IC.text3)),
+                child: Text(
+                  'Disc %',
+                  style: TextStyle(fontSize: 9, color: IC.text3),
+                ),
               ),
               SizedBox(width: 6),
               Expanded(
-                child: Text('Amount', style: TextStyle(fontSize: 9, color: IC.text3)),
+                child: Text(
+                  'Amount',
+                  style: TextStyle(fontSize: 9, color: IC.text3),
+                ),
               ),
             ],
           ),
@@ -1025,7 +1349,11 @@ class _PartLineRow extends StatelessWidget {
                   children: [
                     Text(
                       'AED ${item.amount.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 11, color: IC.text1, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: IC.text1,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -1042,7 +1370,11 @@ class _EditableField extends StatefulWidget {
   final String label;
   final String value;
   final ValueChanged<String> onChanged;
-  const _EditableField({required this.label, required this.value, required this.onChanged});
+  const _EditableField({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
 
   @override
   State<_EditableField> createState() => _EditableFieldState();
@@ -1052,8 +1384,9 @@ class _EditableFieldState extends State<_EditableField> {
   // FE-FIX (audit P1): the controller was created inside build() — every
   // rebuild (e.g. auto-pricing a different line) reset this field to its
   // initial value and dropped whatever the user was typing.
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.value);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value,
+  );
   bool _dirty = false;
 
   @override
@@ -1124,7 +1457,9 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
 
   @override
   Widget build(BuildContext context) {
-    final items = kServiceList.where((s) => s.toLowerCase().contains(_q.toLowerCase())).toList();
+    final items = kServiceList
+        .where((s) => s.toLowerCase().contains(_q.toLowerCase()))
+        .toList();
     return Scaffold(
       backgroundColor: IC.canvas,
       appBar: AppBar(
@@ -1136,7 +1471,11 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
         ),
         title: const Text(
           'Choose Services',
-          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           Container(
@@ -1155,9 +1494,15 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: IC.accent,
-                borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                borderRadius: BorderRadius.all(
+                  Radius.circular(AppDimensions.r8),
+                ),
               ),
-              child: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.arrow_forward,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],
@@ -1166,7 +1511,10 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: SearchField(hint: 'Search', onChanged: (q) => setState(() => _q = q)),
+            child: SearchField(
+              hint: 'Search',
+              onChanged: (q) => setState(() => _q = q),
+            ),
           ),
           // ── Column headers with Selling Price ──────────────────────────
           Container(
@@ -1181,12 +1529,20 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
                 Expanded(
                   child: Text(
                     'SERVICE',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: IC.text2),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: IC.text2,
+                    ),
                   ),
                 ),
                 Text(
                   'SELLING PRICE',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: IC.text2),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: IC.text2,
+                  ),
                 ),
               ],
             ),
@@ -1204,7 +1560,10 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
                     setState(() {});
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: sel ? IC.tealBg : IC.surface,
                       border: const Border(bottom: BorderSide(color: IC.line)),
@@ -1217,19 +1576,40 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
                           height: 18,
                           decoration: BoxDecoration(
                             color: sel ? IC.accent : Colors.transparent,
-                            borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r4)),
-                            border: Border.all(color: sel ? IC.accent : IC.stroke, width: 2),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(AppDimensions.r4),
+                            ),
+                            border: Border.all(
+                              color: sel ? IC.accent : IC.stroke,
+                              width: 2,
+                            ),
                           ),
-                          child: sel ? const Icon(Icons.check, color: Colors.white, size: 12) : null,
+                          child: sel
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 12,
+                                )
+                              : null,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(s, style: const TextStyle(fontSize: 13, color: IC.text1)),
+                          child: Text(
+                            s,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: IC.text1,
+                            ),
+                          ),
                         ),
                         // ─── Selling Price value ───────────────────────────────
                         const Text(
                           'AED 0.00',
-                          style: TextStyle(fontSize: 12, color: IC.text2, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: IC.text2,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
@@ -1241,7 +1621,8 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: SolidBtn(
-              label: 'Select ${widget.selected.length} Service${widget.selected.length != 1 ? "s" : ""}',
+              label:
+                  'Select ${widget.selected.length} Service${widget.selected.length != 1 ? "s" : ""}',
               onTap: _confirm,
             ),
           ),
@@ -1280,7 +1661,9 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
 
   @override
   Widget build(BuildContext context) {
-    final items = kPartList.where((p) => p.toLowerCase().contains(_q.toLowerCase())).toList();
+    final items = kPartList
+        .where((p) => p.toLowerCase().contains(_q.toLowerCase()))
+        .toList();
     return Scaffold(
       backgroundColor: IC.canvas,
       appBar: AppBar(
@@ -1292,7 +1675,11 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
         ),
         title: const Text(
           'Choose Part',
-          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           Container(
@@ -1302,7 +1689,11 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
               color: IC.tealBg,
               borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
             ),
-            child: const Icon(Icons.inventory_2_outlined, color: IC.accent, size: 20),
+            child: const Icon(
+              Icons.inventory_2_outlined,
+              color: IC.accent,
+              size: 20,
+            ),
           ),
           GestureDetector(
             onTap: _confirm,
@@ -1311,9 +1702,15 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: IC.accent,
-                borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                borderRadius: BorderRadius.all(
+                  Radius.circular(AppDimensions.r8),
+                ),
               ),
-              child: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.arrow_forward,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],
@@ -1322,7 +1719,10 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: SearchField(hint: 'Search', onChanged: (q) => setState(() => _q = q)),
+            child: SearchField(
+              hint: 'Search',
+              onChanged: (q) => setState(() => _q = q),
+            ),
           ),
           // Column headers — now including SELLING PRICE
           Container(
@@ -1337,22 +1737,38 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
                 Expanded(
                   child: Text(
                     'PART INFORMATION',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: IC.text2),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: IC.text2,
+                    ),
                   ),
                 ),
                 Text(
                   'STOCK',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: IC.text2),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: IC.text2,
+                  ),
                 ),
                 SizedBox(width: 12),
                 Text(
                   'SELLING PRICE',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: IC.text2),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: IC.text2,
+                  ),
                 ),
                 SizedBox(width: 12),
                 Text(
                   'QTY',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: IC.text2),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: IC.text2,
+                  ),
                 ),
               ],
             ),
@@ -1370,7 +1786,10 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
                     setState(() {});
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: sel ? IC.tealBg : IC.surface,
                       border: const Border(bottom: BorderSide(color: IC.line)),
@@ -1383,10 +1802,21 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
                           height: 18,
                           decoration: BoxDecoration(
                             color: sel ? IC.accent : Colors.transparent,
-                            borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r4)),
-                            border: Border.all(color: sel ? IC.accent : IC.stroke, width: 2),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(AppDimensions.r4),
+                            ),
+                            border: Border.all(
+                              color: sel ? IC.accent : IC.stroke,
+                              width: 2,
+                            ),
                           ),
-                          child: sel ? const Icon(Icons.check, color: Colors.white, size: 12) : null,
+                          child: sel
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 12,
+                                )
+                              : null,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -1395,21 +1825,41 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
                             children: [
                               Text(
                                 p,
-                                style: const TextStyle(fontSize: 13, color: IC.text1, fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: IC.text1,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                              const Text('View Substitutes ▾', style: TextStyle(fontSize: 11, color: IC.accent)),
+                              const Text(
+                                'View Substitutes ▾',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: IC.accent,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        const Text('-', style: TextStyle(fontSize: 11, color: IC.text2)),
+                        const Text(
+                          '-',
+                          style: TextStyle(fontSize: 11, color: IC.text2),
+                        ),
                         const SizedBox(width: 12),
                         // ─── Selling Price value ─────────────────────────────
                         const Text(
                           'AED 0.00',
-                          style: TextStyle(fontSize: 12, color: IC.text2, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: IC.text2,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         const SizedBox(width: 12),
-                        const Text('1', style: TextStyle(fontSize: 12, color: IC.text1)),
+                        const Text(
+                          '1',
+                          style: TextStyle(fontSize: 12, color: IC.text1),
+                        ),
                       ],
                     ),
                   ),
@@ -1440,10 +1890,12 @@ class RepairOrderPreviewView extends ConsumerStatefulWidget {
   const RepairOrderPreviewView({super.key, required this.onBack});
 
   @override
-  ConsumerState<RepairOrderPreviewView> createState() => _RepairOrderPreviewViewState();
+  ConsumerState<RepairOrderPreviewView> createState() =>
+      _RepairOrderPreviewViewState();
 }
 
-class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView> {
+class _RepairOrderPreviewViewState
+    extends ConsumerState<RepairOrderPreviewView> {
   Map<String, dynamic>? _customerData;
   Uint8List? _signatureBytes;
 
@@ -1456,7 +1908,10 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
   void _loadCustomerData() {
     try {
       final box = Hive.box<dynamic>('inspections');
-      final all = box.values.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+      final all = box.values
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
       final state = ref.read(inspectionProvider);
       final jid = state.jobCardId;
       _customerData = all.cast<Map<String, dynamic>?>().firstWhere(
@@ -1473,7 +1928,9 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
       context: context,
       backgroundColor: AppColors.surface,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) => const _SignaturePadSheet(),
     );
     if (result == null || !mounted) return;
@@ -1481,11 +1938,17 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
       _signatureBytes = result;
     });
     // Persist the signature so it can be attached to the repair order later.
-    final path = await saveSignatureFile(result, 'signature_${DateTime.now().millisecondsSinceEpoch}.png');
+    final path = await saveSignatureFile(
+      result,
+      'signature_${DateTime.now().millisecondsSinceEpoch}.png',
+    );
     if (path.isNotEmpty && mounted) {
       try {
         final box = Hive.box<dynamic>('inspections');
-        box.put('repair_order_signature', {'path': path, 'timestamp': DateTime.now().millisecondsSinceEpoch});
+        box.put('repair_order_signature', {
+          'path': path,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        });
       } catch (_) {}
     }
   }
@@ -1498,7 +1961,8 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
     final customerName = _getVal('customerName');
     final phone = _getVal('phoneNumber');
     final email = _getVal('email');
-    final vehicle = '${_getVal('make')} ${_getVal('model')}\n${_getVal('registrationNumber')}\n${_getVal('vin')}';
+    final vehicle =
+        '${_getVal('make')} ${_getVal('model')}\n${_getVal('registrationNumber')}\n${_getVal('vin')}';
 
     return Scaffold(
       backgroundColor: IC.canvas,
@@ -1511,7 +1975,11 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
         ),
         title: const Text(
           'Preview',
-          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           TextButton.icon(
@@ -1519,7 +1987,11 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
             icon: const Icon(Icons.draw_outlined, color: IC.accent, size: 16),
             label: const Text(
               'SIGNATURE',
-              style: TextStyle(color: IC.accent, fontSize: 12, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: IC.accent,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -1537,7 +2009,9 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
                       height: 70,
                       decoration: BoxDecoration(
                         border: Border.all(color: IC.line, width: 2),
-                        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(AppDimensions.r8),
+                        ),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1563,26 +2037,55 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
                         children: [
                           Text(
                             brand.appName.toUpperCase(),
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: IC.text1),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: IC.text1,
+                            ),
                           ),
                           Text(
-                            _getVal('address').isEmpty ? 'Auto Garage Services' : _getVal('address'),
-                            style: const TextStyle(fontSize: 11, color: IC.text2),
+                            _getVal('address').isEmpty
+                                ? 'Auto Garage Services'
+                                : _getVal('address'),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: IC.text2,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              const Icon(Icons.phone_outlined, size: 11, color: IC.text3),
+                              const Icon(
+                                Icons.phone_outlined,
+                                size: 11,
+                                color: IC.text3,
+                              ),
                               const SizedBox(width: 4),
-                              Text(phone.isEmpty ? '--' : phone, style: const TextStyle(fontSize: 11, color: IC.text2)),
+                              Text(
+                                phone.isEmpty ? '--' : phone,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: IC.text2,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 2),
                           Row(
                             children: [
-                              const Icon(Icons.email_outlined, size: 11, color: IC.text3),
+                              const Icon(
+                                Icons.email_outlined,
+                                size: 11,
+                                color: IC.text3,
+                              ),
                               const SizedBox(width: 4),
-                              Text(email.isEmpty ? '--' : email, style: const TextStyle(fontSize: 11, color: IC.text2)),
+                              Text(
+                                email.isEmpty ? '--' : email,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: IC.text2,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -1598,7 +2101,12 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
                 const Text(
                   'Repair Order',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: IC.text1, letterSpacing: 0),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: IC.text1,
+                    letterSpacing: 0,
+                  ),
                 ),
 
                 const SizedBox(height: 12),
@@ -1611,8 +2119,14 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
                   ),
                   child: Row(
                     children: [
-                      _PreviewHeaderCell('CUSTOMER', customerName.isEmpty ? '--' : '$customerName\n$phone'),
-                      _PreviewHeaderCell('VEHICLE', _getVal('make').isEmpty ? '--' : vehicle),
+                      _PreviewHeaderCell(
+                        'CUSTOMER',
+                        customerName.isEmpty ? '--' : '$customerName\n$phone',
+                      ),
+                      _PreviewHeaderCell(
+                        'VEHICLE',
+                        _getVal('make').isEmpty ? '--' : vehicle,
+                      ),
                       _PreviewHeaderCell(
                         'ESTIMATE',
                         '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}\n${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}\nAmount:\nAED ${state.grandTotal.toStringAsFixed(2)}',
@@ -1635,10 +2149,18 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
                       children: [
                         const Text(
                           'CUSTOMER SIGNATURE',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: IC.text3),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: IC.text3,
+                          ),
                         ),
                         const SizedBox(height: 6),
-                        Image.memory(_signatureBytes!, height: 80, fit: BoxFit.contain),
+                        Image.memory(
+                          _signatureBytes!,
+                          height: 80,
+                          fit: BoxFit.contain,
+                        ),
                       ],
                     ),
                   ),
@@ -1653,7 +2175,12 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
             InfoCard(
               child: Column(
                 children: [
-                  _TableHeader(const ['SERVICES', 'QTY', 'SELLING PRICE', 'AMOUNT']),
+                  _TableHeader(const [
+                    'SERVICES',
+                    'QTY',
+                    'SELLING PRICE',
+                    'AMOUNT',
+                  ]),
                   ...state.serviceLines.map(
                     (s) => _TableRow([
                       s.name,
@@ -1674,7 +2201,12 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
             InfoCard(
               child: Column(
                 children: [
-                  _TableHeader(const ['PARTS', 'QTY', 'SELLING PRICE', 'AMOUNT']),
+                  _TableHeader(const [
+                    'PARTS',
+                    'QTY',
+                    'SELLING PRICE',
+                    'AMOUNT',
+                  ]),
                   ...state.partLines.map(
                     (p) => _TableRow([
                       p.name,
@@ -1697,7 +2229,11 @@ class _RepairOrderPreviewViewState extends ConsumerState<RepairOrderPreviewView>
               children: [
                 const Text(
                   'SUMMARY',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: IC.text1),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: IC.text1,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 _SummaryRow('SUB TOTAL:', state.grandTotal),
@@ -1740,12 +2276,19 @@ class _SignaturePadSheetState extends State<_SignaturePadSheet> {
             Container(
               width: 40,
               height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
               'Customer Signature',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
             ),
             const SizedBox(height: 14),
             GestureDetector(
@@ -1770,7 +2313,10 @@ class _SignaturePadSheetState extends State<_SignaturePadSheet> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: CustomPaint(
-                    painter: _SignaturePainter(strokes: _strokes, current: _current),
+                    painter: _SignaturePainter(
+                      strokes: _strokes,
+                      current: _current,
+                    ),
                   ),
                 ),
               ),
@@ -1816,7 +2362,10 @@ class _SignaturePadSheetState extends State<_SignaturePadSheet> {
     final canvas = Canvas(recorder);
     const width = 800.0;
     const height = 320.0;
-    canvas.drawRect(Rect.fromLTWH(0, 0, width, height), Paint()..color = Colors.white);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, width, height),
+      Paint()..color = Colors.white,
+    );
     final painter = _SignaturePainter(strokes: _strokes, current: const []);
     painter.paint(canvas, const Size(width, height));
     final picture = recorder.endRecording();
@@ -1877,10 +2426,17 @@ class _PreviewHeaderCell extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: IC.text3),
+            style: const TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: IC.text3,
+            ),
           ),
           const SizedBox(height: 3),
-          Text(value, style: const TextStyle(fontSize: 10, color: IC.text1, height: 1.4)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 10, color: IC.text1, height: 1.4),
+          ),
         ],
       ),
     ),
@@ -1902,7 +2458,11 @@ class _TableHeader extends StatelessWidget {
         Expanded(
           child: Text(
             cols[0],
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: IC.text1),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: IC.text1,
+            ),
           ),
         ),
         ...cols
@@ -1913,7 +2473,11 @@ class _TableHeader extends StatelessWidget {
                 child: Text(
                   c,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: IC.text1),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: IC.text1,
+                  ),
                 ),
               ),
             ),
@@ -1932,7 +2496,10 @@ class _TableRow extends StatelessWidget {
     child: Row(
       children: [
         Expanded(
-          child: Text(cells[0], style: const TextStyle(fontSize: 11, color: IC.text1)),
+          child: Text(
+            cells[0],
+            style: const TextStyle(fontSize: 11, color: IC.text1),
+          ),
         ),
         ...cells
             .skip(1)
@@ -1960,7 +2527,9 @@ class _CreateRepairOrderButton extends ConsumerWidget {
     return GestureDetector(
       onTap: () async {
         final state = ref.read(inspectionProvider);
-        final local = GenericLocalDataSource(Hive.box<Map<String, dynamic>>('repair_orders'));
+        final local = GenericLocalDataSource(
+          Hive.box<Map<String, dynamic>>('repair_orders'),
+        );
         final id = await IdGenerator.nextId('RO');
         await local.save(id, state.toPersistableMap());
 
@@ -1990,7 +2559,10 @@ class _CreateRepairOrderButton extends ConsumerWidget {
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(color: IC.navy, borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10))),
+        decoration: BoxDecoration(
+          color: IC.navy,
+          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+        ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1998,7 +2570,12 @@ class _CreateRepairOrderButton extends ConsumerWidget {
             SizedBox(width: 8),
             Text(
               'CREATE REPAIR ORDER',
-              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 0.3),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
+              ),
             ),
           ],
         ),
@@ -2020,12 +2597,20 @@ class _SectionTotal extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: IC.text1),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: IC.text1,
+            ),
           ),
         ),
         Text(
           'AED ${amount.toStringAsFixed(2)}',
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: IC.text1),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: IC.text1,
+          ),
         ),
       ],
     ),
@@ -2046,12 +2631,20 @@ class _SummaryRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: TextStyle(fontSize: 12, fontWeight: bold ? FontWeight.w800 : FontWeight.w500, color: IC.text1),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
+              color: IC.text1,
+            ),
           ),
         ),
         Text(
           'AED ${amount.toStringAsFixed(2)}',
-          style: TextStyle(fontSize: 12, fontWeight: bold ? FontWeight.w800 : FontWeight.w500, color: IC.text1),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
+            color: IC.text1,
+          ),
         ),
       ],
     ),

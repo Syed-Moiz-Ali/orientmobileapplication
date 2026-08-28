@@ -14,6 +14,7 @@ class SupervisorJobsTab extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final notifier = ref.read(supervisorDashboardProvider.notifier);
+    final state = ref.watch(supervisorDashboardProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -55,23 +56,30 @@ class SupervisorJobsTab extends ConsumerWidget {
 
             // ── 2. SECTION HEADER ───────────────────────────────────────────
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Live Work Assignments',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.onSurface,
-                    letterSpacing: -0.4,
+                Expanded(
+                  child: Text(
+                    'Live work assignments',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                      letterSpacing: -0.4,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 10),
                 _PressScale(
                   onTap: () {
                     HapticFeedback.lightImpact();
                     notifier.onNewAssignment();
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.primary,
                       borderRadius: BorderRadius.circular(100),
@@ -85,11 +93,19 @@ class SupervisorJobsTab extends ConsumerWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.add_rounded, color: colorScheme.onPrimary, size: 16),
+                        Icon(
+                          Icons.add_rounded,
+                          color: colorScheme.onPrimary,
+                          size: 16,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'New Task',
-                          style: TextStyle(color: colorScheme.onPrimary, fontSize: 12, fontWeight: FontWeight.w800),
+                          style: TextStyle(
+                            color: colorScheme.onPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ],
                     ),
@@ -98,12 +114,42 @@ class SupervisorJobsTab extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
+            if (state.dashboardError.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                  color: colorScheme.errorContainer.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.cloud_off_rounded,
+                      color: colorScheme.onErrorContainer,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        state.dashboardError,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
 
             // ── 3. JOBS LIST ────────────────────────────────────────────────
             if (notifier.jobs.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 40),
-                child: EmptyState(icon: Icons.checklist_rounded, message: 'No assigned jobs on floor'),
+                child: EmptyState(
+                  icon: Icons.checklist_rounded,
+                  message: 'No assigned jobs on floor',
+                ),
               )
             else
               ListView.separated(
@@ -125,7 +171,11 @@ class _JobsMetricPill extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _JobsMetricPill({required this.label, required this.value, required this.color});
+  const _JobsMetricPill({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +230,11 @@ class _JobCard extends StatelessWidget {
 
     final progress = job.total > 0 ? job.done / job.total : 0.0;
     final progressPct = (progress * 100).toInt();
+    final normalizedStatus = job.status.toLowerCase();
+    final isCritical =
+        normalizedStatus.contains('delayed') ||
+        normalizedStatus.contains('overdue') ||
+        normalizedStatus.contains('blocked');
 
     final statusColor = job.status == 'Completed'
         ? const Color(0xFF10B981)
@@ -191,53 +246,82 @@ class _JobCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color: isCritical
+              ? colorScheme.errorContainer.withValues(alpha: 0.28)
+              : colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colorScheme.outlineVariant),
+          border: Border.all(
+            color: isCritical ? colorScheme.error : colorScheme.outlineVariant,
+            width: isCritical ? 1.5 : 1,
+          ),
           boxShadow: [
-            BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 14, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.04),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(10),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          isCritical
+                              ? Icons.warning_amber_rounded
+                              : Icons.receipt_long_rounded,
+                          size: 18,
+                          color: isCritical
+                              ? colorScheme.error
+                              : colorScheme.primary,
+                        ),
                       ),
-                      child: Icon(Icons.receipt_long_rounded, size: 16, color: colorScheme.primary),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      job.jobCard,
-                      style: textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          job.jobCard,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
+                    ],
                   ),
-                  child: Text(
-                    job.status.toUpperCase(),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      job.status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ),
@@ -251,7 +335,11 @@ class _JobCard extends StatelessWidget {
                   backgroundColor: colorScheme.surfaceContainerHighest,
                   child: Text(
                     job.customer.isNotEmpty ? job.customer[0] : '?',
-                    style: TextStyle(color: colorScheme.primary, fontSize: 14, fontWeight: FontWeight.w800),
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -266,7 +354,12 @@ class _JobCard extends StatelessWidget {
                           color: colorScheme.onSurface,
                         ),
                       ),
-                      Text(job.vehicle, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                      Text(
+                        job.vehicle,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -295,7 +388,10 @@ class _JobCard extends StatelessWidget {
               children: [
                 Text(
                   '${job.done}/${job.total} tasks finished',
-                  style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 10.5),
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 10.5,
+                  ),
                 ),
                 Text(
                   '$progressPct%',
@@ -324,7 +420,8 @@ class _PressScale extends StatefulWidget {
   State<_PressScale> createState() => _PressScaleState();
 }
 
-class _PressScaleState extends State<_PressScale> with SingleTickerProviderStateMixin {
+class _PressScaleState extends State<_PressScale>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
 
@@ -336,10 +433,13 @@ class _PressScaleState extends State<_PressScale> with SingleTickerProviderState
       duration: const Duration(milliseconds: 100),
       reverseDuration: const Duration(milliseconds: 140),
     );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.97,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      ),
+    );
   }
 
   @override

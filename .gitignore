@@ -64,5 +64,11 @@ change.txt
 android_keystore/
 **/android/key.properties
 
+# Firebase Admin credentials are server secrets. Mobile google-services.json
+# and GoogleService-Info.plist are public client configuration and stay tracked.
+.secrets/
+**/firebase-adminsdk*.json
+**/service-account*.json
+
 # Build artifacts (accidentally committed in an earlier pass)
 **/build/

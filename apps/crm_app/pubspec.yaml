@@ -18,6 +18,7 @@ dependencies:
     path: ../../packages/shared_auth
   shared_models:
     path: ../../packages/shared_models
+  firebase_core: ^4.14.0
 
 dev_dependencies:
   flutter_test:

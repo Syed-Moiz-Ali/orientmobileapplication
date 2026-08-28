@@ -342,13 +342,17 @@ class _AdvisorDashboardContent extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final recentJobs =
-        ref.watch(advisorRecentJobCardsProvider).value ??
-        const <JobCardEntity>[];
+    final recentJobsState = ref.watch(advisorRecentJobCardsProvider);
+    final bookingsState = ref.watch(advisorAssignedBookingsProvider);
+    final recentJobs = recentJobsState.value ?? const <JobCardEntity>[];
     final assignedBookings =
-        ref.watch(advisorAssignedBookingsProvider).value ??
-        const <AdvisorBookingResponse>[];
+        bookingsState.value ?? const <AdvisorBookingResponse>[];
     final activeBooking = assignedBookings.firstOrNull;
+    final hasDataError = recentJobsState.hasError || bookingsState.hasError;
+    final isInitialLoading =
+        (recentJobsState.isLoading || bookingsState.isLoading) &&
+        recentJobs.isEmpty &&
+        assignedBookings.isEmpty;
 
     return RefreshIndicator(
       onRefresh: () async => ref.read(advisorRefreshProvider.notifier).state++,
@@ -370,11 +374,32 @@ class _AdvisorDashboardContent extends ConsumerWidget {
               onNotificationTap: onShowNotifications,
               onProfileTap: onShowProfile,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
+            if (isInitialLoading) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: const LinearProgressIndicator(minHeight: 4),
+              ),
+              const SizedBox(height: 14),
+            ],
+            if (hasDataError) ...[
+              _AdvisorDataNotice(
+                onRetry: () =>
+                    ref.read(advisorRefreshProvider.notifier).state++,
+              ),
+              const SizedBox(height: 14),
+            ],
+            if (activeBooking != null) ...[
+              _ActiveIntakeRadarHUD(
+                booking: activeBooking,
+                onTap: () => onNavigateTab(1),
+              ),
+              const SizedBox(height: 18),
+            ],
 
             // ── 2. QUICK INTAKE SEARCH PILL ───────────────────────────────
             _AdvisorSearchPill(onTap: onShowSearch),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
 
             // ── 3. BENTO ACTION MATRIX ────────────────────────────────────
             _AdvisorBentoMatrix(
@@ -386,18 +411,7 @@ class _AdvisorDashboardContent extends ConsumerWidget {
             const SizedBox(height: 28),
 
             // ── 4. LIVE INTAKE RADAR HUD ──────────────────────────────────
-            if (activeBooking != null) ...[
-              _ActiveIntakeRadarHUD(
-                booking: activeBooking,
-                onTap: () => onNavigateTab(1),
-              ),
-              const SizedBox(height: 28),
-            ],
-
             // ── 5. OPERATIONAL SPOTLIGHT HERO ─────────────────────────────
-            const _AdvisorSpotlightHeroBanner(),
-            const SizedBox(height: 32),
-
             // ── 6. SHIFT TELEMETRY QUICK METRICS ──────────────────────────
             _SectionHeadingWithAction(
               title: 'Shift Throughput',
@@ -453,6 +467,44 @@ class _AdvisorDashboardContent extends ConsumerWidget {
 }
 
 // ─── 1. ADVISOR COMMAND HEADER ───────────────────────────────────────────────
+class _AdvisorDataNotice extends StatelessWidget {
+  final VoidCallback onRetry;
+
+  const _AdvisorDataNotice({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: colors.errorContainer,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onRetry,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(Icons.cloud_off_rounded, color: colors.onErrorContainer),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Some live workshop data could not be loaded.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onErrorContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Icon(Icons.refresh_rounded, color: colors.onErrorContainer),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AdvisorCommandHeader extends StatelessWidget {
   final VoidCallback onNotificationTap;
   final VoidCallback onProfileTap;
@@ -955,87 +1007,6 @@ class _ActiveIntakeRadarHUD extends StatelessWidget {
 }
 
 // ─── 5. PHOTOGRAPHIC OPERATIONAL HERO BANNER ─────────────────────────────────
-class _AdvisorSpotlightHeroBanner extends StatelessWidget {
-  const _AdvisorSpotlightHeroBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Container(
-      height: 150,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: colorScheme.outlineVariant),
-        image: const DecorationImage(
-          image: NetworkImage(
-            'https://images.unsplash.com/photo-1486006920555-c77dce18193b?q=80&w=800&auto=format&fit=crop',
-          ),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withValues(alpha: 0.88),
-                    Colors.black.withValues(alpha: 0.35),
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: Colors.amberAccent,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'ADVISOR DESK ERP',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: Colors.amberAccent,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Automated Estimate Approvals\n& Transparent Inspections.',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    height: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ─── 6. SHIFT METRICS QUICK ROW ──────────────────────────────────────────────
 class _AdvisorShiftMetricsRow extends StatelessWidget {
   final int totalCount;

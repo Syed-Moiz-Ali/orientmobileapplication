@@ -14,6 +14,7 @@ void main() async {
   AppErrorHandler.init(logger);
 
   await HiveRegistry.initHive();
+  await PushNotificationService.instance.initialize();
 
   runApp(
     ProviderScope(
@@ -45,11 +46,13 @@ class OwnerApp extends ConsumerWidget {
         await ref.read(dashboardUiProvider.notifier).refresh();
         ref.read(jobCardsProvider.notifier).load();
       },
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        routerConfig: router,
-        title: brand.appName,
-        theme: AppTheme.light(brand),
+      child: AuthenticatedPushNotificationScope(
+        child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          routerConfig: router,
+          title: brand.appName,
+          theme: AppTheme.light(brand),
+        ),
       ),
     );
   }

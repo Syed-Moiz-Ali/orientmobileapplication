@@ -18,6 +18,7 @@ void main() async {
   AppErrorHandler.init(logger);
 
   await HiveRegistry.initHive();
+  await PushNotificationService.instance.initialize();
 
   runApp(
     ProviderScope(
@@ -79,11 +80,13 @@ class _StaffAppState extends ConsumerState<StaffApp> {
         // advisor dashboard/jobs on resume.
         ref.read(advisorRefreshProvider.notifier).state++;
       },
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        routerConfig: router,
-        title: brand.appName,
-        theme: AppTheme.light(brand),
+      child: AuthenticatedPushNotificationScope(
+        child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          routerConfig: router,
+          title: brand.appName,
+          theme: AppTheme.light(brand),
+        ),
       ),
     );
   }

@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/core/services/audio_recorder_service.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
 import 'inspection_provider.dart';
@@ -17,7 +18,8 @@ class InspectionSheetView extends ConsumerStatefulWidget {
   const InspectionSheetView({super.key, required this.callbacks});
 
   @override
-  ConsumerState<InspectionSheetView> createState() => _InspectionSheetViewState();
+  ConsumerState<InspectionSheetView> createState() =>
+      _InspectionSheetViewState();
 }
 
 class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
@@ -40,7 +42,9 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
 
     final activeSection = sections.firstWhere(
       (s) => s.id == _selectedSectionId,
-      orElse: () => sections.isNotEmpty ? sections.first : const InspectionSection(id: '', label: '', items: []),
+      orElse: () => sections.isNotEmpty
+          ? sections.first
+          : const InspectionSection(id: '', label: '', items: []),
     );
 
     return Scaffold(
@@ -60,7 +64,11 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
               shape: BoxShape.circle,
               border: Border.all(color: colorScheme.outlineVariant),
             ),
-            child: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface, size: 20),
+            child: Icon(
+              Icons.arrow_back_rounded,
+              color: colorScheme.onSurface,
+              size: 20,
+            ),
           ),
         ),
         title: Column(
@@ -76,7 +84,10 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
             ),
             Text(
               '${state.completedCount} of ${state.totalItems} checkpoints evaluated',
-              style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11.5),
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 11.5,
+              ),
             ),
           ],
         ),
@@ -87,7 +98,9 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
             decoration: BoxDecoration(
               color: colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(100),
-              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.25)),
+              border: Border.all(
+                color: colorScheme.primary.withValues(alpha: 0.25),
+              ),
             ),
             child: Text(
               '${(pct * 100).round()}%',
@@ -103,6 +116,10 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
       ),
       body: Column(
         children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 10),
+            child: AdvisorWorkflowIndicator(currentStep: 1),
+          ),
           // ── 1. REAL-TIME PROGRESS & SEARCH ───────────────────────────────
           Container(
             color: colorScheme.surface,
@@ -115,7 +132,9 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
                     value: pct,
                     minHeight: 6,
                     backgroundColor: colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      colorScheme.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -128,11 +147,21 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
                   ),
                   child: TextField(
                     onChanged: (q) => notifier.setGlobalSearch(q),
-                    style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurface,
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Quick find checkpoint...',
-                      hintStyle: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
-                      prefixIcon: Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant, size: 18),
+                      hintStyle: TextStyle(
+                        fontSize: 12.5,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: colorScheme.onSurfaceVariant,
+                        size: 18,
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     ),
@@ -157,9 +186,12 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
                 final rated = sec.items
                     .asMap()
                     .entries
-                    .where((e) => state.statuses.containsKey('${sec.id}_${e.key}'))
+                    .where(
+                      (e) => state.statuses.containsKey('${sec.id}_${e.key}'),
+                    )
                     .length;
-                final isDone = rated == sec.items.length && sec.items.isNotEmpty;
+                final isDone =
+                    rated == sec.items.length && sec.items.isNotEmpty;
 
                 return _PressScale(
                   onTap: () {
@@ -167,7 +199,10 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
                     setState(() => _selectedSectionId = sec.id);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? colorScheme.primary
@@ -187,7 +222,11 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (isDone && !isSelected) ...[
-                          const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF10B981)),
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: Color(0xFF10B981),
+                          ),
                           const SizedBox(width: 6),
                         ],
                         Text(
@@ -227,7 +266,10 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
           Expanded(
             child: activeSection.items.isEmpty
                 ? const Center(
-                    child: EmptyState(icon: Icons.search_off_rounded, message: 'No matching checkpoints found'),
+                    child: EmptyState(
+                      icon: Icons.search_off_rounded,
+                      message: 'No matching checkpoints found',
+                    ),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 14, 16, 100),
@@ -236,7 +278,11 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
                     itemBuilder: (ctx, idx) {
                       final itemName = activeSection.items[idx];
                       final itemId = '${activeSection.id}_$idx';
-                      return _IntuitiveCheckpointCard(itemId: itemId, itemName: itemName, index: idx + 1);
+                      return _IntuitiveCheckpointCard(
+                        itemId: itemId,
+                        itemName: itemName,
+                        index: idx + 1,
+                      );
                     },
                   ),
           ),
@@ -255,13 +301,19 @@ class _IntuitiveCheckpointCard extends ConsumerStatefulWidget {
   final String itemName;
   final int index;
 
-  const _IntuitiveCheckpointCard({required this.itemId, required this.itemName, required this.index});
+  const _IntuitiveCheckpointCard({
+    required this.itemId,
+    required this.itemName,
+    required this.index,
+  });
 
   @override
-  ConsumerState<_IntuitiveCheckpointCard> createState() => _IntuitiveCheckpointCardState();
+  ConsumerState<_IntuitiveCheckpointCard> createState() =>
+      _IntuitiveCheckpointCardState();
 }
 
-class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCard> {
+class _IntuitiveCheckpointCardState
+    extends ConsumerState<_IntuitiveCheckpointCard> {
   bool _showMediaDrawer = false;
 
   @override
@@ -278,7 +330,10 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
     final hasAudio = (media?.audioPath.isNotEmpty ?? false);
     final hasNote = (media?.note.isNotEmpty ?? false);
     final totalFiles =
-        (media?.photoPaths.length ?? 0) + (media?.videoPaths.length ?? 0) + (hasAudio ? 1 : 0) + (hasNote ? 1 : 0);
+        (media?.photoPaths.length ?? 0) +
+        (media?.videoPaths.length ?? 0) +
+        (hasAudio ? 1 : 0) +
+        (hasNote ? 1 : 0);
 
     final statusColor = status == ItemStatus.good
         ? const Color(0xFF10B981)
@@ -296,12 +351,16 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isRated ? statusColor.withValues(alpha: 0.4) : colorScheme.outlineVariant,
+          color: isRated
+              ? statusColor.withValues(alpha: 0.4)
+              : colorScheme.outlineVariant,
           width: isRated ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isRated ? statusColor.withValues(alpha: 0.04) : colorScheme.shadow.withValues(alpha: 0.03),
+            color: isRated
+                ? statusColor.withValues(alpha: 0.04)
+                : colorScheme.shadow.withValues(alpha: 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -318,7 +377,9 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
                 width: 26,
                 height: 26,
                 decoration: BoxDecoration(
-                  color: isRated ? statusColor.withValues(alpha: 0.14) : colorScheme.surfaceContainerHighest,
+                  color: isRated
+                      ? statusColor.withValues(alpha: 0.14)
+                      : colorScheme.surfaceContainerHighest,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -327,7 +388,9 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
-                      color: isRated ? statusColor : colorScheme.onSurfaceVariant,
+                      color: isRated
+                          ? statusColor
+                          : colorScheme.onSurfaceVariant,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -346,7 +409,10 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
               ),
               if (totalFiles > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(100),
@@ -354,11 +420,19 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.attachment_rounded, size: 12, color: colorScheme.primary),
+                      Icon(
+                        Icons.attachment_rounded,
+                        size: 12,
+                        color: colorScheme.primary,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '$totalFiles',
-                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: colorScheme.primary),
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                          color: colorScheme.primary,
+                        ),
                       ),
                     ],
                   ),
@@ -375,7 +449,10 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
                 icon: Icons.check_circle_outline_rounded,
                 isSelected: status == ItemStatus.good,
                 activeColor: const Color(0xFF10B981),
-                onTap: () => notifier.setStatus(widget.itemId, status == ItemStatus.good ? null : ItemStatus.good),
+                onTap: () => notifier.setStatus(
+                  widget.itemId,
+                  status == ItemStatus.good ? null : ItemStatus.good,
+                ),
               ),
               const SizedBox(width: 8),
               _ConditionSegmentBtn(
@@ -383,7 +460,10 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
                 icon: Icons.error_outline_rounded,
                 isSelected: status == ItemStatus.fair,
                 activeColor: colorScheme.secondary,
-                onTap: () => notifier.setStatus(widget.itemId, status == ItemStatus.fair ? null : ItemStatus.fair),
+                onTap: () => notifier.setStatus(
+                  widget.itemId,
+                  status == ItemStatus.fair ? null : ItemStatus.fair,
+                ),
               ),
               const SizedBox(width: 8),
               _ConditionSegmentBtn(
@@ -391,7 +471,10 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
                 icon: Icons.cancel_outlined,
                 isSelected: status == ItemStatus.poor,
                 activeColor: colorScheme.error,
-                onTap: () => notifier.setStatus(widget.itemId, status == ItemStatus.poor ? null : ItemStatus.poor),
+                onTap: () => notifier.setStatus(
+                  widget.itemId,
+                  status == ItemStatus.poor ? null : ItemStatus.poor,
+                ),
               ),
             ],
           ),
@@ -406,38 +489,55 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
                   setState(() => _showMediaDrawer = !_showMediaDrawer);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: totalFiles > 0
                         ? colorScheme.primary.withValues(alpha: 0.1)
                         : colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: totalFiles > 0 ? colorScheme.primary.withValues(alpha: 0.3) : colorScheme.outlineVariant,
+                      color: totalFiles > 0
+                          ? colorScheme.primary.withValues(alpha: 0.3)
+                          : colorScheme.outlineVariant,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        totalFiles > 0 ? Icons.inventory_2_rounded : Icons.add_photo_alternate_outlined,
+                        totalFiles > 0
+                            ? Icons.inventory_2_rounded
+                            : Icons.add_photo_alternate_outlined,
                         size: 14,
-                        color: totalFiles > 0 ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                        color: totalFiles > 0
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        totalFiles > 0 ? 'Manage Evidence ($totalFiles)' : '+ Add Photo / Voice Note',
+                        totalFiles > 0
+                            ? 'Manage Evidence ($totalFiles)'
+                            : '+ Add Photo / Voice Note',
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w800,
-                          color: totalFiles > 0 ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                          color: totalFiles > 0
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(width: 4),
                       Icon(
-                        _showMediaDrawer ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                        _showMediaDrawer
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
                         size: 16,
-                        color: totalFiles > 0 ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                        color: totalFiles > 0
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                       ),
                     ],
                   ),
@@ -482,40 +582,64 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
                       _MediaPickerSquare(
                         icon: Icons.camera_alt_outlined,
                         label: 'Camera',
-                        onTap: () => _pickPhoto(context, notifier, widget.itemId, fromCamera: true),
+                        onTap: () => _pickPhoto(
+                          context,
+                          notifier,
+                          widget.itemId,
+                          fromCamera: true,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       _MediaPickerSquare(
                         icon: Icons.photo_library_outlined,
                         label: 'Gallery',
-                        onTap: () => _pickPhoto(context, notifier, widget.itemId, fromCamera: false),
+                        onTap: () => _pickPhoto(
+                          context,
+                          notifier,
+                          widget.itemId,
+                          fromCamera: false,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       _MediaPickerSquare(
                         icon: Icons.videocam_outlined,
                         label: 'Video',
-                        onTap: () => _pickVideo(context, notifier, widget.itemId),
+                        onTap: () =>
+                            _pickVideo(context, notifier, widget.itemId),
                       ),
                       const SizedBox(width: 8),
                       _MediaPickerSquare(
                         icon: Icons.mic_rounded,
                         label: 'Audio',
                         active: hasAudio,
-                        onTap: () => _showAudioDialog(context, state, notifier, widget.itemId),
+                        onTap: () => _showAudioDialog(
+                          context,
+                          state,
+                          notifier,
+                          widget.itemId,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       _MediaPickerSquare(
                         icon: Icons.edit_note_rounded,
                         label: 'Note',
                         active: hasNote,
-                        onTap: () =>
-                            _showNoteDialog(context, notifier, widget.itemId, widget.itemName, media?.note ?? ''),
+                        onTap: () => _showNoteDialog(
+                          context,
+                          notifier,
+                          widget.itemId,
+                          widget.itemName,
+                          media?.note ?? '',
+                        ),
                       ),
                     ],
                   ),
                   if (totalFiles > 0) ...[
                     const SizedBox(height: 12),
-                    _AttachmentsThumbnailRow(itemId: widget.itemId, media: media!),
+                    _AttachmentsThumbnailRow(
+                      itemId: widget.itemId,
+                      media: media!,
+                    ),
                   ],
                 ],
               ),
@@ -543,20 +667,28 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
       if (file != null) {
         final dir = await getApplicationDocumentsDirectory();
         final ext = file.path.split('.').last;
-        final destPath = '${dir.path}/photo_${DateTime.now().millisecondsSinceEpoch}.$ext';
+        final destPath =
+            '${dir.path}/photo_${DateTime.now().millisecondsSinceEpoch}.$ext';
         final saved = await persistMediaFile(file.path, destPath);
         notifier.addPhoto(itemId, saved);
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Camera error: $e'), backgroundColor: colorScheme.error));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Camera error: $e'),
+            backgroundColor: colorScheme.error,
+          ),
+        );
       }
     }
   }
 
-  Future<void> _pickVideo(BuildContext context, InspectionNotifier notifier, String itemId) async {
+  Future<void> _pickVideo(
+    BuildContext context,
+    InspectionNotifier notifier,
+    String itemId,
+  ) async {
     final colorScheme = Theme.of(context).colorScheme;
     try {
       final picker = ImagePicker();
@@ -564,20 +696,29 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
       if (file != null) {
         final dir = await getApplicationDocumentsDirectory();
         final ext = file.path.split('.').last;
-        final destPath = '${dir.path}/video_${DateTime.now().millisecondsSinceEpoch}.$ext';
+        final destPath =
+            '${dir.path}/video_${DateTime.now().millisecondsSinceEpoch}.$ext';
         final saved = await persistMediaFile(file.path, destPath);
         notifier.addVideo(itemId, saved);
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Video recording error: $e'), backgroundColor: colorScheme.error));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Video recording error: $e'),
+            backgroundColor: colorScheme.error,
+          ),
+        );
       }
     }
   }
 
-  void _showAudioDialog(BuildContext context, InspectionState state, InspectionNotifier notifier, String itemId) {
+  void _showAudioDialog(
+    BuildContext context,
+    InspectionState state,
+    InspectionNotifier notifier,
+    String itemId,
+  ) {
     showDialog(
       context: context,
       builder: (_) => _AudioDialog(
@@ -610,7 +751,11 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
             Expanded(
               child: Text(
                 itemName,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: colorScheme.onSurface),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
+                ),
               ),
             ),
           ],
@@ -631,7 +776,10 @@ class _IntuitiveCheckpointCardState extends ConsumerState<_IntuitiveCheckpointCa
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
               notifier.setNote(itemId, ctrl.text.trim());
@@ -678,12 +826,20 @@ class _ConditionSegmentBtn extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected ? activeColor : colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSelected ? Colors.transparent : colorScheme.outlineVariant),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.transparent
+                  : colorScheme.outlineVariant,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: isSelected ? Colors.white : colorScheme.onSurfaceVariant),
+              Icon(
+                icon,
+                size: 16,
+                color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
@@ -708,7 +864,12 @@ class _MediaPickerSquare extends StatelessWidget {
   final bool active;
   final VoidCallback onTap;
 
-  const _MediaPickerSquare({required this.icon, required this.label, this.active = false, required this.onTap});
+  const _MediaPickerSquare({
+    required this.icon,
+    required this.label,
+    this.active = false,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -720,20 +881,30 @@ class _MediaPickerSquare extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: active ? colorScheme.primary.withValues(alpha: 0.15) : colorScheme.surface,
+            color: active
+                ? colorScheme.primary.withValues(alpha: 0.15)
+                : colorScheme.surface,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: active ? colorScheme.primary : colorScheme.outlineVariant),
+            border: Border.all(
+              color: active ? colorScheme.primary : colorScheme.outlineVariant,
+            ),
           ),
           child: Column(
             children: [
-              Icon(icon, size: 18, color: active ? colorScheme.primary : colorScheme.onSurface),
+              Icon(
+                icon,
+                size: 18,
+                color: active ? colorScheme.primary : colorScheme.onSurface,
+              ),
               const SizedBox(height: 2),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w700,
-                  color: active ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  color: active
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -790,8 +961,15 @@ class _AttachmentsThumbnailRow extends ConsumerWidget {
                       },
                       child: Container(
                         padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(color: Colors.black87, shape: BoxShape.circle),
-                        child: const Icon(Icons.close, color: Colors.white, size: 10),
+                        decoration: const BoxDecoration(
+                          color: Colors.black87,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 10,
+                        ),
                       ),
                     ),
                   ),
@@ -803,19 +981,30 @@ class _AttachmentsThumbnailRow extends ConsumerWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.audiotrack_rounded, size: 14, color: colorScheme.primary),
+              Icon(
+                Icons.audiotrack_rounded,
+                size: 14,
+                color: colorScheme.primary,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   media.audioPath.split('/').last,
-                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               GestureDetector(
                 onTap: () => notifier.setAudio(itemId, ''),
-                child: Icon(Icons.delete_outline_rounded, size: 16, color: colorScheme.error),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 16,
+                  color: colorScheme.error,
+                ),
               ),
             ],
           ),
@@ -824,7 +1013,11 @@ class _AttachmentsThumbnailRow extends ConsumerWidget {
           const SizedBox(height: 6),
           Text(
             'Note: "${media.note}"',
-            style: TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: colorScheme.onSurface),
+            style: TextStyle(
+              fontSize: 11.5,
+              fontStyle: FontStyle.italic,
+              color: colorScheme.onSurface,
+            ),
           ),
         ],
       ],
@@ -837,13 +1030,18 @@ class _AudioDialog extends StatefulWidget {
   final String itemId;
   final String existing;
   final void Function(String) onSave;
-  const _AudioDialog({required this.itemId, required this.existing, required this.onSave});
+  const _AudioDialog({
+    required this.itemId,
+    required this.existing,
+    required this.onSave,
+  });
 
   @override
   State<_AudioDialog> createState() => _AudioDialogState();
 }
 
-class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderStateMixin {
+class _AudioDialogState extends State<_AudioDialog>
+    with SingleTickerProviderStateMixin {
   bool _recording = false;
   int _seconds = 0;
   Timer? _timer;
@@ -861,7 +1059,8 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
     if (!hasMic.isGranted) return;
 
     final dir = await getApplicationDocumentsDirectory();
-    _recordedPath = '${dir.path}/audio_${widget.itemId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    _recordedPath =
+        '${dir.path}/audio_${widget.itemId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
     await _recorder.startRecording(_recordedPath!);
 
     setState(() {
@@ -893,11 +1092,18 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
     return AlertDialog(
       backgroundColor: colorScheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Voice Log', style: TextStyle(fontWeight: FontWeight.w900)),
+      title: const Text(
+        'Voice Log',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(_recording ? 'Recording... $_seconds s' : 'Tap to start recording note'),
+          Text(
+            _recording
+                ? 'Recording... $_seconds s'
+                : 'Tap to start recording note',
+          ),
           const SizedBox(height: 20),
           GestureDetector(
             onTap: _recording ? _stop : _start,
@@ -908,7 +1114,10 @@ class _AudioDialogState extends State<_AudioDialog> with SingleTickerProviderSta
                 color: _recording ? colorScheme.error : colorScheme.primary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(_recording ? Icons.stop : Icons.mic, color: Colors.white),
+              child: Icon(
+                _recording ? Icons.stop : Icons.mic,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -938,9 +1147,16 @@ class _StickyFooter extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.notifications_active_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.notifications_active_outlined,
+                size: 16,
+                color: colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 8),
-              const Text('Notify Owner', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              const Text(
+                'Notify Owner',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(width: 6),
               Switch.adaptive(
                 value: state.notifyOwner,
@@ -962,9 +1178,14 @@ class _StickyFooter extends ConsumerWidget {
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: const Text('Review Sheet', style: TextStyle(fontWeight: FontWeight.w900)),
+            child: const Text(
+              'Review Sheet',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
           ),
         ],
       ),
@@ -983,7 +1204,8 @@ class _PressScale extends StatefulWidget {
   State<_PressScale> createState() => _PressScaleState();
 }
 
-class _PressScaleState extends State<_PressScale> with SingleTickerProviderStateMixin {
+class _PressScaleState extends State<_PressScale>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
 
@@ -995,10 +1217,13 @@ class _PressScaleState extends State<_PressScale> with SingleTickerProviderState
       duration: const Duration(milliseconds: 100),
       reverseDuration: const Duration(milliseconds: 140),
     );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.97,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      ),
+    );
   }
 
   @override

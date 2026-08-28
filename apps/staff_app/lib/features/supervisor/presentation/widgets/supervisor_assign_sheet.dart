@@ -39,29 +39,38 @@ class SupervisorAssignSheet extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Technician Task Roster',
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: colorScheme.onSurface,
-                          letterSpacing: -0.4,
+                      Expanded(
+                        child: Text(
+                          'Technician task roster',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: colorScheme.onSurface,
+                            letterSpacing: -0.4,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 10),
                       _PressScale(
                         onTap: () {
                           HapticFeedback.lightImpact();
                           notifier.addAssignmentRow();
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 7,
+                          ),
                           decoration: BoxDecoration(
                             color: colorScheme.primary,
                             borderRadius: BorderRadius.circular(100),
                             boxShadow: [
                               BoxShadow(
-                                color: colorScheme.primary.withValues(alpha: 0.28),
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.28,
+                                ),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -69,7 +78,11 @@ class SupervisorAssignSheet extends ConsumerWidget {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.add_rounded, color: colorScheme.onPrimary, size: 16),
+                              Icon(
+                                Icons.add_rounded,
+                                color: colorScheme.onPrimary,
+                                size: 16,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Add Task',
@@ -86,6 +99,35 @@ class SupervisorAssignSheet extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
+                  if (state.assignWorkError.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(13),
+                      decoration: BoxDecoration(
+                        color: colorScheme.errorContainer.withValues(
+                          alpha: 0.55,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: colorScheme.onErrorContainer,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              state.assignWorkError,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onErrorContainer,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   if (state.assignmentRows.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
@@ -108,7 +150,8 @@ class SupervisorAssignSheet extends ConsumerWidget {
                             HapticFeedback.selectionClick();
                             notifier.removeAssignmentRow(e.value.id);
                           },
-                          onChanged: (updated) => notifier.updateAssignmentRow(e.value.id, updated),
+                          onChanged: (updated) =>
+                              notifier.updateAssignmentRow(e.value.id, updated),
                         ),
                       ),
                     ),
@@ -197,7 +240,11 @@ class _AssignmentCardState extends State<_AssignmentCard> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
-          BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 14, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -206,25 +253,37 @@ class _AssignmentCardState extends State<_AssignmentCard> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerLow,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: Row(
               children: [
                 Container(
                   width: 28,
                   height: 28,
-                  decoration: BoxDecoration(color: colorScheme.primary, borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Center(
                     child: Text(
                       '${widget.index}',
-                      style: TextStyle(color: colorScheme.onPrimary, fontSize: 12, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        color: colorScheme.onPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Text(
                   'Task Specifications',
-                  style: textTheme.titleSmall?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
+                  style: textTheme.titleSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const Spacer(),
                 GestureDetector(
@@ -235,7 +294,11 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                       color: colorScheme.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.delete_outline_rounded, color: colorScheme.error, size: 16),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      color: colorScheme.error,
+                      size: 16,
+                    ),
                   ),
                 ),
               ],
@@ -249,8 +312,10 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                   label: 'Work Description',
                   child: _PersistentFieldInput(
                     controller: _descCtrl,
-                    hint: 'Describe component diagnostics, part replacement, or servicing...',
-                    onChanged: (v) => widget.onChanged(widget.row.copyWith(description: v)),
+                    hint:
+                        'Describe component diagnostics, part replacement, or servicing...',
+                    onChanged: (v) =>
+                        widget.onChanged(widget.row.copyWith(description: v)),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -260,10 +325,14 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                       child: _FormFieldWrapper(
                         label: 'Department',
                         child: _ThemePillDropdown(
-                          value: widget.row.department.isEmpty ? null : widget.row.department,
+                          value: widget.row.department.isEmpty
+                              ? null
+                              : widget.row.department,
                           hint: 'Select Bay',
                           items: widget.departments,
-                          onChanged: (v) => widget.onChanged(widget.row.copyWith(department: v ?? '')),
+                          onChanged: (v) => widget.onChanged(
+                            widget.row.copyWith(department: v ?? ''),
+                          ),
                         ),
                       ),
                     ),
@@ -272,10 +341,14 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                       child: _FormFieldWrapper(
                         label: 'Technician',
                         child: _ThemePillDropdown(
-                          value: widget.row.technicianName.isEmpty ? null : widget.row.technicianName,
+                          value: widget.row.technicianName.isEmpty
+                              ? null
+                              : widget.row.technicianName,
                           hint: 'Assign Staff',
                           items: widget.technicians,
-                          onChanged: (v) => widget.onChanged(widget.row.copyWith(technicianName: v ?? '')),
+                          onChanged: (v) => widget.onChanged(
+                            widget.row.copyWith(technicianName: v ?? ''),
+                          ),
                         ),
                       ),
                     ),
@@ -290,7 +363,9 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                         child: _PersistentFieldInput(
                           controller: _dateCtrl,
                           hint: 'YYYY-MM-DD',
-                          onChanged: (v) => widget.onChanged(widget.row.copyWith(dateOfWork: v)),
+                          onChanged: (v) => widget.onChanged(
+                            widget.row.copyWith(dateOfWork: v),
+                          ),
                         ),
                       ),
                     ),
@@ -301,7 +376,8 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                         child: _PersistentFieldInput(
                           controller: _stdTimeCtrl,
                           hint: 'e.g. 2.5 hrs',
-                          onChanged: (v) => widget.onChanged(widget.row.copyWith(stdTime: v)),
+                          onChanged: (v) =>
+                              widget.onChanged(widget.row.copyWith(stdTime: v)),
                         ),
                       ),
                     ),
@@ -313,7 +389,9 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                   child: SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       trackHeight: 4,
-                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 8,
+                      ),
                       activeTrackColor: colorScheme.primary,
                       inactiveTrackColor: colorScheme.surfaceContainerHighest,
                       thumbColor: colorScheme.primary,
@@ -323,7 +401,9 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                       value: widget.row.statusPercent.toDouble(),
                       max: 100,
                       divisions: 20,
-                      onChanged: (v) => widget.onChanged(widget.row.copyWith(statusPercent: v.toInt())),
+                      onChanged: (v) => widget.onChanged(
+                        widget.row.copyWith(statusPercent: v.toInt()),
+                      ),
                     ),
                   ),
                 ),
@@ -386,7 +466,10 @@ class _PersistentFieldInput extends StatelessWidget {
         hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         filled: true,
         fillColor: colorScheme.surfaceContainerLow,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outlineVariant),
@@ -410,7 +493,12 @@ class _ThemePillDropdown extends StatelessWidget {
   final List<String> items;
   final void Function(String?) onChanged;
 
-  const _ThemePillDropdown({required this.value, required this.hint, required this.items, required this.onChanged});
+  const _ThemePillDropdown({
+    required this.value,
+    required this.hint,
+    required this.items,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -427,13 +515,22 @@ class _ThemePillDropdown extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          hint: Text(hint, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+          hint: Text(
+            hint,
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+          ),
           dropdownColor: colorScheme.surface,
           style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.onSurfaceVariant, size: 18),
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: colorScheme.onSurfaceVariant,
+            size: 18,
+          ),
           isExpanded: true,
           onChanged: onChanged,
-          items: items.map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
+          items: items
+              .map((i) => DropdownMenuItem(value: i, child: Text(i)))
+              .toList(),
         ),
       ),
     );
@@ -455,7 +552,11 @@ class _ModernSearchField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
-        prefixIcon: Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant, size: 20),
+        prefixIcon: Icon(
+          Icons.search_rounded,
+          color: colorScheme.onSurfaceVariant,
+          size: 20,
+        ),
         filled: true,
         fillColor: colorScheme.surfaceContainerLow,
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -486,7 +587,8 @@ class _PressScale extends StatefulWidget {
   State<_PressScale> createState() => _PressScaleState();
 }
 
-class _PressScaleState extends State<_PressScale> with SingleTickerProviderStateMixin {
+class _PressScaleState extends State<_PressScale>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
 
@@ -498,10 +600,13 @@ class _PressScaleState extends State<_PressScale> with SingleTickerProviderState
       duration: const Duration(milliseconds: 100),
       reverseDuration: const Duration(milliseconds: 140),
     );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.97,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      ),
+    );
   }
 
   @override

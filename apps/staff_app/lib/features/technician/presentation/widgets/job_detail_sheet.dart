@@ -83,46 +83,57 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            job.jobCardNo,
-                            style: AppTextStyles.displaySmall(
-                              color: Colors.white,
+                          Expanded(
+                            child: Text(
+                              job.jobCardNo,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.displaySmall(
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                           SizedBox(width: AppDimensions.s10),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s8,
-                              vertical: AppDimensions.s4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r20,
+                          Flexible(
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppDimensions.s8,
+                                vertical: AppDimensions.s4,
                               ),
-                              border: Border.all(color: Colors.white38),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.r20,
                                 ),
-                                SizedBox(width: AppDimensions.s4),
-                                Text(
-                                  job.status.label,
-                                  style: AppTextStyles.bodySmall(
-                                    color: Colors.white,
+                                border: Border.all(color: Colors.white38),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  SizedBox(width: AppDimensions.s4),
+                                  Flexible(
+                                    child: Text(
+                                      job.status.label,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTextStyles.bodySmall(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           GestureDetector(
                             onTap: () => Navigator.pop(context),
                             child: Container(
@@ -144,28 +155,36 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                       SizedBox(height: AppDimensions.s8),
                       Row(
                         children: [
-                          Text(
-                            '${job.vehicleBrand} ${job.vehicleModel}',
-                            style: AppTextStyles.bodySmall(
-                              color: Colors.white70,
+                          Expanded(
+                            child: Text(
+                              '${job.vehicleBrand} ${job.vehicleModel}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.bodySmall(
+                                color: Colors.white70,
+                              ),
                             ),
                           ),
                           SizedBox(width: AppDimensions.s10),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s8,
-                              vertical: AppDimensions.s4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r7,
+                          Flexible(
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppDimensions.s8,
+                                vertical: AppDimensions.s4,
                               ),
-                            ),
-                            child: Text(
-                              job.plateNumber,
-                              style: AppTextStyles.bodySmall(
-                                color: AppColors.accent,
+                              decoration: BoxDecoration(
+                                color: AppColors.accent.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.r7,
+                                ),
+                              ),
+                              child: Text(
+                                job.plateNumber,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.bodySmall(
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -174,17 +193,26 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                       SizedBox(height: AppDimensions.s14),
                       Row(
                         children: [
-                          Text(
-                            'Job Progress',
-                            style: AppTextStyles.bodySmall(
-                              color: Colors.white70,
+                          Expanded(
+                            child: Text(
+                              'Job progress',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.bodySmall(
+                                color: Colors.white70,
+                              ),
                             ),
                           ),
-                          const Spacer(),
-                          Text(
-                            '${job.completedTasks}/${job.tasks.length} tasks (${(job.progressPercent * 100).toInt()}%)',
-                            style: AppTextStyles.bodySmall(
-                              color: Colors.white,
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: Text(
+                              '${job.completedTasks}/${job.tasks.length} tasks â€¢ ${(job.progressPercent * 100).toInt()}%',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                              style: AppTextStyles.bodySmall(
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ],
@@ -233,57 +261,21 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                       SizedBox(height: AppDimensions.s4),
                       Text(
                         'Track and update task progress',
-                        style: AppTextStyles.bodySmall(
-                          color: AppColors.text3,
-                        ),
+                        style: AppTextStyles.bodySmall(color: AppColors.text3),
                       ),
                       SizedBox(height: AppDimensions.s12),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppDimensions.s10,
-                          vertical: AppDimensions.s8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.accent.withValues(alpha: 0.12),
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(AppDimensions.r10),
-                          ),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: const Row(
-                          children: [
-                            SizedBox(width: 28, child: _ColHead('S.No')),
-                            Expanded(flex: 4, child: _ColHead('Description')),
-                            SizedBox(width: 46, child: _ColHead('Start')),
-                            SizedBox(width: 38, child: _ColHead('End')),
-                            SizedBox(width: 88, child: _ColHead('Status')),
-                            SizedBox(width: 64, child: _ColHead('Action')),
-                          ],
-                        ),
-                      ),
                       ...job.tasks.asMap().entries.map((e) {
                         final task = e.value;
-                        return _TaskRow(
+                        return _MobileTaskCard(
                           index: e.key + 1,
                           task: task,
-                          isEven: e.key % 2 == 0,
                           onStart: () => notifier.startTask(job, task),
                           onComplete: () => notifier.completeTask(job, task),
                           onStatusChanged: (s) =>
                               notifier.updateTaskStatus(job, task, s),
                         );
                       }),
-                      Container(
-                        height: 1,
-                        margin: EdgeInsets.only(bottom: AppDimensions.s20),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            left: BorderSide(color: AppColors.border),
-                            right: BorderSide(color: AppColors.border),
-                            bottom: BorderSide(color: AppColors.border),
-                          ),
-                        ),
-                      ),
+                      SizedBox(height: AppDimensions.s8),
                       Row(
                         children: [
                           Container(
@@ -446,41 +438,21 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Row(
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: 8,
+                          runSpacing: 8,
                           children: [
-                            OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.text2,
-                                side: const BorderSide(color: AppColors.border),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: AppDimensions.s20,
-                                  vertical: AppDimensions.s14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimensions.r12,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                'Close',
-                                style: AppTextStyles.bodySmall(
-                                  color: AppColors.text2,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
                             OutlinedButton.icon(
                               onPressed: state.isSaving
                                   ? null
                                   : () => notifier.saveChanges(
-                                        // FE-FIX (audit P1): the captured
-                                        // widget.job was saved — typed notes
-                                        // reverted on Save. Persist the LIVE
-                                        // entity from state instead.
-                                        state.selectedJob ?? job,
-                                      ),
+                                      // FE-FIX (audit P1): the captured
+                                      // widget.job was saved — typed notes
+                                      // reverted on Save. Persist the LIVE
+                                      // entity from state instead.
+                                      state.selectedJob ?? job,
+                                    ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.accent,
                                 side: BorderSide(
@@ -512,7 +484,6 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
                                 style: AppTextStyles.bodySmall(),
                               ),
                             ),
-                            SizedBox(width: AppDimensions.s8),
                             GestureDetector(
                               onTap: state.isSaving
                                   ? null
@@ -623,29 +594,16 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
   }
 }
 
-class _ColHead extends StatelessWidget {
-  final String text;
-  const _ColHead(this.text);
-
-  @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: AppTextStyles.bodySmall(color: AppColors.accent),
-  );
-}
-
-class _TaskRow extends StatelessWidget {
+class _MobileTaskCard extends StatelessWidget {
   final int index;
   final WorkTaskEntity task;
-  final bool isEven;
   final VoidCallback onStart;
   final VoidCallback onComplete;
   final void Function(TaskStatus) onStatusChanged;
 
-  const _TaskRow({
+  const _MobileTaskCard({
     required this.index,
     required this.task,
-    required this.isEven,
     required this.onStart,
     required this.onComplete,
     required this.onStatusChanged,
@@ -653,65 +611,124 @@ class _TaskRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isComplete = task.status == TaskStatus.completed;
+    final accent = isComplete
+        ? AppColors.success
+        : task.status == TaskStatus.inProgress
+        ? AppColors.accent
+        : colors.outline;
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppDimensions.s10,
-        vertical: AppDimensions.s10,
-      ),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isEven ? AppColors.surface : AppColors.surfaceAlt,
-        border: const Border(
-          left: BorderSide(color: AppColors.border),
-          right: BorderSide(color: AppColors.border),
-          bottom: BorderSide(color: AppColors.border),
-        ),
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$index',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: accent,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  task.description,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _TimePill(
+                icon: Icons.play_circle_outline_rounded,
+                label: task.startTime ?? 'Not started',
+              ),
+              if (task.endTime != null)
+                _TimePill(
+                  icon: Icons.stop_circle_outlined,
+                  label: task.endTime!,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _TaskStatusDropdown(
+                  status: task.status,
+                  onChanged: onStatusChanged,
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 92,
+                child: _TaskActionButton(
+                  task: task,
+                  onStart: onStart,
+                  onComplete: onComplete,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimePill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _TimePill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 28,
-            child: Text(
-              '$index',
-              style: AppTextStyles.bodySmall(color: AppColors.text3),
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Text(
-              task.description,
-              style: TextStyle(color: AppColors.text2, fontSize: 11),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          SizedBox(
-            width: 46,
-            child: Text(
-              task.startTime ?? '\u2013',
-              style: TextStyle(color: AppColors.text3, fontSize: 11),
-            ),
-          ),
-          SizedBox(
-            width: 38,
-            child: Text(
-              task.endTime ?? '\u2013',
-              style: TextStyle(color: AppColors.text3, fontSize: 11),
-            ),
-          ),
-          SizedBox(
-            width: 88,
-            child: _TaskStatusDropdown(
-              status: task.status,
-              onChanged: onStatusChanged,
-            ),
-          ),
-          SizedBox(
-            width: 64,
-            child: _TaskActionButton(
-              task: task,
-              onStart: onStart,
-              onComplete: onComplete,
-            ),
+          Icon(icon, size: 14, color: colors.onSurfaceVariant),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant),
           ),
         ],
       ),
@@ -767,10 +784,7 @@ class _TaskStatusDropdown extends StatelessWidget {
               .map(
                 (s) => DropdownMenuItem(
                   value: s,
-                  child: Text(
-                    s.label,
-                    style: AppTextStyles.bodySmall(),
-                  ),
+                  child: Text(s.label, style: AppTextStyles.bodySmall()),
                 ),
               )
               .toList(),
@@ -824,10 +838,15 @@ class _TaskActionButton extends StatelessWidget {
               size: 12,
             ),
             SizedBox(width: AppDimensions.s4),
-            Text(
-              inProg ? 'Done' : 'Start',
-              style: AppTextStyles.bodySmall(
-                color: inProg ? AppColors.success : AppColors.accent,
+            Expanded(
+              child: Text(
+                inProg ? 'Done' : 'Start',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodySmall(
+                  color: inProg ? AppColors.success : AppColors.accent,
+                ),
               ),
             ),
           ],
