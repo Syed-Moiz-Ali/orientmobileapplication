@@ -1,9 +1,0 @@
-#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Thu Aug 27 13:53:28 IST 2026
-@default-spring-release-https\://repo.spring.io/release/.lastUpdated=1787819007988
-https\://repo.maven.apache.org/maven2/.lastUpdated=1787819008559
-https\://repo.spring.io/milestone/.error=
-https\://repo.spring.io/milestone/.lastUpdated=1787819008463
-https\://repo.spring.io/snapshot/.error=
-https\://repo.spring.io/snapshot/.lastUpdated=1787819008225
-https\://repo.spring.io/release/.error=Could not transfer artifact io.micrometer\:micrometer-bom\:pom\:1.14.0 from/to spring-release (https\://repo.spring.io/release)\: status code\: 401, reason phrase\:  (401)
