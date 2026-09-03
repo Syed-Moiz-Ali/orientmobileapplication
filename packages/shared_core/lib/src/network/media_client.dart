@@ -17,15 +17,23 @@ class MediaClient {
   /// Uploads a local media file. Throws [MediaUploadException] on failure so
   /// callers can decide to queue the upload for later retry.
   Future<MediaUploadResponse> uploadMedia(
-    String recordId, String filePath, {String itemId = '', String type = 'photo'}) async {
+    String recordId,
+    String filePath, {
+    String itemId = '',
+    String type = 'photo',
+    String module = 'inspections',
+  }) async {
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(filePath, filename: filePath.split(RegExp(r'[/\\]')).last),
+      'file': await MultipartFile.fromFile(
+        filePath,
+        filename: filePath.split(RegExp(r'[/\\]')).last,
+      ),
       'itemId': itemId,
       'type': type,
     });
     try {
       final response = await _dio.post(
-        ApiEndpoints.mediaUploadFor(recordId),
+        _endpointFor(module, recordId),
         data: formData,
       );
       final data = response.data;
@@ -45,5 +53,12 @@ class MediaClient {
         cause: e,
       );
     }
+  }
+
+  String _endpointFor(String module, String recordId) {
+    return switch (module) {
+      'repair-orders' => ApiEndpoints.repairOrderMediaUpload(recordId),
+      _ => ApiEndpoints.inspectionMediaUpload(recordId),
+    };
   }
 }

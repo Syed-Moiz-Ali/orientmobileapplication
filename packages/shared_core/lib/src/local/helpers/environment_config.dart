@@ -20,12 +20,16 @@ class EnvironmentConfig {
   static Future<void> init() async {
     if (_initialized) return;
     try {
-      // Loaded from the package asset path so it works regardless of the
-      // current working directory. A missing/corrupt .env must never crash.
+      // Loaded from the package asset path for consuming apps.
       await dotenv.load(
         isOptional: true,
         fileName: 'packages/shared_core/assets/.env',
       );
+      if (dotenv.get('BASE_URL', fallback: '').trim().isEmpty) {
+        // Package-local tests run from packages/shared_core, where the asset is
+        // available as assets/.env instead of packages/shared_core/assets/.env.
+        await dotenv.load(isOptional: true, fileName: 'assets/.env');
+      }
     } catch (_) {
       // Ignore: fall back to defaults below.
     }

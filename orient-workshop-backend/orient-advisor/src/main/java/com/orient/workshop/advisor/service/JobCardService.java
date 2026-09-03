@@ -9,9 +9,11 @@ import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.common.response.PageResponse;
 import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.model.entity.Staff;
 import com.orient.workshop.core.model.entity.TechnicianTask;
 import com.orient.workshop.core.model.entity.Vehicle;
 import com.orient.workshop.core.repository.CustomerMapper;
+import com.orient.workshop.core.repository.StaffMapper;
 import com.orient.workshop.core.repository.TechnicianTaskMapper;
 import com.orient.workshop.core.repository.VehicleMapper;
 import com.orient.workshop.advisor.model.dto.BatchTaskRequest;
@@ -38,6 +40,7 @@ public class JobCardService {
     private final CustomerMapper customerMapper;
     private final VehicleMapper vehicleMapper;
     private final TechnicianTaskMapper technicianTaskMapper;
+    private final StaffMapper staffMapper;
     private final com.orient.workshop.core.service.ActivityService activityService;
     private final com.orient.workshop.core.service.WebhookService webhookService;
     private final com.orient.workshop.core.service.JobWorkflowService jobWorkflowService;
@@ -111,6 +114,33 @@ public class JobCardService {
             card.setStatus("inProgress");
         }
         jobCardMapper.updateById(card);
+
+        // Resolve technician staff empId and assign any pending unassigned tasks
+        String empId = null;
+        if (staffMapper != null && technician != null && !technician.isBlank()) {
+            Optional<Staff> byEmp = staffMapper.findByEmpId(technician);
+            if (byEmp.isPresent()) {
+                empId = byEmp.get().getEmpId();
+            } else {
+                List<Staff> staffList = card.getBranchId() != null
+                        ? staffMapper.findByRoleAndBranch("technician", card.getBranchId())
+                        : staffMapper.findByRole("technician");
+                empId = staffList.stream()
+                        .filter(s -> technician.equalsIgnoreCase(s.getName()))
+                        .map(Staff::getEmpId)
+                        .findFirst()
+                        .orElse(null);
+            }
+        }
+        if (empId != null) {
+            List<TechnicianTask> tasks = technicianTaskMapper.findByJobCardNo(card.getJobCardRef());
+            for (TechnicianTask task : tasks) {
+                if (task.getEmpId() == null || task.getEmpId().isBlank()) {
+                    task.setEmpId(empId);
+                    technicianTaskMapper.updateById(task);
+                }
+            }
+        }
     }
 
     private JobCard findByIdOrRef(String id) {
@@ -130,14 +160,25 @@ public class JobCardService {
         }
         
         if (request.getTasks() != null) {
+            List<TechnicianTask> existingTasks = technicianTaskMapper.findByJobCardNo(jobCardRef);
+            Map<String, TechnicianTask> existingMap = existingTasks.stream()
+                    .collect(Collectors.toMap(TechnicianTask::getDescription, Function.identity(), (a, b) -> a));
+
             for (BatchTaskRequest.TaskItem task : request.getTasks()) {
-                TechnicianTask tTask = TechnicianTask.builder()
-                        .jobCardNo(jobCardRef)
-                        .description(task.getDescription())
-                        .empId(task.getTechnicianEmpId())
-                        .status("pending")
-                        .build();
-                technicianTaskMapper.insert(tTask);
+                if (task.getDescription() != null && existingMap.containsKey(task.getDescription())) {
+                    TechnicianTask existing = existingMap.get(task.getDescription());
+                    existing.setEmpId(task.getTechnicianEmpId());
+                    technicianTaskMapper.updateById(existing);
+                } else {
+                    TechnicianTask tTask = TechnicianTask.builder()
+                            .jobCardNo(jobCardRef)
+                            .taskRef(com.orient.workshop.common.util.IdGenerator.shortRef("T"))
+                            .description(task.getDescription())
+                            .empId(task.getTechnicianEmpId())
+                            .status("pending")
+                            .build();
+                    technicianTaskMapper.insert(tTask);
+                }
             }
         }
         

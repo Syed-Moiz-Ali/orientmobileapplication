@@ -10,12 +10,16 @@ import com.orient.workshop.common.util.PhoneUtil;
 import com.orient.workshop.core.model.entity.Staff;
 import com.orient.workshop.core.repository.StaffMapper;
 import com.orient.workshop.owner.model.dto.StaffMemberRequest;
+import com.orient.workshop.owner.model.dto.StaffMemberResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,13 +43,24 @@ public class TeamController {
     private final PasswordService passwordService;
 
     @GetMapping
-    public ApiResponse<List<Staff>> listStaff() {
-        return ApiResponse.success(staffMapper.selectList(null));
+    public ApiResponse<List<StaffMemberResponse>> listStaff() {
+        List<Staff> staff = staffMapper.selectList(null);
+        Set<Long> userIds = staff.stream()
+                .map(Staff::getUserId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, User> usersById = userIds.isEmpty()
+                ? Collections.emptyMap()
+                : userMapper.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(User::getId, Function.identity()));
+        return ApiResponse.success(staff.stream()
+                .map(member -> toResponse(member, usersById.get(member.getUserId())))
+                .toList());
     }
 
     @Transactional
     @PostMapping
-    public ApiResponse<Staff> createStaff(@RequestBody StaffMemberRequest req) {
+    public ApiResponse<StaffMemberResponse> createStaff(@RequestBody StaffMemberRequest req) {
         if (req.getName() == null || req.getName().isBlank()) {
             throw new BadRequestException("Staff name is required");
         }
@@ -111,12 +126,12 @@ public class TeamController {
         log.info("Staff created: {} ({}), role {}, linked user {}",
                 staff.getName(), staff.getEmpId(), role,
                 linkedUser.getId());
-        return ApiResponse.success(staff);
+        return ApiResponse.success(toResponse(staff, linkedUser));
     }
 
     @Transactional
     @PutMapping("/{id}")
-    public ApiResponse<Staff> updateStaff(@PathVariable Long id, @RequestBody StaffMemberRequest req) {
+    public ApiResponse<StaffMemberResponse> updateStaff(@PathVariable Long id, @RequestBody StaffMemberRequest req) {
         Staff staff = staffMapper.selectById(id);
         if (staff == null) throw new NotFoundException("Staff not found: " + id);
 
@@ -150,7 +165,8 @@ public class TeamController {
                 userMapper.updateById(user);
             }
         }
-        return ApiResponse.success(staff);
+        User linkedUser = staff.getUserId() != null ? userMapper.selectById(staff.getUserId()) : null;
+        return ApiResponse.success(toResponse(staff, linkedUser));
     }
 
     @Transactional
@@ -171,5 +187,24 @@ public class TeamController {
         }
         log.info("Staff {} deactivated (user {})", staff.getEmpId(), staff.getUserId());
         return ApiResponse.success(Map.of("deactivated", staff.getEmpId()));
+    }
+
+    private StaffMemberResponse toResponse(Staff staff, User user) {
+        return StaffMemberResponse.builder()
+                .id(staff.getId())
+                .userId(staff.getUserId())
+                .empId(staff.getEmpId())
+                .name(staff.getName())
+                .role(staff.getRole())
+                .email(user != null ? user.getEmail() : null)
+                .phone(user != null ? user.getPhone() : null)
+                .branchId(staff.getBranchId())
+                .branch(staff.getBranch())
+                .shift(staff.getShift())
+                .designation(staff.getDesignation())
+                .department(staff.getDepartment())
+                .avatarInitials(staff.getAvatarInitials())
+                .isActive(staff.getIsActive())
+                .build();
     }
 }

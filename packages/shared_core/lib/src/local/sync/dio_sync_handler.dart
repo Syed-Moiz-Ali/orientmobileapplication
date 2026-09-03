@@ -95,7 +95,10 @@ class DioSyncHandler extends SyncHandler {
     if (filePath == null || filePath.isEmpty) {
       return false;
     }
-    final endpoint = ApiEndpoints.mediaUploadFor(operation.entityId);
+    final endpoint = _mediaEndpoint(
+      operation.entityId,
+      operation.payload['module']?.toString(),
+    );
     final url = '${EnvironmentConfig.baseUrl}$endpoint';
     try {
       final formData = FormData.fromMap({
@@ -338,9 +341,16 @@ class DioSyncHandler extends SyncHandler {
       case 'attachment':
         // Attachments are uploaded through the multipart media endpoint when a
         // local file is available; otherwise they are left in the failed box.
-        return ApiEndpoints.mediaUploadFor(op.entityId);
+        return _mediaEndpoint(op.entityId, op.payload['module']?.toString());
       default:
         return null;
     }
+  }
+
+  String _mediaEndpoint(String recordId, String? module) {
+    return switch (module) {
+      'repair-orders' => ApiEndpoints.repairOrderMediaUpload(recordId),
+      _ => ApiEndpoints.inspectionMediaUpload(recordId),
+    };
   }
 }

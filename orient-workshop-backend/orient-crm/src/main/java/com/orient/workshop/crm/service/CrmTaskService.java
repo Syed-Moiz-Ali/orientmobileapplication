@@ -2,6 +2,7 @@ package com.orient.workshop.crm.service;
 
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.NotFoundException;
+import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.crm.model.dto.CrmTaskRequest;
 import com.orient.workshop.crm.model.dto.CrmTaskResponse;
 import com.orient.workshop.crm.model.entity.CrmTask;
@@ -33,6 +34,7 @@ public class CrmTaskService {
             throw new BadRequestException("Task title is required");
         }
         CrmTask task = CrmTask.builder()
+                .ref(IdGenerator.shortRef("TSK"))
                 .title(req.getTitle())
                 .assignedTo(req.getAssignedTo() != null ? req.getAssignedTo() : "")
                 .dueDate(req.getDueDate() != null ? req.getDueDate() : "")

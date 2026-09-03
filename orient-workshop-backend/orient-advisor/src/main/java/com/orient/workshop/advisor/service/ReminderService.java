@@ -44,8 +44,15 @@ public class ReminderService {
     }
 
     @Transactional
-    public void deleteReminder(Long id) {
-        Reminder r = reminderMapper.selectById(id);
+    public void deleteReminder(String id) {
+        if (id == null || id.isBlank()) throw new NotFoundException("Reminder not found");
+        Reminder r = null;
+        if (id.matches("\\d+")) {
+            r = reminderMapper.selectById(Long.valueOf(id));
+        }
+        if (r == null) {
+            r = reminderMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Reminder>().eq("reminder_ref", id));
+        }
         if (r == null) throw new NotFoundException("Reminder not found");
         if (Boolean.TRUE.equals(r.getIsCompleted())) {
             throw new NotFoundException("Reminder not found");

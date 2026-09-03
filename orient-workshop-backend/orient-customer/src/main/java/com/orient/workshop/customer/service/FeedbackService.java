@@ -4,6 +4,7 @@ import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.common.exception.NotFoundException;
+import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.model.entity.Feedback;
 import com.orient.workshop.core.model.entity.JobCard;
@@ -52,6 +53,7 @@ public class FeedbackService {
         }
 
         Feedback fb = Feedback.builder()
+                .ref(IdGenerator.shortRef("FBK"))
                 .jobCardId(req.getJobCardId())
                 .customerId(customer.getId())
                 .branchId(principal.getBranchId())

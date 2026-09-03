@@ -31,7 +31,7 @@ public class ReminderController {
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> deleteReminder(@PathVariable Long id) {
+    public ApiResponse<Void> deleteReminder(@PathVariable String id) {
         reminderService.deleteReminder(id);
         return ApiResponse.success(null);
     }

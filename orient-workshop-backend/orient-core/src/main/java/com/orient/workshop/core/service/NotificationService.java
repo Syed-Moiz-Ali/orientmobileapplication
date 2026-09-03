@@ -30,6 +30,7 @@ public class NotificationService {
     public void emit(Long userId, Long branchId, String type, String title, String body) {
         if (userId == null) return;
         notificationMapper.insert(Notification.builder()
+                .ref(com.orient.workshop.common.util.IdGenerator.shortRef("NTF"))
                 .userId(userId)
                 .branchId(branchId)
                 .type(type)

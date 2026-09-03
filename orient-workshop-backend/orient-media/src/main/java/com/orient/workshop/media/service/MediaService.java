@@ -9,16 +9,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
 public class MediaService {
 
     private static final int MAGIC_BYTES_LENGTH = 16;
+    private static final Pattern SAFE_STORAGE_SEGMENT =
+            Pattern.compile("[A-Za-z0-9_-]{1,100}");
 
     @Value("${app.media.upload-path:/data/orient/media}")
     private String uploadPath;
@@ -26,16 +28,15 @@ public class MediaService {
     @Value("${app.media.allowed-types:image/jpeg,image/png,image/webp,video/mp4,audio/m4a,audio/wav,image/gif}")
     private List<String> allowedTypes;
 
+    @Value("${app.media.public-url-prefix:/api/v1/media}")
+    private String publicUrlPrefix;
+
     public Map<String, String> uploadMedia(String tenant, String module, String recordId,
                                            MultipartFile file, String itemId, String type) {
         validatePathSegment(tenant);
         validatePathSegment(module);
         validatePathSegment(recordId);
 
-        String originalName = file.getOriginalFilename();
-        if (originalName != null) {
-            validatePathSegment(originalName);
-        }
         if (file.isEmpty()) throw new IllegalArgumentException("File is empty");
 
         // CR-3: never trust the client-supplied Content-Type — validate the actual bytes.
@@ -50,13 +51,21 @@ public class MediaService {
         String filename = UUID.randomUUID().toString().replace("-", "") + "." + detected.extension;
 
         try {
-            Path targetDir = Path.of(uploadPath, tenant, module, recordId);
+            Path storageRoot = Path.of(uploadPath).toAbsolutePath().normalize();
+            Path targetDir = storageRoot.resolve(tenant).resolve(module).resolve(recordId).normalize();
+            if (!targetDir.startsWith(storageRoot)) {
+                throw new IllegalArgumentException("Invalid media storage path");
+            }
             Files.createDirectories(targetDir);
             Path target = targetDir.resolve(filename);
             file.transferTo(target.toFile());
-            String url = "/media/" + tenant + "/" + module + "/" + recordId + "/" + filename;
+            String prefix = normalizePublicUrlPrefix(publicUrlPrefix);
+            String url = prefix + "/" + tenant + "/" + module + "/" + recordId + "/" + filename;
             log.info("Uploaded: {} ({} bytes)", url, file.getSize());
-            return Map.of("url", url);
+            return Map.of(
+                    "url", url,
+                    "itemId", itemId == null ? "" : itemId,
+                    "type", type == null || type.isBlank() ? "photo" : type);
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }
@@ -67,13 +76,18 @@ public class MediaService {
      * markers (".."), or NUL bytes so user input can never escape the upload root.
      */
     private void validatePathSegment(String segment) {
-        if (segment == null || segment.isBlank()) {
-            throw new IllegalArgumentException("Invalid path segment");
-        }
-        if (segment.contains("/") || segment.contains("\\")
-                || segment.contains("..") || segment.indexOf('\u0000') >= 0) {
+        if (segment == null || !SAFE_STORAGE_SEGMENT.matcher(segment).matches()) {
             throw new IllegalArgumentException("Invalid path segment: " + segment);
         }
+    }
+
+    private String normalizePublicUrlPrefix(String prefix) {
+        String normalized = prefix == null || prefix.isBlank() ? "/api/v1/media" : prefix.trim();
+        if (!normalized.startsWith("/")) normalized = "/" + normalized;
+        while (normalized.length() > 1 && normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     /** Detects the file type from magic bytes (CR-3); null when unrecognized. */

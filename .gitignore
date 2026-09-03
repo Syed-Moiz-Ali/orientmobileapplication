@@ -50,6 +50,7 @@ app.*.map.json
 # anything else with secrets must never be)
 .env
 .env.*
+!packages/shared_core/assets/.env
 *.p12
 *.jks
 *.keystore

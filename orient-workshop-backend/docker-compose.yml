@@ -56,6 +56,8 @@ services:
       # deterministic for QA and demos. Production must NOT activate the dev
       # profile — deploy with SPRING_PROFILES_ACTIVE=mysql,prod where this is absent.
       APP_OTP_FIXED_VALUE: "123456"
+      APP_RATE_LIMIT_CAPACITY: "5000"
+      APP_RATE_LIMIT_AUTH_CAPACITY: "1000"
       # CRITICAL: secrets below are development defaults. Production MUST override
       # via a .env file or orchestrator secrets (K8s secrets / Docker secrets).
       # Values MUST be >= 32 chars and MUST NOT be any string listed in

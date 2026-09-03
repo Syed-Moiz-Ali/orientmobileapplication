@@ -34,4 +34,18 @@ public class MediaController {
         Map<String, String> result = mediaService.uploadMedia(tenant, "repair-orders", id, file, itemId, type);
         return ApiResponse.success(result);
     }
+
+    @PostMapping(value = "/inspections/{id}/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<Map<String, String>> uploadInspectionMedia(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable String id,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "itemId", required = false) String itemId,
+            @RequestParam(value = "type", defaultValue = "photo") String type) {
+        String tenant = principal != null && principal.getBranchId() != null
+                ? "branch-" + principal.getBranchId()
+                : principal != null ? "user-" + principal.getUserId() : "default";
+        Map<String, String> result = mediaService.uploadMedia(tenant, "inspections", id, file, itemId, type);
+        return ApiResponse.success(result);
+    }
 }

@@ -105,6 +105,7 @@ public class InventoryService {
             throw new BadRequestException("Supplier name is required");
         }
         Supplier supplier = Supplier.builder()
+                .ref(IdGenerator.shortRef("SUP"))
                 .name(req.getName().trim())
                 .contactName(req.getContactName() != null ? req.getContactName() : "")
                 .phone(req.getPhone() != null ? req.getPhone() : "")
@@ -140,6 +141,7 @@ public class InventoryService {
             int qty = line.getQty() != null ? line.getQty() : 1;
             total = total.add(unitCost.multiply(BigDecimal.valueOf(qty)));
             poItemMapper.insert(PurchaseOrderItem.builder()
+                    .ref(IdGenerator.shortRef("POI"))
                     .purchaseOrderId(po.getId())
                     .inventoryItemId(line.getInventoryItemId())
                     .itemName(line.getItemName() != null ? line.getItemName() : "")

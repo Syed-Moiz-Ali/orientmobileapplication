@@ -3,6 +3,7 @@ package com.orient.workshop.auth.service;
 import com.orient.workshop.auth.model.dto.TokenResponse;
 import com.orient.workshop.auth.model.entity.User;
 import com.orient.workshop.auth.repository.UserMapper;
+import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.core.repository.BranchMapper;
 import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.StaffMapper;
@@ -86,5 +87,42 @@ class AuthServiceTest {
         authService.register("Ahmed", "a@b.com", null, "mypass", null);
 
         verify(passwordService).hash("mypass");
+    }
+
+    @Test
+    void loginWithPassword_inactiveStaffMustNotReceiveToken() {
+        User inactiveStaff = User.builder()
+                .id(9L)
+                .email("inactive@example.com")
+                .passwordHash("stored_hash")
+                .role("advisor")
+                .isActive(false)
+                .build();
+        when(userMapper.findByEmail("inactive@example.com")).thenReturn(Optional.of(inactiveStaff));
+
+        ForbiddenException error = assertThrows(ForbiddenException.class,
+                () -> authService.loginWithPassword(
+                        "inactive@example.com", null, "password123", "staff"));
+
+        assertEquals("Account is inactive. Contact your administrator.", error.getMessage());
+        verify(passwordService).validate("password123", "stored_hash");
+        verify(jwtService, never()).createTokenPair(any());
+    }
+
+    @Test
+    void sendOtp_inactiveOwnerMustNotReceiveOtp() {
+        User inactiveOwner = User.builder()
+                .id(2L)
+                .email("inactive-owner@example.com")
+                .role("owner")
+                .isActive(false)
+                .build();
+        when(userMapper.findByEmail("inactive-owner@example.com")).thenReturn(Optional.of(inactiveOwner));
+
+        assertThrows(ForbiddenException.class,
+                () -> authService.sendOtp(
+                        "email", null, "inactive-owner@example.com", "owner"));
+
+        verify(otpService, never()).sendEmailOtp(anyString());
     }
 }

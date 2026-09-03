@@ -139,6 +139,10 @@ public class AuthService {
                 user = userMapper.findByEmail(email.trim().toLowerCase()).orElse(null);
             }
 
+            if (user != null) {
+                ensureActive(user);
+            }
+
             if ("staff".equalsIgnoreCase(appName.trim())) {
                 if (user == null) {
                     throw new ForbiddenException("Invalid credentials for staff application");
@@ -212,6 +216,7 @@ public class AuthService {
             }
         }
 
+        ensureActive(user);
         ensureAppAccess(appName, user.getRole());
         return jwtService.createTokenPair(user);
     }
@@ -291,6 +296,7 @@ public class AuthService {
             }
 
             passwordService.validate(rawPassword, user.getPasswordHash());
+            ensureActive(user);
             loginAttempts.remove(identifier);
             ensureAppAccess(appName, user.getRole());
             return jwtService.createTokenPair(user);
@@ -306,6 +312,12 @@ public class AuthService {
     private void ensureAppAccess(String appName, String role) {
         if (!appAccessPolicy.isAllowed(appName, role)) {
             throw new ForbiddenException("This account is not authorized for the " + appName + " app");
+        }
+    }
+
+    private void ensureActive(User user) {
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new ForbiddenException("Account is inactive. Contact your administrator.");
         }
     }
 

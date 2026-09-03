@@ -125,6 +125,7 @@ public class RepairOrderService {
         String customerName = customer != null && customer.getCustomerName() != null
                 ? customer.getCustomerName() : "";
         approvalMapper.insert(Approval.builder()
+                .ref(IdGenerator.shortRef("APP"))
                 .estimateId(ref)
                 .customerId(jc.getCustomerId())
                 .customerName(customerName)
@@ -153,6 +154,7 @@ public class RepairOrderService {
             BigDecimal lineTotal = lineTotal(li);
             total = total.add(lineTotal);
             serviceMapper.insert(RepairOrderServiceItem.builder()
+                    .ref(IdGenerator.shortRef("ROS"))
                     .repairOrderId(repairOrderId)
                     .name(li.getName())
                     .qty(li.getQty() != null ? li.getQty() : 1)
@@ -171,6 +173,7 @@ public class RepairOrderService {
             BigDecimal lineTotal = lineTotal(li);
             total = total.add(lineTotal);
             partMapper.insert(RepairOrderPartItem.builder()
+                    .ref(IdGenerator.shortRef("ROP"))
                     .repairOrderId(repairOrderId)
                     .name(li.getName())
                     .qty(li.getQty() != null ? li.getQty() : 1)

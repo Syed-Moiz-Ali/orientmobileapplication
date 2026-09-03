@@ -17,18 +17,28 @@ public class FileStorageConfig implements WebMvcConfigurer {
     @Value("${app.media.upload-path:/data/orient/media}")
     private String uploadPath;
 
+    private Path uploadRoot;
+
     @PostConstruct
     public void init() {
         try {
-            Files.createDirectories(Path.of(uploadPath));
+            uploadRoot = Path.of(uploadPath).toAbsolutePath().normalize();
+            Files.createDirectories(uploadRoot);
+            if (!Files.isDirectory(uploadRoot) || !Files.isWritable(uploadRoot)) {
+                throw new IllegalStateException("Media upload directory is not writable: " + uploadRoot);
+            }
+            log.info("Media files stored under {}", uploadRoot);
         } catch (Exception e) {
-            log.warn("Could not create upload dir: {}", uploadPath);
+            throw new IllegalStateException("Could not initialize media upload directory: " + uploadPath, e);
         }
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        Path root = uploadRoot != null
+                ? uploadRoot
+                : Path.of(uploadPath).toAbsolutePath().normalize();
         registry.addResourceHandler("/media/**")
-                .addResourceLocations("file:" + uploadPath + "/");
+                .addResourceLocations(root.toUri().toString());
     }
 }

@@ -249,6 +249,13 @@ public class SyncApplicationService {
         if (principal != null && principal.getUserId() != null) {
             customer = customerMapper.findByUserId(principal.getUserId()).orElse(null);
         }
+        if (customer == null && body.get("customerId") != null) {
+            try {
+                Long cId = Long.parseLong(body.get("customerId").toString());
+                customer = customerMapper.selectById(cId);
+            } catch (Exception ignored) {
+            }
+        }
         if (customer == null) throw new ForbiddenException("Customer account is not scoped to the authenticated user");
         String ref = firstNonBlank(body.get("bookingRef"), body.get("id"));
         if (ref == null) ref = IdGenerator.shortRef("BK");
@@ -269,6 +276,9 @@ public class SyncApplicationService {
     private void applyWorkAssignment(JwtUserPrincipal principal, Map<String, Object> body) {
         JobCard card = requireScopedJobCard(principal, String.valueOf(body.getOrDefault("jobCardId", "")));
         List<?> items = listValue(body, "items");
+        if ((items == null || items.isEmpty()) && (body.containsKey("technicianName") || body.containsKey("technicianEmpId") || body.containsKey("department"))) {
+            items = List.of(body);
+        }
         if (items == null || items.isEmpty()) throw new BadRequestException("items are required");
         int created = 0;
         for (Object raw : items) {
@@ -303,8 +313,11 @@ public class SyncApplicationService {
         if (id != null && isNumeric(id)) inspection = inspectionMapper.selectById(Long.valueOf(id));
         boolean isNew = inspection == null;
         if (isNew) {
+            String inspectionRef = id != null && !id.isBlank() && !isNumeric(id)
+                    ? id
+                    : "INSP-" + IdGenerator.shortSuffix();
             inspection = Inspection.builder()
-                    .inspectionRef("INSP-" + IdGenerator.shortSuffix())
+                    .inspectionRef(inspectionRef)
                     .isDraft(true)
                     .build();
         }

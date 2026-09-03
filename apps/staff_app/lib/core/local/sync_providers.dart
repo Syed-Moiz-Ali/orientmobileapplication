@@ -48,6 +48,12 @@ Future<void> flushPendingMediaUploads(WidgetRef ref) async {
   final dio = ref.read(dioClientProvider);
   final client = MediaClient(dio);
   await queue.retryPending((upload) async {
-    await client.uploadMedia(upload.recordId, upload.filePath);
+    await client.uploadMedia(
+      upload.recordId,
+      upload.filePath,
+      itemId: upload.itemId,
+      type: upload.type,
+      module: upload.module,
+    );
   });
 }

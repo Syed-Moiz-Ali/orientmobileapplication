@@ -63,6 +63,7 @@ public class InspectionService {
             vehicle = vehicleMapper.findByRegOrVin(reg, vin).orElse(null);
             if (vehicle == null) {
                 vehicle = Vehicle.builder()
+                        .ref(IdGenerator.shortRef("VEH"))
                         .customerId(customer.getId())
                         .branchId(principal != null ? principal.getBranchId() : null)
                         .registrationNumber(reg)

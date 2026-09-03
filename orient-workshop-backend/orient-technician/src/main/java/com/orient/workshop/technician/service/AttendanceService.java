@@ -39,6 +39,7 @@ public class AttendanceService {
 
         Attendance attendance = attendanceMapper.findByEmpIdAndDate(staff.getEmpId(), date)
                 .orElseGet(() -> Attendance.builder()
+                        .ref(com.orient.workshop.common.util.IdGenerator.shortRef("ATT"))
                         .empId(staff.getEmpId())
                         .date(date)
                         .build());

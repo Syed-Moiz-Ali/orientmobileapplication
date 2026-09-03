@@ -47,9 +47,10 @@ class ApiEndpoints {
   static const String reminderCreate = '/advisor/reminders';
 
   // Media upload (multipart, backend MediaController)
-  static const String mediaUpload = '/repair-orders/media';
-  static String mediaUploadFor(String recordId) =>
-      '/repair-orders/$recordId/media';
+  static String inspectionMediaUpload(String inspectionId) =>
+      '/inspections/$inspectionId/media';
+  static String repairOrderMediaUpload(String repairOrderId) =>
+      '/repair-orders/$repairOrderId/media';
 
   // Messages / activity (backend OwnerDashboardController)
   static const String messagesCreate = '/owner/messages';
@@ -216,8 +217,7 @@ class ApiEndpoints {
   static String syncInspection(String id) => '/sync/inspections/$id';
   static String syncJobCompleteById(String id) => '/sync/jobs/complete/$id';
   static String syncRepairOrder(String id) => '/sync/repair-orders/$id';
-  static String uploadMedia(String recordId) =>
-      '/repair-orders/$recordId/media';
+  static String uploadMedia(String recordId) => inspectionMediaUpload(recordId);
 
   static const Duration timeout = Duration(seconds: 30);
   static const int maxRetries = 3;

@@ -34,6 +34,7 @@ public class VehicleService {
         Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
 
         Vehicle vehicle = Vehicle.builder()
+                .ref(com.orient.workshop.common.util.IdGenerator.shortRef("VEH"))
                 .customerId(customer.getId())
                 .branchId(principal.getBranchId())
                 .make(req.getBrand())

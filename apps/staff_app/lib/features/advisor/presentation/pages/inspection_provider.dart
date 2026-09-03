@@ -86,7 +86,8 @@ class InspectionState {
       referenceNumber: referenceNumber ?? this.referenceNumber,
       placeOfSupply: placeOfSupply ?? this.placeOfSupply,
       customerRequests: customerRequests ?? this.customerRequests,
-      garageRecommendations: garageRecommendations ?? this.garageRecommendations,
+      garageRecommendations:
+          garageRecommendations ?? this.garageRecommendations,
       estimatedDelivery: estimatedDelivery ?? this.estimatedDelivery,
       notifyOwnerSmsEmail: notifyOwnerSmsEmail ?? this.notifyOwnerSmsEmail,
       tag: tag ?? this.tag,
@@ -124,15 +125,31 @@ class InspectionState {
       statuses: statusesRaw.map(
         (k, v) => MapEntry(
           k.toString(),
-          ItemStatus.values.firstWhere((e) => e.name == v?.toString(), orElse: () => ItemStatus.good),
+          ItemStatus.values.firstWhere(
+            (e) => e.name == v?.toString(),
+            orElse: () => ItemStatus.good,
+          ),
         ),
       ),
       media: mediaRaw.map(
-        (k, v) => MapEntry(k.toString(), v is Map ? ItemMedia.fromJson(_deepCastMap(v)) : const ItemMedia()),
+        (k, v) => MapEntry(
+          k.toString(),
+          v is Map ? ItemMedia.fromJson(_deepCastMap(v)) : const ItemMedia(),
+        ),
       ),
-      preServicePhotos: (map['preServicePhotos'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      serviceLines: serviceLinesRaw.whereType<Map>().map((e) => ServiceLineItem.fromJson(_deepCastMap(e))).toList(),
-      partLines: partLinesRaw.whereType<Map>().map((e) => PartLineItem.fromJson(_deepCastMap(e))).toList(),
+      preServicePhotos:
+          (map['preServicePhotos'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      serviceLines: serviceLinesRaw
+          .whereType<Map>()
+          .map((e) => ServiceLineItem.fromJson(_deepCastMap(e)))
+          .toList(),
+      partLines: partLinesRaw
+          .whereType<Map>()
+          .map((e) => PartLineItem.fromJson(_deepCastMap(e)))
+          .toList(),
       referenceNumber: map['referenceNumber']?.toString() ?? '',
       placeOfSupply: map['placeOfSupply']?.toString() ?? '',
       customerRequests: map['customerRequests']?.toString() ?? '',
@@ -153,17 +170,22 @@ class InspectionState {
       if (value is Map) {
         return MapEntry(key.toString(), _deepCastMap(value));
       } else if (value is List) {
-        return MapEntry(key.toString(), value.map((e) => e is Map ? _deepCastMap(e) : e).toList());
+        return MapEntry(
+          key.toString(),
+          value.map((e) => e is Map ? _deepCastMap(e) : e).toList(),
+        );
       }
       return MapEntry(key.toString(), value);
     });
   }
 
-  int get totalItems => kInspectionSections.fold(0, (sum, s) => sum + s.items.length);
+  int get totalItems =>
+      kInspectionSections.fold(0, (sum, s) => sum + s.items.length);
 
   int get completedCount => statuses.length;
 
-  double get progressPercent => totalItems == 0 ? 0 : completedCount / totalItems;
+  double get progressPercent =>
+      totalItems == 0 ? 0 : completedCount / totalItems;
 
   double get servicesTotal => serviceLines.fold(0, (sum, s) => sum + s.amount);
 
@@ -175,7 +197,9 @@ class InspectionState {
     return kInspectionSections.map((sec) {
       final filtered = sec.items.where((item) {
         final g = item.toLowerCase().contains(globalSearch.toLowerCase());
-        final s = item.toLowerCase().contains((sectionSearch[sec.id] ?? '').toLowerCase());
+        final s = item.toLowerCase().contains(
+          (sectionSearch[sec.id] ?? '').toLowerCase(),
+        );
         return g && s;
       }).toList();
       return InspectionSection(id: sec.id, label: sec.label, items: filtered);
@@ -357,7 +381,13 @@ class InspectionNotifier extends Notifier<InspectionState> {
     _persistDraft();
   }
 
-  void updateServiceLine(int index, {int? qty, double? rate, double? discountPct, double? discountAmt}) {
+  void updateServiceLine(
+    int index, {
+    int? qty,
+    double? rate,
+    double? discountPct,
+    double? discountAmt,
+  }) {
     if (index < 0 || index >= state.serviceLines.length) return;
     final lines = List<ServiceLineItem>.from(state.serviceLines);
     final s = lines[index];
@@ -372,7 +402,13 @@ class InspectionNotifier extends Notifier<InspectionState> {
     _persistDraft();
   }
 
-  void updatePartLine(int index, {int? qty, double? rate, double? discountPct, double? discountAmt}) {
+  void updatePartLine(
+    int index, {
+    int? qty,
+    double? rate,
+    double? discountPct,
+    double? discountAmt,
+  }) {
     if (index < 0 || index >= state.partLines.length) return;
     final lines = List<PartLineItem>.from(state.partLines);
     final p = lines[index];
@@ -456,27 +492,50 @@ class InspectionNotifier extends Notifier<InspectionState> {
   }
 
   Future<void> uploadInspectionMedia(String recordId) async {
-    final paths = <String>[];
-    for (final m in state.media.values) {
-      paths.addAll(m.photoPaths);
-      paths.addAll(m.videoPaths);
-      if (m.audioPath.isNotEmpty) paths.add(m.audioPath);
+    final uploads = <({String path, String itemId, String type})>[];
+    for (final entry in state.media.entries) {
+      final itemId = entry.key;
+      final media = entry.value;
+      uploads.addAll(
+        media.photoPaths.map(
+          (path) => (path: path, itemId: itemId, type: 'photo'),
+        ),
+      );
+      uploads.addAll(
+        media.videoPaths.map(
+          (path) => (path: path, itemId: itemId, type: 'video'),
+        ),
+      );
+      if (media.audioPath.isNotEmpty) {
+        uploads.add((path: media.audioPath, itemId: itemId, type: 'audio'));
+      }
     }
-    paths.addAll(state.preServicePhotos);
-    if (paths.isEmpty || kIsWeb) return;
+    for (final path in state.preServicePhotos) {
+      uploads.add((path: path, itemId: 'pre-service', type: 'photo'));
+    }
+    if (uploads.isEmpty || kIsWeb) return;
 
     final mediaClient = MediaClient(ref.read(dioClientProvider));
     final pending = MediaUploadQueue(Hive.box<dynamic>('pending_media'));
-    for (final path in paths) {
+    for (final upload in uploads) {
       try {
-        await mediaClient.uploadMedia(recordId, path);
+        await mediaClient.uploadMedia(
+          recordId,
+          upload.path,
+          itemId: upload.itemId,
+          type: upload.type,
+          module: 'inspections',
+        );
       } catch (_) {
         final pendingId = await IdGenerator.nextId('MED');
         await pending.enqueue(
           PendingMediaUpload(
             id: pendingId,
             recordId: recordId,
-            filePath: path,
+            filePath: upload.path,
+            itemId: upload.itemId,
+            type: upload.type,
+            module: 'inspections',
             timestamp: DateTime.now().millisecondsSinceEpoch,
           ),
         );
@@ -489,9 +548,18 @@ class InspectionNotifier extends Notifier<InspectionState> {
   }
 
   void res() {
-    state = state.copyWith(statuses: {}, globalSearch: '', showAll: true, tag: '', customerRequests: '');
+    state = state.copyWith(
+      statuses: {},
+      globalSearch: '',
+      showAll: true,
+      tag: '',
+      customerRequests: '',
+    );
     _persistDraft();
   }
 }
 
-final inspectionProvider = NotifierProvider<InspectionNotifier, InspectionState>(InspectionNotifier.new);
+final inspectionProvider =
+    NotifierProvider<InspectionNotifier, InspectionState>(
+      InspectionNotifier.new,
+    );

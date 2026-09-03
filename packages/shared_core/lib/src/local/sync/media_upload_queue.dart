@@ -7,6 +7,7 @@ class PendingMediaUpload {
   final String filePath;
   final String itemId;
   final String type;
+  final String module;
   final int timestamp;
 
   const PendingMediaUpload({
@@ -15,6 +16,7 @@ class PendingMediaUpload {
     required this.filePath,
     this.itemId = '',
     this.type = 'photo',
+    this.module = 'inspections',
     required this.timestamp,
   });
 
@@ -24,6 +26,7 @@ class PendingMediaUpload {
     'filePath': filePath,
     'itemId': itemId,
     'type': type,
+    'module': module,
     'timestamp': timestamp,
   };
 
@@ -34,6 +37,7 @@ class PendingMediaUpload {
         filePath: json['filePath'] as String,
         itemId: json['itemId'] as String? ?? '',
         type: json['type'] as String? ?? 'photo',
+        module: json['module'] as String? ?? 'inspections',
         timestamp: json['timestamp'] as int? ?? 0,
       );
 }
