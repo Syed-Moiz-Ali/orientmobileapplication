@@ -38,6 +38,22 @@ class OwnerDashboardPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (state.errorMessage != null) ...[
+              MaterialBanner(
+                content: Text(state.errorMessage!),
+                leading: Icon(
+                  Icons.cloud_off_rounded,
+                  color: colorScheme.error,
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: notifier.refresh,
+                    child: const Text('RETRY'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.s16),
+            ],
             const HeaderBanner(),
             const SizedBox(height: AppDimensions.s24),
             _sectionLabel('KPI Overview', colorScheme, textTheme),
@@ -73,7 +89,11 @@ class OwnerDashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _sectionLabel(String text, ColorScheme colorScheme, TextTheme textTheme) => Row(
+  Widget _sectionLabel(
+    String text,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) => Row(
     children: [
       Container(
         width: 4,

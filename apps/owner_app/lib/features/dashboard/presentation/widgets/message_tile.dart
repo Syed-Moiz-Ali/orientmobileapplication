@@ -63,6 +63,16 @@ class MessageTile extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
+                    Icon(
+                      message.delivered
+                          ? Icons.done_all_rounded
+                          : Icons.error_outline_rounded,
+                      size: 14,
+                      color: message.delivered
+                          ? AppColors.success
+                          : AppColors.danger,
+                    ),
+                    const SizedBox(width: 5),
                     Text(
                       message.time,
                       style: const TextStyle(

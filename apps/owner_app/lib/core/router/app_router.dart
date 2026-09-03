@@ -11,6 +11,7 @@ import 'package:owner_app/features/dashboard/presentation/pages/job_status_view.
 import 'package:owner_app/features/dashboard/presentation/pages/pending_approvals_view.dart';
 import 'package:owner_app/features/dashboard/presentation/pages/team_view.dart';
 import 'package:owner_app/features/dashboard/presentation/pages/subscription_view.dart';
+import 'package:owner_app/features/dashboard/presentation/pages/attendance_view.dart';
 import 'package:owner_app/features/job_cards/presentation/pages/job_card_detail_view.dart';
 import 'package:owner_app/features/job_cards/presentation/pages/job_cards_list_view.dart';
 
@@ -31,6 +32,7 @@ class AppRoutes {
   static const String feedbackModeration = '/feedback-moderation';
   static const String team = '/team';
   static const String subscription = '/subscription';
+  static const String attendance = '/attendance';
 }
 
 final _routerRefreshNotifier = ValueNotifier<int>(0);
@@ -131,6 +133,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.subscription,
         name: AppRoutes.subscription,
         builder: (context, state) => const SubscriptionView(),
+      ),
+      GoRoute(
+        path: AppRoutes.attendance,
+        name: AppRoutes.attendance,
+        builder: (context, state) => const AttendanceView(),
       ),
       GoRoute(
         path: AppRoutes.team,

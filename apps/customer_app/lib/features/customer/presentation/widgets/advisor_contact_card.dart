@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AdvisorContactCard extends StatelessWidget {
   final String advisorName;
@@ -69,20 +70,31 @@ class AdvisorContactCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   advisorRole,
-                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
           ),
           IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Calling Service Advisor ($phone)...'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
+            tooltip: phone.isEmpty
+                ? 'Contact number unavailable'
+                : 'Call advisor',
+            onPressed: phone.isEmpty
+                ? null
+                : () async {
+                    final opened = await launchUrl(
+                      Uri(scheme: 'tel', path: phone),
+                    );
+                    if (!opened && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Unable to open the phone dialer.'),
+                        ),
+                      );
+                    }
+                  },
             icon: Container(
               width: 38,
               height: 38,

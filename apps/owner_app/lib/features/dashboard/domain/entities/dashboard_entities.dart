@@ -13,7 +13,7 @@ enum JobStage {
   completed,
   invoice,
   gatePassOut,
-  cancelled
+  cancelled,
 }
 
 enum PendingJobCardStatus { overdue, pending, inProgress }
@@ -167,10 +167,7 @@ class TopSalesCategory {
   final String title;
   final List<TopSalesItem> items;
 
-  const TopSalesCategory({
-    required this.title,
-    required this.items,
-  });
+  const TopSalesCategory({required this.title, required this.items});
 }
 
 class TopSalesItem {
@@ -190,12 +187,14 @@ class Message {
   final String recipient;
   final String message;
   final String time;
+  final bool delivered;
 
   const Message({
     required this.id,
     required this.recipient,
     required this.message,
     required this.time,
+    this.delivered = true,
   });
 }
 

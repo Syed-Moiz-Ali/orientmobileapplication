@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_core/shared_core.dart';
 
 class StaffProfileScreen extends ConsumerWidget {
   const StaffProfileScreen({super.key});
@@ -12,6 +13,8 @@ class StaffProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final auth = ref.watch(authNotifierProvider);
+    final profile = auth is AuthAuthenticated ? auth.profile : null;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -31,7 +34,11 @@ class StaffProfileScreen extends ConsumerWidget {
               shape: BoxShape.circle,
               border: Border.all(color: colorScheme.outlineVariant),
             ),
-            child: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface, size: 20),
+            child: Icon(
+              Icons.arrow_back_rounded,
+              color: colorScheme.onSurface,
+              size: 20,
+            ),
           ),
         ),
         centerTitle: true,
@@ -43,21 +50,6 @@ class StaffProfileScreen extends ConsumerWidget {
             letterSpacing: -0.3,
           ),
         ),
-        actions: [
-          _PressScale(
-            onTap: () => HapticFeedback.selectionClick(),
-            child: Container(
-              margin: const EdgeInsets.only(right: 16),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.outlineVariant),
-              ),
-              child: Icon(Icons.edit_outlined, color: colorScheme.onSurface, size: 18),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -65,11 +57,11 @@ class StaffProfileScreen extends ConsumerWidget {
         child: Column(
           children: [
             // ── 1. AVATAR & HERO PROFILE ─────────────────────────────────────
-            _ProfileHeroCard(),
+            _ProfileHeroCard(profile: profile),
             const SizedBox(height: 20),
 
             // ── 2. SHIFT & OPERATIONAL METRICS ───────────────────────────────
-            _ShiftMetricsGrid(),
+            _ShiftMetricsGrid(profile: profile),
             const SizedBox(height: 24),
 
             // ── 3. WORKSPACE & PREFERENCES BENTO ─────────────────────────────
@@ -95,6 +87,9 @@ class StaffProfileScreen extends ConsumerWidget {
 
 // ─── 1. PROFILE HERO CARD ────────────────────────────────────────────────────
 class _ProfileHeroCard extends StatelessWidget {
+  final MeResponse? profile;
+  const _ProfileHeroCard({required this.profile});
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -108,7 +103,11 @@ class _ProfileHeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
-          BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6)),
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
         ],
       ),
       child: Column(
@@ -122,27 +121,23 @@ class _ProfileHeroCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: colorScheme.primary, width: 2),
                 ),
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 42,
-                  backgroundImage: NetworkImage(
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop',
+                  backgroundColor: colorScheme.primaryContainer,
+                  child: Text(
+                    profile?.initials ?? 'S',
+                    style: textTheme.headlineMedium?.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colorScheme.surface, width: 2),
-                ),
-                child: Icon(Icons.camera_alt_rounded, size: 14, color: colorScheme.onPrimary),
               ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
-            'Marcus Vance',
+            profile?.name.isNotEmpty == true ? profile!.name : 'Supervisor',
             style: textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
               color: colorScheme.onSurface,
@@ -151,21 +146,31 @@ class _ProfileHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Shift Lead & Master Technician',
-            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
+            profile?.designation.isNotEmpty == true
+                ? profile!.designation
+                : 'Supervisor',
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'STAFF ID: #OR-8842',
+                  profile?.empId.isNotEmpty == true
+                      ? 'STAFF ID: ${profile!.empId}'
+                      : 'STAFF ACCOUNT',
                   style: textTheme.labelSmall?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w900,
@@ -175,18 +180,23 @@ class _ProfileHeroCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF10B981).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.circle, color: Color(0xFF10B981), size: 6),
-                    SizedBox(width: 6),
+                    const Icon(Icons.circle, color: Color(0xFF10B981), size: 6),
+                    const SizedBox(width: 6),
                     Text(
-                      'BAY 01 LEAD',
-                      style: TextStyle(
+                      profile?.branchName.isNotEmpty == true
+                          ? profile!.branchName.toUpperCase()
+                          : 'ACTIVE',
+                      style: const TextStyle(
                         color: Color(0xFF10B981),
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -206,22 +216,39 @@ class _ProfileHeroCard extends StatelessWidget {
 
 // ─── 2. SHIFT METRICS GRID ───────────────────────────────────────────────────
 class _ShiftMetricsGrid extends StatelessWidget {
+  final MeResponse? profile;
+  const _ShiftMetricsGrid({required this.profile});
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Row(
       children: [
-        _MetricTile(value: '7h 45m', label: 'Shift Time', color: colorScheme.primary, icon: Icons.timer_outlined),
+        _MetricTile(
+          value: profile?.shift.isNotEmpty == true ? profile!.shift : 'Not set',
+          label: 'Shift',
+          color: colorScheme.primary,
+          icon: Icons.schedule_rounded,
+        ),
         const SizedBox(width: 8),
         _MetricTile(
-          value: '98.4%',
-          label: 'QC Pass Rate',
+          value: profile?.branchName.isNotEmpty == true
+              ? profile!.branchName
+              : 'Not set',
+          label: 'Branch',
           color: const Color(0xFF10B981),
           icon: Icons.verified_outlined,
         ),
         const SizedBox(width: 8),
-        _MetricTile(value: '14 Jobs', label: 'Resolved', color: colorScheme.secondary, icon: Icons.task_alt_rounded),
+        _MetricTile(
+          value: profile?.department.isNotEmpty == true
+              ? profile!.department
+              : 'Not set',
+          label: 'Department',
+          color: colorScheme.secondary,
+          icon: Icons.badge_outlined,
+        ),
       ],
     );
   }
@@ -233,7 +260,12 @@ class _MetricTile extends StatelessWidget {
   final Color color;
   final IconData icon;
 
-  const _MetricTile({required this.value, required this.label, required this.color, required this.icon});
+  const _MetricTile({
+    required this.value,
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -350,15 +382,20 @@ class _SecurityBentoGroup extends StatelessWidget {
             title: 'Biometric Station Login',
             subtitle: 'Touch ID / Face unlock enabled',
             onTap: () => HapticFeedback.selectionClick(),
-            trailing: Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           Divider(height: 1, color: colorScheme.outlineVariant, indent: 56),
           _SettingsRow(
             icon: Icons.pin_outlined,
-            title: 'Change Supervisor PIN',
-            subtitle: 'Used for QC sign-offs & invoice approval',
-            onTap: () => HapticFeedback.selectionClick(),
-            trailing: Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
+            title: 'Account credentials',
+            subtitle: 'Managed securely from the sign-in flow',
+            trailing: Icon(
+              Icons.lock_outline_rounded,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -409,11 +446,17 @@ class _SettingsRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                   Text(
                     subtitle,
-                    style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11.5),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 11.5,
+                    ),
                   ),
                 ],
               ),
@@ -436,31 +479,12 @@ class _LogoutButton extends ConsumerWidget {
     return _PressScale(
       onTap: () async {
         HapticFeedback.heavyImpact();
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Confirm Logout'),
-            content: const Text('Are you sure you want to end your shift and log out?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.error,
-                  foregroundColor: colorScheme.onError,
-                ),
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Logout'),
-              ),
-            ],
-          ),
+        await showLogoutDialog(
+          context,
+          onLogout: () {
+            ref.read(authNotifierProvider.notifier).logout();
+          },
         );
-
-        if (confirmed == true) {
-          ref.read(authNotifierProvider.notifier).logout();
-        }
       },
       child: Container(
         width: double.infinity,
@@ -476,8 +500,12 @@ class _LogoutButton extends ConsumerWidget {
             Icon(Icons.logout_rounded, color: colorScheme.error, size: 18),
             const SizedBox(width: 8),
             Text(
-              'End Shift & Lock Station',
-              style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.w900, fontSize: 14),
+              'Sign out',
+              style: TextStyle(
+                color: colorScheme.error,
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -521,7 +549,8 @@ class _PressScale extends StatefulWidget {
   State<_PressScale> createState() => _PressScaleState();
 }
 
-class _PressScaleState extends State<_PressScale> with SingleTickerProviderStateMixin {
+class _PressScaleState extends State<_PressScale>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
 
@@ -533,10 +562,13 @@ class _PressScaleState extends State<_PressScale> with SingleTickerProviderState
       duration: const Duration(milliseconds: 100),
       reverseDuration: const Duration(milliseconds: 140),
     );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.97,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      ),
+    );
   }
 
   @override

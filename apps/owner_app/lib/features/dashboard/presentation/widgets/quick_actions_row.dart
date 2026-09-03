@@ -68,6 +68,12 @@ class QuickActionsRow extends ConsumerWidget {
         onTap: () => context.push('/feedback-moderation'),
       ),
       ActionButton(
+        icon: Icons.fact_check_rounded,
+        label: 'Staff attendance',
+        gradient: const [Color(0xFF1D4ED8), Color(0xFF38BDF8)],
+        onTap: () => context.push('/attendance'),
+      ),
+      ActionButton(
         icon: Icons.groups_outlined,
         label: 'Team & roles',
         gradient: const [Color(0xFF0F766E), Color(0xFF1B9B91)],

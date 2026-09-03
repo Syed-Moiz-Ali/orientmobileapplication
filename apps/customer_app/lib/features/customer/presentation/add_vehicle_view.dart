@@ -92,7 +92,7 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
           : _mileageCtrl.text.trim(),
       lastService: _isEditing ? _lastService() : 'N/A',
       nextDue: 'N/A',
-      healthScore: 90,
+      healthScore: -1,
     );
 
     try {
@@ -109,9 +109,11 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
             color: vehicle.color,
             year: vehicle.year,
             mileage: vehicle.mileage,
-            lastService: vehicle.lastService,
-            nextDue: vehicle.nextDue,
-            healthScore: vehicle.healthScore,
+            lastService: resp.lastService.isEmpty
+                ? vehicle.lastService
+                : resp.lastService,
+            nextDue: resp.nextDue.isEmpty ? vehicle.nextDue : resp.nextDue,
+            healthScore: resp.healthScore,
           );
         }
       } else {
@@ -126,9 +128,11 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
             color: vehicle.color,
             year: vehicle.year,
             mileage: vehicle.mileage,
-            lastService: vehicle.lastService,
-            nextDue: vehicle.nextDue,
-            healthScore: vehicle.healthScore,
+            lastService: resp.lastService.isEmpty
+                ? vehicle.lastService
+                : resp.lastService,
+            nextDue: resp.nextDue.isEmpty ? vehicle.nextDue : resp.nextDue,
+            healthScore: resp.healthScore,
           );
         }
       }

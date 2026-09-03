@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GarageInfoCard extends StatelessWidget {
   final VoidCallback? onCall;
@@ -30,7 +31,11 @@ class GarageInfoCard extends StatelessWidget {
                   color: colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(Icons.garage_rounded, color: colorScheme.primary, size: 26),
+                child: Icon(
+                  Icons.garage_rounded,
+                  color: colorScheme.primary,
+                  size: 26,
+                ),
               ),
               const SizedBox(width: AppDimensions.s12),
               Expanded(
@@ -46,7 +51,7 @@ class GarageInfoCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Mon - Sat: 8:00 AM - 7:00 PM • Open Now',
+                      'Mon - Sat: 8:00 AM - 7:00 PM',
                       style: textTheme.bodySmall?.copyWith(
                         color: const Color(0xFF10B981),
                         fontWeight: FontWeight.w700,
@@ -57,8 +62,7 @@ class GarageInfoCard extends StatelessWidget {
                 ),
               ),
               StatusPill(
-                label: 'OPEN NOW',
-                showDot: true,
+                label: 'WORKSHOP',
                 bg: const Color(0xFF10B981).withValues(alpha: 0.12),
                 fg: const Color(0xFF10B981),
               ),
@@ -69,7 +73,11 @@ class GarageInfoCard extends StatelessWidget {
           const SizedBox(height: AppDimensions.s12),
           Row(
             children: [
-              Icon(Icons.location_on_outlined, size: 16, color: colorScheme.primary),
+              Icon(
+                Icons.location_on_outlined,
+                size: 16,
+                color: colorScheme.primary,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -89,7 +97,10 @@ class GarageInfoCard extends StatelessWidget {
               const SizedBox(width: 6),
               _AmenityPill(icon: Icons.local_cafe_rounded, label: 'Lounge'),
               const SizedBox(width: 6),
-              _AmenityPill(icon: Icons.ev_station_rounded, label: 'EV Charging'),
+              _AmenityPill(
+                icon: Icons.ev_station_rounded,
+                label: 'EV Charging',
+              ),
             ],
           ),
           const SizedBox(height: AppDimensions.s14),
@@ -99,21 +110,21 @@ class GarageInfoCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed:
                       onCall ??
-                      () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Calling Workshop Hotline: +971 4 800-AUTO'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                      () => launchUrl(Uri(scheme: 'tel', path: '800674368')),
                   icon: const Icon(Icons.phone_rounded, size: 16),
-                  label: const Text('Call Workshop', style: TextStyle(fontWeight: FontWeight.w800)),
+                  label: const Text(
+                    'Call Workshop',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colorScheme.primary,
-                    side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.5)),
+                    side: BorderSide(
+                      color: colorScheme.primary.withValues(alpha: 0.5),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimensions.r16),
+                    ),
                   ),
                 ),
               ),
@@ -122,22 +133,26 @@ class GarageInfoCard extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed:
                       onMap ??
-                      () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Opening Google Maps navigation...'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                      () => launchUrl(
+                        Uri.https('www.google.com', '/maps/search/', {
+                          'api': '1',
+                          'query': 'Orient Auto Workshop Dubai UAE',
+                        }),
+                        mode: LaunchMode.externalApplication,
+                      ),
                   icon: const Icon(Icons.directions_rounded, size: 16),
-                  label: const Text('Directions', style: TextStyle(fontWeight: FontWeight.w800)),
+                  label: const Text(
+                    'Directions',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   style: FilledButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimensions.r16),
+                    ),
                   ),
                 ),
               ),
@@ -202,7 +217,9 @@ class EmergencyBreakdownBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFEF4444).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppDimensions.r24),
-        border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.25)),
+        border: Border.all(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.25),
+        ),
       ),
       child: Row(
         children: [
@@ -213,7 +230,11 @@ class EmergencyBreakdownBanner extends StatelessWidget {
               color: const Color(0xFFEF4444),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.emergency_rounded, color: Colors.white, size: 22),
+            child: const Icon(
+              Icons.emergency_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
           const SizedBox(width: AppDimensions.s12),
           Expanded(
@@ -246,9 +267,14 @@ class EmergencyBreakdownBanner extends StatelessWidget {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.rPill)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.rPill),
+              ),
             ),
-            child: const Text('Get Help', style: TextStyle(fontWeight: FontWeight.w900)),
+            child: const Text(
+              'Get Help',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
           ),
         ],
       ),

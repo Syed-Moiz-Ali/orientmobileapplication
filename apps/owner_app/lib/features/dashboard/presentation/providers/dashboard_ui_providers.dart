@@ -8,7 +8,9 @@ import 'package:owner_app/features/dashboard/data/datasources/owner_remote_datas
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 
 final dashboardDataSourceProvider = Provider<DashboardDataSource>((ref) {
-  final adapter = DashboardUIRemoteAdapter(OwnerRemoteDataSource(ref.read(apiClientProvider)));
+  final adapter = DashboardUIRemoteAdapter(
+    OwnerRemoteDataSource(ref.read(apiClientProvider)),
+  );
   adapter.loadAll();
   return adapter;
 });
@@ -24,6 +26,7 @@ class DashboardUiState {
   final String selectedUser;
   final String messageText;
   final List<Message> sentMessages;
+  final String? errorMessage;
 
   const DashboardUiState({
     this.selectedIndex = 0,
@@ -32,6 +35,7 @@ class DashboardUiState {
     this.selectedUser = '',
     this.messageText = '',
     this.sentMessages = const [],
+    this.errorMessage,
   });
 
   DashboardUiState copyWith({
@@ -41,6 +45,8 @@ class DashboardUiState {
     String? selectedUser,
     String? messageText,
     List<Message>? sentMessages,
+    String? errorMessage,
+    bool clearError = false,
   }) {
     return DashboardUiState(
       selectedIndex: selectedIndex ?? this.selectedIndex,
@@ -49,6 +55,7 @@ class DashboardUiState {
       selectedUser: selectedUser ?? this.selectedUser,
       messageText: messageText ?? this.messageText,
       sentMessages: sentMessages ?? this.sentMessages,
+      errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }
 }
@@ -72,6 +79,9 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
         ref
             .read(loggerProvider)
             .e('Failed to load dashboard', error: e, stackTrace: st);
+        state = state.copyWith(
+          errorMessage: 'Dashboard data could not be loaded. Pull to retry.',
+        );
       }
       state = state.copyWith(isLoading: false);
     });
@@ -85,12 +95,15 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
       return box.values
           .whereType<Map>()
           .map((m) => Map<String, dynamic>.from(m))
-          .map((m) => Message(
-                id: m['id'] as String? ?? '',
-                recipient: m['recipient'] as String? ?? '',
-                message: m['message'] as String? ?? '',
-                time: m['time'] as String? ?? '',
-              ))
+          .map(
+            (m) => Message(
+              id: m['id'] as String? ?? '',
+              recipient: m['recipient'] as String? ?? '',
+              message: m['message'] as String? ?? '',
+              time: m['time'] as String? ?? '',
+              delivered: m['delivered'] as bool? ?? false,
+            ),
+          )
           .toList()
         ..sort((a, b) => b.id.compareTo(a.id));
     } catch (_) {
@@ -103,7 +116,8 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
   List<SalesTrendPoint> get salesTrend => _dataSource.salesTrend;
   List<SalesTrendPoint> get profitTrend => _dataSource.profitTrend;
   List<SalesTrendPoint> get expensesTrend => _dataSource.expensesTrend;
-  List<TopSalesCategory> get topSalesCategories => _dataSource.topSalesCategories;
+  List<TopSalesCategory> get topSalesCategories =>
+      _dataSource.topSalesCategories;
   Set<int> get expandedCategoryIndices => _expandedIndices;
   List<Message> get sentMessages => state.sentMessages;
 
@@ -112,11 +126,16 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
 
   Future<void> refresh() async {
     // FE-FIX (audit P1): this was a 900ms fake with zero network activity.
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       await (_dataSource as DashboardUIRemoteAdapter).loadAll();
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to refresh dashboard', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e('Failed to refresh dashboard', error: e, stackTrace: st);
+      state = state.copyWith(
+        errorMessage: 'Refresh failed. Check your connection and try again.',
+      );
     }
     state = state.copyWith(isLoading: false);
   }
@@ -132,8 +151,10 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
     state = state.copyWith(sentMessages: [...fresh, ...state.sentMessages]);
   }
 
-  Future<void> sendMessage() async {
-    if (state.selectedUser.isEmpty || state.messageText.trim().isEmpty) return;
+  Future<bool> sendMessage() async {
+    if (state.selectedUser.isEmpty || state.messageText.trim().isEmpty) {
+      return false;
+    }
     final now = TimeOfDay.now();
     final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
     final min = now.minute.toString().padLeft(2, '0');
@@ -143,12 +164,20 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
       recipient: state.selectedUser,
       message: state.messageText.trim(),
       time: '$hour:$min $ampm',
+      delivered: false,
     );
     // Send through the backend; keep a local copy for offline resilience.
     try {
       final remote = ref.read(ownerRemoteDataSourceProvider);
       final response = await remote.sendMessage(msg.recipient, msg.message);
       final delivered = response.recipient.isNotEmpty;
+      final savedMessage = Message(
+        id: msg.id,
+        recipient: msg.recipient,
+        message: msg.message,
+        time: msg.time,
+        delivered: delivered,
+      );
       final payload = {
         'id': msg.id,
         'recipient': msg.recipient,
@@ -156,28 +185,20 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
         'time': msg.time,
         'delivered': delivered,
       };
-      GenericLocalDataSource(Hive.box<dynamic>('owner_messages'))
-          .save(msg.id, payload);
+      GenericLocalDataSource(
+        Hive.box<dynamic>('owner_messages'),
+      ).save(msg.id, payload);
       state = state.copyWith(
-        sentMessages: [msg, ...state.sentMessages],
+        sentMessages: [savedMessage, ...state.sentMessages],
         selectedUser: '',
         messageText: '',
       );
-    } catch (_) {
-      // Offline: keep the message locally and clear the compose box.
-      GenericLocalDataSource(Hive.box<dynamic>('owner_messages'))
-          .save(msg.id, {
-        'id': msg.id,
-        'recipient': msg.recipient,
-        'message': msg.message,
-        'time': msg.time,
-        'delivered': false,
-      });
-      state = state.copyWith(
-        sentMessages: [msg, ...state.sentMessages],
-        selectedUser: '',
-        messageText: '',
-      );
+      return delivered;
+    } catch (e, st) {
+      ref
+          .read(loggerProvider)
+          .e('Failed to send owner message', error: e, stackTrace: st);
+      return false;
     }
   }
 
@@ -197,6 +218,7 @@ class DashboardUiNotifier extends Notifier<DashboardUiState> {
   }
 }
 
-final dashboardUiProvider = NotifierProvider<DashboardUiNotifier, DashboardUiState>(
-  DashboardUiNotifier.new,
-);
+final dashboardUiProvider =
+    NotifierProvider<DashboardUiNotifier, DashboardUiState>(
+      DashboardUiNotifier.new,
+    );

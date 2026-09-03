@@ -24,16 +24,6 @@ class QcChecklistSheet extends ConsumerStatefulWidget {
 }
 
 class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
-  static const _fallbackItems = [
-    'Oil/fluid levels verified',
-    'Tyre pressures set correctly',
-    'Warning lights cleared',
-    'Test drive completed',
-    'Vehicle interior cleaned',
-    'All tools removed from vehicle',
-    'Completed work checked against estimate',
-  ];
-
   late final List<String> _items;
   late final List<bool> _checked;
   final _notesCtrl = TextEditingController();
@@ -42,7 +32,7 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
   @override
   void initState() {
     super.initState();
-    _items = widget.workItems.isNotEmpty ? widget.workItems : _fallbackItems;
+    _items = widget.workItems;
     _checked = List.filled(_items.length, false);
   }
 
@@ -53,7 +43,7 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
   }
 
   int get _checkedCount => _checked.where((c) => c).length;
-  bool get _allChecked => _checkedCount == _items.length;
+  bool get _allChecked => _items.isNotEmpty && _checkedCount == _items.length;
 
   Future<void> _approve() async {
     HapticFeedback.lightImpact();
@@ -202,63 +192,76 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 6),
-              itemBuilder: (context, i) {
-                final isChecked = _checked[i];
-                return InkWell(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _checked[i] = !isChecked);
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isChecked
-                          ? colorScheme.surfaceContainerLow
-                          : colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isChecked
-                            ? colorScheme.primary.withValues(alpha: 0.3)
-                            : colorScheme.outlineVariant,
+            child: _items.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'This job has no server-provided work items. It cannot be approved until the repair order is complete.',
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isChecked
-                              ? Icons.check_circle_rounded
-                              : Icons.radio_button_unchecked_rounded,
-                          color: isChecked
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _items[i],
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: isChecked
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    itemBuilder: (context, i) {
+                      final isChecked = _checked[i];
+                      return InkWell(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _checked[i] = !isChecked);
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isChecked
+                                ? colorScheme.surfaceContainerLow
+                                : colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isChecked
+                                  ? colorScheme.primary.withValues(alpha: 0.3)
+                                  : colorScheme.outlineVariant,
                             ),
                           ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isChecked
+                                    ? Icons.check_circle_rounded
+                                    : Icons.radio_button_unchecked_rounded,
+                                color: isChecked
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurfaceVariant,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _items[i],
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurface,
+                                    fontWeight: isChecked
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
           Padding(
             padding: const EdgeInsets.all(20),

@@ -15,6 +15,7 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   // FIX (audit P0): offline vehicle create/update/delete used entityType
   // 'vehicle', which had NO registered handler — ops were silently dropped.
   engine.registerHandler(DioSyncHandler('vehicle', dio));
+  Future.microtask(engine.syncAll);
   ref.onDispose(engine.dispose);
   return engine;
 });

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 
 @Slf4j
@@ -34,9 +35,7 @@ public class AttendanceService {
         Staff staff = resolveStaff(principal);
         LocalDate date = parseDate(req.getDate());
 
-        String punchIn = req.getPunchIn() != null && !req.getPunchIn().isBlank()
-                ? req.getPunchIn()
-                : LocalTime.now().format(TIME_FMT);
+        String punchIn = LocalTime.now().format(TIME_FMT);
 
         Attendance attendance = attendanceMapper.findByEmpIdAndDate(staff.getEmpId(), date)
                 .orElseGet(() -> Attendance.builder()
@@ -44,7 +43,16 @@ public class AttendanceService {
                         .date(date)
                         .build());
 
-        attendance.setStatus(req.getStatus() != null ? req.getStatus() : "working");
+        if (attendance.getId() != null) {
+            // Idempotent repeat taps must never overwrite the original arrival
+            // time or allow a completed shift to be reopened.
+            if ("punchedOut".equals(attendance.getStatus())) {
+                throw new ForbiddenException("Today's shift has already been completed");
+            }
+            return toResponse(attendance);
+        }
+
+        attendance.setStatus("working");
         attendance.setPunchIn(punchIn);
 
         if (attendance.getId() == null) {
@@ -55,12 +63,8 @@ public class AttendanceService {
                         staff.getEmpId(), date);
                 attendance = attendanceMapper.findByEmpIdAndDate(staff.getEmpId(), date)
                         .orElseThrow(() -> new NotFoundException("Attendance record disappeared"));
-                attendance.setStatus(req.getStatus() != null ? req.getStatus() : "working");
-                attendance.setPunchIn(punchIn);
-                attendanceMapper.updateById(attendance);
+                return toResponse(attendance);
             }
-        } else {
-            attendanceMapper.updateById(attendance);
         }
         return toResponse(attendance);
     }
@@ -73,10 +77,12 @@ public class AttendanceService {
         Attendance attendance = attendanceMapper.findByEmpIdAndDate(staff.getEmpId(), date)
                 .orElseThrow(() -> new NotFoundException("No attendance record found for today"));
 
-        attendance.setStatus(req.getStatus() != null ? req.getStatus() : "punchedOut");
-        attendance.setPunchOut(req.getPunchOut());
-        attendance.setBreakTime(req.getBreakTime());
-        attendance.setWorkHours(req.getWorkHours());
+        if ("punchedOut".equals(attendance.getStatus())) return;
+
+        String punchOut = LocalTime.now().format(TIME_FMT);
+        attendance.setStatus("punchedOut");
+        attendance.setPunchOut(punchOut);
+        attendance.setWorkHours(calculateWorkHours(attendance.getPunchIn(), punchOut));
         attendanceMapper.updateById(attendance);
     }
 
@@ -133,5 +139,14 @@ public class AttendanceService {
                 .breakTime(a.getBreakTime() != null ? a.getBreakTime() : "")
                 .workHours(a.getWorkHours() != null ? a.getWorkHours() : "")
                 .build();
+    }
+
+    private String calculateWorkHours(String punchIn, String punchOut) {
+        if (punchIn == null || punchIn.isBlank()) return "0h 0m";
+        LocalTime start = LocalTime.parse(punchIn, TIME_FMT);
+        LocalTime end = LocalTime.parse(punchOut, TIME_FMT);
+        long minutes = Duration.between(start, end).toMinutes();
+        if (minutes < 0) minutes += 24 * 60;
+        return String.format("%dh %dm", minutes / 60, minutes % 60);
     }
 }

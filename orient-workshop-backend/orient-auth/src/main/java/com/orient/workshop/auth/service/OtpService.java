@@ -52,6 +52,14 @@ public class OtpService {
     @Value("${app.otp.fixed-value:}")
     private String fixedOtpValue;
 
+    /**
+     * Temporary, explicit production-testing escape hatch. It is disabled by
+     * default and must be enabled together with a fixed value. This avoids
+     * activating the broader dev profile on a production server.
+     */
+    @Value("${app.otp.allow-fixed-in-production:false}")
+    private boolean allowFixedOtpInProduction;
+
     @Transactional
     public void sendSmsOtp(String phone) {
         otpRecordMapper.findValidByPhone(phone).ifPresent(record -> {
@@ -196,6 +204,10 @@ public class OtpService {
             boolean devActive = environment != null
                     && environment.acceptsProfiles(org.springframework.core.env.Profiles.of("dev"));
             if (devActive) {
+                return fixedOtpValue;
+            }
+            if (allowFixedOtpInProduction) {
+                log.warn("SECURITY WARNING: fixed OTP is enabled outside the dev profile; disable it after testing");
                 return fixedOtpValue;
             }
             // S-3: fixed OTP configured outside the dev profile — refuse silently.

@@ -2,6 +2,7 @@ package com.orient.workshop.owner.controller;
 
 import com.orient.workshop.auth.model.entity.User;
 import com.orient.workshop.auth.repository.UserMapper;
+import com.orient.workshop.auth.service.PasswordService;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.common.response.ApiResponse;
@@ -31,10 +32,11 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class TeamController {
 
-    private static final Set<String> VALID_ROLES = Set.of("advisor", "supervisor", "technician", "sales");
+    private static final Set<String> VALID_ROLES = Set.of("advisor", "supervisor", "technician");
 
     private final StaffMapper staffMapper;
     private final UserMapper userMapper;
+    private final PasswordService passwordService;
 
     @GetMapping
     public ApiResponse<List<Staff>> listStaff() {
@@ -58,31 +60,44 @@ public class TeamController {
             throw new BadRequestException("empId already exists: " + req.getEmpId());
         }
 
-        // Link a user account so the staff member can log in via OTP with their
-        // phone. The role is set server-side from this admin action only.
-        User linkedUser = null;
-        if (req.getPhone() != null && !req.getPhone().isBlank()) {
-            String normalized = PhoneUtil.normalize(req.getPhone());
-            linkedUser = userMapper.findByPhone(normalized).orElseGet(() -> {
-                User nu = User.builder()
-                        .phone(normalized)
-                        .name(req.getName().trim())
-                        .role(role)
-                        .build();
-                userMapper.insert(nu);
-                return nu;
-            });
-            // OTP login would otherwise keep a customer role — align it.
-            linkedUser.setRole(role);
-            if (linkedUser.getName() == null || linkedUser.getName().isBlank()) {
-                linkedUser.setName(req.getName().trim());
-            }
-            userMapper.updateById(linkedUser);
+        if (req.getPhone() == null || req.getPhone().isBlank()) {
+            throw new BadRequestException("Mobile number is required for staff login");
         }
+        String normalizedPhone = PhoneUtil.normalize(req.getPhone());
+        if (!PhoneUtil.isValid(normalizedPhone)) {
+            throw new BadRequestException("Invalid mobile number");
+        }
+        if (req.getEmail() == null || req.getEmail().isBlank() || !req.getEmail().contains("@")) {
+            throw new BadRequestException("A valid email is required for staff login");
+        }
+        String normalizedEmail = req.getEmail().trim().toLowerCase();
+        if (req.getPassword() == null || req.getPassword().length() < PasswordService.MIN_PASSWORD_LENGTH) {
+            throw new BadRequestException(
+                    "Password must be at least " + PasswordService.MIN_PASSWORD_LENGTH + " characters");
+        }
+        if (userMapper.findByPhone(normalizedPhone).isPresent()) {
+            throw new BadRequestException("Mobile number is already linked to another account");
+        }
+        if (userMapper.findByEmail(normalizedEmail).isPresent()) {
+            throw new BadRequestException("Email is already linked to another account");
+        }
+
+        // Owner-provisioned staff can use the same sign-in options exposed by
+        // staff_app: password with email/phone, or OTP with email/phone.
+        User linkedUser = User.builder()
+                .phone(normalizedPhone)
+                .email(normalizedEmail)
+                .passwordHash(passwordService.hash(req.getPassword()))
+                .name(req.getName().trim())
+                .role(role)
+                .branchId(req.getBranchId() != null && req.getBranchId() > 0 ? req.getBranchId() : null)
+                .isActive(true)
+                .build();
+        userMapper.insert(linkedUser);
 
         Staff staff = Staff.builder()
                 .empId(req.getEmpId().trim())
-                .userId(linkedUser != null ? linkedUser.getId() : null)
+                .userId(linkedUser.getId())
                 .name(req.getName().trim())
                 .role(role)
                 .branchId(req.getBranchId() != null && req.getBranchId() > 0 ? req.getBranchId() : null)
@@ -95,7 +110,7 @@ public class TeamController {
         staffMapper.insert(staff);
         log.info("Staff created: {} ({}), role {}, linked user {}",
                 staff.getName(), staff.getEmpId(), role,
-                linkedUser != null ? linkedUser.getId() : "none");
+                linkedUser.getId());
         return ApiResponse.success(staff);
     }
 
@@ -128,6 +143,13 @@ public class TeamController {
         if (req.getDepartment() != null) staff.setDepartment(req.getDepartment());
         if (req.getIsActive() != null) staff.setIsActive(req.getIsActive());
         staffMapper.updateById(staff);
+        if (staff.getUserId() != null && req.getIsActive() != null) {
+            User user = userMapper.selectById(staff.getUserId());
+            if (user != null) {
+                user.setIsActive(req.getIsActive());
+                userMapper.updateById(user);
+            }
+        }
         return ApiResponse.success(staff);
     }
 

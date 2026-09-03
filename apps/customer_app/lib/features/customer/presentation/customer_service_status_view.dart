@@ -6,6 +6,7 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_empty_fallbacks.dart';
 import 'package:customer_app/features/customer/presentation/widgets/advisor_contact_card.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CustomerServiceStatusView extends ConsumerStatefulWidget {
   const CustomerServiceStatusView({super.key});
@@ -296,29 +297,19 @@ class _CustomerServiceStatusViewState
                             icon: Icons.call_rounded,
                             color: AppColors.success,
                             bg: AppColors.successBg,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Calling support is not available yet',
+                            onTap: () async {
+                              final opened = await launchUrl(
+                                Uri(scheme: 'tel', path: '800674368'),
+                              );
+                              if (!opened && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Unable to open the phone dialer.',
+                                    ),
                                   ),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(width: AppDimensions.s8),
-                          _IconBtn(
-                            icon: Icons.chat_bubble_outline_rounded,
-                            color: AppColors.primary,
-                            bg: AppColors.primaryBg,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Chat is not available yet'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                                );
+                              }
                             },
                           ),
                         ],

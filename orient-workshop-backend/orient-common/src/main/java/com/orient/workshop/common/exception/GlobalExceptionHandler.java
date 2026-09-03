@@ -5,16 +5,22 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -50,15 +56,74 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(400, "Validation failed", errors));
     }
 
-    // H-7: malformed JSON / wrong parameter types / missing params -> 400
-    @ExceptionHandler({HttpMessageNotReadableException.class,
-            MethodArgumentTypeMismatchException.class,
-            MissingServletRequestParameterException.class})
-    public ResponseEntity<ApiResponse<Void>> handleMalformedRequest(Exception e) {
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Map<String, List<String>>>> handleMethodNotAllowed(
+            HttpRequestMethodNotSupportedException e) {
+        List<String> allowedMethods = e.getSupportedHttpMethods() == null
+                ? List.of()
+                : e.getSupportedHttpMethods().stream()
+                        .map(HttpMethod::name)
+                        .sorted()
+                        .toList();
+        Map<String, List<String>> details = allowedMethods.isEmpty()
+                ? null
+                : Map.of("allowedMethods", allowedMethods);
+        String message = "HTTP method " + e.getMethod() + " is not allowed for this endpoint";
+
+        log.warn("Method not allowed: {} (allowed={})", e.getMethod(), allowedMethods);
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED);
+        if (!allowedMethods.isEmpty()) {
+            response.allow(allowedMethods.stream().map(HttpMethod::valueOf).toArray(HttpMethod[]::new));
+        }
+        return response.body(ApiResponse.error(405, message, details));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(HttpMessageNotReadableException e) {
         log.warn("Malformed request: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+        String message = e.getMessage() != null && e.getMessage().contains("Required request body is missing")
+                ? "Request body is required"
+                : "Malformed JSON request body";
         return ResponseEntity
                 .badRequest()
-                .body(ApiResponse.error(400, "Invalid request"));
+                .body(ApiResponse.error(400, message));
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class,
+            MissingRequestHeaderException.class})
+    public ResponseEntity<ApiResponse<Void>> handleInvalidRequestValue(Exception e) {
+        log.warn("Invalid request value: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(400, "A required request value is missing or invalid"));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Map<String, List<String>>>> handleUnsupportedMediaType(
+            HttpMediaTypeNotSupportedException e) {
+        List<String> supportedTypes = e.getSupportedMediaTypes().stream()
+                .map(Object::toString)
+                .toList();
+        String receivedType = e.getContentType() == null ? "unspecified" : e.getContentType().toString();
+        return ResponseEntity
+                .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(ApiResponse.error(415,
+                        "Content type '" + receivedType + "' is not supported",
+                        Map.of("supportedContentTypes", supportedTypes)));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<ApiResponse<Map<String, List<String>>>> handleNotAcceptable(
+            HttpMediaTypeNotAcceptableException e) {
+        List<String> supportedTypes = e.getSupportedMediaTypes().stream()
+                .map(Object::toString)
+                .toList();
+        return ResponseEntity
+                .status(HttpStatus.NOT_ACCEPTABLE)
+                .body(ApiResponse.error(406,
+                        "Requested response format is not supported",
+                        Map.of("supportedResponseTypes", supportedTypes)));
     }
 
     // FIX (audit QA BUG-017): MediaService (and friends) reject bad input with

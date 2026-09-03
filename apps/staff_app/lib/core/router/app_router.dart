@@ -5,6 +5,7 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/models/profile_data.dart';
 import 'package:staff_app/features/common/presentation/simple_pages.dart';
+import 'package:staff_app/features/common/presentation/staff_attendance_screen.dart';
 import 'package:staff_app/features/advisor/presentation/pages/advisor_home_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/scan_vehicle_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/vehicle_customer_view.dart';
@@ -49,6 +50,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String shiftDetails = '/shift-details';
   static const String settings = '/settings';
+  static const String attendance = '/attendance';
   static const String forgotPassword = '/forgot-password';
 
   static String dashboardForRole(UserRole role) {
@@ -92,7 +94,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         AuthAuthenticated(:final role) when !_isStaffRole(role) =>
           isAuthRoute ? null : AppRoutes.login,
         AuthAuthenticated(:final role) =>
-          matched == AppRoutes.login || matched == AppRoutes.startup
+          isAuthRoute ||
+                  matched == AppRoutes.startup ||
+                  !_isRouteAllowedForRole(role, matched)
               ? AppRoutes.dashboardForRole(role)
               : null,
       };
@@ -264,6 +268,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             RepairOrderPreviewView(onBack: () => context.pop()),
       ),
       GoRoute(
+        path: AppRoutes.attendance,
+        name: AppRoutes.attendance,
+        builder: (context, state) => const StaffAttendanceScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.profile,
         name: AppRoutes.profile,
         builder: (context, state) {
@@ -299,6 +308,33 @@ bool _isStaffRole(UserRole role) {
   return role == UserRole.advisor ||
       role == UserRole.supervisor ||
       role == UserRole.technician;
+}
+
+bool _isRouteAllowedForRole(UserRole role, String location) {
+  const commonRoutes = {
+    AppRoutes.profile,
+    AppRoutes.shiftDetails,
+    AppRoutes.settings,
+    AppRoutes.attendance,
+  };
+  if (commonRoutes.contains(location)) return true;
+
+  return switch (role) {
+    UserRole.supervisor =>
+      location == AppRoutes.supervisorDashboard ||
+          location.startsWith('/supervisor/'),
+    UserRole.advisor =>
+      location == AppRoutes.advisorDashboard ||
+          location == AppRoutes.scanVehicle ||
+          location == AppRoutes.vehicleCustomer ||
+          location == AppRoutes.inspectionPreview ||
+          location == AppRoutes.inspectionSheet ||
+          location == AppRoutes.chooseInspection ||
+          location == AppRoutes.repairOrder ||
+          location == AppRoutes.repairOrderPreview,
+    UserRole.technician => location == AppRoutes.technicianDashboard,
+    _ => false,
+  };
 }
 
 Map<String, dynamic>? _mapExtra(Object? extra) {

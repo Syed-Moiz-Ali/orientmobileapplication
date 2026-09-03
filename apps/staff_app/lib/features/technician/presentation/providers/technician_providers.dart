@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/technician/data/datasources/technician_providers.dart';
@@ -169,17 +170,14 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       final empId = profile.empId;
 
       final jobs = await remote.getJobs(empId);
-      if (jobs.isNotEmpty) {
-        _allJobs.clear();
-        _allJobs.addAll(jobs.map(_jobFromResponse));
-      }
+      _allJobs
+        ..clear()
+        ..addAll(jobs.map(_jobFromResponse));
 
       final assigned = await remote.getAssignedJobs(empId);
-      if (assigned.isNotEmpty) {
-        state = state.copyWith(
-          assignedJobs: assigned.map(_assignedFromResponse).toList(),
-        );
-      }
+      state = state.copyWith(
+        assignedJobs: assigned.map(_assignedFromResponse).toList(),
+      );
 
       final att = await remote.getAttendance(empId);
       if (att.status.isNotEmpty && att.status != 'notPunchedIn') {
@@ -287,12 +285,32 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       // FIX (audit P0): restore the previously resolved identity so offline
       // Hive keys and displays are user-correct on shared tablets.
       final savedProfile = box.get('technician_profile');
+      final auth = ref.read(authNotifierProvider);
+      final authenticatedProfile = auth is AuthAuthenticated
+          ? auth.profile
+          : null;
+      final authenticatedEmpId = authenticatedProfile?.empId ?? '';
+      var cachedIdentityMatches = authenticatedEmpId.isEmpty;
       if (savedProfile != null) {
         try {
-          profile = TechnicianProfileEntity.fromJson(
+          final cachedProfile = TechnicianProfileEntity.fromJson(
             Map<String, dynamic>.from(savedProfile),
           );
+          cachedIdentityMatches =
+              authenticatedEmpId.isEmpty ||
+              cachedProfile.empId == authenticatedEmpId;
+          if (cachedIdentityMatches) profile = cachedProfile;
         } catch (_) {}
+      }
+      if (authenticatedProfile != null && authenticatedEmpId.isNotEmpty) {
+        profile = TechnicianProfileEntity(
+          name: authenticatedProfile.name,
+          empId: authenticatedEmpId,
+          role: authenticatedProfile.role,
+          branch: authenticatedProfile.branchName,
+          shift: authenticatedProfile.shift,
+          avatarInitials: authenticatedProfile.avatarInitials,
+        );
       }
       final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final att = box.get('attendance_${profile.empId}_$today');
@@ -309,6 +327,11 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
           .whereType<Map>()
           .map((m) => Map<String, dynamic>.from(m))
           .where((v) => v['jobCardNo'] != null)
+          .where(
+            (v) =>
+                v['empId'] == profile.empId ||
+                (v['empId'] == null && cachedIdentityMatches),
+          )
           .map((v) => TechnicianJobEntity.fromJson(v))
           .toList();
       if (savedJobs.isNotEmpty) {
@@ -338,55 +361,103 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     state = state.copyWith(isLoading: false);
   }
 
-  String _fmt(TimeOfDay t) {
-    final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
-    final m = t.minute.toString().padLeft(2, '0');
-    final p = t.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$h:$m $p';
-  }
-
   Future<void> punchIn() async {
-    if (state.attendanceStatus != AttendanceStatus.notPunchedIn) return;
-    final now = TimeOfDay.now();
-    state = state.copyWith(
-      attendanceStatus: AttendanceStatus.working,
-      attendanceSummary: AttendanceSummaryEntity(punchIn: _fmt(now)),
-    );
-    await _persistAttendance(action: 'punchIn');
-    await ref.read(syncEngineProvider).syncAll();
+    if (state.isSaving ||
+        state.attendanceStatus != AttendanceStatus.notPunchedIn) {
+      return;
+    }
+    state = state.copyWith(isSaving: true, dashboardError: '');
+    try {
+      final response = await ref
+          .read(technicianRemoteDataSourceProvider)
+          .punchIn({'date': DateFormat('yyyy-MM-dd').format(DateTime.now())});
+      _applyAttendanceResponse(response);
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Punch in failed', error: e, stackTrace: st);
+      state = state.copyWith(
+        isSaving: false,
+        dashboardError:
+            'Punch in requires a connection so the server can record the correct time.',
+      );
+    }
   }
 
   Future<void> punchOut() async {
-    if (state.attendanceStatus == AttendanceStatus.notPunchedIn ||
+    if (state.isSaving ||
+        state.attendanceStatus == AttendanceStatus.notPunchedIn ||
         state.attendanceStatus == AttendanceStatus.punchedOut) {
       return;
     }
-    final now = TimeOfDay.now();
-    state = state.copyWith(
-      attendanceStatus: AttendanceStatus.punchedOut,
-      attendanceSummary: AttendanceSummaryEntity(
-        punchIn: state.attendanceSummary.punchIn,
-        punchOut: _fmt(now),
-        breakTime: state.attendanceSummary.breakTime,
-        workHours: state.attendanceSummary.workHours,
-      ),
-    );
-    await _persistAttendance(action: 'punchOut');
-    await ref.read(syncEngineProvider).syncAll();
+    state = state.copyWith(isSaving: true, dashboardError: '');
+    final remote = ref.read(technicianRemoteDataSourceProvider);
+    try {
+      await remote.punchOut({
+        'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      });
+      _applyAttendanceResponse(await remote.getAttendance(profile.empId));
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Punch out failed', error: e, stackTrace: st);
+      state = state.copyWith(
+        isSaving: false,
+        dashboardError:
+            'Punch out requires a connection so the server can record the correct time.',
+      );
+    }
   }
 
   Future<void> startBreak() async {
-    if (state.attendanceStatus != AttendanceStatus.working) return;
-    state = state.copyWith(attendanceStatus: AttendanceStatus.onBreak);
-    await _persistAttendance(action: 'breakStart');
-    await ref.read(syncEngineProvider).syncAll();
+    if (state.isSaving || state.attendanceStatus != AttendanceStatus.working) {
+      return;
+    }
+    state = state.copyWith(isSaving: true);
+    final remote = ref.read(technicianRemoteDataSourceProvider);
+    try {
+      await remote.breakStart({});
+      _applyAttendanceResponse(await remote.getAttendance(profile.empId));
+    } catch (e, st) {
+      ref
+          .read(loggerProvider)
+          .e('Break start failed', error: e, stackTrace: st);
+      state = state.copyWith(
+        isSaving: false,
+        dashboardError: 'Could not start break.',
+      );
+    }
   }
 
   Future<void> endBreak() async {
-    if (state.attendanceStatus != AttendanceStatus.onBreak) return;
-    state = state.copyWith(attendanceStatus: AttendanceStatus.working);
-    await _persistAttendance(action: 'breakEnd');
-    await ref.read(syncEngineProvider).syncAll();
+    if (state.isSaving || state.attendanceStatus != AttendanceStatus.onBreak) {
+      return;
+    }
+    state = state.copyWith(isSaving: true);
+    final remote = ref.read(technicianRemoteDataSourceProvider);
+    try {
+      await remote.breakEnd({});
+      _applyAttendanceResponse(await remote.getAttendance(profile.empId));
+    } catch (e, st) {
+      ref.read(loggerProvider).e('Break end failed', error: e, stackTrace: st);
+      state = state.copyWith(
+        isSaving: false,
+        dashboardError: 'Could not end break.',
+      );
+    }
+  }
+
+  void _applyAttendanceResponse(AttendanceResponse response) {
+    state = state.copyWith(
+      isSaving: false,
+      attendanceStatus: AttendanceStatus.values.firstWhere(
+        (status) => status.name == response.status,
+        orElse: () => AttendanceStatus.notPunchedIn,
+      ),
+      attendanceSummary: AttendanceSummaryEntity(
+        punchIn: response.punchIn.isEmpty ? '--:--' : response.punchIn,
+        punchOut: response.punchOut.isEmpty ? '--:--' : response.punchOut,
+        breakTime: response.breakTime.isEmpty ? '0 min' : response.breakTime,
+        workHours: response.workHours.isEmpty ? '0h 0m' : response.workHours,
+      ),
+      dashboardError: '',
+    );
   }
 
   Future<void> _enqueueSync(
@@ -425,28 +496,6 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         }[entityType] ??
         'SYNC';
     return IdGenerator.nextId(prefix);
-  }
-
-  Future<void> _persistAttendance({String action = 'punchIn'}) async {
-    final payload = {
-      'action': action,
-      'empId': profile.empId,
-      'status': state.attendanceStatus.name,
-      'punchIn': state.attendanceSummary.punchIn,
-      'punchOut': state.attendanceSummary.punchOut,
-      'breakTime': state.attendanceSummary.breakTime,
-      'workHours': state.attendanceSummary.workHours,
-      'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-    };
-    // FIX (audit P0): attendance was persisted under a single global key —
-    // on shared tablets the next user saw (and overwrote) the previous user's
-    // punch state. Key by empId + date.
-    final box = Hive.box<dynamic>('technician_jobs');
-    box.put('attendance_${profile.empId}_${payload['date']}', payload);
-    await _enqueueSync(
-      'attendance_${profile.empId}_${payload['date']}',
-      payload,
-    );
   }
 
   Future<void> updateAssignedJobStatus(
@@ -632,6 +681,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   void _persistJob(TechnicianJobEntity job) {
     final payload = {
       'jobCardNo': job.jobCardNo,
+      'empId': profile.empId,
       'dateOfWork': job.dateOfWork,
       'startTime': job.startTime,
       'vehicleBrand': job.vehicleBrand,

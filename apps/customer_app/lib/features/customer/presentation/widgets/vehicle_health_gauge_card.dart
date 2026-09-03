@@ -22,8 +22,11 @@ class VehicleHealthGaugeCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final hasAssessment = healthScore >= 0;
     final score = healthScore.clamp(0, 100);
-    final (color, label) = score >= 80
+    final (color, label) = !hasAssessment
+        ? (colorScheme.onSurfaceVariant, 'NOT ASSESSED')
+        : score >= 80
         ? (const Color(0xFF10B981), 'OPTIMAL')
         : score >= 50
         ? (const Color(0xFFD97706), 'ATTENTION')
@@ -76,7 +79,7 @@ class VehicleHealthGaugeCard extends StatelessWidget {
                 ),
               ),
               StatusPill(
-                label: '$score% $label',
+                label: hasAssessment ? '$score% $label' : label,
                 showDot: true,
                 bg: color.withValues(alpha: 0.12),
                 fg: color,
@@ -87,7 +90,7 @@ class VehicleHealthGaugeCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppDimensions.rPill),
             child: LinearProgressIndicator(
-              value: score / 100,
+              value: hasAssessment ? score / 100 : 0,
               minHeight: 8,
               backgroundColor: colorScheme.surfaceContainerLow,
               color: color,

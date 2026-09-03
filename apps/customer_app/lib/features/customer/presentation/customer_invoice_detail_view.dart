@@ -9,11 +9,20 @@ class CustomerInvoiceDetailView extends StatelessWidget {
   (Color, Color) _getStatusColors() {
     switch (invoice.status.toLowerCase()) {
       case 'paid':
-        return (const Color(0xFF10B981), const Color(0xFF10B981).withValues(alpha: 0.12));
+        return (
+          const Color(0xFF10B981),
+          const Color(0xFF10B981).withValues(alpha: 0.12),
+        );
       case 'overdue':
-        return (const Color(0xFFEF4444), const Color(0xFFEF4444).withValues(alpha: 0.12));
+        return (
+          const Color(0xFFEF4444),
+          const Color(0xFFEF4444).withValues(alpha: 0.12),
+        );
       default:
-        return (const Color(0xFFD97706), const Color(0xFFD97706).withValues(alpha: 0.12));
+        return (
+          const Color(0xFFD97706),
+          const Color(0xFFD97706).withValues(alpha: 0.12),
+        );
     }
   }
 
@@ -51,7 +60,9 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                               color: colorScheme.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: colorScheme.primary.withValues(alpha: 0.22),
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.22,
+                                ),
                               ),
                             ),
                             child: Icon(
@@ -136,7 +147,10 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                               vertical: AppDimensions.s14,
                             ),
-                            child: Divider(height: 1, color: colorScheme.outlineVariant),
+                            child: Divider(
+                              height: 1,
+                              color: colorScheme.outlineVariant,
+                            ),
                           ),
                           Row(
                             children: [
@@ -230,7 +244,9 @@ class _AmountRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
         const Spacer(),
         Text(
@@ -271,12 +287,8 @@ class _InvoiceActions extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Payment coming soon')),
-                    );
-                  },
-                  child: const Text('Pay Now'),
+                  onPressed: null,
+                  child: const Text('Online payment unavailable'),
                 ),
               ),
               const SizedBox(height: AppDimensions.s12),
@@ -284,13 +296,9 @@ class _InvoiceActions extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('PDF download coming soon')),
-                  );
-                },
+                onPressed: null,
                 icon: const Icon(Icons.download_rounded),
-                label: const Text('Download Receipt'),
+                label: const Text('PDF receipt unavailable'),
               ),
             ),
           ],

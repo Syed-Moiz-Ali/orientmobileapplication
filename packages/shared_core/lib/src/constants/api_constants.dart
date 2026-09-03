@@ -20,10 +20,12 @@ class ApiEndpoints {
   static const String customerServicesActive = '/customers/services/active';
   static const String customerBreakdowns = '/customers/breakdowns';
   static const String serviceTypes = '/services/types';
-  static String bookingsAvailability(String date) => '/bookings/availability?date=$date';
+  static String bookingsAvailability(String date) =>
+      '/bookings/availability?date=$date';
   static const String createBooking = '/bookings';
   static const String notificationReadAll = '/customers/notifications/read-all';
-  static String notificationRead(String id) => '/customers/notifications/$id/read';
+  static String notificationRead(String id) =>
+      '/customers/notifications/$id/read';
   static String customerVehicle(String id) => '/customers/vehicles/$id';
   static const String feedback = '/feedback';
   static const String feedbackStats = '/feedback/stats';
@@ -46,7 +48,8 @@ class ApiEndpoints {
 
   // Media upload (multipart, backend MediaController)
   static const String mediaUpload = '/repair-orders/media';
-  static String mediaUploadFor(String recordId) => '/repair-orders/$recordId/media';
+  static String mediaUploadFor(String recordId) =>
+      '/repair-orders/$recordId/media';
 
   // Messages / activity (backend OwnerDashboardController)
   static const String messagesCreate = '/owner/messages';
@@ -57,7 +60,8 @@ class ApiEndpoints {
   static const String supervisorAdvisorJobs = '/supervisor/advisor-jobs';
   static const String supervisorJobTypes = '/supervisor/job-types';
   static const String supervisorRevenueMetrics = '/supervisor/revenue-metrics';
-  static const String supervisorPendingStatuses = '/supervisor/pending-statuses';
+  static const String supervisorPendingStatuses =
+      '/supervisor/pending-statuses';
   static const String departments = '/departments';
   static const String technicians = '/technicians';
   static const String workAssignments = '/work-assignments';
@@ -67,9 +71,12 @@ class ApiEndpoints {
   static const String supervisorBookings = '/supervisor/bookings';
   static const String supervisorBreakdowns = '/supervisor/breakdowns';
   static const String supervisorAwaiting = '/supervisor/jobs/awaiting';
-  static const String supervisorAssignableAdvisors = '/supervisor/assignable-advisors';
-  static String supervisorBookingAssign(int id) => '/supervisor/bookings/$id/assign';
-  static String supervisorBreakdownAssign(int id) => '/supervisor/breakdowns/$id/assign';
+  static const String supervisorAssignableAdvisors =
+      '/supervisor/assignable-advisors';
+  static String supervisorBookingAssign(int id) =>
+      '/supervisor/bookings/$id/assign';
+  static String supervisorBreakdownAssign(int id) =>
+      '/supervisor/breakdowns/$id/assign';
   static String supervisorApproveCompletion(int jobCardId) =>
       '/supervisor/jobs/$jobCardId/approve-completion';
   static String supervisorRejectCompletion(int jobCardId) =>
@@ -81,7 +88,8 @@ class ApiEndpoints {
   static const String advisorBookings = '/advisor/bookings';
   static String advisorWorkItems(String jobCardRef) =>
       '/advisor/job-cards/$jobCardRef/work-items';
-  static String advisorWorkItemAssign(int taskId) => '/advisor/work-items/$taskId/assign';
+  static String advisorWorkItemAssign(int taskId) =>
+      '/advisor/work-items/$taskId/assign';
   static const String advisorWorkItemsAssign = '/advisor/work-items/assign';
   static const String advisorTechnicians = '/advisor/technicians';
 
@@ -92,19 +100,23 @@ class ApiEndpoints {
 
   // Seamless flows — customer approvals & invoices
   static const String customerApprovalsPending = '/customers/approvals/pending';
-  static String customerApproval(String estimateId) => '/customers/approvals/$estimateId';
+  static String customerApproval(String estimateId) =>
+      '/customers/approvals/$estimateId';
   static const String customerInvoices = '/customers/invoices';
 
   // Seamless flows — staff notifications
   static const String staffNotifications = '/staff/notifications';
-  static String staffNotificationRead(String id) => '/staff/notifications/$id/read';
-  static const String staffNotificationReadAll = '/staff/notifications/read-all';
+  static String staffNotificationRead(String id) =>
+      '/staff/notifications/$id/read';
+  static const String staffNotificationReadAll =
+      '/staff/notifications/read-all';
 
   // Technician
   static const String technicianProfile = '/technicians/profile';
   static const String attendancePunchIn = '/technicians/attendance/punch-in';
   static const String attendancePunchOut = '/technicians/attendance/punch-out';
-  static const String attendanceBreakStart = '/technicians/attendance/break-start';
+  static const String attendanceBreakStart =
+      '/technicians/attendance/break-start';
   static const String attendanceBreakEnd = '/technicians/attendance/break-end';
   static const String technicianAttendance = '/technicians/attendance';
   static const String technicianAssignedJobs = '/technicians/assigned-jobs';
@@ -118,7 +130,8 @@ class ApiEndpoints {
   static const String ownerSalesTrend = '/owner/dashboard/sales-trend';
   static const String ownerProfitTrend = '/owner/dashboard/profit-trend';
   static const String ownerExpensesTrend = '/owner/dashboard/expenses-trend';
-  static const String ownerJobCardRegister = '/owner/dashboard/job-card-register';
+  static const String ownerJobCardRegister =
+      '/owner/dashboard/job-card-register';
   static const String ownerTopSales = '/owner/dashboard/top-sales';
   static const String ownerJobCards = '/owner/job-cards';
   static const String ownerDocumentsExpiry = '/owner/documents/expiry';
@@ -131,6 +144,7 @@ class ApiEndpoints {
   static const String ownerArRecords = '/owner/accounts-receivable/records';
   static const String ownerMessages = '/owner/messages';
   static const String ownerActivity = '/owner/activity';
+  static const String ownerAttendance = '/owner/attendance';
 
   // CRM
   static const String crmKpis = '/crm/dashboard/kpis';
@@ -149,7 +163,8 @@ class ApiEndpoints {
   // Inventory (P2)
   static const String ownerInventoryItems = '/owner/inventory/items';
   static const String ownerInventorySuppliers = '/owner/inventory/suppliers';
-  static const String ownerInventoryPurchaseOrders = '/owner/inventory/purchase-orders';
+  static const String ownerInventoryPurchaseOrders =
+      '/owner/inventory/purchase-orders';
   static const String ownerSubscription = '/owner/subscription';
   static const String ownerTeam = '/owner/team';
   static String ownerTeamById(String id) => '/owner/team/' + id;
@@ -172,13 +187,18 @@ class ApiEndpoints {
   // Parameterized path builders
   static String advisorApproval(String id) => '/advisor/approvals/$id';
   static String advisorJobCard(String id) => '/advisor/job-cards/$id';
-  static String advisorJobCardStatus(String id) => '/advisor/job-cards/$id/status';
-  static String advisorJobCardTechnician(String id) => '/advisor/job-cards/$id/technician';
+  static String advisorJobCardStatus(String id) =>
+      '/advisor/job-cards/$id/status';
+  static String advisorJobCardTechnician(String id) =>
+      '/advisor/job-cards/$id/technician';
   static String advisorReminder(String id) => '/advisor/reminders/$id';
   static String inspectionDraft(String id) => '/inspections/$id/draft';
-  static String technicianAssignedJobStatus(String id) => '/technicians/assigned-jobs/$id/status';
-  static String technicianTask(String jobCard, String task, String action) => '/technicians/jobs/$jobCard/tasks/$task/$action';
-  static String technicianJobNotes(String jobCard) => '/technicians/jobs/$jobCard/notes';
+  static String technicianAssignedJobStatus(String id) =>
+      '/technicians/assigned-jobs/$id/status';
+  static String technicianTask(String jobCard, String task, String action) =>
+      '/technicians/jobs/$jobCard/tasks/$task/$action';
+  static String technicianJobNotes(String jobCard) =>
+      '/technicians/jobs/$jobCard/notes';
   static String branchById(String id) => '/branches/$id';
   static String crmTaskById(String id) => '/crm/tasks/$id';
   static String crmLeadById(String id) => '/crm/leads/$id';
@@ -187,13 +207,17 @@ class ApiEndpoints {
   static const String crmLeadStats = '/crm/leads/stats';
   static const String crmLeadFollowUps = '/crm/leads/follow-ups';
   static const String crmActivityFeed = '/crm/activity-feed';
-  static String crmIntegrationConnect(String name) => '/crm/integrations/$name/connect';
-  static String crmIntegrationDisconnect(String name) => '/crm/integrations/$name/disconnect';
-  static String crmIntegrationSync(String name) => '/crm/integrations/$name/sync';
+  static String crmIntegrationConnect(String name) =>
+      '/crm/integrations/$name/connect';
+  static String crmIntegrationDisconnect(String name) =>
+      '/crm/integrations/$name/disconnect';
+  static String crmIntegrationSync(String name) =>
+      '/crm/integrations/$name/sync';
   static String syncInspection(String id) => '/sync/inspections/$id';
   static String syncJobCompleteById(String id) => '/sync/jobs/complete/$id';
   static String syncRepairOrder(String id) => '/sync/repair-orders/$id';
-  static String uploadMedia(String recordId) => '/repair-orders/$recordId/media';
+  static String uploadMedia(String recordId) =>
+      '/repair-orders/$recordId/media';
 
   static const Duration timeout = Duration(seconds: 30);
   static const int maxRetries = 3;

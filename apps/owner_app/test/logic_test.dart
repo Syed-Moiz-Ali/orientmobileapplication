@@ -3,6 +3,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/job_cards/domain/entities/job_card.dart';
+import 'package:owner_app/features/dashboard/presentation/providers/attendance_provider.dart';
 
 void main() {
   group('JobCard', () {
@@ -79,5 +80,24 @@ void main() {
       expect(activity.title, 'New job card');
       expect(activity.timestamp, '2026-07-31T08:00:00');
     });
+  });
+
+  test('owner attendance parses staff and shift status', () {
+    final record = OwnerAttendanceRecord.fromJson({
+      'staffId': 7,
+      'empId': 'ADV-007',
+      'name': 'Aisha Khan',
+      'role': 'advisor',
+      'branch': 'Dubai',
+      'date': '2026-08-28',
+      'status': 'working',
+      'punchIn': '08:05 AM',
+      'punchOut': '',
+      'workHours': '',
+    });
+    expect(record.staffId, '7');
+    expect(record.role, 'advisor');
+    expect(record.status, 'working');
+    expect(record.punchIn, '08:05 AM');
   });
 }

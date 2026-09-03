@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:staff_app/features/common/presentation/providers/staff_attendance_provider.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
@@ -64,6 +65,15 @@ void main() {
   });
 
   group('Status labels', () {
+    test('shared attendance supports every server shift state', () {
+      expect(StaffAttendanceStatus.values.map((status) => status.name), [
+        'notPunchedIn',
+        'working',
+        'onBreak',
+        'punchedOut',
+      ]);
+    });
+
     test('attendance labels map to friendly text', () {
       expect(AttendanceStatus.notPunchedIn.label, 'Not Punched In');
       expect(AttendanceStatus.working.label, 'Working');

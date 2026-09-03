@@ -44,6 +44,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * /whatsapp/send, /whatsapp/messages  ADVISOR, SUPERVISOR, OWNER, ADMIN
  * /owner/**                       OWNER, ADMIN
  * /supervisor/**                  SUPERVISOR, OWNER, ADMIN
+ * /technicians/attendance/**      ADVISOR, TECHNICIAN, SUPERVISOR, OWNER, ADMIN
  * /technicians/**                 TECHNICIAN, SUPERVISOR, OWNER, ADMIN
  * /advisor/**                     ADVISOR, SUPERVISOR, OWNER, ADMIN
  * /staff/**                       all staff roles
@@ -156,6 +157,10 @@ public class SecurityConfig {
                         .hasAnyRole(role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
                         .requestMatchers("/supervisor/**")
                         .hasAnyRole(role(RoleConstants.SUPERVISOR), role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
+                        .requestMatchers("/technicians/attendance/**", "/technicians/attendance")
+                        .hasAnyRole(role(RoleConstants.ADVISOR), role(RoleConstants.TECHNICIAN),
+                                role(RoleConstants.SUPERVISOR),
+                                role(RoleConstants.OWNER), role(RoleConstants.ADMIN))
                         .requestMatchers("/technicians/**")
                         .hasAnyRole(role(RoleConstants.TECHNICIAN), role(RoleConstants.SUPERVISOR),
                                 role(RoleConstants.OWNER), role(RoleConstants.ADMIN))

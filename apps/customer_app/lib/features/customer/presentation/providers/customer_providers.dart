@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/data/datasources/customer_remote_datasource.dart';
+import 'package:customer_app/core/local/sync_providers.dart';
 import 'package:customer_app/features/customer/data/repositories/customer_repository_impl.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/domain/repositories/customer_repository.dart';
@@ -364,7 +365,7 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
         .where((v) => v.id == state.selectedVehicle)
         .firstOrNull;
     final payload = {
-      'vehicle': state.selectedVehicle,
+      'vehicleId': state.selectedVehicle,
       'vehicleName': vehicle?.displayName ?? '',
       'plateNumber': vehicle?.plateNumber ?? '',
       'serviceType': state.selectedServiceType,
@@ -386,6 +387,7 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
         timestamp: DateTime.now().millisecondsSinceEpoch,
       ),
     );
+    await ref.read(syncEngineProvider).syncAll();
 
     ref.invalidate(customerBookingsProvider);
     state = state.copyWith(

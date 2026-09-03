@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_local_datasource.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
@@ -210,24 +211,29 @@ final advisorFollowupRemindersProvider =
     );
 
 final advisorInfoProvider = Provider<AdvisorInfo>((ref) {
+  final auth = ref.watch(authNotifierProvider);
+  if (auth is AuthAuthenticated && auth.profile != null) {
+    final profile = auth.profile!;
+    return AdvisorInfo(
+      name: profile.name.isEmpty ? 'Advisor' : profile.name,
+      id: profile.empId,
+      branch: profile.branchName,
+      shift: profile.shift,
+    );
+  }
   try {
     final box = Hive.box<dynamic>('inspections');
     final profile = box.get('advisor_profile');
     if (profile is Map) {
       return AdvisorInfo(
         name: (profile['name'] ?? 'Advisor').toString(),
-        id: (profile['id'] ?? 'ADV001').toString(),
-        branch: (profile['branch'] ?? 'Main Branch').toString(),
+        id: (profile['id'] ?? '').toString(),
+        branch: (profile['branch'] ?? '').toString(),
         shift: (profile['shift'] ?? '').toString(),
       );
     }
   } catch (_) {}
-  return const AdvisorInfo(
-    name: 'Advisor',
-    id: 'ADV001',
-    branch: 'Main Branch',
-    shift: '',
-  );
+  return const AdvisorInfo(name: 'Advisor', id: '', branch: '', shift: '');
 });
 
 class AdvisorInfo {

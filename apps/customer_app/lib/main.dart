@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:customer_app/core/router/app_router.dart';
+import 'package:customer_app/core/local/sync_providers.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
 void main() async {
@@ -37,11 +38,13 @@ class CustomerApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final brand = ref.watch(brandConfigProvider);
+    ref.watch(syncEngineProvider);
     // FE-FIX (pre-deployment): refresh on app-resume so cross-app changes
     // (booking confirmed, estimate awaiting approval, invoice ready) appear
     // as soon as the customer returns to the app.
     return ResumeRefreshScope(
       onResumed: () async {
+        await ref.read(syncEngineProvider).syncAll();
         final notifier = ref.read(customerDashboardProvider.notifier);
         await notifier.refresh();
         ref.invalidate(customerBookingsProvider);

@@ -9,6 +9,7 @@ import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
+import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,13 +73,21 @@ class _StaffAppState extends ConsumerState<StaffApp> {
     // and a completed job shows up in the supervisor's review tab.
     return ResumeRefreshScope(
       onResumed: () async {
-        final sup = ref.read(supervisorDashboardProvider.notifier);
-        await sup.refreshQueue();
-        await sup.refreshReview();
-        await sup.loadNotifications();
-        // advisorRefreshProvider is a tick counter — bumping it reloads the
-        // advisor dashboard/jobs on resume.
-        ref.read(advisorRefreshProvider.notifier).state++;
+        final auth = ref.read(authNotifierProvider);
+        if (auth is! AuthAuthenticated) return;
+        switch (auth.role) {
+          case UserRole.supervisor:
+            final sup = ref.read(supervisorDashboardProvider.notifier);
+            await sup.refreshQueue();
+            await sup.refreshReview();
+            await sup.loadNotifications();
+          case UserRole.advisor:
+            ref.read(advisorRefreshProvider.notifier).state++;
+          case UserRole.technician:
+            await ref.read(technicianDashboardProvider.notifier).refresh();
+          default:
+            return;
+        }
       },
       child: AuthenticatedPushNotificationScope(
         child: MaterialApp.router(

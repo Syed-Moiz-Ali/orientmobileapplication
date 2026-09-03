@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
   const CustomerBreakdownHelpView({super.key});
@@ -178,13 +179,13 @@ class _CustomerBreakdownHelpViewState
     Navigator.pop(context);
   }
 
-  void _callHelpline() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Calling Emergency Helpline: 800-ORIENT (800-674368)'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  Future<void> _callHelpline() async {
+    final opened = await launchUrl(Uri(scheme: 'tel', path: '800674368'));
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open the phone dialer.')),
+      );
+    }
   }
 
   @override

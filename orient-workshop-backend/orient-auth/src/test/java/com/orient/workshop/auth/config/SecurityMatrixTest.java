@@ -212,6 +212,18 @@ class SecurityMatrixTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void allWorkshopStaffCanAccessAttendanceWithoutOpeningTechnicianJobsToAdvisor() throws Exception {
+        mockMvc.perform(get("/technicians/attendance").with(user("u").roles("ADVISOR")))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/technicians/attendance").with(user("u").roles("SUPERVISOR")))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/technicians/attendance").with(user("u").roles("TECHNICIAN")))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/technicians/jobs").with(user("u").roles("ADVISOR")))
+                .andExpect(status().isForbidden());
+    }
+
     // ---------- OWNER role ----------
 
     @Test

@@ -28,7 +28,7 @@ class DioSyncHandler extends SyncHandler {
       return false;
     }
     final url = '${EnvironmentConfig.baseUrl}$endpoint';
-    final method = _methodFor(operation.entityType);
+    final method = _methodFor(operation);
 
     try {
       final response = await _dio.request(
@@ -126,7 +126,11 @@ class DioSyncHandler extends SyncHandler {
     }
   }
 
-  String _methodFor(String entityType) {
+  String _methodFor(SyncOperation operation) {
+    final entityType = operation.entityType;
+    if (entityType == 'vehicle' && operation.changeType == ChangeType.update) {
+      return 'PUT';
+    }
     if (entityType == 'technician_job' ||
         entityType == 'work_item' ||
         entityType == 'assigned_job' ||
@@ -322,7 +326,9 @@ class DioSyncHandler extends SyncHandler {
       case 'job_card_technician':
         return ApiEndpoints.advisorJobCardTechnician(op.entityId);
       case 'vehicle':
-        return ApiEndpoints.customerVehicles;
+        return op.changeType == ChangeType.update
+            ? ApiEndpoints.customerVehicle(op.entityId)
+            : ApiEndpoints.customerVehicles;
       case 'work_item':
         // Offline replay of a per-item action on the legacy task endpoint,
         // which the backend routes through the same completion gate.

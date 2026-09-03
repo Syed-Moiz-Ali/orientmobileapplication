@@ -9,27 +9,28 @@ class ServiceEstimatorCard extends StatelessWidget {
   static const List<Map<String, String>> _services = [
     {
       'name': 'Major Service Package',
-      'price': 'AED 1,200',
-      'duration': '~3 hrs',
+      'price': 'Quote required',
+      'duration': 'Workshop confirms',
       'desc': 'Engine oil, filter, spark plugs & 40-point diagnostic scan',
     },
     {
       'name': 'Synthetic Oil & Filter',
-      'price': 'AED 280',
-      'duration': '~45 mins',
+      'price': 'Quote required',
+      'duration': 'Workshop confirms',
       'desc': 'Fully synthetic Mobil 1/Castrol engine oil + OEM filter',
     },
     {
       'name': 'Brake Pad Replacement',
-      'price': 'AED 450',
-      'duration': '~1.5 hrs',
+      'price': 'Quote required',
+      'duration': 'Workshop confirms',
       'desc': 'Front or rear Brembo/OEM brake pads fitting + rotor check',
     },
     {
       'name': 'RTA Inspection Prep',
-      'price': 'AED 200',
-      'duration': '~1 hr',
-      'desc': 'Official vehicle roadworthiness inspection & certification check',
+      'price': 'Quote required',
+      'duration': 'Workshop confirms',
+      'desc':
+          'Official vehicle roadworthiness inspection & certification check',
     },
   ];
 
@@ -75,7 +76,7 @@ class ServiceEstimatorCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Transparent pricing & turnaround estimates',
+                      'Final price and timing are confirmed after inspection',
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -147,7 +148,9 @@ class ServiceEstimatorCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 14),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppDimensions.r10),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.r10,
+                              ),
                             ),
                           ),
                           child: const Text(

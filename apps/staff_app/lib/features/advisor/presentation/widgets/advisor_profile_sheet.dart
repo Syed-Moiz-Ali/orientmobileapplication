@@ -111,6 +111,15 @@ class AdvisorProfileSheet extends ConsumerWidget {
             },
           ),
           const AdvisorDivider(),
+          AdvisorMenuItem(
+            icon: Icons.fingerprint_rounded,
+            label: 'Attendance · Punch In / Out',
+            onTap: () {
+              Navigator.pop(context);
+              context.push(AppRoutes.attendance);
+            },
+          ),
+          const AdvisorDivider(),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: SizedBox(

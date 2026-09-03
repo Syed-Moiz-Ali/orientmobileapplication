@@ -224,6 +224,15 @@ class TechnicianHeaderWidget extends ConsumerWidget {
             ),
             _menuItem(
               context,
+              icon: Icons.fingerprint_rounded,
+              label: 'Attendance · Punch In / Out',
+              onTap: () {
+                Navigator.pop(context);
+                context.push(AppRoutes.attendance);
+              },
+            ),
+            _menuItem(
+              context,
               icon: Icons.calendar_month_outlined,
               label: 'Shift Details',
               onTap: () {

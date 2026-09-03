@@ -20,7 +20,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AttendanceController {
 
-    private static final Set<String> ALLOWED_WRITE_ROLES = Set.of("technician", "supervisor", "owner");
+    private static final Set<String> ALLOWED_WRITE_ROLES = Set.of(
+            "advisor", "technician", "supervisor", "owner");
 
     private final AttendanceService attendanceService;
 
@@ -65,7 +66,8 @@ public class AttendanceController {
     private void requireWriteRole(JwtUserPrincipal principal) {
         if (principal == null || principal.getRole() == null
                 || !ALLOWED_WRITE_ROLES.contains(principal.getRole().toLowerCase())) {
-            throw new ForbiddenException("Attendance writes are only allowed for technician, supervisor or owner");
+            throw new ForbiddenException(
+                    "Attendance writes are only allowed for advisor, technician, supervisor or owner");
         }
     }
 }

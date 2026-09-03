@@ -328,8 +328,13 @@ class CustomerProfileTab extends ConsumerWidget {
               width: double.infinity,
               height: 56,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  ref.read(authNotifierProvider.notifier).logout();
+                onPressed: () async {
+                  await showLogoutDialog(
+                    context,
+                    onLogout: () {
+                      ref.read(authNotifierProvider.notifier).logout();
+                    },
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.errorContainer,

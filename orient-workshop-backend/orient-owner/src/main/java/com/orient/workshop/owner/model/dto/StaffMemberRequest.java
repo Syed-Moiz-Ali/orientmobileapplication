@@ -12,6 +12,8 @@ public class StaffMemberRequest {
     private String empId;
     private String role;
     private String phone;
+    private String email;
+    private String password;
     private Long branchId;
     private String branch;
     private String shift;

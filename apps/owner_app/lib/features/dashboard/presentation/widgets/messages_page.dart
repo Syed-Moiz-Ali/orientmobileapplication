@@ -3,13 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
+import 'package:owner_app/features/dashboard/presentation/providers/team_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/form_label.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/message_tile.dart';
-
-const _users = [
-  'Ahmed Service Advisor', 'Mohammed Technician', 'Ali Workshop Manager',
-  'Hassan Accountant', 'Omar Parts Manager', 'Fatima Admin', 'Sarah HR Manager',
-];
 
 class MessagesPage extends ConsumerStatefulWidget {
   const MessagesPage({super.key});
@@ -42,12 +38,14 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
       final ids = existing.map((m) => m.id).toSet();
       final server = history
           .where((h) => !ids.contains(h.id))
-          .map((h) => Message(
-                id: h.id,
-                recipient: h.recipient,
-                message: h.message,
-                time: h.time,
-              ))
+          .map(
+            (h) => Message(
+              id: h.id,
+              recipient: h.recipient,
+              message: h.message,
+              time: h.time,
+            ),
+          )
           .toList();
       if (server.isNotEmpty) {
         ref.read(dashboardUiProvider.notifier).mergeMessages(server);
@@ -72,6 +70,11 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(dashboardUiProvider);
     final notifier = ref.read(dashboardUiProvider.notifier);
+    final team = ref.watch(teamProvider);
+    final recipients = team.staff.where((member) => member.isActive).toList();
+    final selectedValue = recipients.any((m) => m.name == state.selectedUser)
+        ? state.selectedUser
+        : null;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -109,9 +112,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
               children: [
                 Text(
                   'SEND NEW MESSAGE',
-                  style: AppTextStyles.bodySmall(
-                    color: AppColors.text3,
-                  ),
+                  style: AppTextStyles.bodySmall(color: AppColors.text3),
                 ),
                 const SizedBox(height: 14),
                 const FormLabel('SELECT USER'),
@@ -126,9 +127,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: state.selectedUser.isEmpty
-                          ? null
-                          : state.selectedUser,
+                      value: selectedValue,
                       hint: Row(
                         children: const [
                           Icon(
@@ -157,10 +156,15 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                         size: 18,
                       ),
                       isExpanded: true,
-                      onChanged: (v) => notifier.selectUser(v ?? ''),
-                      items: _users
+                      onChanged: recipients.isEmpty
+                          ? null
+                          : (v) => notifier.selectUser(v ?? ''),
+                      items: recipients
                           .map(
-                            (u) => DropdownMenuItem(value: u, child: Text(u)),
+                            (member) => DropdownMenuItem(
+                              value: member.name,
+                              child: Text('${member.name} · ${member.role}'),
+                            ),
                           )
                           .toList(),
                     ),
@@ -205,9 +209,21 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                 ),
                 const SizedBox(height: 18),
                 GestureDetector(
-                  onTap: () {
-                    notifier.sendMessage();
-                    _msgController.clear();
+                  onTap: () async {
+                    final delivered = await notifier.sendMessage();
+                    if (!context.mounted) return;
+                    if (delivered) {
+                      _msgController.clear();
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          delivered
+                              ? 'Message delivered.'
+                              : 'Message was not sent. Check the recipient and connection.',
+                        ),
+                      ),
+                    );
                   },
                   child: Container(
                     width: double.infinity,
@@ -236,9 +252,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                         const SizedBox(width: 10),
                         Text(
                           'SEND MESSAGE',
-                          style: AppTextStyles.subtitle(
-                            color: Colors.white,
-                          ),
+                          style: AppTextStyles.subtitle(color: Colors.white),
                         ),
                       ],
                     ),
@@ -262,9 +276,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                 const SizedBox(width: 10),
                 Text(
                   'RECENT MESSAGES',
-                  style: AppTextStyles.button(
-                    color: AppColors.textPrimary,
-                  ),
+                  style: AppTextStyles.button(color: AppColors.textPrimary),
                 ),
               ],
             ),

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
 import 'package:shared_core/src/errors/result.dart';
 import 'package:shared_core/src/local/storage/token_storage.dart';
+import 'package:shared_core/src/local/hive/hive_cleaner.dart';
 import 'package:shared_core/src/models/auth_models.dart';
 import 'package:shared_models/src/user_role.dart';
 
@@ -54,6 +55,7 @@ class AuthNotifier extends Notifier<AuthState> {
     final token = await storage.getToken();
     final roleName = await storage.getRole();
     if (token == null || roleName == null) {
+      await _clearCachedUserData();
       state = const AuthUnauthenticated();
       return;
     }
@@ -61,7 +63,7 @@ class AuthNotifier extends Notifier<AuthState> {
     if (role == null) {
       // FIX (audit P0): an unknown/renamed role must fail closed — it
       // previously defaulted to OWNER (privilege escalation on corrupt data).
-      await storage.clearAll();
+      await _clearLocalSession(storage);
       state = const AuthUnauthenticated();
       return;
     }
@@ -92,7 +94,7 @@ class AuthNotifier extends Notifier<AuthState> {
         data.role.isNotEmpty ? data.role : roleName ?? '',
       );
       if (role == null) {
-        await storage.clearAll();
+        await _clearLocalSession(storage);
         state = const AuthUnauthenticated();
         return false;
       }
@@ -109,21 +111,24 @@ class AuthNotifier extends Notifier<AuthState> {
       if (!refreshed) return false;
       final retryToken = await storage.getToken() ?? token;
       final retry = await datasource.getMe();
-      return retry.when(
-        success: (me) {
-          final role = _tryRoleFromName(me.role);
-          if (role == null) {
-            state = const AuthUnauthenticated();
-            return false;
-          }
-          state = AuthAuthenticated(role: role, token: retryToken, profile: me);
+      if (retry case Success(:final data)) {
+        final role = _tryRoleFromName(data.role);
+        if (role != null) {
+          await storage.setMetadata(
+            _validatedAtKey,
+            DateTime.now().millisecondsSinceEpoch.toString(),
+          );
+          state = AuthAuthenticated(
+            role: role,
+            token: retryToken,
+            profile: data,
+          );
           return true;
-        },
-        failure: (_) {
-          state = const AuthUnauthenticated();
-          return false;
-        },
-      );
+        }
+      }
+      await _clearLocalSession(storage);
+      state = const AuthUnauthenticated();
+      return false;
     }
     // Network failure / offline: proceed with the locally stored session ONLY
     // within the freshness TTL — a revoked user must not stay in forever.
@@ -138,6 +143,7 @@ class AuthNotifier extends Notifier<AuthState> {
             _sessionTtl;
     final role = _tryRoleFromName(roleName ?? '');
     if (!fresh || role == null) {
+      await _clearLocalSession(storage);
       state = const AuthUnauthenticated();
       return false;
     }
@@ -170,7 +176,7 @@ class AuthNotifier extends Notifier<AuthState> {
     final refreshToken = await storage.getRefreshToken();
     if (refreshToken == null) {
       try {
-        await storage.clearAll();
+        await _clearLocalSession(storage);
       } catch (_) {
         // Storage failure must not keep the user logged in.
       }
@@ -196,7 +202,7 @@ class AuthNotifier extends Notifier<AuthState> {
         // would re-enter this failure path, deadlocking on the single-flight
         // refresh future. Clear local state directly instead.
         try {
-          await storage.clearAll();
+          await _clearLocalSession(storage);
         } catch (_) {
           // Storage failure must not keep the user logged in.
         }
@@ -218,13 +224,25 @@ class AuthNotifier extends Notifier<AuthState> {
     // flutter_secure_storage.deleteAll() can throw on some devices (e.g.
     // Android Keystore unavailable) — if it did, state stayed authenticated
     // and logout appeared to do nothing (user could not log out).
-    try {
-      await ref.read(tokenStorageProvider).clearAll();
-    } catch (_) {
-      // Storage failure must not keep the user logged in — the router only
-      // reads the AuthState, so clearing it is sufficient to force logout.
-    }
+    await _clearLocalSession(ref.read(tokenStorageProvider));
     state = const AuthUnauthenticated();
+  }
+
+  Future<void> _clearLocalSession(TokenStorage storage) async {
+    try {
+      await storage.clearAll();
+    } catch (_) {
+      // Storage failure must not keep the in-memory session alive.
+    }
+    await _clearCachedUserData();
+  }
+
+  Future<void> _clearCachedUserData() async {
+    try {
+      await HiveCleaner.clearAll();
+    } catch (_) {
+      // Some isolated tests do not initialize Hive. Production apps do.
+    }
   }
 
   /// FIX (audit P0): unknown role strings fail closed (null) instead of

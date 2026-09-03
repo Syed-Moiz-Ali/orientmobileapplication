@@ -664,14 +664,12 @@ class _AdvisorWorkloadCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeData = data.isNotEmpty
-        ? data
-        : [
-            const AdvisorJobEntity(name: 'Marcus Vance', count: 8),
-            const AdvisorJobEntity(name: 'Sarah Connor', count: 12),
-            const AdvisorJobEntity(name: 'David Kim', count: 5),
-            const AdvisorJobEntity(name: 'Elena Rostova', count: 11),
-          ];
+    if (data.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: Center(child: Text('No advisor workload data available.')),
+      );
+    }
 
     return SizedBox(
       height: 140,
@@ -679,15 +677,10 @@ class _AdvisorWorkloadCarousel extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: activeData.length,
+        itemCount: data.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (ctx, i) {
-          return _AdvisorCard(
-            advisor: activeData[i],
-            imageUrl: i % 2 == 0
-                ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop'
-                : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop',
-          );
+          return _AdvisorCard(advisor: data[i]);
         },
       ),
     );
@@ -696,9 +689,8 @@ class _AdvisorWorkloadCarousel extends StatelessWidget {
 
 class _AdvisorCard extends StatelessWidget {
   final AdvisorJobEntity advisor;
-  final String imageUrl;
 
-  const _AdvisorCard({required this.advisor, required this.imageUrl});
+  const _AdvisorCard({required this.advisor});
 
   @override
   Widget build(BuildContext context) {
@@ -716,7 +708,17 @@ class _AdvisorCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(radius: 24, backgroundImage: NetworkImage(imageUrl)),
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: colorScheme.primaryContainer,
+            child: Text(
+              advisor.name.isEmpty ? '?' : advisor.name[0].toUpperCase(),
+              style: textTheme.titleMedium?.copyWith(
+                color: colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -780,30 +782,12 @@ class _JobTypeShowcase extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    final activeTypes = types.isNotEmpty
-        ? types
-        : [
-            JobTypeEntity(
-              label: 'Full Engine MOT',
-              count: 18,
-              color: colorScheme.primary,
-            ),
-            JobTypeEntity(
-              label: 'Brakes & Discs',
-              count: 11,
-              color: colorScheme.secondary,
-            ),
-            const JobTypeEntity(
-              label: 'Diagnostics & ECU',
-              count: 8,
-              color: Color(0xFF10B981),
-            ),
-            const JobTypeEntity(
-              label: 'Emergency SOS',
-              count: 4,
-              color: Color(0xFFEF4444),
-            ),
-          ];
+    if (types.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: Center(child: Text('No job-type data available.')),
+      );
+    }
 
     return SizedBox(
       height: 100,
@@ -811,10 +795,10 @@ class _JobTypeShowcase extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: activeTypes.length,
+        itemCount: types.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (ctx, i) {
-          final t = activeTypes[i];
+          final t = types[i];
           return Container(
             width: 170,
             padding: const EdgeInsets.all(14),
