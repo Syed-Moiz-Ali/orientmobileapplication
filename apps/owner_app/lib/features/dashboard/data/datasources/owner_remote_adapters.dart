@@ -195,17 +195,17 @@ class DashboardUIRemoteAdapter implements DashboardDataSource {
       _r.getJobCardRegister(), _r.getTopSales(),
     ]);
 
-    _salesTrend = (results[0] as List).map((e) => SalesTrendPoint((e as TrendPointResponse).month, _v(e.value))).toList();
-    _profitTrend = (results[1] as List).map((e) => SalesTrendPoint((e as TrendPointResponse).month, _v(e.value))).toList();
-    _expensesTrend = (results[2] as List).map((e) => SalesTrendPoint((e as TrendPointResponse).month, _v(e.value))).toList();
+    _salesTrend = (results[0] as List<TrendPointResponse>).map((e) => SalesTrendPoint(e.month, _v(e.value))).toList();
+    _profitTrend = (results[1] as List<TrendPointResponse>).map((e) => SalesTrendPoint(e.month, _v(e.value))).toList();
+    _expensesTrend = (results[2] as List<TrendPointResponse>).map((e) => SalesTrendPoint(e.month, _v(e.value))).toList();
 
-    _registerItems = (results[3] as List).map((e) => JobCardRegisterItem(
-      label: (e as JobCardRegisterResponse).label, open: e.open, completed: e.completed, total: e.total,
+    _registerItems = (results[3] as List<JobCardRegisterResponse>).map((e) => JobCardRegisterItem(
+      label: e.label, open: e.open, completed: e.completed, total: e.total,
     )).toList();
 
-    _topSalesCategories = (results[4] as List).asMap().entries.map((e) => TopSalesCategory(
-      title: (e.value as TopSalesCategoryResponse).title,
-      items: e.value.items.asMap().entries.map((i) => TopSalesItem(sno: i.value.sno, description: i.value.description, value: i.value.value)).toList(),
+    _topSalesCategories = (results[4] as List<TopSalesCategoryResponse>).map((cat) => TopSalesCategory(
+      title: cat.title,
+      items: cat.items.map((i) => TopSalesItem(sno: i.sno, description: i.description, value: i.value)).toList(),
     )).toList();
   }
 

@@ -4,7 +4,6 @@ import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/team_providers.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/form_label.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/message_tile.dart';
 
 class MessagesPage extends ConsumerStatefulWidget {
@@ -68,6 +67,10 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     final state = ref.watch(dashboardUiProvider);
     final notifier = ref.read(dashboardUiProvider.notifier);
     final team = ref.watch(teamProvider);
@@ -77,7 +80,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
         : null;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -85,75 +88,86 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
             padding: const EdgeInsets.only(bottom: 16),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppDimensions.r20),
-                  ),
-                  child: Text(
-                    '${state.sentMessages.length} Sent Messages',
-                    style: const TextStyle(
-                      color: AppColors.accent,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                StatusPill(
+                  label: '${state.sentMessages.length} SENT MESSAGES',
+                  bg: colorScheme.primary.withValues(alpha: 0.12),
+                  fg: colorScheme.primary,
                 ),
               ],
             ),
           ),
-          AppCard.surface(
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withValues(alpha: 0.04),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'SEND NEW MESSAGE',
-                  style: AppTextStyles.bodySmall(color: AppColors.text3),
+                  'BROADCAST MESSAGE TO TEAM',
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.primary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-                const SizedBox(height: 14),
-                const FormLabel('SELECT USER'),
-                const SizedBox(height: 7),
+                const SizedBox(height: 16),
+                Text(
+                  'RECIPIENT',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Container(
-                  height: 50,
+                  height: 52,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: AppColors.canvas,
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
-                    border: Border.all(color: AppColors.border),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colorScheme.outlineVariant),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: selectedValue,
                       hint: Row(
-                        children: const [
+                        children: [
                           Icon(
                             Icons.person_outline_rounded,
-                            color: AppColors.text3,
+                            color: colorScheme.onSurfaceVariant,
                             size: 18,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'Choose a user...',
-                            style: TextStyle(
-                              color: AppColors.text3,
-                              fontSize: 13,
+                            'Choose a staff recipient...',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
                       ),
-                      dropdownColor: AppColors.surface,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
+                      dropdownColor: colorScheme.surface,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
                       ),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.text3,
-                        size: 18,
+                        color: colorScheme.onSurfaceVariant,
+                        size: 20,
                       ),
                       isExpanded: true,
                       onChanged: recipients.isEmpty
@@ -163,98 +177,91 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
                           .map(
                             (member) => DropdownMenuItem(
                               value: member.name,
-                              child: Text('${member.name} · ${member.role}'),
+                              child: Text('${member.name} · ${member.role.toUpperCase()}'),
                             ),
                           )
                           .toList(),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                const FormLabel('MESSAGE'),
-                const SizedBox(height: 7),
+                const SizedBox(height: 18),
+                Text(
+                  'MESSAGE BODY',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 TextField(
                   controller: _msgController,
                   onChanged: notifier.updateMessage,
-                  maxLines: 5,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 13,
+                  maxLines: 4,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Type your message here...',
-                    hintStyle: const TextStyle(
-                      color: AppColors.text3,
-                      fontSize: 13,
+                    hintText: 'Type internal instructions or workshop notes here...',
+                    hintStyle: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                     ),
                     filled: true,
-                    fillColor: AppColors.canvas,
+                    fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     contentPadding: const EdgeInsets.all(14),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                      borderSide: const BorderSide(
-                        color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: colorScheme.primary,
                         width: 1.5,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 18),
-                GestureDetector(
-                  onTap: () async {
-                    final delivered = await notifier.sendMessage();
-                    if (!context.mounted) return;
-                    if (delivered) {
-                      _msgController.clear();
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          delivered
-                              ? 'Message delivered.'
-                              : 'Message was not sent. Check the recipient and connection.',
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      final delivered = await notifier.sendMessage();
+                      if (!context.mounted) return;
+                      if (delivered) {
+                        _msgController.clear();
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            delivered
+                                ? 'Message delivered to staff portal.'
+                                : 'Message failed. Check recipient selection.',
+                          ),
+                          behavior: SnackBarBehavior.floating,
                         ),
+                      );
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    );
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.navy, AppColors.accent],
-                      ),
-                      borderRadius: BorderRadius.circular(AppDimensions.r14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.30),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.send_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'SEND MESSAGE',
-                          style: AppTextStyles.subtitle(color: Colors.white),
-                        ),
-                      ],
+                    icon: const Icon(Icons.send_rounded, size: 18),
+                    label: const Text(
+                      'SEND MESSAGE',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ),
@@ -262,28 +269,32 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
             ),
           ),
           if (state.sentMessages.isNotEmpty) ...[
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             Row(
               children: [
                 Container(
                   width: 4,
-                  height: 20,
+                  height: 18,
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(AppDimensions.r2),
+                    color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'RECENT MESSAGES',
-                  style: AppTextStyles.button(color: AppColors.textPrimary),
+                  'DISPATCH HISTORY',
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.onSurface,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             ...state.sentMessages.map(
               (msg) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.only(bottom: 12),
                 child: MessageTile(message: msg),
               ),
             ),

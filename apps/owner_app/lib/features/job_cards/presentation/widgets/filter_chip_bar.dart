@@ -17,11 +17,15 @@ class FilterChipBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return SizedBox(
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _filters.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
@@ -31,13 +35,21 @@ class FilterChipBar extends StatelessWidget {
             onTap: () => onFilterChanged(status),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : Colors.white,
-                borderRadius: BorderRadius.circular(AppDimensions.r20),
-                border: Border.all(color: isActive ? AppColors.primary : AppColors.border),
+                color: isActive ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isActive ? colorScheme.primary : colorScheme.outlineVariant,
+                ),
               ),
-              child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isActive ? Colors.white : AppColors.text3)),
+              child: Text(
+                label,
+                style: textTheme.labelMedium?.copyWith(
+                  fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                  color: isActive ? colorScheme.onPrimary : colorScheme.onSurface,
+                ),
+              ),
             ),
           );
         },

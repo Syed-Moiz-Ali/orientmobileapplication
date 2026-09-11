@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/card_title.dart';
 import 'package:owner_app/features/job_cards/presentation/pages/job_cards_list_view.dart';
 
 class JobCardRegisterCard extends StatelessWidget {
@@ -10,17 +8,55 @@ class JobCardRegisterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard.surface(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CardTitle('Job Card Register'),
-          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text(
+                'Job Card Register',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const JobCardsListView()),
+                ),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                label: const Text('View All'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppDimensions.r10),
+              color: colorScheme.primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               children: [
@@ -28,8 +64,9 @@ class JobCardRegisterCard extends StatelessWidget {
                   flex: 3,
                   child: Text(
                     'Category',
-                    style: AppTextStyles.bodySmall(
-                      color: AppColors.accent,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -38,8 +75,9 @@ class JobCardRegisterCard extends StatelessWidget {
                   child: Text(
                     'Open',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodySmall(
-                      color: AppColors.accent,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -48,8 +86,9 @@ class JobCardRegisterCard extends StatelessWidget {
                   child: Text(
                     'Total',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodySmall(
-                      color: AppColors.accent,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -60,19 +99,20 @@ class JobCardRegisterCard extends StatelessWidget {
           ...items.asMap().entries.map((e) {
             final i = e.key;
             final item = e.value;
-            // FE-FIX (frontend pass): rows were dead UI — tapping now drills
-            // into the full job-card register list.
             return InkWell(
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const JobCardsListView()),
               ),
-              borderRadius: BorderRadius.circular(AppDimensions.r8),
+              borderRadius: BorderRadius.circular(14),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                margin: const EdgeInsets.only(bottom: 6),
                 decoration: BoxDecoration(
-                  color: i.isEven ? AppColors.surfaceAlt : AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.r8),
+                  color: i.isEven
+                      ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+                      : colorScheme.surface,
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Row(
                   children: [
@@ -80,10 +120,9 @@ class JobCardRegisterCard extends StatelessWidget {
                       flex: 3,
                       child: Text(
                         item.label,
-                        style: const TextStyle(
-                          color: AppColors.text2,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -92,9 +131,8 @@ class JobCardRegisterCard extends StatelessWidget {
                       child: Text(
                         '${item.open}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppColors.accent,
-                          fontSize: 14,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.primary,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -104,14 +142,17 @@ class JobCardRegisterCard extends StatelessWidget {
                       child: Text(
                         '${item.total}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                    const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.text3),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ],
                 ),
               ),

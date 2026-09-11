@@ -38,7 +38,7 @@ class TeamControllerTest {
 
     @Test
     void createStaffReturnsLoginEmailAndPhoneFromLinkedUser() {
-        when(staffMapper.findByEmpId("ADV100")).thenReturn(Optional.empty());
+        when(staffMapper.findAnyByEmpId("ADV100")).thenReturn(Optional.empty());
         when(userMapper.findByPhone("971501111111")).thenReturn(Optional.empty());
         when(userMapper.findByEmail("advisor@example.com")).thenReturn(Optional.empty());
         when(passwordService.hash("password123")).thenReturn("hashed");

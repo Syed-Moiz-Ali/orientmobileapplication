@@ -15,22 +15,26 @@ class SalesCategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isExpanded
-              ? AppColors.accent.withValues(alpha: 0.35)
-              : AppColors.border,
+              ? colorScheme.primary
+              : colorScheme.outlineVariant.withValues(alpha: 0.6),
           width: isExpanded ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: colorScheme.shadow.withValues(alpha: isExpanded ? 0.08 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -38,36 +42,51 @@ class SalesCategoryCard extends StatelessWidget {
         children: [
           InkWell(
             onTap: onToggle,
-            borderRadius: BorderRadius.circular(AppDimensions.r16),
+            borderRadius: BorderRadius.circular(20),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               decoration: BoxDecoration(
                 color: isExpanded
-                    ? AppColors.accent.withValues(alpha: 0.12)
-                    : AppColors.surfaceAlt,
+                    ? colorScheme.primary.withValues(alpha: 0.08)
+                    : colorScheme.surface,
                 borderRadius: isExpanded
-                    ? BorderRadius.vertical(
-                        top: Radius.circular(AppDimensions.r15),
-                      )
-                    : BorderRadius.circular(AppDimensions.r15),
+                    ? const BorderRadius.vertical(top: Radius.circular(20))
+                    : BorderRadius.circular(20),
               ),
               child: Row(
                 children: [
-                  Text(
-                    category.title.toUpperCase(),
-                    style: AppTextStyles.subtitle(
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
                       color: isExpanded
-                          ? AppColors.accent
-                          : AppColors.textPrimary,
+                          ? colorScheme.primary.withValues(alpha: 0.15)
+                          : colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.inventory_2_rounded,
+                      color: isExpanded ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                      size: 18,
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      category.title.toUpperCase(),
+                      style: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: isExpanded ? colorScheme.primary : colorScheme.onSurface,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
                   AnimatedRotation(
                     turns: isExpanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
                     child: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: isExpanded ? AppColors.accent : AppColors.text3,
+                      color: isExpanded ? colorScheme.primary : colorScheme.onSurfaceVariant,
                       size: 22,
                     ),
                   ),
@@ -77,51 +96,52 @@ class SalesCategoryCard extends StatelessWidget {
           ),
           if (isExpanded) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-              color: AppColors.surfaceAlt,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               child: Row(
                 children: [
                   SizedBox(
                     width: 40,
                     child: Text(
-                      'S.NO',
-                      style: AppTextStyles.bodySmall(
-                        color: AppColors.text3,
+                      'NO.',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   Expanded(
                     child: Text(
-                      'DESCRIPTION',
-                      style: AppTextStyles.bodySmall(
-                        color: AppColors.text3,
+                      'ITEM DESCRIPTION',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   Text(
-                    'VALUE',
-                    style: AppTextStyles.bodySmall(
-                      color: AppColors.text3,
+                    'REVENUE',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
             ),
-            Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
             ...category.items.asMap().entries.map((e) {
               final i = e.key;
               final item = e.value;
+              final isLast = i == category.items.length - 1;
               return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 13,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 decoration: BoxDecoration(
-                  color: i.isEven ? AppColors.surface : AppColors.surfaceAlt,
-                  borderRadius: i == category.items.length - 1
-                      ? BorderRadius.vertical(
-                          bottom: Radius.circular(AppDimensions.r15),
-                        )
+                  color: i.isEven
+                      ? colorScheme.surface
+                      : colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
+                  borderRadius: isLast
+                      ? const BorderRadius.vertical(bottom: Radius.circular(20))
                       : BorderRadius.zero,
                 ),
                 child: Row(
@@ -130,27 +150,26 @@ class SalesCategoryCard extends StatelessWidget {
                       width: 40,
                       child: Text(
                         '${item.sno}',
-                        style: const TextStyle(
-                          color: AppColors.text3,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     Expanded(
                       child: Text(
                         item.description,
-                        style: const TextStyle(
-                          color: AppColors.text2,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                     Text(
                       item.value,
-                      style: AppTextStyles.label(
+                      style: textTheme.titleSmall?.copyWith(
                         color: AppColors.success,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ],

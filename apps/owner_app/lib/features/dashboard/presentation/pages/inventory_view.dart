@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:owner_app/features/common/presentation/owner_shimmer_skeletons.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/inventory_providers.dart';
 
 class InventoryView extends ConsumerStatefulWidget {
@@ -57,7 +58,7 @@ class _InventoryViewState extends ConsumerState<InventoryView> {
             )
           : null,
       body: state.isLoading
-          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
+          ? const OwnerDashboardSkeleton()
           : state.error.isNotEmpty && state.items.isEmpty
               ? Center(
                   child: Column(

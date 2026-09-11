@@ -76,7 +76,7 @@ class TeamNotifier extends Notifier<TeamState> {
 
   @override
   TeamState build() {
-    load();
+    Future.microtask(load);
     return const TeamState();
   }
 
@@ -109,7 +109,13 @@ class TeamNotifier extends Notifier<TeamState> {
       ref
           .read(loggerProvider)
           .e('Failed to load team', error: e, stackTrace: st);
-      state = state.copyWith(isLoading: false, error: 'Could not load team');
+      final isAuthError = e.toString().contains('401');
+      state = state.copyWith(
+        isLoading: false,
+        error: isAuthError
+            ? 'Session expired (401). Please re-login to access team management.'
+            : 'Could not load team',
+      );
     }
   }
 

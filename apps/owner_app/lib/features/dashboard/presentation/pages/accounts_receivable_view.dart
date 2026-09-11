@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:owner_app/features/common/presentation/owner_shimmer_skeletons.dart';
 import 'package:owner_app/features/dashboard/domain/entities/accounts_receivable.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/ar_providers.dart';
 
@@ -53,9 +54,7 @@ class _AccountsReceivableViewState
         ),
       ),
       body: state.isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: colorScheme.primary),
-            )
+          ? const OwnerDashboardSkeleton()
           : SafeArea(
               child: Column(
                 children: [

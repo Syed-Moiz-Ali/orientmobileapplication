@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/sales_category_card.dart';
 
@@ -9,8 +8,10 @@ class TopSalesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // FE-FIX (audit P1): watch the provider so toggling a category rebuilds
-    // the page (was read-only — the expand/collapse did nothing).
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     ref.watch(dashboardUiProvider);
     final notifier = ref.read(dashboardUiProvider.notifier);
     final categories = notifier.topSalesCategories;
@@ -19,29 +20,39 @@ class TopSalesPage extends ConsumerWidget {
     return Column(
       children: [
         Container(
-          color: AppColors.surface,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          color: colorScheme.surface,
           child: Row(
             children: [
-              const Icon(Icons.category_rounded, color: AppColors.accent, size: 18),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.category_rounded,
+                  color: colorScheme.primary,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
               Text(
-                '${categories.length} Categories',
-                style: const TextStyle(
-                  color: AppColors.text2,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                '${categories.length} High-Volume Sales Categories',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
           ),
         ),
-        Divider(height: 1, color: AppColors.border),
+        Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, i) {
               final cat = categories[i];
               return SalesCategoryCard(

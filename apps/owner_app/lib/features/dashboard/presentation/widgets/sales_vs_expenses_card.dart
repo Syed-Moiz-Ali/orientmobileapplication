@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/bar_chart_painter.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/card_title.dart';
 
 class SalesVsExpensesCard extends StatelessWidget {
   final List<SalesTrendPoint> salesData;
@@ -15,29 +14,51 @@ class SalesVsExpensesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard.surface(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const CardTitle('Sales vs Expenses'),
+              Text(
+                'Sales vs Expenses',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colorScheme.onSurface,
+                ),
+              ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppDimensions.r20),
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'This Year',
-                  style: TextStyle(
-                    color: AppColors.accent,
+                child: Text(
+                  'YTD Overview',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w700,
                     fontSize: 10,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -54,12 +75,12 @@ class SalesVsExpensesCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             children: [
-              _legend(AppColors.accent, 'Sales'),
+              _legend(colorScheme.primary, 'Sales', textTheme, colorScheme),
               const SizedBox(width: 16),
-              _legend(AppColors.warning, 'Expenses'),
+              _legend(AppColors.warning, 'Expenses', textTheme, colorScheme),
             ],
           ),
         ],
@@ -67,24 +88,24 @@ class SalesVsExpensesCard extends StatelessWidget {
     );
   }
 
-  Widget _legend(Color color, String label) => Row(
+  Widget _legend(Color color, String label, TextTheme textTheme, ColorScheme colorScheme) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
       Container(
-        width: 12,
-        height: 12,
+        width: 10,
+        height: 10,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(AppDimensions.r3),
+          borderRadius: BorderRadius.circular(3),
         ),
       ),
-      const SizedBox(width: 5),
+      const SizedBox(width: 6),
       Text(
         label,
-        style: const TextStyle(
-          color: AppColors.text3,
+        style: textTheme.labelSmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w700,
           fontSize: 11,
-          fontWeight: FontWeight.w600,
         ),
       ),
     ],

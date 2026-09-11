@@ -2,18 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:owner_app/features/common/presentation/owner_shimmer_skeletons.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/team_providers.dart';
 
-class TeamView extends ConsumerWidget {
+class TeamView extends ConsumerStatefulWidget {
   const TeamView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TeamView> createState() => _TeamViewState();
+}
+
+class _TeamViewState extends ConsumerState<TeamView> {
+  final _searchCtrl = TextEditingController();
+  String _selectedRole = 'all';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final state = ref.watch(teamProvider);
     final notifier = ref.read(teamProvider.notifier);
+
+    final query = _searchCtrl.text.trim().toLowerCase();
+    final filteredStaff = state.staff.where((m) {
+      final matchesRole = _selectedRole == 'all' ||
+          m.role.toLowerCase() == _selectedRole.toLowerCase();
+      final matchesQuery = query.isEmpty ||
+          m.name.toLowerCase().contains(query) ||
+          m.empId.toLowerCase().contains(query) ||
+          m.phone.toLowerCase().contains(query) ||
+          m.branch.toLowerCase().contains(query) ||
+          m.role.toLowerCase().contains(query);
+      return matchesRole && matchesQuery;
+    }).toList();
+
+    final activeCount = state.staff.where((m) => m.isActive).length;
+    final advisorCount = state.staff.where((m) => m.role.toLowerCase() == 'advisor').length;
+    final supervisorCount = state.staff.where((m) => m.role.toLowerCase() == 'supervisor').length;
+    final techCount = state.staff.where((m) => m.role.toLowerCase() == 'technician').length;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -42,7 +75,8 @@ class TeamView extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        elevation: 4,
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () => _showAddStaffSheet(
           context,
           notifier,
@@ -53,11 +87,11 @@ class TeamView extends ConsumerWidget {
         icon: const Icon(Icons.person_add_alt_1_rounded),
         label: const Text(
           'Add Member',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.3),
         ),
       ),
       body: state.isLoading
-          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
+          ? const OwnerDashboardSkeleton()
           : state.error.isNotEmpty && state.staff.isEmpty
           ? Center(
               child: Column(
@@ -77,106 +111,214 @@ class TeamView extends ConsumerWidget {
                 ],
               ),
             )
-          : state.staff.isEmpty
-          ? Center(
-              child: Text(
-                'No staff members found. Add your first team member.',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
-              itemCount: state.staff.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, i) {
-                final m = state.staff[i];
-                return AppCard(
-                  padding: const EdgeInsets.all(16),
-                  borderRadius: AppDimensions.r20,
-                  color: colorScheme.surface,
-                  borderColor: m.isActive
-                      ? colorScheme.outlineVariant
-                      : const Color(0xFFEF4444).withValues(alpha: 0.3),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: m.isActive
-                            ? colorScheme.primary.withValues(alpha: 0.12)
-                            : colorScheme.surfaceContainerHighest,
-                        child: Text(
-                          m.name.isNotEmpty ? m.name[0].toUpperCase() : '?',
-                          style: textTheme.titleSmall?.copyWith(
-                            color: m.isActive
-                                ? colorScheme.primary
-                                : colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w900,
+          : CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Executive Summary Header Card (Solid Surface, 0 Gradients)
+                        Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colorScheme.shadow.withValues(alpha: 0.04),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.primary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.badge_rounded,
+                                      color: colorScheme.primary,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Workshop Staff Directory',
+                                    style: textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  StatusPill(
+                                    label: '$activeCount / ${state.staff.length} ACTIVE',
+                                    bg: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                    fg: const Color(0xFF10B981),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  _SummaryPill(
+                                    label: 'Advisors',
+                                    count: advisorCount,
+                                    colorScheme: colorScheme,
+                                    textTheme: textTheme,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _SummaryPill(
+                                    label: 'Supervisors',
+                                    count: supervisorCount,
+                                    colorScheme: colorScheme,
+                                    textTheme: textTheme,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _SummaryPill(
+                                    label: 'Technicians',
+                                    count: techCount,
+                                    colorScheme: colorScheme,
+                                    textTheme: textTheme,
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              m.name,
-                              style: textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: colorScheme.onSurface,
+                        const SizedBox(height: 14),
+
+                        // Search Bar
+                        Container(
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: colorScheme.outlineVariant),
+                          ),
+                          child: TextField(
+                            controller: _searchCtrl,
+                            onChanged: (_) => setState(() {}),
+                            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                            decoration: InputDecoration(
+                              hintText: 'Search by staff name, ID, phone, role or branch...',
+                              hintStyle: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                               ),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: colorScheme.onSurfaceVariant,
+                                size: 20,
+                              ),
+                              suffixIcon: _searchCtrl.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(Icons.clear_rounded, size: 18, color: colorScheme.onSurfaceVariant),
+                                      onPressed: () {
+                                        _searchCtrl.clear();
+                                        setState(() {});
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 14),
                             ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                StatusPill(
-                                  label: m.role.toUpperCase(),
-                                  bg: colorScheme.surfaceContainerHighest,
-                                  fg: colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  m.empId,
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontFamily: AppFontFamilies.mono,
-                                    fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Filter Chips Bar
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              ('all', 'All Staff'),
+                              ('advisor', 'Service Advisors'),
+                              ('supervisor', 'Supervisors'),
+                              ('technician', 'Technicians'),
+                            ].map((item) {
+                              final sel = _selectedRole == item.$1;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: FilterChip(
+                                  selected: sel,
+                                  showCheckmark: false,
+                                  label: Text(
+                                    item.$2,
+                                    style: textTheme.labelMedium?.copyWith(
+                                      color: sel ? colorScheme.onPrimary : colorScheme.onSurface,
+                                      fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
+                                    ),
                                   ),
+                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                  selectedColor: colorScheme.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  onSelected: (_) => setState(() => _selectedRole = item.$1),
                                 ),
-                              ],
-                            ),
-                          ],
+                              );
+                            }).toList(),
+                          ),
                         ),
-                      ),
-                      StatusPill(
-                        label: m.isActive ? 'ACTIVE' : 'DISABLED',
-                        showDot: true,
-                        bg: m.isActive
-                            ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                            : const Color(0xFFEF4444).withValues(alpha: 0.12),
-                        fg: m.isActive
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFFEF4444),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: Icon(
-                          m.isActive
-                              ? Icons.toggle_on_rounded
-                              : Icons.toggle_off_rounded,
-                          size: 28,
-                          color: m.isActive
-                              ? const Color(0xFF10B981)
-                              : colorScheme.onSurfaceVariant,
-                        ),
-                        onPressed: () => notifier.toggleActive(m),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                );
-              },
+                ),
+
+                if (filteredStaff.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.person_off_outlined, size: 48, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No staff members match filter criteria',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, i) {
+                          final m = filteredStaff[i];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _StaffCard(
+                              member: m,
+                              notifier: notifier,
+                              colorScheme: colorScheme,
+                              textTheme: textTheme,
+                            ),
+                          );
+                        },
+                        childCount: filteredStaff.length,
+                      ),
+                    ),
+                  ),
+              ],
             ),
     );
   }
@@ -542,6 +684,207 @@ class TeamView extends ConsumerWidget {
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Done'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryPill extends StatelessWidget {
+  final String label;
+  final int count;
+  final ColorScheme colorScheme;
+  final TextTheme textTheme;
+
+  const _SummaryPill({
+    required this.label,
+    required this.count,
+    required this.colorScheme,
+    required this.textTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$count',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: colorScheme.primary,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+                fontSize: 10,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StaffCard extends StatelessWidget {
+  final StaffMember member;
+  final TeamNotifier notifier;
+  final ColorScheme colorScheme;
+  final TextTheme textTheme;
+
+  const _StaffCard({
+    required this.member,
+    required this.notifier,
+    required this.colorScheme,
+    required this.textTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final roleColor = switch (member.role.toLowerCase()) {
+      'supervisor' => const Color(0xFF8B5CF6),
+      'technician' => const Color(0xFF06B6D4),
+      _ => colorScheme.primary,
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: member.isActive
+              ? colorScheme.outlineVariant.withValues(alpha: 0.6)
+              : colorScheme.error.withValues(alpha: 0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: member.isActive
+                    ? roleColor.withValues(alpha: 0.12)
+                    : colorScheme.surfaceContainerHighest,
+                child: Text(
+                  member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
+                  style: textTheme.titleSmall?.copyWith(
+                    color: member.isActive ? roleColor : colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      member.name,
+                      style: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        StatusPill(
+                          label: member.role.toUpperCase(),
+                          bg: roleColor.withValues(alpha: 0.12),
+                          fg: roleColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          member.empId,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontFamily: AppFontFamilies.mono,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              StatusPill(
+                label: member.isActive ? 'ACTIVE' : 'DISABLED',
+                showDot: true,
+                bg: member.isActive
+                    ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                    : const Color(0xFFEF4444).withValues(alpha: 0.12),
+                fg: member.isActive
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFEF4444),
+              ),
+              const SizedBox(width: 4),
+              Switch.adaptive(
+                value: member.isActive,
+                activeTrackColor: const Color(0xFF10B981),
+                onChanged: (_) => notifier.toggleActive(member),
+              ),
+            ],
+          ),
+          if (member.phone.isNotEmpty || member.branch.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                if (member.branch.isNotEmpty) ...[
+                  Icon(Icons.store_outlined, size: 14, color: colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 6),
+                  Text(
+                    member.branch,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                if (member.phone.isNotEmpty) ...[
+                  Icon(Icons.phone_outlined, size: 14, color: colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    member.phone,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
         ],
       ),
     );

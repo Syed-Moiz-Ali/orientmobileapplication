@@ -9,6 +9,8 @@ import 'package:owner_app/features/dashboard/presentation/widgets/quick_actions_
 import 'package:owner_app/features/dashboard/presentation/widgets/sales_trend_card.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/sales_vs_expenses_card.dart';
 
+import 'package:owner_app/features/common/presentation/owner_shimmer_skeletons.dart';
+
 class OwnerDashboardPage extends ConsumerWidget {
   const OwnerDashboardPage({super.key});
 
@@ -21,12 +23,7 @@ class OwnerDashboardPage extends ConsumerWidget {
     final notifier = ref.read(dashboardUiProvider.notifier);
 
     if (state.isLoading) {
-      return Center(
-        child: CircularProgressIndicator(
-          color: colorScheme.primary,
-          strokeWidth: 2.5,
-        ),
-      );
+      return const OwnerDashboardSkeleton();
     }
 
     return RefreshIndicator(
@@ -83,6 +80,7 @@ class OwnerDashboardPage extends ConsumerWidget {
             _sectionLabel('Quick Actions', colorScheme, textTheme),
             const SizedBox(height: AppDimensions.s12),
             const QuickActionsRow(),
+            const SizedBox(height: 80),
           ],
         ),
       ),

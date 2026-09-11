@@ -71,7 +71,7 @@ public class TeamController {
         if (!VALID_ROLES.contains(role)) {
             throw new BadRequestException("Invalid role: " + role + ". Allowed: " + VALID_ROLES);
         }
-        if (staffMapper.findByEmpId(req.getEmpId().trim()).isPresent()) {
+        if (staffMapper.findAnyByEmpId(req.getEmpId().trim()).isPresent()) {
             throw new BadRequestException("empId already exists: " + req.getEmpId());
         }
 

@@ -46,7 +46,7 @@ class JobCardsState {
 class JobCardsNotifier extends Notifier<JobCardsState> {
   @override
   JobCardsState build() {
-    load();
+    Future.microtask(load);
     return const JobCardsState();
   }
 

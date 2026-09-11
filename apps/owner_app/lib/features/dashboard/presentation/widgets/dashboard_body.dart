@@ -55,31 +55,32 @@ class DashboardBody extends ConsumerWidget {
       ),
     );
 
-    return DashboardShell(
+    final state = ref.watch(dashboardUiProvider);
+
+    return Scaffold(
+      extendBody: true,
       appBar: const OwnerAppBar(),
-      body: Consumer(
-        builder: (context, ref, _) {
-          final state = ref.watch(dashboardUiProvider);
-          return AppAdaptiveNavigationFrame(
+      body: Stack(
+        children: [
+          AppAdaptiveNavigationFrame(
             items: _navItems,
             selectedIndex: state.selectedIndex,
             onSelected: notifier.selectTab,
             child: IndexedStack(index: state.selectedIndex, children: _pages),
-          );
-        },
+          ),
+          if (!adaptive.useNavigationRail)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: OwnerBottomNav(
+                items: _navItems,
+                selectedIndex: state.selectedIndex,
+                onTap: notifier.selectTab,
+              ),
+            ),
+        ],
       ),
-      bottomNavigationBar: !adaptive.useNavigationRail
-          ? Consumer(
-              builder: (context, ref, _) {
-                final state = ref.watch(dashboardUiProvider);
-                return OwnerBottomNav(
-                  items: _navItems,
-                  selectedIndex: state.selectedIndex,
-                  onTap: notifier.selectTab,
-                );
-              },
-            )
-          : null,
     );
   }
 }

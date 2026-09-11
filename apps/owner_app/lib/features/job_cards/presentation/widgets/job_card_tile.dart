@@ -18,43 +18,90 @@ class JobCardTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return AppCard(
+    return Container(
       padding: const EdgeInsets.all(16),
-      borderRadius: AppDimensions.r20,
-      color: colorScheme.surface,
-      borderColor: colorScheme.outlineVariant,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                jobCard.id,
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontFamily: AppFontFamilies.mono,
-                  fontWeight: FontWeight.w700,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Text(
+                  jobCard.id,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontFamily: AppFontFamilies.mono,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               const Spacer(),
               _StatusBadge(jobCard: jobCard),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            jobCard.customerName,
-            style: textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: colorScheme.onSurface,
-            ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+                child: Text(
+                  jobCard.customerName.isNotEmpty
+                      ? jobCard.customerName[0].toUpperCase()
+                      : 'C',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      jobCard.customerName,
+                      style: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      jobCard.vehicleDisplay,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            jobCard.vehicleDisplay,
-            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 10),
-          Divider(height: 1, color: colorScheme.outlineVariant),
+          const SizedBox(height: 12),
+          Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
           const SizedBox(height: 10),
           _InfoRow(label: 'Services:', value: jobCard.services.join(', ')),
           const SizedBox(height: 4),
@@ -62,19 +109,32 @@ class JobCardTile extends StatelessWidget {
           const SizedBox(height: 4),
           _InfoRow(label: 'Est. Completion:', value: jobCard.estCompletion),
           const SizedBox(height: 12),
-          Divider(height: 1, color: colorScheme.outlineVariant),
+          Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
           const SizedBox(height: 12),
           Row(
             children: [
-              Text(
-                'AED ${jobCard.amount.toStringAsFixed(2)}',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Estimate Total',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                    ),
+                  ),
+                  Text(
+                    'AED ${jobCard.amount.toStringAsFixed(2)}',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
               ),
               const Spacer(),
-              FilledButton(
+              FilledButton.icon(
                 onPressed: onViewDetails,
                 style: FilledButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -84,12 +144,14 @@ class JobCardTile extends StatelessWidget {
                     vertical: 8,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.r10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('View Details', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 14),
+                label: const Text(
+                  'Details',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                ),
               ),
             ],
           ),
@@ -102,27 +164,15 @@ class JobCardTile extends StatelessWidget {
 class _StatusBadge extends StatelessWidget {
   final JobCard jobCard;
   const _StatusBadge({required this.jobCard});
+
   @override
   Widget build(BuildContext context) {
     final color = _statusColor(jobCard.status);
     final bg = _statusBg(jobCard.status);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.s10,
-        vertical: AppDimensions.s4,
-      ),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppDimensions.r20),
-      ),
-      child: Text(
-        _statusLabel(jobCard.status),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
+    return StatusPill(
+      label: _statusLabel(jobCard.status),
+      fg: color,
+      bg: bg,
     );
   }
 

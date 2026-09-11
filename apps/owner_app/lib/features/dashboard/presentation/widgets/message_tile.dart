@@ -8,46 +8,41 @@ class MessageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(color: AppColors.border),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.navy, AppColors.accent],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                message.recipient[0],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+            child: Text(
+              message.recipient.isEmpty ? '?' : message.recipient[0].toUpperCase(),
+              style: textTheme.titleMedium?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,10 +51,9 @@ class MessageTile extends StatelessWidget {
                   children: [
                     Text(
                       message.recipient,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                      style: textTheme.titleSmall?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const Spacer(),
@@ -67,28 +61,26 @@ class MessageTile extends StatelessWidget {
                       message.delivered
                           ? Icons.done_all_rounded
                           : Icons.error_outline_rounded,
-                      size: 14,
+                      size: 15,
                       color: message.delivered
                           ? AppColors.success
-                          : AppColors.danger,
+                          : colorScheme.error,
                     ),
                     const SizedBox(width: 5),
                     Text(
                       message.time,
-                      style: const TextStyle(
-                        color: AppColors.text3,
-                        fontSize: 11,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   message.message,
-                  style: const TextStyle(
-                    color: AppColors.text3,
-                    fontSize: 12,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                     height: 1.4,
                   ),
                   maxLines: 2,
