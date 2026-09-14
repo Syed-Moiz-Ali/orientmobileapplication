@@ -34,7 +34,18 @@ Professional API collection for the Orient Workshop platform — **209 endpoints
 ```bash
 node scripts/generate_postman_collection.js
 ```
-(parses all controllers, DTO/entity classes and the V1–V12 SQL migrations; regenerates the collection + `database-schema.md`)
+(parsed all controllers, DTO/entity classes and the V1–V12 SQL migrations; regenerates the collection + `database-schema.md`)
+
+## API Testing — Ticket Lifecycle
+
+For a complete end-to-end API test of the ticket workflow (Customer → Supervisor → Advisor → Technician), see:
+
+- **`API_TESTING_TICKET_LIFECYCLE.md`** — Step-by-step testing guide with request/response examples covering:
+  1. **Phase 1** — Owner app login (mobile: `971501234568`, OTP: `123456`) + create 3 staff members (advisor, supervisor, technician)
+  2. **Phase 2** — Customer creates ticket/booking/breakdown
+  3. **Phase 3** — Supervisor receives and assigns to Advisor
+  4. **Phase 4** — Advisor inspects, creates inspection, assigns Technician
+  5. **Phase 5** — Technician works on tasks, completes job, Supervisor approves
 
 ## Notes
 

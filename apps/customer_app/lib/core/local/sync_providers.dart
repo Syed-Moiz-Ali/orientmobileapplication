@@ -7,7 +7,7 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   final dio = ref.read(dioClientProvider);
   final engine = SyncEngine(
     queue: ref.watch(syncQueueProvider),
-    failedBox: Hive.box<dynamic>('sync_failed'),
+    failedBox: Hive.box<SyncOperation>('sync_failed'),
   );
   engine.registerHandler(DioSyncHandler('booking', dio));
   engine.registerHandler(DioSyncHandler('breakdown', dio));

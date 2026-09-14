@@ -12,11 +12,11 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:hive/hive.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
+import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
 import 'inspection_provider.dart';
 
@@ -37,6 +37,8 @@ class RepairOrderView extends ConsumerStatefulWidget {
 class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
   bool _showServices = false;
   bool _showParts = false;
+  bool _loadingGeneratedItems = false;
+  bool _loadedGeneratedItems = false;
   List<String> _pendingServices = [];
   List<String> _pendingParts = [];
   Map<String, dynamic>? _customerData;
@@ -98,6 +100,46 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
   void initState() {
     super.initState();
     _loadCustomerData();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _loadGeneratedWorkItems(),
+    );
+  }
+
+  Future<void> _loadGeneratedWorkItems() async {
+    if (_loadedGeneratedItems || _loadingGeneratedItems) return;
+    final state = ref.read(inspectionProvider);
+    if (state.jobCardId.trim().isEmpty) return;
+    setState(() => _loadingGeneratedItems = true);
+    try {
+      final remote = ref.read(advisorRemoteDataSourceProvider);
+      final detail = await remote.getJobCard(state.jobCardId);
+      final jobCardRef = detail.id.isNotEmpty ? detail.id : state.jobCardId;
+      final items = await remote.getWorkItems(jobCardRef);
+      final generatedServices = items
+          .where((item) => item.description.trim().isNotEmpty)
+          .map(
+            (item) => ServiceLineItem(
+              name: item.description.trim(),
+              qty: item.qty > 0 ? item.qty : 1,
+              rate: item.rate,
+            ),
+          )
+          .toList();
+      if (!mounted) return;
+      ref
+          .read(inspectionProvider.notifier)
+          .mergeGeneratedServices(generatedServices);
+    } catch (_) {
+      // The advisor can still add extra work manually if generated work items
+      // are temporarily unavailable.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadedGeneratedItems = true;
+          _loadingGeneratedItems = false;
+        });
+      }
+    }
   }
 
   void _loadCustomerData() {
@@ -395,19 +437,35 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
               _pendingServices = state.serviceLines.map((s) => s.name).toList();
               setState(() => _showServices = true);
             },
-            children: state.serviceLines
-                .asMap()
-                .entries
-                .map(
-                  (e) => _ServiceLineRow(
-                    index: e.key,
-                    item: e.value,
-                    notifier: notifier,
-                    onSuggest: () =>
-                        _suggestPrice(context, e.key, e.value, notifier),
+            children: [
+              if (_loadingGeneratedItems)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Loading generated repair items...',
+                        style: TextStyle(fontSize: 11, color: IC.text2),
+                      ),
+                    ],
                   ),
-                )
-                .toList(),
+                ),
+              ...state.serviceLines.asMap().entries.map(
+                (e) => _ServiceLineRow(
+                  index: e.key,
+                  item: e.value,
+                  notifier: notifier,
+                  onSuggest: () =>
+                      _suggestPrice(context, e.key, e.value, notifier),
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 12),
@@ -2527,34 +2585,53 @@ class _CreateRepairOrderButton extends ConsumerWidget {
     return GestureDetector(
       onTap: () async {
         final state = ref.read(inspectionProvider);
-        final local = GenericLocalDataSource(
-          Hive.box<Map<String, dynamic>>('repair_orders'),
-        );
-        final id = await IdGenerator.nextId('RO');
-        await local.save(id, state.toPersistableMap());
-
-        final queue = ref.read(syncQueueProvider);
-        final op = SyncOperation(
-          id: id,
-          entityType: 'repair_order',
-          entityId: id,
-          changeType: ChangeType.create,
-          payload: state.toPersistableMap(),
-          timestamp: DateTime.now().millisecondsSinceEpoch,
-        );
-        await queue.enqueue(op);
-
-        ref.read(syncEngineProvider).syncAll();
-
-        if (context.mounted) {
+        if (state.jobCardId.isEmpty) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Job Card is missing')));
+          return;
+        }
+        try {
+          final detail = await ref
+              .read(advisorRemoteDataSourceProvider)
+              .getJobCard(state.jobCardId);
+          final jobCardId = detail.dbId > 0
+              ? '${detail.dbId}'
+              : state.jobCardId;
+          final response = await ref
+              .read(advisorRemoteDataSourceProvider)
+              .createRepairOrderStrict({
+                'jobCardId': jobCardId,
+                'services': state.serviceLines
+                    .map((item) => item.toJson())
+                    .toList(),
+                'parts': state.partLines.map((item) => item.toJson()).toList(),
+                'servicesTotal': state.servicesTotal,
+                'partsTotal': state.partsTotal,
+                'grandTotal': state.grandTotal,
+                'tag': state.tag,
+                'customerRequests': state.customerRequests,
+                'garageRecommendations': state.garageRecommendations,
+                'estimatedDelivery': state.estimatedDelivery?.toIso8601String(),
+                'notifyOwnerSmsEmail': state.notifyOwnerSmsEmail,
+              });
+          if (!context.mounted) return;
+          if (response.id.isEmpty) {
+            throw const UnknownException('Repair order was not created');
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Repair Order saved locally'),
+              content: Text('Repair order created and sent for approval'),
               backgroundColor: IC.accent,
-              behavior: SnackBarBehavior.floating,
             ),
           );
+          ref.read(inspectionProvider.notifier).reset();
           onBack();
+        } catch (error) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not create repair order: $error')),
+          );
         }
       },
       child: Container(

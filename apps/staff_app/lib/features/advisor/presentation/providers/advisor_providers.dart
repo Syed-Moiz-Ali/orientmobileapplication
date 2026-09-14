@@ -59,6 +59,7 @@ final advisorRecentJobCardsProvider = FutureProvider<List<JobCardEntity>>((
   return page.content.map((job) {
     return JobCardEntity(
       id: job.id,
+      dbId: job.dbId,
       customerName: job.customerName,
       vehicleInfo: job.vehicleInfo,
       time: job.time,

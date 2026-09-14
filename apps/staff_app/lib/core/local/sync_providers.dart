@@ -27,7 +27,7 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   final dio = ref.read(dioClientProvider);
   final engine = SyncEngine(
     queue: ref.watch(syncQueueProvider),
-    failedBox: Hive.box<dynamic>('sync_failed'),
+    failedBox: Hive.box<SyncOperation>('sync_failed'),
   );
   for (final type in kSyncEntityTypes) {
     engine.registerHandler(DioSyncHandler(type, dio));

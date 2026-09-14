@@ -2,6 +2,7 @@ package com.orient.workshop.core.service;
 
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.repository.BookingMapper;
 import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.core.repository.StaffMapper;
@@ -65,6 +66,7 @@ class JobWorkflowServiceTest {
         return new TestableJobWorkflowService(
                 jobCardMapper,
                 taskMapper,
+                mock(BookingMapper.class),
                 mock(StaffMapper.class),
                 mock(CustomerMapper.class),
                 mock(NotificationService.class),
@@ -82,13 +84,14 @@ class JobWorkflowServiceTest {
 
         TestableJobWorkflowService(JobCardMapper jobCardMapper,
                                    TechnicianTaskMapper taskMapper,
+                                   BookingMapper bookingMapper,
                                    StaffMapper staffMapper,
                                    CustomerMapper customerMapper,
                                    NotificationService notificationService,
                                    ActivityService activityService,
                                    WebhookService webhookService,
                                    List<JobInvoiceGateway> invoiceGateways) {
-            super(jobCardMapper, taskMapper, staffMapper, customerMapper,
+            super(jobCardMapper, taskMapper, bookingMapper, staffMapper, customerMapper,
                     notificationService, activityService, webhookService, invoiceGateways);
             this.jobCardMapper = jobCardMapper;
         }

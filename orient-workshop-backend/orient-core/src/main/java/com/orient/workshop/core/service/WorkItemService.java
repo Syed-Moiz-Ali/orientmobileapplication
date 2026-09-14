@@ -107,6 +107,9 @@ public class WorkItemService {
         }
         task.setStatus(status);
         taskMapper.updateById(task);
+        if ("inProgress".equals(status)) {
+            markJobInProgress(task.getJobCardNo());
+        }
         checkJobCompletion(task);
     }
 
@@ -117,6 +120,7 @@ public class WorkItemService {
         task.setStatus("inProgress");
         task.setStartTime(startTime != null ? startTime : "");
         taskMapper.updateById(task);
+        markJobInProgress(task.getJobCardNo());
     }
 
     @Transactional
@@ -155,6 +159,15 @@ public class WorkItemService {
 
     private void checkJobCompletion(TechnicianTask task) {
         jobWorkflowService.submitForQcIfAllWorkComplete(jobCard(task.getJobCardNo()));
+    }
+
+    private void markJobInProgress(String jobCardRef) {
+        JobCard card = jobCard(jobCardRef);
+        if (card == null || Set.of("completed", "delivered", "cancelled", "awaitingSupervisor").contains(card.getStatus())) {
+            return;
+        }
+        card.setStatus("inProgress");
+        jobCardMapper.updateById(card);
     }
 
     private JobCard jobCard(String jobCardRef) {
@@ -229,6 +242,7 @@ public class WorkItemService {
                 .endTime(t.getEndTime() != null ? t.getEndTime() : "")
                 .qty(t.getQty() != null ? t.getQty() : 1)
                 .rate(t.getRate() != null ? t.getRate() : 0)
+                .estimatedHours(t.getEstimatedHours())
                 .rejectReason(t.getRejectReason() != null ? t.getRejectReason() : "")
                 .build();
     }

@@ -11,21 +11,22 @@ class ChooseInspectionView extends ConsumerWidget {
   final VoidCallback onSelect;
   final VoidCallback onSkip;
   final VoidCallback onBack;
+  final String jobId;
 
   const ChooseInspectionView({
     super.key,
     required this.onSelect,
     required this.onSkip,
     required this.onBack,
+    this.jobId = '',
   });
 
-  void _startInspection(
-    BuildContext context,
-    WidgetRef ref, {
-    required String templateName,
-  }) {
+  void _startInspection(BuildContext context, WidgetRef ref, {required String templateName}) {
     HapticFeedback.mediumImpact();
     ref.read(inspectionProvider.notifier).reset();
+    if (jobId.isNotEmpty) {
+      ref.read(inspectionProvider.notifier).setJobCardId(jobId);
+    }
     final cb = InspectionCallbacks(
       onBack: () => context.pop(),
       onSaveDraft: () {
@@ -65,26 +66,16 @@ class ChooseInspectionView extends ConsumerWidget {
         ),
         title: Text(
           'Select Inspection Template',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-          ),
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: () {
-              context.push(
-                AppRoutes.repairOrder,
-                extra: {'onBack': () => context.pop(), 'fromInspection': true},
-              );
+              context.push(AppRoutes.repairOrder, extra: {'onBack': () => context.pop(), 'fromInspection': true});
             },
             child: Text(
               'Skip Inspection',
-              style: TextStyle(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800, fontSize: 13),
             ),
           ),
           const SizedBox(width: 8),
@@ -105,10 +96,7 @@ class ChooseInspectionView extends ConsumerWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      colorScheme.primaryContainer.withValues(alpha: 0.5),
-                      colorScheme.surfaceContainerLow,
-                    ],
+                    colors: [colorScheme.primaryContainer.withValues(alpha: 0.5), colorScheme.surfaceContainerLow],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -123,11 +111,7 @@ class ChooseInspectionView extends ConsumerWidget {
                         color: colorScheme.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppDimensions.r16),
                       ),
-                      child: Icon(
-                        Icons.fact_check_outlined,
-                        color: colorScheme.primary,
-                        size: 28,
-                      ),
+                      child: Icon(Icons.fact_check_outlined, color: colorScheme.primary, size: 28),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -144,10 +128,7 @@ class ChooseInspectionView extends ConsumerWidget {
                           const SizedBox(height: 4),
                           Text(
                             'Perform multi-point checks with photo evidence, voice memos, and instant estimate generation.',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              height: 1.3,
-                            ),
+                            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.3),
                           ),
                         ],
                       ),
@@ -159,18 +140,14 @@ class ChooseInspectionView extends ConsumerWidget {
 
               Text(
                 'Available Checkpoint Sheets',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                ),
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
               ),
               const SizedBox(height: 14),
 
               // ── TEMPLATE 1: MASTER 24-POINT DIGITAL CHECK ──────────────────
               _InspectionTemplateCard(
                 title: 'Comprehensive 24-Point Health Check',
-                subtitle:
-                    'Full under-hood, brakes, suspension, battery, tires & exterior inspection',
+                subtitle: 'Full under-hood, brakes, suspension, battery, tires & exterior inspection',
                 sectionsCount: 4,
                 checkpointsCount: 24,
                 estimatedMinutes: 15,
@@ -179,19 +156,14 @@ class ChooseInspectionView extends ConsumerWidget {
                 icon: Icons.checklist_rtl_rounded,
                 colorScheme: colorScheme,
                 textTheme: textTheme,
-                onTap: () => _startInspection(
-                  context,
-                  ref,
-                  templateName: 'Comprehensive 24-Point',
-                ),
+                onTap: () => _startInspection(context, ref, templateName: 'Comprehensive 24-Point'),
               ),
               const SizedBox(height: 16),
 
               // ── TEMPLATE 2: EXPRESS BAY SCAN ───────────────────────────────
               _InspectionTemplateCard(
                 title: 'Express Bay Safety Scan',
-                subtitle:
-                    'Rapid fluid levels, tire pressure, lighting, wiper blades & battery voltage check',
+                subtitle: 'Rapid fluid levels, tire pressure, lighting, wiper blades & battery voltage check',
                 sectionsCount: 2,
                 checkpointsCount: 10,
                 estimatedMinutes: 5,
@@ -200,19 +172,14 @@ class ChooseInspectionView extends ConsumerWidget {
                 icon: Icons.speed_rounded,
                 colorScheme: colorScheme,
                 textTheme: textTheme,
-                onTap: () => _startInspection(
-                  context,
-                  ref,
-                  templateName: 'Express Bay Safety Scan',
-                ),
+                onTap: () => _startInspection(context, ref, templateName: 'Express Bay Safety Scan'),
               ),
               const SizedBox(height: 16),
 
               // ── TEMPLATE 3: BRAKES & CHASSIS DIAGNOSTIC ─────────────────────
               _InspectionTemplateCard(
                 title: 'Brake, Steering & Suspension Audit',
-                subtitle:
-                    'Pad/rotor depth measurements, shock absorber leak check, alignment & bushings',
+                subtitle: 'Pad/rotor depth measurements, shock absorber leak check, alignment & bushings',
                 sectionsCount: 3,
                 checkpointsCount: 14,
                 estimatedMinutes: 10,
@@ -221,11 +188,7 @@ class ChooseInspectionView extends ConsumerWidget {
                 icon: Icons.car_repair_rounded,
                 colorScheme: colorScheme,
                 textTheme: textTheme,
-                onTap: () => _startInspection(
-                  context,
-                  ref,
-                  templateName: 'Brake & Suspension Audit',
-                ),
+                onTap: () => _startInspection(context, ref, templateName: 'Brake & Suspension Audit'),
               ),
               const SizedBox(height: 32),
             ],
@@ -269,9 +232,7 @@ class _InspectionTemplateCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: AppDimensions.r24,
       color: colorScheme.surface,
-      borderColor: isRecommended
-          ? colorScheme.primary.withValues(alpha: 0.5)
-          : colorScheme.outlineVariant,
+      borderColor: isRecommended ? colorScheme.primary.withValues(alpha: 0.5) : colorScheme.outlineVariant,
       padding: const EdgeInsets.all(20),
       boxShadow: [
         BoxShadow(
@@ -295,13 +256,7 @@ class _InspectionTemplateCard extends StatelessWidget {
                       : colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(AppDimensions.r14),
                 ),
-                child: Icon(
-                  icon,
-                  color: isRecommended
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
-                  size: 22,
-                ),
+                child: Icon(icon, color: isRecommended ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -315,9 +270,7 @@ class _InspectionTemplateCard extends StatelessWidget {
                           bg: isRecommended
                               ? colorScheme.primary.withValues(alpha: 0.12)
                               : colorScheme.surfaceContainerHighest,
-                          fg: isRecommended
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
+                          fg: isRecommended ? colorScheme.primary : colorScheme.onSurfaceVariant,
                         ),
                         if (isRecommended) ...[
                           const SizedBox(width: 8),
@@ -332,29 +285,16 @@ class _InspectionTemplateCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colorScheme.onSurfaceVariant),
             ],
           ),
           const SizedBox(height: 16),
           Text(
             title,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: colorScheme.onSurface,
-            ),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
+          Text(subtitle, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.35)),
           const SizedBox(height: 18),
           Divider(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 14),
@@ -394,12 +334,7 @@ class _MetaItem extends StatelessWidget {
   final ColorScheme colorScheme;
   final TextTheme textTheme;
 
-  const _MetaItem({
-    required this.icon,
-    required this.label,
-    required this.colorScheme,
-    required this.textTheme,
-  });
+  const _MetaItem({required this.icon, required this.label, required this.colorScheme, required this.textTheme});
 
   @override
   Widget build(BuildContext context) {
@@ -410,10 +345,7 @@ class _MetaItem extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700, color: colorScheme.onSurfaceVariant),
         ),
       ],
     );

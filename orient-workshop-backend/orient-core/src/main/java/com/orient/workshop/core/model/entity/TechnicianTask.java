@@ -16,6 +16,7 @@ public class TechnicianTask {
     private String itemType;
     private Integer qty;
     private Double rate;
+    private Double estimatedHours;
     private String status;
     private String empId;
     private Long advisorId;

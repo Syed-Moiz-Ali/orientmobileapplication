@@ -1,6 +1,6 @@
 name: customer_app
 description: Customer portal app for Orient Mobile
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
@@ -30,8 +30,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/
-
-
-

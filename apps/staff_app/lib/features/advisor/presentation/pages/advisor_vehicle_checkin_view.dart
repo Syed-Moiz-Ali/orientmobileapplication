@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
+import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 
 class AdvisorVehicleCheckinView extends ConsumerStatefulWidget {
   final String bookingId;
@@ -74,16 +78,29 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
     setState(() => _isLoading = true);
     try {
       final remote = ref.read(advisorRemoteDataSourceProvider);
-      final ok = await remote.checkInVehicle(widget.bookingId, {
-        'odometer': _odometerCtrl.text.trim(),
+      final odo = int.tryParse(_odometerCtrl.text.trim()) ?? 0;
+      final result = await remote.checkInVehicleResult(widget.bookingId, {
+        'odometer': odo,
         'fuelLevel': _fuelLevel,
-        'existingDamages': _damages,
-        'customerNote': _notesCtrl.text.trim(),
+        'existingDamages': _damages.join(', '),
+        'notes': _notesCtrl.text.trim(),
       });
       if (mounted) {
-        if (ok) {
+        if (result != null) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vehicle checked in successfully')));
-          Navigator.pop(context);
+          context.pushReplacement(
+            AppRoutes.advisorJobDetail,
+            extra: JobCardEntity(
+              id: '${result.jobCardId}',
+              dbId: result.jobCardId,
+              customerName: widget.customerName,
+              vehicleInfo: widget.vehicleInfo,
+              time: '',
+              createdDate: '',
+              lastUpdated: '',
+              status: JobCardStatus.vehicleReceived,
+            ),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to check in')));
           setState(() => _isLoading = false);

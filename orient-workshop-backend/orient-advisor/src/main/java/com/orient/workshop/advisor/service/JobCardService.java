@@ -34,7 +34,8 @@ public class JobCardService {
     private static final Set<String> VALID_STATUSES = Set.of(
             "inProgress", "pendingApproval", "qualityCheck", "completed",
             "cancelled", "waitingParts", "pending", "awaitingSupervisor",
-            "vehicleReceived", "waitingCustomerApproval", "delivered", "qualityCheckPassed");
+            "vehicleReceived", "inspected", "approved", "workAssigned",
+            "waitingCustomerApproval", "delivered", "qualityCheckPassed");
 
     private final JobCardMapper jobCardMapper;
     private final CustomerMapper customerMapper;
@@ -86,8 +87,8 @@ public class JobCardService {
         return PageResponse.of(items, safePage, safeLimit, total);
     }
 
-    public JobCardDetailResponse getJobCard(Long id, JwtUserPrincipal principal) {
-        JobCard card = jobCardMapper.selectById(id);
+    public JobCardDetailResponse getJobCard(String id, JwtUserPrincipal principal) {
+        JobCard card = findByIdOrRef(id);
         if (card == null || !inScope(card, principal)) {
             throw new NotFoundException("Job card not found");
         }
@@ -158,16 +159,35 @@ public class JobCardService {
         if (card == null || !inScope(card, principal)) {
             throw new NotFoundException("Job card not found");
         }
-        
-        if (request.getTasks() != null) {
+
+        List<BatchTaskRequest.TaskItem> requestedTasks = request.getItems() != null
+                ? request.getItems()
+                : request.getTasks();
+        if (requestedTasks != null) {
             List<TechnicianTask> existingTasks = technicianTaskMapper.findByJobCardNo(jobCardRef);
             Map<String, TechnicianTask> existingMap = existingTasks.stream()
                     .collect(Collectors.toMap(TechnicianTask::getDescription, Function.identity(), (a, b) -> a));
+            Map<Long, TechnicianTask> existingById = existingTasks.stream()
+                    .filter(t -> t.getId() != null)
+                    .collect(Collectors.toMap(TechnicianTask::getId, Function.identity(), (a, b) -> a));
 
-            for (BatchTaskRequest.TaskItem task : request.getTasks()) {
-                if (task.getDescription() != null && existingMap.containsKey(task.getDescription())) {
-                    TechnicianTask existing = existingMap.get(task.getDescription());
+            String assignedTechEmpId = null;
+            for (BatchTaskRequest.TaskItem task : requestedTasks) {
+                if (assignedTechEmpId == null && task.getTechnicianEmpId() != null && !task.getTechnicianEmpId().isBlank()) {
+                    assignedTechEmpId = task.getTechnicianEmpId();
+                }
+                TechnicianTask existing = task.getTaskId() != null ? existingById.get(task.getTaskId()) : null;
+                if (existing == null && task.getDescription() != null && existingMap.containsKey(task.getDescription())) {
+                    existing = existingMap.get(task.getDescription());
+                }
+                if (existing != null) {
                     existing.setEmpId(task.getTechnicianEmpId());
+                    if (task.getDescription() != null && !task.getDescription().isBlank()) {
+                        existing.setDescription(task.getDescription().trim());
+                    }
+                    if (task.getEstimatedHours() != null) {
+                        existing.setEstimatedHours(task.getEstimatedHours());
+                    }
                     technicianTaskMapper.updateById(existing);
                 } else {
                     TechnicianTask tTask = TechnicianTask.builder()
@@ -175,14 +195,19 @@ public class JobCardService {
                             .taskRef(com.orient.workshop.common.util.IdGenerator.shortRef("T"))
                             .description(task.getDescription())
                             .empId(task.getTechnicianEmpId())
+                            .estimatedHours(task.getEstimatedHours())
                             .status("pending")
                             .build();
                     technicianTaskMapper.insert(tTask);
                 }
             }
+            if (assignedTechEmpId != null && staffMapper != null) {
+                Optional<Staff> techStaff = staffMapper.findByEmpId(assignedTechEmpId);
+                techStaff.ifPresent(s -> card.setTechnician(s.getName()));
+            }
         }
-        
-        card.setStatus("inProgress");
+
+        card.setStatus("workAssigned");
         jobCardMapper.updateById(card);
     }
 
@@ -253,6 +278,7 @@ public class JobCardService {
         return JobCardResponse.builder()
                 .id(c.getJobCardRef())
                 .dbId(c.getId())
+                .dbId(c.getId())
                 .customerName(custName)
                 .vehicleInfo(vehicleInfo)
                 .time(c.getCreatedAt() != null ? c.getCreatedAt().format(DateTimeFormatter.ofPattern("hh:mm a")) : "")
@@ -265,8 +291,26 @@ public class JobCardService {
 
     private JobCardDetailResponse toDetailResponse(JobCard c) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        Customer customer = c.getCustomerId() != null ? customerMapper.selectById(c.getCustomerId()) : null;
+        Vehicle vehicle = c.getVehicleId() != null ? vehicleMapper.selectById(c.getVehicleId()) : null;
+        String vehicleInfo = vehicle == null ? ""
+            : ((vehicle.getMake() != null ? vehicle.getMake() : "") + " "
+            + (vehicle.getModel() != null ? vehicle.getModel() : "")).trim();
         return JobCardDetailResponse.builder()
                 .id(c.getJobCardRef())
+            .customerName(customer != null && customer.getCustomerName() != null ? customer.getCustomerName() : "")
+            .phoneNumber(customer != null && customer.getPhoneNumber() != null ? customer.getPhoneNumber() : "")
+            .email(customer != null && customer.getEmail() != null ? customer.getEmail() : "")
+            .customerGroup(customer != null && customer.getCustomerGroup() != null ? customer.getCustomerGroup() : "")
+            .vehicleInfo(vehicleInfo)
+            .registrationNumber(vehicle != null && vehicle.getRegistrationNumber() != null ? vehicle.getRegistrationNumber() : "")
+            .vin(vehicle != null && vehicle.getVin() != null ? vehicle.getVin() : "")
+            .make(vehicle != null && vehicle.getMake() != null ? vehicle.getMake() : "")
+            .model(vehicle != null && vehicle.getModel() != null ? vehicle.getModel() : "")
+            .modelYear(vehicle != null && vehicle.getModelYear() != null ? String.valueOf(vehicle.getModelYear()) : "")
+            .vehicleColor(vehicle != null && vehicle.getVehicleColor() != null ? vehicle.getVehicleColor() : "")
+            .mileage(vehicle != null && vehicle.getMileage() != null ? vehicle.getMileage() : "")
+            .time(c.getCreatedAt() != null ? c.getCreatedAt().format(DateTimeFormatter.ofPattern("hh:mm a")) : "")
                 .status(c.getStatus())
                 .technician(c.getTechnician())
                 .notes(c.getNotes())

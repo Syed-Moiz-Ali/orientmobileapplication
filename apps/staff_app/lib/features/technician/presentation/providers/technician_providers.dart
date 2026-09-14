@@ -750,7 +750,8 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       'tasks': updatedJob.tasks
           .map(
             (t) => {
-              'id': t.id,
+              'id': t.ref.isNotEmpty ? t.ref : t.id.toString(),
+              'ref': t.ref,
               'description': t.description,
               'status': t.status.name,
               'startTime': t.startTime,

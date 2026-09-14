@@ -52,16 +52,11 @@ public class RepairOrderService {
         if (req.getJobCardId() == null || req.getJobCardId().isBlank()) {
             throw new BadRequestException("jobCardId is required");
         }
-        Long jobCardId;
-        try {
-            jobCardId = Long.parseLong(req.getJobCardId());
-        } catch (NumberFormatException e) {
-            throw new BadRequestException("Invalid jobCardId '" + req.getJobCardId() + "'");
-        }
-        JobCard jc = jobCardMapper.selectById(jobCardId);
+        JobCard jc = resolveJobCard(req.getJobCardId());
         if (jc == null) {
-            throw new BadRequestException("Job card not found with id: " + jobCardId);
+            throw new BadRequestException("Job card not found: " + req.getJobCardId());
         }
+        Long jobCardId = jc.getId();
 
         String ref = IdGenerator.shortRef("RO");
 
@@ -95,9 +90,33 @@ public class RepairOrderService {
         return RepairOrderResponse.builder().id(ref).build();
     }
 
+    private JobCard resolveJobCard(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            JobCard byId = jobCardMapper.selectById(Long.parseLong(value));
+            if (byId != null) return byId;
+        } catch (NumberFormatException ignored) {
+            // Public JC references are resolved below.
+        }
+        return jobCardMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<JobCard>()
+                .eq("job_card_ref", value));
+    }
+
+    private RepairOrder resolveRepairOrder(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            RepairOrder byId = repairOrderMapper.selectById(Long.parseLong(value));
+            if (byId != null) return byId;
+        } catch (NumberFormatException ignored) {
+            // Public RO references are resolved below.
+        }
+        return repairOrderMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<RepairOrder>()
+                .eq("repair_order_ref", value));
+    }
+
     @Transactional
-    public void sendEstimate(Long id, com.orient.workshop.auth.filter.JwtUserPrincipal principal) {
-        RepairOrder ro = repairOrderMapper.selectById(id);
+    public void sendEstimate(String id, com.orient.workshop.auth.filter.JwtUserPrincipal principal) {
+        RepairOrder ro = resolveRepairOrder(id);
         if (ro == null) {
             throw new NotFoundException("Repair order not found");
         }
@@ -135,7 +154,7 @@ public class RepairOrderService {
                 .build());
 
         if (jc.getStatus() == null || !"awaitingSupervisor".equals(jc.getStatus())) {
-            jc.setStatus("pendingApproval");
+            jc.setStatus("waitingCustomerApproval");
             jobCardMapper.updateById(jc);
         }
 

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
-import 'package:staff_app/features/advisor/presentation/pages/advisor_job_detail_view.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'advisor_sheet.dart';
 import 'advisor_handle.dart';
@@ -40,17 +41,11 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
         .toList();
   }
 
-  List<PendingApprovalEntity> _searchApprovals(
-    List<PendingApprovalEntity> approvals,
-  ) {
+  List<PendingApprovalEntity> _searchApprovals(List<PendingApprovalEntity> approvals) {
     if (_query.isEmpty) return [];
     final q = _query.toLowerCase();
     return approvals
-        .where(
-          (a) =>
-              a.customerName.toLowerCase().contains(q) ||
-              a.estimateId.toLowerCase().contains(q),
-        )
+        .where((a) => a.customerName.toLowerCase().contains(q) || a.estimateId.toLowerCase().contains(q))
         .toList();
   }
 
@@ -64,9 +59,7 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
           .map((m) => Map<String, dynamic>.from(m))
           .where(
             (m) =>
-                (m['customerName'] as String? ?? '').toLowerCase().contains(
-                  q,
-                ) ||
+                (m['customerName'] as String? ?? '').toLowerCase().contains(q) ||
                 (m['make'] as String? ?? '').toLowerCase().contains(q) ||
                 (m['model'] as String? ?? '').toLowerCase().contains(q) ||
                 (m['plateNumber'] as String? ?? '').toLowerCase().contains(q) ||
@@ -88,16 +81,11 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
     final cardResults = _searchJobCards(jobCards);
     final approvalResults = _searchApprovals(approvals);
     final customerResults = _searchCustomers();
-    final hasResults =
-        cardResults.isNotEmpty ||
-        approvalResults.isNotEmpty ||
-        customerResults.isNotEmpty;
+    final hasResults = cardResults.isNotEmpty || approvalResults.isNotEmpty || customerResults.isNotEmpty;
 
     return AdvisorSheet(
       child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -120,37 +108,21 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
               controller: _ctrl,
               autofocus: true,
               onChanged: (v) => setState(() => _query = v),
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textPrimary,
-              ),
+              style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Search customers, vehicles, job cards, approvals...',
-                hintStyle: const TextStyle(
-                  color: AppColors.text3,
-                  fontSize: 13,
-                ),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  color: AppColors.text3,
-                  size: 20,
-                ),
+                hintStyle: const TextStyle(color: AppColors.text3, fontSize: 13),
+                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.text3, size: 20),
                 suffixIcon: GestureDetector(
                   onTap: widget.onScan,
                   child: Container(
                     margin: const EdgeInsets.all(8),
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.navy, AppColors.accent],
-                      ),
+                      gradient: const LinearGradient(colors: [AppColors.navy, AppColors.accent]),
                       borderRadius: BorderRadius.circular(AppDimensions.r8),
                     ),
-                    child: const Icon(
-                      Icons.qr_code_scanner_rounded,
-                      color: Colors.white,
-                      size: 16,
-                    ),
+                    child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 16),
                   ),
                 ),
                 filled: true,
@@ -165,10 +137,7 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  borderSide: const BorderSide(
-                    color: AppColors.accent,
-                    width: 1.5,
-                  ),
+                  borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
                 ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 13),
               ),
@@ -178,10 +147,7 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
               if (!hasResults)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Text(
-                    'No results found',
-                    style: TextStyle(color: AppColors.text3, fontSize: 13),
-                  ),
+                  child: Text('No results found', style: TextStyle(color: AppColors.text3, fontSize: 13)),
                 )
               else ...[
                 if (cardResults.isNotEmpty) ...[
@@ -194,25 +160,16 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
                       j.customerName,
                       '${j.vehicleInfo}  \u00b7  ${j.id}',
                       () {
+                        final router = GoRouter.of(context);
                         Navigator.pop(context);
-                        // FE-FIX (audit P1): this pushed a DUPLICATE dashboard
-                        // on top of itself — the search could never open a job.
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AdvisorJobDetailView(jc: j),
-                          ),
-                        );
+                        router.push(AppRoutes.advisorJobDetail, extra: j);
                       },
                     ),
                   ),
                   const SizedBox(height: 8),
                 ],
                 if (customerResults.isNotEmpty) ...[
-                  _sectionHeader(
-                    'Customers / Vehicles',
-                    customerResults.length,
-                  ),
+                  _sectionHeader('Customers / Vehicles', customerResults.length),
                   const SizedBox(height: 6),
                   ...customerResults.map(
                     (c) => _resultItem(
@@ -251,32 +208,18 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
     children: [
       Text(
         '$label ($count)',
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: AppColors.text2,
-          letterSpacing: 0.3,
-        ),
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.text2, letterSpacing: 0.3),
       ),
     ],
   );
 
-  Widget _resultItem(
-    IconData icon,
-    Color color,
-    String title,
-    String subtitle,
-    VoidCallback onTap,
-  ) {
+  Widget _resultItem(IconData icon, Color color, String title, String subtitle, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.canvas,
-          borderRadius: BorderRadius.circular(10),
-        ),
+        decoration: BoxDecoration(color: AppColors.canvas, borderRadius: BorderRadius.circular(10)),
         child: Row(
           children: [
             Icon(icon, size: 18, color: color),
@@ -287,19 +230,9 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                   ),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.text3,
-                    ),
-                  ),
+                  Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.text3)),
                 ],
               ),
             ),
@@ -309,3 +242,4 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
     );
   }
 }
+

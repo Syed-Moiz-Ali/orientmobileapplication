@@ -79,6 +79,19 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
     final id = _isEditing
         ? widget.vehicleId!
         : now.millisecondsSinceEpoch.toString();
+    final existingVehicle = _isEditing
+        ? ref
+            .read(customerDashboardProvider)
+            .vehicles
+            .where((v) => v.id == widget.vehicleId)
+            .firstOrNull
+        : null;
+    final int effectiveHealthScore = _isEditing
+        ? ((existingVehicle != null && existingVehicle.healthScore >= 0)
+            ? existingVehicle.healthScore
+            : 100)
+        : 100;
+
     var vehicle = CustomerVehicleEntity(
       id: id,
       brand: _brandCtrl.text.trim(),
@@ -92,7 +105,7 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
           : _mileageCtrl.text.trim(),
       lastService: _isEditing ? _lastService() : 'N/A',
       nextDue: 'N/A',
-      healthScore: -1,
+      healthScore: effectiveHealthScore,
     );
 
     try {

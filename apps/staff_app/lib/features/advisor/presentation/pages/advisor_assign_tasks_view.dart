@@ -5,9 +5,11 @@ import 'package:staff_app/features/advisor/presentation/providers/advisor_provid
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 
 class TaskDraft {
+  int taskId;
   String description;
   bool selected;
-  TaskDraft({required this.description, this.selected = true});
+  double estimatedHours;
+  TaskDraft({this.taskId = 0, required this.description, this.selected = true, this.estimatedHours = 0});
 }
 
 class AdvisorAssignTasksView extends ConsumerStatefulWidget {
@@ -20,10 +22,47 @@ class AdvisorAssignTasksView extends ConsumerStatefulWidget {
 }
 
 class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView> {
-  final List<TaskDraft> _tasks = [TaskDraft(description: '', selected: true)];
+  final List<TaskDraft> _tasks = [];
   String? _selectedTechnicianId;
   DateTime? _estimatedCompletion;
   bool _isLoading = false;
+  bool _isLoadingItems = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGeneratedItems();
+  }
+
+  Future<void> _loadGeneratedItems() async {
+    try {
+      final items = await ref.read(advisorRemoteDataSourceProvider).getWorkItems(widget.jobCardRef);
+      if (!mounted) return;
+      setState(() {
+        _tasks
+          ..clear()
+          ..addAll(
+            items
+                .where((item) => item.description.trim().isNotEmpty)
+                .map(
+                  (item) => TaskDraft(
+                    taskId: item.id,
+                    description: item.description,
+                    selected: item.empId.isEmpty,
+                    estimatedHours: item.estimatedHours,
+                  ),
+                ),
+          );
+        _isLoadingItems = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _tasks.add(TaskDraft(description: '', selected: true));
+        _isLoadingItems = false;
+      });
+    }
+  }
 
   Future<void> _selectDateTime() async {
     final date = await showDatePicker(
@@ -56,9 +95,17 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
     try {
       final remote = ref.read(advisorRemoteDataSourceProvider);
       final ok = await remote.assignTasks(widget.jobCardRef, {
-        'technicianId': _selectedTechnicianId,
-        'estimatedCompletion': _estimatedCompletion?.toIso8601String(),
-        'tasks': selectedTasks.map((t) => {'description': t.description.trim()}).toList(),
+        'jobCardId': widget.jobCardRef,
+        'items': selectedTasks
+            .map(
+              (t) => {
+                if (t.taskId > 0) 'taskId': t.taskId,
+                'description': t.description.trim(),
+                'technicianEmpId': _selectedTechnicianId,
+                if (t.estimatedHours > 0) 'estimatedHours': t.estimatedHours,
+              },
+            )
+            .toList(),
       });
       if (mounted) {
         if (ok) {
@@ -103,10 +150,7 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
           children: [
             Text(
               'Technician Task Allocation',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: colorScheme.onSurface,
-              ),
+              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
             ),
             Text(
               widget.jobCardRef,
@@ -135,19 +179,14 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
                 foregroundColor: colorScheme.onPrimary,
                 disabledBackgroundColor: colorScheme.surfaceContainerHighest,
                 disabledForegroundColor: colorScheme.onSurfaceVariant,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.r16),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r16)),
               ),
               onPressed: (_isLoading || _selectedTechnicianId == null || validTasksCount == 0) ? null : _assignTasks,
               child: _isLoading
                   ? SizedBox(
                       width: 22,
                       height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: colorScheme.onPrimary,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: colorScheme.onPrimary),
                     )
                   : Text(
                       'Dispatch $validTasksCount Task${validTasksCount == 1 ? '' : 's'} to Bay',
@@ -167,10 +206,7 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
               // ── 1. SELECT TECHNICIAN CARD ────────────────────────────────
               Text(
                 'Assignee Technician',
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                ),
+                style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
               ),
               const SizedBox(height: 10),
               AppCard(
@@ -213,21 +249,18 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
               ),
               const SizedBox(height: 28),
 
-              // ── 2. TASKS CHECKLIST ────────────────────────────────────────
+              // ── 2. GENERATED WORK ITEMS ───────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Work Item Tasks',
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.onSurface,
-                    ),
+                    'Generated Repair Items',
+                    style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
                   ),
                   TextButton.icon(
                     onPressed: () => setState(() => _tasks.add(TaskDraft(description: ''))),
                     icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Add Task', style: TextStyle(fontWeight: FontWeight.w800)),
+                    label: const Text('Add Extra Work', style: TextStyle(fontWeight: FontWeight.w800)),
                   ),
                 ],
               ),
@@ -240,6 +273,7 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
                 borderColor: colorScheme.outlineVariant,
                 child: Column(
                   children: [
+                    if (_isLoadingItems) const Padding(padding: EdgeInsets.all(16), child: LinearProgressIndicator()),
                     for (int idx = 0; idx < _tasks.length; idx++) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -269,6 +303,27 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
                                 onChanged: (v) => _tasks[idx].description = v,
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 78,
+                              child: TextFormField(
+                                initialValue: _tasks[idx].estimatedHours > 0
+                                    ? _tasks[idx].estimatedHours.toString()
+                                    : '',
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: InputDecoration(
+                                  hintText: 'hrs',
+                                  filled: true,
+                                  fillColor: colorScheme.surfaceContainerLow,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                                ),
+                                onChanged: (v) => _tasks[idx].estimatedHours = double.tryParse(v.trim()) ?? 0,
+                              ),
+                            ),
                             if (_tasks.length > 1)
                               IconButton(
                                 icon: Icon(Icons.close_rounded, size: 18, color: colorScheme.error),
@@ -277,8 +332,7 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
                           ],
                         ),
                       ),
-                      if (idx < _tasks.length - 1)
-                        Divider(height: 16, color: colorScheme.outlineVariant),
+                      if (idx < _tasks.length - 1) Divider(height: 16, color: colorScheme.outlineVariant),
                     ],
                   ],
                 ),
@@ -288,10 +342,7 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
               // ── 3. ESTIMATED COMPLETION ───────────────────────────────────
               Text(
                 'Estimated Target Completion (Optional)',
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                ),
+                style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
               ),
               const SizedBox(height: 10),
               InkWell(
@@ -323,7 +374,9 @@ class _AdvisorAssignTasksViewState extends ConsumerState<AdvisorAssignTasksView>
                                   : 'Target: ${_estimatedCompletion.toString().substring(0, 16)}',
                               style: textTheme.bodyMedium?.copyWith(
                                 fontWeight: _estimatedCompletion != null ? FontWeight.w800 : FontWeight.w500,
-                                color: _estimatedCompletion != null ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                                color: _estimatedCompletion != null
+                                    ? colorScheme.onSurface
+                                    : colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],

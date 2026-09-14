@@ -12,5 +12,6 @@
     "**/coverage": true,
     "**/android/.gradle": true,
     "**/android/.kotlin": true
-  }
+  },
+  "java.compile.nullAnalysis.mode": "automatic"
 }

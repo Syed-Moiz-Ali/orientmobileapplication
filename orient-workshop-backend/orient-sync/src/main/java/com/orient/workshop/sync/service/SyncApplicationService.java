@@ -12,6 +12,7 @@ import com.orient.workshop.advisor.repository.InspectionMapper;
 import com.orient.workshop.advisor.repository.RepairOrderMapper;
 import com.orient.workshop.advisor.repository.RepairOrderPartMapper;
 import com.orient.workshop.advisor.repository.RepairOrderServiceMapper;
+import com.orient.workshop.advisor.service.TaskGeneratorService;
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.ForbiddenException;
@@ -63,6 +64,7 @@ public class SyncApplicationService {
     private final CustomerMapper customerMapper;
     private final WorkAssignmentMapper workAssignmentMapper;
     private final ObjectMapper objectMapper;
+    private final TaskGeneratorService taskGeneratorService;
 
     @Transactional
     public Map<String, String> syncInspection(JwtUserPrincipal principal, String id,
@@ -322,12 +324,23 @@ public class SyncApplicationService {
                     .build();
         }
         inspection.setJobCardId(card.getId());
+        inspection.setIsDraft(false);
+        if (principal != null) inspection.setAdvisorId(principal.getUserId());
+        Object sections = body.get("sections");
+        if (sections != null) {
+            try {
+                inspection.setSections(objectMapper.writeValueAsString(sections));
+            } catch (Exception e) {
+                throw new BadRequestException("Invalid inspection sections payload");
+            }
+        }
         copyString(body, "referenceNumber", inspection::setReferenceNumber);
         copyString(body, "placeOfSupply", inspection::setPlaceOfSupply);
         copyString(body, "customerRequests", inspection::setCustomerRequests);
         copyString(body, "garageRecommendations", inspection::setGarageRecommendations);
         copyString(body, "tag", inspection::setTag);
         if (isNew) inspectionMapper.insert(inspection); else inspectionMapper.updateById(inspection);
+        taskGeneratorService.generateForJobCard(card.getId());
         linkBookingFromPayload(principal, body, card.getId());
     }
 

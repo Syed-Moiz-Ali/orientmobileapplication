@@ -12,7 +12,6 @@ import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart'
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/followup_reminder_entity.dart';
 import 'advisor_jobs_view.dart';
-import 'advisor_job_detail_view.dart';
 import 'advisor_reports_view.dart';
 import '../widgets/advisor_profile_sheet.dart';
 import '../widgets/advisor_notification_sheet.dart';
@@ -141,10 +140,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
 
   void _onJobCard(JobCardEntity jc) {
     HapticFeedback.selectionClick();
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => AdvisorJobDetailView(jc: jc)),
-    );
+    context.push(AppRoutes.advisorJobDetail, extra: jc);
   }
 
   void _onApproval(PendingApprovalEntity pa) {

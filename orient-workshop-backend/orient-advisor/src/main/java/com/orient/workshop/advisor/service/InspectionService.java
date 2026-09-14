@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.orient.workshop.core.repository.JobCardMapper;
@@ -48,12 +49,18 @@ public class InspectionService {
     private static final Set<String> VALID_JOB_CARD_STATUSES = Set.of(
             "inProgress", "pendingApproval", "qualityCheck", "completed",
             "cancelled", "waitingParts", "pending", "awaitingSupervisor",
-            "vehicleReceived", "waitingCustomerApproval", "delivered", "qualityCheckPassed");
+            "vehicleReceived", "inspected", "approved", "workAssigned",
+            "waitingCustomerApproval", "delivered", "qualityCheckPassed");
 
     @Transactional
     public InspectionResponse createInspection(JwtUserPrincipal principal, InspectionRequest req) {
-        Customer customer = resolveCustomer(principal, req);
-        Vehicle vehicle = null;
+        JobCard jobCard = resolveExistingJobCard(req.getJobCardId(), principal);
+        Customer customer = jobCard != null && jobCard.getCustomerId() != null
+                ? customerMapper.selectById(jobCard.getCustomerId())
+                : resolveCustomer(principal, req);
+        Vehicle vehicle = jobCard != null && jobCard.getVehicleId() != null
+                ? vehicleMapper.selectById(jobCard.getVehicleId())
+                : null;
 
         if (req.getVehicle() != null && customer != null) {
             // Fix: reuse an existing vehicle by plate/VIN instead of creating
@@ -84,27 +91,37 @@ public class InspectionService {
             }
         }
 
-        // Fix: reject unknown statuses before they hit the ENUM column (409).
-        String status = req.getStatus() != null ? req.getStatus() : "pending";
-        if (!VALID_JOB_CARD_STATUSES.contains(status)) {
-            throw new BadRequestException("Invalid status: " + status
-                    + ". Allowed: " + String.join(", ", VALID_JOB_CARD_STATUSES));
+        if (jobCard == null) {
+            String status = req.getStatus() != null ? req.getStatus() : "pending";
+            if (!VALID_JOB_CARD_STATUSES.contains(status)) {
+                throw new BadRequestException("Invalid status: " + status
+                        + ". Allowed: " + String.join(", ", VALID_JOB_CARD_STATUSES));
+            }
+            String jcRef = IdGenerator.shortRef("JC");
+            jobCard = JobCard.builder()
+                    .jobCardRef(jcRef)
+                    .customerId(customer.getId())
+                    .branchId(principal != null ? principal.getBranchId() : null)
+                    .vehicleId(vehicle != null ? vehicle.getId() : null)
+                    .status(status)
+                    .technician(req.getTechnician())
+                    .tag(req.getTag())
+                    .customerRequests(req.getCustomerRequests())
+                    .garageRecommendations(req.getGarageRecommendations())
+                    .estimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"))
+                    .build();
+            jobCardMapper.insert(jobCard);
+        } else {
+            if (req.getTechnician() != null) jobCard.setTechnician(req.getTechnician());
+            if (req.getTag() != null) jobCard.setTag(req.getTag());
+            if (req.getCustomerRequests() != null) jobCard.setCustomerRequests(req.getCustomerRequests());
+            if (req.getGarageRecommendations() != null) jobCard.setGarageRecommendations(req.getGarageRecommendations());
+            if (req.getEstimatedDelivery() != null) {
+                jobCard.setEstimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"));
+            }
+            jobCard.setStatus("inspected");
+            jobCardMapper.updateById(jobCard);
         }
-
-        String jcRef = IdGenerator.shortRef("JC");
-        JobCard jobCard = JobCard.builder()
-                .jobCardRef(jcRef)
-                .customerId(customer.getId())
-                .branchId(principal != null ? principal.getBranchId() : null)
-                .vehicleId(vehicle != null ? vehicle.getId() : null)
-                .status(status)
-                .technician(req.getTechnician())
-                .tag(req.getTag())
-                .customerRequests(req.getCustomerRequests())
-                .garageRecommendations(req.getGarageRecommendations())
-                .estimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"))
-                .build();
-        jobCardMapper.insert(jobCard);
 
         String insRef = IdGenerator.shortRef("INS");
         String sectionsJson = toJson(req.getSections());
@@ -138,6 +155,22 @@ public class InspectionService {
         return InspectionResponse.builder().id(String.valueOf(inspection.getId())).build();
     }
 
+    private JobCard resolveExistingJobCard(String jobCardId, JwtUserPrincipal principal) {
+        if (jobCardId == null || jobCardId.isBlank()) return null;
+        JobCard card = jobCardId.matches("\\d+")
+                ? jobCardMapper.selectById(Long.valueOf(jobCardId))
+                : jobCardMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<JobCard>()
+                        .eq("job_card_ref", jobCardId));
+        if (card == null) {
+            throw new BadRequestException("Job card not found: " + jobCardId);
+        }
+        Long branchId = principal != null ? principal.getBranchId() : null;
+        if (branchId != null && card.getBranchId() != null && !Objects.equals(branchId, card.getBranchId())) {
+            throw new ForbiddenException("Job card is outside the authenticated branch");
+        }
+        return card;
+    }
+
     private void linkBooking(String bookingId, Long jobCardId, JwtUserPrincipal principal) {
         try {
             Long id = Long.parseLong(bookingId);
@@ -148,7 +181,7 @@ public class InspectionService {
                 return;
             }
             booking.setJobCardId(jobCardId);
-            booking.setStatus("confirmed");
+            booking.setStatus("vehicle_received");
             bookingMapper.updateById(booking);
             if (principal != null && principal.getUserId() != null) {
                 notificationService.emit(principal.getUserId(), booking.getBranchId(),

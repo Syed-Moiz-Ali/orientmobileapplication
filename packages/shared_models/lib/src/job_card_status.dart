@@ -1,4 +1,4 @@
-/// Mirrors the backend job_cards.status ENUM (12 values).
+/// Mirrors the backend job_cards.status ENUM.
 /// NOTE: apps consume shared_core's JobCardStatus; keep both in sync.
 enum JobCardStatus {
   inProgress,
@@ -10,6 +10,9 @@ enum JobCardStatus {
   pending,
   awaitingSupervisor,
   vehicleReceived,
+  inspected,
+  approved,
+  workAssigned,
   waitingCustomerApproval,
   delivered,
   qualityCheckPassed,

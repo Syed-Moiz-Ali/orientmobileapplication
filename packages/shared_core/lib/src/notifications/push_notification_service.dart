@@ -43,10 +43,8 @@ class PushNotificationService {
     if (_initialized || !isSupported) return;
     try {
       if (Firebase.apps.isEmpty) await Firebase.initializeApp();
-    } on FirebaseException catch (error) {
-      // Keeps local development usable until the per-app native Firebase
-      // configuration files are installed.
-      debugPrint('Firebase initialization skipped: ${error.message}');
+    } catch (error, _) {
+      debugPrint('Firebase initialization skipped: $error');
       return;
     }
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
@@ -66,10 +64,10 @@ class PushNotificationService {
     await FirebaseMessaging.instance.requestPermission();
     await FirebaseMessaging.instance
         .setForegroundNotificationPresentationOptions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+      alert: true,
+      badge: true,
+      sound: true,
+    );
     FirebaseMessaging.onMessage.listen(_showForegroundNotification);
     _installationIdSubscription = FirebaseInstallations.instance.onIdChange
         .listen(_registerInstallation);

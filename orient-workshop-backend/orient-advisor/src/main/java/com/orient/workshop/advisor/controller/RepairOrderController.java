@@ -23,7 +23,7 @@ public class RepairOrderController {
     }
 
     @PostMapping("/repair-orders/{id}/send")
-    public ApiResponse<Void> sendEstimate(@PathVariable Long id, @org.springframework.security.core.annotation.AuthenticationPrincipal com.orient.workshop.auth.filter.JwtUserPrincipal principal) {
+    public ApiResponse<Void> sendEstimate(@PathVariable String id, @org.springframework.security.core.annotation.AuthenticationPrincipal com.orient.workshop.auth.filter.JwtUserPrincipal principal) {
         repairOrderService.sendEstimate(id, principal);
         return ApiResponse.success(null);
     }

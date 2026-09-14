@@ -6,6 +6,7 @@ import com.orient.workshop.advisor.repository.InspectionMapper;
 import com.orient.workshop.advisor.repository.RepairOrderMapper;
 import com.orient.workshop.advisor.repository.RepairOrderPartMapper;
 import com.orient.workshop.advisor.repository.RepairOrderServiceMapper;
+import com.orient.workshop.advisor.service.TaskGeneratorService;
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.core.model.entity.JobCard;
 import com.orient.workshop.core.repository.BookingMapper;
@@ -59,7 +60,8 @@ class SyncApplicationServiceConcurrencyTest {
                 mock(ApprovalMapper.class),
                 mock(CustomerMapper.class),
                 mock(WorkAssignmentMapper.class),
-                new ObjectMapper());
+                new ObjectMapper(),
+                mock(TaskGeneratorService.class));
 
         JwtUserPrincipal principal = JwtUserPrincipal.builder()
                 .userId(10L).branchId(5L).role("TECHNICIAN").build();

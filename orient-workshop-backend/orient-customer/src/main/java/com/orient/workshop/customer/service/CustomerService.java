@@ -52,7 +52,7 @@ public class CustomerService {
 
             Customer c = Customer.builder()
                     .userId(userId)
-                    .branchId(branchId)
+                    .branchId(branchId != null ? branchId : 1L)
                     .customerName(name)
                     .phoneNumber(phone != null ? phone : "")
                     .source("SMS")

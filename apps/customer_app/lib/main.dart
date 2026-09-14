@@ -6,15 +6,34 @@ import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/core/local/sync_providers.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await EnvironmentConfig.init();
+
+  try {
+    await EnvironmentConfig.init();
+  } catch (e, _) {
+    debugPrint('EnvironmentConfig init failed: $e');
+  }
 
   final logger = createLogger();
-  AppErrorHandler.init(logger);
 
-  await HiveRegistry.initHive();
-  await PushNotificationService.instance.initialize();
+  try {
+    AppErrorHandler.init(logger);
+  } catch (e, _) {
+    debugPrint('AppErrorHandler init failed: $e');
+  }
+
+  try {
+    await HiveRegistry.initHive();
+  } catch (e, _) {
+    debugPrint('HiveRegistry init failed: $e');
+  }
+
+  try {
+    await PushNotificationService.instance.initialize();
+  } catch (e, _) {
+    debugPrint('PushNotificationService init failed: $e');
+  }
 
   runApp(
     ProviderScope(

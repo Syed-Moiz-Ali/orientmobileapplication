@@ -63,6 +63,9 @@ class LoggingInterceptor extends Interceptor {
       error: err.error,
       stackTrace: err.stackTrace,
     );
+    if (err.response?.data != null) {
+      _logger.e('Error Response Data: ${err.response?.data}');
+    }
     handler.next(err);
   }
 

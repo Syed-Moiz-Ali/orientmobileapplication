@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
-import 'package:staff_app/features/advisor/presentation/pages/advisor_vehicle_checkin_view.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_job_card_row.dart';
 
 class AdvisorJobsListView extends ConsumerStatefulWidget {
@@ -261,15 +262,13 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                   subtitle: Text('${b.customerName} · ${b.bookingDate}'),
                   trailing: ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AdvisorVehicleCheckinView(
-                            bookingId: '${b.id}',
-                            customerName: b.customerName,
-                            vehicleInfo: b.vehicleName,
-                          ),
-                        ),
+                      context.push(
+                        AppRoutes.advisorCheckIn,
+                        extra: {
+                          'bookingId': '${b.id}',
+                          'customerName': b.customerName,
+                          'vehicleInfo': b.vehicleName,
+                        },
                       );
                     },
                     child: const Text('Check In'),
@@ -291,6 +290,9 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     JobCardStatus.pending => 'Pending',
     JobCardStatus.awaitingSupervisor => 'Awaiting Supervisor',
     JobCardStatus.vehicleReceived => 'Vehicle Received',
+    JobCardStatus.inspected => 'Inspected',
+    JobCardStatus.approved => 'Approved',
+    JobCardStatus.workAssigned => 'Work Assigned',
     JobCardStatus.waitingCustomerApproval => 'Waiting Customer Approval',
     JobCardStatus.delivered => 'Delivered',
     JobCardStatus.qualityCheckPassed => 'QC Passed',

@@ -175,6 +175,7 @@ class WorkItemResponse {
   final String endTime;
   final int qty;
   final double rate;
+  final double estimatedHours;
   final String rejectReason;
 
   const WorkItemResponse({
@@ -190,6 +191,7 @@ class WorkItemResponse {
     this.endTime = '',
     this.qty = 1,
     this.rate = 0,
+    this.estimatedHours = 0,
     this.rejectReason = '',
   });
 
@@ -206,6 +208,7 @@ class WorkItemResponse {
         endTime: j['endTime'] as String? ?? '',
         qty: (j['qty'] as num?)?.toInt() ?? 1,
         rate: (j['rate'] as num?)?.toDouble() ?? 0,
+        estimatedHours: (j['estimatedHours'] as num?)?.toDouble() ?? 0,
         rejectReason: j['rejectReason'] as String? ?? '',
       );
 }

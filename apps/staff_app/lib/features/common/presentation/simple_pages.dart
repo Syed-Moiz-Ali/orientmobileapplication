@@ -34,8 +34,8 @@ class ProfilePage extends StatelessWidget {
       ),
       body: SafeArea(
         child: AppResponsivePage(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
                 padding: const EdgeInsets.all(22),
@@ -205,8 +205,8 @@ class ShiftDetailsPage extends StatelessWidget {
       ),
       body: SafeArea(
         child: AppResponsivePage(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _row(context, 'Employee', get('name')),
               _row(context, 'ID', get('id')),
@@ -296,8 +296,8 @@ class SettingsPage extends StatelessWidget {
       ),
       body: SafeArea(
         child: AppResponsivePage(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _row(context, Icons.info_outline_rounded, 'App Version', version),
               _row(

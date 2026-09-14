@@ -19,5 +19,6 @@ public class WorkItemResponse {
     private String endTime;
     private Integer qty;
     private Double rate;
+    private Double estimatedHours;
     private String rejectReason;
 }

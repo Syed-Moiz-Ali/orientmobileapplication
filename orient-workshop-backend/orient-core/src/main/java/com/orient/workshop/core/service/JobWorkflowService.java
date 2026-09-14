@@ -9,6 +9,8 @@ import com.orient.workshop.core.model.entity.Customer;
 import com.orient.workshop.core.model.entity.JobCard;
 import com.orient.workshop.core.model.entity.Staff;
 import com.orient.workshop.core.model.entity.TechnicianTask;
+import com.orient.workshop.core.model.entity.Booking;
+import com.orient.workshop.core.repository.BookingMapper;
 import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.core.repository.StaffMapper;
@@ -36,10 +38,12 @@ public class JobWorkflowService {
     private static final Set<String> QC_READY_STATES = Set.of(AWAITING_QC, "qualityCheck");
     private static final Set<String> ADVISOR_OPERATIONAL_STATES = Set.of(
             WORK_IN_PROGRESS, WAITING_PARTS, "pending", "pendingApproval",
-            "vehicleReceived", "waitingCustomerApproval", "qualityCheck");
+            "vehicleReceived", "inspected", "approved", "workAssigned",
+            "waitingCustomerApproval", "qualityCheck");
 
     private final JobCardMapper jobCardMapper;
     private final TechnicianTaskMapper taskMapper;
+    private final BookingMapper bookingMapper;
     private final StaffMapper staffMapper;
     private final CustomerMapper customerMapper;
     private final NotificationService notificationService;
@@ -153,9 +157,18 @@ public class JobWorkflowService {
         requireState(card, Set.of(READY_FOR_COLLECTION, "qualityCheckPassed"),
                 "Vehicle delivery requires successful QC and invoice readiness");
         transition(card, DELIVERED);
+        completeLinkedBooking(card);
         activityService.log("job_card", "Vehicle delivered",
                 "Job " + card.getJobCardRef() + " marked delivered", userId);
         webhookService.dispatch("job.delivered", Map.of("jobCardRef", card.getJobCardRef()));
+    }
+
+    private void completeLinkedBooking(JobCard card) {
+        Booking booking = bookingMapper.selectOne(
+                new LambdaQueryWrapper<Booking>().eq(Booking::getJobCardId, card.getId()).last("LIMIT 1"));
+        if (booking == null) return;
+        booking.setStatus("completed");
+        bookingMapper.updateById(booking);
     }
 
     private void requireAllWorkComplete(JobCard card) {

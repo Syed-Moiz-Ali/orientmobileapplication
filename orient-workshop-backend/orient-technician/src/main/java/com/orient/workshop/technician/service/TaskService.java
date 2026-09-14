@@ -33,9 +33,8 @@ public class TaskService {
         Staff staff = resolveStaff(principal);
         verifyOwnership(staff, jobCardNo);
         TechnicianTask task = findTask(jobCardNo, taskRef);
-        task.setStatus("inProgress");
-        task.setStartTime(req.getStartTime() != null ? req.getStartTime() : "");
-        taskMapper.updateById(task);
+        workItemService.start(task.getId(), staff.getEmpId(),
+                req.getStartTime() != null ? req.getStartTime() : "");
     }
 
     @Transactional
@@ -43,12 +42,8 @@ public class TaskService {
         Staff staff = resolveStaff(principal);
         verifyOwnership(staff, jobCardNo);
         TechnicianTask task = findTask(jobCardNo, taskRef);
-        task.setStatus("completed");
-        task.setEndTime(req.getEndTime() != null ? req.getEndTime() : "");
-        taskMapper.updateById(task);
-        // Seamless flow — when all work items are done the job moves to the
-        // supervisor completion-review queue.
-        workItemService.checkJobCompletionAfterUpdate(jobCardNo);
+        workItemService.complete(task.getId(), staff.getEmpId(),
+                req.getEndTime() != null ? req.getEndTime() : "");
     }
 
     @Transactional
@@ -56,11 +51,8 @@ public class TaskService {
         Staff staff = resolveStaff(principal);
         verifyOwnership(staff, jobCardNo);
         TechnicianTask task = findTask(jobCardNo, taskRef);
-        task.setStatus(req.getStatus() != null ? req.getStatus() : task.getStatus());
-        taskMapper.updateById(task);
-        if ("completed".equals(task.getStatus())) {
-            workItemService.checkJobCompletionAfterUpdate(jobCardNo);
-        }
+        workItemService.updateStatus(task.getId(), staff.getEmpId(),
+                req.getStatus() != null ? req.getStatus() : task.getStatus());
     }
 
     @Transactional
@@ -81,6 +73,7 @@ public class TaskService {
                 }
             }
         }
+        workItemService.checkJobCompletionAfterUpdate(req.getJobCardNo());
     }
 
     private void verifyOwnership(Staff staff, String jobCardNo) {

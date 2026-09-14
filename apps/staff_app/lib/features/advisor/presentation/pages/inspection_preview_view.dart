@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/router/app_router.dart';
+import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
+import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'inspection_provider.dart';
-import 'package:staff_app/core/router/app_router.dart';
 
 class InspectionPreviewView extends ConsumerWidget {
   final VoidCallback onBack;
@@ -137,7 +139,35 @@ class InspectionPreviewView extends ConsumerWidget {
 
   Future<void> _saveAndUpdate(BuildContext context, WidgetRef ref) async {
     final notifier = ref.read(inspectionProvider.notifier);
-    await notifier.submitInspection();
-    if (context.mounted) context.go(AppRoutes.advisorDashboard);
+    final currentJobCardId = ref.read(inspectionProvider).jobCardId;
+    final result = await notifier.submitInspection();
+    if (!context.mounted) return;
+    await result.when(
+      success: (_) async {
+        final detail = await ref.read(advisorRemoteDataSourceProvider).getJobCard(currentJobCardId);
+        if (!context.mounted) return;
+        final status = JobCardStatus.values.firstWhere(
+          (s) => s.name == detail.status,
+          orElse: () => JobCardStatus.inspected,
+        );
+        context.pushReplacement(
+          AppRoutes.advisorJobDetail,
+          extra: JobCardEntity(
+            id: detail.id.isNotEmpty ? detail.id : currentJobCardId,
+            dbId: detail.dbId,
+            customerName: detail.customerName,
+            vehicleInfo: detail.vehicleInfo,
+            time: detail.time,
+            createdDate: detail.createdDate,
+            lastUpdated: detail.lastUpdated,
+            status: status,
+            technician: detail.technician,
+          ),
+        );
+      },
+      failure: (error) async {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      },
+    );
   }
 }

@@ -38,7 +38,7 @@ public class JobCardController {
 
     @GetMapping("/{id}")
     public ApiResponse<JobCardDetailResponse> getJobCard(@AuthenticationPrincipal JwtUserPrincipal principal,
-                                                          @PathVariable Long id) {
+                                                          @PathVariable String id) {
         return ApiResponse.success(jobCardService.getJobCard(id, principal));
     }
 

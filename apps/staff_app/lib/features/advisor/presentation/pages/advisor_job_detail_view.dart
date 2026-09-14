@@ -6,8 +6,12 @@ import 'package:shared_core/shared_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
+import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/pages/advisor_assign_tasks_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/choose_inspection_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/inspection_provider.dart';
+import 'package:staff_app/features/advisor/presentation/pages/repair_order_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/vehicle_delivery_view.dart';
 
 class AdvisorJobDetailView extends ConsumerStatefulWidget {
@@ -23,6 +27,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   late JobCardEntity _jc;
   String _assignedTech = '';
   Map<String, dynamic>? _hiveData;
+  JobCardDetailResponse? _details;
+  String get _detailLookupId => _jc.dbId > 0 ? '${_jc.dbId}' : _jc.id;
+  String get _jobCardRef =>
+      _details?.id.isNotEmpty == true ? _details!.id : _jc.id;
 
   @override
   void initState() {
@@ -30,6 +38,44 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     _jc = widget.jc;
     _assignedTech = _jc.technician;
     _loadHiveData();
+    _loadDetails();
+  }
+
+  Future<void> _loadDetails() async {
+    try {
+      final details = await ref
+          .read(advisorRemoteDataSourceProvider)
+          .getJobCard(_detailLookupId);
+      if (!mounted) return;
+      setState(() {
+        _details = details;
+        if (details.technician.isNotEmpty) _assignedTech = details.technician;
+        _jc = _jc.copyWith(
+          id: details.id.isNotEmpty ? details.id : _jc.id,
+          dbId: details.dbId > 0 ? details.dbId : _jc.dbId,
+          customerName: details.customerName.isNotEmpty
+              ? details.customerName
+              : _jc.customerName,
+          vehicleInfo: details.vehicleInfo.isNotEmpty
+              ? details.vehicleInfo
+              : _jc.vehicleInfo,
+          time: details.time.isNotEmpty ? details.time : _jc.time,
+          createdDate: details.createdDate.isNotEmpty
+              ? details.createdDate
+              : _jc.createdDate,
+          lastUpdated: details.lastUpdated.isNotEmpty
+              ? details.lastUpdated
+              : _jc.lastUpdated,
+          technician: details.technician.isNotEmpty
+              ? details.technician
+              : _jc.technician,
+          status: JobCardStatus.values.firstWhere(
+            (status) => status.name == details.status,
+            orElse: () => _jc.status,
+          ),
+        );
+      });
+    } catch (_) {}
   }
 
   void _loadHiveData() {
@@ -44,6 +90,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         (m) =>
             m?['type'] == 'vehicle_customer' &&
             (m?['id'] == _jc.id ||
+                m?['id'] == _detailLookupId ||
                 m?['registrationNumber'] == _jc.id ||
                 m?['vin'] == _jc.id),
         orElse: () => null,
@@ -64,6 +111,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       JobCardStatus.pendingApproval ||
       JobCardStatus.pending ||
       JobCardStatus.awaitingSupervisor ||
+      JobCardStatus.inspected ||
+      JobCardStatus.approved ||
+      JobCardStatus.workAssigned ||
       JobCardStatus.waitingCustomerApproval => colorScheme.secondary,
       JobCardStatus.completed ||
       JobCardStatus.delivered ||
@@ -85,12 +135,18 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     JobCardStatus.pending => 'Pending',
     JobCardStatus.awaitingSupervisor => 'Awaiting Supervisor',
     JobCardStatus.vehicleReceived => 'Vehicle Received',
+    JobCardStatus.inspected => 'Inspected',
+    JobCardStatus.approved => 'Approved',
+    JobCardStatus.workAssigned => 'Work Assigned',
     JobCardStatus.waitingCustomerApproval => 'Waiting Approval',
     JobCardStatus.delivered => 'Delivered',
     JobCardStatus.qualityCheckPassed => 'QC Passed',
   };
 
   String _getVal(String key) => _hiveData?[key] as String? ?? '';
+
+  String _apiVal(String value, String fallback) =>
+      value.isNotEmpty ? value : fallback;
 
   @override
   Widget build(BuildContext context) {
@@ -127,15 +183,32 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             _detailRow(
               Icons.person_outline_rounded,
               'Name',
-              hasData ? _getVal('customerName') : _jc.customerName,
+              _apiVal(
+                _details?.customerName ?? '',
+                hasData ? _getVal('customerName') : _jc.customerName,
+              ),
             ),
-            _detailRow(Icons.phone_outlined, 'Phone', _getVal('phoneNumber')),
-            _detailRow(Icons.email_outlined, 'Email', _getVal('email')),
-            if (_getVal('customerGroup').isNotEmpty)
+            _detailRow(
+              Icons.phone_outlined,
+              'Phone',
+              _apiVal(_details?.phoneNumber ?? '', _getVal('phoneNumber')),
+            ),
+            _detailRow(
+              Icons.email_outlined,
+              'Email',
+              _apiVal(_details?.email ?? '', _getVal('email')),
+            ),
+            if (_apiVal(
+              _details?.customerGroup ?? '',
+              _getVal('customerGroup'),
+            ).isNotEmpty)
               _detailRow(
                 Icons.group_outlined,
                 'Group',
-                _getVal('customerGroup'),
+                _apiVal(
+                  _details?.customerGroup ?? '',
+                  _getVal('customerGroup'),
+                ),
               ),
           ]),
           const SizedBox(height: 16),
@@ -143,29 +216,45 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             _detailRow(
               Icons.directions_car_outlined,
               'Vehicle',
-              hasData
-                  ? '${_getVal('make')} ${_getVal('model')}'
-                  : _jc.vehicleInfo,
+              _apiVal(
+                _details?.vehicleInfo ?? '',
+                hasData
+                    ? '${_getVal('make')} ${_getVal('model')}'
+                    : _jc.vehicleInfo,
+              ),
             ),
             _detailRow(
               Icons.confirmation_number_outlined,
               'Plate',
-              _getVal('registrationNumber').toUpperCase(),
+              _apiVal(
+                _details?.registrationNumber ?? '',
+                _getVal('registrationNumber'),
+              ).toUpperCase(),
               isMono: true,
             ),
             _detailRow(
               Icons.qr_code_rounded,
               'VIN',
-              _getVal('vin'),
+              _apiVal(_details?.vin ?? '', _getVal('vin')),
               isMono: true,
             ),
-            if (_getVal('modelYear').isNotEmpty)
-              _detailRow(Icons.calendar_today, 'Year', _getVal('modelYear')),
-            if (_getVal('vehicleColor').isNotEmpty)
+            if (_apiVal(
+              _details?.modelYear ?? '',
+              _getVal('modelYear'),
+            ).isNotEmpty)
+              _detailRow(
+                Icons.calendar_today,
+                'Year',
+                _apiVal(_details?.modelYear ?? '', _getVal('modelYear')),
+              ),
+            if (_apiVal(
+              _details?.vehicleColor ?? '',
+              _getVal('vehicleColor'),
+            ).isNotEmpty)
               _detailRow(
                 Icons.color_lens_outlined,
                 'Color',
-                _getVal('vehicleColor'),
+                _apiVal(_details?.vehicleColor ?? '', _getVal('vehicleColor')),
               ),
             _detailRow(
               Icons.speed_rounded,
@@ -214,33 +303,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           ],
 
           // ── ACTION BUTTONS ────────────────────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: _actionButton(
-                  'Update Status',
-                  Icons.edit_outlined,
-                  colorScheme.primary,
-                  () => _showStatusSheet(context),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _actionButton(
-                  'Assign Tasks',
-                  Icons.assignment_ind_outlined,
-                  colorScheme.secondary,
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          AdvisorAssignTasksView(jobCardRef: _jc.id),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _buildWorkflowActions(),
           const SizedBox(height: 10),
           _actionButton(
             'Call Customer',
@@ -256,12 +319,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               'Deliver Vehicle',
               Icons.check_circle_outline,
               const Color(0xFF10B981),
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => VehicleDeliveryView(jobCardRef: _jc.id),
-                ),
-              ),
+              _openDelivery,
             ),
           ],
         ],
@@ -311,7 +369,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      hasData ? _getVal('customerName') : _jc.customerName,
+                      _apiVal(
+                        _details?.customerName ?? '',
+                        hasData ? _getVal('customerName') : _jc.customerName,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.bodySmall?.copyWith(
@@ -427,7 +488,19 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
 
   Widget _buildFuelLevelDisplay() {
     final colorScheme = Theme.of(context).colorScheme;
-    final fuelLevel = (_hiveData?['fuelLevel'] as num?)?.toInt() ?? 5;
+    final fuelLevelValue = _hiveData?['fuelLevel'];
+    final fuelLevel = fuelLevelValue is num
+        ? fuelLevelValue.toInt()
+        : switch (fuelLevelValue?.toString()) {
+            '1/4' => 3,
+            '1/2' => 5,
+            '3/4' => 8,
+            'Full' => 10,
+            _ => 5,
+          };
+    final fuelLabel = fuelLevelValue?.toString().isNotEmpty == true
+        ? fuelLevelValue.toString()
+        : '$fuelLevel/10';
 
     return Row(
       children: [
@@ -454,7 +527,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         ),
         const SizedBox(width: 8),
         Text(
-          '$fuelLevel/10',
+          fuelLabel,
           style: TextStyle(
             fontWeight: FontWeight.w800,
             color: colorScheme.onSurface,
@@ -470,7 +543,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     final colorScheme = theme.colorScheme;
     ref.watch(advisorWorkItemsRefreshProvider);
     final items =
-        ref.watch(advisorWorkItemsProvider(_jc.id)).value ??
+        ref.watch(advisorWorkItemsProvider(_jobCardRef)).value ??
         const <WorkItemResponse>[];
     if (items.isEmpty) return const SizedBox.shrink();
 
@@ -508,6 +581,122 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   }
 
   Widget _buildInspectionMediaSection() => const SizedBox.shrink();
+
+  Widget _buildWorkflowActions() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return _section('Next Step', [
+      _actionButton(
+        _primaryActionLabel,
+        _primaryActionIcon,
+        colorScheme.primary,
+        _runPrimaryAction,
+      ),
+      if (_jc.status == JobCardStatus.inspected ||
+          _jc.status == JobCardStatus.approved) ...[
+        const SizedBox(height: 10),
+        _actionButton(
+          'Assign Technician',
+          Icons.assignment_ind_outlined,
+          colorScheme.secondary,
+          _openAssignTasks,
+        ),
+      ],
+    ]);
+  }
+
+  String get _primaryActionLabel => switch (_jc.status) {
+    JobCardStatus.vehicleReceived => 'Start Inspection',
+    JobCardStatus.inspected => 'Create Estimate',
+    JobCardStatus.waitingCustomerApproval => 'Waiting for Customer Approval',
+    JobCardStatus.approved => 'Assign Technician',
+    JobCardStatus.workAssigned ||
+    JobCardStatus.inProgress ||
+    JobCardStatus.waitingParts => 'Review Work Items',
+    JobCardStatus.completed ||
+    JobCardStatus.qualityCheckPassed => 'Deliver Vehicle',
+    JobCardStatus.delivered => 'Vehicle Delivered',
+    _ => 'Refresh Job Card',
+  };
+
+  IconData get _primaryActionIcon => switch (_jc.status) {
+    JobCardStatus.vehicleReceived => Icons.fact_check_outlined,
+    JobCardStatus.inspected => Icons.receipt_long_outlined,
+    JobCardStatus.waitingCustomerApproval => Icons.hourglass_top_rounded,
+    JobCardStatus.approved => Icons.assignment_ind_outlined,
+    JobCardStatus.completed ||
+    JobCardStatus.qualityCheckPassed ||
+    JobCardStatus.delivered => Icons.check_circle_outline,
+    _ => Icons.work_outline_rounded,
+  };
+
+  void _runPrimaryAction() {
+    switch (_jc.status) {
+      case JobCardStatus.vehicleReceived:
+        _startInspection();
+      case JobCardStatus.inspected:
+        _openEstimate();
+      case JobCardStatus.waitingCustomerApproval:
+        _loadDetails();
+      case JobCardStatus.approved:
+        _openAssignTasks();
+      case JobCardStatus.completed:
+      case JobCardStatus.qualityCheckPassed:
+        _openDelivery();
+      case JobCardStatus.delivered:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vehicle already delivered')),
+        );
+      default:
+        _loadDetails();
+    }
+  }
+
+  void _startInspection() {
+    ref.read(inspectionProvider.notifier).reset();
+    ref.read(inspectionProvider.notifier).setJobCardId(_detailLookupId);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChooseInspectionView(
+          jobId: _detailLookupId,
+          onSelect: () => Navigator.pop(context),
+          onSkip: () => Navigator.pop(context),
+          onBack: () => Navigator.pop(context),
+        ),
+      ),
+    ).then((_) => _loadDetails());
+  }
+
+  void _openEstimate() {
+    ref.read(inspectionProvider.notifier).setJobCardId(_detailLookupId);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RepairOrderView(
+          fromInspection: true,
+          onBack: () => Navigator.pop(context),
+        ),
+      ),
+    ).then((_) => _loadDetails());
+  }
+
+  void _openAssignTasks() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdvisorAssignTasksView(jobCardRef: _jobCardRef),
+      ),
+    ).then((_) => _loadDetails());
+  }
+
+  void _openDelivery() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VehicleDeliveryView(jobCardRef: _jobCardRef),
+      ),
+    ).then((_) => _loadDetails());
+  }
 
   Widget _actionButton(
     String label,
@@ -548,99 +737,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   }
 
   void _callCustomer() {
-    final phone = _getVal('phoneNumber').replaceAll(RegExp(r'[^\d+]'), '');
+    final phone = _apiVal(
+      _details?.phoneNumber ?? '',
+      _getVal('phoneNumber'),
+    ).replaceAll(RegExp(r'[^\d+]'), '');
     if (phone.isNotEmpty) launchUrl(Uri.parse('tel:$phone'));
-  }
-
-  void _showStatusSheet(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.45,
-        maxChildSize: 0.92,
-        builder: (_, controller) => Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 12, 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Update job status',
-                        style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Close',
-                      onPressed: () => Navigator.pop(ctx),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView.separated(
-                  controller: controller,
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
-                  itemCount: JobCardStatus.values.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 4),
-                  itemBuilder: (_, index) {
-                    final status = JobCardStatus.values[index];
-                    final selected = status == _jc.status;
-                    return ListTile(
-                      selected: selected,
-                      selectedTileColor: colorScheme.primaryContainer,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      leading: Icon(
-                        selected
-                            ? Icons.check_circle_rounded
-                            : Icons.circle_outlined,
-                        color: selected
-                            ? colorScheme.primary
-                            : colorScheme.onSurfaceVariant,
-                      ),
-                      title: Text(
-                        _statusLabel(status),
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      onTap: () => _updateStatus(status, ctx),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _updateStatus(JobCardStatus status, BuildContext ctx) {
-    Navigator.pop(ctx);
-    setState(() => _jc = _jc.copyWith(status: status));
-    ref.read(advisorRefreshProvider.notifier).state++;
   }
 }
 

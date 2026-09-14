@@ -70,6 +70,21 @@ class AdvisorJobCardSheet extends StatelessWidget {
       AppColors.info,
       AppColors.infoBg,
     ),
+    JobCardStatus.inspected => _StatusStyle(
+      'Inspected',
+      AppColors.info,
+      AppColors.infoBg,
+    ),
+    JobCardStatus.approved => _StatusStyle(
+      'Approved',
+      AppColors.success,
+      AppColors.successBg,
+    ),
+    JobCardStatus.workAssigned => _StatusStyle(
+      'Work Assigned',
+      AppColors.accent,
+      AppColors.accent.withValues(alpha: 0.12),
+    ),
     JobCardStatus.waitingCustomerApproval => _StatusStyle(
       'Waiting Customer Approval',
       AppColors.warning,
@@ -186,4 +201,3 @@ class AdvisorJobCardSheet extends StatelessWidget {
     );
   }
 }
-

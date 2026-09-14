@@ -14,6 +14,7 @@ Dio createDio({String? appName}) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Tunnel-Skip-Anti-Abuse-Page': 'true',
         if (appName != null) 'X-App-Name': appName,
       },
     ),

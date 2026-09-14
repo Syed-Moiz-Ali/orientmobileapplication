@@ -48,28 +48,17 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
   Future<void> _approve() async {
     HapticFeedback.lightImpact();
     setState(() => _isLoading = true);
-    final notifier = ref.read(supervisorDashboardProvider.notifier);
-    final qcMsg = await notifier.qcReview(
-      widget.jobCardRef,
-      'approve',
-      checklistPassed: _allChecked,
-      notes: _notesCtrl.text.trim(),
-    );
-    if (qcMsg.startsWith('Could not')) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(qcMsg)));
-      }
-      return;
-    }
-    final msg = await notifier.approveCompletion(widget.jobCardId);
+    final msg = await ref
+        .read(supervisorDashboardProvider.notifier)
+        .approveCompletion(widget.jobCardId);
     if (mounted) {
+      if (msg.startsWith('Could not')) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        return;
+      }
       Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('$qcMsg · $msg')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 

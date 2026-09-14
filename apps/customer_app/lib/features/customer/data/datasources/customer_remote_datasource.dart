@@ -40,6 +40,10 @@ class CustomerRemoteDataSource {
 
   Future<VehicleResponse> addVehicle(Map<String, dynamic> data) async {
     final payload = Map<String, dynamic>.from(data)..remove('id');
+    final rawHealth = payload['healthScore'];
+    if (rawHealth is int && (rawHealth < 0 || rawHealth > 100)) {
+      payload['healthScore'] = 100;
+    }
     final result = await _client.post<VehicleResponse>(
       ApiEndpoints.customerVehicles,
       data: payload,
@@ -56,6 +60,10 @@ class CustomerRemoteDataSource {
     Map<String, dynamic> data,
   ) async {
     final payload = Map<String, dynamic>.from(data)..remove('id');
+    final rawHealth = payload['healthScore'];
+    if (rawHealth is int && (rawHealth < 0 || rawHealth > 100)) {
+      payload['healthScore'] = 100;
+    }
     final result = await _client.put<VehicleResponse>(
       ApiEndpoints.customerVehicle(id),
       data: payload,

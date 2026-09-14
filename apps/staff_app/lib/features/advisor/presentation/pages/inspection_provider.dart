@@ -6,6 +6,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
+import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 
 class InspectionState {
@@ -98,6 +99,7 @@ class InspectionState {
 
   Map<String, dynamic> toPersistableMap() => {
     'statuses': statuses.map((k, v) => MapEntry(k, v.name)),
+    'sections': _sectionsPayload(),
     'media': media.map((k, v) => MapEntry(k, v.toJson())),
     'preServicePhotos': preServicePhotos,
     'serviceLines': serviceLines.map((e) => e.toJson()).toList(),
@@ -113,6 +115,36 @@ class InspectionState {
     'jobCardId': jobCardId,
     'bookingId': bookingId,
   };
+
+  Map<String, dynamic> toLiveRequestMap() => {
+    'sections': _sectionsPayload(),
+    if (referenceNumber.isNotEmpty) 'referenceNumber': referenceNumber,
+    if (placeOfSupply.isNotEmpty) 'placeOfSupply': placeOfSupply,
+    if (customerRequests.isNotEmpty) 'customerRequests': customerRequests,
+    if (garageRecommendations.isNotEmpty)
+      'garageRecommendations': garageRecommendations,
+    if (estimatedDelivery != null)
+      'estimatedDelivery': estimatedDelivery!.toIso8601String(),
+    'notifyOwnerSmsEmail': notifyOwnerSmsEmail,
+    if (tag.isNotEmpty) 'tag': tag,
+    if (jobCardId.isNotEmpty) 'jobCardId': jobCardId,
+    if (bookingId.isNotEmpty) 'bookingId': bookingId,
+  };
+
+  Map<String, dynamic> _sectionsPayload() {
+    final sections = <String, dynamic>{};
+    for (final section in kInspectionSections) {
+      final items = <String, dynamic>{};
+      for (var index = 0; index < section.items.length; index++) {
+        final status = statuses['${section.id}_$index'];
+        if (status != null) {
+          items[section.items[index]] = {'status': status.name};
+        }
+      }
+      if (items.isNotEmpty) sections[section.id] = items;
+    }
+    return sections;
+  }
 
   factory InspectionState.fromPersistableMap(Map<dynamic, dynamic> rawMap) {
     final map = _deepCastMap(rawMap);
@@ -370,6 +402,22 @@ class InspectionNotifier extends Notifier<InspectionState> {
     _persistDraft();
   }
 
+  void mergeGeneratedServices(List<ServiceLineItem> items) {
+    if (items.isEmpty) return;
+    final existing = state.serviceLines
+        .map((s) => s.name.trim().toLowerCase())
+        .toSet();
+    final lines = List<ServiceLineItem>.from(state.serviceLines);
+    for (final item in items) {
+      final name = item.name.trim();
+      if (name.isEmpty || existing.contains(name.toLowerCase())) continue;
+      lines.add(item);
+      existing.add(name.toLowerCase());
+    }
+    state = state.copyWith(serviceLines: lines);
+    _persistDraft();
+  }
+
   void addParts(List<String> names) {
     final existing = state.partLines.map((p) => p.name).toSet();
     final lines = List<PartLineItem>.from(state.partLines);
@@ -469,7 +517,28 @@ class InspectionNotifier extends Notifier<InspectionState> {
     final id = await IdGenerator.nextId('INS');
 
     final payload = state.toPersistableMap();
+    final hasJobCard = state.jobCardId.trim().isNotEmpty;
     await local.saveInspection(id, payload);
+
+    try {
+      final live = await ref
+          .read(advisorRemoteDataSourceProvider)
+          .createInspection(state.toLiveRequestMap());
+      await uploadInspectionMedia(live.id.isNotEmpty ? live.id : id);
+      await local.deleteDraft();
+      Hive.box<dynamic>('inspections').delete('intake_booking_id');
+      ref.read(advisorRefreshProvider.notifier).state++;
+      ref.read(advisorWorkItemsRefreshProvider.notifier).state++;
+      return const Success(null);
+    } catch (e) {
+      if (hasJobCard) {
+        return Failure(
+          UnknownException(
+            'Inspection could not be saved to the Job Card. Please retry. $e',
+          ),
+        );
+      }
+    }
 
     final operation = SyncOperation(
       id: id,
@@ -482,11 +551,19 @@ class InspectionNotifier extends Notifier<InspectionState> {
     await queue.enqueue(operation);
 
     await uploadInspectionMedia(id);
-    await ref.read(syncEngineProvider).syncAll();
+    final syncEngine = ref.read(syncEngineProvider);
+    await syncEngine.syncAll();
+    if (syncEngine.status == SyncStatus.failure ||
+        syncEngine.status == SyncStatus.conflict) {
+      return const Failure(
+        UnknownException(
+          'Inspection could not be uploaded. It was saved and will retry.',
+        ),
+      );
+    }
 
     await local.deleteDraft();
     Hive.box<dynamic>('inspections').delete('intake_booking_id');
-    state = const InspectionState();
 
     return const Success(null);
   }

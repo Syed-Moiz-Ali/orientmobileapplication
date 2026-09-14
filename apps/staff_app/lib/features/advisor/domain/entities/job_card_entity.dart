@@ -2,6 +2,7 @@ import 'package:shared_core/shared_core.dart';
 
 class JobCardEntity {
   final String id;
+  final int dbId;
   final String customerName;
   final String vehicleInfo;
   final String time;
@@ -12,6 +13,7 @@ class JobCardEntity {
 
   const JobCardEntity({
     required this.id,
+    this.dbId = 0,
     required this.customerName,
     required this.vehicleInfo,
     required this.time,
@@ -23,6 +25,7 @@ class JobCardEntity {
 
   JobCardEntity copyWith({
     String? id,
+    int? dbId,
     String? customerName,
     String? vehicleInfo,
     String? time,
@@ -33,6 +36,7 @@ class JobCardEntity {
   }) {
     return JobCardEntity(
       id: id ?? this.id,
+      dbId: dbId ?? this.dbId,
       customerName: customerName ?? this.customerName,
       vehicleInfo: vehicleInfo ?? this.vehicleInfo,
       time: time ?? this.time,

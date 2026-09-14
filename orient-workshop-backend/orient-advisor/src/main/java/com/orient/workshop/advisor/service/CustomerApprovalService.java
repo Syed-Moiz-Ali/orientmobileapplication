@@ -130,7 +130,7 @@ public class CustomerApprovalService {
             if (ro != null && ro.getJobCardId() != null) {
                 JobCard card = jobCardMapper.selectById(ro.getJobCardId());
                 if (card != null && !"awaitingSupervisor".equals(card.getStatus())) {
-                    card.setStatus("inProgress");
+                    card.setStatus("approved");
                     jobCardMapper.updateById(card);
                 }
             }

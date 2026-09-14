@@ -215,9 +215,14 @@ class DioSyncHandler extends SyncHandler {
             'technician': payload['technician'],
         };
       case 'vehicle':
-        // Customer app vehicle payload already matches AddVehicleRequest
-        // (brand/model/plateNumber/vin/color/year/mileage/lastService/nextDue).
-        return payload;
+        // Customer app vehicle payload matches AddVehicleRequest.
+        // Ensure healthScore is within [0, 100].
+        final p = Map<String, dynamic>.from(payload);
+        final rawHealth = p['healthScore'];
+        if (rawHealth is int && (rawHealth < 0 || rawHealth > 100)) {
+          p['healthScore'] = 100;
+        }
+        return p;
       case 'booking':
         // CreateBookingRequest: vehicleId, vehicleName, plateNumber,
         // serviceType, bookingDate, bookingTime, notes.

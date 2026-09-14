@@ -33,10 +33,19 @@ public class VehicleService {
     public VehicleResponse addVehicle(JwtUserPrincipal principal, AddVehicleRequest req) {
         Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
 
+        Long branchId = principal.getBranchId() != null
+                ? principal.getBranchId()
+                : (customer.getBranchId() != null ? customer.getBranchId() : 1L);
+
+        int health = req.getHealthScore();
+        if (health < 0 || health > 100) {
+            health = 100;
+        }
+
         Vehicle vehicle = Vehicle.builder()
                 .ref(com.orient.workshop.common.util.IdGenerator.shortRef("VEH"))
                 .customerId(customer.getId())
-                .branchId(principal.getBranchId())
+                .branchId(branchId)
                 .make(req.getBrand())
                 .model(req.getModel())
                 .plateNumber(req.getPlateNumber())
@@ -46,7 +55,7 @@ public class VehicleService {
                 .mileage(req.getMileage())
                 .lastService(req.getLastService())
                 .nextDue(req.getNextDue())
-                .healthScore(req.getHealthScore())
+                .healthScore(health)
                 .build();
         vehicleMapper.insert(vehicle);
 
@@ -69,7 +78,9 @@ public class VehicleService {
         vehicle.setMileage(req.getMileage());
         vehicle.setLastService(req.getLastService());
         vehicle.setNextDue(req.getNextDue());
-        vehicle.setHealthScore(req.getHealthScore());
+        if (req.getHealthScore() >= 0 && req.getHealthScore() <= 100) {
+            vehicle.setHealthScore(req.getHealthScore());
+        }
         vehicleMapper.updateById(vehicle);
 
         return toResponse(vehicle);
