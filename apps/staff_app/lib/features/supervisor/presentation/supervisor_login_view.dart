@@ -69,7 +69,12 @@ class _SupervisorLoginViewState extends ConsumerState<SupervisorLoginView> {
   Widget build(BuildContext context) {
     return AuthShell(
       title: 'Supervisor access',
-      subtitle: 'Sign in with your workshop account.',
+      subtitle:
+          'Sign in to manage bookings, assignments, QC, and workshop operations.',
+      appName: 'Orient Supervisor Console',
+      intendedUsers: 'For workshop supervisors',
+      appPurpose:
+          'Review incoming bookings, assign advisors and technicians, monitor jobs, and complete quality checks.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

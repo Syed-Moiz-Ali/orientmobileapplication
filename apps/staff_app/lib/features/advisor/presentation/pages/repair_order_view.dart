@@ -168,6 +168,14 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
 
   String _getVal(String key) => _customerData?[key]?.toString() ?? '';
 
+  String get _vehicleTitle {
+    final info = _getVal('vehicleInfo').trim();
+    if (info.isNotEmpty) return info;
+    return '${_getVal('make')} ${_getVal('model')}'.trim();
+  }
+
+  String get _plateNumber => _getVal('registrationNumber').trim();
+
   void _mergeJobCardDetails(JobCardDetailResponse detail) {
     final current = Map<String, dynamic>.from(_customerData ?? const {});
     void put(String key, String value) {
@@ -181,6 +189,9 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
     put('vin', detail.vin);
     put('make', detail.make);
     put('model', detail.model);
+    put('modelYear', detail.modelYear);
+    put('vehicleColor', detail.vehicleColor);
+    put('mileage', detail.mileage);
     put('vehicleInfo', detail.vehicleInfo);
     _customerData = current;
   }
@@ -294,6 +305,7 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
             child: Column(
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
@@ -313,7 +325,12 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                             ),
                           ),
                           Text(
-                            _getVal('phoneNumber'),
+                            [
+                              _getVal('phoneNumber'),
+                              _getVal('email'),
+                            ].where((v) => v.trim().isNotEmpty).join('  |  '),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 11, color: IC.text2),
                           ),
                         ],
@@ -329,9 +346,7 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            _getVal('registrationNumber').isEmpty
-                                ? '${_getVal('make')} ${_getVal('model')}'
-                                : _getVal('registrationNumber'),
+                            _vehicleTitle.isEmpty ? '--' : _vehicleTitle,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
@@ -339,7 +354,12 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                             ),
                           ),
                           Text(
-                            _getVal('vin'),
+                            [
+                              if (_plateNumber.isNotEmpty) 'Plate $_plateNumber',
+                              if (_getVal('vin').isNotEmpty) 'VIN ${_getVal('vin')}',
+                            ].join('  |  '),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 11, color: IC.text2),
                           ),
                         ],
@@ -352,6 +372,19 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
                 SizedBox(height: 10),
                 Row(
                   children: [
+                    Expanded(
+                      child: Text(
+                        [
+                          if (_getVal('modelYear').isNotEmpty) 'Year ${_getVal('modelYear')}',
+                          if (_getVal('vehicleColor').isNotEmpty) _getVal('vehicleColor'),
+                          if (_getVal('mileage').isNotEmpty) '${_getVal('mileage')} km',
+                        ].where((v) => v.trim().isNotEmpty).join('  |  '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 11, color: IC.text2),
+                      ),
+                    ),
+                    SizedBox(width: 8),
                     Text(
                       'Service Advisor',
                       style: TextStyle(fontSize: 11, color: IC.text3),

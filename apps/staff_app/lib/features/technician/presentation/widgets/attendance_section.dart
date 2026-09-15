@@ -20,39 +20,30 @@ class AttendanceSection extends ConsumerWidget {
       icon: Icons.access_time_rounded,
       child: Column(
         children: [
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: AppDimensions.s10,
             children: [
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppDimensions.s12,
-                  vertical: AppDimensions.s6,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: AppDimensions.s12, vertical: AppDimensions.s6),
                 decoration: BoxDecoration(
                   color: status.bgColor,
                   borderRadius: BorderRadius.circular(AppDimensions.r20),
-                  border: Border.all(
-                    color: status.color.withValues(alpha: 0.3),
-                  ),
+                  border: Border.all(color: status.color.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
                     Container(
                       width: 7,
                       height: 7,
-                      decoration: BoxDecoration(
-                        color: status.color,
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: BoxDecoration(color: status.color, shape: BoxShape.circle),
                     ),
                     SizedBox(width: AppDimensions.s6),
-                    Text(
-                      status.label,
-                      style: AppTextStyles.bodyStrong(color: status.color),
-                    ),
+                    Text(status.label, style: AppTextStyles.bodyStrong(color: status.color)),
                   ],
                 ),
               ),
-              const Spacer(),
               if (status == AttendanceStatus.notPunchedIn)
                 _AttBtn(
                   label: 'Punch In',
@@ -84,51 +75,25 @@ class AttendanceSection extends ConsumerWidget {
                 ),
               if (status == AttendanceStatus.punchedOut)
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppDimensions.s12,
-                    vertical: AppDimensions.s6,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: AppDimensions.s12, vertical: AppDimensions.s6),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceAlt,
                     borderRadius: BorderRadius.circular(AppDimensions.r8),
                   ),
-                  child: Text(
-                    'Shift Ended',
-                    style: AppTextStyles.bodyStrong(color: AppColors.text3),
-                  ),
+                  child: Text('Shift Ended', style: AppTextStyles.bodyStrong(color: AppColors.text3)),
                 ),
             ],
           ),
           SizedBox(height: AppDimensions.s16),
           Row(
             children: [
-              _AttCell(
-                label: 'Punch In',
-                value: s.punchIn,
-                icon: Icons.login_rounded,
-                color: AppColors.success,
-              ),
+              _AttCell(label: 'Punch In', value: s.punchIn, icon: Icons.login_rounded, color: AppColors.success),
               _vDivider(),
-              _AttCell(
-                label: 'Punch Out',
-                value: s.punchOut,
-                icon: Icons.logout_rounded,
-                color: AppColors.danger,
-              ),
+              _AttCell(label: 'Punch Out', value: s.punchOut, icon: Icons.logout_rounded, color: AppColors.danger),
               _vDivider(),
-              _AttCell(
-                label: 'Break',
-                value: s.breakTime,
-                icon: Icons.coffee_rounded,
-                color: AppColors.warning,
-              ),
+              _AttCell(label: 'Break', value: s.breakTime, icon: Icons.coffee_rounded, color: AppColors.warning),
               _vDivider(),
-              _AttCell(
-                label: 'Work Hrs',
-                value: s.workHours,
-                icon: Icons.timer_rounded,
-                color: AppColors.accent,
-              ),
+              _AttCell(label: 'Work Hrs', value: s.workHours, icon: Icons.timer_rounded, color: AppColors.accent),
             ],
           ),
         ],
@@ -149,22 +114,14 @@ class _AttBtn extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  const _AttBtn({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
+  const _AttBtn({required this.label, required this.icon, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppDimensions.s12,
-          vertical: AppDimensions.s8,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: AppDimensions.s12, vertical: AppDimensions.s8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(AppDimensions.r10),
@@ -186,12 +143,7 @@ class _AttCell extends StatelessWidget {
   final String label, value;
   final IconData icon;
   final Color color;
-  const _AttCell({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
+  const _AttCell({required this.label, required this.value, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -200,14 +152,8 @@ class _AttCell extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 16),
           SizedBox(height: AppDimensions.s4),
-          Text(
-            value,
-            style: AppTextStyles.label(color: AppColors.textPrimary),
-          ),
-          Text(
-            label,
-            style: AppTextStyles.bodySmall(color: AppColors.text3),
-          ),
+          Text(value, style: AppTextStyles.label(color: AppColors.textPrimary)),
+          Text(label, style: AppTextStyles.bodySmall(color: AppColors.text3)),
         ],
       ),
     );

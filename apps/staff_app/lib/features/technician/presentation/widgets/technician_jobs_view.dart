@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:go_router/go_router.dart';
+import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
-import 'package:staff_app/features/technician/presentation/widgets/job_detail_sheet.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_metric_card.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_section_header.dart';
 
 class TechnicianJobsView extends ConsumerWidget {
   const TechnicianJobsView({super.key});
@@ -20,55 +23,72 @@ class TechnicianJobsView extends ConsumerWidget {
       onRefresh: notifier.refresh,
       child: AppResponsivePage(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          context.pagePadding.left,
-          18,
-          context.pagePadding.right,
-          40,
-        ),
+        padding: EdgeInsets.fromLTRB(context.pagePadding.left, 18, context.pagePadding.right, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _JobsHeader(
-              total: notifier.totalJobs,
-              inProgress: notifier.inProgressJobs,
-              completed: notifier.completedJobs,
-              delayed: notifier.delayedJobs,
+            TechnicianSectionHeader(
+              eyebrow: 'WORK ORDERS',
+              title: 'Jobs for this shift',
+              subtitle: 'Prioritize vehicles, track progress, and move work forward.',
             ),
             const SizedBox(height: 18),
-            TextField(
-              onChanged: notifier.updateSearch,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: 'Search job, vehicle or plate',
-                prefixIcon: const Icon(Icons.search_rounded),
-                suffixIcon: state.searchQuery.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Clear search',
-                        onPressed: () => notifier.updateSearch(''),
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 42,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: notifier.filterOptions.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final filter = notifier.filterOptions[index];
-                  return ChoiceChip(
-                    label: Text(filter),
-                    selected: state.selectedFilter == filter,
-                    showCheckmark: false,
-                    onSelected: (_) => notifier.updateFilter(filter),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final colors = Theme.of(context).colorScheme;
+                final cards = [
+                  TechnicianMetricCard(
+                    value: '${notifier.totalJobs}',
+                    label: 'Assigned',
+                    icon: Icons.assignment_outlined,
+                    color: colors.primary,
+                    compact: true,
+                  ),
+                  TechnicianMetricCard(
+                    value: '${notifier.inProgressJobs}',
+                    label: 'Active',
+                    icon: Icons.play_circle_outline_rounded,
+                    color: colors.secondary,
+                    compact: true,
+                  ),
+                  TechnicianMetricCard(
+                    value: '${notifier.completedJobs}',
+                    label: 'Done',
+                    icon: Icons.task_alt_rounded,
+                    color: const Color(0xFF0F9D73),
+                    compact: true,
+                  ),
+                  TechnicianMetricCard(
+                    value: '${notifier.delayedJobs}',
+                    label: 'Delayed',
+                    icon: Icons.schedule_rounded,
+                    color: colors.error,
+                    compact: true,
+                  ),
+                ];
+                if (constraints.maxWidth >= 520) {
+                  return Row(
+                    children: [
+                      for (var i = 0; i < cards.length; i++) ...[
+                        Expanded(child: cards[i]),
+                        if (i != cards.length - 1) const SizedBox(width: 10),
+                      ],
+                    ],
                   );
-                },
-              ),
+                }
+                return GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 2.45,
+                  children: cards,
+                );
+              },
             ),
+            const SizedBox(height: 18),
+            _JobsToolbar(state: state, notifier: notifier),
             const SizedBox(height: 20),
             if (state.dashboardError.isNotEmpty) ...[
               _SavedDataNotice(message: state.dashboardError),
@@ -76,9 +96,7 @@ class TechnicianJobsView extends ConsumerWidget {
             ],
             if (jobs.isEmpty)
               _JobsEmpty(
-                filtered:
-                    state.searchQuery.isNotEmpty ||
-                    state.selectedFilter != 'All Status',
+                filtered: state.searchQuery.isNotEmpty || state.selectedFilter != 'All Status',
                 onReset: () {
                   notifier.updateSearch('');
                   notifier.updateFilter('All Status');
@@ -91,6 +109,20 @@ class TechnicianJobsView extends ConsumerWidget {
                   child: _JobQueueCard(
                     job: job,
                     onTap: () => _openJob(context, ref, job),
+                    onStatusChanged: (newStatus) {
+                      HapticFeedback.selectionClick();
+                      notifier.updateJobStatus(job, newStatus);
+                    },
+                    onTaskAction: () {
+                      final running = job.tasks.where((t) => t.status == TaskStatus.inProgress).firstOrNull;
+                      final pending = job.tasks.where((t) => t.status == TaskStatus.pending).firstOrNull;
+                      HapticFeedback.mediumImpact();
+                      if (running != null) {
+                        notifier.completeTask(job, running);
+                      } else if (pending != null) {
+                        notifier.startTask(job, pending);
+                      }
+                    },
                   ),
                 ),
               ),
@@ -103,175 +135,122 @@ class TechnicianJobsView extends ConsumerWidget {
   void _openJob(BuildContext context, WidgetRef ref, TechnicianJobEntity job) {
     HapticFeedback.selectionClick();
     ref.read(technicianDashboardProvider.notifier).openJob(job);
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => JobDetailSheet(job: job),
-    ).whenComplete(
-      () => ref.read(technicianDashboardProvider.notifier).closeJob(),
-    );
+    context
+        .push(AppRoutes.technicianJobDetail, extra: job)
+        .whenComplete(() => ref.read(technicianDashboardProvider.notifier).closeJob());
   }
 }
 
-class _JobsHeader extends StatelessWidget {
-  final int total;
-  final int inProgress;
-  final int completed;
-  final int delayed;
+class _JobsToolbar extends StatelessWidget {
+  final TechnicianState state;
+  final TechnicianNotifier notifier;
 
-  const _JobsHeader({
-    required this.total,
-    required this.inProgress,
-    required this.completed,
-    required this.delayed,
-  });
+  const _JobsToolbar({required this.state, required this.notifier});
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'MY WORK QUEUE',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: colors.primary,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1,
+        TextField(
+          onChanged: notifier.updateSearch,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: 'Search job, vehicle or plate',
+            prefixIcon: const Icon(Icons.search_rounded),
+            suffixIcon: state.searchQuery.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Clear search',
+                    onPressed: () => notifier.updateSearch(''),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Jobs for this shift',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Open a job to update tasks, notes, parts and status.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
-        ),
-        const SizedBox(height: 18),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 520;
-            final cards = [
-              _QueueMetric(
-                value: '$total',
-                label: 'Assigned',
-                icon: Icons.assignment_outlined,
-                color: colors.primary,
-              ),
-              _QueueMetric(
-                value: '$inProgress',
-                label: 'Active',
-                icon: Icons.play_circle_outline_rounded,
-                color: colors.secondary,
-              ),
-              _QueueMetric(
-                value: '$completed',
-                label: 'Done',
-                icon: Icons.task_alt_rounded,
-                color: const Color(0xFF0F9D73),
-              ),
-              _QueueMetric(
-                value: '$delayed',
-                label: 'Delayed',
-                icon: Icons.schedule_rounded,
-                color: colors.error,
-              ),
-            ];
-            if (!compact) {
-              return Row(
-                children: [
-                  for (var i = 0; i < cards.length; i++) ...[
-                    Expanded(child: cards[i]),
-                    if (i != cards.length - 1) const SizedBox(width: 10),
-                  ],
-                ],
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: notifier.filterOptions.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final filter = notifier.filterOptions[index];
+              final selected = state.selectedFilter == filter;
+              return _JobFilterPill(
+                label: filter,
+                selected: selected,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  notifier.updateFilter(filter);
+                },
               );
-            }
-            return GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 2.45,
-              children: cards,
-            );
-          },
+            },
+          ),
         ),
       ],
     );
   }
 }
 
-class _QueueMetric extends StatelessWidget {
-  final String value;
+class _JobFilterPill extends StatelessWidget {
   final String label;
-  final IconData icon;
-  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
 
-  const _QueueMetric({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
+  const _JobFilterPill({required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
+    final textTheme = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: 'Filter jobs by $label',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Ink(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(11),
+              color: selected ? colors.primary : colors.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: selected ? colors.primary : colors.outlineVariant),
             ),
-            child: Icon(icon, color: color, size: 19),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w900,
-                  ),
+            child: Center(
+              child: Text(
+                label,
+                style: textTheme.labelMedium?.copyWith(
+                  color: selected ? colors.onPrimary : colors.onSurfaceVariant,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 ),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final TechJobStatus status;
+
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(color: status.color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(99)),
+      child: Text(
+        status.label,
+        style: theme.textTheme.labelSmall?.copyWith(color: status.color, fontWeight: FontWeight.w900),
       ),
     );
   }
@@ -280,153 +259,208 @@ class _QueueMetric extends StatelessWidget {
 class _JobQueueCard extends StatelessWidget {
   final TechnicianJobEntity job;
   final VoidCallback onTap;
+  final ValueChanged<TechJobStatus> onStatusChanged;
+  final VoidCallback onTaskAction;
 
-  const _JobQueueCard({required this.job, required this.onTap});
+  const _JobQueueCard({
+    required this.job,
+    required this.onTap,
+    required this.onStatusChanged,
+    required this.onTaskAction,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final done = job.completedTasks;
     final total = job.tasks.length;
+
+    final running = job.tasks.where((t) => t.status == TaskStatus.inProgress).firstOrNull;
+    final pending = job.tasks.where((t) => t.status == TaskStatus.pending).firstOrNull;
+    final nextTask = running ?? pending;
+
     return Semantics(
       button: true,
-      label:
-          '${job.jobCardNo}, ${job.vehicleBrand} ${job.vehicleModel}, ${job.status.label}',
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Ink(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: colors.outlineVariant),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: job.status.color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(15),
+      label: '${job.jobCardNo}, ${job.vehicleBrand} ${job.vehicleModel}, ${job.status.label}',
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border(left: BorderSide(color: job.status.color, width: 4)),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        job.jobCardNo,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
                     ),
-                    child: Icon(
-                      Icons.car_repair_outlined,
-                      color: job.status.color,
+                    Text(job.dateOfWork, style: theme.textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant)),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<TechJobStatus>(
+                      tooltip: 'Update job status',
+                      onSelected: onStatusChanged,
+                      padding: EdgeInsets.zero,
+                      icon: Icon(Icons.more_horiz_rounded, color: colors.onSurfaceVariant),
+                      itemBuilder: (context) =>
+                          TechJobStatus.values.map((s) => PopupMenuItem(value: s, child: Text(s.label))).toList(),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: job.status.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(Icons.car_repair_rounded, color: job.status.color, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${job.vehicleBrand} ${job.vehicleModel}'.trim(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(height: 4),
+                          if (job.plateNumber.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: colors.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: colors.outlineVariant),
+                              ),
                               child: Text(
-                                '${job.vehicleBrand} ${job.vehicleModel}'
-                                    .trim(),
+                                job.plateNumber,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.w900),
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: colors.onSurface,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.4,
+                                ),
                               ),
+                            )
+                          else
+                            Text(
+                              'Plate unavailable',
+                              style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
                             ),
-                            const SizedBox(width: 8),
-                            _JobStatus(status: job.status),
+                          if (job.customerName.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              job.customerPhone.isEmpty
+                                  ? job.customerName
+                                  : '${job.customerName} · ${job.customerPhone}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant),
+                            ),
                           ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _StatusBadge(status: job.status),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.checklist_rounded, size: 16, color: colors.primary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        total == 0 ? 'No tasks recorded' : '$done of $total tasks finished',
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w700,
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          '${job.jobCardNo} • ${job.plateNumber.isEmpty ? 'No plate' : job.plateNumber}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: colors.onSurfaceVariant),
+                      ),
+                    ),
+                    Text(
+                      '${(job.progressPercent * 100).toInt()}%',
+                      style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: job.progressPercent,
+                    minHeight: 7,
+                    backgroundColor: colors.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation(job.status.color),
+                  ),
+                ),
+                if (nextTask != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.only(top: 10),
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: colors.outlineVariant)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          running != null ? Icons.play_circle_filled_rounded : Icons.schedule_rounded,
+                          size: 16,
+                          color: running != null ? colors.primary : colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            nextTask.description,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton.icon(
+                          onPressed: onTaskAction,
+                          icon: Icon(running != null ? Icons.check_rounded : Icons.play_arrow_rounded, size: 14),
+                          label: Text(running != null ? 'Done' : 'Start'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: running != null ? const Color(0xFF0F9D73) : colors.primary,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 40),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.chevron_right_rounded, color: colors.outline),
                 ],
-              ),
-              const SizedBox(height: 15),
-              Row(
-                children: [
-                  Icon(
-                    Icons.checklist_rounded,
-                    size: 17,
-                    color: colors.primary,
-                  ),
-                  const SizedBox(width: 7),
-                  Expanded(
-                    child: Text(
-                      total == 0
-                          ? 'No tasks added'
-                          : '$done of $total tasks complete',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: colors.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Text(
-                      job.startTime.isEmpty ? job.dateOfWork : job.startTime,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.right,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(
-                  value: job.progressPercent,
-                  minHeight: 7,
-                  backgroundColor: colors.surfaceContainerHighest,
-                  color: job.status.color,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _JobStatus extends StatelessWidget {
-  final TechJobStatus status;
-
-  const _JobStatus({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: status.color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Text(
-        status.label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: status.color,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
         ),
       ),
     );
@@ -466,10 +500,7 @@ class _SavedDataNotice extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.tertiaryContainer,
-        borderRadius: BorderRadius.circular(14),
-      ),
+      decoration: BoxDecoration(color: colors.tertiaryContainer, borderRadius: BorderRadius.circular(14)),
       child: Row(
         children: [
           Icon(Icons.cloud_off_rounded, color: colors.onTertiaryContainer),
@@ -477,10 +508,9 @@ class _SavedDataNotice extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colors.onTertiaryContainer,
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.onTertiaryContainer, fontWeight: FontWeight.w600),
             ),
           ),
         ],

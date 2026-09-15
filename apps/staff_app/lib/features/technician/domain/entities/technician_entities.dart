@@ -49,9 +49,20 @@ extension AttendanceStatusX on AttendanceStatus {
   }
 }
 
-enum AssignedJobStatus { inProgress, pending, waitingParts, completed }
+enum AssignedJobStatus { inProgress, pending, waitingParts, completed, qcReview }
 
 extension AssignedJobStatusX on AssignedJobStatus {
+  static AssignedJobStatus parse(String raw) {
+    final status = raw.trim().replaceAll('_', '').toLowerCase();
+    return switch (status) {
+      'inprogress' || 'approved' || 'workassigned' => AssignedJobStatus.inProgress,
+      'waitingparts' => AssignedJobStatus.waitingParts,
+      'awaitingsupervisor' || 'qualitycheck' => AssignedJobStatus.qcReview,
+      'completed' || 'qualitycheckpassed' => AssignedJobStatus.completed,
+      _ => AssignedJobStatus.pending,
+    };
+  }
+
   String get label {
     switch (this) {
       case AssignedJobStatus.inProgress:
@@ -62,6 +73,8 @@ extension AssignedJobStatusX on AssignedJobStatus {
         return 'Waiting Parts';
       case AssignedJobStatus.completed:
         return 'Completed';
+      case AssignedJobStatus.qcReview:
+        return 'QC Review';
     }
   }
 
@@ -75,6 +88,8 @@ extension AssignedJobStatusX on AssignedJobStatus {
         return AppColors.warning;
       case AssignedJobStatus.completed:
         return AppColors.success;
+      case AssignedJobStatus.qcReview:
+        return AppColors.accent;
     }
   }
 
@@ -88,6 +103,8 @@ extension AssignedJobStatusX on AssignedJobStatus {
         return AppColors.warningBg;
       case AssignedJobStatus.completed:
         return AppColors.successBg;
+      case AssignedJobStatus.qcReview:
+        return AppColors.primaryBg;
     }
   }
 
@@ -101,19 +118,34 @@ extension AssignedJobStatusX on AssignedJobStatus {
         return 'On Hold';
       case AssignedJobStatus.completed:
         return 'Complete';
+      case AssignedJobStatus.qcReview:
+        return 'In QC';
     }
   }
 }
 
-enum TechJobStatus { inProgress, completed, delayed, pending }
+enum TechJobStatus { inProgress, completed, delayed, pending, qcReview }
 
 extension TechJobStatusX on TechJobStatus {
+  static TechJobStatus parse(String raw) {
+    final status = raw.trim().replaceAll('_', '').toLowerCase();
+    return switch (status) {
+      'inprogress' || 'approved' || 'workassigned' => TechJobStatus.inProgress,
+      'awaitingsupervisor' || 'qualitycheck' => TechJobStatus.qcReview,
+      'completed' || 'qualitycheckpassed' => TechJobStatus.completed,
+      'waitingparts' || 'paused' || 'delayed' => TechJobStatus.delayed,
+      _ => TechJobStatus.pending,
+    };
+  }
+
   String get label {
     switch (this) {
       case TechJobStatus.inProgress:
         return 'In Progress';
       case TechJobStatus.completed:
         return 'Completed';
+      case TechJobStatus.qcReview:
+        return 'QC Review';
       case TechJobStatus.delayed:
         return 'Delayed';
       case TechJobStatus.pending:
@@ -127,6 +159,8 @@ extension TechJobStatusX on TechJobStatus {
         return AppColors.primary;
       case TechJobStatus.completed:
         return AppColors.success;
+      case TechJobStatus.qcReview:
+        return AppColors.accent;
       case TechJobStatus.delayed:
         return AppColors.danger;
       case TechJobStatus.pending:
@@ -140,6 +174,8 @@ extension TechJobStatusX on TechJobStatus {
         return AppColors.primaryBg;
       case TechJobStatus.completed:
         return AppColors.successBg;
+      case TechJobStatus.qcReview:
+        return AppColors.primaryBg;
       case TechJobStatus.delayed:
         return AppColors.dangerBg;
       case TechJobStatus.pending:
@@ -168,23 +204,22 @@ class TechnicianProfileEntity {
   });
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'empId': empId,
-        'role': role,
-        'branch': branch,
-        'shift': shift,
-        'avatarInitials': avatarInitials,
-      };
+    'name': name,
+    'empId': empId,
+    'role': role,
+    'branch': branch,
+    'shift': shift,
+    'avatarInitials': avatarInitials,
+  };
 
-  factory TechnicianProfileEntity.fromJson(Map<String, dynamic> json) =>
-      TechnicianProfileEntity(
-        name: json['name'] as String? ?? '',
-        empId: json['empId'] as String? ?? '',
-        role: json['role'] as String? ?? 'Technician',
-        branch: json['branch'] as String? ?? '',
-        shift: json['shift'] as String? ?? '',
-        avatarInitials: json['avatarInitials'] as String? ?? 'T',
-      );
+  factory TechnicianProfileEntity.fromJson(Map<String, dynamic> json) => TechnicianProfileEntity(
+    name: json['name'] as String? ?? '',
+    empId: json['empId'] as String? ?? '',
+    role: json['role'] as String? ?? 'Technician',
+    branch: json['branch'] as String? ?? '',
+    shift: json['shift'] as String? ?? '',
+    avatarInitials: json['avatarInitials'] as String? ?? 'T',
+  );
 }
 
 class AttendanceSummaryEntity {
@@ -202,12 +237,7 @@ class AttendanceSummaryEntity {
 
   static const empty = AttendanceSummaryEntity();
 
-  AttendanceSummaryEntity copyWith({
-    String? punchIn,
-    String? punchOut,
-    String? breakTime,
-    String? workHours,
-  }) {
+  AttendanceSummaryEntity copyWith({String? punchIn, String? punchOut, String? breakTime, String? workHours}) {
     return AttendanceSummaryEntity(
       punchIn: punchIn ?? this.punchIn,
       punchOut: punchOut ?? this.punchOut,
@@ -247,7 +277,10 @@ class TechnicianStatsEntity {
 class AssignedJobEntity {
   final String id;
   final String customerName;
+  final String customerPhone;
+  final String customerEmail;
   final String vehicle;
+  final String plateNumber;
   final String service;
   final double amount;
   final AssignedJobStatus status;
@@ -255,7 +288,10 @@ class AssignedJobEntity {
   const AssignedJobEntity({
     required this.id,
     required this.customerName,
+    this.customerPhone = '',
+    this.customerEmail = '',
     required this.vehicle,
+    this.plateNumber = '',
     required this.service,
     required this.amount,
     required this.status,
@@ -265,7 +301,10 @@ class AssignedJobEntity {
     return AssignedJobEntity(
       id: id,
       customerName: customerName,
+      customerPhone: customerPhone,
+      customerEmail: customerEmail,
       vehicle: vehicle,
+      plateNumber: plateNumber,
       service: service,
       amount: amount,
       status: status ?? this.status,
@@ -280,6 +319,8 @@ class TechnicianJobEntity {
   final String vehicleBrand;
   final String vehicleModel;
   final String plateNumber;
+  final String customerName;
+  final String customerPhone;
   final TechJobStatus status;
   final List<WorkTaskEntity> tasks;
   final String notes;
@@ -291,16 +332,16 @@ class TechnicianJobEntity {
     required this.vehicleBrand,
     required this.vehicleModel,
     required this.plateNumber,
+    this.customerName = '',
+    this.customerPhone = '',
     this.status = TechJobStatus.pending,
     required this.tasks,
     this.notes = '',
   });
 
-  int get completedTasks =>
-      tasks.where((t) => t.status == TaskStatus.completed).length;
+  int get completedTasks => tasks.where((t) => t.status == TaskStatus.completed).length;
 
-  double get progressPercent =>
-      tasks.isEmpty ? 0.0 : completedTasks / tasks.length;
+  double get progressPercent => tasks.isEmpty ? 0.0 : completedTasks / tasks.length;
 
   TechnicianJobEntity copyWith({
     String? jobCardNo,
@@ -309,6 +350,8 @@ class TechnicianJobEntity {
     String? vehicleBrand,
     String? vehicleModel,
     String? plateNumber,
+    String? customerName,
+    String? customerPhone,
     TechJobStatus? status,
     List<WorkTaskEntity>? tasks,
     String? notes,
@@ -320,6 +363,8 @@ class TechnicianJobEntity {
       vehicleBrand: vehicleBrand ?? this.vehicleBrand,
       vehicleModel: vehicleModel ?? this.vehicleModel,
       plateNumber: plateNumber ?? this.plateNumber,
+      customerName: customerName ?? this.customerName,
+      customerPhone: customerPhone ?? this.customerPhone,
       status: status ?? this.status,
       tasks: tasks ?? this.tasks,
       notes: notes ?? this.notes,
@@ -334,15 +379,12 @@ class TechnicianJobEntity {
       vehicleBrand: (json['vehicleBrand'] as String?) ?? '',
       vehicleModel: (json['vehicleModel'] as String?) ?? '',
       plateNumber: (json['plateNumber'] as String?) ?? '',
-      status: TechJobStatus.values.firstWhere(
-        (e) => e.name == json['status'],
-        orElse: () => TechJobStatus.pending,
-      ),
+      customerName: (json['customerName'] as String?) ?? '',
+      customerPhone: (json['customerPhone'] as String?) ?? '',
+      status: TechJobStatusX.parse((json['status'] ?? '').toString()),
       tasks:
           (json['tasks'] as List<dynamic>?)
-              ?.map(
-                (t) => WorkTaskEntity.fromJson(Map<String, dynamic>.from(t)),
-              )
+              ?.map((t) => WorkTaskEntity.fromJson(Map<String, dynamic>.from(t)))
               .toList() ??
           [],
       notes: (json['notes'] as String?) ?? '',

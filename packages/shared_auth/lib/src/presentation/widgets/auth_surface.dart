@@ -8,6 +8,9 @@ class AuthShell extends StatelessWidget {
   final Widget? top;
   final String title;
   final String subtitle;
+  final String appName;
+  final String appPurpose;
+  final String intendedUsers;
   final Widget child;
   final Widget? footer;
 
@@ -16,6 +19,10 @@ class AuthShell extends StatelessWidget {
     this.top,
     required this.title,
     required this.subtitle,
+    this.appName = 'Orient Workshop',
+    this.appPurpose =
+        'Manage workshop bookings, job cards, approvals, and service updates.',
+    this.intendedUsers = 'Workshop users',
     required this.child,
     this.footer,
   });
@@ -42,6 +49,9 @@ class AuthShell extends StatelessWidget {
               final form = _AuthFormPane(
                 title: title,
                 subtitle: subtitle,
+                appName: appName,
+                appPurpose: appPurpose,
+                intendedUsers: intendedUsers,
                 top: top,
                 footer: footer,
                 showCompactBrand: !desktop,
@@ -134,6 +144,9 @@ class _AuthIdentityPanel extends StatelessWidget {
 class _AuthFormPane extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String appName;
+  final String appPurpose;
+  final String intendedUsers;
   final Widget? top;
   final Widget child;
   final Widget? footer;
@@ -142,6 +155,9 @@ class _AuthFormPane extends StatelessWidget {
   const _AuthFormPane({
     required this.title,
     required this.subtitle,
+    required this.appName,
+    required this.appPurpose,
+    required this.intendedUsers,
     required this.top,
     required this.child,
     required this.footer,
@@ -180,15 +196,12 @@ class _AuthFormPane extends StatelessWidget {
                   top!,
                   const SizedBox(height: AppDimensions.s20),
                 ],
-                Text(
-                  'SECURE WORKSHOP ACCESS',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.9,
-                  ),
+                _AppContextBanner(
+                  appName: appName,
+                  appPurpose: appPurpose,
+                  intendedUsers: intendedUsers,
                 ),
-                const SizedBox(height: AppDimensions.s8),
+                const SizedBox(height: AppDimensions.s20),
                 Text(
                   title,
                   style: theme.textTheme.headlineMedium?.copyWith(
@@ -213,6 +226,78 @@ class _AuthFormPane extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AppContextBanner extends StatelessWidget {
+  final String appName;
+  final String appPurpose;
+  final String intendedUsers;
+
+  const _AppContextBanner({
+    required this.appName,
+    required this.appPurpose,
+    required this.intendedUsers,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.s14),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: colors.primary,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            ),
+            child: Icon(Icons.apps_rounded, color: colors.onPrimary, size: 19),
+          ),
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  appName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s4),
+                Text(
+                  intendedUsers,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s6),
+                Text(
+                  appPurpose,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

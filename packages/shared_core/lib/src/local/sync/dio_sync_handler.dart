@@ -134,6 +134,10 @@ class DioSyncHandler extends SyncHandler {
     if (entityType == 'vehicle' && operation.changeType == ChangeType.update) {
       return 'PUT';
     }
+    if (entityType == 'technician_job' &&
+        operation.payload['status'] == 'completed') {
+      return 'POST';
+    }
     if (entityType == 'technician_job' ||
         entityType == 'work_item' ||
         entityType == 'assigned_job' ||
@@ -242,6 +246,25 @@ class DioSyncHandler extends SyncHandler {
           if (payload['notes'] != null) 'notes': payload['notes'],
         };
       case 'technician_job':
+        if (payload['status'] == 'completed') {
+          final tasks = (payload['tasks'] as List<dynamic>?)?.map((t) {
+            if (t is! Map) return <String, dynamic>{};
+            final m = Map<String, dynamic>.from(t);
+            return <String, dynamic>{
+              if (m['id'] != null) 'id': m['id'].toString(),
+              if (m['status'] != null) 'status': m['status'],
+              if (m['startTime'] != null) 'startTime': m['startTime'],
+              if (m['endTime'] != null) 'endTime': m['endTime'],
+            };
+          }).toList();
+          return <String, dynamic>{
+            'jobCardNo': op.entityId,
+            if (payload['empId'] != null) 'empId': payload['empId'],
+            'status': 'completed',
+            if (tasks != null) 'tasks': tasks,
+            if (payload['notes'] != null) 'notes': payload['notes'],
+          };
+        }
         // UpdateAssignedJobStatusRequest: empId, status
         return <String, dynamic>{
           if (payload['empId'] != null) 'empId': payload['empId'],
@@ -326,6 +349,9 @@ class DioSyncHandler extends SyncHandler {
           _ => ApiEndpoints.attendancePunchIn,
         };
       case 'technician_job':
+        if (op.payload['status'] == 'completed') {
+          return ApiEndpoints.jobComplete;
+        }
         return ApiEndpoints.technicianAssignedJobStatus(op.entityId);
       case 'assigned_job':
         return ApiEndpoints.technicianAssignedJobStatus(op.entityId);

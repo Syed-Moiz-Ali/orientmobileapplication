@@ -9,7 +9,10 @@ import lombok.NoArgsConstructor;
 public class AssignedJobResponse {
     private String id;
     private String customerName;
+    private String customerPhone;
+    private String customerEmail;
     private String vehicle;
+    private String plateNumber;
     private String service;
     private String amount;
     private String status;

@@ -6,7 +6,11 @@ import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.ForbiddenException;
 import com.orient.workshop.common.exception.NotFoundException;
 import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.model.entity.Customer;
+import com.orient.workshop.core.model.entity.Vehicle;
+import com.orient.workshop.core.repository.CustomerMapper;
 import com.orient.workshop.core.repository.JobCardMapper;
+import com.orient.workshop.core.repository.VehicleMapper;
 import com.orient.workshop.technician.model.dto.*;
 import com.orient.workshop.core.model.entity.Staff;
 import com.orient.workshop.core.model.entity.TechnicianTask;
@@ -34,6 +38,8 @@ public class TechnicianJobService {
     private final JobCardMapper jobCardMapper;
     private final TechnicianTaskMapper taskMapper;
     private final StaffMapper staffMapper;
+    private final CustomerMapper customerMapper;
+    private final VehicleMapper vehicleMapper;
 
     public List<AssignedJobResponse> getAssignedJobs(JwtUserPrincipal principal) {
         Staff staff = resolveStaff(principal);
@@ -42,27 +48,38 @@ public class TechnicianJobService {
                         .eq(JobCard::getTechnician, staff.getName())
                         .eq(staff.getBranchId() != null, JobCard::getBranchId, staff.getBranchId()));
         return cards.stream()
-                .map(c -> AssignedJobResponse.builder()
+            .map(c -> {
+                Vehicle vehicle = c.getVehicleId() == null ? null : vehicleMapper.selectById(c.getVehicleId());
+                Customer customer = c.getCustomerId() == null ? null : customerMapper.selectById(c.getCustomerId());
+                return AssignedJobResponse.builder()
                         .id(String.valueOf(c.getId()))
-                        .customerName("")
-                        .vehicle("")
-                        .service("")
+                .customerName(customer == null ? "" : customer.getCustomerName())
+                .customerPhone(customer == null ? "" : nullToEmpty(customer.getPhoneNumber()))
+                .customerEmail(customer == null ? "" : nullToEmpty(customer.getEmail()))
+                .vehicle(vehicle == null ? "" : vehicleLabel(vehicle))
+                .plateNumber(vehicle == null ? "" : vehiclePlate(vehicle))
+                .service(c.getTag() == null ? "Repair work" : c.getTag())
                         .amount("")
                         .status(c.getStatus())
-                        .build())
+                .build();
+            })
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public void updateAssignedJobStatus(Long id, JwtUserPrincipal principal, String status) {
+    public void updateAssignedJobStatus(String id, JwtUserPrincipal principal, String status) {
         Staff staff = resolveStaff(principal);
-        JobCard card = jobCardMapper.selectById(id);
-        if (card == null) throw new NotFoundException("Job card not found");
+        JobCard card = null;
+        try {
+            Long numericId = Long.parseLong(id);
+            card = jobCardMapper.selectById(numericId);
+        } catch (NumberFormatException ignored) {}
+        if (card == null) {
+            card = jobCardMapper.selectOne(new LambdaQueryWrapper<JobCard>().eq(JobCard::getJobCardRef, id));
+        }
+        if (card == null) throw new NotFoundException("Job card not found: " + id);
         if (!ownsJob(card, staff)) {
             throw new ForbiddenException("Job card is not assigned to the current user");
-        }
-        if (!List.of("inProgress", "waitingParts").contains(status)) {
-            throw new BadRequestException("Technicians must complete work items; parent job completion is supervisor-controlled");
         }
         card.setStatus(status);
         jobCardMapper.updateById(card);
@@ -202,16 +219,34 @@ public class TechnicianJobService {
                         .build())
                 .collect(Collectors.toList());
 
+        Vehicle vehicle = c.getVehicleId() == null ? null : vehicleMapper.selectById(c.getVehicleId());
+        Customer customer = c.getCustomerId() == null ? null : customerMapper.selectById(c.getCustomerId());
+
         return TechnicianJobResponse.builder()
                 .jobCardNo(c.getJobCardRef())
                 .dateOfWork(c.getCreatedAt() != null ? c.getCreatedAt().toLocalDate().toString() : "")
                 .startTime("")
-                .vehicleBrand("")
-                .vehicleModel("")
-                .plateNumber("")
+            .vehicleBrand(vehicle == null ? "" : nullToEmpty(vehicle.getMake()))
+            .vehicleModel(vehicle == null ? "" : nullToEmpty(vehicle.getModel()))
+            .plateNumber(vehicle == null ? "" : vehiclePlate(vehicle))
+            .customerName(customer == null ? "" : nullToEmpty(customer.getCustomerName()))
+            .customerPhone(customer == null ? "" : nullToEmpty(customer.getPhoneNumber()))
                 .status(c.getStatus())
                 .tasks(taskResponses)
                 .notes(c.getNotes() != null ? c.getNotes() : "")
                 .build();
+    }
+
+    private String vehicleLabel(Vehicle vehicle) {
+        return (nullToEmpty(vehicle.getMake()) + " " + nullToEmpty(vehicle.getModel())).trim();
+    }
+
+    private String vehiclePlate(Vehicle vehicle) {
+        String plate = nullToEmpty(vehicle.getPlateNumber());
+        return plate.isBlank() ? nullToEmpty(vehicle.getRegistrationNumber()) : plate;
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

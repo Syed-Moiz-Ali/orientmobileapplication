@@ -11,12 +11,19 @@ class LoginView extends ConsumerStatefulWidget {
   final VoidCallback onLoginSuccess;
   final VoidCallback? onForgotPassword;
   final bool allowRegistration;
+  final String appName;
+  final String appPurpose;
+  final String intendedUsers;
 
   const LoginView({
     super.key,
     required this.onLoginSuccess,
     this.onForgotPassword,
     this.allowRegistration = false,
+    this.appName = 'Orient Workshop',
+    this.appPurpose =
+        'Manage workshop bookings, job cards, approvals, and service updates.',
+    this.intendedUsers = 'Workshop users',
   });
 
   @override
@@ -93,6 +100,9 @@ class _LoginViewState extends ConsumerState<LoginView> {
     final notifier = ref.read(loginProvider.notifier);
 
     return AuthShell(
+      appName: widget.appName,
+      appPurpose: widget.appPurpose,
+      intendedUsers: widget.intendedUsers,
       title: state.isRegistering
           ? 'Create account'
           : _mode == _SignInMode.code

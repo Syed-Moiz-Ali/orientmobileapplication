@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_auth/shared_auth.dart';
@@ -7,7 +9,6 @@ import 'package:shared_core/shared_core.dart';
 /// registered below, otherwise ops would be dropped.
 const kSyncEntityTypes = [
   'inspection',
-  'job_complete',
   'work_assignment',
   'booking',
   'repair_order',
@@ -25,6 +26,7 @@ const kSyncEntityTypes = [
 
 final syncEngineProvider = Provider<SyncEngine>((ref) {
   final dio = ref.read(dioClientProvider);
+  _discardDeprecatedJobCompleteOps();
   final engine = SyncEngine(
     queue: ref.watch(syncQueueProvider),
     failedBox: Hive.box<SyncOperation>('sync_failed'),
@@ -35,6 +37,22 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   ref.onDispose(engine.dispose);
   return engine;
 });
+
+void _discardDeprecatedJobCompleteOps() {
+  for (final boxName in const ['sync_queue', 'sync_failed']) {
+    final box = Hive.box<SyncOperation>(boxName);
+    final staleKeys = box.keys.where((key) {
+      final op = box.get(key);
+      if (op == null) return false;
+      return op.entityType == 'job_complete' ||
+          (op.entityType == 'technician_job' &&
+              op.payload['status'] == 'completed');
+    }).toList();
+    for (final key in staleKeys) {
+      unawaited(box.delete(key));
+    }
+  }
+}
 
 /// Queue of media uploads that failed while offline (Hive box 'pending_media').
 final pendingMediaQueueProvider = Provider<MediaUploadQueue>((ref) {

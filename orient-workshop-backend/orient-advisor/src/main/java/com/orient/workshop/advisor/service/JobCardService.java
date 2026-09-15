@@ -305,7 +305,7 @@ public class JobCardService {
             .email(customer != null && customer.getEmail() != null ? customer.getEmail() : "")
             .customerGroup(customer != null && customer.getCustomerGroup() != null ? customer.getCustomerGroup() : "")
             .vehicleInfo(vehicleInfo)
-            .registrationNumber(vehicle != null && vehicle.getRegistrationNumber() != null ? vehicle.getRegistrationNumber() : "")
+            .registrationNumber(vehicle != null ? vehiclePlate(vehicle) : "")
             .vin(vehicle != null && vehicle.getVin() != null ? vehicle.getVin() : "")
             .make(vehicle != null && vehicle.getMake() != null ? vehicle.getMake() : "")
             .model(vehicle != null && vehicle.getModel() != null ? vehicle.getModel() : "")
@@ -337,5 +337,11 @@ public class JobCardService {
         String role = principal.getRole() != null ? principal.getRole().toLowerCase() : "";
         if ("owner".equals(role) || "crmdashboard".equals(role) || "admin".equals(role)) return null;
         return principal.getBranchId();
+    }
+
+    private String vehiclePlate(Vehicle vehicle) {
+        String plate = vehicle.getPlateNumber() != null ? vehicle.getPlateNumber().trim() : "";
+        if (!plate.isBlank()) return plate;
+        return vehicle.getRegistrationNumber() != null ? vehicle.getRegistrationNumber().trim() : "";
     }
 }

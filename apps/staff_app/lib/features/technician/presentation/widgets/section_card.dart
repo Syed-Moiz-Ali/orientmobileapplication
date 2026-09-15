@@ -6,42 +6,32 @@ class SectionCard extends StatelessWidget {
   final IconData icon;
   final Widget child;
 
-  const SectionCard({
-    super.key,
-    required this.title,
-    required this.icon,
-    required this.child,
-  });
+  const SectionCard({super.key, required this.title, required this.icon, required this.child});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppDimensions.s16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.r18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.outlineVariant),
         boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
+          BoxShadow(color: colors.shadow.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppDimensions.s16,
-              vertical: AppDimensions.s12,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: AppDimensions.s16, vertical: AppDimensions.s12),
             decoration: BoxDecoration(
-              color: AppColors.surfaceAlt,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AppDimensions.r18),
-              ),
+              color: colors.surfaceContainerLow,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.r18)),
             ),
             child: Row(
               children: [
@@ -49,7 +39,7 @@ class SectionCard extends StatelessWidget {
                   width: 4,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
+                    color: colors.primary,
                     borderRadius: BorderRadius.circular(AppDimensions.r2),
                   ),
                 ),
@@ -58,17 +48,15 @@ class SectionCard extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.12),
+                    color: colors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppDimensions.r8),
                   ),
-                  child: Icon(icon, color: AppColors.accent, size: 15),
+                  child: Icon(icon, color: colors.primary, size: 15),
                 ),
                 SizedBox(width: AppDimensions.s10),
                 Text(
                   title,
-                  style: AppTextStyles.subtitle(
-                    color: AppColors.textPrimary,
-                  ),
+                  style: textTheme.titleSmall?.copyWith(color: colors.onSurface, fontWeight: FontWeight.w800),
                 ),
               ],
             ),

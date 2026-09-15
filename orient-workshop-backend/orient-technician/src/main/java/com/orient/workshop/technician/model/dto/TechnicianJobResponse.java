@@ -15,6 +15,8 @@ public class TechnicianJobResponse {
     private String vehicleBrand;
     private String vehicleModel;
     private String plateNumber;
+    private String customerName;
+    private String customerPhone;
     private String status;
     private List<TaskResponse> tasks;
     private String notes;

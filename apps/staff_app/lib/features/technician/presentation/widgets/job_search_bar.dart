@@ -13,73 +13,37 @@ class JobSearchBar extends ConsumerWidget {
     final state = ref.watch(technicianDashboardProvider);
     final notifier = ref.read(technicianDashboardProvider.notifier);
 
+    void submit() {
+      notifier.searchJobCard();
+      if (ref.read(technicianDashboardProvider).selectedJob != null) {
+        onJobFound?.call();
+      }
+    }
+
     return Row(
       children: [
         Expanded(
           child: TextField(
             controller: notifier.jobCardController,
             onChanged: (_) => notifier.clearQuickJobError(),
-            style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+            onSubmitted: (_) => submit(),
+            textInputAction: TextInputAction.search,
+            style: Theme.of(context).textTheme.bodyMedium,
             decoration: InputDecoration(
-              hintText: 'Enter Job Card Number...',
-              hintStyle: AppTextStyles.bodyStrong(color: AppColors.text3),
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                color: AppColors.text3,
-                size: 18,
-              ),
-              filled: true,
-              fillColor: AppColors.bg,
-              contentPadding: EdgeInsets.symmetric(vertical: AppDimensions.s12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-                borderSide: BorderSide(color: AppColors.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-                borderSide: BorderSide(color: AppColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-                borderSide: BorderSide(color: AppColors.accent, width: 1.5),
-              ),
-              errorText: state.quickJobError.isNotEmpty
-                  ? state.quickJobError
-                  : null,
+              hintText: 'Enter job card number',
+              prefixIcon: const Icon(Icons.search_rounded),
+              errorText: state.quickJobError.isNotEmpty ? state.quickJobError : null,
             ),
           ),
         ),
         SizedBox(width: AppDimensions.s10),
-        GestureDetector(
-          onTap: () {
-            notifier.searchJobCard();
-            if (state.selectedJob != null) {
-              onJobFound?.call();
-            }
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppDimensions.s20,
-              vertical: AppDimensions.s14,
-            ),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.navy, AppColors.accent],
-              ),
-              borderRadius: BorderRadius.circular(AppDimensions.r12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.30),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Text(
-              'Go',
-              style: AppTextStyles.bodyStrong(color: Colors.white),
-            ),
+        FilledButton(
+          onPressed: submit,
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(64, 52),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
           ),
+          child: const Text('Find'),
         ),
       ],
     );

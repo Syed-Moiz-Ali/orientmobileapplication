@@ -74,6 +74,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.login,
         name: AppRoutes.login,
         builder: (context, state) => LoginView(
+          appName: 'Orient Owner App',
+          intendedUsers: 'For workshop owners and admins',
+          appPurpose:
+              'Monitor branches, job cards, staff, revenue, approvals, inventory, and workshop performance.',
           onLoginSuccess: () => context.go(AppRoutes.ownerDashboard),
           onForgotPassword: () => context.push(AppRoutes.forgotPassword),
         ),

@@ -1,867 +1,208 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/models/profile_data.dart';
+import 'package:staff_app/core/router/app_router.dart';
+import 'package:staff_app/features/common/presentation/profile_screen.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
-import 'package:staff_app/features/technician/presentation/widgets/technician_header_widget.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_today_view.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_jobs_view.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_productivity_view.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_notification_sheet.dart';
 
 class TechnicianDashboardView extends ConsumerWidget {
   const TechnicianDashboardView({super.key});
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const _TechBody();
-  }
-}
-
-class _TechBody extends ConsumerWidget {
-  const _TechBody();
-
-  static const _pages = <Widget>[_DashboardTab(), _EfficiencyTab()];
   static const _navItems = <AppNavItem>[
-    AppNavItem(
-      selectedIcon: Icons.dashboard_rounded,
-      icon: Icons.dashboard_outlined,
-      label: 'Today',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.assignment_turned_in_rounded,
-      icon: Icons.assignment_outlined,
-      label: 'My jobs',
-    ),
+    AppNavItem(selectedIcon: Icons.dashboard_rounded, icon: Icons.dashboard_outlined, label: 'Today'),
+    AppNavItem(selectedIcon: Icons.car_repair_rounded, icon: Icons.car_repair_outlined, label: 'Jobs'),
+    AppNavItem(selectedIcon: Icons.insights_rounded, icon: Icons.insights_outlined, label: 'Productivity'),
+    AppNavItem(selectedIcon: Icons.person_rounded, icon: Icons.person_outlined, label: 'Profile'),
+  ];
+
+  static const _pages = <Widget>[
+    TechnicianTodayView(),
+    TechnicianJobsView(),
+    TechnicianProductivityView(),
+    StaffProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final state = ref.watch(technicianDashboardProvider);
     final notifier = ref.read(technicianDashboardProvider.notifier);
     final adaptive = context.adaptive;
-
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: theme.brightness == Brightness.dark
-            ? Brightness.light
-            : Brightness.dark,
-      ),
-    );
+    final effectiveIndex = state.selectedTab < _pages.length ? state.selectedTab : 0;
 
     return DashboardShell(
-      body: Column(
-        children: [
-          const TechnicianHeaderWidget(),
-          Divider(height: 1, color: colorScheme.outlineVariant),
-          if (!adaptive.useNavigationRail) ...[
-            _TechTabBar(
-              selectedTab: state.selectedTab,
-              onTap: notifier.selectTab,
-            ),
-            Divider(height: 1, color: colorScheme.outlineVariant),
-          ],
-          Expanded(
-            child: AppAdaptiveNavigationFrame(
+      appBar: TechnicianAppBar(selectedIndex: effectiveIndex),
+      body: AppAdaptiveNavigationFrame(
+        items: _navItems,
+        selectedIndex: effectiveIndex,
+        onSelected: (i) {
+          HapticFeedback.selectionClick();
+          notifier.selectTab(i);
+        },
+        child: IndexedStack(index: effectiveIndex, children: _pages),
+      ),
+      bottomNavigationBar: adaptive.useNavigationRail
+          ? null
+          : AppBottomNavigation(
               items: _navItems,
-              selectedIndex: state.selectedTab,
-              onSelected: notifier.selectTab,
-              child: IndexedStack(index: state.selectedTab, children: _pages),
+              selectedIndex: effectiveIndex,
+              onSelected: (index) {
+                HapticFeedback.selectionClick();
+                notifier.selectTab(index);
+              },
             ),
-          ),
-        ],
-      ),
     );
   }
 }
 
-class _TechTabBar extends StatelessWidget {
-  final int selectedTab;
-  final void Function(int) onTap;
-  const _TechTabBar({required this.selectedTab, required this.onTap});
+// ─────────────────────────────────────────────────────────────────────────────
+// TECHNICIAN APP BAR (MATCHING SUPERVISOR AND ADVISOR STANDARDS)
+// ─────────────────────────────────────────────────────────────────────────────
+class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
+  final int selectedIndex;
+  const TechnicianAppBar({super.key, required this.selectedIndex});
+
+  static const _titles = ['Workshop Bay', 'My Job Cards', 'Productivity', 'Technician Profile'];
+
+  static const _subtitles = [
+    'Shift Telemetry & Bay Repairs',
+    'Assigned Vehicle Repair Orders',
+    'Workshop Velocity & Attendance',
+    'Personal & Shift Settings',
+  ];
 
   @override
-  Widget build(BuildContext context) {
+  Size get preferredSize => const Size.fromHeight(72);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final notifier = ref.read(technicianDashboardProvider.notifier);
+    final profileName = notifier.profile.name.trim();
+    final firstName = profileName.isEmpty ? 'Technician' : profileName.split(' ').first;
+    final isToday = selectedIndex == 0;
 
-    const tabs = [
-      AppNavItem(
-        selectedIcon: Icons.dashboard_rounded,
-        icon: Icons.dashboard_outlined,
-        label: 'Dashboard',
+    return AppBar(
+      backgroundColor: colors.surface,
+      foregroundColor: colors.onSurface,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: theme.brightness == Brightness.dark ? Brightness.light : Brightness.dark,
       ),
-      AppNavItem(
-        selectedIcon: Icons.assignment_turned_in_rounded,
-        icon: Icons.assignment_outlined,
-        label: 'My Jobs',
-      ),
-    ];
-
-    return Container(
-      color: colorScheme.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        children: List.generate(tabs.length, (i) {
-          final sel = selectedTab == i;
-          return Expanded(
-            child: Semantics(
-              button: true,
-              selected: sel,
-              label: tabs[i].label,
-              child: InkWell(
-                onTap: () => onTap(i),
-                borderRadius: BorderRadius.circular(16),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: sel
-                        ? colorScheme.primary.withValues(alpha: 0.12)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        sel ? tabs[i].selectedIcon : tabs[i].icon,
-                        size: 20,
-                        color: sel
-                            ? colorScheme.primary
-                            : colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        tabs[i].label,
-                        style: textTheme.labelLarge?.copyWith(
-                          color: sel
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
-                          fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
-class _DashboardTab extends ConsumerWidget {
-  const _DashboardTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const TechnicianTodayView();
-  }
-}
-
-class _EfficiencyTab extends ConsumerWidget {
-  const _EfficiencyTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const TechnicianJobsView();
-  }
-}
-
-class _ColHead extends StatelessWidget {
-  final String text;
-  const _ColHead(this.text);
-
-  @override
-  Widget build(BuildContext context) =>
-      Text(text, style: AppTextStyles.bodySmall(color: AppColors.accent));
-}
-
-class AssignedJobsDetailSheet extends StatefulWidget {
-  final TechnicianJobEntity job;
-  const AssignedJobsDetailSheet({super.key, required this.job});
-
-  @override
-  State<AssignedJobsDetailSheet> createState() =>
-      _AssignedJobsDetailSheetState();
-}
-
-class _AssignedJobsDetailSheetState extends State<AssignedJobsDetailSheet> {
-  late TextEditingController _notesCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _notesCtrl = TextEditingController(text: widget.job.notes);
-  }
-
-  @override
-  void dispose() {
-    _notesCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final job = widget.job;
-
-    return Consumer(
-      builder: (context, ref, _) {
-        final state = ref.watch(technicianDashboardProvider);
-        final notifier = ref.read(technicianDashboardProvider.notifier);
-
-        return DraggableScrollableSheet(
-          initialChildSize: 0.92,
-          minChildSize: 0.5,
-          maxChildSize: 0.97,
-          builder: (_, ctrl) => Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppDimensions.r28),
-              ),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    top: AppDimensions.s10,
-                    bottom: AppDimensions.s4,
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.border,
-                        borderRadius: BorderRadius.circular(AppDimensions.r2),
-                      ),
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.navy, AppColors.accent],
-                    ),
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(AppDimensions.r28),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            job.jobCardNo,
-                            style: AppTextStyles.displaySmall(
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(width: AppDimensions.s10),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s8,
-                              vertical: AppDimensions.s4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r20,
-                              ),
-                              border: Border.all(color: Colors.white38),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                SizedBox(width: AppDimensions.s4),
-                                Text(
-                                  job.status.label,
-                                  style: AppTextStyles.bodySmall(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.18),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: AppDimensions.s8),
-                      Row(
-                        children: [
-                          Text(
-                            '${job.vehicleBrand} ${job.vehicleModel}',
-                            style: AppTextStyles.bodySmall(
-                              color: Colors.white70,
-                            ),
-                          ),
-                          SizedBox(width: AppDimensions.s10),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s8,
-                              vertical: AppDimensions.s4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r8,
-                              ),
-                            ),
-                            child: Text(
-                              job.plateNumber,
-                              style: AppTextStyles.bodySmall(
-                                color: AppColors.accent,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: AppDimensions.s14),
-                      Row(
-                        children: [
-                          Text(
-                            'Job Progress',
-                            style: AppTextStyles.bodySmall(
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${job.completedTasks}/${job.tasks.length} tasks (${(job.progressPercent * 100).toInt()}%)',
-                            style: AppTextStyles.bodySmall(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: AppDimensions.s6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(AppDimensions.r6),
-                        child: LinearProgressIndicator(
-                          value: job.progressPercent,
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          valueColor: const AlwaysStoppedAnimation(
-                            Colors.white,
-                          ),
-                          minHeight: 7,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    controller: ctrl,
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: AppColors.accent,
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r2,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: AppDimensions.s10),
-                          Text(
-                            'Work Tasks',
-                            style: AppTextStyles.title(
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: AppDimensions.s4),
-                      Text(
-                        'Track and update task progress',
-                        style: AppTextStyles.bodySmall(color: AppColors.text3),
-                      ),
-                      SizedBox(height: AppDimensions.s12),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppDimensions.s10,
-                          vertical: AppDimensions.s8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.accent.withValues(alpha: 0.12),
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(AppDimensions.r10),
-                          ),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: const Row(
-                          children: [
-                            SizedBox(width: 28, child: _ColHead('S.No')),
-                            Expanded(flex: 4, child: _ColHead('Description')),
-                            SizedBox(width: 46, child: _ColHead('Start')),
-                            SizedBox(width: 38, child: _ColHead('End')),
-                            SizedBox(width: 88, child: _ColHead('Status')),
-                            SizedBox(width: 64, child: _ColHead('Action')),
-                          ],
-                        ),
-                      ),
-                      ...job.tasks.asMap().entries.map((e) {
-                        final task = e.value;
-                        return _TaskRow(
-                          index: e.key + 1,
-                          task: task,
-                          isEven: e.key % 2 == 0,
-                          onStart: () => notifier.startTask(job, task),
-                          onComplete: () => notifier.completeTask(job, task),
-                          onStatusChanged: (s) =>
-                              notifier.updateTaskStatus(job, task, s),
-                        );
-                      }),
-                      Container(
-                        height: 1,
-                        margin: EdgeInsets.only(bottom: AppDimensions.s20),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            left: BorderSide(color: AppColors.border),
-                            right: BorderSide(color: AppColors.border),
-                            bottom: BorderSide(color: AppColors.border),
-                          ),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: AppColors.accent,
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r2,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: AppDimensions.s10),
-                          Icon(
-                            Icons.sticky_note_2_outlined,
-                            size: 16,
-                            color: AppColors.text3,
-                          ),
-                          SizedBox(width: AppDimensions.s6),
-                          Text(
-                            'Technician Notes',
-                            style: AppTextStyles.subtitle(
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: AppDimensions.s8),
-                      TextField(
-                        controller: _notesCtrl,
-                        maxLines: 4,
-                        onChanged: (v) => notifier.updateNotes(job, v),
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                        ),
-                        decoration: InputDecoration(
-                          hintText:
-                              'Add any notes or observations about this job...',
-                          hintStyle: AppTextStyles.bodySmall(
-                            color: AppColors.text3,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.bg,
-                          contentPadding: EdgeInsets.all(AppDimensions.s14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.r12,
-                            ),
-                            borderSide: BorderSide(color: AppColors.border),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.r12,
-                            ),
-                            borderSide: BorderSide(color: AppColors.border),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.r12,
-                            ),
-                            borderSide: BorderSide(
-                              color: AppColors.accent,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: AppDimensions.s24),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    border: const Border(
-                      top: BorderSide(color: AppColors.border),
-                    ),
-                  ),
-                  child: SafeArea(
-                    top: false,
-                    child: Row(
-                      children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.text2,
-                            side: BorderSide(color: AppColors.border),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s20,
-                              vertical: AppDimensions.s14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r12,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            'Close',
-                            style: AppTextStyles.bodySmall(
-                              color: AppColors.text2,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        OutlinedButton.icon(
-                          onPressed: state.isSaving
-                              ? null
-                              : () => notifier.saveChanges(job),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.accent,
-                            side: BorderSide(
-                              color: AppColors.accent,
-                              width: 1.5,
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s14,
-                              vertical: AppDimensions.s14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r12,
-                              ),
-                            ),
-                          ),
-                          icon: state.isSaving
-                              ? SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.accent,
-                                  ),
-                                )
-                              : const Icon(Icons.save_rounded, size: 16),
-                          label: Text('Save', style: AppTextStyles.bodySmall()),
-                        ),
-                        SizedBox(width: AppDimensions.s8),
-                        GestureDetector(
-                          onTap: state.isSaving
-                              ? null
-                              : () async {
-                                  await notifier.completeJob(job);
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                  }
-                                },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppDimensions.s14,
-                              vertical: AppDimensions.s14,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppColors.navy, AppColors.accent],
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.r12,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.accent.withValues(
-                                    alpha: 0.30,
-                                  ),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check_circle_outline_rounded,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                                SizedBox(width: AppDimensions.s6),
-                                Text(
-                                  'Complete Job',
-                                  style: AppTextStyles.bodySmall(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _TaskRow extends StatelessWidget {
-  final int index;
-  final WorkTaskEntity task;
-  final bool isEven;
-  final VoidCallback onStart;
-  final VoidCallback onComplete;
-  final void Function(TaskStatus) onStatusChanged;
-
-  const _TaskRow({
-    required this.index,
-    required this.task,
-    required this.isEven,
-    required this.onStart,
-    required this.onComplete,
-    required this.onStatusChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppDimensions.s10,
-        vertical: AppDimensions.s10,
-      ),
-      decoration: BoxDecoration(
-        color: isEven ? AppColors.surface : AppColors.surfaceAlt,
-        border: const Border(
-          left: BorderSide(color: AppColors.border),
-          right: BorderSide(color: AppColors.border),
-          bottom: BorderSide(color: AppColors.border),
+      titleSpacing: 4,
+      leadingWidth: 58,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
+        child: UserAvatar(
+          initials: notifier.profile.avatarInitials.isNotEmpty ? notifier.profile.avatarInitials : 'T',
+          onTap: () {
+            showProfileSheet(
+              context,
+              _profileSheetData(context, ref),
+              onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
+            );
+          },
         ),
       ),
-      child: Row(
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 28,
-            child: Text(
-              '$index',
-              style: AppTextStyles.bodySmall(color: AppColors.text3),
+          Text(
+            isToday ? 'Good to see you, $firstName' : _titles[selectedIndex],
+            style: textTheme.titleMedium?.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.2,
             ),
           ),
-          Expanded(
-            flex: 4,
-            child: Text(
-              task.description,
-              style: TextStyle(color: AppColors.text2, fontSize: 11),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          SizedBox(
-            width: 46,
-            child: Text(
-              task.startTime ?? '\u2013',
-              style: TextStyle(color: AppColors.text3, fontSize: 11),
-            ),
-          ),
-          SizedBox(
-            width: 38,
-            child: Text(
-              task.endTime ?? '\u2013',
-              style: TextStyle(color: AppColors.text3, fontSize: 11),
-            ),
-          ),
-          SizedBox(
-            width: 88,
-            child: _TaskStatusDropdown(
-              status: task.status,
-              onChanged: onStatusChanged,
-            ),
-          ),
-          SizedBox(
-            width: 64,
-            child: _TaskActionButton(
-              task: task,
-              onStart: onStart,
-              onComplete: onComplete,
+          const SizedBox(height: 1),
+          Text(
+            isToday
+                ? '${notifier.profile.branch.isEmpty ? 'Workshop bay' : notifier.profile.branch} · ${ref.watch(technicianDashboardProvider).attendanceStatus.label}'
+                : _subtitles[selectedIndex],
+            style: textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              fontSize: 10.5,
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _TaskStatusDropdown extends StatelessWidget {
-  final TaskStatus status;
-  final void Function(TaskStatus) onChanged;
-  const _TaskStatusDropdown({required this.status, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    Color border, bg;
-    switch (status) {
-      case TaskStatus.completed:
-        border = AppColors.success;
-        bg = AppColors.successBg;
-        break;
-      case TaskStatus.inProgress:
-        border = AppColors.accent;
-        bg = AppColors.accent.withValues(alpha: 0.12);
-        break;
-      default:
-        border = AppColors.border;
-        bg = AppColors.bg;
-    }
-    return Container(
-      height: 30,
-      padding: EdgeInsets.symmetric(horizontal: AppDimensions.s6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppDimensions.r8),
-        border: Border.all(color: border),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<TaskStatus>(
-          value: status,
-          isDense: true,
-          dropdownColor: AppColors.surface,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 12,
-            color: AppColors.text3,
-          ),
-          style: AppTextStyles.bodySmall(color: AppColors.textPrimary),
-          onChanged: (v) {
-            if (v != null) onChanged(v);
+      actions: [
+        // Notification button
+        IconButton(
+          tooltip: 'Notifications',
+          icon: const Icon(Icons.notifications_outlined),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.transparent,
+              isScrollControlled: true,
+              builder: (_) => const AdvisorNotificationSheet(),
+            );
           },
-          items: TaskStatus.values
-              .map(
-                (s) => DropdownMenuItem(
-                  value: s,
-                  child: Text(s.label, style: AppTextStyles.bodySmall()),
-                ),
-              )
-              .toList(),
         ),
-      ),
+        const SizedBox(width: 8),
+      ],
     );
   }
-}
 
-class _TaskActionButton extends StatelessWidget {
-  final WorkTaskEntity task;
-  final VoidCallback onStart;
-  final VoidCallback onComplete;
-  const _TaskActionButton({
-    required this.task,
-    required this.onStart,
-    required this.onComplete,
-  });
+  ProfileSheetData _profileSheetData(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(technicianDashboardProvider.notifier);
+    final profile = notifier.profile;
+    final name = profile.name.isNotEmpty ? profile.name : 'Technician';
+    final role = profile.role.isNotEmpty ? profile.role : 'Technician';
 
-  @override
-  Widget build(BuildContext context) {
-    if (task.status == TaskStatus.completed) {
-      return const SizedBox.shrink();
-    }
-    final inProg = task.status == TaskStatus.inProgress;
-    // P3 (audit): labelled control with a WCAG-compliant touch target.
-    return Semantics(
-      button: true,
-      label: inProg ? 'Complete task' : 'Start task',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: inProg ? onComplete : onStart,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
-          padding: EdgeInsets.symmetric(
-            horizontal: AppDimensions.s8,
-            vertical: AppDimensions.s4,
-          ),
-          decoration: BoxDecoration(
-            color: inProg
-                ? AppColors.successBg
-                : AppColors.accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppDimensions.r8),
-            border: Border.all(
-              color: inProg ? AppColors.success : AppColors.accent,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                inProg
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.play_arrow_rounded,
-                color: inProg ? AppColors.success : AppColors.accent,
-                size: 12,
-              ),
-              SizedBox(width: AppDimensions.s4),
-              Text(
-                inProg ? 'Done' : 'Start',
-                style: AppTextStyles.bodySmall(
-                  color: inProg ? AppColors.success : AppColors.accent,
-                ),
-              ),
-            ],
-          ),
+    final details = ProfileData(
+      name: name,
+      id: profile.empId,
+      role: role,
+      branch: profile.branch,
+      shift: profile.shift,
+      email: '',
+      phone: '',
+      avatarInitials: profile.avatarInitials,
+    );
+
+    return ProfileSheetData(
+      name: name,
+      initials: profile.avatarInitials.isNotEmpty ? profile.avatarInitials : 'T',
+      roleLabel: role,
+      roleBadge: profile.branch.isNotEmpty ? profile.branch : 'Workshop Bay',
+      menuItems: [
+        ProfileSheetItem(
+          icon: Icons.person_outline_rounded,
+          label: 'My Profile & Settings',
+          onTap: () => context.push(AppRoutes.profile, extra: details),
         ),
-      ),
+        ProfileSheetItem(
+          icon: Icons.fingerprint_rounded,
+          label: 'Attendance · Punch Records',
+          onTap: () => context.push(AppRoutes.attendance),
+        ),
+        ProfileSheetItem(
+          icon: Icons.assignment_outlined,
+          label: 'View Assigned Jobs',
+          onTap: () {
+            Navigator.pop(context);
+            ref.read(technicianDashboardProvider.notifier).selectTab(1);
+          },
+        ),
+      ],
     );
   }
 }

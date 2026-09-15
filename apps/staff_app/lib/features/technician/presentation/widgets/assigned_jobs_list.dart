@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:staff_app/core/router/app_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
@@ -6,7 +8,6 @@ import 'package:staff_app/features/technician/presentation/providers/technician_
 import 'package:staff_app/features/technician/presentation/widgets/section_card.dart';
 import 'package:staff_app/features/technician/presentation/widgets/job_search_bar.dart';
 import 'package:staff_app/features/technician/presentation/widgets/job_card_tile.dart';
-import 'package:staff_app/features/technician/presentation/widgets/job_detail_sheet.dart';
 
 class AssignedJobsList extends ConsumerWidget {
   const AssignedJobsList({super.key});
@@ -22,18 +23,12 @@ class AssignedJobsList extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          JobSearchBar(
-            onJobFound: () => _openDetail(context, ref, state.selectedJob!),
-          ),
+          JobSearchBar(onJobFound: () => _openDetail(context, ref, state.selectedJob!)),
           SizedBox(height: AppDimensions.s14),
           ...state.assignedJobs.map((job) {
             return Padding(
               padding: EdgeInsets.only(bottom: AppDimensions.s10),
-              child: JobCardTile(
-                job: job,
-                onStatusChanged: (s) =>
-                    notifier.updateAssignedJobStatus(job.id, s),
-              ),
+              child: JobCardTile(job: job, onStatusChanged: (s) => notifier.updateAssignedJobStatus(job.id, s)),
             );
           }),
         ],
@@ -41,18 +36,9 @@ class AssignedJobsList extends ConsumerWidget {
     );
   }
 
-  void _openDetail(
-    BuildContext context,
-    WidgetRef ref,
-    TechnicianJobEntity job,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => JobDetailSheet(job: job),
-    ).whenComplete(() {
-      ref.read(technicianDashboardProvider.notifier).closeJob();
-    });
+  void _openDetail(BuildContext context, WidgetRef ref, TechnicianJobEntity job) {
+    context
+        .push(AppRoutes.technicianJobDetail, extra: job)
+        .whenComplete(() => ref.read(technicianDashboardProvider.notifier).closeJob());
   }
 }

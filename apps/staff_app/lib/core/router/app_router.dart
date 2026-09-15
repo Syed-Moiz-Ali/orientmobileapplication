@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/models/profile_data.dart';
+import 'package:staff_app/features/common/presentation/profile_screen.dart';
 import 'package:staff_app/features/common/presentation/simple_pages.dart';
 import 'package:staff_app/features/common/presentation/staff_attendance_screen.dart';
 import 'package:staff_app/features/advisor/presentation/pages/advisor_home_view.dart';
@@ -25,6 +26,8 @@ import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_st
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_schedule_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_reports_tab.dart';
 import 'package:staff_app/features/technician/presentation/technician_dashboard_view.dart';
+import 'package:staff_app/features/technician/presentation/widgets/job_detail_sheet.dart';
+import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 
 import '../../features/advisor/domain/entities/job_card_entity.dart';
 
@@ -44,6 +47,7 @@ class AppRoutes {
   static const String supervisorSchedule = '/supervisor/schedule';
   static const String supervisorReports = '/supervisor/reports';
   static const String technicianDashboard = '/technician-dashboard';
+  static const String technicianJobDetail = '/technician/job-detail';
   static const String scanVehicle = '/scan-vehicle';
   static const String vehicleCustomer = '/vehicle-customer';
   static const String advisorCheckIn = '/advisor/check-in';
@@ -88,25 +92,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final matched = state.matchedLocation;
 
       final isAuthRoute =
-          matched == AppRoutes.login || matched == AppRoutes.supervisorLogin || matched == AppRoutes.forgotPassword;
+          matched == AppRoutes.login ||
+          matched == AppRoutes.supervisorLogin ||
+          matched == AppRoutes.forgotPassword;
 
       return switch (authState) {
         AuthUnauthenticated() => isAuthRoute ? null : AppRoutes.login,
-        AuthLoading() => matched == AppRoutes.startup ? null : AppRoutes.startup,
+        AuthLoading() =>
+          matched == AppRoutes.startup ? null : AppRoutes.startup,
         AuthError() => isAuthRoute ? null : AppRoutes.login,
-        AuthAuthenticated(:final role) when !_isStaffRole(role) => isAuthRoute ? null : AppRoutes.login,
+        AuthAuthenticated(:final role) when !_isStaffRole(role) =>
+          isAuthRoute ? null : AppRoutes.login,
         AuthAuthenticated(:final role) =>
-          isAuthRoute || matched == AppRoutes.startup || !_isRouteAllowedForRole(role, matched)
+          isAuthRoute ||
+                  matched == AppRoutes.startup ||
+                  !_isRouteAllowedForRole(role, matched)
               ? AppRoutes.dashboardForRole(role)
               : null,
       };
     },
     routes: [
-      GoRoute(path: AppRoutes.startup, builder: (context, state) => const AuthLoadingView()),
+      GoRoute(
+        path: AppRoutes.startup,
+        builder: (context, state) => const AuthLoadingView(),
+      ),
       GoRoute(
         path: AppRoutes.login,
         name: AppRoutes.login,
         builder: (context, state) => LoginView(
+          appName: 'Orient Staff App',
+          intendedUsers: 'For advisors, technicians, and supervisors',
+          appPurpose:
+              'Confirm bookings, check in vehicles, run inspections, assign repair work, update tasks, and complete QC.',
           onLoginSuccess: () {
             final authState = ref.read(authNotifierProvider);
             if (authState is AuthAuthenticated) {
@@ -119,7 +136,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) => ForgotPasswordView(onBackToLogin: () => context.pop()),
+        builder: (context, state) =>
+            ForgotPasswordView(onBackToLogin: () => context.pop()),
       ),
       GoRoute(
         path: AppRoutes.advisorDashboard,
@@ -200,6 +218,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const TechnicianDashboardView(),
       ),
       GoRoute(
+        path: AppRoutes.technicianJobDetail,
+        name: AppRoutes.technicianJobDetail,
+        builder: (context, state) {
+          final job = state.extra;
+          return job is TechnicianJobEntity
+              ? JobDetailSheet(job: job)
+              : const TechnicianDashboardView();
+        },
+      ),
+      GoRoute(
         path: AppRoutes.scanVehicle,
         name: AppRoutes.scanVehicle,
         builder: (context, state) => const ScanVehicleView(),
@@ -209,7 +237,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.vehicleCustomer,
         builder: (context, state) {
           final extra = state.extra;
-          return VehicleCustomerView(bookingId: extra is Map ? (extra['bookingId'] as String?) : null);
+          return VehicleCustomerView(
+            bookingId: extra is Map ? (extra['bookingId'] as String?) : null,
+          );
         },
       ),
       GoRoute(
@@ -229,7 +259,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.advisorJobDetail,
         builder: (context, state) {
           final extra = state.extra;
-          return extra is JobCardEntity ? AdvisorJobDetailView(jc: extra) : const AdvisorHomeView();
+          return extra is JobCardEntity
+              ? AdvisorJobDetailView(jc: extra)
+              : const AdvisorHomeView();
         },
       ),
       GoRoute(
@@ -284,7 +316,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.repairOrderPreview,
         name: AppRoutes.repairOrderPreview,
-        builder: (context, state) => RepairOrderPreviewView(onBack: () => context.pop()),
+        builder: (context, state) =>
+            RepairOrderPreviewView(onBack: () => context.pop()),
       ),
       GoRoute(
         path: AppRoutes.attendance,
@@ -296,15 +329,44 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.profile,
         builder: (context, state) {
           final extra = state.extra;
-          return ProfilePage(
-            data: extra is ProfileData ? extra : ProfileData(name: '', id: '', role: '', branch: ''),
+          final authState = ref.read(authNotifierProvider);
+          final me = authState is AuthAuthenticated ? authState.profile : null;
+          final fallbackRole = authState is AuthAuthenticated
+              ? _displayRole(authState.role)
+              : '';
+          final passed = extra is ProfileData ? extra : null;
+          return StaffProfileScreen(
+            data: ProfileData(
+              name: _firstNonEmpty([passed?.name, me?.name, 'Staff Member']),
+              id: _firstNonEmpty([
+                passed?.id,
+                me?.empId,
+                me?.staffId?.toString(),
+              ]),
+              role: _firstNonEmpty([
+                passed?.role,
+                me?.designation,
+                me?.role,
+                fallbackRole,
+              ]),
+              branch: _firstNonEmpty([passed?.branch, me?.branchName]),
+              shift: _firstNonEmpty([passed?.shift, me?.shift]),
+              email: _firstNonEmpty([passed?.email, me?.email]),
+              phone: _firstNonEmpty([passed?.phone, me?.phone]),
+              avatarInitials: _firstNonEmpty([
+                passed?.avatarInitials,
+                me?.avatarInitials,
+                me?.initials,
+              ]),
+            ),
           );
         },
       ),
       GoRoute(
         path: AppRoutes.shiftDetails,
         name: AppRoutes.shiftDetails,
-        builder: (context, state) => ShiftDetailsPage(data: _mapExtra(state.extra)),
+        builder: (context, state) =>
+            ShiftDetailsPage(data: _mapExtra(state.extra)),
       ),
       GoRoute(
         path: AppRoutes.settings,
@@ -321,15 +383,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 });
 
 bool _isStaffRole(UserRole role) {
-  return role == UserRole.advisor || role == UserRole.supervisor || role == UserRole.technician;
+  return role == UserRole.advisor ||
+      role == UserRole.supervisor ||
+      role == UserRole.technician;
 }
 
 bool _isRouteAllowedForRole(UserRole role, String location) {
-  const commonRoutes = {AppRoutes.profile, AppRoutes.shiftDetails, AppRoutes.settings, AppRoutes.attendance};
+  const commonRoutes = {
+    AppRoutes.profile,
+    AppRoutes.shiftDetails,
+    AppRoutes.settings,
+    AppRoutes.attendance,
+  };
   if (commonRoutes.contains(location)) return true;
 
   return switch (role) {
-    UserRole.supervisor => location == AppRoutes.supervisorDashboard || location.startsWith('/supervisor/'),
+    UserRole.supervisor =>
+      location == AppRoutes.supervisorDashboard ||
+          location.startsWith('/supervisor/'),
     UserRole.advisor =>
       location == AppRoutes.advisorDashboard ||
           location == AppRoutes.scanVehicle ||
@@ -341,7 +412,9 @@ bool _isRouteAllowedForRole(UserRole role, String location) {
           location == AppRoutes.chooseInspection ||
           location == AppRoutes.repairOrder ||
           location == AppRoutes.repairOrderPreview,
-    UserRole.technician => location == AppRoutes.technicianDashboard,
+    UserRole.technician =>
+      location == AppRoutes.technicianDashboard ||
+          location == AppRoutes.technicianJobDetail,
     _ => false,
   };
 }
@@ -350,12 +423,34 @@ Map<String, dynamic>? _mapExtra(Object? extra) {
   return extra is Map<String, dynamic> ? extra : null;
 }
 
+String _firstNonEmpty(List<String?> values) {
+  for (final value in values) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isNotEmpty) return trimmed;
+  }
+  return '';
+}
+
+String _displayRole(UserRole role) {
+  return switch (role) {
+    UserRole.advisor => 'Service Advisor',
+    UserRole.technician => 'Technician',
+    UserRole.supervisor => 'Supervisor',
+    _ => 'Staff',
+  };
+}
+
 class SupervisorSubPageWrapper extends StatelessWidget {
   final String title;
   final String subtitle;
   final Widget child;
 
-  const SupervisorSubPageWrapper({super.key, required this.title, required this.subtitle, required this.child});
+  const SupervisorSubPageWrapper({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {

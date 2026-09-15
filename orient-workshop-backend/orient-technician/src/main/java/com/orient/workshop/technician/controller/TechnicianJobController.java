@@ -31,7 +31,7 @@ public class TechnicianJobController {
 
     @PutMapping("/assigned-jobs/{id}/status")
     public ApiResponse<Void> updateAssignedJobStatus(@AuthenticationPrincipal JwtUserPrincipal principal,
-                                                      @PathVariable Long id,
+                                                      @PathVariable String id,
                                                       @Valid @RequestBody UpdateAssignedJobStatusRequest req) {
         jobService.updateAssignedJobStatus(id, principal, req.getStatus());
         return ApiResponse.success(null);
