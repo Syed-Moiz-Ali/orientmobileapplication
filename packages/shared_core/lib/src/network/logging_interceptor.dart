@@ -18,19 +18,11 @@ class LoggingInterceptor extends Interceptor {
   };
 
   LoggingInterceptor({Logger? logger})
-      : _logger =
-            logger ??
-            Logger(
-              printer: PrettyPrinter(
-                methodCount: 1,
-                errorMethodCount: 3,
-                printEmojis: false,
-              ),
-            );
+    : _logger = logger ?? Logger(printer: PrettyPrinter(methodCount: 1, errorMethodCount: 3, printEmojis: false));
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    _logger.i('${options.method} ${options.path}');
+    _logger.i('${options.method} ${options.uri.toString()}');
     final headers = Map<String, dynamic>.from(options.headers);
     if (headers.containsKey('Authorization')) {
       final token = headers['Authorization'];
@@ -49,7 +41,7 @@ class LoggingInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    _logger.i('${response.statusCode} ${response.requestOptions.path}');
+    _logger.i('${response.statusCode} ${response.requestOptions.uri.toString()}');
     if (response.data is Map || response.data is List) {
       _logger.t('Response: ${_maskBody(response.data)}');
     }
@@ -82,9 +74,7 @@ class LoggingInterceptor extends Interceptor {
       return body.map(_maskBody).toList();
     }
     if (body is FormData) {
-      final fields = body.fields.map((f) => _piiKeys.contains(f.key.toLowerCase())
-          ? MapEntry(f.key, '***')
-          : f);
+      final fields = body.fields.map((f) => _piiKeys.contains(f.key.toLowerCase()) ? MapEntry(f.key, '***') : f);
       return 'FormData(fields: $fields, files: ${body.files.length})';
     }
     return body;

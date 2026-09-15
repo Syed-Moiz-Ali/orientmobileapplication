@@ -23,9 +23,8 @@ public class DeviceTokenService {
         String token = rawToken.trim();
         String platform = rawPlatform.trim().toLowerCase();
 
-        // The legacy column/endpoint name is retained for API compatibility,
-        // but this value is a Firebase Installation ID (FID). Moving it prevents
-        // notifications leaking to a user who logged out of a device.
+        // Keep one active FCM registration token owner. Moving a token prevents
+        // notifications leaking to a previous user after login changes.
         deviceTokenMapper.delete(new LambdaQueryWrapper<DeviceToken>()
                 .eq(DeviceToken::getToken, token));
         deviceTokenMapper.insert(DeviceToken.builder()

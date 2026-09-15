@@ -246,7 +246,7 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
       state = state.copyWith(
         isLoading: false,
         loadError: '',
-        vehicles: results[0] as List<CustomerVehicleEntity>,
+        vehicles: _dedupeVehicles(results[0] as List<CustomerVehicleEntity>),
         notifications: results[1] as List<CustomerNotificationEntity>,
         activeService: results[2] as CustomerServiceEntity,
         profile: results[3] as CustomerEntity,
@@ -294,7 +294,23 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
   }
 
   void addVehicle(CustomerVehicleEntity vehicle) {
-    state = state.copyWith(vehicles: [...state.vehicles, vehicle]);
+    state = state.copyWith(
+      vehicles: _dedupeVehicles([...state.vehicles, vehicle]),
+    );
+  }
+
+  List<CustomerVehicleEntity> _dedupeVehicles(
+    List<CustomerVehicleEntity> vehicles,
+  ) {
+    final byKey = <String, CustomerVehicleEntity>{};
+    for (final vehicle in vehicles) {
+      final id = vehicle.id.trim();
+      final plate = vehicle.plateNumber.trim().toUpperCase();
+      final key = id.isNotEmpty ? 'id:$id' : 'plate:$plate';
+      if (key == 'plate:') continue;
+      byKey[key] = vehicle;
+    }
+    return byKey.values.toList();
   }
 
   Future<bool> removeVehicle(String id) async {
@@ -447,6 +463,9 @@ Future<bool> customerProcessApproval(
   final ok = await remote.processApproval(estimateId, action);
   if (ok) {
     ref.read(customerApprovalsRefreshProvider.notifier).state++;
+    ref.invalidate(customerBookingsProvider);
+    ref.invalidate(customerInvoicesProvider);
+    ref.read(customerDashboardProvider.notifier).refresh();
   }
   return ok;
 }

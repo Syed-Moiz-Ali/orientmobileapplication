@@ -58,6 +58,9 @@ services:
       APP_OTP_FIXED_VALUE: "123456"
       APP_RATE_LIMIT_CAPACITY: "5000"
       APP_RATE_LIMIT_AUTH_CAPACITY: "1000"
+      FIREBASE_ENABLED: ${FIREBASE_ENABLED:-false}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+      FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-}
       # CRITICAL: secrets below are development defaults. Production MUST override
       # via a .env file or orchestrator secrets (K8s secrets / Docker secrets).
       # Values MUST be >= 32 chars and MUST NOT be any string listed in
@@ -79,6 +82,10 @@ services:
     cpus: '1.0'
     volumes:
       - media_data:/data/orient/media
+      # Optional: place your Firebase service-account JSON under
+      # orient-workshop-backend/firebase/ and set FIREBASE_CREDENTIALS_PATH
+      # to /run/secrets/firebase/<file>.json.
+      - ./firebase:/run/secrets/firebase:ro
 
 volumes:
   mysql_data:

@@ -2591,6 +2591,16 @@ class _CreateRepairOrderButton extends ConsumerWidget {
           ).showSnackBar(const SnackBar(content: Text('Job Card is missing')));
           return;
         }
+        if (state.serviceLines.isEmpty && state.partLines.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No repair items found. Add extra work or retry after inspection.',
+              ),
+            ),
+          );
+          return;
+        }
         try {
           final detail = await ref
               .read(advisorRemoteDataSourceProvider)

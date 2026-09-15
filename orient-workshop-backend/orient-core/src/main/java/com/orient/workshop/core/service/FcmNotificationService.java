@@ -43,7 +43,7 @@ public class FcmNotificationService {
                             .setBody(body)
                             .build())
                     .putData("type", type == null ? "general" : type)
-                    .addAllFids(batch.stream().map(DeviceToken::getToken).toList())
+                    .addAllTokens(batch.stream().map(DeviceToken::getToken).toList())
                     .build();
             try {
                 BatchResponse response = messaging.sendEachForMulticast(message);

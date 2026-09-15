@@ -512,9 +512,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
         ) ??
         false;
     if (ok) {
-      if (action == 'reject') {
-        _awaiting.removeWhere((j) => j.jobCardRef == jobCardRef);
-      }
+      _awaiting.removeWhere((j) => j.jobCardRef == jobCardRef);
       state = state.copyWith();
       return action == 'approve'
           ? 'QC passed — job approved'

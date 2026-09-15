@@ -137,6 +137,22 @@ class _CustomerBookServiceViewState
     }
   }
 
+  Future<void> _openAddVehicle() async {
+    final added = await context.push<CustomerVehicleEntity>(
+      AppRoutes.customerAddVehicle,
+    );
+    await ref.read(customerDashboardProvider.notifier).refresh();
+    if (!mounted) return;
+    if (added != null) {
+      setState(() => _selectedVehicle = added);
+      return;
+    }
+    final vehicles = ref.read(customerDashboardProvider).vehicles;
+    if (_selectedVehicle == null && vehicles.isNotEmpty) {
+      setState(() => _selectedVehicle = vehicles.first);
+    }
+  }
+
   Future<void> _confirm() async {
     setState(() {
       _submitting = true;
@@ -248,7 +264,8 @@ class _CustomerBookServiceViewState
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final vehicles = ref.watch(customerDashboardProvider).vehicles;
+    final dashboard = ref.watch(customerDashboardProvider);
+    final vehicles = dashboard.vehicles;
 
     if (_selectedVehicle == null && vehicles.isNotEmpty) {
       _selectedVehicle = vehicles.first;
@@ -398,7 +415,16 @@ class _CustomerBookServiceViewState
                             'Choose which registered car requires service',
                       ),
                       const SizedBox(height: 24),
-                      if (vehicles.isEmpty)
+                      if (dashboard.isLoading && vehicles.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(40),
+                            child: CircularProgressIndicator(
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        )
+                      else if (vehicles.isEmpty)
                         AppCard(
                           borderRadius: 24,
                           padding: const EdgeInsets.all(36),
@@ -421,8 +447,7 @@ class _CustomerBookServiceViewState
                               ),
                               const SizedBox(height: 24),
                               OutlinedButton.icon(
-                                onPressed: () =>
-                                    context.push(AppRoutes.customerAddVehicle),
+                                onPressed: _openAddVehicle,
                                 icon: const Icon(Icons.add_rounded, size: 18),
                                 label: const Text('Add Vehicle'),
                                 style: OutlinedButton.styleFrom(

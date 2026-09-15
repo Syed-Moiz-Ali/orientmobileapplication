@@ -1,19 +1,36 @@
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
 class CustomerBookingDetailView extends ConsumerWidget {
   final CustomerBookingEntity booking;
+  final CustomerServiceEntity? activeService;
+  final bool hasApprovalWaiting;
 
-  const CustomerBookingDetailView({super.key, required this.booking});
+  const CustomerBookingDetailView({
+    super.key,
+    required this.booking,
+    this.activeService,
+    this.hasApprovalWaiting = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final service = activeService;
+    final activeJobMatchesBooking =
+        service != null &&
+        service.hasActiveJob &&
+        (service.plateNumber.toLowerCase() ==
+                booking.plateNumber.toLowerCase() ||
+            service.vehicleName.toLowerCase() ==
+                booking.vehicleName.toLowerCase());
 
     final cancellable =
         booking.status == BookingStatus.pending ||
@@ -225,52 +242,29 @@ class CustomerBookingDetailView extends ConsumerWidget {
                           offset: const Offset(0, 6),
                         ),
                       ],
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _StepCircle(
-                            label: 'Booked',
-                            isDone: true,
-                            colorScheme: colorScheme,
-                          ),
-                          _StepLine(
-                            isDone:
-                                booking.status == BookingStatus.confirmed ||
-                                booking.status == BookingStatus.completed,
-                            colorScheme: colorScheme,
-                          ),
-                          _StepCircle(
-                            label: 'Confirmed',
-                            isDone:
-                                booking.status == BookingStatus.confirmed ||
-                                booking.status == BookingStatus.completed,
-                            isCurrent:
-                                booking.status == BookingStatus.confirmed,
-                            colorScheme: colorScheme,
-                          ),
-                          _StepLine(
-                            isDone: booking.status == BookingStatus.completed,
-                            colorScheme: colorScheme,
-                          ),
-                          _StepCircle(
-                            label: 'In Bay',
-                            isDone: booking.status == BookingStatus.completed,
-                            isCurrent:
-                                booking.status == BookingStatus.completed,
-                            colorScheme: colorScheme,
-                          ),
-                          _StepLine(
-                            isDone: booking.status == BookingStatus.completed,
-                            colorScheme: colorScheme,
-                          ),
-                          _StepCircle(
-                            label: 'Done',
-                            isDone: booking.status == BookingStatus.completed,
-                            colorScheme: colorScheme,
-                          ),
-                        ],
+                      child: _CustomerJobProgress(
+                        booking: booking,
+                        activeService: activeJobMatchesBooking ? service : null,
+                        hasApprovalWaiting: hasApprovalWaiting,
                       ),
                     ),
+                    if (hasApprovalWaiting) ...[
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: FilledButton.icon(
+                          onPressed: () => context.go(
+                            '${AppRoutes.customerDashboard}?tab=2',
+                          ),
+                          icon: const Icon(Icons.fact_check_rounded),
+                          label: const Text(
+                            'Review Estimate',
+                            style: TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
 
                     // ── 4. WORKSHOP INFO ───────────────────────────────────
@@ -471,6 +465,114 @@ class _SectionHeader extends StatelessWidget {
           subtitle,
           style: textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CustomerJobProgress extends StatelessWidget {
+  final CustomerBookingEntity booking;
+  final CustomerServiceEntity? activeService;
+  final bool hasApprovalWaiting;
+
+  const _CustomerJobProgress({
+    required this.booking,
+    required this.activeService,
+    required this.hasApprovalWaiting,
+  });
+
+  int get _currentIndex {
+    if (booking.status == BookingStatus.cancelled) return 0;
+    if (booking.status == BookingStatus.completed) return 6;
+    if (hasApprovalWaiting) return 4;
+    final stage = activeService?.currentStage.toLowerCase() ?? '';
+    if (stage.contains('received') || stage.contains('check')) return 2;
+    if (stage.contains('inspection') || stage.contains('estimate')) return 3;
+    if (stage.contains('approval')) return 4;
+    if (stage.contains('work') ||
+        stage.contains('repair') ||
+        stage.contains('progress')) {
+      return 5;
+    }
+    if (stage.contains('qc') ||
+        stage.contains('quality') ||
+        stage.contains('ready')) {
+      return 6;
+    }
+    if (booking.status == BookingStatus.confirmed) return 1;
+    return 0;
+  }
+
+  String get _message {
+    if (booking.status == BookingStatus.pending) {
+      return 'Waiting for workshop confirmation.';
+    }
+    if (hasApprovalWaiting) {
+      return 'Inspection is complete. Your estimate is waiting for approval.';
+    }
+    if (booking.status == BookingStatus.completed) {
+      return 'Service completed. Vehicle delivery is recorded.';
+    }
+    final stage = activeService?.currentStage;
+    if (stage != null && stage.isNotEmpty) return stage;
+    return 'Workshop will update this Job Card as each step is completed.';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final labels = const [
+      'Booked',
+      'Confirmed',
+      'Received',
+      'Inspection',
+      'Approval',
+      'Work/QC',
+      'Ready',
+    ];
+    final current = _currentIndex;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: 620,
+            child: Row(
+              children: [
+                for (var i = 0; i < labels.length; i++) ...[
+                  _StepCircle(
+                    label: labels[i],
+                    isDone:
+                        i < current ||
+                        booking.status == BookingStatus.completed,
+                    isCurrent:
+                        i == current &&
+                        booking.status != BookingStatus.completed,
+                    colorScheme: colorScheme,
+                  ),
+                  if (i < labels.length - 1)
+                    _StepLine(
+                      isDone:
+                          i < current ||
+                          booking.status == BookingStatus.completed,
+                      colorScheme: colorScheme,
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          _message,
+          style: textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],

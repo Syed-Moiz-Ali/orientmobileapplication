@@ -50,11 +50,18 @@ class _QcChecklistSheetState extends ConsumerState<QcChecklistSheet> {
     setState(() => _isLoading = true);
     final msg = await ref
         .read(supervisorDashboardProvider.notifier)
-        .approveCompletion(widget.jobCardId);
+        .qcReview(
+          widget.jobCardRef,
+          'approve',
+          checklistPassed: true,
+          notes: _notesCtrl.text.trim(),
+        );
     if (mounted) {
       if (msg.startsWith('Could not')) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
         return;
       }
       Navigator.pop(context);

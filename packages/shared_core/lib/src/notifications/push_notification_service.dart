@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:firebase_app_installations/firebase_app_installations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -31,7 +30,7 @@ class PushNotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   DeviceTokenRegistrar? _registrar;
-  StreamSubscription<String>? _installationIdSubscription;
+  StreamSubscription<String>? _tokenRefreshSubscription;
   bool _initialized = false;
 
   bool get isSupported =>
@@ -69,8 +68,8 @@ class PushNotificationService {
       sound: true,
     );
     FirebaseMessaging.onMessage.listen(_showForegroundNotification);
-    _installationIdSubscription = FirebaseInstallations.instance.onIdChange
-        .listen(_registerInstallation);
+    _tokenRefreshSubscription = FirebaseMessaging.instance.onTokenRefresh
+        .listen(_registerToken);
     _initialized = true;
   }
 
@@ -80,24 +79,24 @@ class PushNotificationService {
     _registrar = registrar;
     if (!_initialized) await initialize();
     if (!_initialized) return;
-    final installationId = await FirebaseInstallations.instance.getId();
-    if (installationId.isNotEmpty) {
-      await _registerInstallation(installationId);
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null && token.isNotEmpty) {
+      await _registerToken(token);
     }
   }
 
   Future<void> clearAuthenticatedUser() async {
     _registrar = null;
-    if (_initialized) await FirebaseInstallations.instance.delete();
+    if (_initialized) await FirebaseMessaging.instance.deleteToken();
   }
 
-  Future<void> _registerInstallation(String installationId) async {
+  Future<void> _registerToken(String token) async {
     final registrar = _registrar;
     if (registrar == null) return;
     final platform = defaultTargetPlatform == TargetPlatform.iOS
         ? 'ios'
         : 'android';
-    await registrar(installationId, platform);
+    await registrar(token, platform);
   }
 
   Future<void> _showForegroundNotification(RemoteMessage message) async {
@@ -127,6 +126,6 @@ class PushNotificationService {
   }
 
   Future<void> dispose() async {
-    await _installationIdSubscription?.cancel();
+    await _tokenRefreshSubscription?.cancel();
   }
 }

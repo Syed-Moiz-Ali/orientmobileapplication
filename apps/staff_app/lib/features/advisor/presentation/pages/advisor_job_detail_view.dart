@@ -591,8 +591,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         colorScheme.primary,
         _runPrimaryAction,
       ),
-      if (_jc.status == JobCardStatus.inspected ||
-          _jc.status == JobCardStatus.approved) ...[
+      if (_jc.status == JobCardStatus.approved) ...[
         const SizedBox(height: 10),
         _actionButton(
           'Assign Technician',
@@ -668,6 +667,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   }
 
   void _openEstimate() {
+    ref.read(inspectionProvider.notifier).reset();
     ref.read(inspectionProvider.notifier).setJobCardId(_detailLookupId);
     Navigator.push(
       context,
