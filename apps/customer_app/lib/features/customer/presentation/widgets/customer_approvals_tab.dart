@@ -6,8 +6,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
-class CustomerApprovalsTab extends ConsumerWidget {
-  const CustomerApprovalsTab({super.key});
+class CustomerApprovalsTab extends ConsumerStatefulWidget {
+  final String initialEstimateId;
+
+  const CustomerApprovalsTab({super.key, this.initialEstimateId = ''});
+
+  @override
+  ConsumerState<CustomerApprovalsTab> createState() =>
+      _CustomerApprovalsTabState();
+}
+
+class _CustomerApprovalsTabState extends ConsumerState<CustomerApprovalsTab> {
+  String _openedEstimateId = '';
 
   Future<void> _openDetail(
     BuildContext context,
@@ -47,7 +57,26 @@ class CustomerApprovalsTab extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  @override
+  void didUpdateWidget(covariant CustomerApprovalsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialEstimateId != widget.initialEstimateId) {
+      _openedEstimateId = '';
+    }
+  }
+
+  void _openInitialEstimateIfNeeded() {
+    final estimateId = widget.initialEstimateId.trim();
+    if (estimateId.isEmpty || _openedEstimateId == estimateId) return;
+    _openedEstimateId = estimateId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _openDetail(context, ref, estimateId);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _openInitialEstimateIfNeeded();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;

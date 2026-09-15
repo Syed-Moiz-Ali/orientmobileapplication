@@ -17,16 +17,17 @@ class AdvisorStatsResponse {
     this.newAssignedBookings = 0,
     this.newBreakdowns = 0,
   });
-  factory AdvisorStatsResponse.fromJson(Map<String, dynamic> j) => AdvisorStatsResponse(
-    newJobCardsToday: j['newJobCardsToday'] as int? ?? 0,
-    inspectionsToday: j['inspectionsToday'] as int? ?? 0,
-    pendingApprovals: j['pendingApprovals'] as int? ?? 0,
-    vehiclesWaiting: j['vehiclesWaiting'] as int? ?? 0,
-    readyForDelivery: j['readyForDelivery'] as int? ?? 0,
-    totalOpenJobCards: j['totalOpenJobCards'] as int? ?? 0,
-    newAssignedBookings: j['newAssignedBookings'] as int? ?? 0,
-    newBreakdowns: j['newBreakdowns'] as int? ?? 0,
-  );
+  factory AdvisorStatsResponse.fromJson(Map<String, dynamic> j) =>
+      AdvisorStatsResponse(
+        newJobCardsToday: j['newJobCardsToday'] as int? ?? 0,
+        inspectionsToday: j['inspectionsToday'] as int? ?? 0,
+        pendingApprovals: j['pendingApprovals'] as int? ?? 0,
+        vehiclesWaiting: j['vehiclesWaiting'] as int? ?? 0,
+        readyForDelivery: j['readyForDelivery'] as int? ?? 0,
+        totalOpenJobCards: j['totalOpenJobCards'] as int? ?? 0,
+        newAssignedBookings: j['newAssignedBookings'] as int? ?? 0,
+        newBreakdowns: j['newBreakdowns'] as int? ?? 0,
+      );
 }
 
 class JobCardResponse {
@@ -39,6 +40,8 @@ class JobCardResponse {
   final String lastUpdated;
   final String status;
   final String technician;
+  final int? odometer;
+  final String fuelLevel;
   const JobCardResponse({
     this.id = '',
     this.dbId = 0,
@@ -49,6 +52,8 @@ class JobCardResponse {
     this.lastUpdated = '',
     this.status = 'pending',
     this.technician = '',
+    this.odometer,
+    this.fuelLevel = '',
   });
   factory JobCardResponse.fromJson(Map<String, dynamic> j) => JobCardResponse(
     id: j['id'] as String? ?? '',
@@ -60,6 +65,8 @@ class JobCardResponse {
     lastUpdated: j['lastUpdated'] as String? ?? '',
     status: j['status'] as String? ?? 'pending',
     technician: j['technician'] as String? ?? '',
+    odometer: (j['odometer'] as num?)?.toInt(),
+    fuelLevel: _readString(j, const ['fuelLevel', 'fuel_level']),
   );
 }
 
@@ -84,6 +91,8 @@ class JobCardDetailResponse {
   final String status;
   final String technician;
   final String notes;
+  final int? odometer;
+  final String fuelLevel;
   final String tag;
   final String customerRequests;
   final String garageRecommendations;
@@ -109,44 +118,79 @@ class JobCardDetailResponse {
     this.status = 'pending',
     this.technician = '',
     this.notes = '',
+    this.odometer,
+    this.fuelLevel = '',
     this.tag = '',
     this.customerRequests = '',
     this.garageRecommendations = '',
     this.estimatedDelivery = '',
   });
-  factory JobCardDetailResponse.fromJson(Map<String, dynamic> j) => JobCardDetailResponse(
-    id: j['id'] as String? ?? '',
-    dbId: (j['dbId'] as num?)?.toInt() ?? 0,
-    customerName: j['customerName'] as String? ?? '',
-    phoneNumber: j['phoneNumber'] as String? ?? '',
-    email: j['email'] as String? ?? '',
-    customerGroup: j['customerGroup'] as String? ?? '',
-    vehicleInfo: j['vehicleInfo'] as String? ?? '',
-    registrationNumber: j['registrationNumber'] as String? ?? '',
-    vin: j['vin'] as String? ?? '',
-    make: j['make'] as String? ?? '',
-    model: j['model'] as String? ?? '',
-    modelYear: j['modelYear'] as String? ?? '',
-    vehicleColor: j['vehicleColor'] as String? ?? '',
-    mileage: j['mileage'] as String? ?? '',
-    time: j['time'] as String? ?? '',
-    createdDate: j['createdDate'] as String? ?? '',
-    lastUpdated: j['lastUpdated'] as String? ?? '',
-    status: j['status'] as String? ?? 'pending',
-    technician: j['technician'] as String? ?? '',
-    notes: j['notes'] as String? ?? '',
-    tag: j['tag'] as String? ?? '',
-    customerRequests: j['customerRequests'] as String? ?? '',
-    garageRecommendations: j['garageRecommendations'] as String? ?? '',
-    estimatedDelivery: j['estimatedDelivery'] as String? ?? '',
-  );
+  factory JobCardDetailResponse.fromJson(Map<String, dynamic> j) =>
+      JobCardDetailResponse(
+        id: j['id'] as String? ?? '',
+        dbId: (j['dbId'] as num?)?.toInt() ?? 0,
+        customerName: _readString(j, const [
+          'customerName',
+          'name',
+          'customer',
+        ]),
+        phoneNumber: _readString(j, const [
+          'phoneNumber',
+          'phone',
+          'customerPhone',
+          'mobile',
+          'mobileNumber',
+        ]),
+        email: _readString(j, const ['email', 'customerEmail']),
+        customerGroup: j['customerGroup'] as String? ?? '',
+        vehicleInfo: _readString(j, const [
+          'vehicleInfo',
+          'vehicleName',
+          'vehicle',
+        ]),
+        registrationNumber: _readString(j, const [
+          'registrationNumber',
+          'plateNumber',
+          'regNo',
+          'vehiclePlate',
+        ]),
+        vin: _readString(j, const ['vin', 'chassisNumber']),
+        make: _readString(j, const ['make', 'brand']),
+        model: _readString(j, const ['model']),
+        modelYear: _readString(j, const ['modelYear', 'year']),
+        vehicleColor: _readString(j, const ['vehicleColor', 'color']),
+        mileage: j['mileage'] as String? ?? '',
+        time: j['time'] as String? ?? '',
+        createdDate: j['createdDate'] as String? ?? '',
+        lastUpdated: j['lastUpdated'] as String? ?? '',
+        status: j['status'] as String? ?? 'pending',
+        technician: j['technician'] as String? ?? '',
+        notes: j['notes'] as String? ?? '',
+        odometer: (j['odometer'] as num?)?.toInt(),
+        fuelLevel: _readString(j, const ['fuelLevel', 'fuel_level']),
+        tag: j['tag'] as String? ?? '',
+        customerRequests: j['customerRequests'] as String? ?? '',
+        garageRecommendations: j['garageRecommendations'] as String? ?? '',
+        estimatedDelivery: j['estimatedDelivery'] as String? ?? '',
+      );
+}
+
+String _readString(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value != null && value.toString().trim().isNotEmpty) {
+      return value.toString();
+    }
+  }
+  return '';
 }
 
 class InspectionResponse {
   final String id;
   const InspectionResponse({this.id = ''});
   factory InspectionResponse.fromJson(Map<String, dynamic> j) {
-    final rawId = j['id'] ?? j['inspectionId'] ?? j['inspectionRef'] ?? j['ref'];
+    final rawId =
+        j['id'] ?? j['inspectionId'] ?? j['inspectionRef'] ?? j['ref'];
     return InspectionResponse(id: rawId?.toString() ?? '');
   }
 }
@@ -176,19 +220,20 @@ class InspectionDraftResponse {
     this.isDraft,
     this.sections,
   });
-  factory InspectionDraftResponse.fromJson(Map<String, dynamic> j) => InspectionDraftResponse(
-    id: (j['id'] ?? '').toString(),
-    jobCardId: (j['jobCardId'] ?? '').toString(),
-    referenceNumber: j['referenceNumber'] as String? ?? '',
-    placeOfSupply: j['placeOfSupply'] as String? ?? '',
-    customerRequests: j['customerRequests'] as String? ?? '',
-    garageRecommendations: j['garageRecommendations'] as String? ?? '',
-    estimatedDelivery: j['estimatedDelivery'] as String? ?? '',
-    notifyOwnerSmsEmail: j['notifyOwnerSmsEmail'] as bool?,
-    tag: j['tag'] as String? ?? '',
-    isDraft: j['isDraft'] as bool?,
-    sections: j['sections'] as Map<String, Map<String, dynamic>>?,
-  );
+  factory InspectionDraftResponse.fromJson(Map<String, dynamic> j) =>
+      InspectionDraftResponse(
+        id: (j['id'] ?? '').toString(),
+        jobCardId: (j['jobCardId'] ?? '').toString(),
+        referenceNumber: j['referenceNumber'] as String? ?? '',
+        placeOfSupply: j['placeOfSupply'] as String? ?? '',
+        customerRequests: j['customerRequests'] as String? ?? '',
+        garageRecommendations: j['garageRecommendations'] as String? ?? '',
+        estimatedDelivery: j['estimatedDelivery'] as String? ?? '',
+        notifyOwnerSmsEmail: j['notifyOwnerSmsEmail'] as bool?,
+        tag: j['tag'] as String? ?? '',
+        isDraft: j['isDraft'] as bool?,
+        sections: j['sections'] as Map<String, Map<String, dynamic>>?,
+      );
 }
 
 class PendingApprovalResponse {
@@ -204,13 +249,14 @@ class PendingApprovalResponse {
     this.amount = 0,
     this.timeAgo = '',
   });
-  factory PendingApprovalResponse.fromJson(Map<String, dynamic> j) => PendingApprovalResponse(
-    estimateId: j['estimateId'] as String? ?? '',
-    customerName: j['customerName'] as String? ?? '',
-    vehicleId: j['vehicleId'] as String? ?? '',
-    amount: (j['amount'] as num?)?.toDouble() ?? 0,
-    timeAgo: j['timeAgo'] as String? ?? '',
-  );
+  factory PendingApprovalResponse.fromJson(Map<String, dynamic> j) =>
+      PendingApprovalResponse(
+        estimateId: j['estimateId'] as String? ?? '',
+        customerName: j['customerName'] as String? ?? '',
+        vehicleId: j['vehicleId'] as String? ?? '',
+        amount: (j['amount'] as num?)?.toDouble() ?? 0,
+        timeAgo: j['timeAgo'] as String? ?? '',
+      );
 }
 
 class ReminderResponse {
@@ -243,7 +289,10 @@ class ReportActivityDto {
   final int count;
   const ReportActivityDto({this.day = '', this.count = 0});
   factory ReportActivityDto.fromJson(Map<String, dynamic> j) =>
-      ReportActivityDto(day: j['day'] as String? ?? '', count: (j['count'] as num?)?.toInt() ?? 0);
+      ReportActivityDto(
+        day: j['day'] as String? ?? '',
+        count: (j['count'] as num?)?.toInt() ?? 0,
+      );
 }
 
 class ReportResponse {
@@ -275,19 +324,25 @@ class ReportResponse {
 class RepairOrderResponse {
   final String id;
   const RepairOrderResponse({this.id = ''});
-  factory RepairOrderResponse.fromJson(Map<String, dynamic> j) => RepairOrderResponse(id: j['id'] as String? ?? '');
+  factory RepairOrderResponse.fromJson(Map<String, dynamic> j) =>
+      RepairOrderResponse(id: j['id'] as String? ?? '');
 }
 
 class CustomerSearchResponse {
   final String customerName;
   final String phone;
   final String email;
-  const CustomerSearchResponse({this.customerName = '', this.phone = '', this.email = ''});
-  factory CustomerSearchResponse.fromJson(Map<String, dynamic> j) => CustomerSearchResponse(
-    customerName: j['customerName'] as String? ?? '',
-    phone: j['phone'] as String? ?? '',
-    email: j['email'] as String? ?? '',
-  );
+  const CustomerSearchResponse({
+    this.customerName = '',
+    this.phone = '',
+    this.email = '',
+  });
+  factory CustomerSearchResponse.fromJson(Map<String, dynamic> j) =>
+      CustomerSearchResponse(
+        customerName: j['customerName'] as String? ?? '',
+        phone: j['phone'] as String? ?? '',
+        email: j['email'] as String? ?? '',
+      );
 }
 
 class VehicleSearchResponse {
@@ -296,12 +351,19 @@ class VehicleSearchResponse {
   final String make;
   final String model;
   final String plateNumber;
-  const VehicleSearchResponse({this.regNo = '', this.vin = '', this.make = '', this.model = '', this.plateNumber = ''});
-  factory VehicleSearchResponse.fromJson(Map<String, dynamic> j) => VehicleSearchResponse(
-    regNo: j['regNo'] as String? ?? '',
-    vin: j['vin'] as String? ?? '',
-    make: j['make'] as String? ?? '',
-    model: j['model'] as String? ?? '',
-    plateNumber: j['plateNumber'] as String? ?? '',
-  );
+  const VehicleSearchResponse({
+    this.regNo = '',
+    this.vin = '',
+    this.make = '',
+    this.model = '',
+    this.plateNumber = '',
+  });
+  factory VehicleSearchResponse.fromJson(Map<String, dynamic> j) =>
+      VehicleSearchResponse(
+        regNo: j['regNo'] as String? ?? '',
+        vin: j['vin'] as String? ?? '',
+        make: j['make'] as String? ?? '',
+        model: j['model'] as String? ?? '',
+        plateNumber: j['plateNumber'] as String? ?? '',
+      );
 }

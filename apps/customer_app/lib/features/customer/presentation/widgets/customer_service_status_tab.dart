@@ -61,7 +61,12 @@ class _CustomerServiceStatusTabState
         .where(
           (b) =>
               b.status == BookingStatus.confirmed ||
-              b.status == BookingStatus.pending,
+              b.status == BookingStatus.pending ||
+              b.status == BookingStatus.approvalRequired ||
+              b.status == BookingStatus.vehicleReceived ||
+              b.status == BookingStatus.approved ||
+              b.status == BookingStatus.workAssigned ||
+              b.status == BookingStatus.inProgress,
         )
         .toList();
 

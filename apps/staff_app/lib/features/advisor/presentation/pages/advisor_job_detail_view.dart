@@ -69,6 +69,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           technician: details.technician.isNotEmpty
               ? details.technician
               : _jc.technician,
+          odometer: details.odometer ?? _jc.odometer,
+          fuelLevel: details.fuelLevel.isNotEmpty
+              ? details.fuelLevel
+              : _jc.fuelLevel,
           status: JobCardStatus.values.firstWhere(
             (status) => status.name == details.status,
             orElse: () => _jc.status,
@@ -148,6 +152,33 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   String _apiVal(String value, String fallback) =>
       value.isNotEmpty ? value : fallback;
 
+  String get _displayPhone =>
+      _apiVal(_details?.phoneNumber ?? '', _getVal('phoneNumber'));
+
+  String get _displayEmail => _apiVal(_details?.email ?? '', _getVal('email'));
+
+  String get _displayPlate {
+    final fromApi = _details?.registrationNumber ?? '';
+    if (fromApi.isNotEmpty) return fromApi;
+    final fromHive = _getVal('registrationNumber');
+    if (fromHive.isNotEmpty) return fromHive;
+    return '';
+  }
+
+  String get _displayOdometer {
+    final fromApi = _details?.odometer;
+    if (fromApi != null && fromApi > 0) return '$fromApi';
+    if (_jc.odometer != null && _jc.odometer! > 0) return '${_jc.odometer}';
+    return _getVal('odometerReading');
+  }
+
+  String get _displayFuelLevel {
+    final fromApi = _details?.fuelLevel ?? '';
+    if (fromApi.isNotEmpty) return fromApi;
+    if (_jc.fuelLevel.isNotEmpty) return _jc.fuelLevel;
+    return _getVal('fuelLevel');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -191,12 +222,12 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             _detailRow(
               Icons.phone_outlined,
               'Phone',
-              _apiVal(_details?.phoneNumber ?? '', _getVal('phoneNumber')),
+              _displayPhone.isEmpty ? '--' : _displayPhone,
             ),
             _detailRow(
               Icons.email_outlined,
               'Email',
-              _apiVal(_details?.email ?? '', _getVal('email')),
+              _displayEmail.isEmpty ? '--' : _displayEmail,
             ),
             if (_apiVal(
               _details?.customerGroup ?? '',
@@ -226,10 +257,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             _detailRow(
               Icons.confirmation_number_outlined,
               'Plate',
-              _apiVal(
-                _details?.registrationNumber ?? '',
-                _getVal('registrationNumber'),
-              ).toUpperCase(),
+              (_displayPlate.isEmpty ? '--' : _displayPlate).toUpperCase(),
               isMono: true,
             ),
             _detailRow(
@@ -259,9 +287,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             _detailRow(
               Icons.speed_rounded,
               'Odometer',
-              _getVal('odometerReading').isEmpty
-                  ? '--'
-                  : '${_getVal('odometerReading')} km',
+              _displayOdometer.isEmpty ? '--' : '$_displayOdometer km',
               isMono: true,
             ),
           ]),
@@ -488,18 +514,19 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
 
   Widget _buildFuelLevelDisplay() {
     final colorScheme = Theme.of(context).colorScheme;
-    final fuelLevelValue = _hiveData?['fuelLevel'];
-    final fuelLevel = fuelLevelValue is num
-        ? fuelLevelValue.toInt()
-        : switch (fuelLevelValue?.toString()) {
-            '1/4' => 3,
-            '1/2' => 5,
-            '3/4' => 8,
-            'Full' => 10,
-            _ => 5,
-          };
-    final fuelLabel = fuelLevelValue?.toString().isNotEmpty == true
-        ? fuelLevelValue.toString()
+    final fuelLevelValue = _displayFuelLevel;
+    final numericFuel = int.tryParse(fuelLevelValue);
+    final fuelLevel =
+        numericFuel ??
+        switch (fuelLevelValue) {
+          '1/4' => 3,
+          '1/2' => 5,
+          '3/4' => 8,
+          'Full' => 10,
+          _ => 5,
+        };
+    final fuelLabel = fuelLevelValue.isNotEmpty
+        ? fuelLevelValue
         : '$fuelLevel/10';
 
     return Row(
@@ -737,10 +764,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   }
 
   void _callCustomer() {
-    final phone = _apiVal(
-      _details?.phoneNumber ?? '',
-      _getVal('phoneNumber'),
-    ).replaceAll(RegExp(r'[^\d+]'), '');
+    final phone = _displayPhone.replaceAll(RegExp(r'[^\d+]'), '');
     if (phone.isNotEmpty) launchUrl(Uri.parse('tel:$phone'));
   }
 }

@@ -270,7 +270,7 @@ class CustomerProfileTab extends ConsumerWidget {
                   title: 'My Garage & Vehicles',
                   subtitle: 'Manage registered cars, MOT & service details',
                   onTap: () =>
-                      ref.read(customerDashboardProvider.notifier).selectTab(3),
+                      ref.read(customerDashboardProvider.notifier).selectTab(4),
                 ),
                 _SettingsTile(
                   icon: Icons.add_rounded,

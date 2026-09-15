@@ -27,6 +27,8 @@ public class JobCardDetailResponse {
     private String status;
     private String technician;
     private String notes;
+    private Integer odometer;
+    private String fuelLevel;
     private String tag;
     private String customerRequests;
     private String garageRecommendations;

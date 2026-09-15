@@ -66,6 +66,12 @@ class BookingResponse {
   final String date;
   final String time;
   final String status;
+  final String jobCardId;
+  final String jobCardRef;
+  final String jobCardStatus;
+  final bool approvalRequired;
+  final String estimateId;
+  final double estimateAmount;
   const BookingResponse({
     this.id = '',
     this.service = '',
@@ -74,6 +80,12 @@ class BookingResponse {
     this.date = '',
     this.time = '',
     this.status = 'pending',
+    this.jobCardId = '',
+    this.jobCardRef = '',
+    this.jobCardStatus = '',
+    this.approvalRequired = false,
+    this.estimateId = '',
+    this.estimateAmount = 0,
   });
   factory BookingResponse.fromJson(Map<String, dynamic> j) => BookingResponse(
     id: (j['id'] ?? '').toString(),
@@ -83,6 +95,12 @@ class BookingResponse {
     date: j['date'] as String? ?? '',
     time: j['time'] as String? ?? '',
     status: j['status'] as String? ?? 'pending',
+    jobCardId: (j['jobCardId'] ?? '').toString(),
+    jobCardRef: (j['jobCardRef'] ?? '').toString(),
+    jobCardStatus: (j['jobCardStatus'] ?? '').toString(),
+    approvalRequired: j['approvalRequired'] as bool? ?? false,
+    estimateId: (j['estimateId'] ?? '').toString(),
+    estimateAmount: (j['estimateAmount'] as num?)?.toDouble() ?? 0,
   );
 }
 

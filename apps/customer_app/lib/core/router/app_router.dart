@@ -93,7 +93,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final requestedTab =
               int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0;
-          return CustomerDashboardView(initialTab: requestedTab.clamp(0, 4));
+          return CustomerDashboardView(
+            initialTab: requestedTab.clamp(0, 5),
+            pendingEstimateId: state.uri.queryParameters['estimateId'] ?? '',
+          );
         },
       ),
       GoRoute(

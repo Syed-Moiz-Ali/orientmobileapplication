@@ -15,11 +15,20 @@ public interface CustomerMapper extends BaseMapper<Customer> {
     @Select("SELECT * FROM customers WHERE user_id = #{userId} LIMIT 1")
     Optional<Customer> findByUserId(@Param("userId") Long userId);
 
+    @Select("SELECT * FROM customers WHERE user_id = #{userId} ORDER BY id ASC")
+    List<Customer> findAllByUserId(@Param("userId") Long userId);
+
     @Select("SELECT * FROM customers WHERE phone_number = #{phone} LIMIT 1")
     Optional<Customer> findByPhone(@Param("phone") String phone);
 
+    @Select("SELECT * FROM customers WHERE email = #{email} LIMIT 1")
+    Optional<Customer> findByEmail(@Param("email") String email);
+
     @Select("SELECT * FROM customers WHERE user_id = #{userId} AND branch_id = #{branchId} LIMIT 1")
     Optional<Customer> findByUserIdAndBranch(@Param("userId") Long userId, @Param("branchId") Long branchId);
+
+    @Select("SELECT * FROM customers WHERE user_id = #{userId} AND branch_id = #{branchId} ORDER BY id ASC")
+    List<Customer> findAllByUserIdAndBranch(@Param("userId") Long userId, @Param("branchId") Long branchId);
 
     @Select("SELECT * FROM customers WHERE customer_name LIKE CONCAT('%',#{q},'%') " +
             "OR phone_number LIKE CONCAT('%',#{q},'%') OR email LIKE CONCAT('%',#{q},'%') LIMIT 20")

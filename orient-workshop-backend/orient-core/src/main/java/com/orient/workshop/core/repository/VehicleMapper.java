@@ -17,6 +17,31 @@ public interface VehicleMapper extends BaseMapper<Vehicle> {
     @Select("SELECT * FROM vehicles WHERE customer_id = #{customerId} AND branch_id = #{branchId} ORDER BY id DESC")
     List<Vehicle> findByCustomerIdAndBranch(@Param("customerId") Long customerId, @Param("branchId") Long branchId);
 
+    @Select("""
+            <script>
+            SELECT * FROM vehicles
+            WHERE customer_id IN
+            <foreach item="id" collection="customerIds" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+            ORDER BY id DESC
+            </script>
+            """)
+    List<Vehicle> findByCustomerIds(@Param("customerIds") List<Long> customerIds);
+
+    @Select("""
+            <script>
+            SELECT * FROM vehicles
+            WHERE customer_id IN
+            <foreach item="id" collection="customerIds" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+            AND (branch_id = #{branchId} OR branch_id IS NULL)
+            ORDER BY id DESC
+            </script>
+            """)
+    List<Vehicle> findByCustomerIdsAndBranch(@Param("customerIds") List<Long> customerIds, @Param("branchId") Long branchId);
+
     @Select("SELECT * FROM vehicles WHERE registration_number LIKE CONCAT('%',#{q},'%') " +
             "OR vin LIKE CONCAT('%',#{q},'%') OR plate_number LIKE CONCAT('%',#{q},'%') LIMIT 20")
     List<Vehicle> search(@Param("q") String q);

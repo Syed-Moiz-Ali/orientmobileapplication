@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,13 +27,30 @@ public class CustomerService {
         return findOrCreateCustomer(userId, null);
     }
 
+    public List<Customer> findCustomerRecords(Long userId, Long branchId) {
+        List<Customer> branchRecords = branchId != null
+                ? customerMapper.findAllByUserIdAndBranch(userId, branchId)
+                : List.of();
+        if (!branchRecords.isEmpty()) return branchRecords;
+        return customerMapper.findAllByUserId(userId);
+    }
+
     public Customer findOrCreateCustomer(Long userId, Long branchId) {
         return (branchId != null ? customerMapper.findByUserIdAndBranch(userId, branchId) : customerMapper.findByUserId(userId))
+                .or(() -> customerMapper.findByUserId(userId))
+                .map(c -> {
+                    if (branchId != null && c.getBranchId() == null) {
+                        c.setBranchId(branchId);
+                        customerMapper.updateById(c);
+                    }
+                    return c;
+                })
                 .orElseGet(() -> {
             User user = userMapper.selectById(userId);
             String name = (user != null && user.getName() != null && !user.getName().isBlank())
                     ? user.getName() : "Customer";
             String phone = user != null ? user.getPhone() : "";
+            String email = user != null ? user.getEmail() : "";
 
             // Phase 2 — walk-in merge: the intake advisor already created this
             // customer (with a phone, no user_id). Bind that record to the user
@@ -49,12 +68,26 @@ public class CustomerService {
                     }
                 }
             }
+            if (email != null && !email.isBlank()) {
+                var existing = customerMapper.findByEmail(email);
+                if (existing.isPresent()) {
+                    Customer c = existing.get();
+                    if (c.getUserId() == null) {
+                        c.setUserId(userId);
+                        if (branchId != null && c.getBranchId() == null) c.setBranchId(branchId);
+                        customerMapper.updateById(c);
+                        log.info("Merged email Customer record id={} to userId={}", c.getId(), userId);
+                        return c;
+                    }
+                }
+            }
 
             Customer c = Customer.builder()
                     .userId(userId)
                     .branchId(branchId != null ? branchId : 1L)
                     .customerName(name)
                     .phoneNumber(phone != null ? phone : "")
+                    .email(email != null ? email : "")
                     .source("SMS")
                     .build();
             customerMapper.insert(c);

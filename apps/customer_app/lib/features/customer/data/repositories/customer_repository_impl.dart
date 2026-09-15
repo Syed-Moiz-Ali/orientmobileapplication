@@ -69,10 +69,16 @@ class CustomerRepositoryImpl implements CustomerRepository {
               plateNumber: b.plateNumber,
               date: b.date,
               time: b.time,
-              status: BookingStatus.values.firstWhere(
-                (s) => s.name == b.status,
-                orElse: () => BookingStatus.pending,
+              status: CustomerBookingEntity.parseStatus(
+                bookingStatus: b.status,
+                jobCardStatus: b.jobCardStatus,
+                approvalRequired: b.approvalRequired,
               ),
+              jobCardId: b.jobCardId,
+              jobCardRef: b.jobCardRef,
+              jobCardStatus: b.jobCardStatus,
+              estimateId: b.estimateId,
+              estimateAmount: b.estimateAmount,
             ),
           )
           .toList();

@@ -30,7 +30,16 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
 
     // ── INTELLIGENT STATE ROUTING ────────────────────────────────────────────
     final upcomingBooking = bookings
-        .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending)
+        .where(
+          (b) =>
+              b.status == BookingStatus.approvalRequired ||
+              b.status == BookingStatus.confirmed ||
+              b.status == BookingStatus.pending ||
+              b.status == BookingStatus.vehicleReceived ||
+              b.status == BookingStatus.approved ||
+              b.status == BookingStatus.workAssigned ||
+              b.status == BookingStatus.inProgress,
+        )
         .firstOrNull;
 
     return Scaffold(
@@ -512,6 +521,7 @@ class _BookingFilterPills extends StatelessWidget {
     final items = <(String, BookingStatus?)>[
       ('All', null),
       ('Upcoming', BookingStatus.confirmed),
+      ('Approval', BookingStatus.approvalRequired),
       ('Pending', BookingStatus.pending),
       ('History', BookingStatus.completed),
       ('Cancelled', BookingStatus.cancelled),
@@ -697,9 +707,11 @@ class _BookingListItem extends StatelessWidget {
   (Color, Color) _statusColors(BookingStatus status, ColorScheme colorScheme) {
     return switch (status) {
       BookingStatus.confirmed => (colorScheme.primary.withValues(alpha: 0.15), colorScheme.primary),
-      BookingStatus.completed => (const Color(0xFF10B981).withValues(alpha: 0.15), const Color(0xFF10B981)),
+      BookingStatus.completed || BookingStatus.delivered => (const Color(0xFF10B981).withValues(alpha: 0.15), const Color(0xFF10B981)),
       BookingStatus.pending => (colorScheme.secondary.withValues(alpha: 0.15), colorScheme.secondary),
       BookingStatus.cancelled => (colorScheme.error.withValues(alpha: 0.15), colorScheme.error),
+      BookingStatus.approvalRequired => (const Color(0xFFF59E0B).withValues(alpha: 0.16), const Color(0xFFF59E0B)),
+      BookingStatus.vehicleReceived || BookingStatus.approved || BookingStatus.workAssigned || BookingStatus.inProgress => (const Color(0xFF2563EB).withValues(alpha: 0.14), const Color(0xFF2563EB)),
     };
   }
 }

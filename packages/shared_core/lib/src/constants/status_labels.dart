@@ -11,14 +11,25 @@ abstract final class AppStatusLabels {
         return 'Pending';
       case 'confirmed':
         return 'Confirmed';
+      case 'vehicleReceived':
       case 'vehicle_received':
         return 'Vehicle Received';
+      case 'approved':
+        return 'Approved';
+      case 'workAssigned':
+        return 'Work Assigned';
+      case 'inProgress':
       case 'in_service':
         return 'In Service';
+      case 'delivered':
+        return 'Delivered';
       case 'completed':
         return 'Completed';
       case 'cancelled':
         return 'Cancelled';
+      case 'approvalRequired':
+      case 'waitingCustomerApproval':
+        return 'Approval Required';
       default:
         return status ?? '';
     }

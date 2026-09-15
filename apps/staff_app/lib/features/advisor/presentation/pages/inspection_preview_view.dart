@@ -12,7 +12,11 @@ class InspectionPreviewView extends ConsumerWidget {
   final VoidCallback onBack;
   final String jobId;
 
-  const InspectionPreviewView({super.key, required this.onBack, this.jobId = ''});
+  const InspectionPreviewView({
+    super.key,
+    required this.onBack,
+    this.jobId = '',
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,7 +38,10 @@ class InspectionPreviewView extends ConsumerWidget {
         ),
         title: Text(
           'Inspection Review',
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: colorScheme.onSurface,
+          ),
         ),
       ),
       body: Column(
@@ -50,12 +57,18 @@ class InspectionPreviewView extends ConsumerWidget {
                     (sec) => sec.items
                         .asMap()
                         .entries
-                        .where((e) => state.statuses.containsKey('${sec.id}_${e.key}'))
+                        .where(
+                          (e) =>
+                              state.statuses.containsKey('${sec.id}_${e.key}'),
+                        )
                         .map((e) => _ratedItemTile(context, e, sec, state)),
                   ),
                 ] else ...[
                   const Center(
-                    child: EmptyState(icon: Icons.checklist, message: 'No checkpoints rated'),
+                    child: EmptyState(
+                      icon: Icons.checklist,
+                      message: 'No checkpoints rated',
+                    ),
                   ),
                 ],
               ],
@@ -82,13 +95,24 @@ class InspectionPreviewView extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.assignment_turned_in_outlined, color: colorScheme.primary),
+              Icon(
+                Icons.assignment_turned_in_outlined,
+                color: colorScheme.primary,
+              ),
               const SizedBox(width: 10),
-              Text('Vehicle Inspection Summary', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+              Text(
+                'Vehicle Inspection Summary',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const Spacer(),
               Text(
                 '${state.statuses.length} Rated',
-                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
@@ -97,7 +121,12 @@ class InspectionPreviewView extends ConsumerWidget {
     );
   }
 
-  Widget _ratedItemTile(BuildContext context, MapEntry<int, String> e, InspectionSection sec, InspectionState state) {
+  Widget _ratedItemTile(
+    BuildContext context,
+    MapEntry<int, String> e,
+    InspectionSection sec,
+    InspectionState state,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final itemId = '${sec.id}_${e.key}';
     final status = state.statuses[itemId]!;
@@ -113,18 +142,29 @@ class InspectionPreviewView extends ConsumerWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(e.value, style: const TextStyle(fontWeight: FontWeight.w700)),
+            child: Text(
+              e.value,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
           Text(
             status.name.toUpperCase(),
-            style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900),
+            style: TextStyle(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _footer(BuildContext context, WidgetRef ref, InspectionState state, bool hasRatings) {
+  Widget _footer(
+    BuildContext context,
+    WidgetRef ref,
+    InspectionState state,
+    bool hasRatings,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -144,7 +184,9 @@ class InspectionPreviewView extends ConsumerWidget {
     if (!context.mounted) return;
     await result.when(
       success: (_) async {
-        final detail = await ref.read(advisorRemoteDataSourceProvider).getJobCard(currentJobCardId);
+        final detail = await ref
+            .read(advisorRemoteDataSourceProvider)
+            .getJobCard(currentJobCardId);
         if (!context.mounted) return;
         final status = JobCardStatus.values.firstWhere(
           (s) => s.name == detail.status,
@@ -162,11 +204,15 @@ class InspectionPreviewView extends ConsumerWidget {
             lastUpdated: detail.lastUpdated,
             status: status,
             technician: detail.technician,
+            odometer: detail.odometer,
+            fuelLevel: detail.fuelLevel,
           ),
         );
       },
       failure: (error) async {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
       },
     );
   }

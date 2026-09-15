@@ -16,4 +16,6 @@ public class JobCardResponse {
     private String lastUpdated;
     private String status;
     private String technician;
+    private Integer odometer;
+    private String fuelLevel;
 }

@@ -40,10 +40,16 @@ final customerBookingsProvider = FutureProvider<List<CustomerBookingEntity>>((
             plateNumber: b.plateNumber,
             date: b.date,
             time: b.time,
-            status: BookingStatus.values.firstWhere(
-              (e) => e.name == b.status,
-              orElse: () => BookingStatus.pending,
+            status: CustomerBookingEntity.parseStatus(
+              bookingStatus: b.status,
+              jobCardStatus: b.jobCardStatus,
+              approvalRequired: b.approvalRequired,
             ),
+            jobCardId: b.jobCardId,
+            jobCardRef: b.jobCardRef,
+            jobCardStatus: b.jobCardStatus,
+            estimateId: b.estimateId,
+            estimateAmount: b.estimateAmount,
           ),
         )
         .toList();
@@ -97,10 +103,16 @@ List<CustomerBookingEntity> _bookingsFromHive() {
                 '',
             date: (v['bookingDate'] as String?) ?? (v['date'] as String?) ?? '',
             time: v['time'] as String? ?? '',
-            status: BookingStatus.values.firstWhere(
-              (e) => e.name == v['status'],
-              orElse: () => BookingStatus.pending,
+            status: CustomerBookingEntity.parseStatus(
+              bookingStatus: (v['status'] ?? '').toString(),
+              jobCardStatus: (v['jobCardStatus'] ?? '').toString(),
+              approvalRequired: v['approvalRequired'] as bool? ?? false,
             ),
+            jobCardId: (v['jobCardId'] ?? '').toString(),
+            jobCardRef: (v['jobCardRef'] ?? '').toString(),
+            jobCardStatus: (v['jobCardStatus'] ?? '').toString(),
+            estimateId: (v['estimateId'] ?? '').toString(),
+            estimateAmount: (v['estimateAmount'] as num?)?.toDouble() ?? 0,
           ),
         )
         .toList();

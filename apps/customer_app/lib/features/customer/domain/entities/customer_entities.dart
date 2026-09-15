@@ -1,6 +1,17 @@
 import 'package:shared_core/shared_core.dart';
 
-enum BookingStatus { confirmed, completed, pending, cancelled }
+enum BookingStatus {
+  confirmed,
+  completed,
+  pending,
+  cancelled,
+  approvalRequired,
+  vehicleReceived,
+  approved,
+  workAssigned,
+  inProgress,
+  delivered,
+}
 
 enum StageStatus { done, inProgress, pending }
 
@@ -107,6 +118,11 @@ class CustomerBookingEntity {
   final String date;
   final String time;
   final BookingStatus status;
+  final String jobCardId;
+  final String jobCardRef;
+  final String jobCardStatus;
+  final String estimateId;
+  final double estimateAmount;
 
   const CustomerBookingEntity({
     this.id = '',
@@ -116,11 +132,40 @@ class CustomerBookingEntity {
     required this.date,
     required this.time,
     required this.status,
+    this.jobCardId = '',
+    this.jobCardRef = '',
+    this.jobCardStatus = '',
+    this.estimateId = '',
+    this.estimateAmount = 0,
   });
 
   String get statusLabel {
     // FE-FIX (pre-deployment, P2-8): one canonical vocabulary across apps.
     return AppStatusLabels.booking(status.name);
+  }
+
+  static BookingStatus parseStatus({
+    required String bookingStatus,
+    String jobCardStatus = '',
+    bool approvalRequired = false,
+  }) {
+    if (approvalRequired) return BookingStatus.approvalRequired;
+    final raw = (jobCardStatus.isNotEmpty ? jobCardStatus : bookingStatus)
+        .trim()
+        .replaceAll('_', '')
+        .toLowerCase();
+    return switch (raw) {
+      'confirmed' => BookingStatus.confirmed,
+      'completed' || 'qualitycheckpassed' => BookingStatus.completed,
+      'cancelled' || 'canceled' => BookingStatus.cancelled,
+      'waitingcustomerapproval' => BookingStatus.approvalRequired,
+      'vehiclereceived' => BookingStatus.vehicleReceived,
+      'inspected' || 'approved' => BookingStatus.approved,
+      'workassigned' => BookingStatus.workAssigned,
+      'inprogress' || 'inservice' || 'qualitycheck' => BookingStatus.inProgress,
+      'delivered' => BookingStatus.delivered,
+      _ => BookingStatus.pending,
+    };
   }
 
   // FIX (audit P0): UK-flavoured mock bookings removed — data comes from the API.
@@ -133,6 +178,11 @@ class CustomerBookingEntity {
     'date': date,
     'time': time,
     'status': status.name,
+    'jobCardId': jobCardId,
+    'jobCardRef': jobCardRef,
+    'jobCardStatus': jobCardStatus,
+    'estimateId': estimateId,
+    'estimateAmount': estimateAmount,
   };
   factory CustomerBookingEntity.fromJson(Map<String, dynamic> j) =>
       CustomerBookingEntity(
@@ -142,10 +192,16 @@ class CustomerBookingEntity {
         plateNumber: j['plateNumber'] as String? ?? '',
         date: j['date'] as String? ?? '',
         time: j['time'] as String? ?? '',
-        status: BookingStatus.values.firstWhere(
-          (e) => e.name == j['status'],
-          orElse: () => BookingStatus.pending,
+        status: CustomerBookingEntity.parseStatus(
+          bookingStatus: (j['status'] ?? '').toString(),
+          jobCardStatus: (j['jobCardStatus'] ?? '').toString(),
+          approvalRequired: j['approvalRequired'] as bool? ?? false,
         ),
+        jobCardId: (j['jobCardId'] ?? '').toString(),
+        jobCardRef: (j['jobCardRef'] ?? '').toString(),
+        jobCardStatus: (j['jobCardStatus'] ?? '').toString(),
+        estimateId: (j['estimateId'] ?? '').toString(),
+        estimateAmount: (j['estimateAmount'] as num?)?.toDouble() ?? 0,
       );
 }
 

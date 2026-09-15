@@ -70,6 +70,8 @@ final advisorRecentJobCardsProvider = FutureProvider<List<JobCardEntity>>((
         orElse: () => JobCardStatus.inProgress,
       ),
       technician: job.technician,
+      odometer: job.odometer,
+      fuelLevel: job.fuelLevel,
     );
   }).toList();
 });

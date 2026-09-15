@@ -4,11 +4,20 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_sca
 
 class CustomerDashboardView extends ConsumerWidget {
   final int initialTab;
-  const CustomerDashboardView({super.key, this.initialTab = 0});
+  final String pendingEstimateId;
+
+  const CustomerDashboardView({
+    super.key,
+    this.initialTab = 0,
+    this.pendingEstimateId = '',
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // FIX (audit): honour the requested tab (e.g. 'Track Booking' → Status).
-    return CustomerScaffold(initialTab: initialTab);
+    return CustomerScaffold(
+      initialTab: initialTab,
+      pendingEstimateId: pendingEstimateId,
+    );
   }
 }

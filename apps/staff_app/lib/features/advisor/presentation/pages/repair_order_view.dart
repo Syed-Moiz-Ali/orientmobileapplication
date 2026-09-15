@@ -113,6 +113,11 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
     try {
       final remote = ref.read(advisorRemoteDataSourceProvider);
       final detail = await remote.getJobCard(state.jobCardId);
+      if (mounted) {
+        setState(() => _mergeJobCardDetails(detail));
+      } else {
+        _mergeJobCardDetails(detail);
+      }
       final jobCardRef = detail.id.isNotEmpty ? detail.id : state.jobCardId;
       final items = await remote.getWorkItems(jobCardRef);
       final generatedServices = items
@@ -152,13 +157,33 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
       final state = ref.read(inspectionProvider);
       final jid = state.jobCardId;
       _customerData = all.cast<Map<String, dynamic>?>().firstWhere(
-        (m) => m?['id'] == jid || m?['type'] == 'vehicle_customer',
+        (m) =>
+            m?['id'] == jid ||
+            m?['jobCardId'] == jid ||
+            m?['bookingId'] == state.bookingId,
         orElse: () => null,
       );
     } catch (_) {}
   }
 
   String _getVal(String key) => _customerData?[key]?.toString() ?? '';
+
+  void _mergeJobCardDetails(JobCardDetailResponse detail) {
+    final current = Map<String, dynamic>.from(_customerData ?? const {});
+    void put(String key, String value) {
+      if (value.trim().isNotEmpty) current[key] = value;
+    }
+
+    put('customerName', detail.customerName);
+    put('phoneNumber', detail.phoneNumber);
+    put('email', detail.email);
+    put('registrationNumber', detail.registrationNumber);
+    put('vin', detail.vin);
+    put('make', detail.make);
+    put('model', detail.model);
+    put('vehicleInfo', detail.vehicleInfo);
+    _customerData = current;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2636,7 +2661,7 @@ class _CreateRepairOrderButton extends ConsumerWidget {
             ),
           );
           ref.read(inspectionProvider.notifier).reset();
-          onBack();
+          context.go(AppRoutes.advisorDashboard);
         } catch (error) {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(

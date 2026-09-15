@@ -32,6 +32,9 @@ class CustomerBookingDetailView extends ConsumerWidget {
             service.vehicleName.toLowerCase() ==
                 booking.vehicleName.toLowerCase());
 
+    final approvalWaiting =
+        hasApprovalWaiting || booking.status == BookingStatus.approvalRequired;
+
     final cancellable =
         booking.status == BookingStatus.pending ||
         booking.status == BookingStatus.confirmed;
@@ -245,18 +248,22 @@ class CustomerBookingDetailView extends ConsumerWidget {
                       child: _CustomerJobProgress(
                         booking: booking,
                         activeService: activeJobMatchesBooking ? service : null,
-                        hasApprovalWaiting: hasApprovalWaiting,
+                        hasApprovalWaiting: approvalWaiting,
                       ),
                     ),
-                    if (hasApprovalWaiting) ...[
+                    if (approvalWaiting) ...[
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
                         height: 52,
                         child: FilledButton.icon(
-                          onPressed: () => context.go(
-                            '${AppRoutes.customerDashboard}?tab=2',
-                          ),
+                          onPressed: () {
+                            final estimateId = booking.estimateId.trim();
+                            final target = estimateId.isEmpty
+                                ? '${AppRoutes.customerDashboard}?tab=3'
+                                : '${AppRoutes.customerDashboard}?tab=3&estimateId=${Uri.encodeComponent(estimateId)}';
+                            context.go(target);
+                          },
                           icon: const Icon(Icons.fact_check_rounded),
                           label: const Text(
                             'Review Estimate',
@@ -414,9 +421,17 @@ class CustomerBookingDetailView extends ConsumerWidget {
       case BookingStatus.confirmed:
         return colorScheme.primary;
       case BookingStatus.completed:
+      case BookingStatus.delivered:
         return const Color(0xFF10B981);
       case BookingStatus.cancelled:
         return colorScheme.error;
+      case BookingStatus.approvalRequired:
+        return const Color(0xFFF59E0B);
+      case BookingStatus.vehicleReceived:
+      case BookingStatus.approved:
+      case BookingStatus.workAssigned:
+      case BookingStatus.inProgress:
+        return const Color(0xFF2563EB);
       case BookingStatus.pending:
         return colorScheme.secondary;
     }
@@ -427,9 +442,17 @@ class CustomerBookingDetailView extends ConsumerWidget {
       case BookingStatus.confirmed:
         return colorScheme.primary.withValues(alpha: 0.15);
       case BookingStatus.completed:
+      case BookingStatus.delivered:
         return const Color(0xFF10B981).withValues(alpha: 0.15);
       case BookingStatus.cancelled:
         return colorScheme.error.withValues(alpha: 0.15);
+      case BookingStatus.approvalRequired:
+        return const Color(0xFFF59E0B).withValues(alpha: 0.16);
+      case BookingStatus.vehicleReceived:
+      case BookingStatus.approved:
+      case BookingStatus.workAssigned:
+      case BookingStatus.inProgress:
+        return const Color(0xFF2563EB).withValues(alpha: 0.14);
       case BookingStatus.pending:
         return colorScheme.secondary.withValues(alpha: 0.15);
     }
@@ -485,8 +508,17 @@ class _CustomerJobProgress extends StatelessWidget {
 
   int get _currentIndex {
     if (booking.status == BookingStatus.cancelled) return 0;
-    if (booking.status == BookingStatus.completed) return 6;
+    if (booking.status == BookingStatus.completed ||
+        booking.status == BookingStatus.delivered) {
+      return 6;
+    }
     if (hasApprovalWaiting) return 4;
+    if (booking.status == BookingStatus.vehicleReceived) return 2;
+    if (booking.status == BookingStatus.approved ||
+        booking.status == BookingStatus.workAssigned ||
+        booking.status == BookingStatus.inProgress) {
+      return 5;
+    }
     final stage = activeService?.currentStage.toLowerCase() ?? '';
     if (stage.contains('received') || stage.contains('check')) return 2;
     if (stage.contains('inspection') || stage.contains('estimate')) return 3;
@@ -514,6 +546,19 @@ class _CustomerJobProgress extends StatelessWidget {
     }
     if (booking.status == BookingStatus.completed) {
       return 'Service completed. Vehicle delivery is recorded.';
+    }
+    if (booking.status == BookingStatus.delivered) {
+      return 'Vehicle delivered. Thanks for servicing with us.';
+    }
+    if (booking.status == BookingStatus.vehicleReceived) {
+      return 'Vehicle received. Inspection is in progress.';
+    }
+    if (booking.status == BookingStatus.approved) {
+      return 'Estimate approved. Workshop is preparing the job.';
+    }
+    if (booking.status == BookingStatus.workAssigned ||
+        booking.status == BookingStatus.inProgress) {
+      return 'Technician work is in progress.';
     }
     final stage = activeService?.currentStage;
     if (stage != null && stage.isNotEmpty) return stage;
@@ -549,17 +594,20 @@ class _CustomerJobProgress extends StatelessWidget {
                     label: labels[i],
                     isDone:
                         i < current ||
-                        booking.status == BookingStatus.completed,
+                        booking.status == BookingStatus.completed ||
+                        booking.status == BookingStatus.delivered,
                     isCurrent:
                         i == current &&
-                        booking.status != BookingStatus.completed,
+                        booking.status != BookingStatus.completed &&
+                        booking.status != BookingStatus.delivered,
                     colorScheme: colorScheme,
                   ),
                   if (i < labels.length - 1)
                     _StepLine(
                       isDone:
                           i < current ||
-                          booking.status == BookingStatus.completed,
+                          booking.status == BookingStatus.completed ||
+                          booking.status == BookingStatus.delivered,
                       colorScheme: colorScheme,
                     ),
                 ],

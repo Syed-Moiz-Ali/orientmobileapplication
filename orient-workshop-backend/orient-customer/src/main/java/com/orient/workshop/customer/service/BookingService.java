@@ -4,12 +4,16 @@ import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.util.DateParse;
 import com.orient.workshop.common.util.IdGenerator;
 import com.orient.workshop.customer.model.dto.BookingAvailabilityResponse;
+import com.orient.workshop.customer.model.dto.BookingApprovalInfo;
 import com.orient.workshop.customer.model.dto.BookingResponse;
 import com.orient.workshop.customer.model.dto.CreateBookingRequest;
 import com.orient.workshop.customer.model.dto.IdResponse;
 import com.orient.workshop.core.model.entity.Booking;
 import com.orient.workshop.core.model.entity.Customer;
+import com.orient.workshop.core.model.entity.JobCard;
 import com.orient.workshop.core.repository.BookingMapper;
+import com.orient.workshop.core.repository.JobCardMapper;
+import com.orient.workshop.customer.repository.CustomerApprovalLookupMapper;
 import com.orient.workshop.core.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +33,8 @@ import java.util.stream.Collectors;
 public class BookingService {
 
     private final BookingMapper bookingMapper;
+    private final JobCardMapper jobCardMapper;
+    private final CustomerApprovalLookupMapper approvalLookupMapper;
     private final CustomerService customerService;
     private final NotificationService notificationService;
     private final com.orient.workshop.core.service.ActivityService activityService;
@@ -168,6 +174,12 @@ public class BookingService {
     private BookingResponse toResponse(Booking b) {
         DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("d MMM yyyy");
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("hh:mm a");
+        JobCard jobCard = b.getJobCardId() != null ? jobCardMapper.selectById(b.getJobCardId()) : null;
+        BookingApprovalInfo approval = null;
+        if (jobCard != null && "waitingCustomerApproval".equals(jobCard.getStatus())) {
+            approval = approvalLookupMapper.findPendingByCustomerAndJobCard(b.getCustomerId(), jobCard.getId());
+        }
+        boolean approvalRequired = approval != null;
         return BookingResponse.builder()
                 .id(b.getId())
                 .bookingRef(b.getBookingRef())
@@ -177,6 +189,12 @@ public class BookingService {
                 .date(b.getBookingDate() != null ? b.getBookingDate().format(dateFmt) : "")
                 .time(b.getBookingDate() != null ? b.getBookingDate().format(timeFmt) : "")
                 .status(b.getStatus())
+                .jobCardId(jobCard != null ? jobCard.getId() : b.getJobCardId())
+                .jobCardRef(jobCard != null ? jobCard.getJobCardRef() : null)
+                .jobCardStatus(jobCard != null ? jobCard.getStatus() : null)
+                .approvalRequired(approvalRequired)
+                .estimateId(approval != null ? approval.getEstimateId() : null)
+                .estimateAmount(approval != null ? approval.getAmount() : null)
                 .build();
     }
 }

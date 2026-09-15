@@ -10,6 +10,8 @@ class JobCardEntity {
   final String lastUpdated;
   final JobCardStatus status;
   final String technician;
+  final int? odometer;
+  final String fuelLevel;
 
   const JobCardEntity({
     required this.id,
@@ -21,6 +23,8 @@ class JobCardEntity {
     this.lastUpdated = '',
     required this.status,
     this.technician = '',
+    this.odometer,
+    this.fuelLevel = '',
   });
 
   JobCardEntity copyWith({
@@ -33,6 +37,8 @@ class JobCardEntity {
     String? lastUpdated,
     JobCardStatus? status,
     String? technician,
+    int? odometer,
+    String? fuelLevel,
   }) {
     return JobCardEntity(
       id: id ?? this.id,
@@ -44,6 +50,8 @@ class JobCardEntity {
       lastUpdated: lastUpdated ?? this.lastUpdated,
       status: status ?? this.status,
       technician: technician ?? this.technician,
+      odometer: odometer ?? this.odometer,
+      fuelLevel: fuelLevel ?? this.fuelLevel,
     );
   }
 }

@@ -19,10 +19,12 @@ class AdvisorVehicleCheckinView extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<AdvisorVehicleCheckinView> createState() => _AdvisorVehicleCheckinViewState();
+  ConsumerState<AdvisorVehicleCheckinView> createState() =>
+      _AdvisorVehicleCheckinViewState();
 }
 
-class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleCheckinView> {
+class _AdvisorVehicleCheckinViewState
+    extends ConsumerState<AdvisorVehicleCheckinView> {
   int _step = 0;
   final _odometerCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
@@ -47,7 +49,10 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
           backgroundColor: colorScheme.surface,
           title: Text(
             'Damage on $area',
-            style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           content: TextField(
             controller: ctrl,
@@ -58,7 +63,10 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             ElevatedButton(
               onPressed: () {
                 if (ctrl.text.trim().isNotEmpty) {
@@ -87,7 +95,9 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
       });
       if (mounted) {
         if (result != null) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vehicle checked in successfully')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vehicle checked in successfully')),
+          );
           context.pushReplacement(
             AppRoutes.advisorJobDetail,
             extra: JobCardEntity(
@@ -99,16 +109,22 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
               createdDate: '',
               lastUpdated: '',
               status: JobCardStatus.vehicleReceived,
+              odometer: odo,
+              fuelLevel: _fuelLevel,
             ),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to check in')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Failed to check in')));
           setState(() => _isLoading = false);
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
         setState(() => _isLoading = false);
       }
     }
@@ -127,18 +143,24 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: () => _step == 0 ? Navigator.pop(context) : setState(() => _step = 0),
+          onPressed: () =>
+              _step == 0 ? Navigator.pop(context) : setState(() => _step = 0),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Vehicle Intake',
-              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: colorScheme.onSurface,
+              ),
             ),
             Text(
               '${widget.vehicleInfo} · ${widget.customerName}',
-              style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -234,7 +256,10 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
         const SizedBox(height: 40),
         SizedBox(
           height: 48,
-          child: ElevatedButton(onPressed: _isLoading ? null : _submit, child: const Text('Complete Intake')),
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _submit,
+            child: const Text('Complete Intake'),
+          ),
         ),
       ],
     );
@@ -244,7 +269,9 @@ class _AdvisorVehicleCheckinViewState extends ConsumerState<AdvisorVehicleChecki
     final colorScheme = Theme.of(context).colorScheme;
     return OutlinedButton(
       onPressed: () => _addDamage(label),
-      style: OutlinedButton.styleFrom(side: BorderSide(color: colorScheme.outlineVariant)),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
       child: Text(label),
     );
   }

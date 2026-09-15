@@ -278,7 +278,6 @@ public class JobCardService {
         return JobCardResponse.builder()
                 .id(c.getJobCardRef())
                 .dbId(c.getId())
-                .dbId(c.getId())
                 .customerName(custName)
                 .vehicleInfo(vehicleInfo)
                 .time(c.getCreatedAt() != null ? c.getCreatedAt().format(DateTimeFormatter.ofPattern("hh:mm a")) : "")
@@ -286,6 +285,8 @@ public class JobCardService {
                 .lastUpdated(c.getUpdatedAt() != null ? c.getUpdatedAt().format(fmt) : "")
                 .status(c.getStatus())
                 .technician(c.getTechnician() != null ? c.getTechnician() : "")
+                .odometer(c.getOdometer())
+                .fuelLevel(c.getFuelLevel())
                 .build();
     }
 
@@ -298,6 +299,7 @@ public class JobCardService {
             + (vehicle.getModel() != null ? vehicle.getModel() : "")).trim();
         return JobCardDetailResponse.builder()
                 .id(c.getJobCardRef())
+                .dbId(c.getId())
             .customerName(customer != null && customer.getCustomerName() != null ? customer.getCustomerName() : "")
             .phoneNumber(customer != null && customer.getPhoneNumber() != null ? customer.getPhoneNumber() : "")
             .email(customer != null && customer.getEmail() != null ? customer.getEmail() : "")
@@ -314,6 +316,8 @@ public class JobCardService {
                 .status(c.getStatus())
                 .technician(c.getTechnician())
                 .notes(c.getNotes())
+                .odometer(c.getOdometer())
+                .fuelLevel(c.getFuelLevel())
                 .tag(c.getTag())
                 .customerRequests(c.getCustomerRequests())
                 .garageRecommendations(c.getGarageRecommendations())

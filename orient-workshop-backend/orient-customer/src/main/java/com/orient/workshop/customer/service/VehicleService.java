@@ -23,9 +23,14 @@ public class VehicleService {
 
     public List<VehicleResponse> getVehicles(JwtUserPrincipal principal) {
         Customer customer = customerService.findOrCreateCustomer(principal.getUserId(), principal.getBranchId());
+        List<Customer> customerRecords = customerService.findCustomerRecords(principal.getUserId(), principal.getBranchId());
+        if (customerRecords.isEmpty()) {
+            customerRecords = List.of(customer);
+        }
+        List<Long> customerIds = customerRecords.stream().map(Customer::getId).distinct().toList();
         List<Vehicle> vehicles = principal.getBranchId() != null
-                ? vehicleMapper.findByCustomerIdAndBranch(customer.getId(), principal.getBranchId())
-                : vehicleMapper.findByCustomerId(customer.getId());
+                ? vehicleMapper.findByCustomerIdsAndBranch(customerIds, principal.getBranchId())
+                : vehicleMapper.findByCustomerIds(customerIds);
         return vehicles.stream().map(this::toResponse).collect(Collectors.toList());
     }
 

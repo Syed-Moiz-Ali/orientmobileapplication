@@ -25,6 +25,8 @@ public class JobCard {
     private LocalDateTime createdDate;
     private LocalDateTime lastUpdated;
     private String notes;
+    private Integer odometer;
+    private String fuelLevel;
     private String tag;
     private String customerRequests;
     private String garageRecommendations;

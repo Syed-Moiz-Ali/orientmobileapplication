@@ -39,7 +39,12 @@ class CustomerHomeTab extends ConsumerWidget {
         .where(
           (b) =>
               b.status == BookingStatus.pending ||
-              b.status == BookingStatus.confirmed,
+              b.status == BookingStatus.confirmed ||
+              b.status == BookingStatus.approvalRequired ||
+              b.status == BookingStatus.vehicleReceived ||
+              b.status == BookingStatus.approved ||
+              b.status == BookingStatus.workAssigned ||
+              b.status == BookingStatus.inProgress,
         )
         .firstOrNull;
 
@@ -95,7 +100,7 @@ class CustomerHomeTab extends ConsumerWidget {
                       : () => context.push(AppRoutes.customerBookService),
                   onSecondaryTap: () =>
                       context.push(AppRoutes.customerBreakdownHelp),
-                  onGarageTap: () => notifier.selectTab(3),
+                  onGarageTap: () => notifier.selectTab(4),
                 ),
                 const SizedBox(height: 24),
 
@@ -109,7 +114,7 @@ class CustomerHomeTab extends ConsumerWidget {
                 _BentoQuickActions(
                   onBook: () => context.push(AppRoutes.customerBookService),
                   onTrack: () => notifier.selectTab(1),
-                  onGarage: () => notifier.selectTab(3),
+                  onGarage: () => notifier.selectTab(4),
                   onSos: () => context.push(AppRoutes.customerBreakdownHelp),
                 ),
                 const SizedBox(height: 24),
@@ -144,7 +149,7 @@ class CustomerHomeTab extends ConsumerWidget {
                 _SectionHeadingWithAction(
                   title: 'My Garage',
                   actionText: 'Manage',
-                  onAction: () => notifier.selectTab(3),
+                  onAction: () => notifier.selectTab(4),
                 ),
                 const SizedBox(height: 16),
                 if (vehicles.isEmpty)

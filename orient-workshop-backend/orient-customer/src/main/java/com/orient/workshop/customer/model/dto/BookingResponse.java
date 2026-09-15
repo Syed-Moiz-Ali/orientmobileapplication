@@ -21,4 +21,10 @@ public class BookingResponse {
     private String date;
     private String time;
     private String status;
+    private Long jobCardId;
+    private String jobCardRef;
+    private String jobCardStatus;
+    private Boolean approvalRequired;
+    private String estimateId;
+    private Double estimateAmount;
 }

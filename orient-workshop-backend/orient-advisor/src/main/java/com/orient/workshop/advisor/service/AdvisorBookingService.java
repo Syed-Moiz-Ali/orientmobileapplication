@@ -96,6 +96,8 @@ public class AdvisorBookingService {
                 .status("vehicleReceived")
                 .tag(booking.getServiceType())
                 .notes(request.getNotes())
+                .odometer(request.getOdometer())
+                .fuelLevel(request.getFuelLevel())
                 .createdDate(LocalDateTime.now())
                 .build();
 
