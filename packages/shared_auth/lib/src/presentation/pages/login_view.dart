@@ -2,11 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_auth/src/presentation/providers/login_provider.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_notice.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
 import 'package:shared_core/shared_core.dart';
 
 enum _SignInMode { password, code }
 
+/// Shared sign-in experience for all four Orient applications.
+///
+/// The same screen is configured per app through [appName], [appPurpose] and
+/// [intendedUsers]; customer builds additionally enable [allowRegistration].
+/// Business logic lives in [LoginNotifier] and is never duplicated here - this
+/// widget only decides how the authentication task is presented.
 class LoginView extends ConsumerStatefulWidget {
   final VoidCallback onLoginSuccess;
   final VoidCallback? onForgotPassword;
@@ -98,77 +107,96 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     final state = ref.watch(loginProvider);
     final notifier = ref.read(loginProvider.notifier);
+    final registering = state.isRegistering;
+    final codeMode = !registering && _mode == _SignInMode.code;
+
+    final String title;
+    final String subtitle;
+    if (registering) {
+      title = 'Create your account';
+      subtitle = 'Set up your account in under a minute.';
+    } else if (codeMode) {
+      title = 'Security code';
+      subtitle = state.otpSent
+          ? 'Enter the 6-digit code we sent you.'
+          : 'Get a one-time code on your email or mobile.';
+    } else {
+      title = 'Welcome back';
+      subtitle = 'Sign in with your email or mobile number.';
+    }
 
     return AuthShell(
       appName: widget.appName,
       appPurpose: widget.appPurpose,
       intendedUsers: widget.intendedUsers,
-      title: state.isRegistering
-          ? 'Create account'
-          : _mode == _SignInMode.code
-          ? 'Security code'
-          : 'Welcome back',
-      subtitle: state.isRegistering
-          ? 'Use the details registered with your workshop.'
-          : _mode == _SignInMode.code
-          ? 'Get a one-time code on your email or mobile.'
-          : 'Sign in with your email or mobile number.',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AnimatedSwitcher(
-            duration: AppMotion.standard,
-            switchInCurve: AppMotion.enter,
-            switchOutCurve: AppMotion.exit,
-            child: _mode == _SignInMode.password
-                ? _PasswordForm(
-                    key: const ValueKey('password'),
-                    state: state,
-                    notifier: notifier,
-                    identifierCtrl: _identifierCtrl,
-                    passwordCtrl: _passwordCtrl,
-                    nameCtrl: _nameCtrl,
-                    allowRegistration: widget.allowRegistration,
-                    onForgotPassword: widget.onForgotPassword,
-                    onUseCode: () => _changeMode(_SignInMode.code, notifier),
-                    onSubmit: () => _submitPassword(state, notifier),
-                    onIdentifierChanged: () => _syncIdentifier(notifier),
-                  )
-                : _CodeForm(
-                    key: const ValueKey('code'),
-                    state: state,
-                    notifier: notifier,
-                    identifierCtrl: _identifierCtrl,
-                    onUsePassword: () =>
-                        _changeMode(_SignInMode.password, notifier),
-                    onSendCode: () => _sendCode(notifier),
-                  ),
-          ),
-        ],
+      title: title,
+      subtitle: subtitle,
+      child: AnimatedSwitcher(
+        duration: AppMotion.standard,
+        switchInCurve: AppMotion.enter,
+        switchOutCurve: AppMotion.exit,
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        ),
+        child: registering
+            ? _RegisterForm(
+                key: const ValueKey('register'),
+                state: state,
+                notifier: notifier,
+                identifierCtrl: _identifierCtrl,
+                passwordCtrl: _passwordCtrl,
+                nameCtrl: _nameCtrl,
+                onSubmit: () => _submitPassword(state, notifier),
+                onIdentifierChanged: () => _syncIdentifier(notifier),
+              )
+            : codeMode
+            ? _CodeForm(
+                key: const ValueKey('code'),
+                state: state,
+                notifier: notifier,
+                identifierCtrl: _identifierCtrl,
+                onUsePassword: () =>
+                    _changeMode(_SignInMode.password, notifier),
+                onSendCode: () => _sendCode(notifier),
+              )
+            : _SignInPasswordForm(
+                key: const ValueKey('password'),
+                state: state,
+                notifier: notifier,
+                identifierCtrl: _identifierCtrl,
+                passwordCtrl: _passwordCtrl,
+                allowRegistration: widget.allowRegistration,
+                onForgotPassword: widget.onForgotPassword,
+                onUseCode: () => _changeMode(_SignInMode.code, notifier),
+                onSubmit: () => _submitPassword(state, notifier),
+                onIdentifierChanged: () => _syncIdentifier(notifier),
+              ),
       ),
     );
   }
 }
 
-class _PasswordForm extends StatelessWidget {
+class _SignInPasswordForm extends StatelessWidget {
   final LoginState state;
   final LoginNotifier notifier;
   final TextEditingController identifierCtrl;
   final TextEditingController passwordCtrl;
-  final TextEditingController nameCtrl;
   final bool allowRegistration;
   final VoidCallback? onForgotPassword;
   final VoidCallback onUseCode;
   final VoidCallback onSubmit;
   final VoidCallback onIdentifierChanged;
 
-  const _PasswordForm({
+  const _SignInPasswordForm({
     super.key,
     required this.state,
     required this.notifier,
     required this.identifierCtrl,
     required this.passwordCtrl,
-    required this.nameCtrl,
     required this.allowRegistration,
     required this.onForgotPassword,
     required this.onUseCode,
@@ -178,81 +206,162 @@ class _PasswordForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final busy = state.isLoading;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (state.error case final error?) ...[
-          _InlineNotice(
-            icon: Icons.error_outline_rounded,
-            text: error,
-            isError: true,
-          ),
-          const SizedBox(height: AppDimensions.s16),
-        ],
-        if (state.isRegistering) ...[
-          AuthTextField(
-            controller: nameCtrl,
-            label: 'Full name',
-            hint: 'Your name',
-            icon: Icons.person_outline_rounded,
-            onChanged: notifier.setName,
-          ),
-          const SizedBox(height: AppDimensions.s16),
-        ],
+        AuthNoticeSlot(message: state.error),
         AuthTextField(
           controller: identifierCtrl,
           label: 'Email or mobile number',
           hint: 'name@company.com or 501234567',
           icon: Icons.alternate_email_rounded,
           keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          autofillHints: const [AutofillHints.username],
+          enabled: !busy,
           onChanged: (_) => onIdentifierChanged(),
         ),
-        const SizedBox(height: AppDimensions.s20),
+        const SizedBox(height: AppDimensions.s16),
         AuthTextField(
           controller: passwordCtrl,
           label: 'Password',
           hint: 'Enter your password',
           icon: Icons.lock_outline_rounded,
           obscureText: true,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.password],
+          enabled: !busy,
           onChanged: notifier.setPassword,
           onSubmitted: (_) => onSubmit(),
         ),
-        const SizedBox(height: AppDimensions.s10),
-        if (!state.isRegistering && onForgotPassword != null)
-          Row(
-            children: [
-              const Spacer(),
-              AuthLinkButton(
-                label: 'Forgot password?',
-                onPressed: onForgotPassword,
-              ),
-            ],
+        if (onForgotPassword != null) ...[
+          const SizedBox(height: AppDimensions.s4),
+          Align(
+            alignment: Alignment.centerRight,
+            child: AuthLinkButton(
+              label: 'Forgot password?',
+              onPressed: busy ? null : onForgotPassword,
+            ),
           ),
-        const SizedBox(height: AppDimensions.s16),
+        ],
+        const SizedBox(height: AppDimensions.s20),
         AuthPrimaryButton(
-          label: state.isRegistering ? 'Create account' : 'Continue',
+          label: 'Continue',
           icon: Icons.arrow_forward_rounded,
           isLoading: state.isLoading,
           onPressed: onSubmit,
         ),
-        const SizedBox(height: AppDimensions.s16),
+        const SizedBox(height: AppDimensions.s12),
         Center(
           child: AuthLinkButton(
             label: 'Use one-time code instead',
-            onPressed: onUseCode,
+            icon: Icons.password_rounded,
+            onPressed: busy ? null : onUseCode,
           ),
         ),
         if (allowRegistration) ...[
-          const SizedBox(height: AppDimensions.s16),
+          const SizedBox(height: AppDimensions.s8),
           Center(
             child: AuthLinkButton(
-              label: state.isRegistering
-                  ? 'Already have an account? Sign in'
-                  : 'New customer? Create an account',
-              onPressed: notifier.toggleRegister,
+              label: 'New customer? Create an account',
+              onPressed: busy ? null : notifier.toggleRegister,
             ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _RegisterForm extends StatelessWidget {
+  final LoginState state;
+  final LoginNotifier notifier;
+  final TextEditingController identifierCtrl;
+  final TextEditingController passwordCtrl;
+  final TextEditingController nameCtrl;
+  final VoidCallback onSubmit;
+  final VoidCallback onIdentifierChanged;
+
+  const _RegisterForm({
+    super.key,
+    required this.state,
+    required this.notifier,
+    required this.identifierCtrl,
+    required this.passwordCtrl,
+    required this.nameCtrl,
+    required this.onSubmit,
+    required this.onIdentifierChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final busy = state.isLoading;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AuthNoticeSlot(message: state.error),
+        AuthTextField(
+          controller: nameCtrl,
+          label: 'Full name',
+          hint: 'Your full name',
+          icon: Icons.person_outline_rounded,
+          keyboardType: TextInputType.name,
+          textInputAction: TextInputAction.next,
+          textCapitalization: TextCapitalization.words,
+          autofillHints: const [AutofillHints.name],
+          enabled: !busy,
+          onChanged: notifier.setName,
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AuthTextField(
+          controller: identifierCtrl,
+          label: 'Email or mobile number',
+          hint: 'name@company.com or 501234567',
+          icon: Icons.alternate_email_rounded,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          autofillHints: const [AutofillHints.username],
+          enabled: !busy,
+          onChanged: (_) => onIdentifierChanged(),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AuthTextField(
+          controller: passwordCtrl,
+          label: 'Create a password',
+          hint: 'At least 6 characters',
+          icon: Icons.lock_outline_rounded,
+          obscureText: true,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.newPassword],
+          enabled: !busy,
+          labelTrailing: Text(
+            'Min. 6 characters',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          onChanged: notifier.setPassword,
+          onSubmitted: (_) => onSubmit(),
+        ),
+        const SizedBox(height: AppDimensions.s24),
+        AuthPrimaryButton(
+          label: 'Create account',
+          icon: Icons.arrow_forward_rounded,
+          isLoading: state.isLoading,
+          onPressed: onSubmit,
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        Center(
+          child: AuthLinkButton(
+            label: 'Already have an account? Sign in',
+            onPressed: busy ? null : notifier.toggleRegister,
+          ),
+        ),
       ],
     );
   }
@@ -277,23 +386,25 @@ class _CodeForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final email = state.method == AuthMethod.email;
+    final busy = state.isLoading;
 
     if (state.otpSent) {
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _InlineNotice(
-            icon: Icons.mark_email_read_outlined,
+          AuthNotice(
+            icon: email ? Icons.mark_email_read_outlined : Icons.sms_outlined,
             text: 'Code sent to ${email ? state.email : state.phone}.',
           ),
-          const SizedBox(height: AppDimensions.s16),
+          const SizedBox(height: AppDimensions.s20),
           AuthOtpField(
             onChanged: notifier.setOtp,
             errorText: state.error,
+            enabled: !busy,
             onSubmitted: (_) =>
                 email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
           ),
-          const SizedBox(height: AppDimensions.s20),
+          const SizedBox(height: AppDimensions.s24),
           AuthPrimaryButton(
             label: 'Verify code',
             icon: Icons.verified_rounded,
@@ -301,20 +412,22 @@ class _CodeForm extends StatelessWidget {
             onPressed: () =>
                 email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
           ),
-          const SizedBox(height: AppDimensions.s12),
+          const SizedBox(height: AppDimensions.s8),
           Wrap(
-            spacing: AppDimensions.s12,
+            alignment: WrapAlignment.center,
+            spacing: AppDimensions.s8,
             runSpacing: AppDimensions.s4,
             children: [
               AuthLinkButton(
                 label: 'Change email or mobile',
-                onPressed: notifier.reset,
+                onPressed: busy ? null : notifier.reset,
               ),
               AuthLinkButton(
                 label: state.resendCooldown > 0
                     ? 'Resend in ${state.resendCooldown}s'
                     : 'Resend code',
-                onPressed: state.resendCooldown > 0 ? null : onSendCode,
+                subtle: true,
+                onPressed: state.resendCooldown > 0 || busy ? null : onSendCode,
               ),
             ],
           ),
@@ -323,88 +436,36 @@ class _CodeForm extends StatelessWidget {
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        AuthNoticeSlot(message: state.error),
         AuthTextField(
           controller: identifierCtrl,
           label: 'Email or mobile number',
           hint: 'name@company.com or 501234567',
           icon: Icons.alternate_email_rounded,
           keyboardType: TextInputType.emailAddress,
-          errorText: state.error,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.username],
+          enabled: !busy,
           onSubmitted: (_) => onSendCode(),
         ),
-        const SizedBox(height: AppDimensions.s8),
-        Text(
-          'No password needed.',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s24),
+        const SizedBox(height: AppDimensions.s20),
         AuthPrimaryButton(
           label: 'Send code',
-          icon: Icons.sms_outlined,
+          icon: Icons.arrow_forward_rounded,
           isLoading: state.isLoading,
           onPressed: onSendCode,
         ),
-        const SizedBox(height: AppDimensions.s16),
+        const SizedBox(height: AppDimensions.s12),
         Center(
           child: AuthLinkButton(
             label: 'Use password instead',
-            onPressed: onUsePassword,
+            icon: Icons.lock_outline_rounded,
+            onPressed: busy ? null : onUsePassword,
           ),
         ),
       ],
-    );
-  }
-}
-
-class _InlineNotice extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final bool isError;
-
-  const _InlineNotice({
-    required this.icon,
-    required this.text,
-    this.isError = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final accent = isError ? colorScheme.error : colorScheme.primary;
-
-    return Semantics(
-      liveRegion: isError,
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.s12),
-        decoration: BoxDecoration(
-          color: Color.alphaBlend(
-            accent.withValues(alpha: 0.08),
-            colorScheme.surface,
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-          border: Border.all(color: accent.withValues(alpha: 0.35)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: accent),
-            const SizedBox(width: AppDimensions.s10),
-            Expanded(
-              child: Text(
-                text,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: isError ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

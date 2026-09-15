@@ -136,8 +136,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) =>
-            ForgotPasswordView(onBackToLogin: () => context.pop()),
+        builder: (context, state) => ForgotPasswordView(
+          onBackToLogin: () => context.pop(),
+          appName: 'Orient Staff App',
+          intendedUsers: 'For advisors, technicians, and supervisors',
+          appPurpose:
+              'Confirm bookings, check in vehicles, run inspections, assign repair work, update tasks, and complete QC.',
+        ),
       ),
       GoRoute(
         path: AppRoutes.advisorDashboard,

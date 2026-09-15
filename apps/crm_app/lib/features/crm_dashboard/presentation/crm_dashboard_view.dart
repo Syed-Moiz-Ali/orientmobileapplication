@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_lead_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_app_bar.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_drawer.dart';
@@ -64,6 +65,7 @@ class CrmDashboardView extends ConsumerWidget {
     final notifier = ref.read(crmUiProvider.notifier);
     final state = ref.watch(crmUiProvider);
     final adaptive = context.adaptive;
+    final leadCount = ref.watch(crmLeadProvider).length;
 
     final pages = <Widget>[
       const CrmDashboardPage(),
@@ -78,11 +80,14 @@ class CrmDashboardView extends ConsumerWidget {
 
     return DashboardShell(
       appBar: CrmAppBar(notifier: notifier),
-      drawer: !adaptive.useNavigationRail ? CrmDrawer(notifier: notifier) : null,
+      drawer: !adaptive.useNavigationRail
+          ? CrmDrawer(notifier: notifier)
+          : null,
       body: AppAdaptiveNavigationFrame(
         items: _navItems,
         selectedIndex: state.selectedIndex,
         onSelected: notifier.selectTab,
+        badgeCounts: leadCount > 0 ? {1: leadCount} : const <int, int>{},
         child: IndexedStack(index: state.selectedIndex, children: pages),
       ),
     );

@@ -1,1741 +1,555 @@
-import 'dart:async';
-
-import 'package:customer_app/core/router/app_router.dart';
-import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
-import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
+import 'package:customer_app/core/router/app_router.dart';
+import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_home_garage_summary.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_home_header.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_home_quick_actions.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_home_service_summary.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_home_skeleton.dart';
+
+/// Customer Home — answers four questions in the first viewport:
+/// what is happening with my vehicle, do I need to act, how do I book, and
+/// what do I own.
+///
+/// Everything on this screen is backed by real state. There is deliberately no
+/// promotional content, no stock photography and only one Book service entry
+/// point.
 class CustomerHomeTab extends ConsumerWidget {
   const CustomerHomeTab({super.key});
+
+  /// Index of the Status tab in the shared Customer navigation.
+  static const int _statusTab = 1;
+  static const int _bookingsTab = 2;
+  static const int _approvalsTab = 3;
+  static const int _vehiclesTab = 4;
+
+  /// Booking states that still represent work the customer must be aware of.
+  static const Set<BookingStatus> _liveStatuses = {
+    BookingStatus.pending,
+    BookingStatus.confirmed,
+    BookingStatus.approvalRequired,
+    BookingStatus.vehicleReceived,
+    BookingStatus.approved,
+    BookingStatus.workAssigned,
+    BookingStatus.inProgress,
+  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
-    final bookings = ref.watch(customerBookingsProvider).value ?? const [];
+    final bookings =
+        ref.watch(customerBookingsProvider).value ??
+        const <CustomerBookingEntity>[];
+    final approvals =
+        ref.watch(customerApprovalsProvider).value ??
+        const <CustomerApprovalSummaryResponse>[];
 
-    if (state.isLoading) return const _HomeLoading();
+    final hasAnyData =
+        state.profile != null ||
+        state.vehicles.isNotEmpty ||
+        state.notifications.isNotEmpty ||
+        state.activeService != null ||
+        bookings.isNotEmpty;
 
-    if (state.loadError.isNotEmpty) {
+    // First load only — a user-initiated refresh must never blank the screen.
+    if (state.isLoading && !hasAnyData) {
+      return const CustomerHomeSkeleton();
+    }
+
+    if (state.loadError.isNotEmpty && !hasAnyData) {
       return AppResponsivePage(
-        child: EmptyState(
-          title: 'Connection Error',
-          message: 'Unable to load your dashboard.',
-          icon: Icons.wifi_off_rounded,
-          actionLabel: 'Retry',
-          onAction: notifier.refresh,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppDimensions.s48),
+          child: EmptyState(
+            icon: Icons.sync_problem_rounded,
+            title: "We couldn't load your information",
+            message: 'Please try again in a moment.',
+            actionLabel: 'Retry',
+            onAction: notifier.refresh,
+          ),
         ),
       );
     }
 
-    final firstName = state.profile?.firstName.isNotEmpty == true
-        ? state.profile!.firstName
-        : 'Customer';
     final vehicles = state.vehicles;
-    final activeBooking = bookings
-        .where(
-          (b) =>
-              b.status == BookingStatus.pending ||
-              b.status == BookingStatus.confirmed ||
-              b.status == BookingStatus.approvalRequired ||
-              b.status == BookingStatus.vehicleReceived ||
-              b.status == BookingStatus.approved ||
-              b.status == BookingStatus.workAssigned ||
-              b.status == BookingStatus.inProgress,
-        )
-        .firstOrNull;
+    final activeService = state.activeService?.hasActiveJob == true
+        ? state.activeService
+        : null;
+    final activeBooking = _activeBooking(bookings);
+    final recentActivity = _recentActivity(bookings);
+    final isNewCustomer =
+        vehicles.isEmpty && bookings.isEmpty && activeService == null;
+    final hasAttention = approvals.isNotEmpty || state.unpaidInvoices > 0;
 
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      // ── FLOATING BOOK ACTION ───────────────────────────────────────────────
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'customer-home-book-service-fab',
-        onPressed: () => context.push(AppRoutes.customerBookService),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        elevation: 4,
-        icon: Icon(Icons.build_circle_rounded, color: colorScheme.onPrimary),
-        label: Text(
-          'Book Service',
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: colorScheme.onPrimary,
+    final primary = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (hasAttention) ...[
+          _AttentionPanel(
+            approvals: approvals,
+            unpaidInvoices: state.unpaidInvoices,
+            formatAmount: state.formatAmount,
+            onReview: () => notifier.selectTab(_approvalsTab),
           ),
+          const SizedBox(height: AppDimensions.s20),
+        ],
+        CustomerHomeServiceSummary(
+          activeService: activeService,
+          activeBooking: activeBooking,
+          vehicleCount: vehicles.length,
+          onTrackService: () => notifier.selectTab(_statusTab),
+          onViewBooking: () {
+            final booking = activeBooking;
+            if (booking != null) {
+              context.push(AppRoutes.customerBookingDetail, extra: booking);
+            }
+          },
+          onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
         ),
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: notifier.refresh,
-          color: colorScheme.primary,
-          child: AppResponsivePage(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
+      ],
+    );
 
-                // ── 1. PREMIUM HEADER ──────────────────────────────────────────
-                _PremiumHeader(
-                  firstName: firstName,
-                  unreadCount: state.unreadCount,
-                  onNotificationTap: () =>
-                      context.push(AppRoutes.customerNotifications),
-                ),
-                const SizedBox(height: 18),
-
-                _TopCustomerBanners(
-                  activeBooking: activeBooking,
-                  vehicleCount: vehicles.length,
-                  onPrimaryTap: activeBooking != null
-                      ? () => context.push(
-                          AppRoutes.customerBookingDetail,
-                          extra: activeBooking,
-                        )
-                      : () => context.push(AppRoutes.customerBookService),
-                  onSecondaryTap: () =>
-                      context.push(AppRoutes.customerBreakdownHelp),
-                  onGarageTap: () => notifier.selectTab(4),
-                ),
-                const SizedBox(height: 24),
-
-                // ── 2. UBER-STYLE SEARCH PILL ──────────────────────────────────
-                _UberSearchPill(
-                  onTap: () => context.push(AppRoutes.customerBookService),
-                ),
-                const SizedBox(height: 32),
-
-                // ── 3. BENTO-STYLE QUICK ACTIONS ───────────────────────────────
-                _BentoQuickActions(
-                  onBook: () => context.push(AppRoutes.customerBookService),
-                  onTrack: () => notifier.selectTab(1),
-                  onGarage: () => notifier.selectTab(4),
-                  onSos: () => context.push(AppRoutes.customerBreakdownHelp),
-                ),
-                const SizedBox(height: 24),
-
-                // ── 4. LIVE HUD ────────────────────────────────────────────────
-                if (activeBooking != null) ...[
-                  _ActiveJobTracker(
-                    booking: activeBooking,
-                    onTap: () => context.push(
-                      AppRoutes.customerBookingDetail,
-                      extra: activeBooking,
-                    ),
-                  ),
-                  const SizedBox(height: 36),
-                ] else ...[
-                  const SizedBox(height: 12),
-                ],
-
-                // ── 5. PROMOTIONAL CAROUSEL BANNER ─────────────────────────────
-                const _SectionHeading(title: 'Exclusive Promotions'),
-                const SizedBox(height: 16),
-                _PromoCarousel(
-                  onTap: () => context.push(AppRoutes.customerBookService),
-                ),
-                const SizedBox(height: 36),
-
-                // ── 6. PREMIUM MEMBERSHIP BANNER ───────────────────────────────
-                const _OrientPlusBanner(),
-                const SizedBox(height: 36),
-
-                // ── 7. MY GARAGE SHOWCASE ──────────────────────────────────────
-                _SectionHeadingWithAction(
-                  title: 'My Garage',
-                  actionText: 'Manage',
-                  onAction: () => notifier.selectTab(4),
-                ),
-                const SizedBox(height: 16),
-                if (vehicles.isEmpty)
-                  _EmptyGarageTile(
-                    onAdd: () => context.push(AppRoutes.customerAddVehicle),
-                  )
-                else
-                  _GarageShowcase(
-                    vehicles: vehicles,
-                    onAddVehicle: () =>
-                        context.push(AppRoutes.customerAddVehicle),
-                    onBookService: (v) =>
-                        context.push(AppRoutes.customerBookService),
-                  ),
-                const SizedBox(height: 36),
-
-                // ── 8. RECOMMENDED SERVICES ────────────────────────────────────
-                const _SectionHeading(title: 'Recommended for you'),
-                const SizedBox(height: 16),
-                _RecommendedServicesList(
-                  onBook: () => context.push(AppRoutes.customerBookService),
-                ),
-                const SizedBox(height: 36),
-
-                // ── 9. CAR CARE DISCOVERY (ICON DRIVEN) ────────────────────────
-                const _SectionHeading(title: 'Car Care Guides'),
-                const SizedBox(height: 16),
-                const _CarCareTipsRow(),
-                const SizedBox(height: 36),
-
-                // ── 10. RECENT ACTIVITY ────────────────────────────────────────
-                if (bookings.isNotEmpty) ...[
-                  _SectionHeadingWithAction(
-                    title: 'Recent Activity',
-                    actionText: 'View All',
-                    onAction: () => notifier.selectTab(2),
-                  ),
-                  const SizedBox(height: 16),
-                  _RecentActivityList(
-                    bookings: bookings.take(3).toList(),
-                    onTap: (b) =>
-                        context.push(AppRoutes.customerBookingDetail, extra: b),
-                  ),
-                  const SizedBox(height: 80),
-                ],
-              ],
-            ),
+    final secondary = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CustomerHomeQuickActions(
+          hasVehicles: vehicles.isNotEmpty,
+          onBookService: () => context.push(AppRoutes.customerBookService),
+          onMyVehicles: () => notifier.selectTab(_vehiclesTab),
+          onBreakdownHelp: () => context.push(AppRoutes.customerBreakdownHelp),
+        ),
+        if (vehicles.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.s24),
+          CustomerHomeGarageSummary(
+            vehicles: vehicles,
+            onManageVehicles: () => notifier.selectTab(_vehiclesTab),
           ),
+        ],
+        if (recentActivity.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.s24),
+          _RecentActivitySection(
+            bookings: recentActivity,
+            onViewAll: () => notifier.selectTab(_bookingsTab),
+            onTap: (booking) =>
+                context.push(AppRoutes.customerBookingDetail, extra: booking),
+          ),
+        ],
+      ],
+    );
+
+    return RefreshIndicator(
+      onRefresh: notifier.refresh,
+      color: Theme.of(context).colorScheme.primary,
+      child: AppResponsivePage(
+        physics: const AlwaysScrollableScrollPhysics(),
+        maxContentWidth: 1080,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (state.loadError.isNotEmpty) ...[
+              _RefreshFailureNotice(onRetry: notifier.refresh),
+              const SizedBox(height: AppDimensions.s16),
+            ],
+            CustomerHomeHeader(
+              firstName: state.profile?.firstName ?? '',
+              isNewCustomer: isNewCustomer,
+              unreadCount: state.unreadCount,
+              onNotifications: () =>
+                  context.push(AppRoutes.customerNotifications),
+            ),
+            const SizedBox(height: AppDimensions.s20),
+            AppSplitView(
+              // Tablets get a balanced split; wider desktops give the service
+              // summary the extra room it needs.
+              primaryFlex: context.adaptive.isMedium ? 1 : 3,
+              secondaryFlex: context.adaptive.isMedium ? 1 : 2,
+              spacing: AppDimensions.s24,
+              primary: primary,
+              secondary: secondary,
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ─── 1. Premium Header ───────────────────────────────────────────────────────
-class _PremiumHeader extends StatelessWidget {
-  final String firstName;
-  final int unreadCount;
-  final VoidCallback onNotificationTap;
+CustomerBookingEntity? _activeBooking(List<CustomerBookingEntity> bookings) {
+  for (final booking in bookings) {
+    if (CustomerHomeTab._liveStatuses.contains(booking.status)) {
+      return booking;
+    }
+  }
+  return null;
+}
 
-  const _PremiumHeader({
-    required this.firstName,
-    required this.unreadCount,
-    required this.onNotificationTap,
+/// Most recent finished work, used for a compact activity summary. Provider
+/// order is preserved instead of parsing backend date strings.
+List<CustomerBookingEntity> _recentActivity(
+  List<CustomerBookingEntity> bookings,
+) {
+  final recent = <CustomerBookingEntity>[];
+  for (final booking in bookings) {
+    if (CustomerHomeTab._liveStatuses.contains(booking.status)) continue;
+    recent.add(booking);
+    if (recent.length == 2) break;
+  }
+  return recent;
+}
+
+/// Real, action-required states only. Renders nothing when the customer has
+/// nothing to decide or pay.
+class _AttentionPanel extends StatelessWidget {
+  final List<CustomerApprovalSummaryResponse> approvals;
+  final int unpaidInvoices;
+  final String Function(double amount) formatAmount;
+  final VoidCallback onReview;
+
+  const _AttentionPanel({
+    required this.approvals,
+    required this.unpaidInvoices,
+    required this.formatAmount,
+    required this.onReview,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final rows = <Widget>[];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Orient Customer',
-              style: textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                fontSize: 10,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Welcome, $firstName',
-              style: textTheme.headlineSmall?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ],
+    if (approvals.isNotEmpty) {
+      final single = approvals.length == 1;
+      final amount = approvals.first.amount;
+      rows.add(
+        _AttentionRow(
+          icon: Icons.fact_check_rounded,
+          message: single
+              ? (amount > 0
+                    ? 'Estimate ${formatAmount(amount)} awaiting your approval'
+                    : 'An estimate is awaiting your approval')
+              : '${approvals.length} estimates awaiting your approval',
+          onTap: onReview,
         ),
-        GestureDetector(
-          onTap: onNotificationTap,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerLow,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colorScheme.outlineVariant),
-                ),
-                child: Icon(
-                  Icons.notifications_outlined,
-                  color: colorScheme.onSurface,
-                  size: 22,
-                ),
-              ),
-              if (unreadCount > 0)
-                Positioned(
-                  top: -2,
-                  right: -2,
-                  child: Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: colorScheme.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colorScheme.surface, width: 2),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── 2. Uber-Style Search Pill ───────────────────────────────────────────────
-class _TopCustomerBanners extends StatefulWidget {
-  final CustomerBookingEntity? activeBooking;
-  final int vehicleCount;
-  final VoidCallback onPrimaryTap;
-  final VoidCallback onSecondaryTap;
-  final VoidCallback onGarageTap;
-
-  const _TopCustomerBanners({
-    required this.activeBooking,
-    required this.vehicleCount,
-    required this.onPrimaryTap,
-    required this.onSecondaryTap,
-    required this.onGarageTap,
-  });
-
-  @override
-  State<_TopCustomerBanners> createState() => _TopCustomerBannersState();
-}
-
-class _TopCustomerBannersState extends State<_TopCustomerBanners> {
-  late final PageController _controller;
-  Timer? _autoSlideTimer;
-  int _index = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = PageController(viewportFraction: 0.94);
-    _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted || !_controller.hasClients) return;
-
-      final nextPage = (_index + 1) % _bannerCount;
-      _controller.animateToPage(
-        nextPage,
-        duration: const Duration(milliseconds: 420),
-        curve: Curves.easeOutCubic,
       );
-    });
-  }
+    }
 
-  @override
-  void dispose() {
-    _autoSlideTimer?.cancel();
-    _controller.dispose();
-    super.dispose();
-  }
+    if (unpaidInvoices > 0) {
+      rows.add(
+        _AttentionRow(
+          icon: Icons.receipt_long_rounded,
+          message: unpaidInvoices == 1
+              ? '1 unpaid invoice'
+              : '$unpaidInvoices unpaid invoices',
+          onTap: onReview,
+        ),
+      );
+    }
 
-  static const int _bannerCount = 3;
-
-  @override
-  Widget build(BuildContext context) {
-    final booking = widget.activeBooking;
-    final hasBooking = booking != null;
-    final banners = [
-      _TopBannerData(
-        title: hasBooking
-            ? 'Your service is in motion'
-            : 'Book trusted car care',
-        subtitle: hasBooking
-            ? '${booking.service.isNotEmpty ? booking.service : "Service"} • ${booking.vehicleName}'
-            : widget.vehicleCount == 0
-            ? 'Add your vehicle and get workshop support faster.'
-            : 'Pick a service, choose your vehicle, and track every step.',
-        badge: hasBooking ? booking.statusLabel : 'Orient Service',
-        actionLabel: hasBooking ? 'View status' : 'Book now',
-        icon: hasBooking
-            ? Icons.track_changes_rounded
-            : Icons.build_circle_rounded,
-        imageUrl:
-            'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=1000&auto=format&fit=crop',
-        onTap: widget.onPrimaryTap,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.s14),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          colors.error.withValues(alpha: 0.06),
+          colors.surface,
+        ),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        border: Border.all(color: colors.error.withValues(alpha: 0.24)),
       ),
-      _TopBannerData(
-        title: 'Breakdown help',
-        subtitle:
-            'Fast roadside assistance when your car needs urgent support.',
-        badge: '24/7 support',
-        actionLabel: 'Get help',
-        icon: Icons.sos_rounded,
-        imageUrl:
-            'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?q=80&w=900&auto=format&fit=crop',
-        onTap: widget.onSecondaryTap,
-      ),
-      _TopBannerData(
-        title: 'Your garage, ready',
-        subtitle: widget.vehicleCount == 0
-            ? 'Add your first vehicle to make booking quicker.'
-            : '${widget.vehicleCount} vehicle${widget.vehicleCount == 1 ? "" : "s"} saved for quick service booking.',
-        badge: 'My Garage',
-        actionLabel: 'Manage',
-        icon: Icons.directions_car_filled_rounded,
-        imageUrl:
-            'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1000&auto=format&fit=crop',
-        onTap: widget.onGarageTap,
-      ),
-    ];
-
-    return SizedBox(
-      height: 200,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: PageView.builder(
-              controller: _controller,
-              padEnds: false,
-              itemCount: banners.length,
-              physics: const BouncingScrollPhysics(),
-              onPageChanged: (value) => setState(() => _index = value),
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: EdgeInsets.only(
-                    right: index == banners.length - 1 ? 0 : 12,
-                  ),
-                  child: _TopCustomerBannerCard(data: banners[index]),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              for (int i = 0; i < banners.length; i++)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  width: i == _index ? 20 : 7,
-                  height: 7,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  decoration: BoxDecoration(
-                    color: i == _index
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(
-                            context,
-                          ).colorScheme.outlineVariant.withValues(alpha: 0.75),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
+              Icon(Icons.error_outline_rounded, size: 16, color: colors.error),
+              const SizedBox(width: AppDimensions.s6),
+              Text(
+                'Needs your attention',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colors.error,
+                  fontWeight: FontWeight.w800,
                 ),
+              ),
             ],
           ),
+          const SizedBox(height: AppDimensions.s6),
+          for (var index = 0; index < rows.length; index++) ...[
+            if (index > 0) const SizedBox(height: AppDimensions.s4),
+            rows[index],
+          ],
         ],
       ),
     );
   }
 }
 
-class _TopBannerData {
-  final String title;
-  final String subtitle;
-  final String badge;
-  final String actionLabel;
+class _AttentionRow extends StatelessWidget {
   final IconData icon;
-  final String imageUrl;
+  final String message;
   final VoidCallback onTap;
 
-  const _TopBannerData({
-    required this.title,
-    required this.subtitle,
-    required this.badge,
-    required this.actionLabel,
+  const _AttentionRow({
     required this.icon,
-    required this.imageUrl,
+    required this.message,
     required this.onTap,
   });
-}
-
-class _TopCustomerBannerCard extends StatelessWidget {
-  final _TopBannerData data;
-
-  const _TopCustomerBannerCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = theme.colorScheme;
 
-    return AppCard(
-      borderRadius: 24,
-      elevation: 0,
-      borderColor: colorScheme.outlineVariant,
-      padding: EdgeInsets.zero,
-      onTap: data.onTap,
-      boxShadow: [
-        BoxShadow(
-          color: colorScheme.shadow.withValues(alpha: 0.10),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ],
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Image.network(
-                data.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => ColoredBox(
-                  color: colorScheme.surfaceContainerHighest,
-                  child: Icon(
-                    data.icon,
-                    color: colorScheme.primary.withValues(alpha: 0.35),
-                    size: 52,
+    return Semantics(
+      button: true,
+      excludeSemantics: true,
+      label: message,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s4,
+            vertical: AppDimensions.s10,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: AppDimensions.iconMd, color: colors.error),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-            ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colorScheme.inverseSurface.withValues(alpha: 0.88),
-                      colorScheme.inverseSurface.withValues(alpha: 0.64),
-                      colorScheme.inverseSurface.withValues(alpha: 0.16),
-                    ],
-                    stops: const [0, 0.62, 1],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: colors.onSurfaceVariant,
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colorScheme.onInverseSurface.withValues(
-                            alpha: 0.16,
-                          ),
-                          borderRadius: BorderRadius.circular(100),
-                          border: Border.all(
-                            color: colorScheme.onInverseSurface.withValues(
-                              alpha: 0.20,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          data.badge,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onInverseSurface,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Icon(
-                        data.icon,
-                        color: colorScheme.onInverseSurface,
-                        size: 22,
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        data.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: colorScheme.onInverseSurface,
-                          fontWeight: FontWeight.w900,
-                          height: 1.08,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        data.subtitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onInverseSurface.withValues(
-                            alpha: 0.84,
-                          ),
-                          fontWeight: FontWeight.w600,
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        data.actionLabel,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _UberSearchPill extends StatelessWidget {
-  final VoidCallback onTap;
+class _RecentActivitySection extends StatelessWidget {
+  final List<CustomerBookingEntity> bookings;
+  final VoidCallback onViewAll;
+  final void Function(CustomerBookingEntity booking) onTap;
 
-  const _UberSearchPill({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return AppCard(
-      borderRadius: 30,
-      elevation: 0,
-      color: colorScheme.surface,
-      borderColor: colorScheme.outlineVariant,
-      boxShadow: [
-        BoxShadow(
-          color: colorScheme.shadow.withValues(alpha: 0.05),
-          blurRadius: 16,
-          offset: const Offset(0, 6),
-        ),
-      ],
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.search_rounded,
-              color: colorScheme.primary,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'What does your car need?',
-                  style: textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  'Service, repairs, or breakdown help',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── 3. Bento-Style Quick Actions ────────────────────────────────────────────
-class _BentoQuickActions extends StatelessWidget {
-  final VoidCallback onBook;
-  final VoidCallback onTrack;
-  final VoidCallback onGarage;
-  final VoidCallback onSos;
-
-  const _BentoQuickActions({
-    required this.onBook,
-    required this.onTrack,
-    required this.onGarage,
-    required this.onSos,
+  const _RecentActivitySection({
+    required this.bookings,
+    required this.onViewAll,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: _BentoCard(
-                title: 'Book\nService',
-                icon: Icons.calendar_today_rounded,
-                isPrimary: true,
-                onTap: onBook,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: _BentoCard(
-                title: 'My\nGarage',
-                icon: Icons.directions_car_rounded,
-                isPrimary: false,
-                onTap: onGarage,
-              ),
-            ),
-          ],
+        SectionHeader(
+          title: 'Recent activity',
+          action: 'All bookings',
+          onAction: onViewAll,
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: _BentoCard(
-                title: 'Live\nTrack',
-                icon: Icons.track_changes_rounded,
-                isPrimary: false,
-                onTap: onTrack,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 3,
-              child: _BentoCard(
-                title: '24/7\nSOS',
-                icon: Icons.sos_rounded,
-                isDanger: true,
-                isPrimary: false,
-                onTap: onSos,
-              ),
-            ),
-          ],
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: Column(
+            children: [
+              for (var index = 0; index < bookings.length; index++) ...[
+                _ActivityRow(
+                  booking: bookings[index],
+                  onTap: () => onTap(bookings[index]),
+                ),
+                if (index < bookings.length - 1)
+                  Divider(height: 1, color: colors.outlineVariant),
+              ],
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-class _BentoCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final bool isPrimary;
-  final bool isDanger;
-  final VoidCallback onTap;
-
-  const _BentoCard({
-    required this.title,
-    required this.icon,
-    required this.isPrimary,
-    this.isDanger = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    final bgColor = isPrimary
-        ? colorScheme.primary
-        : isDanger
-        ? colorScheme.error.withValues(alpha: 0.1)
-        : colorScheme.surfaceContainerHighest;
-
-    final fgColor = isPrimary
-        ? colorScheme.onPrimary
-        : isDanger
-        ? colorScheme.error
-        : colorScheme.onSurface;
-
-    final iconBgColor = isPrimary
-        ? colorScheme.onPrimary.withValues(alpha: 0.2)
-        : isDanger
-        ? colorScheme.error.withValues(alpha: 0.15)
-        : colorScheme.surface;
-
-    return AppCard(
-      height: 110,
-      borderRadius: 24,
-      elevation: 0,
-      color: bgColor,
-      borderColor: isPrimary || isDanger
-          ? Colors.transparent
-          : colorScheme.outlineVariant,
-      onTap: onTap,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: fgColor, size: 20),
-          ),
-          Text(
-            title,
-            style: textTheme.titleSmall?.copyWith(
-              color: fgColor,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── 4. Active Job Tracker ───────────────────────────────────────────────────
-class _ActiveJobTracker extends StatelessWidget {
+class _ActivityRow extends StatelessWidget {
   final CustomerBookingEntity booking;
   final VoidCallback onTap;
 
-  const _ActiveJobTracker({required this.booking, required this.onTap});
+  const _ActivityRow({required this.booking, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final service = booking.service.trim();
+    final vehicle = booking.vehicleName.trim();
+    final date = booking.date.trim();
+    final meta = [
+      if (vehicle.isNotEmpty) vehicle,
+      if (date.isNotEmpty) date,
+    ].join(' \u00b7 ');
+    final title = service.isEmpty ? 'Workshop visit' : service;
 
-    return AppCard(
-      borderRadius: 24,
-      elevation: 0,
-      color: colorScheme.surface,
-      borderColor: colorScheme.outlineVariant,
-      padding: const EdgeInsets.all(20),
-      boxShadow: [
-        BoxShadow(
-          color: colorScheme.shadow.withValues(alpha: 0.05),
-          blurRadius: 16,
-          offset: const Offset(0, 6),
-        ),
-      ],
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.satellite_alt_rounded,
-              color: colorScheme.primary,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'ACTIVE SERVICE',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${booking.service} • ${booking.vehicleName}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
+    return Semantics(
+      button: true,
+      excludeSemantics: true,
+      label: [title, if (meta.isNotEmpty) meta, booking.statusLabel].join(', '),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.s14),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusControl,
                   ),
                 ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── 5. Promotional Carousel Banner ──────────────────────────────────────────
-class _PromoCarousel extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _PromoCarousel({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 180,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        clipBehavior: Clip.none,
-        children: [
-          _PromoCard(
-            tag: 'SEASONAL',
-            title: 'Winter Readiness\nInspection',
-            subtitle: 'Free battery & tire health check',
-            imageUrl:
-                'https://images.unsplash.com/photo-1469285994282-454ceb49e63c?q=80&w=800&auto=format&fit=crop',
-            onTap: onTap,
-          ),
-          const SizedBox(width: 16),
-          _PromoCard(
-            tag: 'LIMITED TIME',
-            title: '15% Off Major\nServices',
-            subtitle: 'Use code ORIENT15 at checkout',
-            imageUrl:
-                'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=800&auto=format&fit=crop',
-            onTap: onTap,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PromoCard extends StatelessWidget {
-  final String tag;
-  final String title;
-  final String subtitle;
-  final String imageUrl;
-  final VoidCallback onTap;
-
-  const _PromoCard({
-    required this.tag,
-    required this.title,
-    required this.subtitle,
-    required this.imageUrl,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AppCard(
-      width: 300,
-      borderRadius: 24,
-      elevation: 0,
-      borderColor: colorScheme.outlineVariant,
-      onTap: onTap,
-      padding: EdgeInsets.zero,
-      boxShadow: [
-        BoxShadow(
-          color: colorScheme.shadow.withValues(alpha: 0.1),
-          blurRadius: 16,
-          offset: const Offset(0, 6),
-        ),
-      ],
-      child: Stack(
-        children: [
-          Positioned.fill(child: Image.network(imageUrl, fit: BoxFit.cover)),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colorScheme.inverseSurface.withValues(alpha: 0.2),
-                    colorScheme.inverseSurface.withValues(alpha: 0.9),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                child: Icon(
+                  Icons.receipt_long_rounded,
+                  size: AppDimensions.iconMd,
+                  color: colors.onSurfaceVariant,
                 ),
               ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.onInverseSurface,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    tag,
-                    style: textTheme.labelSmall?.copyWith(
-                      color: colorScheme.inverseSurface,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1,
-                      fontSize: 9,
-                    ),
-                  ),
-                ),
-                Column(
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style: textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onInverseSurface,
-                        fontWeight: FontWeight.w900,
-                        height: 1.1,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleSmall?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onInverseSurface.withValues(
-                          alpha: 0.9,
+                    const SizedBox(height: AppDimensions.s6),
+                    Row(
+                      children: [
+                        _StatusChip(
+                          label: booking.statusLabel,
+                          status: booking.status,
                         ),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── 6. Premium Membership Banner ────────────────────────────────────────────
-class _OrientPlusBanner extends StatelessWidget {
-  const _OrientPlusBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return AppCard(
-      height: 140,
-      borderRadius: 24,
-      elevation: 0,
-      borderColor: colorScheme.outlineVariant,
-      padding: EdgeInsets.zero,
-      boxShadow: [
-        BoxShadow(
-          color: colorScheme.shadow.withValues(alpha: 0.1),
-          blurRadius: 16,
-          offset: const Offset(0, 6),
-        ),
-      ],
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.network(
-              'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?q=80&w=800&auto=format&fit=crop',
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colorScheme.inverseSurface.withValues(alpha: 0.8),
-                    colorScheme.inverseSurface.withValues(alpha: 0.5),
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.workspace_premium_rounded,
-                            color: colorScheme.secondary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'ORIENT PLUS',
-                            style: textTheme.labelSmall?.copyWith(
-                              color: colorScheme.secondary,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.5,
+                        if (meta.isNotEmpty) ...[
+                          const SizedBox(width: AppDimensions.s8),
+                          Expanded(
+                            child: Text(
+                              meta,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Unlock 10% off services\n& free instant towing.',
-                        style: textTheme.titleMedium?.copyWith(
-                          color: colorScheme.onInverseSurface,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.onInverseSurface,
-                    foregroundColor: colorScheme.inverseSurface,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      ],
                     ),
-                  ),
-                  child: Text(
-                    'Join',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.inverseSurface,
-                    ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: AppDimensions.iconMd,
+                color: colors.onSurfaceVariant,
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── 7. My Garage Showcase ───────────────────────────────────────────────────
-class _GarageShowcase extends StatelessWidget {
-  final List<CustomerVehicleEntity> vehicles;
-  final VoidCallback onAddVehicle;
-  final void Function(CustomerVehicleEntity) onBookService;
-
-  const _GarageShowcase({
-    required this.vehicles,
-    required this.onAddVehicle,
-    required this.onBookService,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 230,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        clipBehavior: Clip.none,
-        itemCount: vehicles.length + 1,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
-        itemBuilder: (ctx, i) {
-          if (i == vehicles.length) return _AddVehicleCard(onTap: onAddVehicle);
-          return _VehicleCard(
-            vehicle: vehicles[i],
-            imageUrl: i % 2 == 0
-                ? 'https://images.unsplash.com/photo-1550355291-bbee04a92027?q=80&w=800&auto=format&fit=crop'
-                : 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?q=80&w=800&auto=format&fit=crop',
-            onBook: () => onBookService(vehicles[i]),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _VehicleCard extends StatelessWidget {
-  final CustomerVehicleEntity vehicle;
-  final String imageUrl;
-  final VoidCallback onBook;
-
-  const _VehicleCard({
-    required this.vehicle,
-    required this.imageUrl,
-    required this.onBook,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return AppCard(
-      width: 250,
-      borderRadius: 24,
-      elevation: 0,
-      color: colorScheme.surface,
-      borderColor: colorScheme.outlineVariant,
-      padding: EdgeInsets.zero,
-      boxShadow: [
-        BoxShadow(
-          color: colorScheme.shadow.withValues(alpha: 0.05),
-          blurRadius: 16,
-          offset: const Offset(0, 6),
         ),
-      ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    bottom: 12,
-                    left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.secondary,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        vehicle.plateNumber.toUpperCase(),
-                        style: textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSecondary,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        vehicle.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      Text(
-                        'Health: ${vehicle.healthScore}%',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: onBook,
-                  style: IconButton.styleFrom(
-                    backgroundColor: colorScheme.primaryContainer,
-                    foregroundColor: colorScheme.onPrimaryContainer,
-                  ),
-                  icon: const Icon(Icons.build_rounded, size: 18),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
 }
 
-class _AddVehicleCard extends StatelessWidget {
-  final VoidCallback onTap;
+class _StatusChip extends StatelessWidget {
+  final String label;
+  final BookingStatus status;
 
-  const _AddVehicleCard({required this.onTap});
+  const _StatusChip({required this.label, required this.status});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = Theme.of(context).colorScheme;
+    final tint = switch (status) {
+      BookingStatus.completed || BookingStatus.delivered => colors.tertiary,
+      BookingStatus.cancelled => colors.onSurfaceVariant,
+      BookingStatus.approvalRequired => colors.error,
+      _ => colors.primary,
+    };
 
-    return AppCard(
-      width: 140,
-      borderRadius: 24,
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      borderColor: colorScheme.outlineVariant,
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.add_circle_outline_rounded,
-            size: 36,
-            color: colorScheme.primary,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Add Vehicle',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
+    return StatusPill(label: label, bg: tint.withValues(alpha: 0.12), fg: tint);
   }
 }
 
-// ─── 8. Recommended Services ─────────────────────────────────────────────────
-class _RecommendedServicesList extends StatelessWidget {
-  final VoidCallback onBook;
+class _RefreshFailureNotice extends StatelessWidget {
+  final Future<void> Function() onRetry;
 
-  const _RecommendedServicesList({required this.onBook});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 220,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        clipBehavior: Clip.none,
-        children: [
-          _ServicePackageCard(
-            title: 'Full MOT & Service',
-            price: 'From AED 199',
-            imageUrl:
-                'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=800&auto=format&fit=crop',
-            onTap: onBook,
-          ),
-          const SizedBox(width: 16),
-          _ServicePackageCard(
-            title: 'Oil & Filter Change',
-            price: 'From AED 49',
-            imageUrl:
-                'https://images.unsplash.com/photo-1632733711679-529326f6db12?q=80&w=800&auto=format&fit=crop',
-            onTap: onBook,
-          ),
-          const SizedBox(width: 16),
-          _ServicePackageCard(
-            title: 'Brake Inspection',
-            price: 'Free',
-            imageUrl:
-                'https://images.unsplash.com/photo-1600661653561-629509216228?q=80&w=800&auto=format&fit=crop',
-            onTap: onBook,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ServicePackageCard extends StatelessWidget {
-  final String title;
-  final String price;
-  final String imageUrl;
-  final VoidCallback onTap;
-
-  const _ServicePackageCard({
-    required this.title,
-    required this.price,
-    required this.imageUrl,
-    required this.onTap,
-  });
+  const _RefreshFailureNotice({required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
 
-    return AppCard(
-      width: 200,
-      borderRadius: 24,
-      elevation: 0,
-      color: colorScheme.surface,
-      borderColor: colorScheme.outlineVariant,
-      onTap: onTap,
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  price,
-                  style: textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.s12,
+        AppDimensions.s8,
+        AppDimensions.s8,
+        AppDimensions.s8,
       ),
-    );
-  }
-}
-
-// ─── 9. Car Care Discovery (ICON THUMBNAILS) ─────────────────────────────────
-class _CarCareTipsRow extends StatelessWidget {
-  const _CarCareTipsRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 110,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        clipBehavior: Clip.none,
-        children: const [
-          _TipCard(
-            title: '5 signs your brakes need replacing',
-            icon: Icons.car_crash_rounded,
-          ),
-          SizedBox(width: 16),
-          _TipCard(
-            title: 'How to prep your car for winter',
-            icon: Icons.ac_unit_rounded,
-          ),
-          SizedBox(width: 16),
-          _TipCard(
-            title: 'Understanding tire pressure codes',
-            icon: Icons.tire_repair_rounded,
-          ),
-        ],
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          colors.error.withValues(alpha: 0.06),
+          colors.surface,
+        ),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        border: Border.all(color: colors.error.withValues(alpha: 0.24)),
       ),
-    );
-  }
-}
-
-class _TipCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _TipCard({required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = themeText(context);
-
-    return AppCard(
-      width: 260,
-      borderRadius: 20,
-      elevation: 0,
-      color: colorScheme.surfaceContainerHighest,
-      borderColor: colorScheme.outlineVariant,
-      padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          Container(
-            width: 80,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colorScheme.outlineVariant),
-            ),
-            child: Center(
-              child: Icon(icon, color: colorScheme.primary, size: 32),
-            ),
-          ),
-          const SizedBox(width: 16),
+          Icon(Icons.error_outline_rounded, size: 18, color: colors.error),
+          const SizedBox(width: AppDimensions.s10),
           Expanded(
             child: Text(
-              title,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colorScheme.onSurface,
-                height: 1.3,
+              "We couldn't refresh your information.",
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );
-  }
-
-  TextTheme themeText(BuildContext context) => Theme.of(context).textTheme;
-}
-
-// ─── 10. Recent Activity List ────────────────────────────────────────────────
-class _RecentActivityList extends StatelessWidget {
-  final List<CustomerBookingEntity> bookings;
-  final void Function(CustomerBookingEntity) onTap;
-
-  const _RecentActivityList({required this.bookings, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AppCard(
-      borderRadius: 24,
-      elevation: 0,
-      color: colorScheme.surface,
-      borderColor: colorScheme.outlineVariant,
-      padding: EdgeInsets.zero,
-      boxShadow: [
-        BoxShadow(
-          color: colorScheme.shadow.withValues(alpha: 0.05),
-          blurRadius: 16,
-          offset: const Offset(0, 6),
-        ),
-      ],
-      child: Column(
-        children: [
-          for (int i = 0; i < bookings.length; i++) ...[
-            _ActivityTile(
-              booking: bookings[i],
-              onTap: () => onTap(bookings[i]),
-            ),
-            if (i < bookings.length - 1)
-              Divider(height: 1, color: colorScheme.outlineVariant),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivityTile extends StatelessWidget {
-  final CustomerBookingEntity booking;
-  final VoidCallback onTap;
-
-  const _ActivityTile({required this.booking, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(
-                Icons.receipt_long_rounded,
-                color: colorScheme.onSurface,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    booking.service.isNotEmpty ? booking.service : 'Service',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${booking.vehicleName} • ${booking.date}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Helpers & Headings ──────────────────────────────────────────────────────
-class _SectionHeading extends StatelessWidget {
-  final String title;
-
-  const _SectionHeading({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.w900,
-        letterSpacing: -0.5,
-      ),
-    );
-  }
-}
-
-class _SectionHeadingWithAction extends StatelessWidget {
-  final String title;
-  final String actionText;
-  final VoidCallback onAction;
-
-  const _SectionHeadingWithAction({
-    required this.title,
-    required this.actionText,
-    required this.onAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = themeColor(context);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
-          ),
-        ),
-        GestureDetector(
-          onTap: onAction,
-          child: Text(
-            actionText,
-            style: textTheme.labelLarge?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  ColorScheme themeColor(BuildContext context) => Theme.of(context).colorScheme;
-}
-
-class _EmptyGarageTile extends StatelessWidget {
-  final VoidCallback onAdd;
-  const _EmptyGarageTile({required this.onAdd});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      borderRadius: 24,
-      elevation: 0,
-      borderColor: Theme.of(context).colorScheme.outlineVariant,
-      onTap: onAdd,
-      child: const Center(child: Text("Add a vehicle")),
-    );
-  }
-}
-
-class _HomeLoading extends StatelessWidget {
-  const _HomeLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

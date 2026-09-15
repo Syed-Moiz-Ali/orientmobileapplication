@@ -18,10 +18,26 @@ class TechnicianDashboardView extends ConsumerWidget {
   const TechnicianDashboardView({super.key});
 
   static const _navItems = <AppNavItem>[
-    AppNavItem(selectedIcon: Icons.dashboard_rounded, icon: Icons.dashboard_outlined, label: 'Today'),
-    AppNavItem(selectedIcon: Icons.car_repair_rounded, icon: Icons.car_repair_outlined, label: 'Jobs'),
-    AppNavItem(selectedIcon: Icons.insights_rounded, icon: Icons.insights_outlined, label: 'Productivity'),
-    AppNavItem(selectedIcon: Icons.person_rounded, icon: Icons.person_outlined, label: 'Profile'),
+    AppNavItem(
+      selectedIcon: Icons.dashboard_rounded,
+      icon: Icons.dashboard_outlined,
+      label: 'Today',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.car_repair_rounded,
+      icon: Icons.car_repair_outlined,
+      label: 'Jobs',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.insights_rounded,
+      icon: Icons.insights_outlined,
+      label: 'Productivity',
+    ),
+    AppNavItem(
+      selectedIcon: Icons.person_rounded,
+      icon: Icons.person_outlined,
+      label: 'Profile',
+    ),
   ];
 
   static const _pages = <Widget>[
@@ -36,17 +52,16 @@ class TechnicianDashboardView extends ConsumerWidget {
     final state = ref.watch(technicianDashboardProvider);
     final notifier = ref.read(technicianDashboardProvider.notifier);
     final adaptive = context.adaptive;
-    final effectiveIndex = state.selectedTab < _pages.length ? state.selectedTab : 0;
+    final effectiveIndex = state.selectedTab < _pages.length
+        ? state.selectedTab
+        : 0;
 
     return DashboardShell(
       appBar: TechnicianAppBar(selectedIndex: effectiveIndex),
       body: AppAdaptiveNavigationFrame(
         items: _navItems,
         selectedIndex: effectiveIndex,
-        onSelected: (i) {
-          HapticFeedback.selectionClick();
-          notifier.selectTab(i);
-        },
+        onSelected: notifier.selectTab,
         child: IndexedStack(index: effectiveIndex, children: _pages),
       ),
       bottomNavigationBar: adaptive.useNavigationRail
@@ -54,10 +69,7 @@ class TechnicianDashboardView extends ConsumerWidget {
           : AppBottomNavigation(
               items: _navItems,
               selectedIndex: effectiveIndex,
-              onSelected: (index) {
-                HapticFeedback.selectionClick();
-                notifier.selectTab(index);
-              },
+              onSelected: notifier.selectTab,
             ),
     );
   }
@@ -70,7 +82,12 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final int selectedIndex;
   const TechnicianAppBar({super.key, required this.selectedIndex});
 
-  static const _titles = ['Workshop Bay', 'My Job Cards', 'Productivity', 'Technician Profile'];
+  static const _titles = [
+    'Workshop Bay',
+    'My Job Cards',
+    'Productivity',
+    'Technician Profile',
+  ];
 
   static const _subtitles = [
     'Shift Telemetry & Bay Repairs',
@@ -89,7 +106,9 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final textTheme = theme.textTheme;
     final notifier = ref.read(technicianDashboardProvider.notifier);
     final profileName = notifier.profile.name.trim();
-    final firstName = profileName.isEmpty ? 'Technician' : profileName.split(' ').first;
+    final firstName = profileName.isEmpty
+        ? 'Technician'
+        : profileName.split(' ').first;
     final isToday = selectedIndex == 0;
 
     return AppBar(
@@ -99,14 +118,18 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
       scrolledUnderElevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: theme.brightness == Brightness.dark ? Brightness.light : Brightness.dark,
+        statusBarIconBrightness: theme.brightness == Brightness.dark
+            ? Brightness.light
+            : Brightness.dark,
       ),
       titleSpacing: 4,
       leadingWidth: 58,
       leading: Padding(
         padding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
         child: UserAvatar(
-          initials: notifier.profile.avatarInitials.isNotEmpty ? notifier.profile.avatarInitials : 'T',
+          initials: notifier.profile.avatarInitials.isNotEmpty
+              ? notifier.profile.avatarInitials
+              : 'T',
           onTap: () {
             showProfileSheet(
               context,
@@ -180,7 +203,9 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return ProfileSheetData(
       name: name,
-      initials: profile.avatarInitials.isNotEmpty ? profile.avatarInitials : 'T',
+      initials: profile.avatarInitials.isNotEmpty
+          ? profile.avatarInitials
+          : 'T',
       roleLabel: role,
       roleBadge: profile.branch.isNotEmpty ? profile.branch : 'Workshop Bay',
       menuItems: [

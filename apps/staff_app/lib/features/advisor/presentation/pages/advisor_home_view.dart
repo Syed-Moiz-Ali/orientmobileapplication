@@ -252,25 +252,12 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-      ),
-    );
-
     final adaptive = context.adaptive;
     return DashboardShell(
       body: AppAdaptiveNavigationFrame(
         items: _advisorNavItems,
         selectedIndex: _navIndex,
-        onSelected: (index) {
-          HapticFeedback.selectionClick();
-          setState(() => _navIndex = index);
-        },
+        onSelected: (index) => setState(() => _navIndex = index),
         child: IndexedStack(
           index: _navIndex,
           children: [
@@ -294,12 +281,10 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
       ),
       bottomNavigationBar: adaptive.useNavigationRail
           ? null
-          : _AdvisorStreamlinedNav(
+          : AppBottomNavigation(
+              items: _advisorNavItems,
               selectedIndex: _navIndex,
-              onTap: (index) {
-                HapticFeedback.selectionClick();
-                setState(() => _navIndex = index);
-              },
+              onSelected: (index) => setState(() => _navIndex = index),
             ),
     );
   }
@@ -1177,26 +1162,6 @@ class _AdvisorJobCardTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ─── 8. STREAMLINED BOTTOM NAV ───────────────────────────────────────────────
-class _AdvisorStreamlinedNav extends StatelessWidget {
-  final int selectedIndex;
-  final void Function(int) onTap;
-
-  const _AdvisorStreamlinedNav({
-    required this.selectedIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBottomNavigation(
-      items: _advisorNavItems,
-      selectedIndex: selectedIndex,
-      onSelected: onTap,
     );
   }
 }

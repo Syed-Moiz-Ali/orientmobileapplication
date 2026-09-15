@@ -57,6 +57,9 @@ class SupervisorScaffold extends ConsumerWidget {
     final effectiveIndex = state.selectedIndex < _pages.length
         ? state.selectedIndex
         : 0;
+    final queueBadges = notifier.bookings.isEmpty
+        ? const <int>{}
+        : const <int>{2};
 
     return DashboardShell(
       appBar: SupervisorAppBar(selectedIndex: effectiveIndex),
@@ -64,6 +67,7 @@ class SupervisorScaffold extends ConsumerWidget {
         items: _navItems,
         selectedIndex: effectiveIndex,
         onSelected: notifier.selectTab,
+        badgeIndices: queueBadges,
         child: IndexedStack(index: effectiveIndex, children: _pages),
       ),
       bottomNavigationBar: adaptive.useNavigationRail
@@ -71,11 +75,8 @@ class SupervisorScaffold extends ConsumerWidget {
           : AppBottomNavigation(
               items: _navItems,
               selectedIndex: effectiveIndex,
-              onSelected: (index) {
-                HapticFeedback.selectionClick();
-                notifier.selectTab(index);
-              },
-              badgeIndices: notifier.bookings.isEmpty ? const {} : const {2},
+              onSelected: notifier.selectTab,
+              badgeIndices: queueBadges,
             ),
       floatingActionButton: effectiveIndex == 1
           ? FloatingActionButton.extended(

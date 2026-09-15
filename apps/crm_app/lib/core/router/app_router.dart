@@ -63,8 +63,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) =>
-            ForgotPasswordView(onBackToLogin: () => context.pop()),
+        builder: (context, state) => ForgotPasswordView(
+          onBackToLogin: () => context.pop(),
+          appName: 'Orient CRM App',
+          intendedUsers: 'For CRM and customer support users',
+          appPurpose:
+              'Manage customer follow-ups, service communication, leads, reminders, and support activity.',
+        ),
       ),
       GoRoute(
         path: AppRoutes.crmDashboard,

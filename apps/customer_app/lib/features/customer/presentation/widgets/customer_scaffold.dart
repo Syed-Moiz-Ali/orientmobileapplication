@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
@@ -75,14 +74,15 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
   void _applyInitialTab() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(customerDashboardProvider.notifier).selectTab(widget.initialTab);
+        ref
+            .read(customerDashboardProvider.notifier)
+            .selectTab(widget.initialTab);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
     final adaptive = context.adaptive;
@@ -94,15 +94,6 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
       const CustomerVehiclesTab(),
       const CustomerProfileTab(),
     ];
-
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: theme.brightness == Brightness.dark
-            ? Brightness.light
-            : Brightness.dark,
-      ),
-    );
 
     return DashboardShell(
       body: AppAdaptiveNavigationFrame(

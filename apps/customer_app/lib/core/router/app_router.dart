@@ -89,6 +89,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.forgotPassword,
         builder: (context, state) => ForgotPasswordView(
           onBackToLogin: () => context.go(AppRoutes.login),
+          appName: 'Orient Customer App',
+          intendedUsers: 'For vehicle owners and service customers',
+          appPurpose:
+              'Book service, track your vehicle, review estimates, approve repairs, and view invoices.',
         ),
       ),
       GoRoute(

@@ -48,6 +48,145 @@ void main() {
       fileName: 'goldens/shell_family_desktop.png',
     );
   });
+
+  testWidgets('crowded workspaces use a deliberate overflow slot', (
+    tester,
+  ) async {
+    await _expectSingleShellGolden(
+      tester,
+      role: 'Customer',
+      labels: const [
+        'Home',
+        'Status',
+        'Bookings',
+        'Approvals',
+        'Vehicles',
+        'Profile',
+      ],
+      theme: AppTheme.light(BrandConfig.orient),
+      size: const Size(390, 700),
+      fileName: 'goldens/shell_overflow_mobile.png',
+    );
+  });
+
+  testWidgets('navigation surfaces adapt to the dark colour scheme', (
+    tester,
+  ) async {
+    await _expectSingleShellGolden(
+      tester,
+      role: 'Customer',
+      labels: const [
+        'Home',
+        'Status',
+        'Bookings',
+        'Approvals',
+        'Vehicles',
+        'Profile',
+      ],
+      theme: AppTheme.dark(BrandConfig.orient),
+      size: const Size(390, 700),
+      fileName: 'goldens/shell_overflow_dark_mobile.png',
+    );
+  });
+
+  testWidgets('workspaces with many destinations use the shared drawer', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(BrandConfig.orient),
+        home: Scaffold(
+          drawer: AppNavDrawer(
+            title: 'Orient CRM',
+            subtitle: 'Sales workspace',
+            icon: Icons.hub_outlined,
+            items: const [
+              AppNavItem(
+                selectedIcon: Icons.dashboard_rounded,
+                icon: Icons.dashboard_outlined,
+                label: 'Dashboard',
+              ),
+              AppNavItem(
+                selectedIcon: Icons.person_search_rounded,
+                icon: Icons.person_search_outlined,
+                label: 'Leads',
+              ),
+              AppNavItem(
+                selectedIcon: Icons.chat_bubble_rounded,
+                icon: Icons.chat_bubble_outline_rounded,
+                label: 'Conversations',
+              ),
+              AppNavItem(
+                selectedIcon: Icons.groups_rounded,
+                icon: Icons.groups_outlined,
+                label: 'Sales team',
+              ),
+              AppNavItem(
+                selectedIcon: Icons.task_alt_rounded,
+                icon: Icons.task_outlined,
+                label: 'Tasks',
+              ),
+              AppNavItem(
+                selectedIcon: Icons.bar_chart_rounded,
+                icon: Icons.bar_chart_outlined,
+                label: 'Reports',
+              ),
+              AppNavItem(
+                selectedIcon: Icons.power_rounded,
+                icon: Icons.power_outlined,
+                label: 'Integrations',
+              ),
+              AppNavItem(
+                selectedIcon: Icons.settings_rounded,
+                icon: Icons.settings_outlined,
+                label: 'Settings',
+              ),
+            ],
+            selectedIndex: 1,
+            badgeCounts: const {1: 12},
+            onSelected: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    tester.state<ScaffoldState>(find.byType(Scaffold)).openDrawer();
+    await tester.pumpAndSettle();
+
+    await expectLater(
+      find.byType(Drawer),
+      matchesGoldenFile('goldens/shell_drawer_mobile.png'),
+    );
+  });
+}
+
+Future<void> _expectSingleShellGolden(
+  WidgetTester tester, {
+  required String role,
+  required List<String> labels,
+  required ThemeData theme,
+  required Size size,
+  required String fileName,
+}) async {
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = size;
+  addTearDown(tester.view.reset);
+
+  await tester.pumpWidget(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: theme,
+      home: _RoleShell(role: role, labels: labels),
+    ),
+  );
+  await tester.pumpAndSettle();
+
+  await expectLater(find.byType(_RoleShell), matchesGoldenFile(fileName));
 }
 
 Future<void> _expectShellFamilyGolden(
@@ -192,4 +331,5 @@ const _icons = [
   (Icons.insights_rounded, Icons.insights_outlined),
   (Icons.person_rounded, Icons.person_outline_rounded),
   (Icons.directions_car_rounded, Icons.directions_car_outlined),
+  (Icons.fact_check_rounded, Icons.fact_check_outlined),
 ];
