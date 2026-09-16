@@ -164,9 +164,16 @@ class CustomerRemoteDataSource {
     return result.when(success: (r) => r, failure: (e) => throw e);
   }
 
+  /// The backend clamps `size` to 1..100 and returns a bare list with no total
+  /// or hasMore, so this asks for the largest page it will serve. Until the
+  /// contract grows a paging envelope, that is the honest ceiling on how far
+  /// back the inbox can reach.
+  static const int notificationPageSize = 100;
+
   Future<List<NotificationResponse>> getNotifications() async {
     final result = await _client.get<List<dynamic>>(
       ApiEndpoints.customerNotifications,
+      queryParams: const {'page': 1, 'size': notificationPageSize},
       fromJson: (d) => d as List<dynamic>,
     );
     return result.when(
@@ -180,12 +187,17 @@ class CustomerRemoteDataSource {
     );
   }
 
-  Future<void> markNotificationRead(String id) async {
-    await _client.put(ApiEndpoints.notificationRead(id));
+  /// Persists one read marker. Returns false when the workshop did not accept
+  /// it, so the caller can avoid caching a state the server does not hold.
+  Future<bool> markNotificationRead(String id) async {
+    final result = await _client.put(ApiEndpoints.notificationRead(id));
+    return result is Success;
   }
 
-  Future<void> markAllNotificationsRead() async {
-    await _client.put(ApiEndpoints.notificationReadAll);
+  /// Persists the bulk read marker through the backend's own bulk endpoint.
+  Future<bool> markAllNotificationsRead() async {
+    final result = await _client.put(ApiEndpoints.notificationReadAll);
+    return result is Success;
   }
 
   // ---------- Seamless flows: estimate approvals & invoices ----------

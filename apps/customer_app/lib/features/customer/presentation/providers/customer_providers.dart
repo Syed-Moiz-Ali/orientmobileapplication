@@ -250,7 +250,35 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
     );
   }
 
-  Future<void> _loadData() async {
+  /// The canonical dashboard load, coalesced.
+  ///
+  /// A burst of pushes (or a resume landing on top of one) must not become a
+  /// request storm, and a slow response must never overwrite a newer one, so
+  /// concurrent callers share a single in-flight load plus at most one rerun.
+  Future<void>? _loadInFlight;
+  bool _loadRerunRequested = false;
+
+  Future<void> _loadData() {
+    final inFlight = _loadInFlight;
+    if (inFlight != null) {
+      _loadRerunRequested = true;
+      return inFlight;
+    }
+    return _loadInFlight = _runLoadLoop();
+  }
+
+  Future<void> _runLoadLoop() async {
+    try {
+      do {
+        _loadRerunRequested = false;
+        await _fetchDashboard();
+      } while (_loadRerunRequested);
+    } finally {
+      _loadInFlight = null;
+    }
+  }
+
+  Future<void> _fetchDashboard() async {
     final repo = ref.read(customerRepositoryProvider);
     final remote = ref.read(customerRemoteDataSourceProvider);
     // FIX (audit P1): any throw previously left isLoading=true forever and the
@@ -268,7 +296,9 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
         isLoading: false,
         loadError: '',
         vehicles: _dedupeVehicles(results[0] as List<CustomerVehicleEntity>),
-        notifications: results[1] as List<CustomerNotificationEntity>,
+        notifications: _withPendingReads(
+          results[1] as List<CustomerNotificationEntity>,
+        ),
         activeService: results[2] as CustomerServiceEntity,
         profile: results[3] as CustomerEntity,
         unpaidInvoices: invoices.where((i) => i.status == 'unpaid').length,
@@ -290,6 +320,20 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
     }
   }
 
+  /// Re-applies read markers that are still in flight to a freshly loaded
+  /// list, so a refresh that races a tap cannot flash a row back to unread.
+  List<CustomerNotificationEntity> _withPendingReads(
+    List<CustomerNotificationEntity> fresh,
+  ) {
+    if (_pendingReadIds.isEmpty && !_markingAllRead) return fresh;
+    return [
+      for (final notification in fresh)
+        _markingAllRead || _pendingReadIds.contains(notification.id)
+            ? notification.copyWith(isRead: true)
+            : notification,
+    ];
+  }
+
   void selectTab(int index) {
     if (state.selectedIndex == index) return;
     state = state.copyWith(selectedIndex: index);
@@ -307,18 +351,80 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
     await _loadData();
   }
 
-  void markAllRead() {
-    final updated = state.notifications
-        .map((n) => n.copyWith(isRead: true))
-        .toList();
-    state = state.copyWith(notifications: updated);
+  /// Notifications read in this session whose marker is still in flight.
+  ///
+  /// A load that lands mid-flight must not flash them back to unread; once the
+  /// request settles the server's own list governs.
+  final Set<String> _pendingReadIds = {};
+  bool _markingAllRead = false;
+
+  /// Marks one notification read.
+  ///
+  /// The row updates immediately — it is what the customer just did — and the
+  /// marker is persisted to the workshop and the offline cache. A failed
+  /// persistence is deliberately *not* surfaced and does not block anything:
+  /// the local state is kept so the customer's tap is respected, and the next
+  /// load restores the server's truth. Tapping an already-read row is a no-op,
+  /// so a notification is never marked twice.
+  Future<void> markRead(String id) async {
+    final index = state.notifications.indexWhere((n) => n.id == id);
+    if (index < 0 || state.notifications[index].isRead) return;
+
+    _pendingReadIds.add(id);
+    state = state.copyWith(
+      notifications: [
+        for (final n in state.notifications)
+          n.id == id ? n.copyWith(isRead: true) : n,
+      ],
+    );
+
+    try {
+      await ref.read(customerRepositoryProvider).markNotificationRead(id);
+    } catch (e, st) {
+      ref
+          .read(loggerProvider)
+          .e('Failed to persist notification read', error: e, stackTrace: st);
+      if (e is UnauthorizedException) {
+        await ref.read(authNotifierProvider.notifier).logout();
+      }
+    } finally {
+      _pendingReadIds.remove(id);
+    }
   }
 
-  void markRead(String id) {
-    final updated = state.notifications
-        .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
-        .toList();
-    state = state.copyWith(notifications: updated);
+  /// Marks every notification read through the backend's bulk endpoint.
+  ///
+  /// Returns false when the workshop did not accept the bulk marker, in which
+  /// case the optimistic state is rolled back so the badge keeps telling the
+  /// truth instead of showing a state the server never stored.
+  Future<bool> markAllRead() async {
+    if (_markingAllRead) return false;
+    if (state.unreadCount == 0) return true;
+
+    _markingAllRead = true;
+    final before = state.notifications;
+    state = state.copyWith(
+      notifications: [for (final n in before) n.copyWith(isRead: true)],
+    );
+
+    var saved = false;
+    try {
+      saved = await ref
+          .read(customerRepositoryProvider)
+          .markAllNotificationsRead();
+    } catch (e, st) {
+      ref
+          .read(loggerProvider)
+          .e('Failed to persist read-all', error: e, stackTrace: st);
+      if (e is UnauthorizedException) {
+        await ref.read(authNotifierProvider.notifier).logout();
+      }
+    } finally {
+      _markingAllRead = false;
+    }
+
+    if (!saved) state = state.copyWith(notifications: before);
+    return saved;
   }
 
   void addVehicle(CustomerVehicleEntity vehicle) {

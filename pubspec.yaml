@@ -2,3 +2,5 @@ name: orient_mobile_workspace
 publish_to: none
 environment:
   sdk: ^3.9.2
+dev_dependencies:
+  melos: ^8.7.0

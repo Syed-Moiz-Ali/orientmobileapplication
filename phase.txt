@@ -1,818 +1,1280 @@
-You are performing the FINAL visual/product-density pass on the completed Customer Profile domain.
+You are continuing the Orient Mobile Flutter product modernization.
 
-Profile functionality and product decisions are already correct.
+The following Customer domains are COMPLETE and FROZEN:
 
-DO NOT reopen the capability audit.
+* Authentication
+* Home
+* Create Booking
+* Booking Success
+* Bookings
+* Booking Details
+* Service Status
+* Contextual Approvals
+* Vehicles
+* Vehicle offline identity reconciliation
+* Profile / Account
 
-DO NOT add features.
-
-DO NOT restore removed fake content.
-
-The only objective is:
-
-MAKE THE PROFILE EXPERIENCE FEEL COMPLETE AND INTENTIONALLY COMPOSED ON EVERY SCREEN SIZE, ESPECIALLY TABLET AND DESKTOP, WITHOUT FABRICATING CONTENT.
+DO NOT redesign any of those.
 
 ==================================================
-CURRENT VERIFIED PRODUCT STRUCTURE
-==================================
+CURRENT TASK
+============
 
-Profile remains a permanent Customer destination.
+Audit, redesign, implement and verify the COMPLETE CUSTOMER NOTIFICATIONS EXPERIENCE.
 
-Current primary navigation:
+This is NOT:
+
+"Make customer_notifications_view.dart prettier."
+
+This is:
+
+"Make the Customer notification inbox a truthful, persistent, useful contextual product surface."
+
+The primary questions are:
+
+1. What notification data genuinely exists?
+2. Is read/unread state persisted to the backend correctly?
+3. What does tapping each notification actually do?
+4. Can notifications deep-link into the correct Customer domain?
+5. Does the inbox remain useful with 1, 10 or 100 notifications?
+6. Does it avoid looking empty when there are only a few?
+7. Are loading/error/refresh/read states honest?
+8. Are unread badges consistent with Home?
+9. Are there duplicate or dead notification implementations?
+
+==================================================
+NAVIGATION PRODUCT DECISION — FROZEN
+====================================
+
+Notifications is CONTEXTUAL.
+
+It is NOT a permanent bottom-navigation destination.
+
+Customer permanent navigation remains:
 
 Home
 Bookings
 Vehicles
 Profile
 
-Profile's unique responsibility:
+Home header owns the notification bell + unread badge.
 
-* authenticated account identity
-* genuine account/session information
-* genuine account actions
-* genuine support action
-* licences
-* sign out
+Do NOT add Notifications to bottom navigation.
 
-Current truthful Profile content:
-
-IDENTITY
-
-* real name
-* real/derived initials
-* real CUST reference when available
-* compact real account summary
-
-CONTACT
-
-* real email from authenticated session when available
-* real phone from authenticated session when available
-
-ACCOUNT ACTIONS
-
-* Vehicles
-* Roadside assistance
-* Reset password
-
-ABOUT
-
-* Open source licences
-
-SESSION
-
-* Sign out
-
-These decisions are FROZEN.
+Do NOT add Notifications back into Profile.
 
 ==================================================
-DO NOT RESTORE
-==============
+MULTI-AGENT EXECUTION — MANDATORY
+=================================
 
-Never restore:
+Use AT LEAST SIX specialized subagents.
 
-VIP
-Premium
-membership
-loyalty
-points
-rewards
-referrals
-Verified
-notification preference
-notification settings duplicate
-biometrics
-fake security
-fake support
-24/7 claims
-fake legal pages
-app version
-Edit Profile
-Delete Account
-Register Vehicle shortcut
-fake customer IDs
+Run independent discovery in parallel.
+
+The lead agent must:
+
+* delegate
+* collect evidence
+* verify critical claims
+* synthesize the product architecture
+* assign non-overlapping implementation ownership
+* integrate
+* run final testing
+* visually inspect results
+
+Do NOT let several agents rewrite the same file.
 
 ==================================================
-KNOWN REMAINING UX PROBLEM
-==========================
+SUBAGENT 1 — NOTIFICATIONS PRODUCT / UX AUDIT
+=============================================
 
-Current visual QA reports:
-
-tablet / desktop approximately 40–46% of a 900px viewport remains as unused blank space below the actual account content.
-
-The previous implementation classified this as unavoidable because only a small number of real actions exist.
-
-DO NOT accept that conclusion automatically.
-
-There is a difference between:
-
-GOOD WHITESPACE
-intentional breathing room
-
-and
-
-DEAD WHITESPACE
-content clustered at the top of a large viewport while the rest feels unfinished.
-
-The goal is to eliminate DEAD whitespace through COMPOSITION, not fake information.
-
-==================================================
-MULTI-AGENT EXECUTION
-=====================
-
-Use 4 subagents in parallel.
-
-SUBAGENT 1 — WIDE-LAYOUT AUDITOR
-
-Inspect the existing Profile tablet and desktop composition.
-
-Report:
-
-* actual content bounds
-* unused vertical area
-* unused horizontal area
-* column heights
-* max-width constraints
-* oversized gaps
-* section padding
-* whether content is top-heavy
-* whether either column feels stranded
-
-Recommend layout changes only.
-
-Do not alter product content.
-
----
-
-SUBAGENT 2 — MOBILE DENSITY AUDITOR
+READ ONLY initially.
 
 Inspect:
 
-320
-360
-390
-412
-430px
+customer_notifications_view.dart
 
-Verify that any wide-layout changes will not:
+any notification list/item widgets
 
-* make mobile cramped
-* create oversized identity
-* increase scrolling unnecessarily
-* weaken action hierarchy
+Home notification bell
 
-Report mobile constraints.
+unread badge
 
----
+notification detail behavior
 
-SUBAGENT 3 — ACCESSIBILITY / RESPONSIVE AUDITOR
+routes opened by notification taps
+
+empty/error/loading states
+
+pull-to-refresh
+
+notification grouping
+
+timestamps
+
+read/unread appearance
+
+Determine:
+
+* current screen responsibilities
+* current information hierarchy
+* whether notifications are grouped meaningfully
+* whether unread is obvious
+* whether current cards are too large
+* whether screen looks empty with 1–3 notifications
+* whether screen becomes inefficient with many notifications
+* whether notification taps have real effects
+* whether notification type semantics exist
+* whether actions are duplicated
+
+Return:
+
+CURRENT UX
+PRODUCT PROBLEMS
+INFORMATION AVAILABLE
+READ/UNREAD BEHAVIOR
+TAP BEHAVIOR
+DENSITY PROBLEMS
+DUPLICATION
+RECOMMENDED PRODUCT STRUCTURE
+FILES
+
+==================================================
+SUBAGENT 2 — BACKEND / DATA CONTRACT AUDIT
+==========================================
+
+READ ONLY.
+
+Inspect backend:
+
+NotificationController
+NotificationService
+notification entity/model
+repository
+database fields
+customer notification endpoints
+
+Inspect Flutter:
+
+NotificationEntity
+datasource
+repository
+providers
+notifier/state
+mapping
+
+Determine exact fields:
+
+id
+title
+message/body
+type/category
+createdAt
+read
+related entity id/reference
+route
+metadata
+action
+customer id
+branch id
+
+For EACH field report:
+
+SOURCE
+RELIABILITY
+NULLABILITY
+CUSTOMER-FACING?
+NAVIGATION USE?
+
+Explicitly determine:
+
+* GET notifications contract
+* mark one read endpoint
+* mark all read endpoint
+* unread count source
+* sort order
+* pagination or no pagination
+* server persistence of read state
+* idempotency of mark-read
+* notification retention behavior if visible
+
+Return:
+
+REAL CONTRACT
+READ APIs
+UNREAD COUNT CONTRACT
+NAVIGATION METADATA
+MISSING FIELDS
+BACKEND LIMITATIONS
+
+==================================================
+SUBAGENT 3 — READ-STATE CORRECTNESS AUDIT
+=========================================
+
+This is CRITICAL.
+
+The previous Profile audit reported:
+
+notification read state appeared to be mutated locally while backend functions:
+
+markNotificationRead
+markAllNotificationsRead
+
+had zero call sites.
+
+Verify this from the CURRENT code.
+
+Trace:
+
+Home unread badge
+→ notification provider
+→ inbox
+→ mark one read
+→ mark all read
+→ refresh
+→ app restart
+
+Answer:
+
+1. Does tapping notification call backend mark-read?
+2. Does "Mark all as read" call backend?
+3. Does unread count update optimistically?
+4. Does failed backend mark-read roll back or reconcile?
+5. After app restart does a previously read item stay read?
+6. Does Home badge reflect the same canonical state?
+7. Are there race conditions?
+8. Are multiple API calls triggered for the same notification?
+9. Is read state preserved during refresh?
+10. Is the unread count calculated locally or returned by API?
+
+Return:
+
+CURRENT FLOW
+BUGS
+BACKEND CALLS MISSING
+CANONICAL STATE
+RECOMMENDED FIX
+TEST REQUIREMENTS
+
+==================================================
+SUBAGENT 4 — NOTIFICATION ROUTING / ACTION AUDIT
+================================================
+
+READ ONLY.
+
+Inspect all notification types emitted by backend/workshop.
+
+Search:
+
+Notification(...)
+createNotification(...)
+notificationService
+send notification
+FCM payloads
+
+Build a table:
+
+TYPE / SOURCE EVENT / CUSTOMER MEANING / RELATED ID / IDEAL DESTINATION
+
+Potential events may involve:
+
+booking
+booking confirmation
+service status
+approval
+invoice
+vehicle
+breakdown
+general message
+
+Do NOT invent event types.
+
+Determine whether backend provides enough identifiers for safe deep linking.
+
+For every actual notification type decide:
+
+A. safe deep link exists
+B. contextual destination exists but identifier is insufficient
+C. no action should be shown
+
+Do not route by parsing free-text notification messages unless the code already uses a reliable documented format.
+
+Return:
+
+ACTUAL TYPES
+PAYLOAD METADATA
+SAFE ROUTES
+UNSAFE ROUTES
+NO-ACTION TYPES
+MISSING BACKEND RELATIONSHIPS
+
+==================================================
+SUBAGENT 5 — PUSH / FCM AUDIT
+=============================
+
+READ ONLY.
 
 Inspect:
 
-1.6× text scale
-long customer name
-missing contact information
-missing member reference
-tablet
-desktop
+Firebase Messaging
+DeviceTokenController
+token registration
+foreground handling
+background/opened-app handling
+local notification display
+deep link handling
+refresh behavior after incoming notification
+
+Determine:
+
+* token lifecycle
+* foreground notifications
+* background notifications
+* notification-open routing
+* whether receiving a notification updates inbox/unread badge
+* whether app resumes and refreshes state
+* duplicate notification risks
+* whether notification tap from OS can route correctly
+
+This task does NOT need a Firebase architecture rewrite.
+
+Identify only issues directly affecting the Customer notification experience.
+
+Return:
+
+FCM FLOW
+INBOX REFRESH
+BADGE REFRESH
+OPEN-ACTION FLOW
+DUPLICATION RISKS
+SCOPE-SAFE FIXES
+
+==================================================
+SUBAGENT 6 — TEST / REGRESSION AUDIT
+====================================
+
+READ ONLY.
+
+Inspect existing notification tests.
+
+Identify coverage for:
+
+list
+empty
+loading
+error
+refresh
+unread
+mark read
+mark all
+backend persistence
+deep links
+large list
+timestamps
 dark mode
+320px
+1.6x text
+Home badge
 
-Identify layout risks before implementation.
+Return:
 
----
+EXISTING COVERAGE
+STALE TESTS
+MISSING TESTS
+GOLDEN PLAN
+HIGH-RISK CASES
 
-SUBAGENT 4 — VISUAL PRODUCT QA
+==================================================
+SUBAGENT 7 — VISUAL PRODUCT QA
+==============================
 
-After implementation inspect every changed golden and explicitly report:
+Run AFTER implementation.
+
+Review every notification golden.
+
+For each state report:
 
 DEAD WHITESPACE
-INTENTIONAL WHITESPACE
-COLUMN BALANCE
-VISUAL WEIGHT
-PRIMARY IDENTITY CLARITY
-ACTION CLARITY
-DESKTOP SPACE USE
+INFORMATION DENSITY
+UNREAD CLARITY
+TIMESTAMP CLARITY
+GROUPING QUALITY
+PRIMARY ACTION CLARITY
+LONG MESSAGE HANDLING
 MOBILE SPACE USE
+DESKTOP SPACE USE
 DARK MODE
 GENERIC AI LOOK
+FAKE CONTENT
 
-The lead must reject the implementation if desktop still looks like content floating at the top of a large blank canvas.
-
-==================================================
-CORE DESIGN PRINCIPLE
-=====================
-
-DO NOT solve desktop density by adding more rows.
-
-Solve it through layout architecture.
-
-Use the REAL account information as larger compositional building blocks.
+The lead must fix blocking issues before completion.
 
 ==================================================
-PREFERRED WIDE-SCREEN DIRECTION
-===============================
+LEAD SYNTHESIS BEFORE IMPLEMENTATION
+====================================
 
-For sufficiently wide screens, consider a structured Account workspace.
+After audits complete:
 
-Conceptual direction:
+DO NOT code immediately.
 
-┌──────────────────────────────────────────────────────────┐
-│ ACCOUNT                                                  │
-│                                                          │
-│ ┌───────────────────────┐ ┌────────────────────────────┐ │
-│ │ IDENTITY / ACCOUNT    │ │ ACCOUNT ACTIONS            │ │
-│ │                       │ │                            │ │
-│ │ Avatar                │ │ Vehicles                  │ │
-│ │ Name                  │ │ Roadside assistance       │ │
-│ │ CUST reference        │ │ Reset password            │ │
-│ │                       │ │                            │ │
-│ │ Real account summary  │ ├────────────────────────────┤ │
-│ │                       │ │ ABOUT                     │ │
-│ │ Contact               │ │ Open source licences      │ │
-│ │ Email                 │ │                            │ │
-│ │ Phone                 │ ├────────────────────────────┤ │
-│ │                       │ │ SESSION                   │ │
-│ │                       │ │ Sign out                  │ │
-│ └───────────────────────┘ └────────────────────────────┘ │
-└──────────────────────────────────────────────────────────┘
+First decide:
 
-This is conceptual.
-
-Do not mechanically copy it.
+1. What notification fields are trustworthy?
+2. What creates unread count?
+3. What state is canonical?
+4. Which notification types can deep-link safely?
+5. Should notifications be grouped?
+6. Does the product need notification detail pages?
+7. Does "Mark all read" belong in the UI?
+8. How should failure of mark-read behave?
+9. How should notifications scale to many records?
+10. Which legacy/dead notification files should be removed?
 
 ==================================================
-FULL-HEIGHT COMPOSITION
-=======================
+NOTIFICATION DETAIL — DECISION GATE
+===================================
 
-On desktop/tablet, the top-level account composition may intentionally occupy more of the available viewport height.
+Do NOT create a Notification Detail screen automatically.
 
-This does NOT mean stretching every row.
+Use one ONLY if notifications contain substantially more content than can reasonably be shown in the list.
 
-Instead consider:
+If notification has only:
 
-* equal-height major columns
-* tonal background region
-* full-height left identity/account panel
-* right account/action grouping
-* vertically balanced internal sections
-* controlled minimum height based on viewport
+title
+message
+time
+type
 
-The account surface may visually occupy the viewport even when content itself does not require 900px of scrolling.
+then the row itself may be enough.
 
-This is legitimate design.
+Tapping can:
 
-==================================================
-IMPORTANT DISTINCTION
-=====================
+* mark read
+* navigate directly to the related product destination
 
-DO NOT vertically stretch:
+Do not create:
 
-Vehicles row
-Roadside row
-Reset password row
-Licences row
+Notifications List
+→ Notification Detail
+→ Booking Detail
 
-into huge settings cells merely to consume space.
-
-Rows should remain compact.
-
-Instead use larger compositional surfaces around them.
+if the middle screen adds nothing.
 
 ==================================================
-IDENTITY PANEL
-==============
-
-The Identity side may carry more visual weight on wide screens because it represents the account itself.
-
-Use REAL content:
-
-* initials/avatar
-* name
-* customer reference
-* account summary
-* contact
-
-Possible improvements:
-
-* larger but restrained avatar
-* stronger name hierarchy
-* account reference placement
-* visually integrated Contact block
-* subtle divider
-* compact real account summary
-
-Do not create a giant marketing hero.
-
-No decorative automotive imagery.
-
-No VIP styling.
-
-No giant gradient banner.
-
-==================================================
-CONTACT INTEGRATION
-===================
-
-Contact should feel part of Account identity rather than a random independent card.
-
-On wide layouts consider integrating:
-
-Email
-Phone
-
-inside the identity/account panel.
-
-This can improve vertical composition without inventing data.
-
-If contact data is absent:
-
-the layout must collapse naturally.
-
-Do not leave empty labelled rows.
-
-==================================================
-REAL ACCOUNT SUMMARY
-====================
-
-Existing genuine summary such as:
-
-2 vehicles
-Service in progress
-
-may remain where derived from real data.
-
-Use it to support identity/account context.
-
-Do NOT make these giant KPI cards.
-
-A concise summary strip / sentence / compact row is preferable.
-
-==================================================
-RIGHT COLUMN
-============
-
-The right side should clearly represent:
-
-Account actions
-About
-Session
-
-Use grouped surfaces.
-
-Do not scatter four unrelated floating cards.
-
-Potential structure:
-
-ACCOUNT
-Vehicles
-Roadside assistance
-Reset password
-
-ABOUT
-Open source licences
-
-SESSION
-Sign out
-
-Maintain compact row density.
-
-==================================================
-VERTICAL BALANCE
-================
-
-On wide screens:
-
-do not let the right column finish at y=450 while the page extends to y=900 with nothing below.
-
-Use a layout strategy that creates intentional vertical balance.
-
-Possible approaches:
-
-* right column fills available height with groups distributed intentionally
-* Session anchored toward the lower part of the account surface
-* identity and action surfaces use matching visual height
-* entire account workspace is vertically centered inside the content viewport
-
-Choose the best result after golden review.
-
-==================================================
-SIGN OUT POSITIONING
-====================
-
-Sign out may be placed near the lower portion of the Account actions column on wide screens.
-
-This can improve the mental model:
-
-identity / account settings
-↓
-session termination
-
-But do not force it to the literal bottom edge if that creates awkward empty space inside the group.
-
-Use layout judgment.
-
-==================================================
-TONAL BACKGROUND
-================
-
-A subtle ColorScheme-based tonal account region is allowed if it improves composition.
-
-This is NOT fake content.
-
-It is visual structure.
-
-Use:
-
-surface
-surfaceContainer
-surfaceContainerLow
-surfaceContainerHighest
-outlineVariant
-
-or existing equivalent tokens.
-
-Do not hardcode colors.
-
-Avoid large gradients unless the current design language genuinely supports them.
-
-==================================================
-DESKTOP MAX WIDTH
-=================
-
-Audit the current max-content constraint.
-
-Do not automatically use:
-
-1040
-1080
-
-just because other Customer screens use them.
-
-Profile is a two-column Account workspace and may legitimately use more width.
-
-At 1440px viewport, consider approximately:
-
-1100–1240px usable content
-
-if visual QA confirms it improves composition.
-
-Do not stretch rows edge to edge.
-
-==================================================
-TABLET
-======
-
-At approximately:
-
-600–899px
-
-decide whether two columns remain appropriate.
-
-Do not force narrow side-by-side cards if:
-
-* long names
-* contact values
-* 1.6× text
-
-become cramped.
-
-A stacked but broad composition may be better at lower tablet widths.
-
-Use existing responsive breakpoints where practical.
-
-==================================================
-DESKTOP
-=======
-
-At:
-
-1024+
-1440+
-
-the page must clearly feel desktop-designed.
-
-Reject:
-
-a 430px settings column centered on screen.
-
-Reject:
-
-a 700px-wide surface floating in a 1440px viewport.
-
-Use real width deliberately.
-
-==================================================
-MOBILE
-======
-
-Keep mobile compact.
-
-The current 390px full-data layout ends around y765 on an 844px viewport and is already considered appropriately dense.
-
-Do NOT make it significantly taller just to match desktop changes.
-
-Mobile likely remains:
-
-identity
-contact
-account actions
-about
-sign out
-
-stacked naturally.
-
-==================================================
-SPARSE PROFILE DATA
-===================
-
-Sparse data is an important state.
-
-Possible missing fields:
-
-name
-member reference
-email
-phone
-vehicles
-
-The screen must remain intentional.
-
-Do NOT render:
-
-CONTACT
-
-with no rows.
-
-Do NOT create blank panels.
-
-Do NOT fabricate account identity.
-
-Use:
-
-Your account
-generic person icon
-
-where already established.
-
-==================================================
-SPARSE DATA + WIDE SCREEN
-=========================
-
-This is the hardest layout state.
-
-Do not attempt to fill a desktop viewport with nonexistent account information.
-
-Instead create intentional composition through:
-
-* centered/balanced account workspace
-* larger structural surface
-* proper action grouping
-* balanced margins
-
-Some whitespace is acceptable.
-
-But it should be SYMMETRIC / INTENTIONAL, not a giant dead region below content.
-
-==================================================
-ROW DENSITY
-===========
-
-Keep actions compact.
-
-Target approximately:
-
-48–56px minimum interactive height
-
-plus subtitle space only when genuinely useful.
-
-Do not make rows 90px simply to occupy space.
-
-==================================================
-SECTION SPACING
-===============
-
-Audit repetitive patterns such as:
-
-24px surface padding
-24px gap
-24px surface padding
-32px section gap
-
-Use a deliberate hierarchy such as:
-
-small internal
-medium between groups
-large only between major regions
-
-Do not let repeated spacing create artificial emptiness.
-
-==================================================
-VISUAL HIERARCHY
-================
-
-Priority should be:
-
-1. Account identity
-2. Genuine account actions
-3. Contact / account metadata
-4. About
-5. Sign out
-
-Sign out should be visible but not dominate the page.
-
-Licences should not visually compete with Vehicles or Roadside assistance.
-
-==================================================
-NO NEW PRODUCT CONTENT
-======================
-
-Again:
-
-do NOT add:
-
-notifications
-support tickets
-FAQ
-Terms
-Privacy
-version
-membership
-rewards
-biometrics
-profile edit
-account deletion
-data export
-marketing preferences
-
-to solve layout.
-
-==================================================
-NO PAGE-FILLING ILLUSTRATION
+INBOX PRODUCT RESPONSIBILITY
 ============================
 
-Do not solve whitespace by adding:
+The inbox answers:
 
-car illustration
-profile illustration
-abstract blobs
-stock photography
-large icon artwork
+"What changed and what needs my attention?"
 
-Profile is an account product surface.
+Each row should communicate quickly:
+
+* unread/read
+* title
+* concise message
+* time/date
+* contextual type/state if useful
+* destination/action where real
+
+Do not make every notification a huge promotional card.
+
+==================================================
+HEADER
+======
+
+Use a compact contextual AppTopBar.
+
+Title:
+
+Notifications
+
+Back
+
+Optional action:
+
+Mark all as read
+
+ONLY when:
+
+* at least one unread exists
+* backend operation genuinely works
+
+Do not show disabled/no-op header actions.
+
+Potential compact subtitle/count:
+
+3 unread
+
+if genuinely useful.
+
+Do not create giant KPI surfaces.
+
+==================================================
+READ / UNREAD VISUAL HIERARCHY
+==============================
+
+Unread state must be immediately visible.
+
+But do not paint whole cards bright colors.
+
+Possible treatment:
+
+* subtle tonal background
+* small unread dot
+* stronger title weight
+
+Use at least one non-color signal.
+
+Read notifications should remain fully legible.
+
+Do NOT fade them to inaccessible opacity.
+
+==================================================
+MARK ONE AS READ
+================
+
+Define canonical behavior.
+
+Preferred flow:
+
+user taps notification
+→ optimistically mark read locally if safe
+→ call backend
+→ update shared unread count
+→ navigate to destination
+
+OR:
+
+backend then local
+
+depending on repository architecture.
+
+Choose based on correctness.
+
+Requirements:
+
+* no duplicate backend calls
+* no race with refresh
+* no badge inconsistency
+* app restart must preserve read state via backend
+* failure must eventually reconcile
+
+==================================================
+MARK-READ FAILURE
+=================
+
+Do not block navigation to useful content merely because read persistence failed unless architecture requires it.
+
+If navigation succeeds but mark-read fails:
+
+keep/invalidate state so next refresh restores backend truth.
+
+Do not show raw API errors for every failed read marker unless customer action is genuinely required.
+
+Use product judgment.
+
+==================================================
+MARK ALL READ
+=============
+
+If backend supports mark-all:
+
+wire it.
+
+Requirements:
+
+* loading state
+* duplicate-tap protection
+* unread count becomes zero on success
+* Home badge updates
+* refresh keeps everything read
+* failure reconciles honestly
+
+Do not loop over each notification client-side if a real bulk endpoint exists.
+
+==================================================
+HOME BADGE CONSISTENCY
+======================
+
+This is CRITICAL.
+
+Home bell badge and Notification inbox must use the SAME canonical state.
+
+Scenario:
+
+Home shows 4 unread
+→ open Notifications
+→ read one
+→ back Home
+
+Expected:
+
+Home shows 3
+
+Then:
+
+Mark all read
+→ Home badge disappears
+
+After app restart/refresh:
+
+still zero if backend persisted it.
+
+Test this.
+
+==================================================
+INCOMING NOTIFICATION CONSISTENCY
+=================================
+
+If app receives a new push while active:
+
+inbox/unread count should eventually refresh through the existing messaging/provider architecture.
+
+Do not fake local insertion unless payload contains enough canonical data.
+
+Prefer canonical refresh if appropriate.
+
+==================================================
+ROW DESIGN
+==========
+
+Rows should be compact and information-rich.
+
+Conceptual:
+
+●  Estimate ready for review
+Your workshop sent an estimate for Toyota Camry.
+12 min ago                                  →
+
+Use real data.
+
+Do NOT invent vehicle names if notification payload does not include them.
+
+==================================================
+NO GIANT CARDS
+==============
+
+Avoid:
+
+20px exterior gap
+24px card padding
+large 48px decorative icon tile
+multiple metadata lines
+button footer
+
+for every notification.
+
+Use grouped surface:
+
+row
+divider
+row
+divider
+
+where appropriate.
+
+This is an inbox.
+
+==================================================
+GROUPING
+========
+
+Consider useful temporal grouping:
+
+Today
+Earlier
+
+or:
+
+Today
+Yesterday
+Earlier
+
+ONLY if timestamps reliably support it.
+
+Do not over-group five notifications into five tiny sections.
+
+Choose the simplest grouping that improves scanning.
+
+If list is short, a single grouped surface may be better.
+
+==================================================
+TIMESTAMPS
+==========
+
+Use a consistent timestamp formatter.
+
+Possible behavior:
+
+recent:
+12 min ago
+
+same day:
+3:42 PM
+
+older:
+15 Sep
+
+But only if an existing canonical time formatter supports this.
+
+Do not create inconsistent hand-written timestamp logic across widgets.
+
+Test timezone handling.
+
+==================================================
+LARGE NOTIFICATION COUNT
+========================
+
+Test at least:
+
+1 notification
+3 notifications
+20 notifications
+100 notifications if architecture permits fixture generation
+
+Do not render 100 giant cards.
+
+Ensure list lazily renders.
+
+Use ListView.builder / slivers appropriately.
+
+==================================================
+PAGINATION
+==========
+
+If backend supports pagination:
+
+use it properly.
+
+If backend returns the entire list:
+
+do NOT invent fake pagination.
+
+Report the scalability limitation.
+
+==================================================
+ONE NOTIFICATION
+================
+
+One notification should not make the page look unfinished.
+
+Use:
+
+AppTopBar
+compact unread summary if applicable
+proper grouped surface
+well-proportioned row
+
+Do not make the row 250px tall to fill space.
+
+Some whitespace after one row is legitimate.
+
+But structure must feel intentional.
+
+==================================================
+EMPTY STATE
+===========
+
+Zero notifications:
+
+must feel purposeful.
+
+Suggested concept:
+
+You're all caught up
+
+Updates about bookings, estimates and service progress will appear here.
+
+ONLY make that statement if those are actual emitted notification domains.
+
+Otherwise use generic truthful wording:
+
+Updates from the workshop will appear here.
+
+No giant illustration required.
+
+No fake notification previews.
 
 ==================================================
 LOADING
 =======
 
-Update skeleton geometry only if required by the new final layout.
+Use a notification-list skeleton.
 
-Wide skeleton should roughly reflect:
+Rows should roughly resemble final density.
 
-identity/account side
-actions side
-
-Do not leave the old skeleton shape if the page architecture changes substantially.
+Do not use a fullscreen spinner.
 
 ==================================================
-ERROR
-=====
+FIRST-LOAD ERROR
+================
 
-Do not redesign error logic.
+Use an honest recoverable state:
 
-Ensure first-load error still uses the wider composition appropriately.
+"We couldn't load your notifications."
 
-No giant error card floating at the top of desktop.
+Retry
+
+Do not claim network failure unless known.
 
 ==================================================
-PULL TO REFRESH
+REFRESH FAILURE
 ===============
 
-Preserve existing behavior.
+If current data exists:
 
-No provider changes unless directly required for layout.
+retain it.
+
+Use CustomerRefreshNotice.
+
+Do not blank the inbox.
 
 ==================================================
-TESTS
-=====
+DEEP LINKS
+==========
 
-Preserve all 34 existing Profile tests.
+Only navigate using reliable identifiers.
 
-Add/update only necessary responsive tests.
+Potential canonical destinations already available:
 
-Explicitly verify:
+Bookings
+Booking Details
+Service Status
+Approval
+Vehicles
+Roadside assistance
 
-1. 390px full-data layout remains compact.
-2. 320px remains overflow-free.
-3. 1.6× scale remains overflow-free.
-4. long name remains safe.
-5. sparse mobile remains intentional.
-6. 800px layout.
-7. 1024×900 layout.
-8. 1440×900 layout.
-9. wide columns use substantial available width.
-10. no major content group is stranded.
-11. sign out remains reachable.
-12. sparse wide layout does not contain broken empty surfaces.
-13. dark mode.
-14. loading skeleton wide layout.
+But DO NOT force every notification into one of them.
+
+If notification metadata is insufficient:
+
+mark read and leave row non-navigational
+or use the safest broad destination only if clearly meaningful.
+
+Do not parse IDs from display text.
+
+==================================================
+ACTION PRIORITY
+===============
+
+Notifications that require action should make that clear if actual type/status proves it.
+
+Examples conceptually:
+
+Estimate ready
+Review →
+
+Service started
+Track →
+
+Booking confirmed
+View booking →
+
+ONLY if backend event type + related id support this.
+
+Do not infer ACTION REQUIRED just from wording.
+
+==================================================
+NOTIFICATIONS VS APPROVALS
+==========================
+
+Approvals remains contextual.
+
+A notification about an estimate should deep-link to:
+
+approvalsLocation(estimateId)
+
+when exact estimateId exists.
+
+Do not add an Approvals tab.
+
+==================================================
+NOTIFICATIONS VS STATUS
+=======================
+
+Service Status remains contextual.
+
+A live-service notification may open Status only when it corresponds reliably to the customer's active job.
+
+Do not open Status for an unrelated/old service blindly.
+
+==================================================
+NOTIFICATIONS VS BOOKINGS
+=========================
+
+If a booking notification carries exact booking identification:
+
+prefer Booking Detail.
+
+If only generic booking state exists:
+
+Bookings list may be safer.
+
+Do not construct fake BookingEntity objects.
+
+==================================================
+NOTIFICATION INBOX ENTRY
+========================
+
+Home bell remains the primary entry.
+
+Verify:
+
+tap bell
+→ Notification page
+
+Back:
+→ Home
+
+Do not create an alternative duplicated shell.
+
+Notification page should be contextual, with AppTopBar back behavior and NO bottom nav.
+
+==================================================
+OS PUSH TAP
+===========
+
+If existing FCM metadata allows direct routing:
+
+preserve/improve it.
+
+If not:
+
+opening the Notification inbox is safer than guessing.
+
+Do not redesign the entire push architecture in this task.
+
+==================================================
+NO FAKE PRODUCT CONTENT
+=======================
+
+Do NOT create:
+
+"Offers"
+"Promotions"
+"Deals"
+"Recommended services"
+"VIP alerts"
+"Rewards"
+"Flash sale"
+
+unless real backend notification types exist.
+
+==================================================
+NO EMPTY-LOOKING UI
+===================
+
+Same product rule as every modernized Customer domain:
+
+NO DEAD WHITESPACE.
+
+This does NOT mean fake filler.
+
+For:
+
+1 item
+3 items
+many items
+
+use layout appropriately.
+
+Mobile rows should be dense.
+
+Tablet/desktop should use width intelligently.
+
+==================================================
+TABLET / DESKTOP
+================
+
+Do not render a 420px inbox in a 1440px viewport.
+
+However, an inbox generally should NOT stretch individual text rows edge-to-edge across 1200px.
+
+Possible strategies:
+
+* moderate max-width around 800–1000
+* list + compact unread/activity summary on wider screens ONLY if real useful data exists
+* wider grouped inbox with controlled text width
+
+Do not invent a side panel.
+
+Prefer an intentionally centered/wide inbox rather than an admin dashboard.
+
+==================================================
+DESKTOP DEAD-WHITESPACE RULE
+============================
+
+If there are many notifications:
+use the viewport naturally.
+
+If only one notification:
+some lower whitespace is expected.
+
+Do NOT stretch the row.
+
+Instead ensure:
+
+* page alignment is intentional
+* grouped surface has meaningful width
+* header/summary give structure
+* content is not a tiny 400px island in a 1440px page
+
+==================================================
+MOBILE
+======
+
+Verify:
+
+320
+360
+390
+412
+430
+
+Rows must support:
+
+long titles
+3–4 line messages
+long timestamps
+large text
+
+without overflow.
+
+==================================================
+TEXT TRUNCATION
+===============
+
+Audit notification message behavior.
+
+Do not truncate so aggressively that important workshop information becomes unusable.
+
+Potentially allow:
+
+2–3 lines in list
+
+if message is longer and no Detail page exists.
+
+If full message has important content and there is no destination:
+
+consider expand/collapse only if genuinely needed.
+
+Do not build complexity prematurely.
+
+==================================================
+ACCESSIBILITY
+=============
+
+Ensure:
+
+* unread state announced semantically
+* row semantic label includes title/time
+* actionable rows expose button semantics
+* unread dot is not the sole indicator
+* Mark all read is labelled
+* loading state announced
+* error state accessible
+* 1.6× scale
+* 48px touch targets
+* logical reading order
+
+==================================================
+DARK MODE
+=========
+
+Verify:
+
+unread tonal background
+dividers
+timestamps
+icons
+badges
+empty state
+error
+skeleton
+
+No hardcoded light surfaces.
+
+==================================================
+DEAD CODE
+=========
+
+Previous work already removed:
+
+customer_notifications_sheet.dart
+
+because it was unreferenced.
+
+Search for remaining duplicate Notification implementations/widgets.
+
+Delete only after repo-wide reference verification.
+
+Do not preserve dead inbox designs.
+
+==================================================
+TESTS — DATA / READ STATE
+=========================
+
+Add direct tests for:
+
+1. unread fetched from backend
+2. mark one read calls backend
+3. local state updates
+4. unread count decrements
+5. refresh preserves backend read state
+6. app restart conceptually reloads read state from backend
+7. mark all calls real bulk endpoint
+8. unread count becomes zero
+9. mark-read failure reconciliation
+10. mark-all failure behavior
+11. duplicate tap does not duplicate calls
+
+==================================================
+TESTS — ROUTING
+===============
+
+For every actual supported notification type test:
+
+notification
+→ expected canonical destination
+
+Also test:
+
+unsupported/metadata-insufficient notification
+→ does not navigate incorrectly
+
+No free-text parsing.
+
+==================================================
+TESTS — HOME BADGE
+==================
+
+Directly test:
+
+4 unread
+→ read one
+→ Home badge = 3
+
+mark all
+→ Home badge absent/zero
+
+refresh
+→ remains backend truth
+
+==================================================
+TESTS — LIST STATES
+===================
+
+Cover:
+
+empty
+one read
+one unread
+mixed
+3 notifications
+20 notifications
+long title
+long body
+old timestamp
+loading
+error
+retry
+refresh
+refresh failure with data retained
+
+==================================================
+RESPONSIVE TESTS
+================
+
+Cover:
+
+320
+360
+390
+430
+1.6× text
+tablet
+desktop
+dark
+
+No overflow.
+
+==================================================
+SOURCE GUARDS
+=============
+
+Guard notification production code against:
+
+fake Offers
+VIP
+Rewards
+Promotions
+
+unless backend audit proves they exist.
+
+Also ensure:
+
+no visible action uses empty callbacks.
 
 ==================================================
 GOLDENS
 =======
 
-Update only:
+Create/review a focused set:
 
-customer_profile_tablet
-customer_profile_desktop
+customer_notifications_mixed_mobile
+customer_notifications_one_mobile
+customer_notifications_empty_mobile
+customer_notifications_tablet
+customer_notifications_desktop
+customer_notifications_dark_mobile
 
-and any wide sparse-data golden you determine is necessary.
+Potentially:
 
-Do NOT blindly rebaseline:
+customer_notifications_long_content_mobile
 
-mobile
-dark mobile
-long-name mobile
+only if necessary.
 
-unless actual intentional changes affect them.
-
-==================================================
-MANDATORY GEOMETRY ASSERTIONS
-=============================
-
-Do not rely only on subjective golden review.
-
-Where practical add geometry assertions.
-
-Examples:
-
-At 1440px:
-
-* account workspace width uses a meaningful proportion of viewport.
-* right/left columns exist.
-* bottom of major account workspace reaches a meaningful portion of the viewport.
-* content is not all confined to the upper half without intentional centering.
-
-Do NOT write brittle pixel-perfect tests.
-
-Use ranges/proportions.
+Do not create excessive goldens.
 
 ==================================================
-VISUAL QA ACCEPTANCE
-====================
+VISUAL QA
+=========
 
-At 1024×900 and 1440×900:
+The independent Visual QA agent must inspect every golden.
 
-DEAD WHITESPACE must be reported as:
+Reject:
 
-NO
-
-or:
-
-ONLY INTENTIONAL BALANCED WHITESPACE
-
-The following is NOT acceptable:
-
-"40–46% blank below content is inherent."
-
-If significant unused area remains:
-
-the agent must demonstrate why its placement is compositionally intentional.
+huge cards
+weak unread distinction
+oversized decorative icons
+large blank top area
+tiny list floating in desktop
+unread state shown only through color
+timestamps competing with title
+too much padding
+long body clipping
+fake content
 
 ==================================================
-SOURCE / CAPABILITY SAFETY
-==========================
+SCOPE BOUNDARY
+==============
 
-Do not alter the verified capability decisions.
+DO NOT redesign:
 
-Production Profile code must remain free of:
+Home
+Bookings
+Booking Detail
+Status
+Approvals
+Vehicles
+Profile
+Breakdown
+Staff
+Owner
+CRM
 
-VIP
-Loyalty
-PTS
-Refer & Earn
-Verified
-24/7
-fake notification preferences
-no-op actions
-
-==================================================
-MULTI-AGENT FILE OWNERSHIP
-==========================
-
-After audits:
-
-Lead / implementation owner:
-customer_profile_tab.dart
-
-Supporting implementation agent:
-Profile-specific extracted widgets only, if required
-
-Test agent:
-customer_profile_test.dart
-
-Visual QA:
-read-only
-
-Do not allow two agents to edit customer_profile_tab.dart concurrently.
+Home may receive ONLY minimal state wiring required for the unread badge to stay correct.
 
 ==================================================
 VERIFICATION
@@ -828,58 +1290,97 @@ flutter test customer_app
 
 Review changed goldens manually.
 
-No unrelated golden updates.
+Search notification code for:
+
+onTap: () {}
+onPressed: () {}
+Offers
+VIP
+Rewards
+Promotions
+
+Any remaining match must be justified.
 
 ==================================================
 STOP CONDITION
 ==============
 
-Profile is considered FROZEN only when:
+Notifications is complete only when:
 
-* product capability remains truthful
-* mobile remains dense and usable
-* tablet is intentionally composed
-* desktop is intentionally composed
-* large blank-bottom region is eliminated or transformed into balanced intentional whitespace
-* no fake filler was added
-* all tests pass
+* inbox is truthful
+* unread state persists through backend
+* mark one read works
+* mark all works
+* Home badge stays consistent
+* notification actions route safely
+* unsupported notifications do not guess
+* empty/one/many states look intentional
+* mobile/tablet/desktop are visually complete
+* no fake content
+* tests pass
 
 Then STOP.
 
-Do not start Notifications.
+Do NOT move to Breakdown automatically.
 
 ==================================================
 FINAL REPORT
 ============
 
-Report:
+Start with:
 
-OLD WIDE-LAYOUT PROBLEM
+PRODUCT STRUCTURE DECISION
 
-NEW WIDE-SCREEN COMPOSITION
+Then report:
 
-MOBILE IMPACT
+MULTI-AGENT EXECUTION
 
-TABLET IMPACT
+BACKEND NOTIFICATION CONTRACT
 
-DESKTOP IMPACT
+READ-STATE BUG AUDIT
 
-SPARSE PROFILE HANDLING
+* old behavior
+* canonical behavior
+* persistence
+* Home badge
 
-WHITESPACE ANALYSIS
+NOTIFICATION TYPES
 
-* before
-* after
-* why remaining whitespace is intentional
+* actual types
+* routable types
+* non-routable types
 
-REAL CONTENT USED
+FINAL INBOX HIERARCHY
 
-* no new product features
+ONE / FEW / MANY BEHAVIOR
 
-VISUAL QA RESULTS
+EMPTY / LOADING / ERROR / REFRESH
+
+MARK READ
+
+MARK ALL READ
+
+HOME BADGE INTEGRATION
+
+PUSH / FCM BEHAVIOR
+
+DEEP LINKS
+
+INFORMATION DENSITY
+
+* mobile
+* tablet
+* desktop
+* whitespace findings
+
+DEAD CODE
 
 TESTS / GOLDENS
 
+VISUAL QA
+
 ANALYZE / TEST RESULTS
+
+REMAINING BACKEND / PRODUCT LIMITATIONS
 
 STOP.

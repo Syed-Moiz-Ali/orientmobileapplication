@@ -8,6 +8,63 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 typedef DeviceTokenRegistrar =
     Future<bool> Function(String token, String platform);
 
+/// One push event, reduced to the fields the backend actually sends.
+///
+/// Deliberately free of any Firebase type so the apps (and their tests) can
+/// react to a push without depending on Firebase or on navigation.
+///
+/// The backend's FCM data map carries exactly one key — `type` — and no entity
+/// identifier, so nothing here can identify a specific booking, estimate,
+/// invoice or notification: [type] is the only routing input there is.
+@immutable
+class PushMessage {
+  /// Firebase's own message id, used only to ignore a duplicate delivery.
+  /// Empty when the platform did not supply one.
+  final String messageId;
+
+  /// The raw notification category (`approvalNeeded`, `bookingReceived`, …).
+  /// Empty when the payload carried none.
+  final String type;
+
+  const PushMessage({this.messageId = '', this.type = ''});
+
+  factory PushMessage.fromRemote(RemoteMessage message) => PushMessage(
+    messageId: message.messageId ?? '',
+    type: (message.data['type'] ?? '').toString(),
+  );
+
+  /// The payload of a locally displayed notification, which is the category.
+  factory PushMessage.fromLocalPayload(String? payload) =>
+      PushMessage(type: (payload ?? '').trim());
+
+  @override
+  bool operator ==(Object other) =>
+      other is PushMessage &&
+      other.messageId == messageId &&
+      other.type == type;
+
+  @override
+  int get hashCode => Object.hash(messageId, type);
+
+  @override
+  String toString() => 'PushMessage($messageId, $type)';
+}
+
+/// The push events an application may react to.
+///
+/// Implemented by [PushNotificationService] and replaced by a fake in tests, so
+/// no widget or test needs Firebase.
+abstract interface class PushNotificationSource {
+  /// Pushes that arrived while the app was in the foreground.
+  Stream<PushMessage> get foregroundMessages;
+
+  /// Pushes the user tapped, in the background or while the app was running.
+  Stream<PushMessage> get openedMessages;
+
+  /// The push that launched the app, if it was launched by one. Reads it once.
+  Future<PushMessage?> takeInitialMessage();
+}
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (Firebase.apps.isEmpty) await Firebase.initializeApp();
@@ -16,7 +73,11 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 /// One notification implementation shared by all four mobile applications.
 /// Native Firebase config remains app-specific; permission, foreground display,
 /// installation refresh and backend registration stay consistent everywhere.
-class PushNotificationService {
+///
+/// Delivering events to the UI is opt-in and navigation-agnostic: an app
+/// subscribes to [foregroundMessages] / [openedMessages] only if it wants them,
+/// so the other applications are unaffected.
+class PushNotificationService implements PushNotificationSource {
   PushNotificationService._();
 
   static final PushNotificationService instance = PushNotificationService._();
@@ -31,7 +92,37 @@ class PushNotificationService {
       FlutterLocalNotificationsPlugin();
   DeviceTokenRegistrar? _registrar;
   StreamSubscription<String>? _tokenRefreshSubscription;
+  StreamSubscription<RemoteMessage>? _foregroundSubscription;
+  StreamSubscription<RemoteMessage>? _openedSubscription;
+  final StreamController<PushMessage> _foreground =
+      StreamController<PushMessage>.broadcast();
+  final StreamController<PushMessage> _opened =
+      StreamController<PushMessage>.broadcast();
+  Future<PushMessage?>? _initialMessage;
   bool _initialized = false;
+
+  @override
+  Stream<PushMessage> get foregroundMessages => _foreground.stream;
+
+  @override
+  Stream<PushMessage> get openedMessages => _opened.stream;
+
+  @override
+  Future<PushMessage?> takeInitialMessage() {
+    // Read once per process: a launched-by-push message must never be replayed
+    // after the user has already been taken to its destination.
+    return _initialMessage ??= _readInitialMessage();
+  }
+
+  Future<PushMessage?> _readInitialMessage() async {
+    try {
+      final message = await FirebaseMessaging.instance.getInitialMessage();
+      return message == null ? null : PushMessage.fromRemote(message);
+    } catch (error, _) {
+      debugPrint('Initial push message unavailable: $error');
+      return null;
+    }
+  }
 
   bool get isSupported =>
       !kIsWeb &&
@@ -53,6 +144,11 @@ class PushNotificationService {
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(),
       ),
+      // Tapping the notification we displayed ourselves is an open intent too.
+      onDidReceiveNotificationResponse: (response) {
+        final message = PushMessage.fromLocalPayload(response.payload);
+        if (message.type.isNotEmpty) _opened.add(message);
+      },
     );
     await _localNotifications
         .resolvePlatformSpecificImplementation<
@@ -67,7 +163,12 @@ class PushNotificationService {
       badge: true,
       sound: true,
     );
-    FirebaseMessaging.onMessage.listen(_showForegroundNotification);
+    _foregroundSubscription = FirebaseMessaging.onMessage.listen(
+      _showForegroundNotification,
+    );
+    _openedSubscription = FirebaseMessaging.onMessageOpenedApp.listen(
+      (message) => _opened.add(PushMessage.fromRemote(message)),
+    );
     _tokenRefreshSubscription = FirebaseMessaging.instance.onTokenRefresh
         .listen(_registerToken);
     _initialized = true;
@@ -100,6 +201,10 @@ class PushNotificationService {
   }
 
   Future<void> _showForegroundNotification(RemoteMessage message) async {
+    // Publish before any platform-specific display so every platform can react
+    // to the event; the local copy below stays Android-only.
+    _foreground.add(PushMessage.fromRemote(message));
+
     // iOS already presents foreground notifications through
     // setForegroundNotificationPresentationOptions; showing a local copy would
     // display the same notification twice.
@@ -121,11 +226,17 @@ class PushNotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      payload: message.data['route']?.toString(),
+      // The backend sends the category, never a route, so the tapped payload
+      // is the one value that can be resolved safely.
+      payload: message.data['type']?.toString(),
     );
   }
 
   Future<void> dispose() async {
     await _tokenRefreshSubscription?.cancel();
+    await _foregroundSubscription?.cancel();
+    await _openedSubscription?.cancel();
+    await _foreground.close();
+    await _opened.close();
   }
 }

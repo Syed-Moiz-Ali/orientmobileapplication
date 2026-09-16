@@ -561,7 +561,7 @@ const _unreadNotification = CustomerNotificationEntity(
   title: 'Your vehicle is ready',
   body: 'Please collect your Land Cruiser from Bay 3.',
   time: '2h ago',
-  type: NotifType.carReady,
+  type: NotifType.completionApproved,
 );
 
 const _readNotification = CustomerNotificationEntity(
@@ -569,7 +569,7 @@ const _readNotification = CustomerNotificationEntity(
   title: 'Booking confirmed',
   body: 'Your brake inspection is confirmed.',
   time: 'Yesterday',
-  type: NotifType.bookingConfirmed,
+  type: NotifType.bookingAssigned,
   isRead: true,
 );
 

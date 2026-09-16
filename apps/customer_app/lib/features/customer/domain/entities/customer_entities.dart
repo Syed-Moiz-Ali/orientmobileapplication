@@ -15,13 +15,33 @@ enum BookingStatus {
 
 enum StageStatus { done, inProgress, pending }
 
+/// The notification categories the workshop actually emits for customers.
+///
+/// Every value below is a `type` the backend really writes. Anything else —
+/// including stale cached values from older app versions — becomes [general]
+/// instead of being forced into a category it may not be, so a mismatch can
+/// never render a wrong icon, tone or destination.
 enum NotifType {
-  carReady,
-  bookingConfirmed,
-  invoiceReady,
+  general,
+  bookingReceived,
+  bookingAssigned,
   approvalNeeded,
-  workInProgress,
-  reminder,
+  completionApproved,
+  invoiceReady,
+  paymentReceived,
+  estimateApproved,
+  estimateRejected,
+  breakdownAssigned;
+
+  /// Maps a backend `type` string onto a category.
+  static NotifType fromWire(String? raw) {
+    final value = (raw ?? '').trim().toLowerCase();
+    if (value.isEmpty) return NotifType.general;
+    for (final type in NotifType.values) {
+      if (type.name.toLowerCase() == value) return type;
+    }
+    return NotifType.general;
+  }
 }
 
 class CustomerEntity {
@@ -347,9 +367,6 @@ class CustomerNotificationEntity {
         body: j['body'] as String? ?? '',
         time: j['time'] as String? ?? '',
         isRead: j['isRead'] as bool? ?? false,
-        type: NotifType.values.firstWhere(
-          (e) => e.name == j['type'],
-          orElse: () => NotifType.carReady,
-        ),
+        type: NotifType.fromWire(j['type'] as String?),
       );
 }

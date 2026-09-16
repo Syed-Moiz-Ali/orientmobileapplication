@@ -102,10 +102,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
               title: n.title,
               body: n.body,
               time: n.time,
-              type: NotifType.values.firstWhere(
-                (t) => t.name == n.type,
-                orElse: () => NotifType.carReady,
-              ),
+              type: NotifType.fromWire(n.type),
               isRead: n.isRead,
             ),
           )
@@ -116,6 +113,36 @@ class CustomerRepositoryImpl implements CustomerRepository {
       if (e is UnauthorizedException) rethrow;
       return _loadCachedNotifications();
     }
+  }
+
+  @override
+  Future<bool> markNotificationRead(String id) async {
+    final saved = await remoteDataSource.markNotificationRead(id);
+    if (!saved) return false;
+    _rewriteCachedReadState((n) => n.id == id ? n.copyWith(isRead: true) : n);
+    return true;
+  }
+
+  @override
+  Future<bool> markAllNotificationsRead() async {
+    final saved = await remoteDataSource.markAllNotificationsRead();
+    if (!saved) return false;
+    _rewriteCachedReadState((n) => n.copyWith(isRead: true));
+    return true;
+  }
+
+  /// Keeps the offline cache in step with a read marker the workshop accepted.
+  ///
+  /// A cache that cannot be written must never turn a persisted read marker
+  /// into a failure, so this is deliberately best-effort.
+  void _rewriteCachedReadState(
+    CustomerNotificationEntity Function(CustomerNotificationEntity) update,
+  ) {
+    try {
+      final cached = _loadCachedNotifications();
+      if (cached.isEmpty) return;
+      _cacheNotifications(cached.map(update).toList());
+    } catch (_) {}
   }
 
   @override

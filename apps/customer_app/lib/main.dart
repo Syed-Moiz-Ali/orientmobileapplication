@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:customer_app/core/notifications/customer_push_scope.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/core/local/sync_providers.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
@@ -70,13 +71,18 @@ class CustomerApp extends ConsumerWidget {
         ref.invalidate(customerApprovalsProvider);
       },
       child: AuthenticatedPushNotificationScope(
-        child: MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          routerConfig: router,
-          title: brand.appName,
-          theme: AppTheme.light(brand),
-          darkTheme: AppTheme.dark(brand),
-          themeMode: ThemeMode.light,
+        // Push events: a foreground push refreshes canonical notification
+        // state (the bell badge follows it), a tapped push opens the safe
+        // destination for its category.
+        child: CustomerPushScope(
+          child: MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            routerConfig: router,
+            title: brand.appName,
+            theme: AppTheme.light(brand),
+            darkTheme: AppTheme.dark(brand),
+            themeMode: ThemeMode.light,
+          ),
         ),
       ),
     );
