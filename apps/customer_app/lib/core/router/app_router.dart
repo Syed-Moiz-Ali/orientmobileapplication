@@ -1,6 +1,7 @@
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/add_vehicle_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_book_service_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_approvals_page.dart';
 import 'package:customer_app/features/customer/presentation/customer_booking_detail_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_booking_success_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_breakdown_detail_view.dart';
@@ -9,7 +10,8 @@ import 'package:customer_app/features/customer/presentation/customer_dashboard_v
 import 'package:customer_app/features/customer/presentation/customer_feedback_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_invoice_detail_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_notifications_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_service_status_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_service_status_page.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -32,11 +34,128 @@ class AppRoutes {
   static const String customerBookingSuccess = '/booking-success';
   static const String customerInvoiceDetail = '/invoice-detail';
   static const String customerFeedback = '/feedback';
-  static const String customerServiceStatus = '/customer_service_status_view';
   static const String customerNotifications = '/notifications';
+
+  /// Canonical contextual Service Status route.
+  ///
+  /// Status is not a permanent workspace destination: it is the detailed view
+  /// of one active workshop job, opened from Home, Bookings, notifications or a
+  /// deep link.
+  static const String customerServiceStatus = '/customer_service_status';
+
+  /// Pre-migration Status path, kept resolving for existing bookmarks.
+  static const String customerServiceStatusLegacy =
+      '/customer_service_status_view';
+
+  /// Canonical contextual Approvals route.
+  ///
+  /// Approvals is not a permanent workspace destination: the backend only
+  /// exposes *pending* estimate decisions (no approval history), and Home,
+  /// Bookings and Booking Details already surface each decision with an exact
+  /// deep link. The page lists what needs a decision — and the settled invoices
+  /// that have no other entry point — while `?estimateId=` opens that one
+  /// estimate directly.
+  static const String customerApprovals = '/customer_approvals';
+
+  /// Canonical workspace location for a primary destination.
+  static String tabLocation(CustomerDestination destination) =>
+      '$customerDashboard?tab=${destination.name}';
+
+  /// Canonical Customer Bookings location.
+  static String get bookingsLocation =>
+      tabLocation(CustomerDestination.bookings);
+
+  /// Canonical Book Service location, optionally preselecting one vehicle.
+  ///
+  /// The vehicle id travels as an explicit query parameter, so a
+  /// vehicle-specific entry point (the Vehicles tab) hands the chosen car to
+  /// the flow without overloading unrelated route extras.
+  static String customerBookServiceLocation({String vehicleId = ''}) {
+    final id = vehicleId.trim();
+    if (id.isEmpty) return customerBookService;
+    return '$customerBookService?vehicleId=${Uri.encodeQueryComponent(id)}';
+  }
+
+  /// Canonical Customer Approvals location.
+  ///
+  /// With an estimate id this opens that estimate's decision detail; without
+  /// one it opens the approvals overview. Both remain valid deep links.
+  static String approvalsLocation({String estimateId = ''}) {
+    final id = estimateId.trim();
+    if (id.isEmpty) return customerApprovals;
+    return '$customerApprovals?estimateId=${Uri.encodeQueryComponent(id)}';
+  }
 }
 
 final _routerRefreshNotifier = ValueNotifier<int>(0);
+
+/// Canonical contextual Service Status route.
+///
+/// Renders the already-redesigned tracking experience as a pushed page — no
+/// duplicate implementation, no bottom-navigation destination.
+final GoRoute customerServiceStatusRoute = GoRoute(
+  path: AppRoutes.customerServiceStatus,
+  name: AppRoutes.customerServiceStatus,
+  builder: (context, state) => const CustomerServiceStatusPage(),
+);
+
+/// Compatibility route for the pre-migration `/customer_service_status_view`
+/// path.
+///
+/// That path must keep resolving so existing bookmarks and deep links do not
+/// 404, but it now points at the canonical contextual Service Status route
+/// instead of the removed duplicate implementation.
+final GoRoute customerServiceStatusCompatRoute = GoRoute(
+  path: AppRoutes.customerServiceStatusLegacy,
+  name: AppRoutes.customerServiceStatusLegacy,
+  redirect: (context, state) => AppRoutes.customerServiceStatus,
+);
+
+/// Canonical contextual Approvals route.
+///
+/// Approvals is a pushed page, not a workspace destination. `?estimateId=` opens
+/// that estimate's decision directly (from Home, a Bookings row or Booking
+/// Details); without it the page shows what still needs a decision.
+final GoRoute customerApprovalsRoute = GoRoute(
+  path: AppRoutes.customerApprovals,
+  name: AppRoutes.customerApprovals,
+  builder: (context, state) => CustomerApprovalsPage(
+    estimateId: state.uri.queryParameters['estimateId'] ?? '',
+  ),
+);
+
+/// Canonical Booking Details route.
+///
+/// The detailed single-booking surface receives the booking it must represent
+/// through route `extra` (an entity, or a map parsed into one). Anything
+/// missing or unusable recovers to the named Bookings destination instead of
+/// rendering an empty screen or crashing.
+final GoRoute customerBookingDetailRoute = GoRoute(
+  path: AppRoutes.customerBookingDetail,
+  name: AppRoutes.customerBookingDetail,
+  builder: (context, state) {
+    final extra = state.extra;
+
+    if (extra is CustomerBookingEntity) {
+      return CustomerBookingDetailView(booking: extra);
+    }
+
+    if (extra is Map<String, dynamic>) {
+      return CustomerBookingDetailView(
+        booking: CustomerBookingEntity.fromJson(extra),
+      );
+    }
+
+    return _RouteErrorPage(
+      title: 'Booking detail unavailable',
+      message:
+          "We couldn't find this booking. Open My Bookings to pick "
+          'an appointment again.',
+      actionLabel: 'Return to bookings',
+      actionLocation: AppRoutes.bookingsLocation,
+    );
+  },
+);
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   ref.listen<AuthState>(authNotifierProvider, (_, __) {
@@ -98,30 +217,47 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.customerDashboard,
         name: AppRoutes.customerDashboard,
+        // Migration: `?tab=1` selected Status and `?tab=3` selected Approvals
+        // before both became contextual. Each is redirected to its canonical
+        // route — carrying any `estimateId` along — rather than silently opening
+        // whichever destination now sits at that index.
+        redirect: (context, state) {
+          final tab = state.uri.queryParameters['tab'];
+          if (CustomerDestination.isStatusTabValue(tab)) {
+            return AppRoutes.customerServiceStatus;
+          }
+          if (CustomerDestination.isApprovalsTabValue(tab)) {
+            return AppRoutes.approvalsLocation(
+              estimateId: state.uri.queryParameters['estimateId'] ?? '',
+            );
+          }
+          return null;
+        },
         builder: (context, state) {
-          final requestedTab =
-              int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0;
-          return CustomerDashboardView(
-            initialTab: requestedTab.clamp(0, 5),
-            pendingEstimateId: state.uri.queryParameters['estimateId'] ?? '',
-          );
+          final destination =
+              CustomerDestination.fromTabValue(
+                state.uri.queryParameters['tab'],
+              ) ??
+              CustomerDestination.home;
+          return CustomerDashboardView(initialDestination: destination);
         },
       ),
+      customerServiceStatusRoute,
+      customerApprovalsRoute,
       GoRoute(
         path: AppRoutes.customerBookService,
         name: AppRoutes.customerBookService,
-        builder: (context, state) => const CustomerBookServiceView(),
+        builder: (context, state) => CustomerBookServiceView(
+          vehicleId: state.uri.queryParameters['vehicleId'] ?? '',
+        ),
       ),
       GoRoute(
         path: AppRoutes.customerBreakdownHelp,
         name: AppRoutes.customerBreakdownHelp,
         builder: (context, state) => const CustomerBreakdownHelpView(),
       ),
-      GoRoute(
-        path: AppRoutes.customerServiceStatus,
-        name: AppRoutes.customerServiceStatus,
-        builder: (context, state) => const CustomerServiceStatusView(),
-      ),
+      customerServiceStatusCompatRoute,
+      customerBookingDetailRoute,
       GoRoute(
         path: AppRoutes.customerNotifications,
         name: AppRoutes.customerNotifications,
@@ -138,28 +274,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
           return AddVehicleView(vehicleId: id);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.customerBookingDetail,
-        name: AppRoutes.customerBookingDetail,
-        builder: (context, state) {
-          final extra = state.extra;
-
-          if (extra is CustomerBookingEntity) {
-            return CustomerBookingDetailView(booking: extra);
-          }
-
-          if (extra is Map<String, dynamic>) {
-            return CustomerBookingDetailView(
-              booking: CustomerBookingEntity.fromJson(extra),
-            );
-          }
-
-          return const _RouteErrorPage(
-            title: 'Booking detail unavailable',
-            message: 'Select a booking again from My Bookings.',
-          );
         },
       ),
       GoRoute(
@@ -197,10 +311,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
           final args = extra;
           return CustomerBookingSuccessView(
-            bookingRef: args['ref'] as String?,
+            bookingRef: args['ref'] as String? ?? '',
+            bookingId: args['id'] as String? ?? '',
             service: args['service'] as String,
             date: args['date'] as String,
             time: args['time'] as String,
+            vehicle: args['vehicle'] as String? ?? '',
+            plate: args['plate'] as String? ?? '',
+            queuedOffline: args['queued'] as bool? ?? false,
           );
         },
       ),
@@ -243,7 +361,17 @@ class _RouteErrorPage extends StatelessWidget {
   final String title;
   final String message;
 
-  const _RouteErrorPage({required this.title, required this.message});
+  /// Where the recovery action sends the customer. Defaults to the Home
+  /// destination so pre-existing callers keep their behaviour.
+  final String actionLabel;
+  final String actionLocation;
+
+  const _RouteErrorPage({
+    required this.title,
+    required this.message,
+    this.actionLabel = 'Return to Home',
+    this.actionLocation = AppRoutes.customerDashboard,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -277,8 +405,8 @@ class _RouteErrorPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () => context.go(AppRoutes.customerDashboard),
-                child: const Text('Return to Home'),
+                onPressed: () => context.go(actionLocation),
+                child: Text(actionLabel),
               ),
             ],
           ),

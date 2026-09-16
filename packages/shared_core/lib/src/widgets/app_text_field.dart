@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 class AppTextField extends StatelessWidget {
@@ -12,6 +13,8 @@ class AppTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final int? maxLength;
   final TextInputAction? textInputAction;
+  final TextCapitalization textCapitalization;
+  final List<TextInputFormatter>? inputFormatters;
   final String? label;
   final String? helperText;
   final String? errorText;
@@ -32,6 +35,8 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.maxLength,
     this.textInputAction,
+    this.textCapitalization = TextCapitalization.none,
+    this.inputFormatters,
     this.label,
     this.helperText,
     this.errorText,
@@ -57,6 +62,8 @@ class AppTextField extends StatelessWidget {
       keyboardType: keyboardType,
       maxLength: maxLength,
       textInputAction: textInputAction,
+      textCapitalization: textCapitalization,
+      inputFormatters: inputFormatters,
       onSubmitted: onSubmitted,
       style: textTheme.bodyLarge?.copyWith(
         color: colorScheme.onSurface,

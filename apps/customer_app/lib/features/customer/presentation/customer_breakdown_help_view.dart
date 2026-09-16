@@ -18,9 +18,7 @@ class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
 class _CustomerBreakdownHelpViewState
     extends ConsumerState<CustomerBreakdownHelpView> {
   final _notesCtrl = TextEditingController();
-  final _locationCtrl = TextEditingController(
-    text: 'Current GPS Location (Auto-detected)',
-  );
+  final _locationCtrl = TextEditingController();
   final _searchCtrl = TextEditingController();
 
   CustomerVehicleEntity? _selectedVehicle;
@@ -291,9 +289,7 @@ class _CustomerBreakdownHelpViewState
                         )
                       : const Icon(Icons.warning_amber_rounded, size: 22),
                   label: Text(
-                    _isSaving
-                        ? 'Dispatching Unit...'
-                        : 'Request Emergency Dispatch',
+                    _isSaving ? 'Sending request...' : 'Request assistance',
                     style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: colorScheme.onError,
@@ -310,14 +306,14 @@ class _CustomerBreakdownHelpViewState
         child: Column(
           children: [
             AppTopBar(
-              title: '24/7 Roadside SOS',
+              title: 'Roadside assistance',
               trailing: IconButton(
                 onPressed: _callHelpline,
                 icon: Icon(
                   Icons.phone_in_talk_rounded,
                   color: colorScheme.error,
                 ),
-                tooltip: 'Call Emergency Helpline',
+                tooltip: 'Call the workshop',
               ),
             ),
             Divider(height: 1, color: colorScheme.outlineVariant),
@@ -357,7 +353,7 @@ class _CustomerBreakdownHelpViewState
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Emergency Assistance',
+                                  'Roadside assistance',
                                   style: textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w900,
                                     color: colorScheme.error,
@@ -365,7 +361,7 @@ class _CustomerBreakdownHelpViewState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Avg response: 15–20 mins • Free towing up to 40km',
+                                  'We send your request straight to the workshop.',
                                   style: textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                     fontWeight: FontWeight.w600,

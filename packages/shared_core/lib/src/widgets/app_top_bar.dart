@@ -7,11 +7,17 @@ class AppTopBar extends StatelessWidget {
   final Widget? trailing;
   final bool showBack;
 
+  /// Overrides the default back behaviour (pop the current route). Used by
+  /// contextual pages that can be opened directly by a deep link and therefore
+  /// have nothing to pop.
+  final VoidCallback? onBack;
+
   const AppTopBar({
     super.key,
     required this.title,
     this.trailing,
     this.showBack = true,
+    this.onBack,
   });
 
   @override
@@ -28,7 +34,7 @@ class AppTopBar extends StatelessWidget {
         children: [
           if (showBack)
             IconButton(
-              onPressed: () => Navigator.maybePop(context),
+              onPressed: onBack ?? () => Navigator.maybePop(context),
               tooltip: 'Back',
               style: IconButton.styleFrom(
                 backgroundColor: colorScheme.surfaceContainerLow,

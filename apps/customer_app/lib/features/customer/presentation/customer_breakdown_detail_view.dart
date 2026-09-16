@@ -10,11 +10,20 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
   (Color, Color) _statusColors(String status) {
     switch (status) {
       case 'resolved':
-        return (const Color(0xFF10B981).withValues(alpha: 0.12), const Color(0xFF10B981));
+        return (
+          const Color(0xFF10B981).withValues(alpha: 0.12),
+          const Color(0xFF10B981),
+        );
       case 'inProgress':
-        return (const Color(0xFF3B82F6).withValues(alpha: 0.12), const Color(0xFF3B82F6));
+        return (
+          const Color(0xFF3B82F6).withValues(alpha: 0.12),
+          const Color(0xFF3B82F6),
+        );
       default:
-        return (const Color(0xFFD97706).withValues(alpha: 0.12), const Color(0xFFD97706));
+        return (
+          const Color(0xFFD97706).withValues(alpha: 0.12),
+          const Color(0xFFD97706),
+        );
     }
   }
 
@@ -50,9 +59,13 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(AppDimensions.s16),
                       decoration: BoxDecoration(
-                        color: colorScheme.errorContainer.withValues(alpha: 0.6),
+                        color: colorScheme.errorContainer.withValues(
+                          alpha: 0.6,
+                        ),
                         borderRadius: BorderRadius.circular(AppDimensions.r16),
-                        border: Border.all(color: colorScheme.error.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: colorScheme.error.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -121,7 +134,10 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                 vertical: AppDimensions.s12,
                               ),
-                              child: Divider(height: 1, color: colorScheme.outlineVariant),
+                              child: Divider(
+                                height: 1,
+                                color: colorScheme.outlineVariant,
+                              ),
                             ),
                             _DetailRow(
                               icon: Icons.location_on_outlined,
@@ -133,7 +149,10 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                               vertical: AppDimensions.s12,
                             ),
-                            child: Divider(height: 1, color: colorScheme.outlineVariant),
+                            child: Divider(
+                              height: 1,
+                              color: colorScheme.outlineVariant,
+                            ),
                           ),
                           _DetailRow(
                             icon: Icons.access_time_rounded,
@@ -150,7 +169,9 @@ class CustomerBreakdownDetailView extends ConsumerWidget {
                       padding: const EdgeInsets.all(AppDimensions.s14),
                       decoration: BoxDecoration(
                         color: resolved
-                            ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+                            ? colorScheme.primaryContainer.withValues(
+                                alpha: 0.5,
+                              )
                             : colorScheme.errorContainer.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(AppDimensions.r16),
                         border: Border.all(

@@ -4,7 +4,9 @@ import 'package:customer_app/features/customer/domain/repositories/customer_repo
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/shared_auth.dart';
 
-final customerRemoteDataSourceProvider = Provider<CustomerRemoteDataSource>((ref) {
+final customerRemoteDataSourceProvider = Provider<CustomerRemoteDataSource>((
+  ref,
+) {
   return CustomerRemoteDataSource(ref.read(apiClientProvider));
 });
 

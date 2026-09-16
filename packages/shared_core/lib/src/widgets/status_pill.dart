@@ -57,12 +57,18 @@ class StatusPill extends StatelessWidget {
             Icon(icon, size: 12, color: effectiveFg),
             const SizedBox(width: AppDimensions.s4),
           ],
-          Text(
-            label,
-            style: textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: effectiveFg,
-              letterSpacing: 0.2,
+          // The label shrinks instead of overflowing when the pill is narrow,
+          // for example at large text scales or with a long status name.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: effectiveFg,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
         ],

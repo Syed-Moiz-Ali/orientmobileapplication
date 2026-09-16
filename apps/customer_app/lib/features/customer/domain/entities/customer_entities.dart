@@ -119,6 +119,10 @@ class CustomerBookingEntity {
   final String time;
   final BookingStatus status;
   final String jobCardId;
+
+  /// Public, prefixed booking reference (BK-â€¦) â€” the customer-facing
+  /// identifier, preferred over internal job-card references.
+  final String bookingRef;
   final String jobCardRef;
   final String jobCardStatus;
   final String estimateId;
@@ -133,6 +137,7 @@ class CustomerBookingEntity {
     required this.time,
     required this.status,
     this.jobCardId = '',
+    this.bookingRef = '',
     this.jobCardRef = '',
     this.jobCardStatus = '',
     this.estimateId = '',
@@ -168,7 +173,7 @@ class CustomerBookingEntity {
     };
   }
 
-  // FIX (audit P0): UK-flavoured mock bookings removed — data comes from the API.
+  // FIX (audit P0): UK-flavoured mock bookings removed â€” data comes from the API.
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -179,6 +184,7 @@ class CustomerBookingEntity {
     'time': time,
     'status': status.name,
     'jobCardId': jobCardId,
+    'bookingRef': bookingRef,
     'jobCardRef': jobCardRef,
     'jobCardStatus': jobCardStatus,
     'estimateId': estimateId,
@@ -198,6 +204,7 @@ class CustomerBookingEntity {
           approvalRequired: j['approvalRequired'] as bool? ?? false,
         ),
         jobCardId: (j['jobCardId'] ?? '').toString(),
+        bookingRef: (j['bookingRef'] ?? '').toString(),
         jobCardRef: (j['jobCardRef'] ?? '').toString(),
         jobCardStatus: (j['jobCardStatus'] ?? '').toString(),
         estimateId: (j['estimateId'] ?? '').toString(),
@@ -323,8 +330,8 @@ class CustomerNotificationEntity {
     );
   }
 
-  // FIX (audit P0): UK-flavoured mock notifications (incl. a £ invoice)
-  // removed — notifications come from the API.
+  // FIX (audit P0): UK-flavoured mock notifications (incl. a Â£ invoice)
+  // removed â€” notifications come from the API.
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,
@@ -346,34 +353,3 @@ class CustomerNotificationEntity {
         ),
       );
 }
-
-class ServiceTypeEntity {
-  final String id;
-  final String name;
-  final String price;
-  final String duration;
-
-  const ServiceTypeEntity({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.duration,
-  });
-
-  // FIX (audit P0): the hardcoded GBP ("From £65") service catalogue is
-  // removed — services and prices must come from the /services/types API so
-  // the workshop controls pricing and currency.
-  static const List<ServiceTypeEntity> list = [];
-}
-
-const List<String> kTimeSlots = [
-  '08:00',
-  '09:00',
-  '10:00',
-  '11:00',
-  '12:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-];

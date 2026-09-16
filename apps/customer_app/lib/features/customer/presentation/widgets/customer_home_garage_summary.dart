@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
 
 /// Compact real-data garage summary.
 ///
@@ -117,7 +118,7 @@ class _VehicleRow extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (vehicle.healthScore >= 0) ...[
+                    if (vehicle.healthScore > 0) ...[
                       const SizedBox(width: AppDimensions.s8),
                       _HealthPill(score: vehicle.healthScore),
                     ],
@@ -130,7 +131,7 @@ class _VehicleRow extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     if (vehicle.plateNumber.trim().isNotEmpty)
-                      _PlateChip(plate: vehicle.plateNumber.trim()),
+                      CustomerPlateChip(plate: vehicle.plateNumber.trim()),
                     if (facts.isNotEmpty)
                       Text(
                         facts.join(' \u00b7 '),
@@ -167,41 +168,6 @@ class _VehicleRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Registration plate rendered as a readable mono chip instead of a hardcoded
-/// yellow plate, so it stays legible in both light and dark themes.
-class _PlateChip extends StatelessWidget {
-  final String plate;
-
-  const _PlateChip({required this.plate});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.s8,
-        vertical: 3,
-      ),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-        border: Border.all(color: colors.outline),
-      ),
-      child: Text(
-        plate.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: colors.onSurface,
-          fontFamily: AppFontFamilies.mono,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.6,
-        ),
       ),
     );
   }

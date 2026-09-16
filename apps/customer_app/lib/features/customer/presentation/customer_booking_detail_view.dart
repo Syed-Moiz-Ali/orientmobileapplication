@@ -1,356 +1,152 @@
-import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
-import 'package:customer_app/core/router/app_router.dart';
-import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
-class CustomerBookingDetailView extends ConsumerWidget {
-  final CustomerBookingEntity booking;
-  final CustomerServiceEntity? activeService;
-  final bool hasApprovalWaiting;
+import 'package:customer_app/core/router/app_router.dart';
+import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_booking_relations.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_booking_detail_service.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_booking_detail_summary.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_booking_detail_vehicle.dart';
 
-  const CustomerBookingDetailView({
-    super.key,
-    required this.booking,
-    this.activeService,
-    this.hasApprovalWaiting = false,
-  });
+/// The complete detailed representation of ONE booking: what it is, where it
+/// stands, and what the customer can legitimately do with it.
+///
+/// It is a summary of the booking, not a second tracker â€” the stage-by-stage
+/// service journey lives in the contextual Service Status page it links to.
+/// Everything shown comes from real booking/active-service/approval state.
+class CustomerBookingDetailView extends ConsumerStatefulWidget {
+  final CustomerBookingEntity booking;
+
+  const CustomerBookingDetailView({super.key, required this.booking});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CustomerBookingDetailView> createState() =>
+      _CustomerBookingDetailViewState();
+}
+
+class _CustomerBookingDetailViewState
+    extends ConsumerState<CustomerBookingDetailView> {
+  bool _cancelling = false;
+
+  /// The booking the screen is showing, resolved from live provider state so
+  /// the screen reflects changes (for example a cancellation) without losing
+  /// the booking passed in through the route.
+  CustomerBookingEntity get _currentBooking {
+    final bookings =
+        ref.read(customerBookingsProvider).valueOrNull ??
+        const <CustomerBookingEntity>[];
+    return _resolve(bookings) ?? widget.booking;
+  }
+
+  CustomerBookingEntity? _resolve(List<CustomerBookingEntity> bookings) {
+    final requested = widget.booking;
+    final id = requested.id.trim();
+    if (id.isNotEmpty) {
+      for (final booking in bookings) {
+        if (booking.id.trim() == id) return booking;
+      }
+      return null;
+    }
+    final reference = CustomerBookingsPresentation.referenceOf(requested);
+    if (reference.isEmpty) return null;
+    for (final booking in bookings) {
+      if (CustomerBookingsPresentation.referenceOf(booking) == reference) {
+        return booking;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final service = activeService;
-    final activeJobMatchesBooking =
-        service != null &&
-        service.hasActiveJob &&
-        (service.plateNumber.toLowerCase() ==
-                booking.plateNumber.toLowerCase() ||
-            service.vehicleName.toLowerCase() ==
-                booking.vehicleName.toLowerCase());
+    final colors = theme.colorScheme;
 
-    final approvalWaiting =
-        hasApprovalWaiting || booking.status == BookingStatus.approvalRequired;
+    final bookings =
+        ref.watch(customerBookingsProvider).valueOrNull ??
+        const <CustomerBookingEntity>[];
+    final booking = _resolve(bookings) ?? widget.booking;
+    final dash = ref.watch(customerDashboardProvider);
+    final approvals =
+        ref.watch(customerApprovalsProvider).valueOrNull ??
+        const <CustomerApprovalSummaryResponse>[];
 
+    // Related records are only used when they can be matched reliably.
+    final vehicle = CustomerBookingRelations.vehicleFor(booking, dash.vehicles);
+    final approval = CustomerBookingRelations.approvalFor(booking, approvals);
+    final liveService = _liveServiceFor(booking, dash.activeService);
+    final trackable = liveService != null;
+    final approvalPending = CustomerBookingRelations.needsApproval(
+      booking,
+      approval,
+    );
+    final estimateId = booking.estimateId.trim();
+
+    // Existing client-side rule: only a booking that has not reached the
+    // workshop can be cancelled from the app.
     final cancellable =
         booking.status == BookingStatus.pending ||
         booking.status == BookingStatus.confirmed;
 
-    final statusColor = _statusColor(booking.status, colorScheme);
-    final statusBg = _statusBg(booking.status, colorScheme);
+    final primary = <Widget>[
+      CustomerBookingDetailSummary(booking: booking),
+      if (trackable || approvalPending) ...[
+        const SizedBox(height: AppDimensions.s16),
+        CustomerBookingDetailService(
+          booking: booking,
+          liveService: liveService,
+          approvalPending: approvalPending,
+          approvalMessage: _approvalMessage(booking, approval, dash),
+          onReviewEstimate: () =>
+              context.go(AppRoutes.approvalsLocation(estimateId: estimateId)),
+          onTrackService: () => context.push(AppRoutes.customerServiceStatus),
+        ),
+      ],
+    ];
+
+    final secondary = <Widget>[
+      if (CustomerBookingDetailVehicle.hasDetails(vehicle)) ...[
+        CustomerBookingDetailVehicle(booking: booking, vehicle: vehicle!),
+        const SizedBox(height: AppDimensions.s16),
+      ],
+      if (cancellable)
+        _CancelBookingAction(
+          cancelling: _cancelling,
+          onPressed: _confirmCancel,
+        ),
+    ];
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             const AppTopBar(title: 'Booking Details'),
-            Divider(height: 1, color: colorScheme.outlineVariant),
+            Divider(height: 1, color: colors.outlineVariant),
             Expanded(
               child: AppResponsivePage(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-
-                    // ── 1. STATUS HEADER CARD ──────────────────────────────
-                    AppCard(
-                      borderRadius: 24,
-                      elevation: 0,
-                      padding: const EdgeInsets.all(24),
-                      color: colorScheme.surface,
-                      borderColor: colorScheme.outlineVariant,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              StatusPill(
-                                label: booking.statusLabel,
-                                bg: statusBg,
-                                fg: statusColor,
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(
-                                    color: colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                child: Text(
-                                  '#${booking.id.length > 8 ? booking.id.substring(booking.id.length - 8) : booking.id}',
-                                  style: textTheme.labelSmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 10,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            booking.service.isNotEmpty
-                                ? booking.service
-                                : 'Scheduled Service',
-                            style: textTheme.headlineSmall?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFFFACC15,
-                                  ), // Yellow plate
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: Colors.black.withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                child: Text(
-                                  booking.plateNumber.toUpperCase(),
-                                  style: textTheme.labelSmall?.copyWith(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 10,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  booking.vehicleName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // ── 2. APPOINTMENT DETAILS CARD ────────────────────────
-                    _SectionHeader(
-                      title: 'Appointment Specifications',
-                      subtitle: 'Date, time & service details',
-                    ),
-                    const SizedBox(height: 16),
-                    AppCard(
-                      borderRadius: 24,
-                      elevation: 0,
-                      padding: EdgeInsets.zero,
-                      color: colorScheme.surface,
-                      borderColor: colorScheme.outlineVariant,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                      child: Column(
-                        children: [
-                          _InfoRow(
-                            icon: Icons.calendar_today_rounded,
-                            label: 'Date',
-                            value: booking.date.isNotEmpty
-                                ? booking.date
-                                : 'TBC',
-                          ),
-                          Divider(height: 1, color: colorScheme.outlineVariant),
-                          _InfoRow(
-                            icon: Icons.access_time_rounded,
-                            label: 'Time Slot',
-                            value: booking.time.isNotEmpty
-                                ? booking.time
-                                : 'TBC',
-                          ),
-                          Divider(height: 1, color: colorScheme.outlineVariant),
-                          _InfoRow(
-                            icon: Icons.directions_car_rounded,
-                            label: 'Vehicle',
-                            value: booking.vehicleName.isNotEmpty
-                                ? booking.vehicleName
-                                : '—',
-                          ),
-                          Divider(height: 1, color: colorScheme.outlineVariant),
-                          _InfoRow(
-                            icon: Icons.pin_rounded,
-                            label: 'Registration',
-                            value: booking.plateNumber.toUpperCase(),
-                          ),
-                          Divider(height: 1, color: colorScheme.outlineVariant),
-                          _InfoRow(
-                            icon: Icons.build_rounded,
-                            label: 'Service Package',
-                            value: booking.service.isNotEmpty
-                                ? booking.service
-                                : '—',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // ── 3. PROGRESS TRACKER ────────────────────────────────
-                    _SectionHeader(
-                      title: 'Service Progress',
-                      subtitle: 'Live stage tracker updated by workshop',
-                    ),
-                    const SizedBox(height: 16),
-                    AppCard(
-                      borderRadius: 24,
-                      elevation: 0,
-                      padding: const EdgeInsets.all(24),
-                      color: colorScheme.surface,
-                      borderColor: colorScheme.outlineVariant,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                      child: _CustomerJobProgress(
-                        booking: booking,
-                        activeService: activeJobMatchesBooking ? service : null,
-                        hasApprovalWaiting: approvalWaiting,
-                      ),
-                    ),
-                    if (approvalWaiting) ...[
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            final estimateId = booking.estimateId.trim();
-                            final target = estimateId.isEmpty
-                                ? '${AppRoutes.customerDashboard}?tab=3'
-                                : '${AppRoutes.customerDashboard}?tab=3&estimateId=${Uri.encodeComponent(estimateId)}';
-                            context.go(target);
-                          },
-                          icon: const Icon(Icons.fact_check_rounded),
-                          label: const Text(
-                            'Review Estimate',
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-
-                    // ── 4. WORKSHOP INFO ───────────────────────────────────
-                    _SectionHeader(
-                      title: 'Workshop Location',
-                      subtitle: 'Orient Automotive • Main Bay',
-                    ),
-                    const SizedBox(height: 16),
-                    AppCard(
-                      borderRadius: 24,
-                      elevation: 0,
-                      padding: EdgeInsets.zero,
-                      color: colorScheme.surface,
-                      borderColor: colorScheme.outlineVariant,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                      child: Column(
-                        children: [
-                          _InfoRow(
-                            icon: Icons.location_on_rounded,
-                            label: 'Address',
-                            value: 'Orient Automotive, Workshop Bay 1',
-                          ),
-                          Divider(height: 1, color: colorScheme.outlineVariant),
-                          _InfoRow(
-                            icon: Icons.access_time_filled_rounded,
-                            label: 'Opening Hours',
-                            value: 'Mon–Fri 8:00am – 6:00pm',
-                          ),
-                          Divider(height: 1, color: colorScheme.outlineVariant),
-                          _InfoRow(
-                            icon: Icons.phone_rounded,
-                            label: 'Workshop Line',
-                            value: '+971 4 555 0123',
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // ── CANCEL BUTTON ──────────────────────────────────────
-                    if (cancellable) ...[
-                      const SizedBox(height: 36),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: OutlinedButton.icon(
-                          onPressed: () =>
-                              _confirmCancel(context, ref, colorScheme),
-                          icon: Icon(
-                            Icons.cancel_outlined,
-                            size: 20,
-                            color: colorScheme.error,
-                          ),
-                          label: Text(
-                            'Cancel Booking',
-                            style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.error,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: colorScheme.error,
-                            side: BorderSide(
-                              color: colorScheme.error.withValues(alpha: 0.5),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 48),
-                  ],
+                // Records share the wider canvas as two coherent columns; a
+                // single narrow phone column would waste desktop space.
+                maxContentWidth: 1040,
+                child: AppSplitView(
+                  primaryFlex: 3,
+                  secondaryFlex: 2,
+                  spacing: AppDimensions.s24,
+                  primary: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: primary,
+                  ),
+                  secondary: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: secondary,
+                  ),
                 ),
               ),
             ),
@@ -360,410 +156,163 @@ class CustomerBookingDetailView extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmCancel(
-    BuildContext context,
-    WidgetRef ref,
-    ColorScheme colorScheme,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(
-          'Cancel this booking?',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        content: Text(
-          'This appointment will be cancelled and cannot be undone.',
-          style: TextStyle(color: colorScheme.onSurfaceVariant),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              'Keep Booking',
-              style: TextStyle(color: colorScheme.onSurface),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: colorScheme.error),
-            child: const Text(
-              'Cancel Booking',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
-          ),
-        ],
-      ),
+  String _approvalMessage(
+    CustomerBookingEntity booking,
+    CustomerApprovalSummaryResponse? approval,
+    CustomerDashboardState dash,
+  ) {
+    final amount = CustomerBookingRelations.estimateAmount(booking, approval);
+    if (amount == null) return 'Approval needed before work continues';
+    return 'Estimate ${dash.formatAmount(amount)} awaiting approval';
+  }
+
+  /// The active workshop job, but only when it canonically belongs to this
+  /// booking — otherwise the screen would describe another vehicle's service.
+  CustomerServiceEntity? _liveServiceFor(
+    CustomerBookingEntity booking,
+    CustomerServiceEntity? activeService,
+  ) {
+    if (!CustomerServiceTracking.isLiveService(activeService)) return null;
+    final service = activeService!;
+    final owner = CustomerServiceTracking.bookingForJobCard([
+      booking,
+    ], service.jobCardId);
+    return owner == null ? null : service;
+  }
+
+  Future<void> _confirmCancel() async {
+    final booking = _currentBooking;
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: 'Cancel booking?',
+      message: _cancelMessage(booking),
+      confirmLabel: 'Cancel booking',
+      cancelLabel: 'Keep booking',
+      icon: Icons.cancel_outlined,
+      destructive: true,
     );
-    if (confirmed == true) {
-      final cancelled = await ref
+    if (!confirmed || !mounted) return;
+    await _cancelBooking(booking);
+  }
+
+  String _cancelMessage(CustomerBookingEntity booking) {
+    final service = booking.service.trim();
+    final schedule = CustomerBookingsPresentation.scheduleLabel(
+      booking.date,
+      booking.time,
+    );
+    final subject = service.isEmpty ? 'this appointment' : service;
+    if (schedule.isEmpty) {
+      return 'This will cancel your appointment for $subject. '
+          'This cannot be undone.';
+    }
+    return 'This will cancel your appointment for $subject on $schedule. '
+        'This cannot be undone.';
+  }
+
+  Future<void> _cancelBooking(CustomerBookingEntity booking) async {
+    if (_cancelling || !mounted) return;
+
+    final bookingId = int.tryParse(booking.id.trim()) ?? 0;
+    if (bookingId <= 0) {
+      // A booking without a usable id cannot be cancelled; report it the same
+      // way as a failed request rather than sending a bogus id to the API.
+      _showMessage(
+        "We couldn't cancel this booking. Please try again.",
+        onRetry: () => _cancelBooking(booking),
+      );
+      return;
+    }
+
+    setState(() => _cancelling = true);
+
+    var cancelled = false;
+    try {
+      cancelled = await ref
           .read(customerRemoteDataSourceProvider)
-          .cancelBooking(int.tryParse(booking.id) ?? 0);
-      if (!cancelled) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not cancel this booking.')),
-        );
-        return;
-      }
+          .cancelBooking(bookingId);
+    } catch (_) {
+      // Never let a transport failure leave the screen stuck in a loading
+      // state; the customer gets a friendly, retryable message instead.
+      cancelled = false;
+    }
+
+    if (!mounted) return;
+    setState(() => _cancelling = false);
+
+    if (cancelled) {
       ref.invalidate(customerBookingsProvider);
-      if (context.mounted) Navigator.pop(context);
+      _showMessage('Booking cancelled.');
+    } else {
+      _showMessage(
+        "We couldn't cancel this booking. Please try again.",
+        onRetry: () => _cancelBooking(booking),
+      );
     }
   }
 
-  Color _statusColor(BookingStatus s, ColorScheme colorScheme) {
-    switch (s) {
-      case BookingStatus.confirmed:
-        return colorScheme.primary;
-      case BookingStatus.completed:
-      case BookingStatus.delivered:
-        return const Color(0xFF10B981);
-      case BookingStatus.cancelled:
-        return colorScheme.error;
-      case BookingStatus.approvalRequired:
-        return const Color(0xFFF59E0B);
-      case BookingStatus.vehicleReceived:
-      case BookingStatus.approved:
-      case BookingStatus.workAssigned:
-      case BookingStatus.inProgress:
-        return const Color(0xFF2563EB);
-      case BookingStatus.pending:
-        return colorScheme.secondary;
-    }
-  }
-
-  Color _statusBg(BookingStatus s, ColorScheme colorScheme) {
-    switch (s) {
-      case BookingStatus.confirmed:
-        return colorScheme.primary.withValues(alpha: 0.15);
-      case BookingStatus.completed:
-      case BookingStatus.delivered:
-        return const Color(0xFF10B981).withValues(alpha: 0.15);
-      case BookingStatus.cancelled:
-        return colorScheme.error.withValues(alpha: 0.15);
-      case BookingStatus.approvalRequired:
-        return const Color(0xFFF59E0B).withValues(alpha: 0.16);
-      case BookingStatus.vehicleReceived:
-      case BookingStatus.approved:
-      case BookingStatus.workAssigned:
-      case BookingStatus.inProgress:
-        return const Color(0xFF2563EB).withValues(alpha: 0.14);
-      case BookingStatus.pending:
-        return colorScheme.secondary.withValues(alpha: 0.15);
-    }
-  }
-}
-
-// ─── SHARED HELPERS ──────────────────────────────────────────────────────────
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
-
-  const _SectionHeader({required this.title, required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: textTheme.titleLarge?.copyWith(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.4,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
+  void _showMessage(String message, {VoidCallback? onRetry}) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: onRetry == null
+            ? null
+            : SnackBarAction(label: 'Retry', onPressed: onRetry),
+      ),
     );
   }
 }
 
-class _CustomerJobProgress extends StatelessWidget {
-  final CustomerBookingEntity booking;
-  final CustomerServiceEntity? activeService;
-  final bool hasApprovalWaiting;
+/// Tertiary, restrained destructive action with an explicit in-flight state so
+/// the request can never be submitted twice.
+class _CancelBookingAction extends StatelessWidget {
+  final bool cancelling;
+  final VoidCallback onPressed;
 
-  const _CustomerJobProgress({
-    required this.booking,
-    required this.activeService,
-    required this.hasApprovalWaiting,
+  const _CancelBookingAction({
+    required this.cancelling,
+    required this.onPressed,
   });
-
-  int get _currentIndex {
-    if (booking.status == BookingStatus.cancelled) return 0;
-    if (booking.status == BookingStatus.completed ||
-        booking.status == BookingStatus.delivered) {
-      return 6;
-    }
-    if (hasApprovalWaiting) return 4;
-    if (booking.status == BookingStatus.vehicleReceived) return 2;
-    if (booking.status == BookingStatus.approved ||
-        booking.status == BookingStatus.workAssigned ||
-        booking.status == BookingStatus.inProgress) {
-      return 5;
-    }
-    final stage = activeService?.currentStage.toLowerCase() ?? '';
-    if (stage.contains('received') || stage.contains('check')) return 2;
-    if (stage.contains('inspection') || stage.contains('estimate')) return 3;
-    if (stage.contains('approval')) return 4;
-    if (stage.contains('work') ||
-        stage.contains('repair') ||
-        stage.contains('progress')) {
-      return 5;
-    }
-    if (stage.contains('qc') ||
-        stage.contains('quality') ||
-        stage.contains('ready')) {
-      return 6;
-    }
-    if (booking.status == BookingStatus.confirmed) return 1;
-    return 0;
-  }
-
-  String get _message {
-    if (booking.status == BookingStatus.pending) {
-      return 'Waiting for workshop confirmation.';
-    }
-    if (hasApprovalWaiting) {
-      return 'Inspection is complete. Your estimate is waiting for approval.';
-    }
-    if (booking.status == BookingStatus.completed) {
-      return 'Service completed. Vehicle delivery is recorded.';
-    }
-    if (booking.status == BookingStatus.delivered) {
-      return 'Vehicle delivered. Thanks for servicing with us.';
-    }
-    if (booking.status == BookingStatus.vehicleReceived) {
-      return 'Vehicle received. Inspection is in progress.';
-    }
-    if (booking.status == BookingStatus.approved) {
-      return 'Estimate approved. Workshop is preparing the job.';
-    }
-    if (booking.status == BookingStatus.workAssigned ||
-        booking.status == BookingStatus.inProgress) {
-      return 'Technician work is in progress.';
-    }
-    final stage = activeService?.currentStage;
-    if (stage != null && stage.isNotEmpty) return stage;
-    return 'Workshop will update this Job Card as each step is completed.';
-  }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final labels = const [
-      'Booked',
-      'Confirmed',
-      'Received',
-      'Inspection',
-      'Approval',
-      'Work/QC',
-      'Ready',
-    ];
-    final current = _currentIndex;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: 620,
-            child: Row(
-              children: [
-                for (var i = 0; i < labels.length; i++) ...[
-                  _StepCircle(
-                    label: labels[i],
-                    isDone:
-                        i < current ||
-                        booking.status == BookingStatus.completed ||
-                        booking.status == BookingStatus.delivered,
-                    isCurrent:
-                        i == current &&
-                        booking.status != BookingStatus.completed &&
-                        booking.status != BookingStatus.delivered,
-                    colorScheme: colorScheme,
+        TextButton.icon(
+          onPressed: cancelling ? null : onPressed,
+          icon: cancelling
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(colors.error),
                   ),
-                  if (i < labels.length - 1)
-                    _StepLine(
-                      isDone:
-                          i < current ||
-                          booking.status == BookingStatus.completed ||
-                          booking.status == BookingStatus.delivered,
-                      colorScheme: colorScheme,
-                    ),
-                ],
-              ],
-            ),
+                )
+              : const Icon(Icons.cancel_outlined, size: 18),
+          label: Text(cancelling ? 'Cancelling\u2026' : 'Cancel booking'),
+          style: TextButton.styleFrom(
+            foregroundColor: colors.error,
+            disabledForegroundColor: colors.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 14),
-        Text(
-          _message,
-          style: textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: colorScheme.onSurface, size: 20),
-          ),
-          const SizedBox(width: 16),
+        if (cancelling) ...[
+          const SizedBox(width: AppDimensions.s8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
+            child: Text(
+              'Cancelling your booking\u2026',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StepCircle extends StatelessWidget {
-  final String label;
-  final bool isDone;
-  final bool isCurrent;
-  final ColorScheme colorScheme;
-
-  const _StepCircle({
-    required this.label,
-    this.isDone = false,
-    this.isCurrent = false,
-    required this.colorScheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const successGreen = Color(0xFF10B981);
-    final activeColor = isDone ? successGreen : colorScheme.primary;
-    final inactiveColor = colorScheme.outline;
-
-    return Column(
-      children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: isDone || isCurrent
-                ? activeColor.withValues(alpha: 0.15)
-                : colorScheme.surfaceContainerHighest,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isDone || isCurrent ? activeColor : inactiveColor,
-              width: isCurrent ? 2 : 1,
-            ),
-          ),
-          child: Center(
-            child: isDone
-                ? const Icon(Icons.check_rounded, size: 16, color: successGreen)
-                : Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: isCurrent ? activeColor : Colors.transparent,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: isCurrent || isDone ? FontWeight.w900 : FontWeight.w600,
-            color: isCurrent || isDone
-                ? colorScheme.onSurface
-                : colorScheme.onSurfaceVariant,
-          ),
-        ),
       ],
-    );
-  }
-}
-
-class _StepLine extends StatelessWidget {
-  final bool isDone;
-  final ColorScheme colorScheme;
-
-  const _StepLine({required this.isDone, required this.colorScheme});
-
-  @override
-  Widget build(BuildContext context) {
-    const successGreen = Color(0xFF10B981);
-    return Expanded(
-      child: Container(
-        height: 2,
-        margin: const EdgeInsets.only(bottom: 18),
-        color: isDone ? successGreen : colorScheme.outlineVariant,
-      ),
     );
   }
 }

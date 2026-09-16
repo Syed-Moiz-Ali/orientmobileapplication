@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
 /// The single most important thing on Customer Home: what is happening to the
 /// customer's vehicle right now.
@@ -55,41 +57,6 @@ class CustomerHomeServiceSummary extends StatelessWidget {
   }
 }
 
-/// Calm tonal surface shared by every summary state — no shadow, restrained
-/// radius, and only enough tint to signal importance.
-class _SummaryPanel extends StatelessWidget {
-  final Color accent;
-  final bool emphasised;
-  final Widget child;
-
-  const _SummaryPanel({
-    required this.accent,
-    required this.child,
-    this.emphasised = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.s18),
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(
-          accent.withValues(alpha: emphasised ? 0.08 : 0.04),
-          colors.surface,
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        border: Border.all(
-          color: accent.withValues(alpha: emphasised ? 0.30 : 0.18),
-        ),
-      ),
-      child: child,
-    );
-  }
-}
-
 class _LiveServicePanel extends StatelessWidget {
   final CustomerServiceEntity svc;
   final VoidCallback onTrackService;
@@ -102,13 +69,12 @@ class _LiveServicePanel extends StatelessWidget {
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
     final progress = svc.progressPercent.clamp(0, 100);
-    final vehicleLine = [
-      if (svc.vehicleName.trim().isNotEmpty) svc.vehicleName.trim(),
-      if (svc.plateNumber.trim().isNotEmpty)
-        svc.plateNumber.trim().toUpperCase(),
-    ].join(' \u00b7 ');
+    final vehicleLine = CustomerServiceTracking.vehicleLine(
+      svc.vehicleName,
+      svc.plateNumber,
+    );
 
-    return _SummaryPanel(
+    return CustomerSurfacePanel(
       accent: colors.primary,
       emphasised: true,
       child: Column(
@@ -246,17 +212,16 @@ class _ActiveBookingPanel extends StatelessWidget {
     final textTheme = theme.textTheme;
     final needsApproval = booking.status == BookingStatus.approvalRequired;
     final accent = needsApproval ? colors.error : colors.primary;
-    final vehicleLine = [
-      if (booking.vehicleName.trim().isNotEmpty) booking.vehicleName.trim(),
-      if (booking.plateNumber.trim().isNotEmpty)
-        booking.plateNumber.trim().toUpperCase(),
-    ].join(' \u00b7 ');
+    final vehicleLine = CustomerServiceTracking.vehicleLine(
+      booking.vehicleName,
+      booking.plateNumber,
+    );
     final schedule = [
       if (booking.date.trim().isNotEmpty) booking.date.trim(),
       if (booking.time.trim().isNotEmpty) booking.time.trim(),
     ].join(' \u00b7 ');
 
-    return _SummaryPanel(
+    return CustomerSurfacePanel(
       accent: accent,
       emphasised: needsApproval,
       child: Column(
@@ -272,12 +237,17 @@ class _ActiveBookingPanel extends StatelessWidget {
               ),
               const Spacer(),
               if (booking.jobCardRef.trim().isNotEmpty)
-                Text(
-                  booking.jobCardRef.trim(),
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontFamily: AppFontFamilies.mono,
-                    fontWeight: FontWeight.w600,
+                Flexible(
+                  child: Text(
+                    booking.jobCardRef.trim(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontFamily: AppFontFamilies.mono,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],
@@ -347,7 +317,7 @@ class _WelcomePanel extends StatelessWidget {
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return _SummaryPanel(
+    return CustomerSurfacePanel(
       accent: colors.primary,
       emphasised: true,
       child: Column(
@@ -414,7 +384,7 @@ class _IdlePanel extends StatelessWidget {
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return _SummaryPanel(
+    return CustomerSurfacePanel(
       accent: colors.onSurfaceVariant,
       child: Row(
         children: [

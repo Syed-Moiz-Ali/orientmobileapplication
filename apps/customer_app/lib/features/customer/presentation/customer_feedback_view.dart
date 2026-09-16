@@ -262,7 +262,9 @@ class _OverallStep extends StatelessWidget {
                   index < value
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
-                  color: index < value ? const Color(0xFFFFB800) : colorScheme.outlineVariant,
+                  color: index < value
+                      ? const Color(0xFFFFB800)
+                      : colorScheme.outlineVariant,
                 ),
               ),
           ],
@@ -375,7 +377,9 @@ class _CategoryRating extends StatelessWidget {
                   index < value
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
-                  color: index < value ? const Color(0xFFFFB800) : colorScheme.outlineVariant,
+                  color: index < value
+                      ? const Color(0xFFFFB800)
+                      : colorScheme.outlineVariant,
                 ),
               ),
           ],
@@ -423,7 +427,9 @@ class _CommentStep extends StatelessWidget {
             style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
             decoration: InputDecoration(
               hintText: 'Tell us more (optional)',
-              hintStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+              hintStyle: textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(AppDimensions.s16),
             ),

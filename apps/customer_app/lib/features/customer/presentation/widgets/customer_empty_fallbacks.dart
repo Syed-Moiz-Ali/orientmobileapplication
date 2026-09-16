@@ -143,22 +143,3 @@ class EmptyInvoicesCard extends StatelessWidget {
     );
   }
 }
-
-class IdleServiceCard extends StatelessWidget {
-  final VoidCallback onBook;
-
-  const IdleServiceCard({super.key, required this.onBook});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomerEmptyStateCard(
-      icon: Icons.build_circle_rounded,
-      iconColor: AppColors.cyan,
-      title: 'Vehicle Idle - No Active Service',
-      description:
-          'Your vehicle is not currently in the workshop. Live updates will appear when it is checked in.',
-      buttonLabel: 'Book Maintenance Service',
-      onButtonTap: onBook,
-    );
-  }
-}

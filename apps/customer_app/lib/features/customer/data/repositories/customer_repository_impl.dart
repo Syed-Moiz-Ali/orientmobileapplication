@@ -75,6 +75,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
                 approvalRequired: b.approvalRequired,
               ),
               jobCardId: b.jobCardId,
+              bookingRef: b.bookingRef,
               jobCardRef: b.jobCardRef,
               jobCardStatus: b.jobCardStatus,
               estimateId: b.estimateId,

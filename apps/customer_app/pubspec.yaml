@@ -22,6 +22,11 @@ dependencies:
     path: ../../packages/shared_models
   url_launcher: ^6.3.2
   firebase_core: ^4.14.0
+  # The workspace shell and the booking flow both need the device's real
+  # connectivity state.
+  connectivity_plus: 6.1.5
+  # Vehicle sync reads the create response to reconcile the local identity.
+  dio: ^5.9.0
 
 dev_dependencies:
   flutter_test:

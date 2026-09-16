@@ -4,13 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/core/router/app_router.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_garage_summary.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_header.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_quick_actions.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_service_summary.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_skeleton.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 
 /// Customer Home — answers four questions in the first viewport:
 /// what is happening with my vehicle, do I need to act, how do I book, and
@@ -18,26 +21,10 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_hom
 ///
 /// Everything on this screen is backed by real state. There is deliberately no
 /// promotional content, no stock photography and only one Book service entry
-/// point.
+/// point. Home stays a summary; the contextual Service Status page carries the
+/// tracking detail.
 class CustomerHomeTab extends ConsumerWidget {
   const CustomerHomeTab({super.key});
-
-  /// Index of the Status tab in the shared Customer navigation.
-  static const int _statusTab = 1;
-  static const int _bookingsTab = 2;
-  static const int _approvalsTab = 3;
-  static const int _vehiclesTab = 4;
-
-  /// Booking states that still represent work the customer must be aware of.
-  static const Set<BookingStatus> _liveStatuses = {
-    BookingStatus.pending,
-    BookingStatus.confirmed,
-    BookingStatus.approvalRequired,
-    BookingStatus.vehicleReceived,
-    BookingStatus.approved,
-    BookingStatus.workAssigned,
-    BookingStatus.inProgress,
-  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -78,10 +65,11 @@ class CustomerHomeTab extends ConsumerWidget {
     }
 
     final vehicles = state.vehicles;
-    final activeService = state.activeService?.hasActiveJob == true
+    final activeService =
+        CustomerServiceTracking.isLiveService(state.activeService)
         ? state.activeService
         : null;
-    final activeBooking = _activeBooking(bookings);
+    final activeBooking = CustomerServiceTracking.activeBooking(bookings);
     final recentActivity = _recentActivity(bookings);
     final isNewCustomer =
         vehicles.isEmpty && bookings.isEmpty && activeService == null;
@@ -91,11 +79,16 @@ class CustomerHomeTab extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (hasAttention) ...[
-          _AttentionPanel(
+          CustomerAttentionPanel(
             approvals: approvals,
             unpaidInvoices: state.unpaidInvoices,
             formatAmount: state.formatAmount,
-            onReview: () => notifier.selectTab(_approvalsTab),
+            // Approvals is contextual: each decision opens its own estimate,
+            // and the approvals page is where invoices live.
+            onReviewEstimate: (estimateId) => context.push(
+              AppRoutes.approvalsLocation(estimateId: estimateId),
+            ),
+            onViewInvoices: () => context.push(AppRoutes.approvalsLocation()),
           ),
           const SizedBox(height: AppDimensions.s20),
         ],
@@ -103,7 +96,8 @@ class CustomerHomeTab extends ConsumerWidget {
           activeService: activeService,
           activeBooking: activeBooking,
           vehicleCount: vehicles.length,
-          onTrackService: () => notifier.selectTab(_statusTab),
+          // Service Status is contextual: it is a pushed page, not a tab.
+          onTrackService: () => context.push(AppRoutes.customerServiceStatus),
           onViewBooking: () {
             final booking = activeBooking;
             if (booking != null) {
@@ -121,21 +115,24 @@ class CustomerHomeTab extends ConsumerWidget {
         CustomerHomeQuickActions(
           hasVehicles: vehicles.isNotEmpty,
           onBookService: () => context.push(AppRoutes.customerBookService),
-          onMyVehicles: () => notifier.selectTab(_vehiclesTab),
+          onMyVehicles: () =>
+              notifier.selectDestination(CustomerDestination.vehicles),
           onBreakdownHelp: () => context.push(AppRoutes.customerBreakdownHelp),
         ),
         if (vehicles.isNotEmpty) ...[
           const SizedBox(height: AppDimensions.s24),
           CustomerHomeGarageSummary(
             vehicles: vehicles,
-            onManageVehicles: () => notifier.selectTab(_vehiclesTab),
+            onManageVehicles: () =>
+                notifier.selectDestination(CustomerDestination.vehicles),
           ),
         ],
         if (recentActivity.isNotEmpty) ...[
           const SizedBox(height: AppDimensions.s24),
           _RecentActivitySection(
             bookings: recentActivity,
-            onViewAll: () => notifier.selectTab(_bookingsTab),
+            onViewAll: () =>
+                notifier.selectDestination(CustomerDestination.bookings),
             onTap: (booking) =>
                 context.push(AppRoutes.customerBookingDetail, extra: booking),
           ),
@@ -153,7 +150,7 @@ class CustomerHomeTab extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (state.loadError.isNotEmpty) ...[
-              _RefreshFailureNotice(onRetry: notifier.refresh),
+              CustomerRefreshNotice(onRetry: notifier.refresh),
               const SizedBox(height: AppDimensions.s16),
             ],
             CustomerHomeHeader(
@@ -180,15 +177,6 @@ class CustomerHomeTab extends ConsumerWidget {
   }
 }
 
-CustomerBookingEntity? _activeBooking(List<CustomerBookingEntity> bookings) {
-  for (final booking in bookings) {
-    if (CustomerHomeTab._liveStatuses.contains(booking.status)) {
-      return booking;
-    }
-  }
-  return null;
-}
-
 /// Most recent finished work, used for a compact activity summary. Provider
 /// order is preserved instead of parsing backend date strings.
 List<CustomerBookingEntity> _recentActivity(
@@ -196,152 +184,13 @@ List<CustomerBookingEntity> _recentActivity(
 ) {
   final recent = <CustomerBookingEntity>[];
   for (final booking in bookings) {
-    if (CustomerHomeTab._liveStatuses.contains(booking.status)) continue;
+    if (CustomerServiceTracking.liveBookingStatuses.contains(booking.status)) {
+      continue;
+    }
     recent.add(booking);
     if (recent.length == 2) break;
   }
   return recent;
-}
-
-/// Real, action-required states only. Renders nothing when the customer has
-/// nothing to decide or pay.
-class _AttentionPanel extends StatelessWidget {
-  final List<CustomerApprovalSummaryResponse> approvals;
-  final int unpaidInvoices;
-  final String Function(double amount) formatAmount;
-  final VoidCallback onReview;
-
-  const _AttentionPanel({
-    required this.approvals,
-    required this.unpaidInvoices,
-    required this.formatAmount,
-    required this.onReview,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final rows = <Widget>[];
-
-    if (approvals.isNotEmpty) {
-      final single = approvals.length == 1;
-      final amount = approvals.first.amount;
-      rows.add(
-        _AttentionRow(
-          icon: Icons.fact_check_rounded,
-          message: single
-              ? (amount > 0
-                    ? 'Estimate ${formatAmount(amount)} awaiting your approval'
-                    : 'An estimate is awaiting your approval')
-              : '${approvals.length} estimates awaiting your approval',
-          onTap: onReview,
-        ),
-      );
-    }
-
-    if (unpaidInvoices > 0) {
-      rows.add(
-        _AttentionRow(
-          icon: Icons.receipt_long_rounded,
-          message: unpaidInvoices == 1
-              ? '1 unpaid invoice'
-              : '$unpaidInvoices unpaid invoices',
-          onTap: onReview,
-        ),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.s14),
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(
-          colors.error.withValues(alpha: 0.06),
-          colors.surface,
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        border: Border.all(color: colors.error.withValues(alpha: 0.24)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.error_outline_rounded, size: 16, color: colors.error),
-              const SizedBox(width: AppDimensions.s6),
-              Text(
-                'Needs your attention',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: colors.error,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.s6),
-          for (var index = 0; index < rows.length; index++) ...[
-            if (index > 0) const SizedBox(height: AppDimensions.s4),
-            rows[index],
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _AttentionRow extends StatelessWidget {
-  final IconData icon;
-  final String message;
-  final VoidCallback onTap;
-
-  const _AttentionRow({
-    required this.icon,
-    required this.message,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Semantics(
-      button: true,
-      excludeSemantics: true,
-      label: message,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s4,
-            vertical: AppDimensions.s10,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: AppDimensions.iconMd, color: colors.error),
-              const SizedBox(width: AppDimensions.s12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: colors.onSurfaceVariant,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _RecentActivitySection extends StatelessWidget {
@@ -410,6 +259,7 @@ class _ActivityRow extends StatelessWidget {
       if (date.isNotEmpty) date,
     ].join(' \u00b7 ');
     final title = service.isEmpty ? 'Workshop visit' : service;
+    final tone = CustomerServiceTracking.bookingTone(colors, booking.status);
 
     return Semantics(
       button: true,
@@ -453,9 +303,10 @@ class _ActivityRow extends StatelessWidget {
                     const SizedBox(height: AppDimensions.s6),
                     Row(
                       children: [
-                        _StatusChip(
+                        StatusPill(
                           label: booking.statusLabel,
-                          status: booking.status,
+                          bg: tone.withValues(alpha: 0.12),
+                          fg: tone,
                         ),
                         if (meta.isNotEmpty) ...[
                           const SizedBox(width: AppDimensions.s8),
@@ -484,71 +335,6 @@ class _ActivityRow extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final String label;
-  final BookingStatus status;
-
-  const _StatusChip({required this.label, required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final tint = switch (status) {
-      BookingStatus.completed || BookingStatus.delivered => colors.tertiary,
-      BookingStatus.cancelled => colors.onSurfaceVariant,
-      BookingStatus.approvalRequired => colors.error,
-      _ => colors.primary,
-    };
-
-    return StatusPill(label: label, bg: tint.withValues(alpha: 0.12), fg: tint);
-  }
-}
-
-class _RefreshFailureNotice extends StatelessWidget {
-  final Future<void> Function() onRetry;
-
-  const _RefreshFailureNotice({required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.s12,
-        AppDimensions.s8,
-        AppDimensions.s8,
-        AppDimensions.s8,
-      ),
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(
-          colors.error.withValues(alpha: 0.06),
-          colors.surface,
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        border: Border.all(color: colors.error.withValues(alpha: 0.24)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline_rounded, size: 18, color: colors.error),
-          const SizedBox(width: AppDimensions.s10),
-          Expanded(
-            child: Text(
-              "We couldn't refresh your information.",
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
       ),
     );
   }

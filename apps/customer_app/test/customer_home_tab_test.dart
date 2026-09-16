@@ -10,6 +10,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_quick_actions.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_service_summary.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_skeleton.dart';
@@ -243,6 +244,21 @@ void main() {
       expect(find.text('BOOK_SERVICE'), findsOneWidget);
     });
 
+    testWidgets('opens the contextual Service Status page', (tester) async {
+      await _pumpHome(
+        tester,
+        state: _state(
+          profile: _profile,
+          vehicles: const [_landCruiser],
+          activeService: _activeService,
+        ),
+      );
+
+      await tester.tap(find.text('Track service'));
+      await tester.pumpAndSettle();
+      expect(find.text('SERVICE_STATUS'), findsOneWidget);
+    });
+
     testWidgets('opens breakdown help from the quick actions', (tester) async {
       await _pumpHome(
         tester,
@@ -262,7 +278,7 @@ void main() {
 
       await tester.tap(find.text('Manage'));
       await tester.pump();
-      expect(notifier.selectedTabs, [4]);
+      expect(notifier.selectedTabs, [CustomerDestination.vehicles.index]);
     });
 
     testWidgets('opens the active booking detail from the summary', (
@@ -279,7 +295,7 @@ void main() {
       expect(find.text('BOOKING_DETAIL'), findsOneWidget);
     });
 
-    testWidgets('routes approvals attention rows to the approvals tab', (
+    testWidgets('routes approval rows to the contextual approvals page', (
       tester,
     ) async {
       final notifier = await _pumpHome(
@@ -288,8 +304,26 @@ void main() {
       );
 
       await tester.tap(find.text('1 unpaid invoice'));
-      await tester.pump();
-      expect(notifier.selectedTabs, [3]);
+      await tester.pumpAndSettle();
+      expect(
+        notifier.selectedTabs,
+        isEmpty,
+        reason: 'approvals is contextual — it is not a workspace destination',
+      );
+      expect(find.text('APPROVALS estimateId=none'), findsOneWidget);
+    });
+
+    testWidgets('opens a pending approval on its own estimate', (tester) async {
+      await _pumpHome(
+        tester,
+        state: _state(profile: _profile),
+        approvals: const [_approval],
+      );
+
+      await tester.tap(find.textContaining('AED 1,250 awaiting'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('APPROVALS estimateId=EST-9001'), findsOneWidget);
     });
   });
 
@@ -442,7 +476,7 @@ void main() {
   });
 }
 
-// ─── Fixtures (real entity shapes, no fabricated business claims) ────────────
+// â”€â”€â”€ Fixtures (real entity shapes, no fabricated business claims) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const _profile = CustomerEntity(
   name: 'Ahmed Al Mansoori',
@@ -621,6 +655,19 @@ Future<_FakeDashboardNotifier> _pumpHome(
       GoRoute(
         path: AppRoutes.customerAddVehicle,
         builder: (_, __) => const Scaffold(body: Text('ADD_VEHICLE')),
+      ),
+      GoRoute(
+        path: AppRoutes.customerServiceStatus,
+        builder: (_, __) => const Scaffold(body: Text('SERVICE_STATUS')),
+      ),
+      GoRoute(
+        path: AppRoutes.customerApprovals,
+        builder: (context, routeState) => Scaffold(
+          body: Text(
+            'APPROVALS estimateId='
+            '${routeState.uri.queryParameters['estimateId'] ?? 'none'}',
+          ),
+        ),
       ),
       GoRoute(
         path: AppRoutes.customerBookingDetail,

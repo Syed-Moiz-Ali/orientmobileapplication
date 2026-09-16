@@ -1,0 +1,885 @@
+You are performing the FINAL visual/product-density pass on the completed Customer Profile domain.
+
+Profile functionality and product decisions are already correct.
+
+DO NOT reopen the capability audit.
+
+DO NOT add features.
+
+DO NOT restore removed fake content.
+
+The only objective is:
+
+MAKE THE PROFILE EXPERIENCE FEEL COMPLETE AND INTENTIONALLY COMPOSED ON EVERY SCREEN SIZE, ESPECIALLY TABLET AND DESKTOP, WITHOUT FABRICATING CONTENT.
+
+==================================================
+CURRENT VERIFIED PRODUCT STRUCTURE
+==================================
+
+Profile remains a permanent Customer destination.
+
+Current primary navigation:
+
+Home
+Bookings
+Vehicles
+Profile
+
+Profile's unique responsibility:
+
+* authenticated account identity
+* genuine account/session information
+* genuine account actions
+* genuine support action
+* licences
+* sign out
+
+Current truthful Profile content:
+
+IDENTITY
+
+* real name
+* real/derived initials
+* real CUST reference when available
+* compact real account summary
+
+CONTACT
+
+* real email from authenticated session when available
+* real phone from authenticated session when available
+
+ACCOUNT ACTIONS
+
+* Vehicles
+* Roadside assistance
+* Reset password
+
+ABOUT
+
+* Open source licences
+
+SESSION
+
+* Sign out
+
+These decisions are FROZEN.
+
+==================================================
+DO NOT RESTORE
+==============
+
+Never restore:
+
+VIP
+Premium
+membership
+loyalty
+points
+rewards
+referrals
+Verified
+notification preference
+notification settings duplicate
+biometrics
+fake security
+fake support
+24/7 claims
+fake legal pages
+app version
+Edit Profile
+Delete Account
+Register Vehicle shortcut
+fake customer IDs
+
+==================================================
+KNOWN REMAINING UX PROBLEM
+==========================
+
+Current visual QA reports:
+
+tablet / desktop approximately 40–46% of a 900px viewport remains as unused blank space below the actual account content.
+
+The previous implementation classified this as unavoidable because only a small number of real actions exist.
+
+DO NOT accept that conclusion automatically.
+
+There is a difference between:
+
+GOOD WHITESPACE
+intentional breathing room
+
+and
+
+DEAD WHITESPACE
+content clustered at the top of a large viewport while the rest feels unfinished.
+
+The goal is to eliminate DEAD whitespace through COMPOSITION, not fake information.
+
+==================================================
+MULTI-AGENT EXECUTION
+=====================
+
+Use 4 subagents in parallel.
+
+SUBAGENT 1 — WIDE-LAYOUT AUDITOR
+
+Inspect the existing Profile tablet and desktop composition.
+
+Report:
+
+* actual content bounds
+* unused vertical area
+* unused horizontal area
+* column heights
+* max-width constraints
+* oversized gaps
+* section padding
+* whether content is top-heavy
+* whether either column feels stranded
+
+Recommend layout changes only.
+
+Do not alter product content.
+
+---
+
+SUBAGENT 2 — MOBILE DENSITY AUDITOR
+
+Inspect:
+
+320
+360
+390
+412
+430px
+
+Verify that any wide-layout changes will not:
+
+* make mobile cramped
+* create oversized identity
+* increase scrolling unnecessarily
+* weaken action hierarchy
+
+Report mobile constraints.
+
+---
+
+SUBAGENT 3 — ACCESSIBILITY / RESPONSIVE AUDITOR
+
+Inspect:
+
+1.6× text scale
+long customer name
+missing contact information
+missing member reference
+tablet
+desktop
+dark mode
+
+Identify layout risks before implementation.
+
+---
+
+SUBAGENT 4 — VISUAL PRODUCT QA
+
+After implementation inspect every changed golden and explicitly report:
+
+DEAD WHITESPACE
+INTENTIONAL WHITESPACE
+COLUMN BALANCE
+VISUAL WEIGHT
+PRIMARY IDENTITY CLARITY
+ACTION CLARITY
+DESKTOP SPACE USE
+MOBILE SPACE USE
+DARK MODE
+GENERIC AI LOOK
+
+The lead must reject the implementation if desktop still looks like content floating at the top of a large blank canvas.
+
+==================================================
+CORE DESIGN PRINCIPLE
+=====================
+
+DO NOT solve desktop density by adding more rows.
+
+Solve it through layout architecture.
+
+Use the REAL account information as larger compositional building blocks.
+
+==================================================
+PREFERRED WIDE-SCREEN DIRECTION
+===============================
+
+For sufficiently wide screens, consider a structured Account workspace.
+
+Conceptual direction:
+
+┌──────────────────────────────────────────────────────────┐
+│ ACCOUNT                                                  │
+│                                                          │
+│ ┌───────────────────────┐ ┌────────────────────────────┐ │
+│ │ IDENTITY / ACCOUNT    │ │ ACCOUNT ACTIONS            │ │
+│ │                       │ │                            │ │
+│ │ Avatar                │ │ Vehicles                  │ │
+│ │ Name                  │ │ Roadside assistance       │ │
+│ │ CUST reference        │ │ Reset password            │ │
+│ │                       │ │                            │ │
+│ │ Real account summary  │ ├────────────────────────────┤ │
+│ │                       │ │ ABOUT                     │ │
+│ │ Contact               │ │ Open source licences      │ │
+│ │ Email                 │ │                            │ │
+│ │ Phone                 │ ├────────────────────────────┤ │
+│ │                       │ │ SESSION                   │ │
+│ │                       │ │ Sign out                  │ │
+│ └───────────────────────┘ └────────────────────────────┘ │
+└──────────────────────────────────────────────────────────┘
+
+This is conceptual.
+
+Do not mechanically copy it.
+
+==================================================
+FULL-HEIGHT COMPOSITION
+=======================
+
+On desktop/tablet, the top-level account composition may intentionally occupy more of the available viewport height.
+
+This does NOT mean stretching every row.
+
+Instead consider:
+
+* equal-height major columns
+* tonal background region
+* full-height left identity/account panel
+* right account/action grouping
+* vertically balanced internal sections
+* controlled minimum height based on viewport
+
+The account surface may visually occupy the viewport even when content itself does not require 900px of scrolling.
+
+This is legitimate design.
+
+==================================================
+IMPORTANT DISTINCTION
+=====================
+
+DO NOT vertically stretch:
+
+Vehicles row
+Roadside row
+Reset password row
+Licences row
+
+into huge settings cells merely to consume space.
+
+Rows should remain compact.
+
+Instead use larger compositional surfaces around them.
+
+==================================================
+IDENTITY PANEL
+==============
+
+The Identity side may carry more visual weight on wide screens because it represents the account itself.
+
+Use REAL content:
+
+* initials/avatar
+* name
+* customer reference
+* account summary
+* contact
+
+Possible improvements:
+
+* larger but restrained avatar
+* stronger name hierarchy
+* account reference placement
+* visually integrated Contact block
+* subtle divider
+* compact real account summary
+
+Do not create a giant marketing hero.
+
+No decorative automotive imagery.
+
+No VIP styling.
+
+No giant gradient banner.
+
+==================================================
+CONTACT INTEGRATION
+===================
+
+Contact should feel part of Account identity rather than a random independent card.
+
+On wide layouts consider integrating:
+
+Email
+Phone
+
+inside the identity/account panel.
+
+This can improve vertical composition without inventing data.
+
+If contact data is absent:
+
+the layout must collapse naturally.
+
+Do not leave empty labelled rows.
+
+==================================================
+REAL ACCOUNT SUMMARY
+====================
+
+Existing genuine summary such as:
+
+2 vehicles
+Service in progress
+
+may remain where derived from real data.
+
+Use it to support identity/account context.
+
+Do NOT make these giant KPI cards.
+
+A concise summary strip / sentence / compact row is preferable.
+
+==================================================
+RIGHT COLUMN
+============
+
+The right side should clearly represent:
+
+Account actions
+About
+Session
+
+Use grouped surfaces.
+
+Do not scatter four unrelated floating cards.
+
+Potential structure:
+
+ACCOUNT
+Vehicles
+Roadside assistance
+Reset password
+
+ABOUT
+Open source licences
+
+SESSION
+Sign out
+
+Maintain compact row density.
+
+==================================================
+VERTICAL BALANCE
+================
+
+On wide screens:
+
+do not let the right column finish at y=450 while the page extends to y=900 with nothing below.
+
+Use a layout strategy that creates intentional vertical balance.
+
+Possible approaches:
+
+* right column fills available height with groups distributed intentionally
+* Session anchored toward the lower part of the account surface
+* identity and action surfaces use matching visual height
+* entire account workspace is vertically centered inside the content viewport
+
+Choose the best result after golden review.
+
+==================================================
+SIGN OUT POSITIONING
+====================
+
+Sign out may be placed near the lower portion of the Account actions column on wide screens.
+
+This can improve the mental model:
+
+identity / account settings
+↓
+session termination
+
+But do not force it to the literal bottom edge if that creates awkward empty space inside the group.
+
+Use layout judgment.
+
+==================================================
+TONAL BACKGROUND
+================
+
+A subtle ColorScheme-based tonal account region is allowed if it improves composition.
+
+This is NOT fake content.
+
+It is visual structure.
+
+Use:
+
+surface
+surfaceContainer
+surfaceContainerLow
+surfaceContainerHighest
+outlineVariant
+
+or existing equivalent tokens.
+
+Do not hardcode colors.
+
+Avoid large gradients unless the current design language genuinely supports them.
+
+==================================================
+DESKTOP MAX WIDTH
+=================
+
+Audit the current max-content constraint.
+
+Do not automatically use:
+
+1040
+1080
+
+just because other Customer screens use them.
+
+Profile is a two-column Account workspace and may legitimately use more width.
+
+At 1440px viewport, consider approximately:
+
+1100–1240px usable content
+
+if visual QA confirms it improves composition.
+
+Do not stretch rows edge to edge.
+
+==================================================
+TABLET
+======
+
+At approximately:
+
+600–899px
+
+decide whether two columns remain appropriate.
+
+Do not force narrow side-by-side cards if:
+
+* long names
+* contact values
+* 1.6× text
+
+become cramped.
+
+A stacked but broad composition may be better at lower tablet widths.
+
+Use existing responsive breakpoints where practical.
+
+==================================================
+DESKTOP
+=======
+
+At:
+
+1024+
+1440+
+
+the page must clearly feel desktop-designed.
+
+Reject:
+
+a 430px settings column centered on screen.
+
+Reject:
+
+a 700px-wide surface floating in a 1440px viewport.
+
+Use real width deliberately.
+
+==================================================
+MOBILE
+======
+
+Keep mobile compact.
+
+The current 390px full-data layout ends around y765 on an 844px viewport and is already considered appropriately dense.
+
+Do NOT make it significantly taller just to match desktop changes.
+
+Mobile likely remains:
+
+identity
+contact
+account actions
+about
+sign out
+
+stacked naturally.
+
+==================================================
+SPARSE PROFILE DATA
+===================
+
+Sparse data is an important state.
+
+Possible missing fields:
+
+name
+member reference
+email
+phone
+vehicles
+
+The screen must remain intentional.
+
+Do NOT render:
+
+CONTACT
+
+with no rows.
+
+Do NOT create blank panels.
+
+Do NOT fabricate account identity.
+
+Use:
+
+Your account
+generic person icon
+
+where already established.
+
+==================================================
+SPARSE DATA + WIDE SCREEN
+=========================
+
+This is the hardest layout state.
+
+Do not attempt to fill a desktop viewport with nonexistent account information.
+
+Instead create intentional composition through:
+
+* centered/balanced account workspace
+* larger structural surface
+* proper action grouping
+* balanced margins
+
+Some whitespace is acceptable.
+
+But it should be SYMMETRIC / INTENTIONAL, not a giant dead region below content.
+
+==================================================
+ROW DENSITY
+===========
+
+Keep actions compact.
+
+Target approximately:
+
+48–56px minimum interactive height
+
+plus subtitle space only when genuinely useful.
+
+Do not make rows 90px simply to occupy space.
+
+==================================================
+SECTION SPACING
+===============
+
+Audit repetitive patterns such as:
+
+24px surface padding
+24px gap
+24px surface padding
+32px section gap
+
+Use a deliberate hierarchy such as:
+
+small internal
+medium between groups
+large only between major regions
+
+Do not let repeated spacing create artificial emptiness.
+
+==================================================
+VISUAL HIERARCHY
+================
+
+Priority should be:
+
+1. Account identity
+2. Genuine account actions
+3. Contact / account metadata
+4. About
+5. Sign out
+
+Sign out should be visible but not dominate the page.
+
+Licences should not visually compete with Vehicles or Roadside assistance.
+
+==================================================
+NO NEW PRODUCT CONTENT
+======================
+
+Again:
+
+do NOT add:
+
+notifications
+support tickets
+FAQ
+Terms
+Privacy
+version
+membership
+rewards
+biometrics
+profile edit
+account deletion
+data export
+marketing preferences
+
+to solve layout.
+
+==================================================
+NO PAGE-FILLING ILLUSTRATION
+============================
+
+Do not solve whitespace by adding:
+
+car illustration
+profile illustration
+abstract blobs
+stock photography
+large icon artwork
+
+Profile is an account product surface.
+
+==================================================
+LOADING
+=======
+
+Update skeleton geometry only if required by the new final layout.
+
+Wide skeleton should roughly reflect:
+
+identity/account side
+actions side
+
+Do not leave the old skeleton shape if the page architecture changes substantially.
+
+==================================================
+ERROR
+=====
+
+Do not redesign error logic.
+
+Ensure first-load error still uses the wider composition appropriately.
+
+No giant error card floating at the top of desktop.
+
+==================================================
+PULL TO REFRESH
+===============
+
+Preserve existing behavior.
+
+No provider changes unless directly required for layout.
+
+==================================================
+TESTS
+=====
+
+Preserve all 34 existing Profile tests.
+
+Add/update only necessary responsive tests.
+
+Explicitly verify:
+
+1. 390px full-data layout remains compact.
+2. 320px remains overflow-free.
+3. 1.6× scale remains overflow-free.
+4. long name remains safe.
+5. sparse mobile remains intentional.
+6. 800px layout.
+7. 1024×900 layout.
+8. 1440×900 layout.
+9. wide columns use substantial available width.
+10. no major content group is stranded.
+11. sign out remains reachable.
+12. sparse wide layout does not contain broken empty surfaces.
+13. dark mode.
+14. loading skeleton wide layout.
+
+==================================================
+GOLDENS
+=======
+
+Update only:
+
+customer_profile_tablet
+customer_profile_desktop
+
+and any wide sparse-data golden you determine is necessary.
+
+Do NOT blindly rebaseline:
+
+mobile
+dark mobile
+long-name mobile
+
+unless actual intentional changes affect them.
+
+==================================================
+MANDATORY GEOMETRY ASSERTIONS
+=============================
+
+Do not rely only on subjective golden review.
+
+Where practical add geometry assertions.
+
+Examples:
+
+At 1440px:
+
+* account workspace width uses a meaningful proportion of viewport.
+* right/left columns exist.
+* bottom of major account workspace reaches a meaningful portion of the viewport.
+* content is not all confined to the upper half without intentional centering.
+
+Do NOT write brittle pixel-perfect tests.
+
+Use ranges/proportions.
+
+==================================================
+VISUAL QA ACCEPTANCE
+====================
+
+At 1024×900 and 1440×900:
+
+DEAD WHITESPACE must be reported as:
+
+NO
+
+or:
+
+ONLY INTENTIONAL BALANCED WHITESPACE
+
+The following is NOT acceptable:
+
+"40–46% blank below content is inherent."
+
+If significant unused area remains:
+
+the agent must demonstrate why its placement is compositionally intentional.
+
+==================================================
+SOURCE / CAPABILITY SAFETY
+==========================
+
+Do not alter the verified capability decisions.
+
+Production Profile code must remain free of:
+
+VIP
+Loyalty
+PTS
+Refer & Earn
+Verified
+24/7
+fake notification preferences
+no-op actions
+
+==================================================
+MULTI-AGENT FILE OWNERSHIP
+==========================
+
+After audits:
+
+Lead / implementation owner:
+customer_profile_tab.dart
+
+Supporting implementation agent:
+Profile-specific extracted widgets only, if required
+
+Test agent:
+customer_profile_test.dart
+
+Visual QA:
+read-only
+
+Do not allow two agents to edit customer_profile_tab.dart concurrently.
+
+==================================================
+VERIFICATION
+============
+
+Run:
+
+dart format
+
+dart analyze customer_app
+
+flutter test customer_app
+
+Review changed goldens manually.
+
+No unrelated golden updates.
+
+==================================================
+STOP CONDITION
+==============
+
+Profile is considered FROZEN only when:
+
+* product capability remains truthful
+* mobile remains dense and usable
+* tablet is intentionally composed
+* desktop is intentionally composed
+* large blank-bottom region is eliminated or transformed into balanced intentional whitespace
+* no fake filler was added
+* all tests pass
+
+Then STOP.
+
+Do not start Notifications.
+
+==================================================
+FINAL REPORT
+============
+
+Report:
+
+OLD WIDE-LAYOUT PROBLEM
+
+NEW WIDE-SCREEN COMPOSITION
+
+MOBILE IMPACT
+
+TABLET IMPACT
+
+DESKTOP IMPACT
+
+SPARSE PROFILE HANDLING
+
+WHITESPACE ANALYSIS
+
+* before
+* after
+* why remaining whitespace is intentional
+
+REAL CONTENT USED
+
+* no new product features
+
+VISUAL QA RESULTS
+
+TESTS / GOLDENS
+
+ANALYZE / TEST RESULTS
+
+STOP.

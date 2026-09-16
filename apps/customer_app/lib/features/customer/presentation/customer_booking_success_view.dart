@@ -1,310 +1,383 @@
-import 'package:customer_app/core/router/app_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
-class CustomerBookingSuccessView extends StatelessWidget {
-  final String? bookingRef;
+import 'package:customer_app/core/router/app_router.dart';
+import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
+
+/// The end of the booking flow: what was requested, and what to do next.
+///
+/// It shows only what the workshop actually returned — the booking reference
+/// and creation result — plus the selections the customer just made. When the
+/// booking was queued on the device because there was no connection, it says so
+/// instead of inventing a reference.
+class CustomerBookingSuccessView extends ConsumerWidget {
+  final String bookingRef;
+  final String bookingId;
   final String service;
   final String date;
   final String time;
+  final String vehicle;
+  final String plate;
+  final bool queuedOffline;
 
   const CustomerBookingSuccessView({
     super.key,
-    this.bookingRef,
+    this.bookingRef = '',
+    this.bookingId = '',
     required this.service,
     required this.date,
     required this.time,
+    this.vehicle = '',
+    this.plate = '',
+    this.queuedOffline = false,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
+
+    // The new booking is only offered as a detail link once the refreshed feed
+    // really contains it, so Booking Details is never opened with invented data.
+    final created = _createdBooking(
+      ref.watch(customerBookingsProvider).valueOrNull ??
+          const <CustomerBookingEntity>[],
+    );
+
+    final schedule = CustomerBookingsPresentation.scheduleLabel(date, time);
+    final pendingTone = CustomerServiceTracking.bookingTone(
+      colors,
+      BookingStatus.pending,
+    );
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: AppResponsivePage(
           physics: const AlwaysScrollableScrollPhysics(),
+          maxContentWidth: 720,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 32),
-
-              // ── 1. SUCCESS ICON + HEADLINE ─────────────────────────────
-              Center(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 4),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                            blurRadius: 24,
-                            spreadRadius: 4,
+              const SizedBox(height: AppDimensions.s20),
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colors.tertiary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_rounded,
+                      color: colors.tertiary,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            queuedOffline
+                                ? 'Booking saved'
+                                : 'Booking requested',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                            ),
                           ),
-                        ],
-                      ),
-                      child: const Center(child: Icon(Icons.check_rounded, color: Color(0xFF10B981), size: 48)),
+                        ),
+                        const SizedBox(height: AppDimensions.r2),
+                        Text(
+                          queuedOffline
+                              ? 'It will reach the workshop when you are back online.'
+                              : 'The workshop will confirm your appointment.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Booking Requested!',
-                      style: textTheme.headlineMedium?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.8,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'The workshop will confirm your bay slot shortly.\nTrack live updates anytime from Appointments.',
-                      textAlign: TextAlign.center,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 36),
-
-              // ── 2. BOOKING SUMMARY CARD ────────────────────────────────
-              Text(
-                'Booking Summary',
-                style: textTheme.titleLarge?.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Keep this reference for your records',
-                style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 16),
-              AppCard(
-                borderRadius: 24,
-                elevation: 0,
-                padding: EdgeInsets.zero,
-                color: colorScheme.surface,
-                borderColor: colorScheme.outlineVariant,
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.shadow.withValues(alpha: 0.05),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
                   ),
                 ],
+              ),
+              const SizedBox(height: AppDimensions.s20),
+
+              // ── The booking record ────────────────────────────────────────
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+                  border: Border.all(color: colors.outlineVariant),
+                ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (bookingRef != null && bookingRef!.isNotEmpty) ...[
-                      _InfoRow(
-                        icon: Icons.tag_rounded,
-                        label: 'Reference',
-                        value: '#$bookingRef',
-                        highlight: true,
-                        colorScheme: colorScheme,
+                    if (bookingRef.isNotEmpty) ...[
+                      _RecordRow(
+                        label: 'Booking reference',
+                        value: bookingRef,
+                        mono: true,
+                        emphasize: true,
                       ),
-                      Divider(height: 1, color: colorScheme.outlineVariant),
+                      Divider(height: 1, color: colors.outlineVariant),
                     ],
-                    _InfoRow(
-                      icon: Icons.build_rounded,
-                      label: 'Service Package',
-                      value: service,
-                      colorScheme: colorScheme,
-                    ),
-                    Divider(height: 1, color: colorScheme.outlineVariant),
-                    _InfoRow(
-                      icon: Icons.calendar_today_rounded,
-                      label: 'Scheduled Date',
-                      value: date,
-                      colorScheme: colorScheme,
-                    ),
-                    Divider(height: 1, color: colorScheme.outlineVariant),
-                    _InfoRow(
-                      icon: Icons.access_time_rounded,
-                      label: 'Time Slot',
-                      value: time.isNotEmpty ? time : 'TBC',
-                      colorScheme: colorScheme,
-                    ),
-                    Divider(height: 1, color: colorScheme.outlineVariant),
-                    _InfoRow(
-                      icon: Icons.pending_actions_rounded,
+                    // A booking that only exists on this device has not reached
+                    // the workshop, so it must not display a server status.
+                    _RecordRow(
                       label: 'Status',
-                      value: 'Pending Intake',
-                      statusColor: colorScheme.secondary,
-                      colorScheme: colorScheme,
+                      value: '',
+                      pillTone: queuedOffline
+                          ? colors.onSurfaceVariant
+                          : pendingTone,
+                      pillLabel: queuedOffline
+                          ? 'Not sent yet'
+                          : AppStatusLabels.booking('pending'),
                     ),
+                    Divider(height: 1, color: colors.outlineVariant),
+                    _RecordRow(
+                      label: 'Service',
+                      value: service.trim().isEmpty ? 'Service' : service,
+                    ),
+                    Divider(height: 1, color: colors.outlineVariant),
+                    _VehicleRow(vehicle: vehicle, plate: plate),
+                    if (schedule.isNotEmpty) ...[
+                      Divider(height: 1, color: colors.outlineVariant),
+                      _RecordRow(label: 'Appointment', value: schedule),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppDimensions.s16),
 
-              // ── 3. WHAT HAPPENS NEXT CARD ──────────────────────────────
-              AppCard(
-                borderRadius: 24,
-                elevation: 0,
-                padding: const EdgeInsets.all(20),
-                color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-                borderColor: colorScheme.primary.withValues(alpha: 0.2),
+              // ── Honest state note ─────────────────────────────────────────
+              CustomerSurfacePanel(
+                accent: queuedOffline ? colors.error : colors.primary,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(Icons.info_outline_rounded, color: colorScheme.primary, size: 22),
+                    Icon(
+                      queuedOffline
+                          ? Icons.cloud_off_rounded
+                          : Icons.info_outline_rounded,
+                      size: AppDimensions.iconMd,
+                      color: queuedOffline ? colors.error : colors.primary,
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: AppDimensions.s10),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'What happens next?',
-                            style: textTheme.titleSmall?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Our team will review your booking and send confirmation within 1–2 hours during working hours (Mon–Fri, 8am–6pm).',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              height: 1.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        queuedOffline
+                            ? 'This booking is stored on this device. It will be '
+                                  'sent to the workshop automatically when the '
+                                  'connection is back.'
+                            : 'Your appointment is not confirmed yet. You will '
+                                  'find it in your bookings, and the workshop '
+                                  'will confirm the slot.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurface,
+                          height: 1.45,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: AppDimensions.s24),
 
-              // ── 4. ACTION BUTTONS ──────────────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: FilledButton.icon(
-                  onPressed: () => context.go(AppRoutes.customerDashboard, extra: {'tab': 2}),
-                  icon: Icon(Icons.calendar_month_rounded, size: 20, color: colorScheme.onPrimary),
-                  label: Text('View Appointments'),
+              if (created != null)
+                FilledButton.icon(
+                  onPressed: () => context.push(
+                    AppRoutes.customerBookingDetail,
+                    extra: created,
+                  ),
+                  icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                  label: const Text('View booking'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: colorScheme.onPrimary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                    textStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                    minimumSize: const Size.fromHeight(
+                      AppDimensions.touchTarget,
+                    ),
+                  ),
+                )
+              else
+                FilledButton.icon(
+                  onPressed: () => context.go(AppRoutes.bookingsLocation),
+                  icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                  label: const Text('View bookings'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(
+                      AppDimensions.touchTarget,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: OutlinedButton(
-                  onPressed: () => context.go(AppRoutes.customerDashboard),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colorScheme.onSurface,
-                    side: BorderSide(color: colorScheme.outlineVariant),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                    textStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                  child: const Text('Back to Dashboard'),
+              const SizedBox(height: AppDimensions.s8),
+              OutlinedButton(
+                onPressed: () => context.go(AppRoutes.customerDashboard),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(AppDimensions.touchTarget),
                 ),
+                child: const Text('Back to Home'),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: AppDimensions.s32),
             ],
           ),
         ),
       ),
     );
   }
+
+  /// The booking this flow just created, resolved from the refreshed feed.
+  CustomerBookingEntity? _createdBooking(List<CustomerBookingEntity> bookings) {
+    if (bookingId.isEmpty && bookingRef.isEmpty) return null;
+    for (final booking in bookings) {
+      if (bookingRef.isNotEmpty && booking.bookingRef.trim() == bookingRef) {
+        return booking;
+      }
+      if (bookingId.isNotEmpty && booking.id.trim() == bookingId) {
+        return booking;
+      }
+    }
+    return null;
+  }
 }
 
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
+class _RecordRow extends StatelessWidget {
   final String label;
   final String value;
-  final bool highlight;
-  final Color? statusColor;
-  final ColorScheme colorScheme;
+  final bool mono;
+  final bool emphasize;
+  final Color? pillTone;
+  final String? pillLabel;
 
-  const _InfoRow({
-    required this.icon,
+  const _RecordRow({
     required this.label,
     required this.value,
-    this.highlight = false,
-    this.statusColor,
-    required this.colorScheme,
+    this.mono = false,
+    this.emphasize = false,
+    this.pillTone,
+    this.pillLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s14,
+        vertical: AppDimensions.s14,
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: colorScheme.onSurfaceVariant, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
+          SizedBox(
+            width: 92,
             child: Text(
               label,
-              style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          if (statusColor != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: statusColor!.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: Text(
-                value,
-                style: textTheme.labelSmall?.copyWith(color: statusColor, fontWeight: FontWeight.w900),
-              ),
-            )
-          else
-            Flexible(
-              child: Text(
-                value,
-                textAlign: TextAlign.end,
-                maxLines: 2,
-                style: textTheme.titleSmall?.copyWith(
-                  color: highlight ? colorScheme.primary : colorScheme.onSurface,
-                  fontWeight: highlight ? FontWeight.w900 : FontWeight.w800,
+          const SizedBox(width: AppDimensions.s8),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: emphasize ? colors.primary : colors.onSurface,
+                      fontFamily: mono ? AppFontFamilies.mono : null,
+                      fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
+                    ),
+                  ),
                 ),
+                if (pillTone != null && pillLabel != null)
+                  StatusPill(
+                    label: pillLabel!.toUpperCase(),
+                    showDot: true,
+                    bg: pillTone!.withValues(alpha: 0.12),
+                    fg: pillTone!,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VehicleRow extends StatelessWidget {
+  final String vehicle;
+  final String plate;
+
+  const _VehicleRow({required this.vehicle, required this.plate});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final name = vehicle.trim();
+
+    if (name.isEmpty && plate.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s14,
+        vertical: AppDimensions.s14,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 92,
+            child: Text(
+              'Vehicle',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
               ),
             ),
+          ),
+          const SizedBox(width: AppDimensions.s8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (name.isNotEmpty)
+                  Text(
+                    name,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                if (plate.trim().isNotEmpty) ...[
+                  const SizedBox(height: AppDimensions.s6),
+                  CustomerPlateChip(plate: plate.trim()),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );

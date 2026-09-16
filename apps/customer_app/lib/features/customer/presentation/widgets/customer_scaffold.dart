@@ -1,22 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_bookings_tab.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_approvals_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_profile_tab.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_service_status_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicles_tab.dart';
 
+/// Customer workspace shell.
+///
+/// Exactly four permanent destinations — Home, Bookings, Vehicles and Profile —
+/// configured straight from [CustomerDestination], so the navigation order,
+/// labels and indices have one source of truth and the shared More/overflow
+/// destination is never needed here.
+///
+/// Service Status and Approvals are deliberately absent: both are contextual
+/// pushed pages (`CustomerServiceStatusPage`, `CustomerApprovalsPage`) reached
+/// from Home, Bookings, Booking Details or a deep link when they genuinely
+/// apply to the customer right now.
 class CustomerScaffold extends ConsumerStatefulWidget {
-  final int initialTab;
-  final String pendingEstimateId;
+  final CustomerDestination initialDestination;
 
   const CustomerScaffold({
     super.key,
-    this.initialTab = 0,
-    this.pendingEstimateId = '',
+    this.initialDestination = CustomerDestination.home,
   });
 
   @override
@@ -24,59 +33,26 @@ class CustomerScaffold extends ConsumerStatefulWidget {
 }
 
 class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
-  static const _navItems = <AppNavItem>[
-    AppNavItem(
-      selectedIcon: Icons.home_rounded,
-      icon: Icons.home_outlined,
-      label: 'Home',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.track_changes_rounded,
-      icon: Icons.track_changes_outlined,
-      label: 'Status',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.calendar_month_rounded,
-      icon: Icons.calendar_month_outlined,
-      label: 'Bookings',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.fact_check_rounded,
-      icon: Icons.fact_check_outlined,
-      label: 'Approvals',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.directions_car_rounded,
-      icon: Icons.directions_car_outlined,
-      label: 'Vehicles',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.person_rounded,
-      icon: Icons.person_outline_rounded,
-      label: 'Profile',
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
-    _applyInitialTab();
+    _applyInitialDestination();
   }
 
   @override
   void didUpdateWidget(covariant CustomerScaffold oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialTab != widget.initialTab) {
-      _applyInitialTab();
+    if (oldWidget.initialDestination != widget.initialDestination) {
+      _applyInitialDestination();
     }
   }
 
-  void _applyInitialTab() {
+  void _applyInitialDestination() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref
             .read(customerDashboardProvider.notifier)
-            .selectTab(widget.initialTab);
+            .selectDestination(widget.initialDestination);
       }
     });
   }
@@ -86,18 +62,19 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
     final adaptive = context.adaptive;
+    final items = CustomerDestination.navItems;
+
+    // Must stay in [CustomerDestination] order.
     final pages = <Widget>[
       const CustomerHomeTab(),
-      const CustomerServiceStatusTab(),
       const CustomerBookingsTab(),
-      CustomerApprovalsTab(initialEstimateId: widget.pendingEstimateId),
       const CustomerVehiclesTab(),
       const CustomerProfileTab(),
     ];
 
     return DashboardShell(
       body: AppAdaptiveNavigationFrame(
-        items: _navItems,
+        items: items,
         selectedIndex: state.selectedIndex,
         onSelected: notifier.selectTab,
         child: IndexedStack(index: state.selectedIndex, children: pages),
@@ -105,7 +82,7 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
       bottomNavigationBar: adaptive.useNavigationRail
           ? null
           : AppBottomNavigation(
-              items: _navItems,
+              items: items,
               selectedIndex: state.selectedIndex,
               onSelected: notifier.selectTab,
             ),

@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_scaffold.dart';
 
 class CustomerDashboardView extends ConsumerWidget {
-  final int initialTab;
-  final String pendingEstimateId;
+  final CustomerDestination initialDestination;
 
   const CustomerDashboardView({
     super.key,
-    this.initialTab = 0,
-    this.pendingEstimateId = '',
+    this.initialDestination = CustomerDestination.home,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // FIX (audit): honour the requested tab (e.g. 'Track Booking' → Status).
-    return CustomerScaffold(
-      initialTab: initialTab,
-      pendingEstimateId: pendingEstimateId,
-    );
+    // FIX (audit): honour the requested destination (e.g. 'Track Booking').
+    return CustomerScaffold(initialDestination: initialDestination);
   }
 }

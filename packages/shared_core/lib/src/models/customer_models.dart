@@ -1,4 +1,4 @@
-class CustomerProfileResponse {
+﻿class CustomerProfileResponse {
   final String name;
   final String firstName;
   final String avatarInitials;
@@ -60,6 +60,10 @@ class VehicleResponse {
 
 class BookingResponse {
   final String id;
+
+  /// Public, prefixed booking reference (`BK-â€¦`) â€” the customer-facing
+  /// identifier the backend exposes for a booking.
+  final String bookingRef;
   final String service;
   final String vehicleName;
   final String plateNumber;
@@ -74,6 +78,7 @@ class BookingResponse {
   final double estimateAmount;
   const BookingResponse({
     this.id = '',
+    this.bookingRef = '',
     this.service = '',
     this.vehicleName = '',
     this.plateNumber = '',
@@ -89,6 +94,7 @@ class BookingResponse {
   });
   factory BookingResponse.fromJson(Map<String, dynamic> j) => BookingResponse(
     id: (j['id'] ?? '').toString(),
+    bookingRef: (j['bookingRef'] ?? '').toString(),
     service: j['service'] as String? ?? '',
     vehicleName: j['vehicleName'] as String? ?? '',
     plateNumber: j['plateNumber'] as String? ?? '',
