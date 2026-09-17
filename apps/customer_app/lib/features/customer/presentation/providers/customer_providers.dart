@@ -131,26 +131,6 @@ List<CustomerBookingEntity> _bookingsFromHive() {
   }
 }
 
-final customerBreakdownsProvider = Provider<List<Map<String, dynamic>>>((ref) {
-  try {
-    final box = Hive.box<dynamic>('customer_breakdowns');
-    return box.values
-        .whereType<Map>()
-        .map((m) => Map<String, dynamic>.from(m))
-        .toList()
-      ..sort(
-        (a, b) => (b['createdAt'] as String? ?? '').compareTo(
-          a['createdAt'] as String? ?? '',
-        ),
-      );
-  } catch (e, st) {
-    ref
-        .read(loggerProvider)
-        .e('Failed to load breakdowns from Hive', error: e, stackTrace: st);
-    return [];
-  }
-});
-
 class CustomerDashboardState {
   final int selectedIndex;
   final bool isLoading;

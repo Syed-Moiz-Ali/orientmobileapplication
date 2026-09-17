@@ -1,12 +1,25 @@
-import 'package:customer_app/core/local/sync_providers.dart';
+import 'package:customer_app/core/local/vehicle_identity_store.dart';
+import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_core/shared_core.dart';
 
+/// Roadside assistance: one request to the workshop.
+///
+/// The backend contract is deliberately small — an issue, an optional vehicle,
+/// and a free-text location — and it stores a `pending` request that a
+/// supervisor later assigns to an advisor. Nothing here claims more than that:
+/// no dispatch, no ETA, no towing, no automatic location. The screen is a
+/// short form with the send action always in reach, because a customer using it
+/// is standing next to a broken-down car.
 class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
   const CustomerBreakdownHelpView({super.key});
 
@@ -17,703 +30,292 @@ class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
 
 class _CustomerBreakdownHelpViewState
     extends ConsumerState<CustomerBreakdownHelpView> {
-  final _notesCtrl = TextEditingController();
-  final _locationCtrl = TextEditingController();
-  final _searchCtrl = TextEditingController();
-
-  CustomerVehicleEntity? _selectedVehicle;
-  String? _selectedIssue;
-  String _selectedCategory = 'All';
-  bool _isSaving = false;
-
-  List<CustomerVehicleEntity> get _vehicles =>
-      ref.watch(customerDashboardProvider).vehicles;
-
-  // Expanded dataset structure with categories to showcase future-proofing
-  static const _issues = [
-    (
-      Icons.battery_alert_rounded,
-      'Battery Dead',
-      'Jumpstart or battery replacement',
-      'Electrical',
-    ),
-    (
-      Icons.tire_repair_rounded,
-      'Flat Tyre',
-      'Tyre change or puncture repair',
-      'Wheels',
-    ),
-    (
-      Icons.device_thermostat_rounded,
-      'Overheating',
-      'Coolant leak or engine heat',
-      'Engine',
-    ),
-    (
-      Icons.local_gas_station_rounded,
-      'Fuel Empty',
-      'Emergency fuel delivery',
-      'Fluid',
-    ),
-    (
-      Icons.key_rounded,
-      'Key Locked',
-      'Lockout assistance & key service',
-      'Access',
-    ),
-    (
-      Icons.car_crash_rounded,
-      'Accident / Towing',
-      'Priority flatbed towing unit',
-      'Emergency',
-    ),
-    (
-      Icons.electrical_services_rounded,
-      'Alternator Failure',
-      'Electrical charging system issue',
-      'Electrical',
-    ),
-    (
-      Icons.warning_rounded,
-      'Brake Failure',
-      'Hydraulic pressure loss or pads',
-      'Mechanical',
-    ),
+  /// Symptoms only. The backend stores this text as the request's issue and
+  /// promises no specific service, so nothing here names a service that may not
+  /// exist (towing, fuel delivery, lockout).
+  static const List<String> _symptoms = [
+    'Flat tyre',
+    "Won't start",
+    'Dead battery',
+    'Overheating',
+    'Brake problem',
+    'Warning light',
+    'Accident damage',
+    'Something else',
   ];
+
+  final _locationCtrl = TextEditingController();
+  final _detailCtrl = TextEditingController();
+  String? _symptom;
+  CustomerVehicleEntity? _vehicle;
+  bool _sending = false;
 
   @override
   void initState() {
     super.initState();
+    // Preselect only when there is no ambiguity about which car needs help.
     final vehicles = ref.read(customerDashboardProvider).vehicles;
-    if (vehicles.isNotEmpty) {
-      _selectedVehicle = vehicles.first;
-    }
+    if (vehicles.length == 1) _vehicle = vehicles.first;
   }
 
   @override
   void dispose() {
-    _notesCtrl.dispose();
     _locationCtrl.dispose();
-    _searchCtrl.dispose();
+    _detailCtrl.dispose();
     super.dispose();
   }
 
+  List<CustomerVehicleEntity> get _vehicles =>
+      ref.watch(customerDashboardProvider).vehicles;
+
+  /// The single text field the contract has, filled from the symptom chip
+  /// plus anything the customer adds, so no typed detail is thrown away.
+  String get _issueText {
+    final symptom = _symptom?.trim() ?? '';
+    final detail = _detailCtrl.text.trim();
+    if (symptom.isEmpty) return detail;
+    if (detail.isEmpty) return symptom;
+    return '$symptom — $detail';
+  }
+
+  /// The vehicle id the workshop can actually use.
+  ///
+  /// A vehicle created offline still carries a temporary local id; sending that
+  /// would store a meaningless reference, so the request travels with the real
+  /// name and plate instead of a fake id.
+  String get _workshopVehicleId {
+    final id = _vehicle?.id.trim() ?? '';
+    if (id.isEmpty) return '';
+    final serverId = VehicleIdentityStore.serverIdFor(id);
+    if (serverId != null && serverId.isNotEmpty) return serverId;
+    if (VehicleIdentityStore.isPending(id)) return '';
+    return id;
+  }
+
+  void _notice(String message) {
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _submit() async {
-    if (_selectedIssue == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select the breakdown issue type'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    if (_sending) return;
+
+    final issue = _issueText;
+    if (issue.isEmpty) {
+      _notice("Tell us what's wrong so the workshop can help.");
       return;
     }
-    setState(() => _isSaving = true);
-    final local = GenericLocalDataSource(
-      Hive.box<dynamic>('customer_breakdowns'),
-    );
-    final payload = {
-      'issue': _selectedIssue ?? '',
-      'vehicleId': _selectedVehicle?.id ?? '',
-      'vehicleName': _selectedVehicle?.displayName ?? 'Vehicle',
-      'vehiclePlate': _selectedVehicle?.plateNumber ?? '',
-      'location': _locationCtrl.text,
-      'notes': _notesCtrl.text.trim(),
-    };
-    var refId = '';
-    var synced = true;
-    final remote = ref.read(customerRemoteDataSourceProvider);
+    final location = _locationCtrl.text.trim();
+    if (location.isEmpty) {
+      _notice('Add where the vehicle is so the workshop can find you.');
+      return;
+    }
 
+    final payload = <String, dynamic>{
+      'issue': issue,
+      'vehicleName': _vehicle?.displayName ?? '',
+      'vehiclePlate': _vehicle?.plateNumber ?? '',
+      'location': location,
+    };
+    final vehicleId = _workshopVehicleId;
+    if (vehicleId.isNotEmpty) payload['vehicleId'] = vehicleId;
+
+    setState(() => _sending = true);
     try {
-      final resp = await remote.createBreakdown(payload);
-      refId = resp.id;
-    } catch (e, st) {
-      ref
-          .read(loggerProvider)
-          .e('Breakdown API failed', error: e, stackTrace: st);
-      if (e is NetworkException) {
-        synced = false;
-      } else {
-        if (!mounted) return;
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e is AppException
-                  ? e.message
-                  : 'Could not request emergency support.',
-            ),
-          ),
+      final response = await ref
+          .read(customerRemoteDataSourceProvider)
+          .createBreakdown(payload);
+      if (!mounted) return;
+      _showResult(sent: true, reference: response.id, location: location);
+    } on NetworkException catch (e) {
+      if (!mounted) return;
+      if (e.message.toLowerCase().contains('receive data')) {
+        // The workshop may already hold this request; queueing it would risk
+        // sending a second one, so the customer is asked to retry instead.
+        _notice(
+          "We couldn't confirm whether the workshop received this request. "
+          'Check your connection and try again.',
         );
         return;
       }
-    }
-
-    final id = refId.isNotEmpty ? refId : await IdGenerator.nextId('BD');
-    await local.save(id, {
-      ...payload,
-      'id': id,
-      'status': 'pending',
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-
-    if (!synced) {
-      final queue = ref.read(syncQueueProvider);
-      await queue.enqueue(
-        SyncOperation(
-          id: id,
-          entityType: 'breakdown',
-          entityId: id,
-          changeType: ChangeType.create,
-          payload: payload,
-          timestamp: DateTime.now().millisecondsSinceEpoch,
-        ),
+      await _queue(payload);
+      if (!mounted) return;
+      _showResult(sent: false, reference: '', location: location);
+    } on UnauthorizedException {
+      await ref.read(authNotifierProvider.notifier).logout();
+    } catch (e) {
+      if (!mounted) return;
+      _notice(
+        e is AppException
+            ? e.message
+            : "We couldn't send your request. Please try again.",
       );
-      await ref.read(syncEngineProvider).syncAll();
+    } finally {
+      if (mounted) setState(() => _sending = false);
     }
-
-    ref.invalidate(customerBreakdownsProvider);
-    if (!mounted) return;
-    Navigator.pop(context);
   }
 
-  Future<void> _callHelpline() async {
-    final opened = await launchUrl(Uri(scheme: 'tel', path: '800674368'));
-    if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to open the phone dialer.')),
-      );
+  /// Queues the request for the workshop.
+  ///
+  /// It is deliberately *not* pushed to the network here: while offline every
+  /// attempt counts as a failed retry, and a request that was never actually
+  /// sent must not exhaust its retries. The sync engine sends it when the
+  /// connection returns.
+  Future<void> _queue(Map<String, dynamic> payload) async {
+    final localId = 'breakdown-${DateTime.now().millisecondsSinceEpoch}';
+    try {
+      await ref
+          .read(syncQueueProvider)
+          .enqueue(
+            SyncOperation(
+              id: localId,
+              entityType: 'breakdown',
+              entityId: localId,
+              changeType: ChangeType.create,
+              payload: payload,
+              timestamp: DateTime.now().millisecondsSinceEpoch,
+            ),
+          );
+    } catch (e, st) {
+      ref
+          .read(loggerProvider)
+          .e('Failed to queue breakdown request', error: e, stackTrace: st);
+      if (mounted) {
+        _notice("We couldn't save this request on your device.");
+      }
     }
+  }
+
+  void _showResult({
+    required bool sent,
+    required String reference,
+    required String location,
+  }) {
+    context.pushReplacement(
+      AppRoutes.customerBreakdownResult,
+      extra: <String, dynamic>{
+        'sent': sent,
+        'reference': reference,
+        'vehicleName': _vehicle?.displayName ?? '',
+        'vehiclePlate': _vehicle?.plateNumber ?? '',
+        'location': location,
+        'issue': _issueText,
+      },
+    );
+  }
+
+  Future<void> _callWorkshop() async {
+    final uri = Uri(scheme: 'tel', path: '800674368');
+    final opened = await launchUrl(uri);
+    if (!opened && mounted) _notice('Unable to open the phone dialer.');
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    // Filter logic for scalability (Category + Search Query)
-    const categories = [
-      'All',
-      'Electrical',
-      'Wheels',
-      'Engine',
-      'Mechanical',
-      'Emergency',
-    ];
-
-    final filteredIssues = _issues.where((item) {
-      final matchesCategory =
-          _selectedCategory == 'All' || item.$4 == _selectedCategory;
-      final query = _searchCtrl.text.toLowerCase();
-      final matchesSearch =
-          query.isEmpty ||
-          item.$2.toLowerCase().contains(query) ||
-          item.$3.toLowerCase().contains(query);
-      return matchesCategory && matchesSearch;
-    }).toList();
+    final colors = theme.colorScheme;
+    final vehicles = _vehicles;
 
     return Scaffold(
-      // ── BOTTOM DOCKED CHECKOUT BAR ─────────────────────────────────────────
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(
-          24,
-        ).copyWith(bottom: MediaQuery.of(context).padding.bottom + 24),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.08),
-              blurRadius: 24,
-              offset: const Offset(0, -8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              height: 56,
-              child: OutlinedButton(
-                onPressed: _callHelpline,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: colorScheme.error,
-                  side: BorderSide(
-                    color: colorScheme.error.withValues(alpha: 0.5),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.phone_rounded,
-                      size: 18,
-                      color: colorScheme.error,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Call',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 56,
-                child: FilledButton.icon(
-                  onPressed: _isSaving ? null : _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colorScheme.error,
-                    foregroundColor: colorScheme.onError,
-                    disabledBackgroundColor:
-                        colorScheme.surfaceContainerHighest,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                  ),
-                  icon: _isSaving
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: colorScheme.onError,
-                          ),
-                        )
-                      : const Icon(Icons.warning_amber_rounded, size: 22),
-                  label: Text(
-                    _isSaving ? 'Sending request...' : 'Request assistance',
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.onError,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+      bottomNavigationBar: _Dock(
+        sending: _sending,
+        onCall: _callWorkshop,
+        onSubmit: _submit,
       ),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            AppTopBar(
-              title: 'Roadside assistance',
-              trailing: IconButton(
-                onPressed: _callHelpline,
-                icon: Icon(
-                  Icons.phone_in_talk_rounded,
-                  color: colorScheme.error,
-                ),
-                tooltip: 'Call the workshop',
-              ),
-            ),
-            Divider(height: 1, color: colorScheme.outlineVariant),
+            const AppTopBar(title: 'Roadside assistance'),
+            Divider(height: 1, color: colors.outlineVariant),
             Expanded(
               child: AppResponsivePage(
-                physics: const AlwaysScrollableScrollPhysics(),
+                maxContentWidth: 720,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 16),
-
-                    // ── EMERGENCY HERO BANNER ────────────────────────────────
-                    AppCard(
-                      borderRadius: 24,
-                      elevation: 0,
-                      color: colorScheme.errorContainer.withValues(alpha: 0.6),
-                      borderColor: colorScheme.error.withValues(alpha: 0.3),
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color: colorScheme.error,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.sos_rounded,
-                              color: colorScheme.onError,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Roadside assistance',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    color: colorScheme.error,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'We send your request straight to the workshop.',
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // ── ISSUE SELECTION SECTION (SCALABLE & CHIP GRID) ───────
+                    const SizedBox(height: AppDimensions.s12),
                     Text(
-                      'Select Issue Type',
-                      style: textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.onSurface,
-                        letterSpacing: -0.4,
+                      'Tell the workshop which vehicle needs help, where it '
+                      "is, and what's wrong.",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        height: 1.45,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Filter categories or search symptoms below',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                    const SizedBox(height: AppDimensions.s20),
+                    _Section(
+                      title: 'Which vehicle needs help?',
+                      child: _VehicleField(
+                        vehicles: vehicles,
+                        selected: _vehicle,
+                        onSelect: (vehicle) =>
+                            setState(() => _vehicle = vehicle),
+                        onAddVehicle: () =>
+                            context.push(AppRoutes.customerAddVehicle),
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    // 1. Search Bar for Future-Proof Scaling
-                    TextField(
-                      controller: _searchCtrl,
-                      onChanged: (_) => setState(() {}),
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface,
-                      ),
-                      decoration: InputDecoration(
-                        hintText:
-                            'Search specific issue (e.g. battery, tyre)...',
-                        hintStyle: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        filled: true,
-                        fillColor: colorScheme.surface,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: colorScheme.outlineVariant,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: colorScheme.outlineVariant,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: colorScheme.primary,
-                            width: 2,
-                          ),
+                    const SizedBox(height: AppDimensions.s16),
+                    _Section(
+                      title: 'Where are you?',
+                      child: TextField(
+                        controller: _locationCtrl,
+                        maxLines: 2,
+                        minLines: 1,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter your current location or landmark',
+                          helperText:
+                              'Type an address, exit or nearby landmark.',
+                          prefixIcon: Icon(Icons.location_on_outlined),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    // 2. Category Filter Chips (Horizontal Scroll)
-                    SizedBox(
-                      height: 40,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: categories.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          final cat = categories[index];
-                          final isSelected = _selectedCategory == cat;
-                          return GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedCategory = cat),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? colorScheme.primary
-                                    : colorScheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(100),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? colorScheme.primary
-                                      : colorScheme.outlineVariant,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  cat,
-                                  style: textTheme.labelSmall?.copyWith(
-                                    color: isSelected
-                                        ? colorScheme.onPrimary
-                                        : colorScheme.onSurface,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w900
-                                        : FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 3. Responsive Grid of Option Chips
-                    if (filteredIssues.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        child: Center(
-                          child: Text(
-                            'No matching breakdown issues found.',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2, // 2 items per row chip grid
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio:
-                                  1.5, // Compact rectangular chip cards
-                            ),
-                        itemCount: filteredIssues.length,
-                        itemBuilder: (context, index) {
-                          final item = filteredIssues[index];
-                          return _IssueChipCard(
-                            icon: item.$1,
-                            title: item.$2,
-                            subtitle: item.$3,
-                            selected: _selectedIssue == item.$2,
-                            onTap: () =>
-                                setState(() => _selectedIssue = item.$2),
-                            colorScheme: colorScheme,
-                          );
-                        },
-                      ),
-                    const SizedBox(height: 36),
-
-                    // ── DISPATCH DETAILS CARD ────────────────────────────────
-                    Text(
-                      'Dispatch Details',
-                      style: textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.onSurface,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Confirm vehicle and breakdown location',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    AppCard(
-                      borderRadius: 24,
-                      elevation: 0,
-                      padding: const EdgeInsets.all(20),
-                      color: colorScheme.surface,
-                      borderColor: colorScheme.outlineVariant,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.04),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                    const SizedBox(height: AppDimensions.s16),
+                    _Section(
+                      title: "What's wrong?",
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Vehicle Needing Assistance',
-                            style: textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: colorScheme.outlineVariant,
-                              ),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<CustomerVehicleEntity>(
-                                value: _selectedVehicle,
-                                isExpanded: true,
-                                dropdownColor: colorScheme.surface,
-                                hint: Text(
-                                  'Choose vehicle from garage',
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
+                          Wrap(
+                            spacing: AppDimensions.s8,
+                            runSpacing: AppDimensions.s8,
+                            children: [
+                              for (final symptom in _symptoms)
+                                ChoiceChip(
+                                  label: Text(symptom),
+                                  selected: _symptom == symptom,
+                                  onSelected: (selected) => setState(
+                                    () => _symptom = selected ? symptom : null,
                                   ),
                                 ),
-                                icon: Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: colorScheme.onSurfaceVariant,
-                                  size: 22,
-                                ),
-                                items: _vehicles
-                                    .map(
-                                      (v) => DropdownMenuItem(
-                                        value: v,
-                                        child: Text(
-                                          '${v.displayName} • ${v.plateNumber.toUpperCase()}',
-                                          style: textTheme.bodyMedium?.copyWith(
-                                            color: colorScheme.onSurface,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (v) =>
-                                    setState(() => _selectedVehicle = v),
-                              ),
-                            ),
+                            ],
                           ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Current GPS Location',
-                            style: textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: colorScheme.outlineVariant,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const SizedBox(width: 16),
-                                Icon(
-                                  Icons.my_location_rounded,
-                                  size: 20,
-                                  color: colorScheme.error,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _locationCtrl,
-                                    style: textTheme.bodyMedium?.copyWith(
-                                      color: colorScheme.onSurface,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: 'Enter location or landmark',
-                                      border: InputBorder.none,
-                                      hintStyle: textTheme.bodyMedium?.copyWith(
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            vertical: 16,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Additional Notes (Optional)',
-                            style: textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppDimensions.s12),
                           TextField(
-                            controller: _notesCtrl,
-                            maxLines: 2,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurface,
-                            ),
-                            decoration: InputDecoration(
+                            controller: _detailCtrl,
+                            maxLines: 3,
+                            minLines: 2,
+                            textInputAction: TextInputAction.done,
+                            decoration: const InputDecoration(
+                              labelText: 'Anything else? (optional)',
                               hintText:
-                                  'e.g. Parked in basement, hard to locate',
-                              hintStyle: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                              filled: true,
-                              fillColor: colorScheme.surfaceContainerHighest,
-                              contentPadding: const EdgeInsets.all(16),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: colorScheme.outlineVariant,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: colorScheme.outlineVariant,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: colorScheme.primary,
-                                  width: 2,
-                                ),
-                              ),
+                                  'e.g. Parked in the basement, hard to see',
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 60),
+                    if (_sending) ...[
+                      const SizedBox(height: AppDimensions.s16),
+                      const CustomerNoticePanel(
+                        message: 'Sending your request…',
+                        icon: Icons.cloud_upload_outlined,
+                        destructive: false,
+                      ),
+                    ],
+                    const SizedBox(height: AppDimensions.s32),
                   ],
                 ),
               ),
@@ -725,103 +327,233 @@ class _CustomerBreakdownHelpViewState
   }
 }
 
-// ─── COMPACT ISSUE CHIP CARD GRID WIDGET ──────────────────────────────────────
-class _IssueChipCard extends StatelessWidget {
-  final IconData icon;
+class _Section extends StatelessWidget {
   final String title;
-  final String subtitle;
-  final bool selected;
-  final VoidCallback onTap;
-  final ColorScheme colorScheme;
+  final Widget child;
 
-  const _IssueChipCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
+  const _Section({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          header: true,
+          child: Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        child,
+      ],
+    );
+  }
+}
+
+/// The customer's own vehicles, or an honest note when there are none.
+class _VehicleField extends StatelessWidget {
+  final List<CustomerVehicleEntity> vehicles;
+  final CustomerVehicleEntity? selected;
+  final ValueChanged<CustomerVehicleEntity> onSelect;
+  final VoidCallback onAddVehicle;
+
+  const _VehicleField({
+    required this.vehicles,
     required this.selected,
-    required this.onTap,
-    required this.colorScheme,
+    required this.onSelect,
+    required this.onAddVehicle,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-    return Material(
-      color: selected ? colorScheme.errorContainer : colorScheme.surface,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? colorScheme.error : colorScheme.outlineVariant,
-              width: selected ? 2 : 1,
-            ),
-          ),
+    if (vehicles.isEmpty) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.s14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? colorScheme.error.withValues(alpha: 0.15)
-                          : colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      icon,
-                      size: 18,
-                      color: selected
-                          ? colorScheme.error
-                          : colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  if (selected)
-                    Icon(
-                      Icons.check_circle_rounded,
-                      color: colorScheme.error,
-                      size: 18,
-                    ),
-                ],
+              Text(
+                'No vehicles registered yet',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.titleSmall?.copyWith(
-                      color: selected
-                          ? colorScheme.error
-                          : colorScheme.onSurface,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: AppDimensions.s4),
+              Text(
+                'You can still send a request. Adding the vehicle helps the '
+                'workshop keep your history in one place.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: onAddVehicle,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add vehicle'),
+                ),
               ),
             ],
           ),
+        ),
+      );
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          for (var index = 0; index < vehicles.length; index++) ...[
+            if (index > 0) Divider(height: 1, color: colors.outlineVariant),
+            _VehicleOption(
+              vehicle: vehicles[index],
+              selected: selected?.id == vehicles[index].id,
+              onTap: () => onSelect(vehicles[index]),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _VehicleOption extends StatelessWidget {
+  final CustomerVehicleEntity vehicle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _VehicleOption({
+    required this.vehicle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${vehicle.displayName} ${vehicle.plateNumber}'.trim(),
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s14,
+            vertical: AppDimensions.s12,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_off_rounded,
+                size: AppDimensions.iconMd,
+                color: selected ? colors.primary : colors.outline,
+              ),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Text(
+                  vehicle.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (vehicle.plateNumber.trim().isNotEmpty) ...[
+                const SizedBox(width: AppDimensions.s8),
+                CustomerPlateChip(plate: vehicle.plateNumber),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The send action, always reachable without scrolling.
+class _Dock extends StatelessWidget {
+  final bool sending;
+  final VoidCallback onCall;
+  final VoidCallback onSubmit;
+
+  const _Dock({
+    required this.sending,
+    required this.onCall,
+    required this.onSubmit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          border: Border(top: BorderSide(color: colors.outlineVariant)),
+        ),
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s16,
+          AppDimensions.s12,
+          AppDimensions.s16,
+          0,
+        ),
+        child: Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: sending ? null : onCall,
+              icon: const Icon(Icons.phone_outlined, size: 18),
+              label: const Text('Call'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(96, AppDimensions.touchTarget),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.s12),
+            Expanded(
+              child: FilledButton(
+                onPressed: sending ? null : onSubmit,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(AppDimensions.touchTarget),
+                ),
+                child: Text(
+                  sending ? 'Sending request…' : 'Request assistance',
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

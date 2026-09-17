@@ -93,7 +93,7 @@ void main() {
 
         expect(location, isNot(AppRoutes.customerBookingDetail));
         expect(location, isNot(AppRoutes.customerInvoiceDetail));
-        expect(location, isNot(AppRoutes.customerBreakdownDetail));
+        expect(location, isNot(AppRoutes.customerBreakdownResult));
         expect(location.contains('estimateId'), isFalse);
       }
     });

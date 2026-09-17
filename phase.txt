@@ -1,6 +1,6 @@
 You are continuing the Orient Mobile Flutter product modernization.
 
-The following Customer domains are COMPLETE and FROZEN:
+The following Customer domains are now COMPLETE and FROZEN:
 
 * Authentication
 * Home
@@ -11,378 +11,341 @@ The following Customer domains are COMPLETE and FROZEN:
 * Service Status
 * Contextual Approvals
 * Vehicles
-* Vehicle offline identity reconciliation
+* Vehicle offline/sync identity
 * Profile / Account
+* Notifications inbox
+* FCM notification lifecycle / push-open behavior
 
-DO NOT redesign any of those.
+DO NOT redesign any of those domains.
 
 ==================================================
 CURRENT TASK
 ============
 
-Audit, redesign, implement and verify the COMPLETE CUSTOMER NOTIFICATIONS EXPERIENCE.
+Audit, redesign, implement and verify the COMPLETE CUSTOMER ROADSIDE ASSISTANCE / BREAKDOWN DOMAIN.
 
 This is NOT:
 
-"Make customer_notifications_view.dart prettier."
+"Make the breakdown form prettier."
 
 This is:
 
-"Make the Customer notification inbox a truthful, persistent, useful contextual product surface."
+"Determine what roadside assistance the product REALLY supports, then make the full request lifecycle truthful, useful and modern."
 
-The primary questions are:
+This includes all existing Breakdown-related:
 
-1. What notification data genuinely exists?
-2. Is read/unread state persisted to the backend correctly?
-3. What does tapping each notification actually do?
-4. Can notifications deep-link into the correct Customer domain?
-5. Does the inbox remain useful with 1, 10 or 100 notifications?
-6. Does it avoid looking empty when there are only a few?
-7. Are loading/error/refresh/read states honest?
-8. Are unread badges consistent with Home?
-9. Are there duplicate or dead notification implementations?
+* entry points
+* request/create flow
+* pending/requested state
+* offline submission
+* status/history if real
+* any detail screen
+* routing
+* notifications integration
+* dead code
+* failure/retry behavior
 
 ==================================================
-NAVIGATION PRODUCT DECISION — FROZEN
-====================================
+PRIMARY PRODUCT QUESTIONS
+=========================
 
-Notifications is CONTEXTUAL.
+Before UI work determine:
 
-It is NOT a permanent bottom-navigation destination.
+1. What exactly does a customer submit?
+2. What does the backend actually promise?
+3. Does it dispatch assistance automatically?
+4. Is there a workshop acceptance/assignment step?
+5. Does the customer receive status updates?
+6. Does a real Breakdown Detail endpoint exist?
+7. Can a customer see previous breakdown requests?
+8. Is live location actually collected?
+9. Is the request offline-syncable?
+10. What happens after a request succeeds?
+11. Can it be cancelled?
+12. Can it be retried safely?
+13. Which notification types relate to breakdown?
+14. Does the current UI claim things the backend does not support?
 
-Customer permanent navigation remains:
-
-Home
-Bookings
-Vehicles
-Profile
-
-Home header owns the notification bell + unread badge.
-
-Do NOT add Notifications to bottom navigation.
-
-Do NOT add Notifications back into Profile.
+Do NOT begin visual redesign until these are answered.
 
 ==================================================
 MULTI-AGENT EXECUTION — MANDATORY
 =================================
 
-Use AT LEAST SIX specialized subagents.
+Use at least SIX specialized subagents for initial discovery.
 
-Run independent discovery in parallel.
+Run all independent audits IN PARALLEL.
 
 The lead agent must:
 
-* delegate
-* collect evidence
-* verify critical claims
-* synthesize the product architecture
-* assign non-overlapping implementation ownership
-* integrate
-* run final testing
-* visually inspect results
-
-Do NOT let several agents rewrite the same file.
+* assign non-overlapping scopes
+* collect evidence with file:line
+* verify critical backend claims personally
+* synthesize product decisions
+* assign implementation ownership
+* integrate serially where files overlap
+* run final tests
+* run visual QA
+* stop after this domain
 
 ==================================================
-SUBAGENT 1 — NOTIFICATIONS PRODUCT / UX AUDIT
-=============================================
+SUBAGENT 1 — PRODUCT / UX AUDIT
+===============================
 
 READ ONLY initially.
 
+Inspect every Customer Breakdown / Roadside screen and entry point.
+
+Search for:
+
+breakdown
+roadside
+SOS
+emergency
+dispatch
+assistance
+towing
+location
+GPS
+vehicle breakdown
+
 Inspect:
 
-customer_notifications_view.dart
-
-any notification list/item widgets
-
-Home notification bell
-
-unread badge
-
-notification detail behavior
-
-routes opened by notification taps
-
-empty/error/loading states
-
-pull-to-refresh
-
-notification grouping
-
-timestamps
-
-read/unread appearance
-
-Determine:
-
-* current screen responsibilities
-* current information hierarchy
-* whether notifications are grouped meaningfully
-* whether unread is obvious
-* whether current cards are too large
-* whether screen looks empty with 1–3 notifications
-* whether screen becomes inefficient with many notifications
-* whether notification taps have real effects
-* whether notification type semantics exist
-* whether actions are duplicated
+* Profile Roadside assistance entry
+* any Home entry
+* breakdown request page
+* breakdown detail page
+* success state
+* request history
+* notifications
+* route definitions
+* old widgets
 
 Return:
 
-CURRENT UX
-PRODUCT PROBLEMS
-INFORMATION AVAILABLE
-READ/UNREAD BEHAVIOR
-TAP BEHAVIOR
-DENSITY PROBLEMS
-DUPLICATION
+CURRENT JOURNEY
+ENTRY POINTS
+SCREEN RESPONSIBILITIES
+FAKE CLAIMS
+DUPLICATED SCREENS
+DEAD SCREENS
+LOW-DENSITY AREAS
+BROKEN ACTIONS
 RECOMMENDED PRODUCT STRUCTURE
 FILES
 
+Do NOT modify code.
+
 ==================================================
-SUBAGENT 2 — BACKEND / DATA CONTRACT AUDIT
-==========================================
+SUBAGENT 2 — BACKEND CONTRACT AUDIT
+===================================
 
 READ ONLY.
 
 Inspect backend:
 
-NotificationController
-NotificationService
-notification entity/model
-repository
-database fields
-customer notification endpoints
+CustomerBreakdownController
+BreakdownService
+Breakdown entity
+BreakdownResponse
+request DTO
+assignment/update endpoints
+advisor/staff breakdown flows
+database schema
+notification creation
 
-Inspect Flutter:
-
-NotificationEntity
-datasource
-repository
-providers
-notifier/state
-mapping
-
-Determine exact fields:
+Determine exact fields such as:
 
 id
-title
-message/body
-type/category
+ref
+vehicleId
+vehicle
+location
+latitude
+longitude
+description
+issue
+status
+priority
+assigned staff
+advisor
 createdAt
-read
-related entity id/reference
-route
-metadata
-action
-customer id
-branch id
+updatedAt
+notes
+phone
+branch
 
-For EACH field report:
+Do not assume these names.
+
+For EACH actual field report:
 
 SOURCE
-RELIABILITY
-NULLABILITY
+REQUIRED?
+EDITABLE?
 CUSTOMER-FACING?
-NAVIGATION USE?
+SAFE TO DISPLAY?
+STATUS OWNERSHIP
 
-Explicitly determine:
-
-* GET notifications contract
-* mark one read endpoint
-* mark all read endpoint
-* unread count source
-* sort order
-* pagination or no pagination
-* server persistence of read state
-* idempotency of mark-read
-* notification retention behavior if visible
+Determine actual statuses and lifecycle.
 
 Return:
 
-REAL CONTRACT
-READ APIs
-UNREAD COUNT CONTRACT
-NAVIGATION METADATA
-MISSING FIELDS
+REQUEST CONTRACT
+RESPONSE CONTRACT
+STATUS LIFECYCLE
+CUSTOMER ENDPOINTS
+STAFF/ADVISOR ENDPOINTS
+ASSIGNMENT BEHAVIOR
+CANCELLATION SUPPORT
+HISTORY SUPPORT
 BACKEND LIMITATIONS
 
 ==================================================
-SUBAGENT 3 — READ-STATE CORRECTNESS AUDIT
-=========================================
-
-This is CRITICAL.
-
-The previous Profile audit reported:
-
-notification read state appeared to be mutated locally while backend functions:
-
-markNotificationRead
-markAllNotificationsRead
-
-had zero call sites.
-
-Verify this from the CURRENT code.
-
-Trace:
-
-Home unread badge
-→ notification provider
-→ inbox
-→ mark one read
-→ mark all read
-→ refresh
-→ app restart
-
-Answer:
-
-1. Does tapping notification call backend mark-read?
-2. Does "Mark all as read" call backend?
-3. Does unread count update optimistically?
-4. Does failed backend mark-read roll back or reconcile?
-5. After app restart does a previously read item stay read?
-6. Does Home badge reflect the same canonical state?
-7. Are there race conditions?
-8. Are multiple API calls triggered for the same notification?
-9. Is read state preserved during refresh?
-10. Is the unread count calculated locally or returned by API?
-
-Return:
-
-CURRENT FLOW
-BUGS
-BACKEND CALLS MISSING
-CANONICAL STATE
-RECOMMENDED FIX
-TEST REQUIREMENTS
-
-==================================================
-SUBAGENT 4 — NOTIFICATION ROUTING / ACTION AUDIT
-================================================
+SUBAGENT 3 — LOCATION / GPS AUDIT
+=================================
 
 READ ONLY.
 
-Inspect all notification types emitted by backend/workshop.
+This is CRITICAL.
 
-Search:
+Inspect Flutter dependencies and production code for:
 
-Notification(...)
-createNotification(...)
-notificationService
-send notification
-FCM payloads
+geolocator
+location
+permission_handler
+maps
+GPS
+coordinates
+address lookup
+reverse geocoding
+platform permissions
 
-Build a table:
+Determine:
 
-TYPE / SOURCE EVENT / CUSTOMER MEANING / RELATED ID / IDEAL DESTINATION
-
-Potential events may involve:
-
-booking
-booking confirmation
-service status
-approval
-invoice
-vehicle
-breakdown
-general message
-
-Do NOT invent event types.
-
-Determine whether backend provides enough identifiers for safe deep linking.
-
-For every actual notification type decide:
-
-A. safe deep link exists
-B. contextual destination exists but identifier is insufficient
-C. no action should be shown
-
-Do not route by parsing free-text notification messages unless the code already uses a reliable documented format.
+* whether live location is actually collected
+* whether location permission exists
+* whether lat/lng is sent
+* whether only a text address exists
+* whether current copy falsely says auto-detected
+* whether manual location entry is canonical
+* whether map/location UI is real or decorative
 
 Return:
 
-ACTUAL TYPES
-PAYLOAD METADATA
-SAFE ROUTES
-UNSAFE ROUTES
-NO-ACTION TYPES
-MISSING BACKEND RELATIONSHIPS
+REAL LOCATION CAPABILITY
+FAKE LOCATION CLAIMS
+PERMISSIONS
+BACKEND LOCATION FIELDS
+SAFE UX
+
+Do NOT introduce geolocation merely because it sounds useful.
 
 ==================================================
-SUBAGENT 5 — PUSH / FCM AUDIT
-=============================
+SUBAGENT 4 — OFFLINE / SYNC AUDIT
+=================================
 
 READ ONLY.
 
 Inspect:
 
-Firebase Messaging
-DeviceTokenController
-token registration
-foreground handling
-background/opened-app handling
-local notification display
-deep link handling
-refresh behavior after incoming notification
+breakdown offline create
+SyncEngine
+queue operation
+idempotency key
+local cache
+failure queue
+retry behavior
+success reconciliation
+temporary ids
+notifications
 
 Determine:
 
-* token lifecycle
-* foreground notifications
-* background notifications
-* notification-open routing
-* whether receiving a notification updates inbox/unread badge
-* whether app resumes and refreshes state
-* duplicate notification risks
-* whether notification tap from OS can route correctly
-
-This task does NOT need a Firebase architecture rewrite.
-
-Identify only issues directly affecting the Customer notification experience.
+* whether a breakdown request can genuinely be queued offline
+* what customer sees while queued
+* whether success is falsely reported
+* whether server response is reconciled
+* whether duplicate requests are possible
+* whether failed sync is recoverable
+* whether app restart preserves pending requests
 
 Return:
 
-FCM FLOW
-INBOX REFRESH
-BADGE REFRESH
-OPEN-ACTION FLOW
-DUPLICATION RISKS
-SCOPE-SAFE FIXES
+OFFLINE CONTRACT
+TEMP ID BEHAVIOR
+REPLAY
+IDEMPOTENCY
+RECONCILIATION
+FAILURE STATE
+CUSTOMER RECOVERY
+RISKS
 
 ==================================================
-SUBAGENT 6 — TEST / REGRESSION AUDIT
-====================================
+SUBAGENT 5 — ROUTING / DETAIL / NOTIFICATION AUDIT
+==================================================
 
 READ ONLY.
 
-Inspect existing notification tests.
+Inspect:
+
+breakdown routes
+CustomerBreakdownDetailView
+route extras
+notification type `breakdownAssigned`
+FCM routing
+existing request success navigation
+
+Determine:
+
+* whether a real customer Breakdown Detail screen is justified
+* whether it can load by id/ref
+* whether it only accepts a full object via route extra
+* whether its content is real or fabricated
+* whether `breakdownAssigned` can route there safely
+* whether a broad Breakdown page exists
+* whether Notifications should continue falling back to inbox
+
+Return:
+
+ROUTES
+DETAIL CAPABILITY
+DEEP-LINK CAPABILITY
+DEAD ROUTES
+NOTIFICATION LIMITATIONS
+PRODUCT RECOMMENDATION
+
+==================================================
+SUBAGENT 6 — TEST / VISUAL REGRESSION AUDIT
+===========================================
+
+READ ONLY.
+
+Inspect existing Breakdown tests/goldens.
 
 Identify coverage for:
 
-list
-empty
-loading
-error
-refresh
-unread
-mark read
-mark all
-backend persistence
-deep links
-large list
-timestamps
+request
+offline
+success
+failure
+validation
+location
+vehicle
+status
+history
+detail
+notification link
+responsive
 dark mode
-320px
-1.6x text
-Home badge
+text scale
 
 Return:
 
 EXISTING COVERAGE
 STALE TESTS
 MISSING TESTS
-GOLDEN PLAN
-HIGH-RISK CASES
+REQUIRED GOLDENS
+HIGH-RISK REGRESSIONS
 
 ==================================================
 SUBAGENT 7 — VISUAL PRODUCT QA
@@ -390,635 +353,631 @@ SUBAGENT 7 — VISUAL PRODUCT QA
 
 Run AFTER implementation.
 
-Review every notification golden.
+Review every Breakdown golden.
 
-For each state report:
+Report per golden:
 
 DEAD WHITESPACE
 INFORMATION DENSITY
-UNREAD CLARITY
-TIMESTAMP CLARITY
-GROUPING QUALITY
+URGENCY CLARITY
+FAKE CLAIMS
+FORM CLARITY
 PRIMARY ACTION CLARITY
-LONG MESSAGE HANDLING
 MOBILE SPACE USE
 DESKTOP SPACE USE
+ERROR STATE QUALITY
 DARK MODE
 GENERIC AI LOOK
-FAKE CONTENT
 
-The lead must fix blocking issues before completion.
+Any fake promise or giant empty emergency screen is BLOCKING.
 
 ==================================================
 LEAD SYNTHESIS BEFORE IMPLEMENTATION
 ====================================
 
-After audits complete:
+After all audits complete, the lead must explicitly decide:
 
-DO NOT code immediately.
+1. What should this feature be called?
+2. Is "Roadside assistance" the truthful primary name?
+3. Is "Breakdown" an internal/backend term only?
+4. Is this emergency dispatch or merely a workshop assistance request?
+5. Is a detail/status screen justified?
+6. Is history supported?
+7. Is GPS supported?
+8. Is vehicle selection required?
+9. Is manual location required?
+10. Is phone/contact required?
+11. Is offline request safe?
+12. What does success actually mean?
+13. Which current claims must be deleted?
 
-First decide:
-
-1. What notification fields are trustworthy?
-2. What creates unread count?
-3. What state is canonical?
-4. Which notification types can deep-link safely?
-5. Should notifications be grouped?
-6. Does the product need notification detail pages?
-7. Does "Mark all read" belong in the UI?
-8. How should failure of mark-read behave?
-9. How should notifications scale to many records?
-10. Which legacy/dead notification files should be removed?
-
-==================================================
-NOTIFICATION DETAIL — DECISION GATE
-===================================
-
-Do NOT create a Notification Detail screen automatically.
-
-Use one ONLY if notifications contain substantially more content than can reasonably be shown in the list.
-
-If notification has only:
-
-title
-message
-time
-type
-
-then the row itself may be enough.
-
-Tapping can:
-
-* mark read
-* navigate directly to the related product destination
-
-Do not create:
-
-Notifications List
-→ Notification Detail
-→ Booking Detail
-
-if the middle screen adds nothing.
+Only then implement.
 
 ==================================================
-INBOX PRODUCT RESPONSIBILITY
+NAMING / PRODUCT LANGUAGE
+=========================
+
+Prefer truthful customer language.
+
+Potential primary label:
+
+Roadside assistance
+
+Internal code may remain:
+
+Breakdown
+
+if changing domain names broadly would create unnecessary churn.
+
+Do NOT use:
+
+SOS
+Emergency dispatch
+Rescue unit
+Tow truck dispatched
+
+unless the backend/business genuinely guarantees those outcomes.
+
+==================================================
+KNOWN HISTORICAL FAKE CLAIMS
 ============================
 
-The inbox answers:
+Earlier audit found old copy such as:
 
-"What changed and what needs my attention?"
+"24/7 Roadside SOS"
 
-Each row should communicate quickly:
+"Avg response: 15–20 mins"
 
-* unread/read
-* title
-* concise message
-* time/date
-* contextual type/state if useful
-* destination/action where real
+"Free towing up to 40km"
 
-Do not make every notification a huge promotional card.
+"Request Emergency Dispatch"
 
-==================================================
-HEADER
-======
+"Dispatching Unit..."
 
-Use a compact contextual AppTopBar.
+"Current GPS Location (Auto-detected)"
 
-Title:
+Profile cleanup already corrected some visible copy.
 
-Notifications
+Search the ENTIRE Breakdown domain for remaining equivalents.
 
-Back
-
-Optional action:
-
-Mark all as read
-
-ONLY when:
-
-* at least one unread exists
-* backend operation genuinely works
-
-Do not show disabled/no-op header actions.
-
-Potential compact subtitle/count:
-
-3 unread
-
-if genuinely useful.
-
-Do not create giant KPI surfaces.
+Remove anything unsupported.
 
 ==================================================
-READ / UNREAD VISUAL HIERARCHY
-==============================
+REQUEST FORM PRODUCT RESPONSIBILITY
+===================================
 
-Unread state must be immediately visible.
+The request form must answer:
 
-But do not paint whole cards bright colors.
+Which vehicle needs help?
 
-Possible treatment:
+Where are you?
 
-* subtle tonal background
-* small unread dot
-* stronger title weight
+What happened?
 
-Use at least one non-color signal.
+How can the workshop understand the issue?
 
-Read notifications should remain fully legible.
+What am I actually submitting?
 
-Do NOT fade them to inaccessible opacity.
+Do not make it feel like a flashy emergency landing page.
 
 ==================================================
-MARK ONE AS READ
-================
-
-Define canonical behavior.
-
-Preferred flow:
-
-user taps notification
-→ optimistically mark read locally if safe
-→ call backend
-→ update shared unread count
-→ navigate to destination
-
-OR:
-
-backend then local
-
-depending on repository architecture.
-
-Choose based on correctness.
-
-Requirements:
-
-* no duplicate backend calls
-* no race with refresh
-* no badge inconsistency
-* app restart must preserve read state via backend
-* failure must eventually reconcile
-
-==================================================
-MARK-READ FAILURE
+VEHICLE SELECTION
 =================
 
-Do not block navigation to useful content merely because read persistence failed unless architecture requires it.
+Use REAL customer vehicles.
 
-If navigation succeeds but mark-read fails:
+If one vehicle:
+preselect it.
 
-keep/invalidate state so next refresh restores backend truth.
+If multiple:
+allow compact selection.
 
-Do not show raw API errors for every failed read marker unless customer action is genuinely required.
+If none:
+determine whether backend permits request without vehicle.
 
-Use product judgment.
+If vehicle is required:
+show a truthful Add vehicle path.
 
-==================================================
-MARK ALL READ
-=============
-
-If backend supports mark-all:
-
-wire it.
-
-Requirements:
-
-* loading state
-* duplicate-tap protection
-* unread count becomes zero on success
-* Home badge updates
-* refresh keeps everything read
-* failure reconciles honestly
-
-Do not loop over each notification client-side if a real bulk endpoint exists.
+Do not fabricate a vehicle.
 
 ==================================================
-HOME BADGE CONSISTENCY
-======================
-
-This is CRITICAL.
-
-Home bell badge and Notification inbox must use the SAME canonical state.
-
-Scenario:
-
-Home shows 4 unread
-→ open Notifications
-→ read one
-→ back Home
-
-Expected:
-
-Home shows 3
-
-Then:
-
-Mark all read
-→ Home badge disappears
-
-After app restart/refresh:
-
-still zero if backend persisted it.
-
-Test this.
-
-==================================================
-INCOMING NOTIFICATION CONSISTENCY
-=================================
-
-If app receives a new push while active:
-
-inbox/unread count should eventually refresh through the existing messaging/provider architecture.
-
-Do not fake local insertion unless payload contains enough canonical data.
-
-Prefer canonical refresh if appropriate.
-
-==================================================
-ROW DESIGN
-==========
-
-Rows should be compact and information-rich.
-
-Conceptual:
-
-●  Estimate ready for review
-Your workshop sent an estimate for Toyota Camry.
-12 min ago                                  →
-
-Use real data.
-
-Do NOT invent vehicle names if notification payload does not include them.
-
-==================================================
-NO GIANT CARDS
-==============
-
-Avoid:
-
-20px exterior gap
-24px card padding
-large 48px decorative icon tile
-multiple metadata lines
-button footer
-
-for every notification.
-
-Use grouped surface:
-
-row
-divider
-row
-divider
-
-where appropriate.
-
-This is an inbox.
-
-==================================================
-GROUPING
-========
-
-Consider useful temporal grouping:
-
-Today
-Earlier
-
-or:
-
-Today
-Yesterday
-Earlier
-
-ONLY if timestamps reliably support it.
-
-Do not over-group five notifications into five tiny sections.
-
-Choose the simplest grouping that improves scanning.
-
-If list is short, a single grouped surface may be better.
-
-==================================================
-TIMESTAMPS
-==========
-
-Use a consistent timestamp formatter.
-
-Possible behavior:
-
-recent:
-12 min ago
-
-same day:
-3:42 PM
-
-older:
-15 Sep
-
-But only if an existing canonical time formatter supports this.
-
-Do not create inconsistent hand-written timestamp logic across widgets.
-
-Test timezone handling.
-
-==================================================
-LARGE NOTIFICATION COUNT
-========================
-
-Test at least:
-
-1 notification
-3 notifications
-20 notifications
-100 notifications if architecture permits fixture generation
-
-Do not render 100 giant cards.
-
-Ensure list lazily renders.
-
-Use ListView.builder / slivers appropriately.
-
-==================================================
-PAGINATION
-==========
-
-If backend supports pagination:
-
-use it properly.
-
-If backend returns the entire list:
-
-do NOT invent fake pagination.
-
-Report the scalability limitation.
-
-==================================================
-ONE NOTIFICATION
+VEHICLE IDENTITY
 ================
-
-One notification should not make the page look unfinished.
 
 Use:
 
-AppTopBar
-compact unread summary if applicable
-proper grouped surface
-well-proportioned row
+make/model
+plate
+relevant real metadata
 
-Do not make the row 250px tall to fill space.
+No stock images.
 
-Some whitespace after one row is legitimate.
+No hardcoded car silhouettes.
 
-But structure must feel intentional.
-
-==================================================
-EMPTY STATE
-===========
-
-Zero notifications:
-
-must feel purposeful.
-
-Suggested concept:
-
-You're all caught up
-
-Updates about bookings, estimates and service progress will appear here.
-
-ONLY make that statement if those are actual emitted notification domains.
-
-Otherwise use generic truthful wording:
-
-Updates from the workshop will appear here.
-
-No giant illustration required.
-
-No fake notification previews.
+Reuse established vehicle components where appropriate.
 
 ==================================================
-LOADING
+OFFLINE / UNSYNCED VEHICLE
+==========================
+
+Respect the previously frozen vehicle identity system.
+
+Do NOT send a temporary vehicle id to backend if the Breakdown API requires a persisted vehicle id.
+
+If Breakdown request can safely queue offline with a temp id and reconciliation exists:
+use the established mechanism.
+
+Otherwise block honestly.
+
+Do not create a second temp-id architecture.
+
+==================================================
+LOCATION
+========
+
+If real GPS is NOT supported:
+
+use a clear manual location field.
+
+Possible label:
+
+Where are you?
+
+Helper text:
+Enter your current location or nearby landmark.
+
+Do not say:
+
+Auto-detected
+Current GPS
+Live location
+
+without actual capability.
+
+==================================================
+LOCATION INPUT DENSITY
+======================
+
+Avoid a giant map placeholder if there is no map.
+
+Use a normal purposeful text field.
+
+If backend stores only free text:
+do not fabricate coordinate/map precision.
+
+==================================================
+ISSUE / DESCRIPTION
+===================
+
+Inspect the actual DTO.
+
+If one description field exists:
+
+do not invent multiple fake categories unless they improve the payload honestly.
+
+Potential UI:
+
+What's wrong?
+
+Describe what happened
+
+Only add issue chips such as:
+
+Flat tyre
+Won't start
+Overheating
+
+if:
+
+* backend genuinely supports free-text mapping cleanly
+* product UX benefits
+* chip simply fills the same real description field
+* choices are not misleading
+
+Do not create pseudo-diagnostics.
+
+==================================================
+CONTACT INFORMATION
+===================
+
+If backend already knows authenticated customer's phone/contact:
+
+do not make the user re-enter it without reason.
+
+If request DTO genuinely requires contact phone:
+pre-fill from real session data if safe.
+
+Do not fabricate missing phone.
+
+==================================================
+REQUEST REVIEW
+==============
+
+Determine whether a separate Review step is warranted.
+
+For a simple form containing:
+
+vehicle
+location
+description
+
+a separate review screen may be unnecessary.
+
+Do not create a wizard just because Booking uses one.
+
+Prefer one efficient form if the product is simple.
+
+==================================================
+SUBMISSION CTA
+==============
+
+Use truthful copy.
+
+Examples:
+
+Request assistance
+
+or:
+
+Send assistance request
+
+Do NOT use:
+
+Dispatch now
+Send rescue
+Emergency dispatch
+
+unless real.
+
+==================================================
+SUBMISSION LOADING
+==================
+
+Use:
+
+Sending request…
+
+Do NOT say:
+
+Dispatching unit…
+
+unless assignment has actually happened.
+
+Prevent duplicate submits.
+
+==================================================
+SUBMISSION SUCCESS — CRITICAL
+=============================
+
+Success must communicate exactly what happened.
+
+If backend only accepted the request:
+
+say:
+
+Request sent
+
+not:
+
+Help is on the way
+
+unless assignment is already confirmed.
+
+Possible truthful hierarchy:
+
+Request sent
+
+The workshop has received your roadside assistance request.
+
+Reference:
+BR-...
+
+Vehicle
+Location
+
+We'll show updates here when they are available.
+
+Only include claims supported by real status flow.
+
+==================================================
+SUCCESS ACTIONS
+===============
+
+Potential:
+
+View request
+
+ONLY if real Detail/status is supported.
+
+Otherwise:
+
+Back to Home
+
+or:
+
+Done
+
+Do not create a dead View Request button.
+
+==================================================
+STATUS / DETAIL DECISION
+========================
+
+Create or retain Breakdown Detail ONLY if real backend/customer data makes it useful.
+
+The detail page must add meaningful information such as:
+
+request reference
+vehicle
+location
+description
+real status
+assigned advisor/team if real
+created time
+updated state
+
+Do NOT retain it if it only shows invented dispatch progress.
+
+==================================================
+IF DETAIL IS NOT JUSTIFIED
+==========================
+
+Delete the dead/unreachable detail implementation after verifying references.
+
+Do not preserve it because a route once existed.
+
+Notifications for `breakdownAssigned` should continue to fall back safely to inbox if there is no reliable destination.
+
+==================================================
+IF DETAIL IS JUSTIFIED
+======================
+
+Then List/request success vs Detail must have distinct purposes.
+
+REQUEST FORM:
+submit assistance request
+
+DETAIL:
+understand the current real request state
+
+Do not duplicate.
+
+==================================================
+STATUS VOCABULARY
+=================
+
+Use backend statuses.
+
+Do NOT invent:
+
+Dispatching
+Unit en route
+Arriving soon
+
+unless these are actual statuses.
+
+Create one canonical customer-facing status mapping.
+
+Reuse it everywhere.
+
+==================================================
+ASSIGNMENT
+==========
+
+If backend can assign staff/advisor:
+
+show assignment only after a real assignment exists.
+
+Potential:
+
+Assigned to workshop team
+
+or actual advisor/team name if returned.
+
+Do not show:
+
+Technician verified
+Rescue driver
+ETA
+
+unless real.
+
+==================================================
+ETA
+===
+
+No estimated arrival time unless backend provides one.
+
+Never calculate from request time.
+
+Never reuse old "15–20 minutes" copy.
+
+==================================================
+TOWING
+======
+
+Do not mention towing unless:
+
+* API/product explicitly supports it
+* customer request includes it
+* business contract guarantees something
+
+Do not keep the old "free towing up to 40km" promise.
+
+==================================================
+HISTORY
 =======
 
-Use a notification-list skeleton.
+If customer API exposes multiple breakdown requests/history:
 
-Rows should roughly resemble final density.
+consider whether Roadside assistance page should show:
 
-Do not use a fullscreen spinner.
+Current request
+Recent requests
+
+Only if genuine.
+
+If only create exists:
+do not invent history.
 
 ==================================================
-FIRST-LOAD ERROR
-================
+ONE ACTIVE REQUEST
+==================
 
-Use an honest recoverable state:
+Audit whether customer can create multiple simultaneous requests.
 
-"We couldn't load your notifications."
+If backend permits it but product logically should not:
+do NOT invent a client restriction without evidence.
+
+If backend exposes an active request:
+consider showing it prominently instead of immediately presenting another blank form.
+
+==================================================
+OFFLINE REQUEST — PRODUCT HONESTY
+=================================
+
+If queued offline:
+
+do NOT say:
+
+Request sent to workshop
+
+Say something like:
+
+Request saved on this device
+
+It will be sent when you're back online.
+
+Only if this accurately matches sync behavior.
+
+==================================================
+OFFLINE SAFETY
+==============
+
+Because Roadside Assistance may be urgent:
+
+do not overstate offline reliability.
+
+If offline request is merely queued locally, clearly indicate that the workshop has NOT received it yet.
+
+This is more important here than in normal booking flows.
+
+==================================================
+FAILED SYNC
+===========
+
+If a queued roadside request exhausts retries:
+
+do not silently leave it in a failed box.
+
+Audit whether current sync architecture exposes failure state.
+
+If it does:
+show a compact recovery action.
+
+Conceptually:
+
+"We couldn't send this request."
 
 Retry
 
-Do not claim network failure unless known.
-
-==================================================
-REFRESH FAILURE
-===============
-
-If current data exists:
-
-retain it.
-
-Use CustomerRefreshNotice.
-
-Do not blank the inbox.
-
-==================================================
-DEEP LINKS
-==========
-
-Only navigate using reliable identifiers.
-
-Potential canonical destinations already available:
-
-Bookings
-Booking Details
-Service Status
-Approval
-Vehicles
-Roadside assistance
-
-But DO NOT force every notification into one of them.
-
-If notification metadata is insufficient:
-
-mark read and leave row non-navigational
-or use the safest broad destination only if clearly meaningful.
-
-Do not parse IDs from display text.
-
-==================================================
-ACTION PRIORITY
-===============
-
-Notifications that require action should make that clear if actual type/status proves it.
-
-Examples conceptually:
-
-Estimate ready
-Review →
-
-Service started
-Track →
-
-Booking confirmed
-View booking →
-
-ONLY if backend event type + related id support this.
-
-Do not infer ACTION REQUIRED just from wording.
-
-==================================================
-NOTIFICATIONS VS APPROVALS
-==========================
-
-Approvals remains contextual.
-
-A notification about an estimate should deep-link to:
-
-approvalsLocation(estimateId)
-
-when exact estimateId exists.
-
-Do not add an Approvals tab.
-
-==================================================
-NOTIFICATIONS VS STATUS
-=======================
-
-Service Status remains contextual.
-
-A live-service notification may open Status only when it corresponds reliably to the customer's active job.
-
-Do not open Status for an unrelated/old service blindly.
-
-==================================================
-NOTIFICATIONS VS BOOKINGS
-=========================
-
-If a booking notification carries exact booking identification:
-
-prefer Booking Detail.
-
-If only generic booking state exists:
-
-Bookings list may be safer.
-
-Do not construct fake BookingEntity objects.
-
-==================================================
-NOTIFICATION INBOX ENTRY
-========================
-
-Home bell remains the primary entry.
-
-Verify:
-
-tap bell
-→ Notification page
-
-Back:
-→ Home
-
-Do not create an alternative duplicated shell.
-
-Notification page should be contextual, with AppTopBar back behavior and NO bottom nav.
-
-==================================================
-OS PUSH TAP
-===========
-
-If existing FCM metadata allows direct routing:
-
-preserve/improve it.
-
 If not:
+report the limitation.
 
-opening the Notification inbox is safer than guessing.
-
-Do not redesign the entire push architecture in this task.
-
-==================================================
-NO FAKE PRODUCT CONTENT
-=======================
-
-Do NOT create:
-
-"Offers"
-"Promotions"
-"Deals"
-"Recommended services"
-"VIP alerts"
-"Rewards"
-"Flash sale"
-
-unless real backend notification types exist.
+Because this is safety-adjacent, do not show false delivery.
 
 ==================================================
-NO EMPTY-LOOKING UI
+ONLINE FAILURE
+==============
+
+Keep all inputs.
+
+Show clear error.
+
+Allow Retry.
+
+Do not clear the issue/location.
+
+==================================================
+TIMEOUT
+=======
+
+Audit whether request creation has an idempotency key.
+
+If timeout makes server acceptance ambiguous:
+
+do not blindly create a duplicate request.
+
+Use existing idempotency architecture if present.
+
+Report gaps.
+
+==================================================
+BREAKDOWN REFERENCE
 ===================
 
-Same product rule as every modernized Customer domain:
+If server returns a public reference:
 
-NO DEAD WHITESPACE.
+display it.
 
-This does NOT mean fake filler.
+Prefer public ref over internal id.
 
-For:
+Do not fabricate:
 
-1 item
-3 items
-many items
-
-use layout appropriately.
-
-Mobile rows should be dense.
-
-Tablet/desktop should use width intelligently.
+SOS-123
+CASE-456
 
 ==================================================
-TABLET / DESKTOP
-================
+NO STOCK / HERO IMAGERY
+=======================
 
-Do not render a 420px inbox in a 1440px viewport.
+Do not add:
 
-However, an inbox generally should NOT stretch individual text rows edge-to-edge across 1200px.
+tow-truck image
+warning illustration
+map illustration
+emergency red hero art
 
-Possible strategies:
+unless genuinely functional.
 
-* moderate max-width around 800–1000
-* list + compact unread/activity summary on wider screens ONLY if real useful data exists
-* wider grouped inbox with controlled text width
-
-Do not invent a side panel.
-
-Prefer an intentionally centered/wide inbox rather than an admin dashboard.
+This product should feel calm and trustworthy.
 
 ==================================================
-DESKTOP DEAD-WHITESPACE RULE
-============================
+COLOR / URGENCY
+===============
 
-If there are many notifications:
-use the viewport naturally.
+Roadside assistance can use stronger hierarchy than ordinary settings.
 
-If only one notification:
-some lower whitespace is expected.
+But do NOT make the entire page red.
 
-Do NOT stretch the row.
+Use error/emergency tones sparingly for:
 
-Instead ensure:
+important warnings
+failed send
+destructive/caution state
 
-* page alignment is intentional
-* grouped surface has meaningful width
-* header/summary give structure
-* content is not a tiny 400px island in a 1440px page
+Primary request CTA can remain normal product primary color unless design system dictates otherwise.
+
+==================================================
+NO DEAD WHITESPACE
+==================
+
+Same product rule:
+
+NO EMPTY-LOOKING SCREEN.
+
+But do not fill the page with fake emergency messaging.
+
+Use:
+
+vehicle
+location
+issue
+real request state
+reference
+real actions
+
+to create density.
 
 ==================================================
 MOBILE
@@ -1032,34 +991,53 @@ Verify:
 412
 430
 
-Rows must support:
+The form should feel efficient.
 
-long titles
-3–4 line messages
-long timestamps
-large text
+A user in a roadside situation should not scroll through decorative content.
 
-without overflow.
+Primary action should be easy to reach.
 
 ==================================================
-TEXT TRUNCATION
-===============
+STICKY ACTION
+=============
 
-Audit notification message behavior.
+A SafeArea bottom action may be appropriate:
 
-Do not truncate so aggressively that important workshop information becomes unusable.
+Request assistance
 
-Potentially allow:
+if it does not cover content.
 
-2–3 lines in list
+Keep form context visible.
 
-if message is longer and no Detail page exists.
+==================================================
+TABLET / DESKTOP
+================
 
-If full message has important content and there is no destination:
+Do not render a narrow 390px emergency form in a 1440px viewport.
 
-consider expand/collapse only if genuinely needed.
+Potential wide composition:
 
-Do not build complexity prematurely.
+LEFT
+vehicle + location + issue
+
+RIGHT
+request summary / existing request state / submission context
+
+ONLY using real content.
+
+If form is too simple for two columns:
+use a wider balanced single-column surface.
+
+Do not invent a dashboard.
+
+==================================================
+SPARSE STATE
+============
+
+If only minimal fields exist:
+use strong composition.
+
+Do not create giant empty surfaces.
 
 ==================================================
 ACCESSIBILITY
@@ -1067,16 +1045,17 @@ ACCESSIBILITY
 
 Ensure:
 
-* unread state announced semantically
-* row semantic label includes title/time
-* actionable rows expose button semantics
-* unread dot is not the sole indicator
-* Mark all read is labelled
-* loading state announced
-* error state accessible
-* 1.6× scale
-* 48px touch targets
-* logical reading order
+* Roadside assistance heading
+* selected vehicle semantics
+* location label
+* issue field
+* error announcements
+* offline warning
+* failed send warning
+* success announcement
+* 48px targets
+* 1.6x scale
+* color not sole signal
 
 ==================================================
 DARK MODE
@@ -1084,107 +1063,131 @@ DARK MODE
 
 Verify:
 
-unread tonal background
-dividers
-timestamps
-icons
-badges
-empty state
-error
-skeleton
+fields
+vehicle selector
+warnings
+success
+failure
+offline notice
+status
+dialogs
 
-No hardcoded light surfaces.
+No hardcoded red/white assumptions.
 
 ==================================================
 DEAD CODE
 =========
 
-Previous work already removed:
+Audit and potentially delete:
 
-customer_notifications_sheet.dart
+CustomerBreakdownDetailView
 
-because it was unreferenced.
+old fake dispatch widgets
 
-Search for remaining duplicate Notification implementations/widgets.
+old emergency hero widgets
 
-Delete only after repo-wide reference verification.
+unused status helpers
 
-Do not preserve dead inbox designs.
+dead routes
 
-==================================================
-TESTS — DATA / READ STATE
-=========================
-
-Add direct tests for:
-
-1. unread fetched from backend
-2. mark one read calls backend
-3. local state updates
-4. unread count decrements
-5. refresh preserves backend read state
-6. app restart conceptually reloads read state from backend
-7. mark all calls real bulk endpoint
-8. unread count becomes zero
-9. mark-read failure reconciliation
-10. mark-all failure behavior
-11. duplicate tap does not duplicate calls
+Only after repo-wide grep.
 
 ==================================================
-TESTS — ROUTING
+NOTIFICATION INTEGRATION
+========================
+
+The notification type:
+
+breakdownAssigned
+
+currently routes safely to Notifications inbox because no identifier exists.
+
+Do NOT change that unless this task discovers:
+
+* a real customer breakdown detail route
+  AND
+* a reliable identifier in FCM payload
+
+Current payload reportedly has only type.
+
+Therefore it will likely remain inbox fallback.
+
+That is acceptable.
+
+==================================================
+TESTS — CONTRACT
+================
+
+Add tests for:
+
+1. exact request payload
+2. required fields
+3. optional fields
+4. real vehicle id
+5. no temporary id sent online
+6. manual location
+7. issue description
+8. no fake GPS claim
+9. no fake ETA/towing promise
+10. no duplicate submission
+
+==================================================
+TESTS — REQUEST
 ===============
-
-For every actual supported notification type test:
-
-notification
-→ expected canonical destination
-
-Also test:
-
-unsupported/metadata-insufficient notification
-→ does not navigate incorrectly
-
-No free-text parsing.
-
-==================================================
-TESTS — HOME BADGE
-==================
-
-Directly test:
-
-4 unread
-→ read one
-→ Home badge = 3
-
-mark all
-→ Home badge absent/zero
-
-refresh
-→ remains backend truth
-
-==================================================
-TESTS — LIST STATES
-===================
 
 Cover:
 
-empty
-one read
-one unread
-mixed
-3 notifications
-20 notifications
-long title
-long body
-old timestamp
+vehicle preselection
+multiple vehicles
+zero vehicles
+location
+description
+validation
 loading
-error
+success
+server failure
+timeout if representable
+offline queue
+failed sync if representable
 retry
-refresh
-refresh failure with data retained
+state preserved
 
 ==================================================
-RESPONSIVE TESTS
-================
+TESTS — SUCCESS
+===============
+
+Cover:
+
+real request reference
+real vehicle
+real location
+truthful success wording
+no "help is on the way" unless backend state proves it
+
+==================================================
+TESTS — DETAIL/STATUS
+=====================
+
+If detail retained:
+
+test every real backend status.
+
+Test:
+
+assignment absent
+assignment present
+unknown status
+long content
+stale/missing request
+refresh
+
+If detail removed:
+
+test route cleanup and absence of dead navigation.
+
+==================================================
+TESTS — RESPONSIVE
+==================
 
 Cover:
 
@@ -1192,69 +1195,73 @@ Cover:
 360
 390
 430
-1.6× text
+1.6x
 tablet
 desktop
 dark
-
-No overflow.
 
 ==================================================
 SOURCE GUARDS
 =============
 
-Guard notification production code against:
+Search production Breakdown code for:
 
-fake Offers
-VIP
-Rewards
-Promotions
+24/7
+15–20
+40km
+Free towing
+Auto-detected
+GPS Location
+Dispatching Unit
+Emergency Dispatch
+Help is on the way
+Technician en route
+Unit en route
 
-unless backend audit proves they exist.
-
-Also ensure:
-
-no visible action uses empty callbacks.
+Any remaining match must be supported by repository evidence and justified.
 
 ==================================================
 GOLDENS
 =======
 
-Create/review a focused set:
+Create/review only meaningful states.
 
-customer_notifications_mixed_mobile
-customer_notifications_one_mobile
-customer_notifications_empty_mobile
-customer_notifications_tablet
-customer_notifications_desktop
-customer_notifications_dark_mobile
+Potential:
 
-Potentially:
+customer_breakdown_form_mobile
+customer_breakdown_success_mobile
+customer_breakdown_offline_mobile
+customer_breakdown_error_mobile
+customer_breakdown_tablet
+customer_breakdown_desktop
+customer_breakdown_dark_mobile
 
-customer_notifications_long_content_mobile
+If detail is retained:
 
-only if necessary.
+customer_breakdown_detail_mobile
+customer_breakdown_detail_assigned_mobile
 
-Do not create excessive goldens.
+Do not create unnecessary goldens.
 
 ==================================================
 VISUAL QA
 =========
 
-The independent Visual QA agent must inspect every golden.
+Independent Visual Product QA must review all changed goldens.
 
-Reject:
+Specifically reject:
 
-huge cards
-weak unread distinction
-oversized decorative icons
-large blank top area
-tiny list floating in desktop
-unread state shown only through color
-timestamps competing with title
-too much padding
-long body clipping
-fake content
+* giant emergency hero
+* stock imagery
+* excessive red
+* empty white page
+* misleading "dispatch" language
+* fake location
+* oversized cards
+* poor form density
+* weak offline warning
+* success that implies server receipt when queued offline
+* desktop phone-column island
 
 ==================================================
 SCOPE BOUNDARY
@@ -1264,17 +1271,27 @@ DO NOT redesign:
 
 Home
 Bookings
-Booking Detail
+Booking Details
 Status
 Approvals
 Vehicles
 Profile
-Breakdown
+Notifications
 Staff
 Owner
 CRM
 
-Home may receive ONLY minimal state wiring required for the unread badge to stay correct.
+Only minimal routing/provider integration is allowed.
+
+==================================================
+KNOWN PRE-EXISTING FAILURES
+===========================
+
+Do NOT fix unrelated:
+
+shared_core `.env`
+Staff JobDetailSheet
+Owner KPI grid
 
 ==================================================
 VERIFICATION
@@ -1288,44 +1305,34 @@ dart analyze customer_app
 
 flutter test customer_app
 
-Review changed goldens manually.
+Analyze shared packages only if modified.
 
-Search notification code for:
-
-onTap: () {}
-onPressed: () {}
-Offers
-VIP
-Rewards
-Promotions
-
-Any remaining match must be justified.
+Review all changed goldens manually.
 
 ==================================================
 STOP CONDITION
 ==============
 
-Notifications is complete only when:
+The Roadside Assistance domain is complete only when:
 
-* inbox is truthful
-* unread state persists through backend
-* mark one read works
-* mark all works
-* Home badge stays consistent
-* notification actions route safely
-* unsupported notifications do not guess
-* empty/one/many states look intentional
-* mobile/tablet/desktop are visually complete
-* no fake content
+* claims match backend capability
+* request payload is correct
+* location UX is truthful
+* offline state is honest
+* duplicate submission is prevented
+* success means exactly what happened
+* dead detail/fake dispatch UI is resolved
+* responsive layouts feel complete
+* no dead whitespace
 * tests pass
 
 Then STOP.
 
-Do NOT move to Breakdown automatically.
+DO NOT move to Staff automatically.
 
 ==================================================
-FINAL REPORT
-============
+FINAL REPORT FORMAT
+===================
 
 Start with:
 
@@ -1335,43 +1342,35 @@ Then report:
 
 MULTI-AGENT EXECUTION
 
-BACKEND NOTIFICATION CONTRACT
+BACKEND BREAKDOWN CONTRACT
 
-READ-STATE BUG AUDIT
+REAL STATUS LIFECYCLE
 
-* old behavior
-* canonical behavior
-* persistence
-* Home badge
+LOCATION CAPABILITY
 
-NOTIFICATION TYPES
+OLD FAKE / UNSUPPORTED CLAIMS
 
-* actual types
-* routable types
-* non-routable types
+FINAL REQUEST FLOW
 
-FINAL INBOX HIERARCHY
+VEHICLE BEHAVIOR
 
-ONE / FEW / MANY BEHAVIOR
+LOCATION / ISSUE INPUT
 
-EMPTY / LOADING / ERROR / REFRESH
+SUBMISSION
 
-MARK READ
+ONLINE / OFFLINE
 
-MARK ALL READ
+SUCCESS STATE
 
-HOME BADGE INTEGRATION
+DETAIL / STATUS DECISION
 
-PUSH / FCM BEHAVIOR
-
-DEEP LINKS
+NOTIFICATION INTEGRATION
 
 INFORMATION DENSITY
 
 * mobile
 * tablet
 * desktop
-* whitespace findings
 
 DEAD CODE
 

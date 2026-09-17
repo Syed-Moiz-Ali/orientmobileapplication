@@ -4,8 +4,9 @@ import 'package:customer_app/features/customer/presentation/customer_book_servic
 import 'package:customer_app/features/customer/presentation/customer_approvals_page.dart';
 import 'package:customer_app/features/customer/presentation/customer_booking_detail_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_booking_success_view.dart';
-import 'package:customer_app/features/customer/presentation/customer_breakdown_detail_view.dart';
+
 import 'package:customer_app/features/customer/presentation/customer_breakdown_help_view.dart';
+import 'package:customer_app/features/customer/presentation/customer_breakdown_result_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_dashboard_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_feedback_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_invoice_detail_view.dart';
@@ -27,7 +28,11 @@ class AppRoutes {
   static const String customerBookService = '/customer_book_service_view';
   static const String customerBreakdownHelp = '/customer_breakdown_help_view';
   static const String customerBookingDetail = '/customer_booking_detail';
-  static const String customerBreakdownDetail = '/customer_breakdown_detail';
+
+  /// Where a submitted roadside request is confirmed. It carries the result
+  /// of the request the customer just made, because there is no endpoint that
+  /// can read a breakdown back, and never pretends to be a tracking page.
+  static const String customerBreakdownResult = '/customer_breakdown_result';
   static const String forgotPassword = '/forgot-password';
   static const String customerAddVehicle = '/add-vehicle';
   static String customerEditVehicle(String id) => '/edit-vehicle/$id';
@@ -277,20 +282,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: AppRoutes.customerBreakdownDetail,
-        name: AppRoutes.customerBreakdownDetail,
+        path: AppRoutes.customerBreakdownResult,
+        name: AppRoutes.customerBreakdownResult,
         builder: (context, state) {
           final extra = state.extra;
 
           if (extra is! Map<String, dynamic>) {
             return const _RouteErrorPage(
-              title: 'Breakdown detail unavailable',
-              message: 'Select a request again from Breakdown Help.',
+              title: 'Request unavailable',
+              message: 'Open Roadside assistance to send a new request.',
+              actionLabel: 'Roadside assistance',
+              actionLocation: AppRoutes.customerBreakdownHelp,
             );
           }
 
-          final breakdown = extra;
-          return CustomerBreakdownDetailView(breakdown: breakdown);
+          return CustomerBreakdownResultView(result: extra);
         },
       ),
       GoRoute(
