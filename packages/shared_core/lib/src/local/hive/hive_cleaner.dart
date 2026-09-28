@@ -20,8 +20,15 @@ class HiveCleaner {
   }
 
   static bool hasPendingSync() {
-    final queue = Hive.box<SyncOperation>('sync_queue');
-    final failed = Hive.box<SyncOperation>('sync_failed');
-    return queue.isNotEmpty || failed.isNotEmpty;
+    try {
+      if (!Hive.isBoxOpen('sync_queue') || !Hive.isBoxOpen('sync_failed')) {
+        return false;
+      }
+      final queue = Hive.box<SyncOperation>('sync_queue');
+      final failed = Hive.box<SyncOperation>('sync_failed');
+      return queue.isNotEmpty || failed.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
   }
 }

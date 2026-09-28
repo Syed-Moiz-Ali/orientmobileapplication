@@ -233,30 +233,34 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
       );
     }
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: IC.canvas,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: IC.navy,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: widget.onBack,
         ),
-        title: const Text(
+        title: Text(
           'Repair Order',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: colorScheme.onSurface,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => notifier.reset(),
-            child: const Text(
+            child: Text(
               'RESET',
               style: TextStyle(
-                color: IC.accent,
+                color: colorScheme.primary,
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),

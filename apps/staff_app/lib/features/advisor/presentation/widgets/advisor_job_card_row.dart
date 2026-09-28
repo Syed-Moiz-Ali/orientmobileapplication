@@ -14,87 +14,58 @@ class AdvisorJobCardRow extends StatelessWidget {
   final void Function(JobCardEntity) onTap;
   const AdvisorJobCardRow({super.key, required this.jc, required this.onTap});
 
-  _StatusStyle get _s => switch (jc.status) {
-    JobCardStatus.inProgress => _StatusStyle(
-      'In Progress',
-      AppColors.accent,
-      AppColors.accent.withValues(alpha: 0.12),
-    ),
-    JobCardStatus.pendingApproval => _StatusStyle(
-      'Pending',
-      AppColors.warning,
-      AppColors.warningBg,
-    ),
-    JobCardStatus.completed => _StatusStyle(
-      'Completed',
-      AppColors.success,
-      AppColors.successBg,
-    ),
-    JobCardStatus.waitingParts => _StatusStyle(
-      'Waiting Parts',
-      AppColors.danger,
-      AppColors.dangerBg,
-    ),
-    JobCardStatus.qualityCheck => _StatusStyle(
-      'QC Check',
-      AppColors.info,
-      AppColors.infoBg,
-    ),
-    JobCardStatus.cancelled => _StatusStyle(
-      'Cancelled',
-      AppColors.text3,
-      AppColors.surfaceAlt,
-    ),
-    JobCardStatus.pending => _StatusStyle(
-      'Pending',
-      AppColors.warning,
-      AppColors.warningBg,
-    ),
-    JobCardStatus.awaitingSupervisor => _StatusStyle(
-      'Awaiting Supervisor',
-      AppColors.warning,
-      AppColors.warningBg,
-    ),
-    JobCardStatus.vehicleReceived => _StatusStyle(
-      'Vehicle Received',
-      AppColors.info,
-      AppColors.infoBg,
-    ),
-    JobCardStatus.inspected => _StatusStyle(
-      'Inspected',
-      AppColors.info,
-      AppColors.infoBg,
-    ),
-    JobCardStatus.approved => _StatusStyle(
-      'Approved',
-      AppColors.success,
-      AppColors.successBg,
-    ),
-    JobCardStatus.workAssigned => _StatusStyle(
-      'Work Assigned',
-      AppColors.accent,
-      AppColors.accent.withValues(alpha: 0.12),
-    ),
-    JobCardStatus.waitingCustomerApproval => _StatusStyle(
-      'Waiting Customer Approval',
-      AppColors.warning,
-      AppColors.warningBg,
-    ),
-    JobCardStatus.delivered => _StatusStyle(
-      'Delivered',
-      AppColors.success,
-      AppColors.successBg,
-    ),
-    JobCardStatus.qualityCheckPassed => _StatusStyle(
-      'QC Passed',
-      AppColors.success,
-      AppColors.successBg,
-    ),
-  };
+  _StatusStyle _getStatusStyle(BuildContext context, JobCardStatus status) {
+    final colors = Theme.of(context).colorScheme;
+    return switch (status) {
+      JobCardStatus.inProgress => _StatusStyle(
+        'In Progress',
+        colors.primary,
+        colors.primary.withValues(alpha: 0.12),
+      ),
+      JobCardStatus.pendingApproval ||
+      JobCardStatus.pending ||
+      JobCardStatus.awaitingSupervisor ||
+      JobCardStatus.waitingCustomerApproval => _StatusStyle(
+        'Pending',
+        colors.secondary,
+        colors.secondary.withValues(alpha: 0.12),
+      ),
+      JobCardStatus.completed ||
+      JobCardStatus.approved ||
+      JobCardStatus.delivered ||
+      JobCardStatus.qualityCheckPassed => const _StatusStyle(
+        'Completed',
+        Color(0xFF10B981),
+        Color(0x1A10B981),
+      ),
+      JobCardStatus.waitingParts => _StatusStyle(
+        'Waiting Parts',
+        colors.error,
+        colors.errorContainer,
+      ),
+      JobCardStatus.qualityCheck ||
+      JobCardStatus.vehicleReceived ||
+      JobCardStatus.inspected => _StatusStyle(
+        'QC Check',
+        colors.primary,
+        colors.primaryContainer,
+      ),
+      JobCardStatus.cancelled => _StatusStyle(
+        'Cancelled',
+        colors.onSurfaceVariant,
+        colors.surfaceContainerHighest,
+      ),
+      JobCardStatus.workAssigned => _StatusStyle(
+        'Work Assigned',
+        colors.primary,
+        colors.primary.withValues(alpha: 0.12),
+      ),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
-    final s = _s;
+    final s = _getStatusStyle(context, jc.status);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/layout/app_responsive.dart';
-import 'package:shared_core/src/theme/app_dimensions.dart';
-import 'package:shared_core/src/theme/app_motion.dart';
+
+import '../../shared_core.dart';
 
 /// A restrained grouped surface. Prefer page structure, rows, and dividers before
 /// reaching for a card.
@@ -51,6 +50,142 @@ class AppCard extends StatelessWidget {
     this.onTap,
   });
 
+  /// Standard elevated white card with subtle 1px border and soft shadow.
+  AppCard.standard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(AppDimensions.s16),
+    this.borderRadius = AppDimensions.radiusCard,
+    this.width,
+    this.height,
+    this.clipBehavior = Clip.antiAlias,
+    this.onTap,
+  }) : color = AppColors.surface,
+       borderColor = AppColors.borderDefault,
+       border = Border.all(color: AppColors.borderDefault),
+       boxShadow = AppDimensions.shadowCard,
+       elevation = null;
+
+  /// Subtle card with soft tinted background and no shadow, ideal for secondary groupings.
+  AppCard.subtle({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(AppDimensions.s16),
+    this.borderRadius = AppDimensions.radiusCard,
+    this.width,
+    this.height,
+    this.clipBehavior = Clip.antiAlias,
+    this.onTap,
+  }) : color = AppColors.surfaceSubtle,
+       borderColor = AppColors.borderDefault,
+       border = Border.all(color: AppColors.borderDefault),
+       boxShadow = null,
+       elevation = 0;
+
+  /// Clean outlined card with transparent/surface background and crisp border.
+  AppCard.outlined({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(AppDimensions.s16),
+    this.borderRadius = AppDimensions.radiusCard,
+    this.width,
+    this.height,
+    this.clipBehavior = Clip.antiAlias,
+    this.onTap,
+  }) : color = AppColors.surface,
+       borderColor = AppColors.borderStrong,
+       border = Border.all(color: AppColors.borderStrong),
+       boxShadow = null,
+       elevation = 0;
+
+  /// Interactive card with guaranteed minimum touch target and hover/pressed states.
+  AppCard.interactive({
+    super.key,
+    required this.child,
+    required this.onTap,
+    this.padding = const EdgeInsets.all(AppDimensions.s16),
+    this.borderRadius = AppDimensions.radiusCard,
+    this.width,
+    this.height,
+    this.clipBehavior = Clip.antiAlias,
+  }) : color = AppColors.surface,
+       borderColor = AppColors.borderDefault,
+       border = Border.all(color: AppColors.borderDefault),
+       boxShadow = AppDimensions.shadowCard,
+       elevation = null;
+
+  /// Selected state card with primary subtle background and electric blue border.
+  AppCard.selected({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(AppDimensions.s16),
+    this.borderRadius = AppDimensions.radiusCard,
+    this.width,
+    this.height,
+    this.clipBehavior = Clip.antiAlias,
+    this.onTap,
+  }) : color = AppColors.primarySubtle,
+       borderColor = AppColors.primary,
+       border = Border.all(color: AppColors.primary, width: 1.5),
+       boxShadow = null,
+       elevation = 0;
+
+  /// High-emphasis dark navy surface with white text and dark theme propagation.
+  factory AppCard.navy({
+    Key? key,
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(AppDimensions.s18),
+    double borderRadius = AppDimensions.radiusPanel,
+    double? width,
+    double? height,
+    VoidCallback? onTap,
+  }) {
+    return AppCard(
+      key: key,
+      color: AppColors.navy,
+      borderColor: const Color(0xFF2A3A5E),
+      borderRadius: borderRadius,
+      boxShadow: AppDimensions.shadowNavy,
+      width: width,
+      height: height,
+      padding: EdgeInsets.zero,
+      onTap: onTap,
+      child: Theme(
+        data: ThemeData(
+          brightness: Brightness.dark,
+          colorScheme: const ColorScheme.dark(surface: AppColors.navy, primary: Color(0xFF60A5FA)),
+        ),
+        child: Padding(padding: padding, child: child),
+      ),
+    );
+  }
+
+  /// Semantic colored alert card for success, warning, danger, or info.
+  factory AppCard.semantic({
+    Key? key,
+    required Widget child,
+    required Color baseColor,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(AppDimensions.s14),
+    double borderRadius = AppDimensions.radiusCard,
+    double? width,
+    double? height,
+    VoidCallback? onTap,
+  }) {
+    return AppCard(
+      key: key,
+      color: baseColor.withValues(alpha: 0.08),
+      borderColor: baseColor.withValues(alpha: 0.28),
+      border: Border.all(color: baseColor.withValues(alpha: 0.28)),
+      borderRadius: borderRadius,
+      elevation: 0,
+      width: width,
+      height: height,
+      padding: padding,
+      onTap: onTap,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -60,9 +195,7 @@ class AppCard extends StatelessWidget {
     final effectiveBackgroundColor = color ?? colorScheme.surface;
     final effectiveBorderColor = borderColor ?? colorScheme.outline;
 
-    final effectiveRadius = borderRadius == AppDimensions.r14
-        ? adaptive.radius
-        : borderRadius;
+    final effectiveRadius = borderRadius == AppDimensions.r14 ? adaptive.radius : borderRadius;
 
     final effectivePadding = padding ?? EdgeInsets.all(adaptive.itemSpacing);
 

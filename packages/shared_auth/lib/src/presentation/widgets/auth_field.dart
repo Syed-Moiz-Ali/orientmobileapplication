@@ -169,14 +169,14 @@ class _AuthTextFieldState extends State<AuthTextField> {
                     tooltip: _hidden ? 'Show password' : 'Hide password',
                   )
                 : null,
-            border: outline(colors.outlineVariant),
-            enabledBorder: outline(colors.outlineVariant),
+            border: outline(AppColors.borderDefault),
+            enabledBorder: outline(AppColors.borderDefault),
             disabledBorder: outline(
-              colors.outlineVariant.withValues(alpha: 0.6),
+              AppColors.borderDefault.withValues(alpha: 0.6),
             ),
-            focusedBorder: outline(colors.primary, 1.6),
+            focusedBorder: outline(colors.primary, 1.5),
             errorBorder: outline(colors.error, 1.2),
-            focusedErrorBorder: outline(colors.error, 1.6),
+            focusedErrorBorder: outline(colors.error, 1.5),
             hintStyle: theme.textTheme.bodyMedium?.copyWith(
               color: colors.onSurfaceVariant,
               fontWeight: FontWeight.w400,

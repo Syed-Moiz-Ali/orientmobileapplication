@@ -52,7 +52,9 @@ class _ShimmerBoxState extends State<ShimmerBox>
         width: widget.width,
         height: widget.height,
         decoration: BoxDecoration(
-          color: colorScheme.outlineVariant.withValues(alpha: _animation.value * 0.4),
+          color: colorScheme.outlineVariant.withValues(
+            alpha: _animation.value * 0.4,
+          ),
           borderRadius: BorderRadius.circular(widget.borderRadius),
         ),
       ),
@@ -78,19 +80,45 @@ class AdvisorDashboardSkeleton extends StatelessWidget {
           const SizedBox(height: 20),
           const Row(
             children: [
-              Expanded(child: ShimmerBox(width: double.infinity, height: 90, borderRadius: 20)),
+              Expanded(
+                child: ShimmerBox(
+                  width: double.infinity,
+                  height: 90,
+                  borderRadius: 20,
+                ),
+              ),
               SizedBox(width: 12),
-              Expanded(child: ShimmerBox(width: double.infinity, height: 90, borderRadius: 20)),
+              Expanded(
+                child: ShimmerBox(
+                  width: double.infinity,
+                  height: 90,
+                  borderRadius: 20,
+                ),
+              ),
               SizedBox(width: 12),
-              Expanded(child: ShimmerBox(width: double.infinity, height: 90, borderRadius: 20)),
+              Expanded(
+                child: ShimmerBox(
+                  width: double.infinity,
+                  height: 90,
+                  borderRadius: 20,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
           const ShimmerBox(width: 140, height: 20),
           const SizedBox(height: 12),
-          const ShimmerBox(width: double.infinity, height: 110, borderRadius: 20),
+          const ShimmerBox(
+            width: double.infinity,
+            height: 110,
+            borderRadius: 20,
+          ),
           const SizedBox(height: 12),
-          const ShimmerBox(width: double.infinity, height: 110, borderRadius: 20),
+          const ShimmerBox(
+            width: double.infinity,
+            height: 110,
+            borderRadius: 20,
+          ),
         ],
       ),
     );
@@ -133,11 +161,89 @@ class TechnicianHUDSkeleton extends StatelessWidget {
           const SizedBox(height: 20),
           const ShimmerBox(width: 160, height: 22),
           const SizedBox(height: 14),
-          const ShimmerBox(width: double.infinity, height: 80, borderRadius: 16),
+          const ShimmerBox(
+            width: double.infinity,
+            height: 80,
+            borderRadius: 16,
+          ),
           const SizedBox(height: 12),
-          const ShimmerBox(width: double.infinity, height: 80, borderRadius: 16),
+          const ShimmerBox(
+            width: double.infinity,
+            height: 80,
+            borderRadius: 16,
+          ),
         ],
       ),
+    );
+  }
+}
+
+class StaffAttendanceSkeleton extends StatelessWidget {
+  const StaffAttendanceSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ShimmerBox(
+          width: double.infinity,
+          height: 124,
+          borderRadius: AppDimensions.radiusCard,
+        ),
+        SizedBox(height: AppDimensions.s20),
+        ShimmerBox(
+          width: 160,
+          height: 16,
+          borderRadius: AppDimensions.radiusXs,
+        ),
+        SizedBox(height: AppDimensions.s10),
+        Row(
+          children: [
+            Expanded(
+              child: ShimmerBox(
+                width: double.infinity,
+                height: 78,
+                borderRadius: AppDimensions.radiusCard,
+              ),
+            ),
+            SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: ShimmerBox(
+                width: double.infinity,
+                height: 78,
+                borderRadius: AppDimensions.radiusCard,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: AppDimensions.s10),
+        Row(
+          children: [
+            Expanded(
+              child: ShimmerBox(
+                width: double.infinity,
+                height: 78,
+                borderRadius: AppDimensions.radiusCard,
+              ),
+            ),
+            SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: ShimmerBox(
+                width: double.infinity,
+                height: 78,
+                borderRadius: AppDimensions.radiusCard,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: AppDimensions.s24),
+        ShimmerBox(
+          width: double.infinity,
+          height: 50,
+          borderRadius: AppDimensions.radiusButton,
+        ),
+      ],
     );
   }
 }

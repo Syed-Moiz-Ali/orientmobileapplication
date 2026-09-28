@@ -406,6 +406,7 @@ class _LineItemGroup extends StatelessWidget {
                   ),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colors.onSurface,
+                    fontFamily: AppFontFamilies.mono,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -489,6 +490,7 @@ class _FinancialSummary extends StatelessWidget {
                   formatAmount(detail.grandTotal),
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: colors.primary,
+                    fontFamily: AppFontFamilies.mono,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -526,6 +528,7 @@ class _SummaryRow extends StatelessWidget {
           value,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: colors.onSurface,
+            fontFamily: AppFontFamilies.mono,
             fontWeight: FontWeight.w700,
           ),
         ),

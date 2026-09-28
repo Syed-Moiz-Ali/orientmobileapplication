@@ -68,6 +68,66 @@ class SupervisorScaffold extends ConsumerWidget {
         selectedIndex: effectiveIndex,
         onSelected: notifier.selectTab,
         badgeIndices: queueBadges,
+        headerBuilder: (ctx, ext) =>
+            OrientBrandMark(workspace: 'Supervisor', compact: !ext),
+        footerBuilder: (ctx, ext) => InkWell(
+          onTap: () => notifier.selectTab(4),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: ext ? AppDimensions.s8 : 0,
+              vertical: AppDimensions.s4,
+            ),
+            child: ext
+                ? Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Theme.of(
+                          ctx,
+                        ).colorScheme.primary.withValues(alpha: 0.14),
+                        child: Text(
+                          'S',
+                          style: TextStyle(
+                            color: Theme.of(ctx).colorScheme.primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.s10),
+                      Expanded(
+                        child: Text(
+                          'Supervisor Profile',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(ctx).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(ctx).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Tooltip(
+                    message: 'Supervisor Profile',
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Theme.of(
+                        ctx,
+                      ).colorScheme.primary.withValues(alpha: 0.14),
+                      child: Text(
+                        'S',
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ),
         child: IndexedStack(index: effectiveIndex, children: _pages),
       ),
       bottomNavigationBar: adaptive.useNavigationRail

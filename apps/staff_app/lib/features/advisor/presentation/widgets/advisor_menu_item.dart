@@ -18,7 +18,8 @@ class AdvisorMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppColors.textPrimary;
+    final colors = Theme.of(context).colorScheme;
+    final c = color ?? colors.onSurface;
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
@@ -41,7 +42,7 @@ class AdvisorMenuItem extends StatelessWidget {
         ),
       ),
       trailing: showChevron
-          ? Icon(Icons.chevron_right_rounded, color: AppColors.stroke, size: 18)
+          ? Icon(Icons.chevron_right_rounded, color: colors.outlineVariant, size: 18)
           : null,
       onTap: onTap,
     );

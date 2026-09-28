@@ -53,6 +53,64 @@ class DashboardBody extends ConsumerWidget {
         items: _navItems,
         selectedIndex: state.selectedIndex,
         onSelected: notifier.selectTab,
+        headerBuilder: (ctx, ext) => OrientBrandMark(
+          workspace: 'Executive',
+          compact: !ext,
+        ),
+        footerBuilder: (ctx, ext) => InkWell(
+          onTap: () => notifier.selectTab(3),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: ext ? AppDimensions.s8 : 0,
+              vertical: AppDimensions.s4,
+            ),
+            child: ext
+                ? Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                        child: Text(
+                          'O',
+                          style: TextStyle(
+                            color: Theme.of(ctx).colorScheme.primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.s10),
+                      Expanded(
+                        child: Text(
+                          'Owner Suite',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(ctx).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(ctx).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Tooltip(
+                    message: 'Owner Suite',
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                      child: Text(
+                        'O',
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ),
         child: IndexedStack(index: state.selectedIndex, children: _pages),
       ),
       bottomNavigationBar: adaptive.useNavigationRail

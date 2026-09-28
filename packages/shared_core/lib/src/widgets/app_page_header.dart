@@ -8,6 +8,9 @@ class AppPageHeader extends StatelessWidget {
   final String? subtitle;
   final String? eyebrow;
   final Widget? leading;
+  final Widget? primaryAction;
+  final Widget? secondaryAction;
+  final Widget? trailing;
   final List<Widget> actions;
 
   const AppPageHeader({
@@ -16,6 +19,9 @@ class AppPageHeader extends StatelessWidget {
     this.subtitle,
     this.eyebrow,
     this.leading,
+    this.primaryAction,
+    this.secondaryAction,
+    this.trailing,
     this.actions = const [],
   });
 
@@ -23,6 +29,14 @@ class AppPageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final resolvedActions = <Widget>[
+      ...actions,
+      if (secondaryAction != null) secondaryAction!,
+      if (primaryAction != null) primaryAction!,
+      if (trailing != null) trailing!,
+    ];
 
     final identity = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,25 +51,34 @@ class AppPageHeader extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               if (eyebrow != null) ...[
                 Text(
                   eyebrow!.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
+                  style: textTheme.labelSmall?.copyWith(
                     color: colors.primary,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
                   ),
                 ),
-                const SizedBox(height: AppDimensions.s6),
+                const SizedBox(height: AppDimensions.s4),
               ],
-              Text(title, style: theme.textTheme.headlineSmall),
+              Text(
+                title,
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colors.onSurface,
+                  letterSpacing: -0.2,
+                ),
+              ),
               if (subtitle != null) ...[
-                const SizedBox(height: AppDimensions.s6),
+                const SizedBox(height: AppDimensions.s4),
                 Text(
                   subtitle!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  style: textTheme.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
+                    height: 1.35,
                   ),
                 ),
               ],
@@ -65,27 +88,27 @@ class AppPageHeader extends StatelessWidget {
       ],
     );
 
-    if (actions.isEmpty) return identity;
+    if (resolvedActions.isEmpty) return identity;
 
     final actionBar = Wrap(
       spacing: AppDimensions.s8,
       runSpacing: AppDimensions.s8,
-      children: actions,
+      children: resolvedActions,
     );
 
     if (context.isCompact) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
           identity,
-          const SizedBox(height: AppDimensions.s16),
+          const SizedBox(height: AppDimensions.s14),
           Align(alignment: Alignment.centerLeft, child: actionBar),
         ],
       );
     }
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(child: identity),
         const SizedBox(width: AppDimensions.s24),

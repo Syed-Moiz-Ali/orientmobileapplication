@@ -256,6 +256,7 @@ class AttendanceSummaryEntity {
   }
 }
 
+
 class TechnicianStatsEntity {
   final int assignedJobs;
   final int inProgress;
@@ -272,6 +273,12 @@ class TechnicianStatsEntity {
     required this.avgTimePerJob,
     required this.totalHoursWorked,
   });
+
+  int get normalizedEfficiencyPercent {
+    if (efficiency <= 0) return 0;
+    if (efficiency <= 1.0) return (efficiency * 100).round();
+    return efficiency.round().clamp(0, 100);
+  }
 }
 
 class AssignedJobEntity {

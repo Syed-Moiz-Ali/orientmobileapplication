@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
 
 class AdvisorContactOption extends StatelessWidget {
   final IconData icon;
@@ -34,7 +33,7 @@ class AdvisorContactOption extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: AppColors.text2,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],

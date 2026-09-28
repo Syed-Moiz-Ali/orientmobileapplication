@@ -30,14 +30,14 @@ class TechnicianProductivityView extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const TechnicianSectionHeader(
-              eyebrow: 'TELEMETRY & EFFICIENCY',
+              eyebrow: 'SHIFT PERFORMANCE',
               title: 'Productivity & Shift',
-              subtitle: 'Real-time workshop velocity and attendance tracking.',
+              subtitle: 'Workshop turnaround, duration, and attendance records.',
             ),
             const SizedBox(height: 20),
 
-            // Efficiency Gauge Hero Card
-            _EfficiencyHeroCard(efficiency: prod.efficiency),
+            // Productivity Summary Card
+            _ProductivitySummaryCard(stats: prod),
             const SizedBox(height: 18),
 
             // Operational KPI Grid (2x2)
@@ -70,7 +70,7 @@ class TechnicianProductivityView extends ConsumerWidget {
                 Expanded(
                   child: TechnicianMetricCard(
                     label: 'Avg Repair Time',
-                    value: prod.avgTimePerJob.isNotEmpty ? prod.avgTimePerJob : '1h 45m',
+                    value: prod.avgTimePerJob.isNotEmpty ? prod.avgTimePerJob : '--',
                     subtitle: 'Per job card',
                     icon: Icons.timer_outlined,
                     color: colors.secondary,
@@ -80,7 +80,9 @@ class TechnicianProductivityView extends ConsumerWidget {
                 Expanded(
                   child: TechnicianMetricCard(
                     label: 'Total Worked',
-                    value: prod.totalHoursWorked.isNotEmpty ? prod.totalHoursWorked : att.workHours,
+                    value: prod.totalHoursWorked.isNotEmpty
+                        ? prod.totalHoursWorked
+                        : (att.workHours.isNotEmpty ? att.workHours : '0h 0m'),
                     subtitle: 'Today\'s duration',
                     icon: Icons.hourglass_bottom_rounded,
                     color: colors.tertiary,
@@ -105,49 +107,50 @@ class TechnicianProductivityView extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HERO CARD: EFFICIENCY GAUGE
+// PRODUCTIVITY SUMMARY CARD
 // ─────────────────────────────────────────────────────────────────────────────
-class _EfficiencyHeroCard extends StatelessWidget {
-  final double efficiency;
-  const _EfficiencyHeroCard({required this.efficiency});
+class _ProductivitySummaryCard extends StatelessWidget {
+  final TechnicianStatsEntity stats;
+  const _ProductivitySummaryCard({required this.stats});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final pct = (efficiency * 100).toInt();
-    final displayPct = pct == 0 ? 94 : pct;
+    final pct = stats.normalizedEfficiencyPercent;
 
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         children: [
-          // Circular gauge representation
           SizedBox(
-            width: 76,
-            height: 76,
+            width: 72,
+            height: 72,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 CircularProgressIndicator(
-                  value: displayPct / 100,
-                  strokeWidth: 8,
+                  value: pct > 0 ? (pct / 100).clamp(0.0, 1.0) : 0.0,
+                  strokeWidth: 7,
                   backgroundColor: colors.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation(colors.primary),
                 ),
                 Text(
-                  '$displayPct%',
-                  style: theme.textTheme.titleSmall?.copyWith(color: colors.primary, fontWeight: FontWeight.w900),
+                  pct > 0 ? '$pct%' : '--',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 18),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +162,7 @@ class _EfficiencyHeroCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'WORKSHOP RATING',
+                    'TURNAROUND EFFICIENCY',
                     style: TextStyle(
                       color: colors.primary,
                       fontSize: 10,
@@ -170,17 +173,25 @@ class _EfficiencyHeroCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  displayPct >= 90
-                      ? 'Exceptional Pace'
-                      : displayPct >= 75
-                      ? 'Optimal Efficiency'
-                      : 'Standard Operations',
-                  style: theme.textTheme.titleMedium?.copyWith(color: colors.onSurface, fontWeight: FontWeight.w900),
+                  pct >= 90
+                      ? 'High Turnaround Pace'
+                      : pct >= 70
+                          ? 'Consistent Pace'
+                          : 'Shift Active',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
-                  'Meeting Orient target turnaround and QC benchmarks.',
-                  style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant, height: 1.3),
+                  pct > 0
+                      ? 'Based on completed vehicle repair orders and elapsed work duration.'
+                      : 'Efficiency metrics will populate as repair orders are completed.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.3,
+                  ),
                 ),
               ],
             ),
@@ -219,7 +230,11 @@ class _AttendanceBreakdownCard extends StatelessWidget {
       child: Column(
         children: [
           // Row 1: Status pill + punch control button
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -244,7 +259,6 @@ class _AttendanceBreakdownCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Spacer(),
               _buildPunchActionButton(context),
             ],
           ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
 
 class SupervisorStatCard extends StatelessWidget {
@@ -17,15 +16,13 @@ class SupervisorStatCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: kpi.color.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: colorScheme.shadow.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -35,26 +32,29 @@ class SupervisorStatCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: kpi.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(kpi.icon, color: kpi.color, size: 20),
+                child: Icon(kpi.icon, color: kpi.color, size: 18),
               ),
               const Spacer(),
               if (kpi.sub.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: AppColors.successBg,
-                    borderRadius: BorderRadius.circular(10),
+                    color: colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     kpi.sub,
                     style: textTheme.labelSmall?.copyWith(
-                      color: AppColors.success,
+                      color: colorScheme.onSecondaryContainer,
                       fontWeight: FontWeight.w700,
                       fontSize: 10,
                     ),

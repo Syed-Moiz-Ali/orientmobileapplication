@@ -5,7 +5,6 @@ import 'package:customer_app/features/customer/presentation/providers/customer_p
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
@@ -24,15 +23,13 @@ class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
   const CustomerBreakdownHelpView({super.key});
 
   @override
-  ConsumerState<CustomerBreakdownHelpView> createState() =>
-      _CustomerBreakdownHelpViewState();
+  ConsumerState<CustomerBreakdownHelpView> createState() => _CustomerBreakdownHelpViewState();
 }
 
-class _CustomerBreakdownHelpViewState
-    extends ConsumerState<CustomerBreakdownHelpView> {
+class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHelpView> {
   /// Symptoms only. The backend stores this text as the request's issue and
   /// promises no specific service, so nothing here names a service that may not
-  /// exist (towing, fuel delivery, lockout).
+  /// exist.
   static const List<String> _symptoms = [
     'Flat tyre',
     "Won't start",
@@ -65,8 +62,7 @@ class _CustomerBreakdownHelpViewState
     super.dispose();
   }
 
-  List<CustomerVehicleEntity> get _vehicles =>
-      ref.watch(customerDashboardProvider).vehicles;
+  List<CustomerVehicleEntity> get _vehicles => ref.watch(customerDashboardProvider).vehicles;
 
   /// The single text field the contract has, filled from the symptom chip
   /// plus anything the customer adds, so no typed detail is thrown away.
@@ -93,9 +89,7 @@ class _CustomerBreakdownHelpViewState
   }
 
   void _notice(String message) {
-    ScaffoldMessenger.maybeOf(
-      context,
-    )?.showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _submit() async {
@@ -123,9 +117,7 @@ class _CustomerBreakdownHelpViewState
 
     setState(() => _sending = true);
     try {
-      final response = await ref
-          .read(customerRemoteDataSourceProvider)
-          .createBreakdown(payload);
+      final response = await ref.read(customerRemoteDataSourceProvider).createBreakdown(payload);
       if (!mounted) return;
       _showResult(sent: true, reference: response.id, location: location);
     } on NetworkException catch (e) {
@@ -146,11 +138,7 @@ class _CustomerBreakdownHelpViewState
       await ref.read(authNotifierProvider.notifier).logout();
     } catch (e) {
       if (!mounted) return;
-      _notice(
-        e is AppException
-            ? e.message
-            : "We couldn't send your request. Please try again.",
-      );
+      _notice(e is AppException ? e.message : "We couldn't send your request. Please try again.");
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -178,20 +166,14 @@ class _CustomerBreakdownHelpViewState
             ),
           );
     } catch (e, st) {
-      ref
-          .read(loggerProvider)
-          .e('Failed to queue breakdown request', error: e, stackTrace: st);
+      ref.read(loggerProvider).e('Failed to queue breakdown request', error: e, stackTrace: st);
       if (mounted) {
         _notice("We couldn't save this request on your device.");
       }
     }
   }
 
-  void _showResult({
-    required bool sent,
-    required String reference,
-    required String location,
-  }) {
+  void _showResult({required bool sent, required String reference, required String location}) {
     context.pushReplacement(
       AppRoutes.customerBreakdownResult,
       extra: <String, dynamic>{
@@ -218,11 +200,7 @@ class _CustomerBreakdownHelpViewState
     final vehicles = _vehicles;
 
     return Scaffold(
-      bottomNavigationBar: _Dock(
-        sending: _sending,
-        onCall: _callWorkshop,
-        onSubmit: _submit,
-      ),
+      bottomNavigationBar: _Dock(sending: _sending, onCall: _callWorkshop, onSubmit: _submit),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -239,10 +217,7 @@ class _CustomerBreakdownHelpViewState
                     Text(
                       'Tell the workshop which vehicle needs help, where it '
                       "is, and what's wrong.",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colors.onSurfaceVariant,
-                        height: 1.45,
-                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant, height: 1.45),
                     ),
                     const SizedBox(height: AppDimensions.s20),
                     _Section(
@@ -250,10 +225,8 @@ class _CustomerBreakdownHelpViewState
                       child: _VehicleField(
                         vehicles: vehicles,
                         selected: _vehicle,
-                        onSelect: (vehicle) =>
-                            setState(() => _vehicle = vehicle),
-                        onAddVehicle: () =>
-                            context.push(AppRoutes.customerAddVehicle),
+                        onSelect: (vehicle) => setState(() => _vehicle = vehicle),
+                        onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.s16),
@@ -266,8 +239,7 @@ class _CustomerBreakdownHelpViewState
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
                           hintText: 'Enter your current location or landmark',
-                          helperText:
-                              'Type an address, exit or nearby landmark.',
+                          helperText: 'Type an address, exit or nearby landmark.',
                           prefixIcon: Icon(Icons.location_on_outlined),
                         ),
                       ),
@@ -286,9 +258,7 @@ class _CustomerBreakdownHelpViewState
                                 ChoiceChip(
                                   label: Text(symptom),
                                   selected: _symptom == symptom,
-                                  onSelected: (selected) => setState(
-                                    () => _symptom = selected ? symptom : null,
-                                  ),
+                                  onSelected: (selected) => setState(() => _symptom = selected ? symptom : null),
                                 ),
                             ],
                           ),
@@ -300,8 +270,7 @@ class _CustomerBreakdownHelpViewState
                             textInputAction: TextInputAction.done,
                             decoration: const InputDecoration(
                               labelText: 'Anything else? (optional)',
-                              hintText:
-                                  'e.g. Parked in the basement, hard to see',
+                              hintText: 'e.g. Parked in the basement, hard to see',
                             ),
                           ),
                         ],
@@ -390,19 +359,13 @@ class _VehicleField extends StatelessWidget {
             children: [
               Text(
                 'No vehicles registered yet',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurface, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: AppDimensions.s4),
               Text(
                 'You can still send a request. Adding the vehicle helps the '
                 'workshop keep your history in one place.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  height: 1.4,
-                ),
+                style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant, height: 1.4),
               ),
               const SizedBox(height: AppDimensions.s8),
               Align(
@@ -446,11 +409,7 @@ class _VehicleOption extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _VehicleOption({
-    required this.vehicle,
-    required this.selected,
-    required this.onTap,
-  });
+  const _VehicleOption({required this.vehicle, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -465,16 +424,11 @@ class _VehicleOption extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s14,
-            vertical: AppDimensions.s12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s14, vertical: AppDimensions.s12),
           child: Row(
             children: [
               Icon(
-                selected
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_off_rounded,
+                selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
                 size: AppDimensions.iconMd,
                 color: selected ? colors.primary : colors.outline,
               ),
@@ -508,11 +462,7 @@ class _Dock extends StatelessWidget {
   final VoidCallback onCall;
   final VoidCallback onSubmit;
 
-  const _Dock({
-    required this.sending,
-    required this.onCall,
-    required this.onSubmit,
-  });
+  const _Dock({required this.sending, required this.onCall, required this.onSubmit});
 
   @override
   Widget build(BuildContext context) {
@@ -525,32 +475,21 @@ class _Dock extends StatelessWidget {
           color: colors.surface,
           border: Border(top: BorderSide(color: colors.outlineVariant)),
         ),
-        padding: const EdgeInsets.fromLTRB(
-          AppDimensions.s16,
-          AppDimensions.s12,
-          AppDimensions.s16,
-          0,
-        ),
+        padding: const EdgeInsets.fromLTRB(AppDimensions.s16, AppDimensions.s12, AppDimensions.s16, 0),
         child: Row(
           children: [
             OutlinedButton.icon(
               onPressed: sending ? null : onCall,
               icon: const Icon(Icons.phone_outlined, size: 18),
               label: const Text('Call'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(96, AppDimensions.touchTarget),
-              ),
+              style: OutlinedButton.styleFrom(minimumSize: const Size(96, AppDimensions.touchTarget)),
             ),
             const SizedBox(width: AppDimensions.s12),
             Expanded(
               child: FilledButton(
                 onPressed: sending ? null : onSubmit,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(AppDimensions.touchTarget),
-                ),
-                child: Text(
-                  sending ? 'Sending request…' : 'Request assistance',
-                ),
+                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(AppDimensions.touchTarget)),
+                child: Text(sending ? 'Sending request…' : 'Request assistance'),
               ),
             ),
           ],

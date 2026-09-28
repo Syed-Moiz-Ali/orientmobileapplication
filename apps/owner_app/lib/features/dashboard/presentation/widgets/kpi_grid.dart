@@ -20,7 +20,7 @@ class KpiGrid extends StatelessWidget {
       spacing: adaptive.itemSpacing,
       runSpacing: adaptive.itemSpacing,
       childAspectRatio: adaptive.isSmallMobile
-          ? 2.65
+          ? 2.15
           : adaptive.pick(
               compact: 1.35,
               medium: 1.8,

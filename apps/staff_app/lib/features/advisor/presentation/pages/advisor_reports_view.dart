@@ -46,7 +46,7 @@ class AdvisorReportsView extends ConsumerWidget {
                   const SizedBox(height: 20),
                   _summaryRow(context, data),
                   const SizedBox(height: 28),
-                  _sectionLabel(context, 'Throughput Analytics'),
+                  _sectionLabel(context, 'Job Activity'),
                   const SizedBox(height: 12),
                   _barChartSection(context, data),
                   const SizedBox(height: 28),
@@ -71,14 +71,18 @@ class AdvisorReportsView extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Advisor Analytics',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-            letterSpacing: -0.4,
+        Expanded(
+          child: Text(
+            'Advisor Analytics',
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: colorScheme.onSurface,
+              letterSpacing: -0.4,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
+        const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
           decoration: BoxDecoration(
@@ -390,7 +394,7 @@ class AdvisorReportsView extends ConsumerWidget {
         onPressed: () => _exportCsv(context, data),
         icon: const Icon(Icons.download_rounded, size: 18),
         label: const Text(
-          'Export Telemetry Report',
+          'Export CSV',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         style: ElevatedButton.styleFrom(

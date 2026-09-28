@@ -8,6 +8,8 @@ class EmptyState extends StatelessWidget {
   final IconData icon;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final Color? iconColor;
+  final Color? iconBackgroundColor;
 
   const EmptyState({
     super.key,
@@ -16,7 +18,21 @@ class EmptyState extends StatelessWidget {
     this.icon = Icons.inbox_outlined,
     this.actionLabel,
     this.onAction,
+    this.iconColor,
+    this.iconBackgroundColor,
   });
+
+  /// Unified Error state constructor
+  const EmptyState.error({
+    super.key,
+    required this.message,
+    this.title = 'Something went wrong',
+    this.icon = Icons.error_outline_rounded,
+    this.actionLabel = 'Retry',
+    required VoidCallback onRetry,
+  })  : onAction = onRetry,
+        iconColor = const Color(0xFFDC2626),
+        iconBackgroundColor = const Color(0xFFFEF2F2);
 
   @override
   Widget build(BuildContext context) {
@@ -50,21 +66,21 @@ class EmptyState extends StatelessWidget {
             children: [
               // Ambient Minimalist Icon Container
               Container(
-                width: 80,
-                height: 80,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerLow,
+                  color: iconBackgroundColor ?? colorScheme.surfaceContainerLow,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Icon(
                     icon,
-                    size: AppDimensions.iconLg,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    size: 28,
+                    color: iconColor ?? colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
                 ),
               ),
-              const SizedBox(height: AppDimensions.s20),
+              const SizedBox(height: AppDimensions.s16),
 
               // Optional Typographic Title
               if (title != null) ...[
@@ -76,7 +92,7 @@ class EmptyState extends StatelessWidget {
                     color: colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: AppDimensions.s8),
+                const SizedBox(height: AppDimensions.s6),
               ],
 
               // Descriptive Message

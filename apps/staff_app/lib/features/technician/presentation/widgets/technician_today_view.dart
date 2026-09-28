@@ -46,9 +46,7 @@ class TechnicianTodayView extends ConsumerWidget {
               const SizedBox(height: 12),
               _ConnectionNotice(message: state.dashboardError, onRetry: notifier.refresh),
             ],
-            const SizedBox(height: 14),
-            _ShiftKpiRow(notifier: notifier),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             _SectionLabel(eyebrow: 'CURRENT WORK', title: activeJob == null ? 'Ready for assignment' : 'On the bay'),
             const SizedBox(height: 12),
             if (activeJob == null)
@@ -84,7 +82,7 @@ class TechnicianTodayView extends ConsumerWidget {
                 ),
               ),
             const SizedBox(height: 20),
-            _ShiftPulse(notifier: notifier),
+            _ShiftSummaryCard(notifier: notifier),
           ],
         ),
       ),
@@ -351,29 +349,54 @@ class _ActiveJobCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(99),
-                    child: LinearProgressIndicator(
-                      value: job.progressPercent,
-                      minHeight: 8,
-                      backgroundColor: colors.outlineVariant,
-                      valueColor: AlwaysStoppedAnimation(colors.primary),
+            if (job.tasks.isEmpty) ...[
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Icon(Icons.checklist_rounded, size: 16, color: colors.onSurfaceVariant),
+                  const SizedBox(width: 6),
+                  Text(
+                    'No tasks recorded',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                ],
+              ),
+            ] else ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                        value: job.progressPercent,
+                        minHeight: 8,
+                        backgroundColor: colors.outlineVariant,
+                        valueColor: AlwaysStoppedAnimation(colors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${(job.progressPercent * 100).round()}%',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelLarge?.copyWith(color: colors.primary, fontWeight: FontWeight.w900),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${job.completedTasks} of ${job.tasks.length} tasks completed',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  '${(job.progressPercent * 100).round()}%',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelLarge?.copyWith(color: colors.primary, fontWeight: FontWeight.w900),
-                ),
-              ],
-            ),
+              ),
+            ],
             const SizedBox(height: 18),
             Row(
               children: [
@@ -597,15 +620,21 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-class _ShiftPulse extends StatelessWidget {
+class _ShiftSummaryCard extends StatelessWidget {
   final TechnicianNotifier notifier;
 
-  const _ShiftPulse({required this.notifier});
+  const _ShiftSummaryCard({required this.notifier});
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final p = notifier.productivity;
+    final inProgress = notifier.inProgressJobs;
+    final completed = p.completedToday > 0 ? p.completedToday : notifier.completedJobs;
+    final totalTasks = notifier.allTasks.length;
+    final completedTasks = notifier.allTasks.where((t) => t.task.status == TaskStatus.completed).length;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -625,43 +654,55 @@ class _ShiftPulse extends StatelessWidget {
                   color: colors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.insights_rounded, color: colors.primary, size: 18),
+                child: Icon(Icons.assessment_outlined, color: colors.primary, size: 18),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  'LIVE SHIFT PULSE',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Today's Shift Output",
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Operational turnaround and task progress',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Tooltip(
-                message: 'Updates live',
-                child: Icon(Icons.sync_rounded, color: colors.onSurfaceVariant, size: 18),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: (p.efficiency / 100).clamp(0, 1),
-              minHeight: 6,
-              backgroundColor: colors.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation(colors.primary),
-            ),
-          ),
-          const SizedBox(height: 16),
           Row(
             children: [
-              _PulseMetric(value: '${p.completedToday}', label: 'Completed'),
-              _PulseMetric(value: '${p.inProgress}', label: 'In progress'),
-              _PulseMetric(value: '${p.efficiency.round()}%', label: 'Efficiency'),
+              _SummaryMetricItem(
+                value: '$inProgress',
+                label: 'Active Bay',
+                icon: Icons.run_circle_outlined,
+                color: colors.primary,
+              ),
+              const SizedBox(width: 8),
+              _SummaryMetricItem(
+                value: '$completedTasks/$totalTasks',
+                label: 'Tasks Done',
+                icon: Icons.task_alt_rounded,
+                color: const Color(0xFF0F9D73),
+              ),
+              const SizedBox(width: 8),
+              _SummaryMetricItem(
+                value: '$completed',
+                label: 'Repairs Done',
+                icon: Icons.done_all_rounded,
+                color: colors.secondary,
+              ),
             ],
           ),
         ],
@@ -670,26 +711,60 @@ class _ShiftPulse extends StatelessWidget {
   }
 }
 
-class _PulseMetric extends StatelessWidget {
+class _SummaryMetricItem extends StatelessWidget {
   final String value;
   final String label;
+  final IconData icon;
+  final Color color;
 
-  const _PulseMetric({required this.value, required this.label});
+  const _SummaryMetricItem({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: colors.primary),
-          ),
-          const SizedBox(height: 2),
-          Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: colors.onSurfaceVariant)),
-        ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: color),
+                const Spacer(),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: colors.onSurface,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontSize: 10.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -834,103 +909,3 @@ class _ConnectionNotice extends StatelessWidget {
   }
 }
 
-class _ShiftKpiRow extends StatelessWidget {
-  final TechnicianNotifier notifier;
-  const _ShiftKpiRow({required this.notifier});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final inProgress = notifier.inProgressJobs;
-    final completed = notifier.productivity.completedToday > 0
-        ? notifier.productivity.completedToday
-        : notifier.completedJobs;
-    final totalTasks = notifier.allTasks.length;
-    final completedTasks = notifier.allTasks.where((t) => t.task.status == TaskStatus.completed).length;
-
-    return Row(
-      children: [
-        Expanded(
-          child: _ShiftKpiChip(
-            label: 'Active Bay',
-            value: '$inProgress',
-            icon: Icons.run_circle_outlined,
-            color: colors.primary,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _ShiftKpiChip(
-            label: 'Tasks Done',
-            value: '$completedTasks/$totalTasks',
-            icon: Icons.task_alt_rounded,
-            color: const Color(0xFF0F9D73),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _ShiftKpiChip(
-            label: 'Repairs Done',
-            value: '$completed',
-            icon: Icons.done_all_rounded,
-            color: colors.secondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ShiftKpiChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _ShiftKpiChip({required this.label, required this.value, required this.icon, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(9)),
-            child: Icon(icon, color: color, size: 16),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900, color: color),
-                ),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant, fontSize: 10),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

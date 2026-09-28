@@ -8,7 +8,7 @@ class AdvisorSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(AppDimensions.r28),
       ),

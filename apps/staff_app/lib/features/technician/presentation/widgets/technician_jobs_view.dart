@@ -152,20 +152,10 @@ class _JobsToolbar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
+        AppSearchField(
+          hintText: 'Search job, vehicle or plate',
           onChanged: notifier.updateSearch,
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            hintText: 'Search job, vehicle or plate',
-            prefixIcon: const Icon(Icons.search_rounded),
-            suffixIcon: state.searchQuery.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: 'Clear search',
-                    onPressed: () => notifier.updateSearch(''),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-          ),
+          onClear: () => notifier.updateSearch(''),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -403,22 +393,25 @@ class _JobQueueCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Text(
-                      '${(job.progressPercent * 100).toInt()}%',
-                      style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900),
-                    ),
+                    if (total > 0)
+                      Text(
+                        '${(job.progressPercent * 100).toInt()}%',
+                        style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: job.progressPercent,
-                    minHeight: 7,
-                    backgroundColor: colors.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation(job.status.color),
+                if (total > 0) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: job.progressPercent,
+                      minHeight: 7,
+                      backgroundColor: colors.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation(job.status.color),
+                    ),
                   ),
-                ),
+                ],
                 if (nextTask != null) ...[
                   const SizedBox(height: 12),
                   Container(

@@ -6,22 +6,22 @@ class CustomerInvoiceDetailView extends StatelessWidget {
 
   const CustomerInvoiceDetailView({super.key, required this.invoice});
 
-  (Color, Color) _getStatusColors() {
+  (Color, Color) _getStatusColors(ColorScheme colors) {
     switch (invoice.status.toLowerCase()) {
       case 'paid':
         return (
-          const Color(0xFF10B981),
-          const Color(0xFF10B981).withValues(alpha: 0.12),
+          colors.tertiary,
+          colors.tertiary.withValues(alpha: 0.12),
         );
       case 'overdue':
         return (
-          const Color(0xFFEF4444),
-          const Color(0xFFEF4444).withValues(alpha: 0.12),
+          colors.error,
+          colors.error.withValues(alpha: 0.12),
         );
       default:
         return (
-          const Color(0xFFD97706),
-          const Color(0xFFD97706).withValues(alpha: 0.12),
+          colors.primary,
+          colors.primary.withValues(alpha: 0.12),
         );
     }
   }
@@ -31,7 +31,7 @@ class CustomerInvoiceDetailView extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final (statusColor, statusBg) = _getStatusColors();
+    final (statusColor, statusBg) = _getStatusColors(colorScheme);
     final total = invoice.grandTotal > 0 ? invoice.grandTotal : invoice.amount;
 
     return Scaffold(
@@ -166,6 +166,7 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                                 'AED ${total.toStringAsFixed(2)}',
                                 style: textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.w900,
+                                  fontFamily: AppFontFamilies.mono,
                                   color: colorScheme.primary,
                                 ),
                               ),
@@ -253,6 +254,7 @@ class _AmountRow extends StatelessWidget {
           'AED ${amount.toStringAsFixed(2)}',
           style: textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w800,
+            fontFamily: AppFontFamilies.mono,
             color: colorScheme.onSurface,
           ),
         ),

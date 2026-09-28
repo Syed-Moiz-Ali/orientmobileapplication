@@ -29,6 +29,121 @@ class AppNavItem {
   });
 }
 
+/// Standard ORIENT product family brand identifier for rails, sidebars, and drawers.
+///
+/// In compact (rail) mode, renders a crisp 36x36 geometric monogram tile with the
+/// signature 'O' emblem.
+/// In expanded (sidebar/drawer) mode, displays the monogram tile alongside the
+/// bold "ORIENT" wordmark and the role/workspace context (e.g. "Workshop Advisor",
+/// "Operations", "CRM Pipeline", "Customer Portal").
+class OrientBrandMark extends StatelessWidget {
+  final String? workspace;
+  final bool compact;
+  final VoidCallback? onTap;
+
+  const OrientBrandMark({
+    super.key,
+    this.workspace,
+    this.compact = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    final emblem = Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: colors.primary,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          'O',
+          style: TextStyle(
+            color: colors.onPrimary,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ),
+    );
+
+    if (compact) {
+      final tooltipMsg = 'ORIENT ${workspace ?? ''}'.trim();
+      return Tooltip(
+        message: tooltipMsg,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: emblem,
+          ),
+        ),
+      );
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            emblem,
+            const SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ORIENT',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                  if (workspace != null) ...[
+                    const SizedBox(height: 1),
+                    Text(
+                      workspace!.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 9.5,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Single cobalt tint used for every selected navigation surface so the bar,
 /// rail and drawer read as one product.
 const double _selectedTint = 0.12;
@@ -483,6 +598,10 @@ class AppNavigationRail extends StatelessWidget {
   final bool extended;
   final double compactWidth;
   final double extendedWidth;
+  final Widget? header;
+  final Widget Function(BuildContext context, bool extended)? headerBuilder;
+  final Widget? footer;
+  final Widget Function(BuildContext context, bool extended)? footerBuilder;
 
   const AppNavigationRail({
     super.key,
@@ -494,11 +613,21 @@ class AppNavigationRail extends StatelessWidget {
     this.extended = false,
     this.compactWidth = _compactRailWidth,
     this.extendedWidth = _extendedRailWidth,
+    this.header,
+    this.headerBuilder,
+    this.footer,
+    this.footerBuilder,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final resolvedHeader = headerBuilder != null
+        ? headerBuilder!(context, extended)
+        : header;
+    final resolvedFooter = footerBuilder != null
+        ? footerBuilder!(context, extended)
+        : footer;
 
     return Material(
       color: colors.surface,
@@ -513,7 +642,20 @@ class AppNavigationRail extends StatelessWidget {
             width: extended ? extendedWidth : compactWidth,
             child: Column(
               children: [
-                const SizedBox(height: AppDimensions.s16),
+                if (resolvedHeader != null) ...[
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      extended ? AppDimensions.s16 : AppDimensions.s8,
+                      AppDimensions.s12,
+                      extended ? AppDimensions.s16 : AppDimensions.s8,
+                      AppDimensions.s10,
+                    ),
+                    child: resolvedHeader,
+                  ),
+                  Divider(height: 1, color: colors.outlineVariant),
+                  const SizedBox(height: AppDimensions.s8),
+                ] else
+                  const SizedBox(height: AppDimensions.s16),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
@@ -549,7 +691,19 @@ class AppNavigationRail extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: AppDimensions.s12),
+                if (resolvedFooter != null) ...[
+                  Divider(height: 1, color: colors.outlineVariant),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: extended
+                          ? AppDimensions.s12
+                          : AppDimensions.s8,
+                      vertical: AppDimensions.s8,
+                    ),
+                    child: resolvedFooter,
+                  ),
+                ] else
+                  const SizedBox(height: AppDimensions.s12),
               ],
             ),
           ),
@@ -650,6 +804,10 @@ class AppAdaptiveNavigationFrame extends StatelessWidget {
   final Widget child;
   final Set<int> badgeIndices;
   final Map<int, int> badgeCounts;
+  final Widget? header;
+  final Widget Function(BuildContext context, bool extended)? headerBuilder;
+  final Widget? footer;
+  final Widget Function(BuildContext context, bool extended)? footerBuilder;
 
   const AppAdaptiveNavigationFrame({
     super.key,
@@ -659,6 +817,10 @@ class AppAdaptiveNavigationFrame extends StatelessWidget {
     required this.child,
     this.badgeIndices = const {},
     this.badgeCounts = const {},
+    this.header,
+    this.headerBuilder,
+    this.footer,
+    this.footerBuilder,
   });
 
   @override
@@ -679,6 +841,10 @@ class AppAdaptiveNavigationFrame extends StatelessWidget {
           badgeCounts: badgeCounts,
           extended: adaptive.extendNavigationRail,
           compactWidth: adaptive.navigationRailWidth,
+          header: header,
+          headerBuilder: headerBuilder,
+          footer: footer,
+          footerBuilder: footerBuilder,
         ),
         Expanded(child: child),
       ],

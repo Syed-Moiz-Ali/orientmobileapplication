@@ -8,7 +8,7 @@ void main() {
 
     expect(
       EnvironmentConfig.baseUrl,
-      'https://56zk48dj-8080.inc1.devtunnels.ms/api/v1',
+      'https://g.erpmass.com/api/v1',
       reason: 'BASE_URL must come from packages/shared_core/assets/.env',
     );
     expect(EnvironmentConfig.appEnv, 'development');

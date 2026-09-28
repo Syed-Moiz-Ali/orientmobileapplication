@@ -88,6 +88,64 @@ class CrmDashboardView extends ConsumerWidget {
         selectedIndex: state.selectedIndex,
         onSelected: notifier.selectTab,
         badgeCounts: leadCount > 0 ? {1: leadCount} : const <int, int>{},
+        headerBuilder: (ctx, ext) => OrientBrandMark(
+          workspace: 'CRM',
+          compact: !ext,
+        ),
+        footerBuilder: (ctx, ext) => InkWell(
+          onTap: () => notifier.selectTab(7),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: ext ? AppDimensions.s8 : 0,
+              vertical: AppDimensions.s4,
+            ),
+            child: ext
+                ? Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                        child: Text(
+                          'C',
+                          style: TextStyle(
+                            color: Theme.of(ctx).colorScheme.primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.s10),
+                      Expanded(
+                        child: Text(
+                          'CRM Settings',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(ctx).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(ctx).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Tooltip(
+                    message: 'CRM Settings',
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                      child: Text(
+                        'C',
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ),
         child: IndexedStack(index: state.selectedIndex, children: pages),
       ),
     );

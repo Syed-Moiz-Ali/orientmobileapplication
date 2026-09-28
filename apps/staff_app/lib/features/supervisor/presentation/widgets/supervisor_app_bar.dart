@@ -13,19 +13,19 @@ class SupervisorAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const SupervisorAppBar({super.key, required this.selectedIndex});
 
   static const _titles = [
-    'Command Center',
-    'Task Assignment',
-    'Dispatch Queue',
-    'QC Verification',
+    'Workshop Overview',
+    'Work Assignment',
+    'Incoming Queue',
+    'Quality Control',
     'Staff Profile',
   ];
 
   static const _subtitles = [
-    'Shift Telemetry & Velocity',
-    'Dispatch Tasks to Technicians',
-    'Incoming Bookings & Breakdowns',
-    'Sign-off Completed Repairs',
-    'Personal & Shift Settings',
+    'Shift operations & floor activity',
+    'Assign tasks to technicians',
+    'Incoming bookings & breakdowns',
+    'Review and verify completed repairs',
+    'Personal & shift details',
   ];
 
   @override
@@ -56,7 +56,11 @@ class SupervisorAppBar extends ConsumerWidget implements PreferredSizeWidget {
             color: colors.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(Icons.speed_rounded, color: colors.primary, size: 20),
+          child: Icon(
+            Icons.engineering_rounded,
+            color: colors.primary,
+            size: 20,
+          ),
         ),
       ),
       title: Column(

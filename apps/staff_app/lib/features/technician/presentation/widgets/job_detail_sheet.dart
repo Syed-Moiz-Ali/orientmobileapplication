@@ -77,248 +77,345 @@ class _JobDetailSheetState extends ConsumerState<JobDetailSheet> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Drag Handle
-            Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 6),
-              child: Center(
-                child: Container(
-                  width: 44,
-                  height: 5,
-                  decoration: BoxDecoration(color: colors.outlineVariant, borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
-
-            // Header Card
-            _SheetHeader(
-              job: liveJob,
-              isActionable: isActionable,
-              onClose: () => Navigator.pop(context),
-              onStatusChanged: (newStatus) {
-                if (!isActionable) return;
-                HapticFeedback.selectionClick();
-                notifier.updateJobStatus(liveJob, newStatus);
-              },
-            ),
-
-            // Main Scrollable Body
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Section Title: Work Tasks
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      runSpacing: 6,
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 18,
-                          decoration: BoxDecoration(color: colors.primary, borderRadius: BorderRadius.circular(2)),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Work Tasks',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: colors.onSurface,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: colors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${liveJob.completedTasks}/${liveJob.tasks.length} Done',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colors.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Track and update live task execution',
-                      style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 14),
-
-                    if (isActionable &&
-                        liveJob.tasks.any((task) => task.status == TaskStatus.pending))
-                      TextButton.icon(
-                        onPressed: () {
-                          final nextTask = liveJob.tasks.firstWhere((task) => task.status == TaskStatus.pending);
-                          HapticFeedback.mediumImpact();
-                          notifier.startTask(liveJob, nextTask);
-                        },
-                        icon: const Icon(Icons.play_arrow_rounded, size: 16),
-                        label: const Text('Start'),
-                        style: TextButton.styleFrom(
-                          minimumSize: const Size(0, 40),
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                      ),
-                    // Task Cards List
-                    if (liveJob.tasks.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: colors.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: colors.outlineVariant),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'No specific work tasks defined for this job card.',
-                            style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
-                          ),
-                        ),
-                      )
-                    else
-                      ...liveJob.tasks.asMap().entries.map((entry) {
-                        final index = entry.key + 1;
-                        final task = entry.value;
-                        return _InteractiveTaskCard(
-                          index: index,
-                          task: task,
-                          isActionable: isActionable,
-                          onStart: () {
-                            if (!isActionable) return;
-                            HapticFeedback.mediumImpact();
-                            notifier.startTask(liveJob, task);
-                          },
-                          onComplete: () {
-                            if (!isActionable) return;
-                            HapticFeedback.mediumImpact();
-                            notifier.completeTask(liveJob, task);
-                          },
-                          onStatusChanged: (status) {
-                            if (!isActionable) return;
-                            HapticFeedback.selectionClick();
-                            notifier.updateTaskStatus(liveJob, task, status);
-                          },
-                        );
-                      }),
-
-                    const SizedBox(height: 20),
-
-                    // Section Title: Technician Notes
-                    Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 18,
-                          decoration: BoxDecoration(color: colors.secondary, borderRadius: BorderRadius.circular(2)),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.edit_note_rounded, size: 20, color: colors.secondary),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Technician Observations & Notes',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: colors.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _notesCtrl,
-                      maxLines: 4,
-                      readOnly: !isActionable,
-                      onChanged: isActionable
-                          ? (val) => notifier.updateNotes(liveJob, val)
-                          : null,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurface),
-                      decoration: InputDecoration(
-                        hintText: 'Add any diagnosis notes, part numbers or observations...',
-                        hintStyle: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
-                        filled: true,
-                        fillColor: colors.surfaceContainerLow,
-                        contentPadding: const EdgeInsets.all(14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: colors.outlineVariant),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: colors.outlineVariant),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: colors.primary, width: 2),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-
-            // Bottom Action Footer
-            _SheetFooter(
-              job: liveJob,
-              isActionable: isActionable,
-              isSaving: state.isSaving,
-              empId: notifier.profile.empId,
-              onSave: () async {
-                HapticFeedback.selectionClick();
-                await notifier.saveChanges(liveJob);
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Job progress saved successfully'), behavior: SnackBarBehavior.floating),
-                );
-              },
-              onCompleteJob: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Complete Job Card?'),
-                    content: Text(
-                      'Are you sure you want to mark ${liveJob.jobCardNo} as complete?\n\n'
-                      'All remaining tasks will be recorded as completed and sent for Supervisor QC verification.',
-                    ),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                      FilledButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F9D73)),
-                        child: const Text('Confirm Complete'),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirmed == true) {
-                  HapticFeedback.heavyImpact();
-                  await notifier.completeJob(liveJob);
-                  if (!context.mounted) return;
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${liveJob.jobCardNo} completed and submitted for QC review'),
-                      backgroundColor: const Color(0xFF0F9D73),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 768;
+            if (isWide) {
+              return _buildWideLayout(context, ref, liveJob, isActionable, state, notifier);
+            }
+            return _buildMobileLayout(context, ref, liveJob, isActionable, state, notifier);
+          },
         ),
       ),
     );
+  }
+
+  Widget _buildMobileLayout(
+    BuildContext context,
+    WidgetRef ref,
+    TechnicianJobEntity liveJob,
+    bool isActionable,
+    TechnicianState state,
+    TechnicianNotifier notifier,
+  ) {
+    return Column(
+      children: [
+        _SheetHeader(
+          job: liveJob,
+          isActionable: isActionable,
+          onClose: () => Navigator.pop(context),
+          onStatusChanged: (newStatus) {
+            if (!isActionable) return;
+            HapticFeedback.selectionClick();
+            notifier.updateJobStatus(liveJob, newStatus);
+          },
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTasksSection(context, liveJob, isActionable, notifier),
+                const SizedBox(height: 20),
+                _buildNotesSection(context, liveJob, isActionable, notifier),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+        _SheetFooter(
+          job: liveJob,
+          isActionable: isActionable,
+          isSaving: state.isSaving,
+          empId: notifier.profile.empId,
+          onSave: () => _handleSave(context, notifier, liveJob),
+          onCompleteJob: () => _handleComplete(context, notifier, liveJob),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWideLayout(
+    BuildContext context,
+    WidgetRef ref,
+    TechnicianJobEntity liveJob,
+    bool isActionable,
+    TechnicianState state,
+    TechnicianNotifier notifier,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 6,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: _buildTasksSection(context, liveJob, isActionable, notifier),
+          ),
+        ),
+        VerticalDivider(width: 1, thickness: 1, color: colors.outlineVariant),
+        Expanded(
+          flex: 4,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SheetHeader(
+                  job: liveJob,
+                  isActionable: isActionable,
+                  onClose: () => Navigator.pop(context),
+                  onStatusChanged: (newStatus) {
+                    if (!isActionable) return;
+                    HapticFeedback.selectionClick();
+                    notifier.updateJobStatus(liveJob, newStatus);
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildNotesSection(context, liveJob, isActionable, notifier),
+                const SizedBox(height: 24),
+                _SheetFooter(
+                  job: liveJob,
+                  isActionable: isActionable,
+                  isSaving: state.isSaving,
+                  empId: notifier.profile.empId,
+                  onSave: () => _handleSave(context, notifier, liveJob),
+                  onCompleteJob: () => _handleComplete(context, notifier, liveJob),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTasksSection(
+    BuildContext context,
+    TechnicianJobEntity liveJob,
+    bool isActionable,
+    TechnicianNotifier notifier,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          runSpacing: 6,
+          children: [
+            Container(
+              width: 4,
+              height: 18,
+              decoration: BoxDecoration(color: colors.primary, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Work Tasks',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: colors.onSurface,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${liveJob.completedTasks}/${liveJob.tasks.length} Done',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Track and update live task execution',
+          style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 14),
+        if (isActionable &&
+            liveJob.tasks.any((task) => task.status == TaskStatus.pending))
+          TextButton.icon(
+            onPressed: () {
+              final nextTask = liveJob.tasks.firstWhere((task) => task.status == TaskStatus.pending);
+              HapticFeedback.mediumImpact();
+              notifier.startTask(liveJob, nextTask);
+            },
+            icon: const Icon(Icons.play_arrow_rounded, size: 16),
+            label: const Text('Start'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+          ),
+        if (liveJob.tasks.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            child: Center(
+              child: Text(
+                'No specific work tasks defined for this job card.',
+                style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+              ),
+            ),
+          )
+        else
+          ...liveJob.tasks.asMap().entries.map((entry) {
+            final index = entry.key + 1;
+            final task = entry.value;
+            return _InteractiveTaskCard(
+              index: index,
+              task: task,
+              isActionable: isActionable,
+              onStart: () {
+                if (!isActionable) return;
+                HapticFeedback.mediumImpact();
+                notifier.startTask(liveJob, task);
+              },
+              onComplete: () {
+                if (!isActionable) return;
+                HapticFeedback.mediumImpact();
+                notifier.completeTask(liveJob, task);
+              },
+              onStatusChanged: (status) {
+                if (!isActionable) return;
+                HapticFeedback.selectionClick();
+                notifier.updateTaskStatus(liveJob, task, status);
+              },
+            );
+          }),
+      ],
+    );
+  }
+
+  Widget _buildNotesSection(
+    BuildContext context,
+    TechnicianJobEntity liveJob,
+    bool isActionable,
+    TechnicianNotifier notifier,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 4,
+              height: 18,
+              decoration: BoxDecoration(color: colors.secondary, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.edit_note_rounded, size: 20, color: colors.secondary),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'Technician Observations & Notes',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colors.onSurface,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _notesCtrl,
+          maxLines: 4,
+          readOnly: !isActionable,
+          onChanged: isActionable
+              ? (val) => notifier.updateNotes(liveJob, val)
+              : null,
+          style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurface),
+          decoration: InputDecoration(
+            hintText: 'Add any diagnosis notes, part numbers or observations...',
+            hintStyle: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+            filled: true,
+            fillColor: colors.surfaceContainerLow,
+            contentPadding: const EdgeInsets.all(14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: colors.outlineVariant),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: colors.outlineVariant),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: colors.primary, width: 2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleSave(
+    BuildContext context,
+    TechnicianNotifier notifier,
+    TechnicianJobEntity liveJob,
+  ) async {
+    HapticFeedback.selectionClick();
+    await notifier.saveChanges(liveJob);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Job progress saved successfully'), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  Future<void> _handleComplete(
+    BuildContext context,
+    TechnicianNotifier notifier,
+    TechnicianJobEntity liveJob,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Complete Job Card?'),
+        content: Text(
+          'Are you sure you want to mark ${liveJob.jobCardNo} as complete?\n\n'
+          'All remaining tasks will be recorded as completed and sent for Supervisor QC verification.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F9D73)),
+            child: const Text('Confirm Complete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      HapticFeedback.heavyImpact();
+      await notifier.completeJob(liveJob);
+      if (!context.mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${liveJob.jobCardNo} completed and submitted for QC review'),
+          backgroundColor: const Color(0xFF0F9D73),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }
 

@@ -70,37 +70,15 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                 ref.invalidate(advisorAssignedBookingsProvider);
               },
             ),
-          // ── SEARCH PILL ──────────────────────────────────────────────────
+          // ── SEARCH FIELD ────────────────────────────────────────────────
           Container(
             color: colorScheme.surface,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Container(
-              height: 44,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: colorScheme.outlineVariant),
-              ),
-              child: TextField(
-                controller: _searchCtrl,
-                decoration: InputDecoration(
-                  hintText: 'Search by registration, customer, or ID...',
-                  hintStyle: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    size: 18,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
-                onChanged: (v) =>
-                    ref.read(_jobsSearchProvider.notifier).state = v,
-              ),
+            child: AppSearchField(
+              controller: _searchCtrl,
+              hintText: 'Search by registration, customer, or ID...',
+              onChanged: (v) => ref.read(_jobsSearchProvider.notifier).state = v,
+              onClear: () => ref.read(_jobsSearchProvider.notifier).state = '',
             ),
           ),
 

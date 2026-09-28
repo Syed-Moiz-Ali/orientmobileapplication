@@ -74,14 +74,16 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
         padding: EdgeInsets.only(bottom: bottomInset),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.92,
-          ),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
+        child: Center(
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: 540,
+              maxHeight: MediaQuery.sizeOf(context).height * 0.92,
+            ),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
             child: Form(
@@ -244,8 +246,9 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _SheetHeader extends StatelessWidget {

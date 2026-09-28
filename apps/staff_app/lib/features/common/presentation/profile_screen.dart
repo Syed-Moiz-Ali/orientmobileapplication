@@ -19,111 +19,66 @@ class StaffProfileScreen extends ConsumerWidget {
     final me = auth is AuthAuthenticated ? auth.profile : null;
     final profile = _StaffProfile.from(profile: me, data: data);
 
+    final canPop = Navigator.of(context).canPop();
+
     return Scaffold(
       backgroundColor: colors.surfaceContainerLowest,
-      appBar: AppBar(
-        backgroundColor: colors.surfaceContainerLowest,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  context.pop();
-                },
-              )
-            : null,
-        centerTitle: true,
-        title: Text(
-          profile.role.isEmpty ? 'Staff Profile' : '${profile.role} Profile',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colors.onSurface,
-          ),
-        ),
-      ),
       body: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 60),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ProfileHero(profile: profile),
-              const SizedBox(height: 16),
-              _MetricGrid(profile: profile),
-              const SizedBox(height: 24),
-              _SectionTitle('Account Details'),
-              const SizedBox(height: 12),
-              _InfoGroup(
-                rows: [
-                  _InfoRow(Icons.badge_outlined, 'Staff ID', profile.empId),
-                  _InfoRow(Icons.work_outline_rounded, 'Role', profile.role),
-                  _InfoRow(Icons.business_outlined, 'Branch', profile.branch),
-                  _InfoRow(Icons.schedule_outlined, 'Shift', profile.shift),
-                  _InfoRow(Icons.email_outlined, 'Email', profile.email),
-                  _InfoRow(Icons.phone_outlined, 'Phone', profile.phone),
-                  _InfoRow(
-                    Icons.groups_2_outlined,
-                    'Department',
-                    profile.department,
-                  ),
-                  _InfoRow(
-                    Icons.assignment_ind_outlined,
-                    'Designation',
-                    profile.designation,
-                  ),
+        child: AppPageFrame(
+          title: 'Profile',
+          subtitle: profile.role.isNotEmpty ? '${profile.role} account' : null,
+          leading: canPop
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  tooltip: 'Back',
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    context.pop();
+                  },
+                )
+              : null,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 640;
+              if (isWide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 280,
+                      child: _IdentityCard(profile: profile),
+                    ),
+                    const SizedBox(width: AppDimensions.s24),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _WorkContextPanel(profile: profile),
+                          const SizedBox(height: AppDimensions.s20),
+                          _ContactInfoPanel(profile: profile),
+                          const SizedBox(height: AppDimensions.s28),
+                          _SignOutSection(ref: ref),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _IdentityCard(profile: profile),
+                  const SizedBox(height: AppDimensions.s20),
+                  _WorkContextPanel(profile: profile),
+                  const SizedBox(height: AppDimensions.s20),
+                  _ContactInfoPanel(profile: profile),
+                  const SizedBox(height: AppDimensions.s28),
+                  _SignOutSection(ref: ref),
+                  const SizedBox(height: AppDimensions.s24),
                 ],
-              ),
-              const SizedBox(height: 24),
-              _SectionTitle('Security & Access'),
-              const SizedBox(height: 12),
-              _InfoGroup(
-                rows: const [
-                  _InfoRow(
-                    Icons.fingerprint_rounded,
-                    'Biometric Login',
-                    'Managed by device settings',
-                  ),
-                  _InfoRow(
-                    Icons.lock_outline_rounded,
-                    'Account Credentials',
-                    'Use sign-in or OTP flow',
-                  ),
-                  _InfoRow(
-                    Icons.notifications_active_outlined,
-                    'Notifications',
-                    'Firebase push enabled after login',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: colors.error,
-                  foregroundColor: colors.onError,
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text(
-                  'Sign out',
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                onPressed: () async {
-                  HapticFeedback.heavyImpact();
-                  await showLogoutDialog(
-                    context,
-                    onLogout: () =>
-                        ref.read(authNotifierProvider.notifier).logout(),
-                  );
-                },
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -189,183 +144,179 @@ class _StaffProfile {
   }
 }
 
-class _ProfileHero extends StatelessWidget {
+/// Compact, professional identity surface without giant circular avatars or fake chips.
+class _IdentityCard extends StatelessWidget {
   final _StaffProfile profile;
 
-  const _ProfileHero({required this.profile});
+  const _IdentityCard({required this.profile});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final hasEmpId = profile.empId.isNotEmpty;
+    final hasBranch = profile.branch.isNotEmpty;
 
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(AppDimensions.s20),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.outlineVariant),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.8)),
+        boxShadow: AppDimensions.shadowCard,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 44,
-            backgroundColor: colors.primaryContainer,
-            child: Text(
-              profile.initials,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: colors.onPrimaryContainer,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            profile.name,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            profile.designation.isEmpty ? profile.role : profile.designation,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
+          Row(
             children: [
-              _Chip(
-                label: profile.empId.isEmpty ? 'STAFF ACCOUNT' : profile.empId,
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  profile.initials,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onPrimaryContainer,
+                  ),
+                ),
               ),
-              _Chip(label: profile.branch.isEmpty ? 'ACTIVE' : profile.branch),
+              const SizedBox(width: AppDimensions.s16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      profile.designation.isNotEmpty
+                          ? profile.designation
+                          : profile.role,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricGrid extends StatelessWidget {
-  final _StaffProfile profile;
-
-  const _MetricGrid({required this.profile});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _MetricTile(
-            icon: Icons.schedule_rounded,
-            label: 'Shift',
-            value: profile.shift,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _MetricTile(
-            icon: Icons.business_rounded,
-            label: 'Branch',
-            value: profile.branch,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _MetricTile(
-            icon: Icons.badge_rounded,
-            label: 'Dept',
-            value: profile.department,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _MetricTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Container(
-      height: 104,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: colors.primary, size: 20),
-          const SizedBox(height: 8),
-          Text(
-            value.isEmpty ? 'Not set' : value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w900,
+          if (hasEmpId || hasBranch) ...[
+            const SizedBox(height: AppDimensions.s16),
+            Divider(
+              height: 1,
+              color: colors.outlineVariant.withValues(alpha: 0.5),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
+            const SizedBox(height: AppDimensions.s12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasEmpId)
+                  Container(
+                    margin: EdgeInsets.only(
+                      bottom: hasBranch ? AppDimensions.s8 : 0,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.s8,
+                      vertical: AppDimensions.s4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHighest.withValues(
+                        alpha: 0.5,
+                      ),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusXs,
+                      ),
+                      border: Border.all(
+                        color: colors.outlineVariant.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.badge_outlined,
+                          size: 13,
+                          color: colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: AppDimensions.s4),
+                        Flexible(
+                          child: Text(
+                            profile.empId,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontFamily: AppFontFamilies.mono,
+                              fontWeight: FontWeight.w700,
+                              color: colors.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (hasBranch)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.s8,
+                      vertical: AppDimensions.s4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHighest.withValues(
+                        alpha: 0.5,
+                      ),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusXs,
+                      ),
+                      border: Border.all(
+                        color: colors.outlineVariant.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 13,
+                          color: colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: AppDimensions.s4),
+                        Flexible(
+                          child: Text(
+                            profile.branch,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colors.onSurfaceVariant,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoGroup extends StatelessWidget {
-  final List<_InfoRow> rows;
-
-  const _InfoGroup({required this.rows});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            rows[i],
-            if (i != rows.length - 1)
-              Divider(height: 1, color: colors.outlineVariant, indent: 56),
           ],
         ],
       ),
@@ -373,93 +324,233 @@ class _InfoGroup extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
+/// Work context section grouping role, designation, branch, shift, and department.
+class _WorkContextPanel extends StatelessWidget {
+  final _StaffProfile profile;
+
+  const _WorkContextPanel({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final showDesignation =
+        profile.designation.isNotEmpty &&
+        profile.designation.toLowerCase() != profile.role.toLowerCase();
+
+    final items = <_ProfileField>[
+      if (profile.role.isNotEmpty)
+        _ProfileField(
+          icon: Icons.work_outline_rounded,
+          label: 'Role',
+          value: profile.role,
+        ),
+      if (showDesignation)
+        _ProfileField(
+          icon: Icons.assignment_ind_outlined,
+          label: 'Designation',
+          value: profile.designation,
+        ),
+      if (profile.department.isNotEmpty)
+        _ProfileField(
+          icon: Icons.groups_2_outlined,
+          label: 'Department',
+          value: profile.department,
+        ),
+      if (profile.branch.isNotEmpty)
+        _ProfileField(
+          icon: Icons.business_outlined,
+          label: 'Branch',
+          value: profile.branch,
+        ),
+      if (profile.shift.isNotEmpty)
+        _ProfileField(
+          icon: Icons.schedule_outlined,
+          label: 'Shift',
+          value: profile.shift,
+        ),
+    ];
+
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader(title: 'Work Information'),
+        const SizedBox(height: AppDimensions.s8),
+        _FieldGroupCard(fields: items),
+      ],
+    );
+  }
+}
+
+/// Contact information section grouping email and phone.
+class _ContactInfoPanel extends StatelessWidget {
+  final _StaffProfile profile;
+
+  const _ContactInfoPanel({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <_ProfileField>[
+      if (profile.email.isNotEmpty)
+        _ProfileField(
+          icon: Icons.email_outlined,
+          label: 'Email',
+          value: profile.email,
+        ),
+      if (profile.phone.isNotEmpty)
+        _ProfileField(
+          icon: Icons.phone_outlined,
+          label: 'Phone',
+          value: profile.phone,
+          isMono: true,
+        ),
+    ];
+
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader(title: 'Contact Details'),
+        const SizedBox(height: AppDimensions.s8),
+        _FieldGroupCard(fields: items),
+      ],
+    );
+  }
+}
+
+class _ProfileField {
   final IconData icon;
   final String label;
   final String value;
+  final bool isMono;
 
-  const _InfoRow(this.icon, this.label, this.value);
+  const _ProfileField({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.isMono = false,
+  });
+}
+
+class _FieldGroupCard extends StatelessWidget {
+  final List<_ProfileField> fields;
+
+  const _FieldGroupCard({required this.fields});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.8)),
+        boxShadow: AppDimensions.shadowCard,
+      ),
+      child: Column(
         children: [
-          Icon(icon, size: 20, color: colors.primary),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
+          for (var i = 0; i < fields.length; i++) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.s16,
+                vertical: AppDimensions.s12,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHighest.withValues(
+                        alpha: 0.4,
+                      ),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusSm,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      fields[i].icon,
+                      size: AppDimensions.iconSm,
+                      color: colors.primary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value.isEmpty ? 'Not available' : value,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w800,
+                  const SizedBox(width: AppDimensions.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fields[i].label,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          fields[i].value,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: fields[i].isMono
+                                ? AppFontFamilies.mono
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            if (i < fields.length - 1)
+              Divider(
+                height: 1,
+                indent: 60,
+                color: colors.outlineVariant.withValues(alpha: 0.4),
+              ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _Chip extends StatelessWidget {
-  final String label;
+/// Sign out action with standard dialog confirmation.
+class _SignOutSection extends StatelessWidget {
+  final WidgetRef ref;
 
-  const _Chip({required this.label});
+  const _SignOutSection({required this.ref});
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          color: colors.primary,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
+    return OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: colors.error,
+        side: BorderSide(color: colors.error.withValues(alpha: 0.35)),
+        minimumSize: const Size.fromHeight(48),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
         ),
       ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  final String title;
-
-  const _SectionTitle(this.title);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      title,
-      style: theme.textTheme.titleMedium?.copyWith(
-        color: theme.colorScheme.onSurface,
-        fontWeight: FontWeight.w900,
+      icon: const Icon(Icons.logout_rounded, size: AppDimensions.iconSm),
+      label: const Text(
+        'Sign out',
+        style: TextStyle(fontWeight: FontWeight.w700),
       ),
+      onPressed: () async {
+        HapticFeedback.heavyImpact();
+        await showLogoutDialog(
+          context,
+          onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
+        );
+      },
     );
   }
 }

@@ -32,15 +32,17 @@ class DashboardShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final iconBrightness = isDark ? Brightness.light : Brightness.dark;
+    final brightness = theme.brightness;
+    final iconBrightness = brightness == Brightness.dark
+        ? Brightness.light
+        : Brightness.dark;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: iconBrightness,
         // iOS expresses this as the background brightness.
-        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        statusBarBrightness: brightness,
         systemNavigationBarColor: colors.surface,
         systemNavigationBarIconBrightness: iconBrightness,
       ),

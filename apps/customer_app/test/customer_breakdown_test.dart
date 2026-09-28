@@ -610,7 +610,9 @@ Future<void> _pumpForm(
       GoRoute(path: '/', builder: (_, __) => const CustomerBreakdownHelpView()),
       GoRoute(
         path: AppRoutes.customerBreakdownResult,
-        builder: (_, __) => const Scaffold(body: Text('RESULT')),
+        builder: (_, state) => CustomerBreakdownResultView(
+          result: (state.extra as Map<String, dynamic>?) ?? const {},
+        ),
       ),
       GoRoute(
         path: AppRoutes.customerAddVehicle,

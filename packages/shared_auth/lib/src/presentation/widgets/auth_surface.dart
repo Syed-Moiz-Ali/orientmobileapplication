@@ -43,7 +43,6 @@ class AuthShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -51,10 +50,10 @@ class AuthShell extends StatelessWidget {
         statusBarIconBrightness: theme.brightness == Brightness.dark
             ? Brightness.light
             : Brightness.dark,
-        systemNavigationBarColor: colors.surfaceContainerLow,
+        systemNavigationBarColor: AppColors.canvas,
       ),
       child: Scaffold(
-        backgroundColor: colors.surfaceContainerLow,
+        backgroundColor: AppColors.canvas,
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -78,6 +77,7 @@ class AuthShell extends StatelessWidget {
               if (!desktop) return form;
 
               return Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
                     flex: 5,
@@ -90,7 +90,7 @@ class AuthShell extends StatelessWidget {
                   VerticalDivider(
                     width: 1,
                     thickness: 1,
-                    color: colors.outlineVariant,
+                    color: AppColors.borderDefault,
                   ),
                   Expanded(flex: 6, child: form),
                 ],
@@ -209,16 +209,8 @@ class _AuthFormPane extends StatelessWidget {
             decoration: BoxDecoration(
               color: colors.surface,
               borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
-              border: Border.all(color: colors.outlineVariant),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: theme.brightness == Brightness.dark ? 0.36 : 0.05,
-                  ),
-                  blurRadius: 24,
-                  offset: const Offset(0, 14),
-                ),
-              ],
+              border: Border.all(color: AppColors.borderDefault),
+              boxShadow: AppDimensions.shadowCard,
             ),
             padding: const EdgeInsets.all(AppDimensions.s28),
             child: panel,
@@ -260,45 +252,46 @@ class _AuthIdentityPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return ColoredBox(
+    return Container(
       color: colors.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.s40),
-        child: Align(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s48,
+            vertical: AppDimensions.s40,
+          ),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
+            constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _AuthBrandMark(size: 44),
+                const _AuthBrandMark(size: 46),
                 const SizedBox(height: AppDimensions.s40),
                 Text(
-                  'Workshop operations, end to end.',
+                  'Automotive Garage ERP & Workshop Suite.',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
-                    height: 1.15,
+                    height: 1.2,
                   ),
                 ),
-                const SizedBox(height: AppDimensions.s12),
+                const SizedBox(height: AppDimensions.s14),
                 Text(
-                  'Bookings, job cards, inspections, approvals, and customer '
-                  'updates in one secure workspace for every workshop role.',
+                  'End-to-end management for vehicle check-in, multi-point '
+                  'inspections, digital job cards, customer estimates, and parts procurement.',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: colors.onSurfaceVariant,
                     height: 1.55,
                   ),
                 ),
-                const SizedBox(height: AppDimensions.s28),
+                const SizedBox(height: AppDimensions.s32),
                 Container(
-                  padding: const EdgeInsets.all(AppDimensions.s16),
+                  padding: const EdgeInsets.all(AppDimensions.s18),
                   decoration: BoxDecoration(
                     color: colors.surface,
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusCard,
-                    ),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
                     border: Border.all(color: colors.outlineVariant),
                   ),
                   child: _AuthContextBlock(
@@ -307,20 +300,20 @@ class _AuthIdentityPanel extends StatelessWidget {
                     intendedUsers: intendedUsers,
                   ),
                 ),
-                const SizedBox(height: AppDimensions.s28),
+                const SizedBox(height: AppDimensions.s32),
                 const _AuthTrustPoint(
                   icon: Icons.verified_user_outlined,
-                  label: 'Role-aware access',
+                  label: 'Role-based access & audit compliance',
                 ),
-                const SizedBox(height: AppDimensions.s12),
+                const SizedBox(height: AppDimensions.s14),
                 const _AuthTrustPoint(
                   icon: Icons.sync_rounded,
-                  label: 'Protected session continuity',
+                  label: 'Encrypted telemetry & offline sync',
                 ),
-                const SizedBox(height: AppDimensions.s12),
+                const SizedBox(height: AppDimensions.s14),
                 const _AuthTrustPoint(
-                  icon: Icons.support_agent_rounded,
-                  label: 'Workshop support when you need it',
+                  icon: Icons.speed_rounded,
+                  label: 'Optimized for high-throughput workshop bays',
                 ),
               ],
             ),
@@ -331,9 +324,6 @@ class _AuthIdentityPanel extends StatelessWidget {
   }
 }
 
-/// Compact application context: the product name, the roles it serves, and a
-/// de-emphasised purpose line. Reacts to the values supplied by each app, so a
-/// single shared screen can present four different application identities.
 class _AuthContextBlock extends StatelessWidget {
   final String appName;
   final String appPurpose;
@@ -492,7 +482,10 @@ class _AuthTrustPoint extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _AuthTrustPoint({required this.icon, required this.label});
+  const _AuthTrustPoint({
+    required this.icon,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -508,7 +501,11 @@ class _AuthTrustPoint extends StatelessWidget {
             color: colors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
           ),
-          child: Icon(icon, size: 17, color: colors.primary),
+          child: Icon(
+            icon,
+            size: 17,
+            color: colors.primary,
+          ),
         ),
         const SizedBox(width: AppDimensions.s12),
         Expanded(

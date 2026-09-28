@@ -17,6 +17,8 @@ class AdvisorProfileSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(advisorInfoProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return AdvisorSheet(
       child: Column(
@@ -27,9 +29,9 @@ class AdvisorProfileSheet extends ConsumerWidget {
           Container(
             width: 68,
             height: 68,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.navy, AppColors.accent],
+                colors: [colorScheme.primary, colorScheme.secondary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -38,7 +40,7 @@ class AdvisorProfileSheet extends ConsumerWidget {
             child: Center(
               child: Text(
                 info.initials,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
                   fontSize: 26,
@@ -49,8 +51,8 @@ class AdvisorProfileSheet extends ConsumerWidget {
           const SizedBox(height: 14),
           Text(
             info.name,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: colorScheme.onSurface,
               fontSize: 19,
               fontWeight: FontWeight.w700,
               letterSpacing: 0,
@@ -59,13 +61,13 @@ class AdvisorProfileSheet extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             '${info.id} · Service Advisor',
-            style: const TextStyle(fontSize: 13, color: AppColors.text2),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.12),
+              color: colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppDimensions.r20),
             ),
             child: Row(
@@ -75,7 +77,7 @@ class AdvisorProfileSheet extends ConsumerWidget {
                   width: 7,
                   height: 7,
                   decoration: const BoxDecoration(
-                    color: AppColors.success,
+                    color: Color(0xFF10B981),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -85,7 +87,7 @@ class AdvisorProfileSheet extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.accent,
+                    color: colorScheme.primary,
                   ),
                 ),
               ],
@@ -128,19 +130,19 @@ class AdvisorProfileSheet extends ConsumerWidget {
               child: OutlinedButton.icon(
                 onPressed: onLogout,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.danger,
-                  side: const BorderSide(color: AppColors.danger, width: 1.5),
+                  foregroundColor: colorScheme.error,
+                  side: BorderSide(color: colorScheme.error, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppDimensions.r14),
                   ),
                 ),
                 icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text(
+                label: Text(
                   'Logout',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    color: AppColors.danger,
+                    color: colorScheme.error,
                   ),
                 ),
               ),

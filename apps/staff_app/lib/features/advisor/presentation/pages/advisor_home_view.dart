@@ -11,6 +11,7 @@ import 'package:staff_app/features/advisor/presentation/providers/advisor_provid
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/followup_reminder_entity.dart';
+import '../../../../core/models/profile_data.dart';
 import 'advisor_jobs_view.dart';
 import 'advisor_reports_view.dart';
 import '../widgets/advisor_profile_sheet.dart';
@@ -21,21 +22,9 @@ import '../widgets/advisor_search_sheet.dart';
 import '../widgets/advisor_stat_dialog.dart';
 
 const _advisorNavItems = <AppNavItem>[
-  AppNavItem(
-    selectedIcon: Icons.dashboard_rounded,
-    icon: Icons.dashboard_outlined,
-    label: 'Today',
-  ),
-  AppNavItem(
-    selectedIcon: Icons.receipt_long_rounded,
-    icon: Icons.receipt_long_outlined,
-    label: 'Jobs',
-  ),
-  AppNavItem(
-    selectedIcon: Icons.bar_chart_rounded,
-    icon: Icons.bar_chart_outlined,
-    label: 'Reports',
-  ),
+  AppNavItem(selectedIcon: Icons.dashboard_rounded, icon: Icons.dashboard_outlined, label: 'Today'),
+  AppNavItem(selectedIcon: Icons.receipt_long_rounded, icon: Icons.receipt_long_outlined, label: 'Jobs'),
+  AppNavItem(selectedIcon: Icons.bar_chart_rounded, icon: Icons.bar_chart_outlined, label: 'Reports'),
 ];
 
 class AdvisorHomeView extends ConsumerStatefulWidget {
@@ -68,10 +57,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
         _toast('Draft saved successfully', icon: Icons.save_outlined);
       },
       onPreview: () {
-        context.push(
-          AppRoutes.inspectionPreview,
-          extra: {'onBack': () => context.go(AppRoutes.advisorDashboard)},
-        );
+        context.push(AppRoutes.inspectionPreview, extra: {'onBack': () => context.go(AppRoutes.advisorDashboard)});
       },
     );
     context.push(AppRoutes.inspectionSheet, extra: callbacks);
@@ -83,18 +69,11 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
       SnackBar(
         content: Row(
           children: [
-            if (icon != null) ...[
-              Icon(icon, color: Colors.white, size: 16),
-              const SizedBox(width: 8),
-            ],
+            if (icon != null) ...[Icon(icon, color: Colors.white, size: 16), const SizedBox(width: 8)],
             Expanded(
               child: Text(
                 msg,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -161,11 +140,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
         onReject: () {
           Navigator.pop(context);
           _persistApproval(pa, 'rejected');
-          _toast(
-            'Sent back for revision',
-            icon: Icons.undo,
-            color: colorScheme.secondary,
-          );
+          _toast('Sent back for revision', icon: Icons.undo, color: colorScheme.secondary);
         },
       ),
     );
@@ -188,12 +163,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
         entityType: 'approval',
         entityId: pa.estimateId,
         changeType: ChangeType.update,
-        payload: {
-          'estimateId': pa.estimateId,
-          'action': action,
-          'customerName': pa.customerName,
-          'amount': pa.amount,
-        },
+        payload: {'estimateId': pa.estimateId, 'action': action, 'customerName': pa.customerName, 'amount': pa.amount},
         timestamp: DateTime.now().millisecondsSinceEpoch,
       ),
     );
@@ -211,11 +181,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
         },
         onWhatsApp: () {
           Navigator.pop(context);
-          _toast(
-            'Opening WhatsApp…',
-            icon: Icons.chat_outlined,
-            color: const Color(0xFF10B981),
-          );
+          _toast('Opening WhatsApp…', icon: Icons.chat_outlined, color: const Color(0xFF10B981));
         },
         onSms: () {
           Navigator.pop(context);
@@ -223,11 +189,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
         },
         onDone: () {
           Navigator.pop(context);
-          _toast(
-            'Marked as completed',
-            icon: Icons.check_circle_outline_rounded,
-            color: const Color(0xFF10B981),
-          );
+          _toast('Marked as completed', icon: Icons.check_circle_outline_rounded, color: const Color(0xFF10B981));
         },
       ),
     );
@@ -245,8 +207,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
   void _onStat(String label, int count, Color color) {
     showDialog(
       context: context,
-      builder: (_) =>
-          AdvisorStatDialog(label: label, count: count, color: color),
+      builder: (_) => AdvisorStatDialog(label: label, count: count, color: color),
     );
   }
 
@@ -258,6 +219,58 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
         items: _advisorNavItems,
         selectedIndex: _navIndex,
         onSelected: (index) => setState(() => _navIndex = index),
+        headerBuilder: (ctx, ext) => OrientBrandMark(workspace: 'Advisor', compact: !ext),
+        footerBuilder: (ctx, ext) => InkWell(
+          onTap: _showProfile,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: ext ? AppDimensions.s8 : 0, vertical: AppDimensions.s4),
+            child: ext
+                ? Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                        child: Text(
+                          'A',
+                          style: TextStyle(
+                            color: Theme.of(ctx).colorScheme.primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.s10),
+                      Expanded(
+                        child: Text(
+                          'Advisor Profile',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(ctx).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(ctx).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Tooltip(
+                    message: 'Advisor Profile',
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                      child: Text(
+                        'A',
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ),
         child: IndexedStack(
           index: _navIndex,
           children: [
@@ -326,14 +339,11 @@ class _AdvisorDashboardContent extends ConsumerWidget {
     final recentJobsState = ref.watch(advisorRecentJobCardsProvider);
     final bookingsState = ref.watch(advisorAssignedBookingsProvider);
     final recentJobs = recentJobsState.value ?? const <JobCardEntity>[];
-    final assignedBookings =
-        bookingsState.value ?? const <AdvisorBookingResponse>[];
+    final assignedBookings = bookingsState.value ?? const <AdvisorBookingResponse>[];
     final activeBooking = assignedBookings.firstOrNull;
     final hasDataError = recentJobsState.hasError || bookingsState.hasError;
     final isInitialLoading =
-        (recentJobsState.isLoading || bookingsState.isLoading) &&
-        recentJobs.isEmpty &&
-        assignedBookings.isEmpty;
+        (recentJobsState.isLoading || bookingsState.isLoading) && recentJobs.isEmpty && assignedBookings.isEmpty;
 
     return RefreshIndicator(
       onRefresh: () async => ref.read(advisorRefreshProvider.notifier).state++,
@@ -341,40 +351,38 @@ class _AdvisorDashboardContent extends ConsumerWidget {
       backgroundColor: colorScheme.surface,
       child: AppResponsivePage(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          context.pagePadding.left,
-          context.pagePadding.top,
-          context.pagePadding.right,
-          110,
-        ),
+        padding: EdgeInsets.fromLTRB(context.pagePadding.left, context.pagePadding.top, context.pagePadding.right, 110),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── 1. PREMIUM ADVISOR HEADER ─────────────────────────────────
-            _AdvisorCommandHeader(
+            // ── 1. CLEAN ADVISOR OPERATIONAL HEADER ───────────────────────
+            _AdvisorHeader(
               onNotificationTap: onShowNotifications,
-              onProfileTap: onShowProfile,
+              onProfileTap: () {
+                final info = ref.read(advisorInfoProvider);
+                context.push(
+                  AppRoutes.profile,
+                  extra: ProfileData(
+                    name: info.name,
+                    id: info.id,
+                    role: 'Service Advisor',
+                    branch: info.branch,
+                    shift: info.shift,
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 18),
             if (isInitialLoading) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: const LinearProgressIndicator(minHeight: 4),
-              ),
+              ClipRRect(borderRadius: BorderRadius.circular(99), child: const LinearProgressIndicator(minHeight: 4)),
               const SizedBox(height: 14),
             ],
             if (hasDataError) ...[
-              _AdvisorDataNotice(
-                onRetry: () =>
-                    ref.read(advisorRefreshProvider.notifier).state++,
-              ),
+              _AdvisorDataNotice(onRetry: () => ref.read(advisorRefreshProvider.notifier).state++),
               const SizedBox(height: 14),
             ],
             if (activeBooking != null) ...[
-              _ActiveIntakeRadarHUD(
-                booking: activeBooking,
-                onTap: () => onNavigateTab(1),
-              ),
+              _ActiveIntakeCard(booking: activeBooking, onTap: () => onNavigateTab(1)),
               const SizedBox(height: 18),
             ],
 
@@ -382,8 +390,8 @@ class _AdvisorDashboardContent extends ConsumerWidget {
             _AdvisorSearchPill(onTap: onShowSearch),
             const SizedBox(height: 18),
 
-            // ── 3. BENTO ACTION MATRIX ────────────────────────────────────
-            _AdvisorBentoMatrix(
+            // ── 3. OPERATIONAL QUICK ACTIONS MATRIX ───────────────────────
+            _AdvisorQuickActionsMatrix(
               onScan: onOpenScan,
               onNewJob: onNewJobCard,
               onInspection: onOpenInspection,
@@ -391,27 +399,17 @@ class _AdvisorDashboardContent extends ConsumerWidget {
             ),
             const SizedBox(height: 28),
 
-            // ── 4. LIVE INTAKE RADAR HUD ──────────────────────────────────
-            // ── 5. OPERATIONAL SPOTLIGHT HERO ─────────────────────────────
-            // ── 6. SHIFT TELEMETRY QUICK METRICS ──────────────────────────
-            _SectionHeadingWithAction(
-              title: 'Shift Throughput',
-              actionText: 'Analytics',
-              onAction: () => onNavigateTab(2),
-            ),
+            // ── 4. WORK SUMMARY QUICK METRICS ─────────────────────────────
+            _SectionHeadingWithAction(title: 'Work Summary', actionText: 'Analytics', onAction: () => onNavigateTab(2)),
             const SizedBox(height: 14),
             _AdvisorShiftMetricsRow(
               totalCount: recentJobs.length,
-              inProgressCount: recentJobs
-                  .where((j) => j.status == JobCardStatus.inProgress)
-                  .length,
-              completedCount: recentJobs
-                  .where((j) => j.status == JobCardStatus.completed)
-                  .length,
+              inProgressCount: recentJobs.where((j) => j.status == JobCardStatus.inProgress).length,
+              completedCount: recentJobs.where((j) => j.status == JobCardStatus.completed).length,
             ),
             const SizedBox(height: 32),
 
-            // ── 7. ACTIVE WORK ORDERS LIST ────────────────────────────────
+            // ── 5. ASSIGNED WORK ORDERS LIST ──────────────────────────────
             _SectionHeadingWithAction(
               title: 'Assigned Work Orders',
               actionText: 'View All (${recentJobs.length})',
@@ -421,10 +419,7 @@ class _AdvisorDashboardContent extends ConsumerWidget {
             if (recentJobs.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
-                child: EmptyState(
-                  icon: Icons.assignment_outlined,
-                  message: 'No active job cards assigned',
-                ),
+                child: EmptyState(icon: Icons.assignment_outlined, message: 'No active job cards assigned'),
               )
             else
               ListView.separated(
@@ -434,10 +429,7 @@ class _AdvisorDashboardContent extends ConsumerWidget {
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (ctx, i) {
                   final jc = recentJobs[i];
-                  return _AdvisorJobCardTile(
-                    job: jc,
-                    onTap: () => onJobCard(jc),
-                  );
+                  return _AdvisorJobCardTile(job: jc, onTap: () => onJobCard(jc));
                 },
               ),
           ],
@@ -447,7 +439,7 @@ class _AdvisorDashboardContent extends ConsumerWidget {
   }
 }
 
-// ─── 1. ADVISOR COMMAND HEADER ───────────────────────────────────────────────
+// ─── 1. ADVISOR NOTICE ───────────────────────────────────────────────────────
 class _AdvisorDataNotice extends StatelessWidget {
   final VoidCallback onRetry;
 
@@ -471,10 +463,9 @@ class _AdvisorDataNotice extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Some live workshop data could not be loaded.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.onErrorContainer,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: colors.onErrorContainer, fontWeight: FontWeight.w700),
                 ),
               ),
               Icon(Icons.refresh_rounded, color: colors.onErrorContainer),
@@ -486,14 +477,11 @@ class _AdvisorDataNotice extends StatelessWidget {
   }
 }
 
-class _AdvisorCommandHeader extends StatelessWidget {
+class _AdvisorHeader extends StatelessWidget {
   final VoidCallback onNotificationTap;
   final VoidCallback onProfileTap;
 
-  const _AdvisorCommandHeader({
-    required this.onNotificationTap,
-    required this.onProfileTap,
-  });
+  const _AdvisorHeader({required this.onNotificationTap, required this.onProfileTap});
 
   @override
   Widget build(BuildContext context) {
@@ -504,41 +492,47 @@ class _AdvisorCommandHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    shape: BoxShape.circle,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'ADVISOR INTAKE · COMMAND',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'SERVICE ADVISOR',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Service Desk',
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: colorScheme.onSurface,
-                letterSpacing: -0.6,
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                'Service Desk',
+                style: textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
+                  letterSpacing: -0.6,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
+        const SizedBox(width: 12),
         Row(
           children: [
             _PressScale(
@@ -554,11 +548,7 @@ class _AdvisorCommandHeader extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: colorScheme.outlineVariant),
                 ),
-                child: Icon(
-                  Icons.notifications_none_rounded,
-                  color: colorScheme.onSurface,
-                  size: 20,
-                ),
+                child: Icon(Icons.notifications_none_rounded, color: colorScheme.onSurface, size: 20),
               ),
             ),
             const SizedBox(width: 10),
@@ -573,18 +563,12 @@ class _AdvisorCommandHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colorScheme.primary.withValues(alpha: 0.14),
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.3),
-                  ),
+                  border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
                 ),
                 child: Center(
                   child: Text(
                     'A',
-                    style: TextStyle(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 16),
                   ),
                 ),
               ),
@@ -618,11 +602,7 @@ class _AdvisorSearchPill extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: colorScheme.outlineVariant),
           boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
+            BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6)),
           ],
         ),
         child: Row(
@@ -633,11 +613,7 @@ class _AdvisorSearchPill extends StatelessWidget {
                 color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                Icons.search_rounded,
-                color: colorScheme.primary,
-                size: 20,
-              ),
+              child: Icon(Icons.search_rounded, color: colorScheme.primary, size: 20),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -653,18 +629,12 @@ class _AdvisorSearchPill extends StatelessWidget {
                   ),
                   Text(
                     'Lookup repair orders, estimates & history',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.qr_code_scanner_rounded,
-              color: colorScheme.onSurfaceVariant,
-              size: 18,
-            ),
+            Icon(Icons.qr_code_scanner_rounded, color: colorScheme.onSurfaceVariant, size: 18),
           ],
         ),
       ),
@@ -672,14 +642,14 @@ class _AdvisorSearchPill extends StatelessWidget {
   }
 }
 
-// ─── 3. BENTO QUICK ACTIONS MATRIX ───────────────────────────────────────────
-class _AdvisorBentoMatrix extends StatelessWidget {
+// ─── 3. OPERATIONAL QUICK ACTIONS MATRIX ─────────────────────────────────────
+class _AdvisorQuickActionsMatrix extends StatelessWidget {
   final VoidCallback onScan;
   final VoidCallback onNewJob;
   final VoidCallback onInspection;
   final VoidCallback onReports;
 
-  const _AdvisorBentoMatrix({
+  const _AdvisorQuickActionsMatrix({
     required this.onScan,
     required this.onNewJob,
     required this.onInspection,
@@ -694,9 +664,9 @@ class _AdvisorBentoMatrix extends StatelessWidget {
           children: [
             Expanded(
               flex: 3,
-              child: _AdvisorBentoTile(
-                title: 'Quick VIN\nScanner',
-                subtitle: 'Camera scan',
+              child: _AdvisorActionTile(
+                title: 'Scan Vehicle\nVIN / Plate',
+                subtitle: 'Camera scanner',
                 icon: Icons.qr_code_scanner_rounded,
                 isPrimary: true,
                 onTap: onScan,
@@ -705,7 +675,7 @@ class _AdvisorBentoMatrix extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               flex: 2,
-              child: _AdvisorBentoTile(
+              child: _AdvisorActionTile(
                 title: 'New Job\nCard',
                 subtitle: 'Client intake',
                 icon: Icons.add_to_photos_rounded,
@@ -720,7 +690,7 @@ class _AdvisorBentoMatrix extends StatelessWidget {
           children: [
             Expanded(
               flex: 2,
-              child: _AdvisorBentoTile(
+              child: _AdvisorActionTile(
                 title: 'Vehicle\nInspection',
                 subtitle: 'Checkpoints',
                 icon: Icons.fact_check_rounded,
@@ -731,9 +701,9 @@ class _AdvisorBentoMatrix extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               flex: 3,
-              child: _AdvisorBentoTile(
-                title: 'Advisor\nReports',
-                subtitle: 'Throughput logs',
+              child: _AdvisorActionTile(
+                title: 'Workshop\nReports',
+                subtitle: 'Performance logs',
                 icon: Icons.bar_chart_rounded,
                 isPrimary: false,
                 onTap: onReports,
@@ -746,14 +716,14 @@ class _AdvisorBentoMatrix extends StatelessWidget {
   }
 }
 
-class _AdvisorBentoTile extends StatelessWidget {
+class _AdvisorActionTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
   final bool isPrimary;
   final VoidCallback onTap;
 
-  const _AdvisorBentoTile({
+  const _AdvisorActionTile({
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -776,14 +746,12 @@ class _AdvisorBentoTile extends StatelessWidget {
         onTap();
       },
       child: Container(
-        height: 112,
-        padding: const EdgeInsets.all(16),
+        constraints: const BoxConstraints(minHeight: 104),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isPrimary ? Colors.transparent : colorScheme.outlineVariant,
-          ),
+          border: Border.all(color: isPrimary ? Colors.transparent : colorScheme.outlineVariant),
           boxShadow: isPrimary
               ? [
                   BoxShadow(
@@ -803,6 +771,7 @@ class _AdvisorBentoTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -819,31 +788,24 @@ class _AdvisorBentoTile extends StatelessWidget {
                 ),
                 Icon(
                   Icons.arrow_outward_rounded,
-                  color: isPrimary
-                      ? colorScheme.onPrimary.withValues(alpha: 0.6)
-                      : colorScheme.onSurfaceVariant,
+                  color: isPrimary ? colorScheme.onPrimary.withValues(alpha: 0.6) : colorScheme.onSurfaceVariant,
                   size: 16,
                 ),
               ],
             ),
+            const SizedBox(height: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: textTheme.titleSmall?.copyWith(
-                    color: fgColor,
-                    fontWeight: FontWeight.w900,
-                    height: 1.1,
-                  ),
+                  style: textTheme.titleSmall?.copyWith(color: fgColor, fontWeight: FontWeight.w900, height: 1.1),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: textTheme.bodySmall?.copyWith(
-                    color: isPrimary
-                        ? colorScheme.onPrimary.withValues(alpha: 0.8)
-                        : colorScheme.onSurfaceVariant,
+                    color: isPrimary ? colorScheme.onPrimary.withValues(alpha: 0.8) : colorScheme.onSurfaceVariant,
                     fontSize: 10.5,
                   ),
                 ),
@@ -856,12 +818,12 @@ class _AdvisorBentoTile extends StatelessWidget {
   }
 }
 
-// ─── 4. LIVE INTAKE RADAR HUD ────────────────────────────────────────────────
-class _ActiveIntakeRadarHUD extends StatelessWidget {
+// ─── 4. CONFIRMED ARRIVAL / ACTIVE INTAKE ────────────────────────────────────
+class _ActiveIntakeCard extends StatelessWidget {
   final dynamic booking;
   final VoidCallback onTap;
 
-  const _ActiveIntakeRadarHUD({required this.booking, required this.onTap});
+  const _ActiveIntakeCard({required this.booking, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -879,15 +841,9 @@ class _ActiveIntakeRadarHUD extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: colorScheme.primary.withValues(alpha: 0.35),
-          ),
+          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
           boxShadow: [
-            BoxShadow(
-              color: colorScheme.primary.withValues(alpha: 0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
+            BoxShadow(color: colorScheme.primary.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(
@@ -895,10 +851,7 @@ class _ActiveIntakeRadarHUD extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: colorScheme.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
@@ -908,18 +861,15 @@ class _ActiveIntakeRadarHUD extends StatelessWidget {
                       Container(
                         width: 6,
                         height: 6,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'INTAKE RADAR ACTIVE',
+                        'ACTIVE ARRIVAL',
                         style: textTheme.labelSmall?.copyWith(
                           color: colorScheme.primary,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
@@ -928,11 +878,8 @@ class _ActiveIntakeRadarHUD extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  'CONFIRMED ARRIVAL',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.secondary,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  'CONFIRMED APPOINTMENT',
+                  style: textTheme.labelSmall?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.w800),
                 ),
               ],
             ),
@@ -945,11 +892,7 @@ class _ActiveIntakeRadarHUD extends StatelessWidget {
                     color: colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
-                    Icons.car_crash_rounded,
-                    color: colorScheme.primary,
-                    size: 24,
-                  ),
+                  child: Icon(Icons.directions_car_rounded, color: colorScheme.primary, size: 24),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -967,17 +910,12 @@ class _ActiveIntakeRadarHUD extends StatelessWidget {
                       ),
                       Text(
                         'Client: ${booking.customerName} · ${booking.bookingDate}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
               ],
             ),
           ],
@@ -1006,23 +944,11 @@ class _AdvisorShiftMetricsRow extends StatelessWidget {
 
     return Row(
       children: [
-        _MetricTile(
-          label: 'Total Orders',
-          value: '$totalCount',
-          color: colorScheme.primary,
-        ),
+        _MetricTile(label: 'Total Orders', value: '$totalCount', color: colorScheme.primary),
         const SizedBox(width: 8),
-        _MetricTile(
-          label: 'In Progress',
-          value: '$inProgressCount',
-          color: colorScheme.secondary,
-        ),
+        _MetricTile(label: 'In Progress', value: '$inProgressCount', color: colorScheme.secondary),
         const SizedBox(width: 8),
-        _MetricTile(
-          label: 'Delivered',
-          value: '$completedCount',
-          color: const Color(0xFF10B981),
-        ),
+        _MetricTile(label: 'Delivered', value: '$completedCount', color: const Color(0xFF10B981)),
       ],
     );
   }
@@ -1033,11 +959,7 @@ class _MetricTile extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _MetricTile({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _MetricTile({required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -1116,10 +1038,7 @@ class _AdvisorJobCardTile extends StatelessWidget {
               backgroundColor: colorScheme.surfaceContainerHighest,
               child: Text(
                 job.customerName.isNotEmpty ? job.customerName[0] : 'C',
-                style: TextStyle(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900),
               ),
             ),
             const SizedBox(width: 14),
@@ -1129,16 +1048,11 @@ class _AdvisorJobCardTile extends StatelessWidget {
                 children: [
                   Text(
                     job.customerName,
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
                   ),
                   Text(
                     '${job.vehicleInfo} · ${job.id}',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -1151,12 +1065,7 @@ class _AdvisorJobCardTile extends StatelessWidget {
               ),
               child: Text(
                 job.status.name.toUpperCase(),
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
-                ),
+                style: TextStyle(color: statusColor, fontSize: 9.5, fontWeight: FontWeight.w900, letterSpacing: 0.5),
               ),
             ),
           ],
@@ -1172,11 +1081,7 @@ class _SectionHeadingWithAction extends StatelessWidget {
   final String actionText;
   final VoidCallback onAction;
 
-  const _SectionHeadingWithAction({
-    required this.title,
-    required this.actionText,
-    required this.onAction,
-  });
+  const _SectionHeadingWithAction({required this.title, required this.actionText, required this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -1186,14 +1091,18 @@ class _SectionHeadingWithAction extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-            letterSpacing: -0.4,
+        Expanded(
+          child: Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: colorScheme.onSurface,
+              letterSpacing: -0.4,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
+        const SizedBox(width: 8),
         GestureDetector(
           onTap: () {
             HapticFeedback.selectionClick();
@@ -1201,10 +1110,7 @@ class _SectionHeadingWithAction extends StatelessWidget {
           },
           child: Text(
             actionText,
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: colorScheme.primary,
-            ),
+            style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.primary),
           ),
         ),
       ],
@@ -1222,8 +1128,7 @@ class _PressScale extends StatefulWidget {
   State<_PressScale> createState() => _PressScaleState();
 }
 
-class _PressScaleState extends State<_PressScale>
-    with SingleTickerProviderStateMixin {
+class _PressScaleState extends State<_PressScale> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
 
@@ -1235,13 +1140,10 @@ class _PressScaleState extends State<_PressScale>
       duration: const Duration(milliseconds: 100),
       reverseDuration: const Duration(milliseconds: 140),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutCubic,
-        reverseCurve: Curves.easeInCubic,
-      ),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.97,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic));
   }
 
   @override

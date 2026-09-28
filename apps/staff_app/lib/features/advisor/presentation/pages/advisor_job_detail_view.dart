@@ -243,7 +243,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               ),
           ]),
           const SizedBox(height: 16),
-          _section('Vehicle Telemetry', [
+          _section('Vehicle Details', [
             _detailRow(
               Icons.directions_car_outlined,
               'Vehicle',

@@ -84,11 +84,11 @@ class _BodyState extends ConsumerState<_Body> {
                 const AdvisorWorkflowIndicator(currentStep: 0),
                 const SizedBox(height: 16),
                 // ── Hint text ───────────────────────────────────────────
-                const Text(
-                  'Type VIN/License Plate no./Customer Name If not found create new vehicle.',
+                Text(
+                  'Type VIN / License Plate / Customer Name. If vehicle is not found, enter new vehicle details below.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.text2,
+                    color: colorScheme.onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),
@@ -97,26 +97,26 @@ class _BodyState extends ConsumerState<_Body> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryBg,
+                      color: colorScheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(AppDimensions.r12),
                       border: Border.all(
-                        color: AppColors.accent.withValues(alpha: 0.4),
+                        color: colorScheme.primary.withValues(alpha: 0.3),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
                         Icon(
                           Icons.event_available_rounded,
-                          color: AppColors.accent,
+                          color: colorScheme.primary,
                           size: 18,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Intake from assigned booking — the booking will be linked to this job card.',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textPrimary,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                         ),
