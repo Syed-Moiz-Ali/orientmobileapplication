@@ -71,7 +71,7 @@ void main() {
     testWidgets('keeps a failed load recoverable', (tester) async {
       await _pumpApprovals(tester, approvalsFail: true);
 
-      expect(find.text("We couldn't load your estimates"), findsOneWidget);
+      expect(find.text("We couldn't load your approvals"), findsOneWidget);
       expect(find.text('Pull down to try again.'), findsOneWidget);
     });
 
@@ -101,6 +101,39 @@ void main() {
   });
 
   group('CustomerApprovalDetailView', () {
+    testWidgets('renders job-card approval without estimate pricing', (
+      tester,
+    ) async {
+      await _pumpApprovals(
+        tester,
+        detail: _jobCardDetail,
+        estimateId: 'JC-2048',
+      );
+
+      expect(find.text('Job card approval'), findsOneWidget);
+      expect(find.text('Customer requested brake inspection'), findsOneWidget);
+      expect(find.text('Approve job card'), findsOneWidget);
+      expect(find.text('Reject job card'), findsOneWidget);
+      expect(find.text('Estimated total'), findsNothing);
+      expect(find.text('What this estimate covers'), findsNothing);
+    });
+
+    testWidgets('renders inspection approval without estimate pricing', (
+      tester,
+    ) async {
+      await _pumpApprovals(
+        tester,
+        detail: _inspectionDetail,
+        estimateId: 'INS-2048',
+      );
+
+      expect(find.text('Inspection approval'), findsOneWidget);
+      expect(find.text('12 inspection points recorded'), findsOneWidget);
+      expect(find.text('Approve inspection'), findsOneWidget);
+      expect(find.text('Reject inspection'), findsOneWidget);
+      expect(find.text('Estimated total'), findsNothing);
+    });
+
     testWidgets('shows what is being approved, in real detail', (tester) async {
       await _pumpApprovals(tester, detail: _detail, estimateId: 'EST-2048');
 
@@ -450,6 +483,28 @@ const _detail = CustomerApprovalDetailResponse(
       discountAmount: 20,
     ),
   ],
+);
+
+const _jobCardDetail = CustomerApprovalDetailResponse(
+  estimateId: 'JC-2048',
+  approvalType: 'job_card',
+  referenceId: 'JC-2048',
+  description: 'Customer requested brake inspection',
+  customerName: 'Ahmed Al Mansoori',
+  vehicleInfo: 'Toyota Land Cruiser',
+  status: 'pending',
+  createdAt: '15 Sep 2026 — 10:30 AM',
+);
+
+const _inspectionDetail = CustomerApprovalDetailResponse(
+  estimateId: 'INS-2048',
+  approvalType: 'inspection',
+  referenceId: 'INS-2048',
+  description: '12 inspection points recorded',
+  customerName: 'Ahmed Al Mansoori',
+  vehicleInfo: 'Toyota Land Cruiser',
+  status: 'pending',
+  createdAt: '15 Sep 2026 — 10:45 AM',
 );
 
 /// Long names and large amounts must not break the layout.

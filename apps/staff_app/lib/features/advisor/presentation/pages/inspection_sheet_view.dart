@@ -26,6 +26,14 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
   String _selectedSectionId = '';
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref.read(inspectionProvider.notifier).loadDefaultTemplate(),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -36,7 +44,8 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
     final pct = state.progressPercent;
     final sections = state.filteredSections;
 
-    if (_selectedSectionId.isEmpty && sections.isNotEmpty) {
+    if (sections.isNotEmpty &&
+        !sections.any((section) => section.id == _selectedSectionId)) {
       _selectedSectionId = sections.first.id;
     }
 

@@ -146,6 +146,8 @@ public class RepairOrderService {
         approvalMapper.insert(Approval.builder()
                 .ref(IdGenerator.shortRef("APP"))
                 .estimateId(ref)
+                .approvalType("estimate")
+                .targetId(ref)
                 .customerId(jc.getCustomerId())
                 .customerName(customerName)
                 .vehicleId(jc.getVehicleId() != null ? String.valueOf(jc.getVehicleId()) : "")

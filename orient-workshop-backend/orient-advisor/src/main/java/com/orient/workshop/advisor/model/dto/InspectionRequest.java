@@ -51,6 +51,9 @@ public class InspectionRequest {
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class VehicleInfo {
         private String registrationNumber;
+        private String emirate;
+        private String plateCode;
+        private String plateNumber;
         private String vin;
         private String make;
         private String model;
@@ -59,11 +62,14 @@ public class InspectionRequest {
         private Integer cylinders;
         private String engineCapacity;
         private String vehicleColor;
+        private String fuelType;
         private String engineNumber;
         private String insuranceProvider;
         private String insuranceTaxNumber;
         private String insuranceAddress;
         private String policyNumber;
+        private String lpoNumber;
+        private String accidentNumber;
         private String insuranceExpiryDate;
     }
 
@@ -72,5 +78,9 @@ public class InspectionRequest {
         private String odometerReading;
         private Integer fuelLevel;
         private Boolean customerConsent;
+        private String jobCategory;
+        private String markupType;
+        private String orderType;
+        private String jobDescription;
     }
 }

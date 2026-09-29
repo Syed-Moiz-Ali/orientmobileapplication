@@ -237,6 +237,8 @@ public class SyncApplicationService {
             Customer customer = customerMapper.selectById(card.getCustomerId());
             approvalMapper.insert(Approval.builder()
                     .estimateId(ref)
+                    .approvalType("estimate")
+                    .targetId(ref)
                     .customerId(card.getCustomerId())
                     .customerName(customer != null && customer.getCustomerName() != null ? customer.getCustomerName() : "")
                     .vehicleId(card.getVehicleId() != null ? String.valueOf(card.getVehicleId()) : "")

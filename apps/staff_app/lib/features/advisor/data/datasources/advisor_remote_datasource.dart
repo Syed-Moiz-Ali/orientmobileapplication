@@ -189,6 +189,12 @@ class AdvisorRemoteDataSource {
         failure: (_) => [],
       );
 
+  Future<InspectionTemplateResponse> getDefaultInspectionTemplate() async =>
+      (await _client.get<InspectionTemplateResponse>(
+        ApiEndpoints.defaultInspectionTemplate,
+        fromJson: (data) => InspectionTemplateResponse.fromJson(data),
+      )).unwrapOrThrow();
+
   // ---------- Seamless flows ----------
 
   Future<List<AdvisorBookingResponse>> getAssignedBookings() async {

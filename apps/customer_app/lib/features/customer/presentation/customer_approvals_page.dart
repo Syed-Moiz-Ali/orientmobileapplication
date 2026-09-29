@@ -176,7 +176,7 @@ class _NeedsDecision extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  "We couldn't load your estimates",
+                  "We couldn't load your approvals",
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -207,8 +207,8 @@ class _NeedsDecision extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimensions.s4),
                 Text(
-                  'When the workshop sends an estimate for your approval, it '
-                  'appears here and on your booking.',
+                  'When the workshop sends an estimate, job card, or inspection '
+                  'for your approval, it appears here and on your booking.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                     height: 1.45,
@@ -276,7 +276,8 @@ class _PendingApprovalRow extends StatelessWidget {
       label: [
         'Action required',
         if (approval.amount > 0) formatAmount(approval.amount),
-        if (approval.estimateId.isNotEmpty) 'Estimate ${approval.estimateId}',
+        if (approval.estimateId.isNotEmpty)
+          '${_approvalLabel(approval.approvalType)} ${approval.estimateId}',
         if (requested.isNotEmpty) 'Sent $requested',
       ].join(', '),
       child: InkWell(
@@ -361,12 +362,14 @@ class _PendingApprovalRow extends StatelessWidget {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Review estimate'),
-                      SizedBox(width: AppDimensions.s4),
-                      Icon(Icons.arrow_forward_rounded, size: 14),
+                      Text(
+                        'Review ${_approvalLabel(approval.approvalType).toLowerCase()}',
+                      ),
+                      const SizedBox(width: AppDimensions.s4),
+                      const Icon(Icons.arrow_forward_rounded, size: 14),
                     ],
                   ),
                 ),
@@ -377,6 +380,12 @@ class _PendingApprovalRow extends StatelessWidget {
       ),
     );
   }
+
+  String _approvalLabel(String type) => switch (type) {
+    'job_card' => 'Job card',
+    'inspection' => 'Inspection',
+    _ => 'Estimate',
+  };
 }
 
 /// Settled invoices keep their existing home here: this page is their only

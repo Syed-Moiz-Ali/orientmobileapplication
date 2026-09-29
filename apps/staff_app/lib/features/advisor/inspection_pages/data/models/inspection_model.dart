@@ -22,6 +22,17 @@ class InspectionSection {
     required this.label,
     required this.items,
   });
+
+  Map<String, dynamic> toJson() => {'id': id, 'label': label, 'items': items};
+
+  factory InspectionSection.fromJson(Map<String, dynamic> json) =>
+      InspectionSection(
+        id: json['id']?.toString() ?? '',
+        label: json['label']?.toString() ?? '',
+        items: (json['items'] as List? ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+      );
 }
 
 const List<InspectionSection> kInspectionSections = [

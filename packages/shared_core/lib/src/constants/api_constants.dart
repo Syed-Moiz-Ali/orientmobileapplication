@@ -41,6 +41,8 @@ class ApiEndpoints {
   static const String repairOrders = '/repair-orders';
   static const String customerSearch = '/customers/search';
   static const String vehicleSearch = '/vehicles/search';
+  static const String defaultInspectionTemplate =
+      '/advisor/inspection-templates/default';
 
   // Approval / reminder action endpoints
   static String approvalAction(String id) => '/advisor/approvals/$id';

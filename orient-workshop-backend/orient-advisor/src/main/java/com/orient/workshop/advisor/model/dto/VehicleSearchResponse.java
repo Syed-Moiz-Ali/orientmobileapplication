@@ -12,4 +12,9 @@ public class VehicleSearchResponse {
     private String make;
     private String model;
     private String plateNumber;
+    private String customerName;
+    private String phone;
+    private String email;
+    private String emirate;
+    private String plateCode;
 }

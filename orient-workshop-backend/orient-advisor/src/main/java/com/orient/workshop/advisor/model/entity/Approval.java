@@ -15,6 +15,8 @@ public class Approval {
     // P1 (V13): prefixed unique ref (public identifier).
     private String ref;
     private String estimateId;
+    private String approvalType;
+    private String targetId;
     private Long customerId;
     private String customerName;
     private String vehicleId;

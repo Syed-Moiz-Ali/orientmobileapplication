@@ -196,21 +196,21 @@ class WorkItemResponse {
   });
 
   factory WorkItemResponse.fromJson(Map<String, dynamic> j) => WorkItemResponse(
-        id: (j['id'] as num?)?.toInt() ?? 0,
-        taskRef: j['taskRef'] as String? ?? '',
-        jobCardRef: j['jobCardRef'] as String? ?? '',
-        description: j['description'] as String? ?? '',
-        itemType: j['itemType'] as String? ?? 'WORK',
-        status: j['status'] as String? ?? 'pending',
-        empId: j['empId'] as String? ?? '',
-        empName: j['empName'] as String? ?? '',
-        startTime: j['startTime'] as String? ?? '',
-        endTime: j['endTime'] as String? ?? '',
-        qty: (j['qty'] as num?)?.toInt() ?? 1,
-        rate: (j['rate'] as num?)?.toDouble() ?? 0,
-        estimatedHours: (j['estimatedHours'] as num?)?.toDouble() ?? 0,
-        rejectReason: j['rejectReason'] as String? ?? '',
-      );
+    id: (j['id'] as num?)?.toInt() ?? 0,
+    taskRef: j['taskRef'] as String? ?? '',
+    jobCardRef: j['jobCardRef'] as String? ?? '',
+    description: j['description'] as String? ?? '',
+    itemType: j['itemType'] as String? ?? 'WORK',
+    status: j['status'] as String? ?? 'pending',
+    empId: j['empId'] as String? ?? '',
+    empName: j['empName'] as String? ?? '',
+    startTime: j['startTime'] as String? ?? '',
+    endTime: j['endTime'] as String? ?? '',
+    qty: (j['qty'] as num?)?.toInt() ?? 1,
+    rate: (j['rate'] as num?)?.toDouble() ?? 0,
+    estimatedHours: (j['estimatedHours'] as num?)?.toDouble() ?? 0,
+    rejectReason: j['rejectReason'] as String? ?? '',
+  );
 }
 
 class WorkItemDetail {
@@ -243,19 +243,19 @@ class WorkItemDetail {
   });
 
   factory WorkItemDetail.fromJson(Map<String, dynamic> j) => WorkItemDetail(
-        id: (j['id'] as num?)?.toInt() ?? 0,
-        taskRef: j['taskRef'] as String? ?? '',
-        description: j['description'] as String? ?? '',
-        itemType: j['itemType'] as String? ?? 'WORK',
-        status: j['status'] as String? ?? 'pending',
-        empId: j['empId'] as String? ?? '',
-        empName: j['empName'] as String? ?? '',
-        startTime: j['startTime'] as String? ?? '',
-        endTime: j['endTime'] as String? ?? '',
-        qty: (j['qty'] as num?)?.toInt() ?? 1,
-        rate: (j['rate'] as num?)?.toDouble() ?? 0,
-        rejectReason: j['rejectReason'] as String? ?? '',
-      );
+    id: (j['id'] as num?)?.toInt() ?? 0,
+    taskRef: j['taskRef'] as String? ?? '',
+    description: j['description'] as String? ?? '',
+    itemType: j['itemType'] as String? ?? 'WORK',
+    status: j['status'] as String? ?? 'pending',
+    empId: j['empId'] as String? ?? '',
+    empName: j['empName'] as String? ?? '',
+    startTime: j['startTime'] as String? ?? '',
+    endTime: j['endTime'] as String? ?? '',
+    qty: (j['qty'] as num?)?.toInt() ?? 1,
+    rate: (j['rate'] as num?)?.toDouble() ?? 0,
+    rejectReason: j['rejectReason'] as String? ?? '',
+  );
 }
 
 class AwaitingCompletionResponse {
@@ -291,7 +291,8 @@ class AwaitingCompletionResponse {
         done: (j['done'] as num?)?.toInt() ?? 0,
         total: (j['total'] as num?)?.toInt() ?? 0,
         updatedAt: j['updatedAt'] as String? ?? '',
-        items: (j['items'] as List<dynamic>?)
+        items:
+            (j['items'] as List<dynamic>?)
                 ?.map((e) => WorkItemDetail.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             const [],
@@ -328,6 +329,8 @@ class StaffNotificationResponse {
 
 class CustomerApprovalSummaryResponse {
   final String estimateId;
+  final String approvalType;
+  final String referenceId;
   final String customerName;
   final double amount;
   final String status;
@@ -335,6 +338,8 @@ class CustomerApprovalSummaryResponse {
 
   const CustomerApprovalSummaryResponse({
     this.estimateId = '',
+    this.approvalType = 'estimate',
+    this.referenceId = '',
     this.customerName = '',
     this.amount = 0,
     this.status = 'pending',
@@ -344,6 +349,8 @@ class CustomerApprovalSummaryResponse {
   factory CustomerApprovalSummaryResponse.fromJson(Map<String, dynamic> j) =>
       CustomerApprovalSummaryResponse(
         estimateId: j['estimateId'] as String? ?? '',
+        approvalType: j['approvalType'] as String? ?? 'estimate',
+        referenceId: j['referenceId'] as String? ?? '',
         customerName: j['customerName'] as String? ?? '',
         amount: (j['amount'] as num?)?.toDouble() ?? 0,
         status: j['status'] as String? ?? 'pending',
@@ -367,16 +374,19 @@ class ApprovalLineItem {
   });
 
   factory ApprovalLineItem.fromJson(Map<String, dynamic> j) => ApprovalLineItem(
-        name: j['name'] as String? ?? '',
-        qty: (j['qty'] as num?)?.toInt() ?? 1,
-        rate: (j['rate'] as num?)?.toDouble() ?? 0,
-        discountPercent: (j['discountPercent'] as num?)?.toDouble() ?? 0,
-        discountAmount: (j['discountAmount'] as num?)?.toDouble() ?? 0,
-      );
+    name: j['name'] as String? ?? '',
+    qty: (j['qty'] as num?)?.toInt() ?? 1,
+    rate: (j['rate'] as num?)?.toDouble() ?? 0,
+    discountPercent: (j['discountPercent'] as num?)?.toDouble() ?? 0,
+    discountAmount: (j['discountAmount'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 class CustomerApprovalDetailResponse {
   final String estimateId;
+  final String approvalType;
+  final String referenceId;
+  final String description;
   final String customerName;
   final String vehicleInfo;
   final double servicesTotal;
@@ -389,6 +399,9 @@ class CustomerApprovalDetailResponse {
 
   const CustomerApprovalDetailResponse({
     this.estimateId = '',
+    this.approvalType = 'estimate',
+    this.referenceId = '',
+    this.description = '',
     this.customerName = '',
     this.vehicleInfo = '',
     this.servicesTotal = 0,
@@ -400,23 +413,29 @@ class CustomerApprovalDetailResponse {
     this.parts = const [],
   });
 
-  factory CustomerApprovalDetailResponse.fromJson(Map<String, dynamic> j) =>
-      CustomerApprovalDetailResponse(
-        estimateId: j['estimateId'] as String? ?? '',
-        customerName: j['customerName'] as String? ?? '',
-        vehicleInfo: j['vehicleInfo'] as String? ?? '',
-        servicesTotal: (j['servicesTotal'] as num?)?.toDouble() ?? 0,
-        partsTotal: (j['partsTotal'] as num?)?.toDouble() ?? 0,
-        grandTotal: (j['grandTotal'] as num?)?.toDouble() ?? 0,
-        status: j['status'] as String? ?? 'pending',
-        createdAt: j['createdAt'] as String? ?? '',
-        services: (j['services'] as List<dynamic>?)
-                ?.map((e) => ApprovalLineItem.fromJson(e as Map<String, dynamic>))
-                .toList() ??
-            const [],
-        parts: (j['parts'] as List<dynamic>?)
-                ?.map((e) => ApprovalLineItem.fromJson(e as Map<String, dynamic>))
-                .toList() ??
-            const [],
-      );
+  factory CustomerApprovalDetailResponse.fromJson(
+    Map<String, dynamic> j,
+  ) => CustomerApprovalDetailResponse(
+    estimateId: j['estimateId'] as String? ?? '',
+    approvalType: j['approvalType'] as String? ?? 'estimate',
+    referenceId: j['referenceId'] as String? ?? '',
+    description: j['description'] as String? ?? '',
+    customerName: j['customerName'] as String? ?? '',
+    vehicleInfo: j['vehicleInfo'] as String? ?? '',
+    servicesTotal: (j['servicesTotal'] as num?)?.toDouble() ?? 0,
+    partsTotal: (j['partsTotal'] as num?)?.toDouble() ?? 0,
+    grandTotal: (j['grandTotal'] as num?)?.toDouble() ?? 0,
+    status: j['status'] as String? ?? 'pending',
+    createdAt: j['createdAt'] as String? ?? '',
+    services:
+        (j['services'] as List<dynamic>?)
+            ?.map((e) => ApprovalLineItem.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [],
+    parts:
+        (j['parts'] as List<dynamic>?)
+            ?.map((e) => ApprovalLineItem.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [],
+  );
 }

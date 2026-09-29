@@ -46,6 +46,7 @@ public class CustomerApprovalService {
     private final RepairOrderMapper repairOrderMapper;
     private final RepairOrderServiceMapper serviceMapper;
     private final RepairOrderPartMapper partMapper;
+    private final com.orient.workshop.advisor.repository.InspectionMapper inspectionMapper;
     private final CustomerMapper customerMapper;
     private final JobCardMapper jobCardMapper;
     private final VehicleMapper vehicleMapper;
@@ -59,7 +60,9 @@ public class CustomerApprovalService {
                         .eq(Approval::getAction, "pending")
                         .orderByDesc(Approval::getCreatedAt));
         return approvals.stream().map(a -> CustomerApprovalSummaryResponse.builder()
-                .estimateId(a.getEstimateId())
+                .estimateId(a.getTargetId() != null ? a.getTargetId() : a.getEstimateId())
+                .approvalType(a.getApprovalType() != null ? a.getApprovalType() : "estimate")
+                .referenceId(a.getTargetId() != null ? a.getTargetId() : a.getEstimateId())
                 .customerName(a.getCustomerName())
                 .amount(a.getAmount())
                 .status(a.getAction())
@@ -70,8 +73,13 @@ public class CustomerApprovalService {
     public CustomerApprovalDetailResponse getApprovalDetail(JwtUserPrincipal principal, String estimateId) {
         Customer customer = resolveCustomer(principal);
         Approval approval = requireApproval(estimateId, customer.getId());
-        RepairOrder ro = repairOrderMapper.selectOne(
-                new LambdaQueryWrapper<RepairOrder>().eq(RepairOrder::getRepairOrderRef, estimateId));
+        if (!"pending".equalsIgnoreCase(approval.getAction())) {
+            throw new BadRequestException("This approval has already been decided");
+        }
+        String approvalType = approval.getApprovalType() != null ? approval.getApprovalType() : "estimate";
+        String targetId = approval.getTargetId() != null ? approval.getTargetId() : approval.getEstimateId();
+        RepairOrder ro = "estimate".equals(approvalType) ? repairOrderMapper.selectOne(
+                new LambdaQueryWrapper<RepairOrder>().eq(RepairOrder::getRepairOrderRef, targetId)) : null;
 
         List<CustomerApprovalDetailResponse.LineItem> services = List.of();
         List<CustomerApprovalDetailResponse.LineItem> parts = List.of();
@@ -83,19 +91,37 @@ public class CustomerApprovalService {
         }
 
         String vehicleInfo = "";
+        String description = "";
+        JobCard card = null;
         if (ro != null && ro.getJobCardId() != null) {
-            JobCard card = jobCardMapper.selectById(ro.getJobCardId());
-            if (card != null && card.getVehicleId() != null) {
-                Vehicle v = vehicleMapper.selectById(card.getVehicleId());
-                if (v != null) {
-                    vehicleInfo = ((v.getMake() != null ? v.getMake() : "") + " "
-                            + (v.getModel() != null ? v.getModel() : "")).trim();
-                }
+            card = jobCardMapper.selectById(ro.getJobCardId());
+        } else if ("job_card".equals(approvalType)) {
+            card = jobCardMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<JobCard>()
+                    .eq("job_card_ref", targetId));
+            description = card != null && card.getCustomerRequests() != null
+                    ? card.getCustomerRequests() : "Review and approve the workshop job card.";
+        } else if ("inspection".equals(approvalType)) {
+            var inspection = inspectionMapper.selectOne(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.orient.workshop.advisor.model.entity.Inspection>()
+                            .eq("inspection_ref", targetId));
+            if (inspection != null) {
+                card = jobCardMapper.selectById(inspection.getJobCardId());
+                description = "Review and approve the completed vehicle inspection.";
+            }
+        }
+        if (card != null && card.getVehicleId() != null) {
+            Vehicle v = vehicleMapper.selectById(card.getVehicleId());
+            if (v != null) {
+                vehicleInfo = ((v.getMake() != null ? v.getMake() : "") + " "
+                        + (v.getModel() != null ? v.getModel() : "")).trim();
             }
         }
 
         return CustomerApprovalDetailResponse.builder()
-                .estimateId(approval.getEstimateId())
+                .estimateId(targetId)
+                .approvalType(approvalType)
+                .referenceId(targetId)
+                .description(description)
                 .customerName(approval.getCustomerName())
                 .vehicleInfo(vehicleInfo)
                 .servicesTotal(ro != null ? ro.getServicesTotal() : 0)
@@ -121,12 +147,17 @@ public class CustomerApprovalService {
             default -> throw new BadRequestException("Invalid action '" + action
                     + "'. Allowed values: approve, reject, revise");
         };
+        String approvalType = approval.getApprovalType() != null ? approval.getApprovalType() : "estimate";
+        if ("revise".equals(action) && !"estimate".equals(approvalType)) {
+            throw new BadRequestException("Revision requests are only supported for estimates");
+        }
         approval.setAction(stored);
         approvalMapper.updateById(approval);
 
-        if ("approved".equals(stored)) {
+        if ("approved".equals(stored) && "estimate".equals(approvalType)) {
+            String targetId = approval.getTargetId() != null ? approval.getTargetId() : approval.getEstimateId();
             RepairOrder ro = repairOrderMapper.selectOne(
-                    new LambdaQueryWrapper<RepairOrder>().eq(RepairOrder::getRepairOrderRef, estimateId));
+                    new LambdaQueryWrapper<RepairOrder>().eq(RepairOrder::getRepairOrderRef, targetId));
             if (ro != null && ro.getJobCardId() != null) {
                 JobCard card = jobCardMapper.selectById(ro.getJobCardId());
                 if (card != null && !"awaitingSupervisor".equals(card.getStatus())) {
@@ -136,18 +167,23 @@ public class CustomerApprovalService {
             }
         }
         if (customer.getUserId() != null) {
+            String subject = switch (approvalType) {
+                case "job_card" -> "Job card";
+                case "inspection" -> "Inspection";
+                default -> "Estimate";
+            };
             String type = switch (stored) {
                 case "approved" -> "estimateApproved";
                 case "rejected" -> "estimateRejected";
                 default -> "estimateApproved";
             };
             String title = switch (stored) {
-                case "approved" -> "Estimate approved";
-                case "rejected" -> "Estimate rejected";
+                case "approved" -> subject + " approved";
+                case "rejected" -> subject + " rejected";
                 default -> "Changes requested";
             };
             notificationService.emit(customer.getUserId(), customer.getBranchId(), type, title,
-                    "Estimate " + estimateId + (stored.equals("approved")
+                    subject + " " + estimateId + (stored.equals("approved")
                             ? " — work will start shortly." : " — the workshop has been informed."));
         }
     }
@@ -167,10 +203,11 @@ public class CustomerApprovalService {
     private Approval requireApproval(String estimateId, Long customerId) {
         Approval approval = approvalMapper.selectOne(
                 new LambdaQueryWrapper<Approval>()
-                        .eq(Approval::getEstimateId, estimateId)
+                        .and(q -> q.eq(Approval::getTargetId, estimateId)
+                                .or().eq(Approval::getEstimateId, estimateId))
                         .eq(Approval::getCustomerId, customerId));
         if (approval == null) {
-            throw new NotFoundException("Approval not found for estimate " + estimateId);
+            throw new NotFoundException("Approval not found for reference " + estimateId);
         }
         return approval;
     }

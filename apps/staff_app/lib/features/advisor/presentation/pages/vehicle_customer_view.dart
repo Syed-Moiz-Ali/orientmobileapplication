@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,12 +9,15 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:staff_app/core/platform/file_ops.dart';
 import 'inspection_provider.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/vehicle_customer_provider.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/vehicle_customer_shared_widgets.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/select_brand_sheet.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_signature_pad.dart';
 import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.dart';
 import 'scan_vehicle_view.dart';
 
@@ -37,6 +42,10 @@ class _BodyState extends ConsumerState<_Body> {
   String? _savedJobId;
   XFile? _registrationDocument;
   XFile? _insuranceDocument;
+  final List<String> _jobPhotoPaths = [];
+  final List<String> _jobVideoPaths = [];
+  String _customerSignaturePath = '';
+  String _advisorSignaturePath = '';
 
   @override
   void initState() {
@@ -150,7 +159,18 @@ class _BodyState extends ConsumerState<_Body> {
                 ),
 
                 // ── Additional Information (Image 15) ────────────────────
-                _AdditionalInfoSection(state: state, ref: ref),
+                _AdditionalInfoSection(
+                  state: state,
+                  ref: ref,
+                  photoCount: _jobPhotoPaths.length,
+                  videoCount: _jobVideoPaths.length,
+                  hasCustomerSignature: _customerSignaturePath.isNotEmpty,
+                  hasAdvisorSignature: _advisorSignaturePath.isNotEmpty,
+                  onAddPhotos: _pickJobPhotos,
+                  onAddVideo: _pickJobVideo,
+                  onCustomerSignature: () => _captureSignature(true),
+                  onAdvisorSignature: () => _captureSignature(false),
+                ),
               ],
             ),
           ),
@@ -186,11 +206,40 @@ class _BodyState extends ConsumerState<_Body> {
                     'customerName': formState.customerName,
                     'phoneNumber': formState.phoneNumber,
                     'email': formState.email,
+                    'isB2B': formState.isB2B,
+                    'customerGroup': formState.customerGroup,
+                    'gender': formState.gender,
+                    'address': formState.address,
+                    'taxNumber': formState.taxNumber,
+                    'source': formState.source,
+                    'emirate': formState.emirate,
+                    'plateCode': formState.plateCode,
+                    'plateNumber': formState.plateNumber,
                     'vin': formState.vin,
                     'make': formState.make,
                     'model': formState.model,
                     'modelYear': formState.modelYear,
                     'registrationNumber': formState.registrationNumber,
+                    'cylinders': formState.cylinders,
+                    'engineCapacity': formState.engineCapacity,
+                    'vehicleColor': formState.vehicleColor,
+                    'fuelType': formState.fuelType,
+                    'engineNumber': formState.engineNumber,
+                    'jobCategory': formState.jobCategory,
+                    'markupType': formState.markupType,
+                    'orderType': formState.orderType,
+                    'jobDescription': formState.jobDescription,
+                    'insuranceProvider': formState.insuranceProvider,
+                    'insuranceTaxNumber': formState.insuranceTaxNumber,
+                    'insuranceAddress': formState.insuranceAddress,
+                    'policyNumber': formState.policyNumber,
+                    'lpoNumber': formState.lpoNumber,
+                    'accidentNumber': formState.accidentNumber,
+                    'insuranceExpiryDate': formState.insuranceExpiryDate,
+                    'jobPhotoPaths': List<String>.from(_jobPhotoPaths),
+                    'jobVideoPaths': List<String>.from(_jobVideoPaths),
+                    'customerSignaturePath': _customerSignaturePath,
+                    'advisorSignaturePath': _advisorSignaturePath,
                     'odometerReading': formState.odometerReading,
                     'fuelLevel': formState.fuelLevel,
                     'customerConsent': formState.customerConsent,
@@ -465,6 +514,82 @@ class _BodyState extends ConsumerState<_Body> {
     });
   }
 
+  Future<String> _persistPickedFile(XFile file, String prefix) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final extension = file.name.contains('.')
+        ? file.name.split('.').last
+        : 'bin';
+    final destination =
+        '${directory.path}/${prefix}_${DateTime.now().microsecondsSinceEpoch}.$extension';
+    return persistMediaFile(file.path, destination);
+  }
+
+  Future<void> _pickJobPhotos() async {
+    final files = await ImagePicker().pickMultiImage(imageQuality: 85);
+    if (files.isEmpty) return;
+    final paths = <String>[];
+    for (final file in files) {
+      paths.add(await _persistPickedFile(file, 'job_photo'));
+    }
+    if (mounted) setState(() => _jobPhotoPaths.addAll(paths));
+  }
+
+  Future<void> _pickJobVideo() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.videocam_outlined),
+              title: const Text('Record video'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.video_library_outlined),
+              title: const Text('Choose video'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    final file = await ImagePicker().pickVideo(
+      source: source,
+      maxDuration: const Duration(minutes: 3),
+    );
+    if (file == null) return;
+    final path = await _persistPickedFile(file, 'job_video');
+    if (mounted) setState(() => _jobVideoPaths.add(path));
+  }
+
+  Future<void> _captureSignature(bool customer) async {
+    final title = customer ? 'Customer Signature' : 'Advisor Signature';
+    final bytes = await showModalBottomSheet<Uint8List>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => AdvisorSignaturePad(title: title),
+    );
+    if (bytes == null || bytes.isEmpty || !mounted) return;
+    final path = await saveSignatureFile(
+      bytes,
+      '${customer ? 'customer' : 'advisor'}_signature_${DateTime.now().millisecondsSinceEpoch}.png',
+    );
+    if (!mounted || path.isEmpty) return;
+    setState(() {
+      if (customer) {
+        _customerSignaturePath = path;
+      } else {
+        _advisorSignaturePath = path;
+      }
+    });
+  }
+
   void _showInspectionPrompt(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -607,7 +732,9 @@ class _SearchModeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final matches = ref.watch(advisorVehicleMatchesProvider);
+    final localMatches = ref.watch(advisorVehicleMatchesProvider);
+    final remoteMatches = ref.watch(advisorRemoteVehicleMatchesProvider);
+    final matches = remoteMatches.value ?? localMatches;
     final notifier = ref.read(vehicleCustomerFormProvider.notifier);
 
     void applyMatch(VehicleMatch m) {
@@ -619,6 +746,14 @@ class _SearchModeSection extends StatelessWidget {
         ..setVin(m.vin)
         ..setMake(m.make)
         ..setModel(m.model);
+      if (m.emirate.isNotEmpty ||
+          m.plateCode.isNotEmpty ||
+          m.plateNumber.isNotEmpty) {
+        notifier
+          ..setEmirate(m.emirate)
+          ..setPlateCode(m.plateCode)
+          ..setPlateNumber(m.plateNumber);
+      }
     }
 
     return Container(
@@ -636,91 +771,28 @@ class _SearchModeSection extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // By Vehicle Reg No.
-          _RadioOption(
-            label: 'By Vehicle Reg No.',
-            value: SearchMode.byVehicleReg,
-            groupValue: state.searchMode,
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setSearchMode(v),
-          ),
-          if (state.searchMode == SearchMode.byVehicleReg) ...[
-            const SizedBox(height: 12),
-            TextField(
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setCustomerSearch(v),
-              decoration: InputDecoration(
-                hintText: 'Vehicle Reg No. / VIN',
-                hintStyle: const TextStyle(color: kHintColor, fontSize: 13),
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: kHintColor,
-                  size: 18,
+          TextField(
+            onChanged: (v) => ref
+                .read(vehicleCustomerFormProvider.notifier)
+                .setCustomerSearch(v),
+            decoration: InputDecoration(
+              hintText: 'Mobile, customer name, plate number, or VIN',
+              hintStyle: const TextStyle(color: kHintColor, fontSize: 13),
+              prefixIcon: const Icon(Icons.search, color: kHintColor, size: 18),
+              filled: true,
+              fillColor: kFieldBg,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(AppDimensions.r10),
                 ),
-                filled: true,
-                fillColor: kFieldBg,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(AppDimensions.r10),
-                  ),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
+                borderSide: BorderSide.none,
               ),
-            ),
-          ],
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'OR',
-              style: TextStyle(
-                color: AppColors.text3,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
               ),
             ),
           ),
-          // By Customer Name / Phone
-          _RadioOption(
-            label: 'By Customer Name / Phone Number',
-            value: SearchMode.byCustomer,
-            groupValue: state.searchMode,
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setSearchMode(v),
-          ),
-          if (state.searchMode == SearchMode.byCustomer) ...[
-            const SizedBox(height: 12),
-            TextField(
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setCustomerSearch(v),
-              decoration: InputDecoration(
-                hintText: 'Customer Search',
-                hintStyle: const TextStyle(color: kHintColor, fontSize: 13),
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: kHintColor,
-                  size: 18,
-                ),
-                filled: true,
-                fillColor: kFieldBg,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(AppDimensions.r10),
-                  ),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ],
           if (matches.isNotEmpty) ...[
             const SizedBox(height: 10),
             ...matches.map(
@@ -761,7 +833,10 @@ class _SearchModeSection extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '${m.registrationNumber} · ${m.phoneNumber}',
+                              [
+                                m.registrationNumber,
+                                m.phoneNumber,
+                              ].where((value) => value.isNotEmpty).join(' · '),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -816,71 +891,6 @@ class _SearchModeSection extends StatelessWidget {
             icon: Icons.qr_code_scanner,
             label: 'SCAN VEHICLE QR CODE',
             onTap: onScanQr,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RadioOption extends StatelessWidget {
-  final String label;
-  final SearchMode value;
-  final SearchMode groupValue;
-  final ValueChanged<SearchMode> onChanged;
-
-  const _RadioOption({
-    required this.label,
-    required this.value,
-    required this.groupValue,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isSelected = value == groupValue;
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: Row(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.stroke,
-                width: 2,
-              ),
-              color: Colors.white,
-            ),
-            child: isSelected
-                ? Center(
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 9,
-                      ),
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 10),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: isSelected ? kTextColor : AppColors.text2,
-              fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-            ),
           ),
         ],
       ),
@@ -1014,9 +1024,6 @@ class _CustomerDetailsSection extends StatelessWidget {
           ),
           kGap12,
 
-          const FieldLabel('Customer Tag'),
-          _TagRow(state: state, ref: ref),
-
           if (state.showMoreCustomer) ...[
             kGap12,
             const FieldLabel('Gender'),
@@ -1048,33 +1055,6 @@ class _CustomerDetailsSection extends StatelessWidget {
             ),
             kGap12,
 
-            const FieldLabel('Group Tax Number'),
-            AdvisorTextField(
-              hint: 'Group Tax Number',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setGroupTaxNumber(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Occupation'),
-            AdvisorTextField(
-              hint: 'Occupation',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setOccupation(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Organisation'),
-            AdvisorTextField(
-              hint: 'Organisation',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setOrganisation(v),
-            ),
-            kGap12,
-
             const FieldLabel('Source'),
             AdvisorTextField(
               hint: 'How did you come to know abo...',
@@ -1092,91 +1072,6 @@ class _CustomerDetailsSection extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _TagRow extends StatelessWidget {
-  final VehicleCustomerFormState state;
-  final WidgetRef ref;
-  const _TagRow({required this.state, required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        // selected tags
-        ...state.selectedTags.map((tag) {
-          final t = kCustomerTags.firstWhere(
-            (t) => t.label == tag,
-            orElse: () => CustomerTag(label: tag, color: AppColors.primary),
-          );
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: t.color),
-              borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r6)),
-            ),
-            child: Text(
-              tag,
-              style: TextStyle(
-                color: t.color,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
-          );
-        }),
-        // Add tag button
-        GestureDetector(
-          onTap: () async {
-            final result = await showModalBottomSheet<List<String>>(
-              context: context,
-              isScrollControlled: true,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              builder: (_) => CustomerTagSheet(selected: state.selectedTags),
-            );
-            if (result != null) {
-              final notifier = ref.read(vehicleCustomerFormProvider.notifier);
-              for (final tag in kCustomerTags.map((t) => t.label)) {
-                if (result.contains(tag) && !state.selectedTags.contains(tag)) {
-                  notifier.toggleTag(tag);
-                } else if (!result.contains(tag) &&
-                    state.selectedTags.contains(tag)) {
-                  notifier.toggleTag(tag);
-                }
-              }
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: kFieldBg,
-              borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r8)),
-              border: Border.all(color: kBorderColor),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add, size: 14, color: AppColors.primary),
-                SizedBox(width: 4),
-                Text(
-                  'Tag',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: kLabelColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -1209,14 +1104,32 @@ class _VehicleDetailsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FieldLabel('Registration Number', required: true),
+          const FieldLabel('Emirate'),
+          AdvisorDropdown(
+            hint: 'Select Emirate',
+            value: state.emirate,
+            items: kEmirates,
+            onChanged: (v) =>
+                ref.read(vehicleCustomerFormProvider.notifier).setEmirate(v),
+          ),
+          kGap12,
+
+          const FieldLabel('Plate Code'),
           AdvisorTextField(
-            hint: '',
-            initialValue: state.registrationNumber,
+            hint: 'Plate Code',
+            initialValue: state.plateCode,
+            onChanged: (v) =>
+                ref.read(vehicleCustomerFormProvider.notifier).setPlateCode(v),
+          ),
+          kGap12,
+
+          FieldLabel('Plate Number', required: true),
+          AdvisorTextField(
+            hint: 'Plate Number',
+            initialValue: state.plateNumber,
             onChanged: (v) => ref
                 .read(vehicleCustomerFormProvider.notifier)
-                .setRegistrationNumber(v),
-            filled: state.registrationNumber.isNotEmpty,
+                .setPlateNumber(v),
           ),
           kGap12,
 
@@ -1248,19 +1161,6 @@ class _VehicleDetailsSection extends StatelessWidget {
 
           if (state.showMoreVehicle) ...[
             kGap12,
-            const FieldLabel('Purchase Date'),
-            AdvisorTextField(
-              hint: 'MM/YYYY',
-              prefix: const Padding(
-                padding: EdgeInsets.only(left: 12, right: 4),
-                child: Icon(Icons.calendar_today, color: kHintColor, size: 16),
-              ),
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setPurchaseDate(v),
-            ),
-            kGap12,
-
             const FieldLabel('Number of Cylinders'),
             AdvisorDropdown(
               hint: 'Number of Cylinders',
@@ -1290,63 +1190,22 @@ class _VehicleDetailsSection extends StatelessWidget {
             ),
             kGap12,
 
+            const FieldLabel('Fuel Type'),
+            AdvisorDropdown(
+              hint: 'Select Fuel Type',
+              value: state.fuelType,
+              items: kFuelTypes,
+              onChanged: (v) =>
+                  ref.read(vehicleCustomerFormProvider.notifier).setFuelType(v),
+            ),
+            kGap12,
+
             const FieldLabel('Engine number'),
             AdvisorTextField(
               hint: 'Engine number',
               onChanged: (v) => ref
                   .read(vehicleCustomerFormProvider.notifier)
                   .setEngineNumber(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Insurance Provider'),
-            AdvisorDropdown(
-              hint: 'Insurance Provider',
-              value: state.insuranceProvider,
-              items: kInsuranceProviders,
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setInsuranceProvider(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Insurance Tax number'),
-            AdvisorTextField(
-              hint: 'Enter Insurance Tax number',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setInsuranceTaxNumber(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Insurance Address'),
-            AdvisorTextField(
-              hint: 'Insurance Address',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setInsuranceAddress(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Policy number'),
-            AdvisorTextField(
-              hint: 'Policy number',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setPolicyNumber(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Insurance expiry date'),
-            AdvisorTextField(
-              hint: 'Click to select a date',
-              prefix: const Padding(
-                padding: EdgeInsets.only(left: 12, right: 4),
-                child: Icon(Icons.calendar_today, color: kHintColor, size: 16),
-              ),
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setInsuranceExpiry(v),
             ),
             kGap12,
 
@@ -1357,8 +1216,56 @@ class _VehicleDetailsSection extends StatelessWidget {
               onTap: onRegistrationUpload,
             ),
             kGap12,
+          ],
 
-            const FieldLabel('Insurance'),
+          kGap12,
+          const FieldLabel('Job Category'),
+          AdvisorDropdown(
+            hint: 'Select Job Category',
+            value: state.jobCategory,
+            items: kJobCategories,
+            onChanged: (v) => ref
+                .read(vehicleCustomerFormProvider.notifier)
+                .setJobCategory(v),
+          ),
+
+          if (state.jobCategory == 'Insurance') ...[
+            kGap12,
+            const FieldLabel('Insurance Name'),
+            AdvisorDropdown(
+              hint: 'Insurance Name',
+              value: state.insuranceProvider,
+              items: kInsuranceProviders,
+              onChanged: (v) => ref
+                  .read(vehicleCustomerFormProvider.notifier)
+                  .setInsuranceProvider(v),
+            ),
+            kGap12,
+            const FieldLabel('LPO Number'),
+            AdvisorTextField(
+              hint: 'LPO Number',
+              onChanged: (v) => ref
+                  .read(vehicleCustomerFormProvider.notifier)
+                  .setLpoNumber(v),
+            ),
+            kGap12,
+            const FieldLabel('Policy Number'),
+            AdvisorTextField(
+              hint: 'Policy Number',
+              onChanged: (v) => ref
+                  .read(vehicleCustomerFormProvider.notifier)
+                  .setPolicyNumber(v),
+            ),
+            kGap12,
+            const FieldLabel('Accident Number'),
+            AdvisorTextField(
+              hint: 'Accident Number',
+              onChanged: (v) => ref
+                  .read(vehicleCustomerFormProvider.notifier)
+                  .setAccidentNumber(v),
+            ),
+            kGap12,
+            const FieldLabel('Insurance Document'),
             _ImageUploadButton(
               label: insuranceDocumentName ?? 'Add document',
               selected: insuranceDocumentName != null,
@@ -1569,7 +1476,27 @@ class _ImageUploadButton extends StatelessWidget {
 class _AdditionalInfoSection extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
-  const _AdditionalInfoSection({required this.state, required this.ref});
+  final int photoCount;
+  final int videoCount;
+  final bool hasCustomerSignature;
+  final bool hasAdvisorSignature;
+  final VoidCallback onAddPhotos;
+  final VoidCallback onAddVideo;
+  final VoidCallback onCustomerSignature;
+  final VoidCallback onAdvisorSignature;
+
+  const _AdditionalInfoSection({
+    required this.state,
+    required this.ref,
+    required this.photoCount,
+    required this.videoCount,
+    required this.hasCustomerSignature,
+    required this.hasAdvisorSignature,
+    required this.onAddPhotos,
+    required this.onAddVideo,
+    required this.onCustomerSignature,
+    required this.onAdvisorSignature,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1578,6 +1505,31 @@ class _AdditionalInfoSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const FieldLabel('Job Description'),
+          AdvisorTextField(
+            hint: 'Describe the requested work',
+            onChanged: (v) => ref
+                .read(vehicleCustomerFormProvider.notifier)
+                .setJobDescription(v),
+          ),
+          kGap12,
+
+          const FieldLabel('Markup Type'),
+          AdvisorTextField(
+            hint: 'Markup Type',
+            onChanged: (v) =>
+                ref.read(vehicleCustomerFormProvider.notifier).setMarkupType(v),
+          ),
+          kGap12,
+
+          const FieldLabel('Order Type'),
+          AdvisorTextField(
+            hint: 'Order Type',
+            onChanged: (v) =>
+                ref.read(vehicleCustomerFormProvider.notifier).setOrderType(v),
+          ),
+          kGap16,
+
           const FieldLabel('Odometer Reading(in Kms)'),
           AdvisorTextField(
             hint: 'Odometer (in Kms)',
@@ -1633,6 +1585,67 @@ class _AdditionalInfoSection extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          kGap16,
+
+          const FieldLabel('Job Card Photos and Videos'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onAddPhotos,
+                icon: const Icon(Icons.photo_library_outlined, size: 18),
+                label: Text(
+                  photoCount == 0 ? 'Add Photos' : 'Photos ($photoCount)',
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: onAddVideo,
+                icon: const Icon(Icons.videocam_outlined, size: 18),
+                label: Text(
+                  videoCount == 0 ? 'Add Video' : 'Videos ($videoCount)',
+                ),
+              ),
+            ],
+          ),
+          kGap16,
+
+          const FieldLabel('Digital Signatures'),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onCustomerSignature,
+                  icon: Icon(
+                    hasCustomerSignature
+                        ? Icons.check_circle_outline
+                        : Icons.draw_outlined,
+                    size: 18,
+                  ),
+                  label: Text(
+                    hasCustomerSignature ? 'Customer Signed' : 'Customer',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onAdvisorSignature,
+                  icon: Icon(
+                    hasAdvisorSignature
+                        ? Icons.check_circle_outline
+                        : Icons.draw_outlined,
+                    size: 18,
+                  ),
+                  label: Text(
+                    hasAdvisorSignature ? 'Advisor Signed' : 'Advisor',
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

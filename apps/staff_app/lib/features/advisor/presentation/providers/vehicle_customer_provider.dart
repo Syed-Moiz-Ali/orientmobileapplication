@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.dart';
+import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 
 /// A previously saved vehicle/customer record matching a search query.
 class VehicleMatch {
@@ -11,6 +12,9 @@ class VehicleMatch {
   final String make;
   final String model;
   final String registrationNumber;
+  final String emirate;
+  final String plateCode;
+  final String plateNumber;
 
   const VehicleMatch({
     required this.customerName,
@@ -20,6 +24,9 @@ class VehicleMatch {
     required this.make,
     required this.model,
     required this.registrationNumber,
+    this.emirate = '',
+    this.plateCode = '',
+    this.plateNumber = '',
   });
 }
 
@@ -39,9 +46,10 @@ final advisorVehicleMatchesProvider = Provider<List<VehicleMatch>>((ref) {
           final phone = (m['phoneNumber'] ?? '').toString().toLowerCase();
           final reg = (m['registrationNumber'] ?? '').toString().toLowerCase();
           final vin = (m['vin'] ?? '').toString().toLowerCase();
-          return form.searchMode == SearchMode.byVehicleReg
-              ? reg.contains(q) || vin.contains(q)
-              : name.contains(q) || phone.contains(q);
+          return reg.contains(q) ||
+              vin.contains(q) ||
+              name.contains(q) ||
+              phone.contains(q);
         })
         .take(5)
         .map(
@@ -53,6 +61,9 @@ final advisorVehicleMatchesProvider = Provider<List<VehicleMatch>>((ref) {
             make: (m['make'] ?? '').toString(),
             model: (m['model'] ?? '').toString(),
             registrationNumber: (m['registrationNumber'] ?? '').toString(),
+            emirate: (m['emirate'] ?? '').toString(),
+            plateCode: (m['plateCode'] ?? '').toString(),
+            plateNumber: (m['plateNumber'] ?? '').toString(),
           ),
         )
         .toList();
@@ -60,6 +71,52 @@ final advisorVehicleMatchesProvider = Provider<List<VehicleMatch>>((ref) {
     return const [];
   }
 });
+
+/// Uses the workshop database for intake search, with the existing local
+/// records as an offline fallback.
+final advisorRemoteVehicleMatchesProvider =
+    FutureProvider.autoDispose<List<VehicleMatch>>((ref) async {
+      final form = ref.watch(vehicleCustomerFormProvider);
+      final q = form.customerSearch.trim();
+      if (q.length < 2) return const [];
+
+      try {
+        final remote = ref.read(advisorRemoteDataSourceProvider);
+        final customersRequest = remote.searchCustomers(q);
+        final vehiclesRequest = remote.searchVehicles(q);
+        final customers = await customersRequest;
+        final vehicles = await vehiclesRequest;
+        return <VehicleMatch>[
+          ...vehicles.map(
+            (v) => VehicleMatch(
+              customerName: v.customerName,
+              phoneNumber: v.phone,
+              email: v.email,
+              vin: v.vin,
+              make: v.make,
+              model: v.model,
+              registrationNumber: v.regNo,
+              emirate: v.emirate,
+              plateCode: v.plateCode,
+              plateNumber: v.plateNumber,
+            ),
+          ),
+          ...customers.map(
+            (c) => VehicleMatch(
+              customerName: c.customerName,
+              phoneNumber: c.phone,
+              email: c.email,
+              vin: '',
+              make: '',
+              model: '',
+              registrationNumber: '',
+            ),
+          ),
+        ].take(10).toList();
+      } catch (_) {
+        return ref.read(advisorVehicleMatchesProvider);
+      }
+    });
 
 class VehicleCustomerFormState {
   final SearchMode searchMode;
@@ -77,6 +134,9 @@ class VehicleCustomerFormState {
   final String occupation;
   final String organisation;
   final String source;
+  final String emirate;
+  final String plateCode;
+  final String plateNumber;
   final String registrationNumber;
   final String vin;
   final String make;
@@ -86,11 +146,18 @@ class VehicleCustomerFormState {
   final String cylinders;
   final String engineCapacity;
   final String vehicleColor;
+  final String fuelType;
   final String engineNumber;
+  final String jobCategory;
+  final String markupType;
+  final String orderType;
+  final String jobDescription;
   final String insuranceProvider;
   final String insuranceTaxNumber;
   final String insuranceAddress;
   final String policyNumber;
+  final String lpoNumber;
+  final String accidentNumber;
   final String insuranceExpiryDate;
   final String odometerReading;
   final int fuelLevel;
@@ -114,6 +181,9 @@ class VehicleCustomerFormState {
     this.occupation = '',
     this.organisation = '',
     this.source = '',
+    this.emirate = '',
+    this.plateCode = '',
+    this.plateNumber = '',
     this.registrationNumber = '',
     this.vin = '',
     this.make = '',
@@ -123,11 +193,18 @@ class VehicleCustomerFormState {
     this.cylinders = '',
     this.engineCapacity = '',
     this.vehicleColor = '',
+    this.fuelType = '',
     this.engineNumber = '',
+    this.jobCategory = 'Regular',
+    this.markupType = '',
+    this.orderType = '',
+    this.jobDescription = '',
     this.insuranceProvider = '',
     this.insuranceTaxNumber = '',
     this.insuranceAddress = '',
     this.policyNumber = '',
+    this.lpoNumber = '',
+    this.accidentNumber = '',
     this.insuranceExpiryDate = '',
     this.odometerReading = '',
     this.fuelLevel = 5,
@@ -152,6 +229,9 @@ class VehicleCustomerFormState {
     String? occupation,
     String? organisation,
     String? source,
+    String? emirate,
+    String? plateCode,
+    String? plateNumber,
     String? registrationNumber,
     String? vin,
     String? make,
@@ -161,11 +241,18 @@ class VehicleCustomerFormState {
     String? cylinders,
     String? engineCapacity,
     String? vehicleColor,
+    String? fuelType,
     String? engineNumber,
+    String? jobCategory,
+    String? markupType,
+    String? orderType,
+    String? jobDescription,
     String? insuranceProvider,
     String? insuranceTaxNumber,
     String? insuranceAddress,
     String? policyNumber,
+    String? lpoNumber,
+    String? accidentNumber,
     String? insuranceExpiryDate,
     String? odometerReading,
     int? fuelLevel,
@@ -189,6 +276,9 @@ class VehicleCustomerFormState {
       occupation: occupation ?? this.occupation,
       organisation: organisation ?? this.organisation,
       source: source ?? this.source,
+      emirate: emirate ?? this.emirate,
+      plateCode: plateCode ?? this.plateCode,
+      plateNumber: plateNumber ?? this.plateNumber,
       registrationNumber: registrationNumber ?? this.registrationNumber,
       vin: vin ?? this.vin,
       make: make ?? this.make,
@@ -198,11 +288,18 @@ class VehicleCustomerFormState {
       cylinders: cylinders ?? this.cylinders,
       engineCapacity: engineCapacity ?? this.engineCapacity,
       vehicleColor: vehicleColor ?? this.vehicleColor,
+      fuelType: fuelType ?? this.fuelType,
       engineNumber: engineNumber ?? this.engineNumber,
+      jobCategory: jobCategory ?? this.jobCategory,
+      markupType: markupType ?? this.markupType,
+      orderType: orderType ?? this.orderType,
+      jobDescription: jobDescription ?? this.jobDescription,
       insuranceProvider: insuranceProvider ?? this.insuranceProvider,
       insuranceTaxNumber: insuranceTaxNumber ?? this.insuranceTaxNumber,
       insuranceAddress: insuranceAddress ?? this.insuranceAddress,
       policyNumber: policyNumber ?? this.policyNumber,
+      lpoNumber: lpoNumber ?? this.lpoNumber,
+      accidentNumber: accidentNumber ?? this.accidentNumber,
       insuranceExpiryDate: insuranceExpiryDate ?? this.insuranceExpiryDate,
       odometerReading: odometerReading ?? this.odometerReading,
       fuelLevel: fuelLevel ?? this.fuelLevel,
@@ -234,6 +331,27 @@ class VehicleCustomerFormNotifier extends Notifier<VehicleCustomerFormState> {
   void setOccupation(String v) => state = state.copyWith(occupation: v);
   void setOrganisation(String v) => state = state.copyWith(organisation: v);
   void setSource(String v) => state = state.copyWith(source: v);
+  void setEmirate(String? v) => _setPlateParts(emirate: v ?? '');
+  void setPlateCode(String v) => _setPlateParts(plateCode: v);
+  void setPlateNumber(String v) => _setPlateParts(plateNumber: v);
+
+  void _setPlateParts({
+    String? emirate,
+    String? plateCode,
+    String? plateNumber,
+  }) {
+    final next = state.copyWith(
+      emirate: emirate,
+      plateCode: plateCode,
+      plateNumber: plateNumber,
+    );
+    final display = [
+      next.emirate,
+      next.plateCode,
+      next.plateNumber,
+    ].where((part) => part.trim().isNotEmpty).join(' ');
+    state = next.copyWith(registrationNumber: display);
+  }
 
   void toggleTag(String tag) {
     final tags = List<String>.from(state.selectedTags);
@@ -255,7 +373,13 @@ class VehicleCustomerFormNotifier extends Notifier<VehicleCustomerFormState> {
   void setCylinders(String? v) => state = state.copyWith(cylinders: v ?? '');
   void setEngineCapacity(String v) => state = state.copyWith(engineCapacity: v);
   void setVehicleColor(String v) => state = state.copyWith(vehicleColor: v);
+  void setFuelType(String? v) => state = state.copyWith(fuelType: v ?? '');
   void setEngineNumber(String v) => state = state.copyWith(engineNumber: v);
+  void setJobCategory(String? v) =>
+      state = state.copyWith(jobCategory: v ?? 'Regular');
+  void setMarkupType(String v) => state = state.copyWith(markupType: v);
+  void setOrderType(String v) => state = state.copyWith(orderType: v);
+  void setJobDescription(String v) => state = state.copyWith(jobDescription: v);
   void setInsuranceProvider(String? v) =>
       state = state.copyWith(insuranceProvider: v ?? '');
   void setInsuranceTaxNumber(String v) =>
@@ -263,6 +387,8 @@ class VehicleCustomerFormNotifier extends Notifier<VehicleCustomerFormState> {
   void setInsuranceAddress(String v) =>
       state = state.copyWith(insuranceAddress: v);
   void setPolicyNumber(String v) => state = state.copyWith(policyNumber: v);
+  void setLpoNumber(String v) => state = state.copyWith(lpoNumber: v);
+  void setAccidentNumber(String v) => state = state.copyWith(accidentNumber: v);
   void setInsuranceExpiry(String v) =>
       state = state.copyWith(insuranceExpiryDate: v);
   void setOdometer(String v) => state = state.copyWith(odometerReading: v);

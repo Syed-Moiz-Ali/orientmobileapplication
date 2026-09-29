@@ -10,6 +10,9 @@ import java.util.List;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class CustomerApprovalDetailResponse {
     private String estimateId;
+    private String approvalType;
+    private String referenceId;
+    private String description;
     private String customerName;
     private String vehicleInfo;
     private Double servicesTotal;

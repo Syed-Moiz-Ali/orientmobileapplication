@@ -351,12 +351,22 @@ class VehicleSearchResponse {
   final String make;
   final String model;
   final String plateNumber;
+  final String customerName;
+  final String phone;
+  final String email;
+  final String emirate;
+  final String plateCode;
   const VehicleSearchResponse({
     this.regNo = '',
     this.vin = '',
     this.make = '',
     this.model = '',
     this.plateNumber = '',
+    this.customerName = '',
+    this.phone = '',
+    this.email = '',
+    this.emirate = '',
+    this.plateCode = '',
   });
   factory VehicleSearchResponse.fromJson(Map<String, dynamic> j) =>
       VehicleSearchResponse(
@@ -365,5 +375,70 @@ class VehicleSearchResponse {
         make: j['make'] as String? ?? '',
         model: j['model'] as String? ?? '',
         plateNumber: j['plateNumber'] as String? ?? '',
+        customerName: j['customerName'] as String? ?? '',
+        phone: j['phone'] as String? ?? '',
+        email: j['email'] as String? ?? '',
+        emirate: j['emirate'] as String? ?? '',
+        plateCode: j['plateCode'] as String? ?? '',
       );
+}
+
+class InspectionTemplateResponse {
+  final String id;
+  final String name;
+  final String description;
+  final int estimatedMinutes;
+  final List<InspectionTemplateSectionResponse> sections;
+
+  const InspectionTemplateResponse({
+    this.id = '',
+    this.name = '',
+    this.description = '',
+    this.estimatedMinutes = 0,
+    this.sections = const [],
+  });
+
+  factory InspectionTemplateResponse.fromJson(Map<String, dynamic> json) =>
+      InspectionTemplateResponse(
+        id: json['id']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        estimatedMinutes: (json['estimatedMinutes'] as num?)?.toInt() ?? 0,
+        sections: (json['sections'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (section) => InspectionTemplateSectionResponse.fromJson(
+                Map<String, dynamic>.from(section),
+              ),
+            )
+            .toList(),
+      );
+}
+
+class InspectionTemplateSectionResponse {
+  final String id;
+  final String sectionKey;
+  final String label;
+  final int displayOrder;
+  final List<String> items;
+
+  const InspectionTemplateSectionResponse({
+    this.id = '',
+    this.sectionKey = '',
+    this.label = '',
+    this.displayOrder = 0,
+    this.items = const [],
+  });
+
+  factory InspectionTemplateSectionResponse.fromJson(
+    Map<String, dynamic> json,
+  ) => InspectionTemplateSectionResponse(
+    id: json['id']?.toString() ?? '',
+    sectionKey: json['sectionKey']?.toString() ?? '',
+    label: json['label']?.toString() ?? '',
+    displayOrder: (json['displayOrder'] as num?)?.toInt() ?? 0,
+    items: (json['items'] as List? ?? const [])
+        .map((item) => item.toString())
+        .toList(),
+  );
 }

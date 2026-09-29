@@ -24,6 +24,8 @@ public class Vehicle {
     private Long customerId;
     private Long branchId;
     private String registrationNumber;
+    private String emirate;
+    private String plateCode;
     private String vin;
     private String make;
     private String model;
@@ -32,11 +34,14 @@ public class Vehicle {
     private Integer cylinders;
     private String engineCapacity;
     private String vehicleColor;
+    private String fuelType;
     private String engineNumber;
     private String insuranceProvider;
     private String insuranceTaxNumber;
     private String insuranceAddress;
     private String policyNumber;
+    private String lpoNumber;
+    private String accidentNumber;
     private LocalDate insuranceExpiryDate;
     private String plateNumber;
     private String mileage;

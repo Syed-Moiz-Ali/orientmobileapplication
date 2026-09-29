@@ -53,7 +53,7 @@ class InspectionPreviewView extends ConsumerWidget {
                 _summaryCard(context, state),
                 const SizedBox(height: 16),
                 if (hasRatings) ...[
-                  ...kInspectionSections.expand(
+                  ...state.sections.expand(
                     (sec) => sec.items
                         .asMap()
                         .entries

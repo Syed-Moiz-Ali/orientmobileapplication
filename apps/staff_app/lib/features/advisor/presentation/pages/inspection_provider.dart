@@ -10,6 +10,7 @@ import 'package:staff_app/features/advisor/data/datasources/advisor_providers.da
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 
 class InspectionState {
+  final List<InspectionSection> sections;
   final Map<String, ItemStatus> statuses;
   final Map<String, bool> collapsed;
   final Map<String, ItemMedia> media;
@@ -31,6 +32,7 @@ class InspectionState {
   final String bookingId;
 
   const InspectionState({
+    this.sections = kInspectionSections,
     this.statuses = const {},
     this.collapsed = const {},
     this.media = const {},
@@ -53,6 +55,7 @@ class InspectionState {
   });
 
   InspectionState copyWith({
+    List<InspectionSection>? sections,
     Map<String, ItemStatus>? statuses,
     Map<String, bool>? collapsed,
     Map<String, ItemMedia>? media,
@@ -74,6 +77,7 @@ class InspectionState {
     String? bookingId,
   }) {
     return InspectionState(
+      sections: sections ?? this.sections,
       statuses: statuses ?? this.statuses,
       collapsed: collapsed ?? this.collapsed,
       media: media ?? this.media,
@@ -98,6 +102,7 @@ class InspectionState {
   }
 
   Map<String, dynamic> toPersistableMap() => {
+    'templateSections': sections.map((section) => section.toJson()).toList(),
     'statuses': statuses.map((k, v) => MapEntry(k, v.name)),
     'sections': _sectionsPayload(),
     'media': media.map((k, v) => MapEntry(k, v.toJson())),
@@ -132,8 +137,8 @@ class InspectionState {
   };
 
   Map<String, dynamic> _sectionsPayload() {
-    final sections = <String, dynamic>{};
-    for (final section in kInspectionSections) {
+    final payload = <String, dynamic>{};
+    for (final section in sections) {
       final items = <String, dynamic>{};
       for (var index = 0; index < section.items.length; index++) {
         final status = statuses['${section.id}_$index'];
@@ -141,9 +146,9 @@ class InspectionState {
           items[section.items[index]] = {'status': status.name};
         }
       }
-      if (items.isNotEmpty) sections[section.id] = items;
+      if (items.isNotEmpty) payload[section.id] = items;
     }
-    return sections;
+    return payload;
   }
 
   factory InspectionState.fromPersistableMap(Map<dynamic, dynamic> rawMap) {
@@ -152,8 +157,18 @@ class InspectionState {
     final mediaRaw = map['media'] as Map<String, dynamic>? ?? {};
     final serviceLinesRaw = map['serviceLines'] as List<dynamic>? ?? [];
     final partLinesRaw = map['partLines'] as List<dynamic>? ?? [];
+    final templateSectionsRaw = map['templateSections'] as List<dynamic>? ?? [];
 
     return InspectionState(
+      sections: templateSectionsRaw.isEmpty
+          ? kInspectionSections
+          : templateSectionsRaw
+                .whereType<Map>()
+                .map(
+                  (section) =>
+                      InspectionSection.fromJson(_deepCastMap(section)),
+                )
+                .toList(),
       statuses: statusesRaw.map(
         (k, v) => MapEntry(
           k.toString(),
@@ -212,7 +227,7 @@ class InspectionState {
   }
 
   int get totalItems =>
-      kInspectionSections.fold(0, (sum, s) => sum + s.items.length);
+      sections.fold(0, (sum, section) => sum + section.items.length);
 
   int get completedCount => statuses.length;
 
@@ -226,7 +241,7 @@ class InspectionState {
   double get grandTotal => servicesTotal + partsTotal;
 
   List<InspectionSection> get filteredSections {
-    return kInspectionSections.map((sec) {
+    return sections.map((sec) {
       final filtered = sec.items.where((item) {
         final g = item.toLowerCase().contains(globalSearch.toLowerCase());
         final s = item.toLowerCase().contains(
@@ -285,7 +300,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
 
   void setCollapseAll() {
     final c = <String, bool>{};
-    for (final s in kInspectionSections) {
+    for (final s in state.sections) {
       c[s.id] = true;
     }
     state = state.copyWith(showAll: false, collapsed: c);
@@ -293,6 +308,30 @@ class InspectionNotifier extends Notifier<InspectionState> {
 
   void setGlobalSearch(String q) {
     state = state.copyWith(globalSearch: q);
+  }
+
+  Future<void> loadDefaultTemplate() async {
+    try {
+      final template = await ref
+          .read(advisorRemoteDataSourceProvider)
+          .getDefaultInspectionTemplate();
+      final sections = template.sections
+          .where((section) => section.sectionKey.isNotEmpty)
+          .map(
+            (section) => InspectionSection(
+              id: section.sectionKey,
+              label: section.label,
+              items: section.items,
+            ),
+          )
+          .where((section) => section.items.isNotEmpty)
+          .toList();
+      if (sections.isEmpty) return;
+      state = state.copyWith(sections: sections);
+      _persistDraft();
+    } catch (_) {
+      // The bundled checklist remains available when offline or during rollout.
+    }
   }
 
   void setSectionSearch(String sectionId, String q) {

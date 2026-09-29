@@ -43,6 +43,9 @@ class DioSyncHandler extends SyncHandler {
       if (response.statusCode != null &&
           response.statusCode! >= 200 &&
           response.statusCode! < 300) {
+        if (operation.entityType == 'vehicle_customer') {
+          await _uploadIntakeMedia(response.data, operation.payload);
+        }
         return true;
       }
 
@@ -60,6 +63,59 @@ class DioSyncHandler extends SyncHandler {
         );
       }
       rethrow;
+    }
+  }
+
+  Future<void> _uploadIntakeMedia(
+    dynamic responseBody,
+    Map<String, dynamic> payload,
+  ) async {
+    dynamic body = responseBody;
+    if (body is Map && body['data'] != null) body = body['data'];
+    final recordId = body is Map ? body['id']?.toString() ?? '' : '';
+    if (recordId.isEmpty) return;
+
+    final uploads = <({String path, String itemId, String type})>[];
+    for (final path in (payload['jobPhotoPaths'] as List? ?? const [])) {
+      if (path.toString().isNotEmpty) {
+        uploads.add((path: path.toString(), itemId: 'job-card', type: 'photo'));
+      }
+    }
+    for (final path in (payload['jobVideoPaths'] as List? ?? const [])) {
+      if (path.toString().isNotEmpty) {
+        uploads.add((path: path.toString(), itemId: 'job-card', type: 'video'));
+      }
+    }
+    final customerSignature =
+        payload['customerSignaturePath']?.toString() ?? '';
+    if (customerSignature.isNotEmpty) {
+      uploads.add((
+        path: customerSignature,
+        itemId: 'customer-signature',
+        type: 'signature',
+      ));
+    }
+    final advisorSignature = payload['advisorSignaturePath']?.toString() ?? '';
+    if (advisorSignature.isNotEmpty) {
+      uploads.add((
+        path: advisorSignature,
+        itemId: 'advisor-signature',
+        type: 'signature',
+      ));
+    }
+
+    final endpoint = _mediaEndpoint(recordId, 'inspections');
+    final url = '${EnvironmentConfig.baseUrl}$endpoint';
+    for (final upload in uploads) {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          upload.path,
+          filename: upload.path.split(RegExp(r'[/\\]')).last,
+        ),
+        'itemId': upload.itemId,
+        'type': upload.type,
+      });
+      await _dio.post(url, data: formData);
     }
   }
 
@@ -278,19 +334,51 @@ class DioSyncHandler extends SyncHandler {
           if (payload['status'] != null) 'status': payload['status'],
           if (payload['bookingId'] != null) 'bookingId': payload['bookingId'],
           'customer': <String, dynamic>{
+            if (payload['isB2B'] != null) 'isB2B': payload['isB2B'],
             if (payload['customerName'] != null)
               'customerName': payload['customerName'],
             if (payload['phoneNumber'] != null)
               'phoneNumber': payload['phoneNumber'],
             if (payload['email'] != null) 'email': payload['email'],
+            if (payload['customerGroup'] != null)
+              'customerGroup': payload['customerGroup'],
+            if (payload['gender'] != null) 'gender': payload['gender'],
+            if (payload['address'] != null) 'address': payload['address'],
+            if (payload['taxNumber'] != null) 'taxNumber': payload['taxNumber'],
+            if (payload['source'] != null) 'source': payload['source'],
           },
           'vehicle': <String, dynamic>{
+            if (payload['emirate'] != null) 'emirate': payload['emirate'],
+            if (payload['plateCode'] != null) 'plateCode': payload['plateCode'],
+            if (payload['plateNumber'] != null)
+              'plateNumber': payload['plateNumber'],
             if (payload['registrationNumber'] != null)
               'registrationNumber': payload['registrationNumber'],
             if (payload['vin'] != null) 'vin': payload['vin'],
             if (payload['make'] != null) 'make': payload['make'],
             if (payload['model'] != null) 'model': payload['model'],
             if (payload['modelYear'] != null) 'modelYear': payload['modelYear'],
+            if (payload['cylinders'] != null) 'cylinders': payload['cylinders'],
+            if (payload['engineCapacity'] != null)
+              'engineCapacity': payload['engineCapacity'],
+            if (payload['vehicleColor'] != null)
+              'vehicleColor': payload['vehicleColor'],
+            if (payload['fuelType'] != null) 'fuelType': payload['fuelType'],
+            if (payload['engineNumber'] != null)
+              'engineNumber': payload['engineNumber'],
+            if (payload['insuranceProvider'] != null)
+              'insuranceProvider': payload['insuranceProvider'],
+            if (payload['insuranceTaxNumber'] != null)
+              'insuranceTaxNumber': payload['insuranceTaxNumber'],
+            if (payload['insuranceAddress'] != null)
+              'insuranceAddress': payload['insuranceAddress'],
+            if (payload['policyNumber'] != null)
+              'policyNumber': payload['policyNumber'],
+            if (payload['lpoNumber'] != null) 'lpoNumber': payload['lpoNumber'],
+            if (payload['accidentNumber'] != null)
+              'accidentNumber': payload['accidentNumber'],
+            if (payload['insuranceExpiryDate'] != null)
+              'insuranceExpiryDate': payload['insuranceExpiryDate'],
           },
           'additional': <String, dynamic>{
             if (payload['odometerReading'] != null)
@@ -298,7 +386,16 @@ class DioSyncHandler extends SyncHandler {
             if (payload['fuelLevel'] != null) 'fuelLevel': payload['fuelLevel'],
             if (payload['customerConsent'] != null)
               'customerConsent': payload['customerConsent'],
+            if (payload['jobCategory'] != null)
+              'jobCategory': payload['jobCategory'],
+            if (payload['markupType'] != null)
+              'markupType': payload['markupType'],
+            if (payload['orderType'] != null) 'orderType': payload['orderType'],
+            if (payload['jobDescription'] != null)
+              'jobDescription': payload['jobDescription'],
           },
+          if (payload['jobDescription'] != null)
+            'customerRequests': payload['jobDescription'],
         };
       case 'work_item':
         // WorkItemActionRequest replay: { status | startTime | endTime }

@@ -54,6 +54,7 @@ class _CustomerApprovalDetailViewState
     String Function(double amount) formatAmount,
   ) {
     final pending = CustomerApprovalPresentation.isPending(detail.status);
+    final isEstimate = detail.approvalType == 'estimate';
 
     return Column(
       children: [
@@ -83,10 +84,17 @@ class _CustomerApprovalDetailViewState
               secondary: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _FinancialSummary(detail: detail, formatAmount: formatAmount),
+                  if (isEstimate)
+                    _FinancialSummary(
+                      detail: detail,
+                      formatAmount: formatAmount,
+                    ),
                   if (!pending) ...[
                     const SizedBox(height: AppDimensions.s16),
-                    _DecidedNote(status: detail.status),
+                    _DecidedNote(
+                      status: detail.status,
+                      approvalType: detail.approvalType,
+                    ),
                   ],
                 ],
               ),
@@ -96,6 +104,7 @@ class _CustomerApprovalDetailViewState
         if (pending)
           _DecisionBar(
             deciding: _deciding,
+            subject: _approvalLabel(detail.approvalType).toLowerCase(),
             onApprove: () => _confirm(
               detail: detail,
               action: 'approve',
@@ -119,16 +128,23 @@ class _CustomerApprovalDetailViewState
     if (_deciding) return;
     final approving = action == 'approve';
     final amount = detail.grandTotal;
+    final subject = _approvalLabel(detail.approvalType).toLowerCase();
+    final isEstimate = detail.approvalType == 'estimate';
 
     final confirmed = await showAppConfirmationDialog(
       context,
-      title: approving ? 'Approve estimate?' : 'Reject estimate?',
+      title: approving ? 'Approve $subject?' : 'Reject $subject?',
       message: approving
-          ? 'You are approving work totaling ${formatAmount(amount)}'
-                '${detail.vehicleInfo.trim().isEmpty ? '' : ' for ${detail.vehicleInfo.trim()}'}.'
-          : 'The workshop will be told you do not accept this estimate. '
-                'You can ask them for a revised one.',
-      confirmLabel: approving ? 'Approve' : 'Reject estimate',
+          ? isEstimate
+                ? 'You are approving work totaling ${formatAmount(amount)}'
+                      '${detail.vehicleInfo.trim().isEmpty ? '' : ' for ${detail.vehicleInfo.trim()}'}.'
+                : 'You are approving this $subject'
+                      '${detail.vehicleInfo.trim().isEmpty ? '' : ' for ${detail.vehicleInfo.trim()}'}.'
+          : isEstimate
+          ? 'The workshop will be told you do not accept this estimate. '
+                'You can ask them for a revised one.'
+          : 'The workshop will be told you do not accept this $subject.',
+      confirmLabel: approving ? 'Approve' : 'Reject $subject',
       cancelLabel: approving ? 'Not now' : 'Keep reviewing',
       icon: approving ? Icons.verified_outlined : Icons.cancel_outlined,
       destructive: !approving,
@@ -151,8 +167,8 @@ class _CustomerApprovalDetailViewState
         content: Text(
           ok
               ? approving
-                    ? 'Estimate approved — the workshop has been told.'
-                    : 'Estimate rejected — the workshop has been told.'
+                    ? '${_approvalLabel(detail.approvalType)} approved — the workshop has been told.'
+                    : '${_approvalLabel(detail.approvalType)} rejected — the workshop has been told.'
               : "We couldn't send your decision. Please try again.",
         ),
         action: ok
@@ -168,6 +184,12 @@ class _CustomerApprovalDetailViewState
       ),
     );
   }
+
+  String _approvalLabel(String type) => switch (type) {
+    'job_card' => 'Job card',
+    'inspection' => 'Inspection',
+    _ => 'Estimate',
+  };
 }
 
 /// The estimate itself: decision state, amount, vehicle, reference and when the
@@ -186,6 +208,12 @@ class _EstimateRecord extends StatelessWidget {
     final pending = CustomerApprovalPresentation.isPending(detail.status);
     final vehicle = detail.vehicleInfo.trim();
     final requested = detail.createdAt.trim();
+    final isEstimate = detail.approvalType == 'estimate';
+    final recordLabel = switch (detail.approvalType) {
+      'job_card' => 'Job card approval',
+      'inspection' => 'Inspection approval',
+      _ => 'Estimated total',
+    };
 
     return CustomerSurfacePanel(
       accent: tone,
@@ -224,21 +252,30 @@ class _EstimateRecord extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s14),
           Text(
-            'Estimated total',
+            recordLabel,
             style: theme.textTheme.labelSmall?.copyWith(
               color: colors.onSurfaceVariant,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: AppDimensions.s4),
-          Text(
-            formatAmount(detail.grandTotal),
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.4,
+          if (isEstimate)
+            Text(
+              formatAmount(detail.grandTotal),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.4,
+              ),
+            )
+          else if (detail.description.trim().isNotEmpty)
+            Text(
+              detail.description.trim(),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colors.onSurface,
+                height: 1.45,
+              ),
             ),
-          ),
           if (vehicle.isNotEmpty || requested.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.s14),
             Divider(height: 1, color: colors.outlineVariant),
@@ -540,8 +577,9 @@ class _SummaryRow extends StatelessWidget {
 /// Read-only state for an estimate the customer already decided.
 class _DecidedNote extends StatelessWidget {
   final String status;
+  final String approvalType;
 
-  const _DecidedNote({required this.status});
+  const _DecidedNote({required this.status, required this.approvalType});
 
   @override
   Widget build(BuildContext context) {
@@ -551,6 +589,17 @@ class _DecidedNote extends StatelessWidget {
     final approved =
         CustomerApprovalPresentation.normalize(status) ==
         CustomerApprovalPresentation.approved;
+    final subject = switch (approvalType) {
+      'job_card' => 'job card',
+      'inspection' => 'inspection',
+      _ => 'estimate',
+    };
+    final approvedMessage = approvalType == 'estimate'
+        ? 'You approved this estimate. The workshop will carry out the work listed above.'
+        : 'You approved this $subject. The workshop has been told.';
+    final rejectedMessage = approvalType == 'estimate'
+        ? 'You rejected this estimate. The workshop has been told and can send a revised one.'
+        : 'You rejected this $subject. The workshop has been told.';
 
     return CustomerSurfacePanel(
       accent: tone,
@@ -565,11 +614,7 @@ class _DecidedNote extends StatelessWidget {
           const SizedBox(width: AppDimensions.s10),
           Expanded(
             child: Text(
-              approved
-                  ? 'You approved this estimate. The workshop will carry out '
-                        'the work listed above.'
-                  : 'You rejected this estimate. The workshop has been told and '
-                        'can send a revised one.',
+              approved ? approvedMessage : rejectedMessage,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurface,
                 height: 1.45,
@@ -586,11 +631,13 @@ class _DecidedNote extends StatelessWidget {
 /// less prominent rejection.
 class _DecisionBar extends StatelessWidget {
   final bool deciding;
+  final String subject;
   final VoidCallback onApprove;
   final VoidCallback onReject;
 
   const _DecisionBar({
     required this.deciding,
+    required this.subject,
     required this.onApprove,
     required this.onReject,
   });
@@ -626,13 +673,13 @@ class _DecisionBar extends StatelessWidget {
                         ),
                       )
                     : const Icon(Icons.verified_outlined, size: 18),
-                label: Text(deciding ? 'Sending\u2026' : 'Approve estimate'),
+                label: Text(deciding ? 'Sending\u2026' : 'Approve $subject'),
               ),
               const SizedBox(height: AppDimensions.s8),
               TextButton.icon(
                 onPressed: deciding ? null : onReject,
                 icon: const Icon(Icons.close_rounded, size: 18),
-                label: const Text('Reject estimate'),
+                label: Text('Reject $subject'),
                 style: TextButton.styleFrom(
                   foregroundColor: colors.error,
                   disabledForegroundColor: colors.onSurfaceVariant,

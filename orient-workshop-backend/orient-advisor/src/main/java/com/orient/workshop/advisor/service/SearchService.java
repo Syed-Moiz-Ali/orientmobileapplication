@@ -29,13 +29,23 @@ public class SearchService {
 
     public List<VehicleSearchResponse> searchVehicles(String q) {
         return vehicleMapper.search(q).stream()
-                .map(v -> VehicleSearchResponse.builder()
+                .map(v -> {
+                    var customer = v.getCustomerId() != null
+                            ? customerMapper.selectById(v.getCustomerId())
+                            : null;
+                    return VehicleSearchResponse.builder()
                         .regNo(v.getRegistrationNumber())
                         .vin(v.getVin())
                         .make(v.getMake())
                         .model(v.getModel())
                         .plateNumber(v.getPlateNumber())
-                        .build())
+                        .emirate(v.getEmirate())
+                        .plateCode(v.getPlateCode())
+                        .customerName(customer != null ? customer.getCustomerName() : "")
+                        .phone(customer != null ? customer.getPhoneNumber() : "")
+                        .email(customer != null ? customer.getEmail() : "")
+                        .build();
+                })
                 .collect(Collectors.toList());
     }
 }

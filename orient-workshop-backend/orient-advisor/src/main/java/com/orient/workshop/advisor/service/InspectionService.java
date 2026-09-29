@@ -7,6 +7,8 @@ import com.orient.workshop.advisor.model.dto.InspectionRequest;
 import com.orient.workshop.advisor.model.dto.InspectionResponse;
 import com.orient.workshop.advisor.model.entity.Inspection;
 import com.orient.workshop.advisor.repository.InspectionMapper;
+import com.orient.workshop.advisor.repository.ApprovalMapper;
+import com.orient.workshop.advisor.model.entity.Approval;
 import com.orient.workshop.auth.filter.JwtUserPrincipal;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.ForbiddenException;
@@ -38,6 +40,7 @@ import com.orient.workshop.core.service.NotificationService;
 public class InspectionService {
 
     private final InspectionMapper inspectionMapper;
+    private final ApprovalMapper approvalMapper;
     private final JobCardMapper jobCardMapper;
     private final CustomerMapper customerMapper;
     private final VehicleMapper vehicleMapper;
@@ -74,19 +77,51 @@ public class InspectionService {
                         .customerId(customer.getId())
                         .branchId(principal != null ? principal.getBranchId() : null)
                         .registrationNumber(reg)
+                        .emirate(req.getVehicle().getEmirate())
+                        .plateCode(req.getVehicle().getPlateCode())
+                        .plateNumber(req.getVehicle().getPlateNumber())
                         .vin(vin)
                         .make(req.getVehicle().getMake())
                         .model(req.getVehicle().getModel())
                         .modelYear(req.getVehicle().getModelYear())
                         .vehicleColor(req.getVehicle().getVehicleColor())
+                        .fuelType(req.getVehicle().getFuelType())
+                        .cylinders(req.getVehicle().getCylinders())
                         .engineNumber(req.getVehicle().getEngineNumber())
                         .engineCapacity(req.getVehicle().getEngineCapacity())
                         .insuranceProvider(req.getVehicle().getInsuranceProvider())
+                        .insuranceTaxNumber(req.getVehicle().getInsuranceTaxNumber())
+                        .insuranceAddress(req.getVehicle().getInsuranceAddress())
                         .policyNumber(req.getVehicle().getPolicyNumber())
+                        .lpoNumber(req.getVehicle().getLpoNumber())
+                        .accidentNumber(req.getVehicle().getAccidentNumber())
+                        .insuranceExpiryDate(DateParse.parseLocalDate(
+                                req.getVehicle().getInsuranceExpiryDate(), "insuranceExpiryDate"))
                         .build();
                 vehicleMapper.insert(vehicle);
-            } else if (vehicle.getCustomerId() == null) {
-                vehicle.setCustomerId(customer.getId());
+            } else {
+                if (vehicle.getCustomerId() == null) vehicle.setCustomerId(customer.getId());
+                vehicle.setRegistrationNumber(reg);
+                vehicle.setEmirate(req.getVehicle().getEmirate());
+                vehicle.setPlateCode(req.getVehicle().getPlateCode());
+                vehicle.setPlateNumber(req.getVehicle().getPlateNumber());
+                vehicle.setVin(vin);
+                vehicle.setMake(req.getVehicle().getMake());
+                vehicle.setModel(req.getVehicle().getModel());
+                vehicle.setModelYear(req.getVehicle().getModelYear());
+                vehicle.setCylinders(req.getVehicle().getCylinders());
+                vehicle.setEngineCapacity(req.getVehicle().getEngineCapacity());
+                vehicle.setVehicleColor(req.getVehicle().getVehicleColor());
+                vehicle.setFuelType(req.getVehicle().getFuelType());
+                vehicle.setEngineNumber(req.getVehicle().getEngineNumber());
+                vehicle.setInsuranceProvider(req.getVehicle().getInsuranceProvider());
+                vehicle.setInsuranceTaxNumber(req.getVehicle().getInsuranceTaxNumber());
+                vehicle.setInsuranceAddress(req.getVehicle().getInsuranceAddress());
+                vehicle.setPolicyNumber(req.getVehicle().getPolicyNumber());
+                vehicle.setLpoNumber(req.getVehicle().getLpoNumber());
+                vehicle.setAccidentNumber(req.getVehicle().getAccidentNumber());
+                vehicle.setInsuranceExpiryDate(DateParse.parseLocalDate(
+                        req.getVehicle().getInsuranceExpiryDate(), "insuranceExpiryDate"));
                 vehicleMapper.updateById(vehicle);
             }
         }
@@ -106,11 +141,17 @@ public class InspectionService {
                     .status(status)
                     .technician(req.getTechnician())
                     .tag(req.getTag())
-                    .customerRequests(req.getCustomerRequests())
+                    .customerRequests(req.getCustomerRequests() != null
+                            ? req.getCustomerRequests()
+                            : req.getAdditional() != null ? req.getAdditional().getJobDescription() : null)
+                    .jobCategory(req.getAdditional() != null ? req.getAdditional().getJobCategory() : null)
+                    .markupType(req.getAdditional() != null ? req.getAdditional().getMarkupType() : null)
+                    .orderType(req.getAdditional() != null ? req.getAdditional().getOrderType() : null)
                     .garageRecommendations(req.getGarageRecommendations())
                     .estimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"))
                     .build();
             jobCardMapper.insert(jobCard);
+            createCustomerApproval("job_card", jobCard.getJobCardRef(), customer, vehicle);
         } else {
             if (req.getTechnician() != null) jobCard.setTechnician(req.getTechnician());
             if (req.getTag() != null) jobCard.setTag(req.getTag());
@@ -140,6 +181,9 @@ public class InspectionService {
                 .advisorId(principal != null ? principal.getUserId() : null)
                 .build();
         inspectionMapper.insert(inspection);
+        if (req.getSections() != null && !req.getSections().isEmpty()) {
+            createCustomerApproval("inspection", insRef, customer, vehicle);
+        }
 
         // Phase 1 — link to booking if intake started from an assigned booking
         if (req.getBookingId() != null && !req.getBookingId().isBlank()) {
@@ -153,6 +197,30 @@ public class InspectionService {
         // endpoints all resolve ids via selectById(Long); the previous INS-<hex>
         // ref could not be used with any of them.
         return InspectionResponse.builder().id(String.valueOf(inspection.getId())).build();
+    }
+
+    private void createCustomerApproval(
+            String approvalType,
+            String targetId,
+            Customer customer,
+            Vehicle vehicle) {
+        if (customer == null || targetId == null || targetId.isBlank()) return;
+        Long existing = approvalMapper.selectCount(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Approval>()
+                        .eq(Approval::getApprovalType, approvalType)
+                        .eq(Approval::getTargetId, targetId));
+        if (existing != null && existing > 0) return;
+        approvalMapper.insert(Approval.builder()
+                .estimateId(targetId)
+                .approvalType(approvalType)
+                .targetId(targetId)
+                .customerId(customer.getId())
+                .customerName(customer.getCustomerName())
+                .vehicleId(vehicle != null && vehicle.getId() != null
+                        ? vehicle.getId().toString() : "")
+                .amount(0D)
+                .action("pending")
+                .build());
     }
 
     private JobCard resolveExistingJobCard(String jobCardId, JwtUserPrincipal principal) {

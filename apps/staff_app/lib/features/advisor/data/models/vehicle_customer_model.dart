@@ -218,6 +218,32 @@ const List<String> kInsuranceProviders = [
   'Salama Insurance',
 ];
 
+const List<String> kEmirates = [
+  'Abu Dhabi',
+  'Dubai',
+  'Sharjah',
+  'Ajman',
+  'Umm Al Quwain',
+  'Ras Al Khaimah',
+  'Fujairah',
+];
+
+const List<String> kFuelTypes = [
+  'Petrol',
+  'Diesel',
+  'Hybrid',
+  'Electric',
+  'LPG',
+  'Other',
+];
+
+const List<String> kJobCategories = [
+  'Regular',
+  'Insurance',
+  'Warranty',
+  'Contract',
+];
+
 class VehicleCustomerFormModel {
   SearchMode searchMode = SearchMode.byCustomer;
   String customerSearch = '';

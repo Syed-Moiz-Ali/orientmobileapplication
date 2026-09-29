@@ -29,6 +29,9 @@ public class JobCard {
     private String fuelLevel;
     private String tag;
     private String customerRequests;
+    private String jobCategory;
+    private String markupType;
+    private String orderType;
     private String garageRecommendations;
     private LocalDateTime estimatedDelivery;
     private Boolean notifyOwnerSmsEmail;
