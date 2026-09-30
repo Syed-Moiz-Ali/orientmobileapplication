@@ -187,11 +187,21 @@ String _readString(Map<String, dynamic> json, List<String> keys) {
 
 class InspectionResponse {
   final String id;
-  const InspectionResponse({this.id = ''});
+  final String jobCardId;
+  final String jobCardRef;
+  const InspectionResponse({
+    this.id = '',
+    this.jobCardId = '',
+    this.jobCardRef = '',
+  });
   factory InspectionResponse.fromJson(Map<String, dynamic> j) {
     final rawId =
         j['id'] ?? j['inspectionId'] ?? j['inspectionRef'] ?? j['ref'];
-    return InspectionResponse(id: rawId?.toString() ?? '');
+    return InspectionResponse(
+      id: rawId?.toString() ?? '',
+      jobCardId: j['jobCardId']?.toString() ?? '',
+      jobCardRef: j['jobCardRef']?.toString() ?? '',
+    );
   }
 }
 
@@ -238,12 +248,16 @@ class InspectionDraftResponse {
 
 class PendingApprovalResponse {
   final String estimateId;
+  final String approvalType;
+  final String referenceId;
   final String customerName;
   final String vehicleId;
   final double amount;
   final String timeAgo;
   const PendingApprovalResponse({
     this.estimateId = '',
+    this.approvalType = 'estimate',
+    this.referenceId = '',
     this.customerName = '',
     this.vehicleId = '',
     this.amount = 0,
@@ -252,6 +266,8 @@ class PendingApprovalResponse {
   factory PendingApprovalResponse.fromJson(Map<String, dynamic> j) =>
       PendingApprovalResponse(
         estimateId: j['estimateId'] as String? ?? '',
+        approvalType: j['approvalType'] as String? ?? 'estimate',
+        referenceId: j['referenceId'] as String? ?? '',
         customerName: j['customerName'] as String? ?? '',
         vehicleId: j['vehicleId'] as String? ?? '',
         amount: (j['amount'] as num?)?.toDouble() ?? 0,
@@ -413,6 +429,49 @@ class InspectionTemplateResponse {
             )
             .toList(),
       );
+}
+
+/// Transparent summary of the latest inspection attached to a job card.
+class InspectionSummaryResponse {
+  final bool found;
+  final String inspectionId;
+  final String inspectionRef;
+  final String summary;
+  final int good;
+  final int fair;
+  final int poor;
+  final int total;
+  final List<String> issues;
+
+  const InspectionSummaryResponse({
+    this.found = false,
+    this.inspectionId = '',
+    this.inspectionRef = '',
+    this.summary = '',
+    this.good = 0,
+    this.fair = 0,
+    this.poor = 0,
+    this.total = 0,
+    this.issues = const [],
+  });
+
+  factory InspectionSummaryResponse.fromJson(Map<String, dynamic> j) {
+    final counts = j['counts'] is Map
+        ? Map<String, dynamic>.from(j['counts'] as Map)
+        : const <String, dynamic>{};
+    return InspectionSummaryResponse(
+      found: j['found'] as bool? ?? false,
+      inspectionId: j['inspectionId']?.toString() ?? '',
+      inspectionRef: j['inspectionRef']?.toString() ?? '',
+      summary: j['summary']?.toString() ?? '',
+      good: (counts['good'] as num?)?.toInt() ?? 0,
+      fair: (counts['fair'] as num?)?.toInt() ?? 0,
+      poor: (counts['poor'] as num?)?.toInt() ?? 0,
+      total: (counts['total'] as num?)?.toInt() ?? 0,
+      issues:
+          (j['issues'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+    );
+  }
 }
 
 class InspectionTemplateSectionResponse {

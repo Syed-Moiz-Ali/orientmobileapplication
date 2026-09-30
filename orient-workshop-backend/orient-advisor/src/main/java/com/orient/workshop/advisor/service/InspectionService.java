@@ -196,7 +196,13 @@ public class InspectionService {
         // FIX (audit QA BUG-014): return the numeric DB id — update/draft/summary
         // endpoints all resolve ids via selectById(Long); the previous INS-<hex>
         // ref could not be used with any of them.
-        return InspectionResponse.builder().id(String.valueOf(inspection.getId())).build();
+        // Also return the job card reference so the client can start/link the
+        // follow-up inspection to the exact job card this intake created.
+        return InspectionResponse.builder()
+                .id(String.valueOf(inspection.getId()))
+                .jobCardId(String.valueOf(jobCard.getId()))
+                .jobCardRef(jobCard.getJobCardRef())
+                .build();
     }
 
     private void createCustomerApproval(
@@ -221,6 +227,23 @@ public class InspectionService {
                 .amount(0D)
                 .action("pending")
                 .build());
+        // Tell the customer there is something to approve. Only customers with
+        // a linked login can receive in-app/FCM notifications.
+        if (customer.getUserId() != null) {
+            String subject = switch (approvalType) {
+                case "job_card" -> "Job card";
+                case "inspection" -> "Inspection";
+                default -> "Estimate";
+            };
+            // Reuse the canonical "approvalNeeded" notification type that the
+            // customer app already routes to the approvals page (the same type
+            // the estimate flow emits), so job-card and inspection requests are
+            // categorised and tappable too.
+            notificationService.emit(customer.getUserId(), customer.getBranchId(),
+                    "approvalNeeded", subject + " approval needed",
+                    "Please review and approve the " + subject.toLowerCase()
+                            + " for " + targetId + " in the app.");
+        }
     }
 
     private JobCard resolveExistingJobCard(String jobCardId, JwtUserPrincipal principal) {

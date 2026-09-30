@@ -263,6 +263,22 @@ class _BodyState extends ConsumerState<_Body> {
                     ),
                   );
                   await ref.read(syncEngineProvider).syncAll();
+                  // Prefer the server-assigned job card reference once the
+                  // intake has synced so the follow-up inspection links to the
+                  // exact job card the backend created.
+                  var resolvedJobId = id;
+                  try {
+                    final record = Hive.box<dynamic>('inspections').get(id);
+                    if (record is Map) {
+                      final ref =
+                          (record['jobCardRef'] ??
+                                  record['serverJobCardId'] ??
+                                  '')
+                              .toString();
+                      if (ref.isNotEmpty) resolvedJobId = ref;
+                    }
+                  } catch (_) {}
+                  _savedJobId = resolvedJobId;
                   ref.read(advisorRefreshProvider.notifier).state++;
                   if (!context.mounted) return;
                   _showInspectionPrompt(context);
@@ -1265,6 +1281,30 @@ class _VehicleDetailsSection extends StatelessWidget {
                   .setAccidentNumber(v),
             ),
             kGap12,
+            const FieldLabel('Insurance Tax Number'),
+            AdvisorTextField(
+              hint: 'Enter Insurance Tax number',
+              onChanged: (v) => ref
+                  .read(vehicleCustomerFormProvider.notifier)
+                  .setInsuranceTaxNumber(v),
+            ),
+            kGap12,
+            const FieldLabel('Insurance Address'),
+            AdvisorTextField(
+              hint: 'Insurance Address',
+              onChanged: (v) => ref
+                  .read(vehicleCustomerFormProvider.notifier)
+                  .setInsuranceAddress(v),
+            ),
+            kGap12,
+            const FieldLabel('Insurance Expiry Date'),
+            _DateField(
+              value: state.insuranceExpiryDate,
+              onChanged: (v) => ref
+                  .read(vehicleCustomerFormProvider.notifier)
+                  .setInsuranceExpiry(v),
+            ),
+            kGap12,
             const FieldLabel('Insurance Document'),
             _ImageUploadButton(
               label: insuranceDocumentName ?? 'Add document',
@@ -1648,6 +1688,61 @@ class _AdditionalInfoSection extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DateField extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+  const _DateField({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        final initial = DateTime.tryParse(value) ?? DateTime.now();
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: initial,
+          firstDate: DateTime(1980),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) {
+          final month = picked.month.toString().padLeft(2, '0');
+          final day = picked.day.toString().padLeft(2, '0');
+          onChanged('${picked.year}-$month-$day');
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+        decoration: BoxDecoration(
+          color: value.isEmpty ? kFieldBg : kTealLight,
+          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.calendar_today_outlined,
+              color: kHintColor,
+              size: 16,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                value.isEmpty ? 'Click to select a date' : value,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: value.isEmpty ? kHintColor : kTextColor,
+                  fontWeight: value.isEmpty
+                      ? FontWeight.normal
+                      : FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

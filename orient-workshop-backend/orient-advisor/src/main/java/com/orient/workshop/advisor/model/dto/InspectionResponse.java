@@ -8,4 +8,6 @@ import lombok.NoArgsConstructor;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class InspectionResponse {
     private String id;
+    private String jobCardId;
+    private String jobCardRef;
 }

@@ -138,6 +138,11 @@ public class CustomerApprovalService {
     public void processApproval(JwtUserPrincipal principal, String estimateId, CustomerApprovalActionRequest req) {
         Customer customer = resolveCustomer(principal);
         Approval approval = requireApproval(estimateId, customer.getId());
+        // A decision can only be applied once. Re-submitting the same decision
+        // (double tap, retry after a flaky connection) must not overwrite it.
+        if (!"pending".equalsIgnoreCase(approval.getAction())) {
+            throw new BadRequestException("This approval has already been decided");
+        }
 
         String action = req != null && req.getAction() != null ? req.getAction().trim().toLowerCase() : "";
         String stored = switch (action) {

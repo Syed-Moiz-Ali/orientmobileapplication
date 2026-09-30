@@ -85,6 +85,7 @@ final advisorPendingApprovalsProvider =
         return approvals.map((a) {
           return PendingApprovalEntity(
             estimateId: a.estimateId,
+            approvalType: a.approvalType,
             customerName: a.customerName,
             vehicleId: a.vehicleId,
             amount: a.amount,

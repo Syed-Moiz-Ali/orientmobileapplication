@@ -790,7 +790,7 @@ class _DetailError extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  "We couldn't load this estimate",
+                  "We couldn't load this request",
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -799,7 +799,7 @@ class _DetailError extends StatelessWidget {
                 const SizedBox(height: AppDimensions.s4),
                 Text(
                   'The workshop may have replaced it. You can try again or '
-                  'review your other estimates.',
+                  'review your other approvals.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                     height: 1.45,

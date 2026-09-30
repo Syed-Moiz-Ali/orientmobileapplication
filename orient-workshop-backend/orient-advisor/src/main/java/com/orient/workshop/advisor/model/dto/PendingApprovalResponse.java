@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class PendingApprovalResponse {
     private String estimateId;
+    private String approvalType;
+    private String referenceId;
     private String customerName;
     private String vehicleId;
     private double amount;

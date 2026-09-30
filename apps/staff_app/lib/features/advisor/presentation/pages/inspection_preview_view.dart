@@ -184,17 +184,16 @@ class InspectionPreviewView extends ConsumerWidget {
     if (!context.mounted) return;
     await result.when(
       success: (_) async {
-        final detail = await ref
-            .read(advisorRemoteDataSourceProvider)
-            .getJobCard(currentJobCardId);
-        if (!context.mounted) return;
-        final status = JobCardStatus.values.firstWhere(
-          (s) => s.name == detail.status,
-          orElse: () => JobCardStatus.inspected,
-        );
-        context.pushReplacement(
-          AppRoutes.advisorJobDetail,
-          extra: JobCardEntity(
+        JobCardEntity? target;
+        try {
+          final detail = await ref
+              .read(advisorRemoteDataSourceProvider)
+              .getJobCard(currentJobCardId);
+          final status = JobCardStatus.values.firstWhere(
+            (s) => s.name == detail.status,
+            orElse: () => JobCardStatus.inspected,
+          );
+          target = JobCardEntity(
             id: detail.id.isNotEmpty ? detail.id : currentJobCardId,
             dbId: detail.dbId,
             customerName: detail.customerName,
@@ -206,8 +205,24 @@ class InspectionPreviewView extends ConsumerWidget {
             technician: detail.technician,
             odometer: detail.odometer,
             fuelLevel: detail.fuelLevel,
-          ),
-        );
+          );
+        } catch (_) {
+          // Offline: the inspection is queued and will sync later; we cannot
+          // refresh the job card right now.
+        }
+        if (!context.mounted) return;
+        if (target != null) {
+          context.pushReplacement(AppRoutes.advisorJobDetail, extra: target);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Inspection saved offline. It will sync automatically.',
+              ),
+            ),
+          );
+          onBack();
+        }
       },
       failure: (error) async {
         ScaffoldMessenger.of(

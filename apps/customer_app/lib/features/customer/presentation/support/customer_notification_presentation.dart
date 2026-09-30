@@ -31,11 +31,11 @@ class CustomerNotificationPresentation {
   /// rather than only a colour or an icon.
   static String label(NotifType type) => switch (type) {
     NotifType.bookingReceived || NotifType.bookingAssigned => 'Booking',
-    NotifType.approvalNeeded => 'Estimate',
+    NotifType.approvalNeeded => 'Approval',
     NotifType.completionApproved => 'Service',
     NotifType.invoiceReady => 'Invoice',
     NotifType.paymentReceived => 'Payment',
-    NotifType.estimateApproved || NotifType.estimateRejected => 'Estimate',
+    NotifType.estimateApproved || NotifType.estimateRejected => 'Approval',
     NotifType.breakdownAssigned => 'Breakdown',
     NotifType.general => 'Update',
   };

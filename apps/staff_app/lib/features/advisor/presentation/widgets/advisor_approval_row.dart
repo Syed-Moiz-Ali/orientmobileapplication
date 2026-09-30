@@ -51,6 +51,15 @@ class AdvisorApprovalRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
+                    pa.typeLabel,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
                     '${pa.customerName} · ${pa.vehicleId}',
                     style: const TextStyle(
                       fontSize: 12,
@@ -71,15 +80,25 @@ class AdvisorApprovalRow extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  'AED ${pa.amount.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.warning,
-                    letterSpacing: 0,
+                if (pa.isEstimate)
+                  Text(
+                    'AED ${pa.amount.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.warning,
+                      letterSpacing: 0,
+                    ),
+                  )
+                else
+                  const Text(
+                    'Review',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.warning,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 4),
                 Icon(
                   Icons.chevron_right_rounded,

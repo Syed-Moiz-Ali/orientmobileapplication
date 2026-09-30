@@ -26,6 +26,25 @@ public class InspectionSummaryService {
     private final InspectionMapper inspectionMapper;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Latest inspection attached to a job card, summarised for the advisor
+     * workflow. Returns {@code {found:false}} when the job card has no
+     * inspection yet so the client can render an empty state.
+     */
+    public Map<String, Object> summarizeForJobCard(Long jobCardId) {
+        Inspection inspection = inspectionMapper.findLatestByJobCardId(jobCardId).orElse(null);
+        if (inspection == null) {
+            Map<String, Object> empty = new LinkedHashMap<>();
+            empty.put("found", false);
+            return empty;
+        }
+        Map<String, Object> result = new LinkedHashMap<>(summarize(inspection.getId()));
+        result.put("found", true);
+        result.put("inspectionId", inspection.getId());
+        result.put("inspectionRef", inspection.getInspectionRef());
+        return result;
+    }
+
     public Map<String, Object> summarize(Long inspectionId) {
         Inspection inspection = inspectionMapper.selectById(inspectionId);
         if (inspection == null) throw new NotFoundException("Inspection not found: " + inspectionId);
@@ -40,8 +59,16 @@ public class InspectionSummaryService {
             Map<String, Object> items = section.getValue();
             for (Map.Entry<String, Object> item : items.entrySet()) {
                 total++;
-                Object status = item.getValue();
-                String st = status != null ? status.toString().toLowerCase() : "good";
+                // Stored checklist items are shaped {"status":"poor"}; older or
+                // alternative payloads may store the status as a plain string.
+                Object raw = item.getValue();
+                String st;
+                if (raw instanceof Map<?, ?> detail) {
+                    Object status = detail.get("status");
+                    st = status != null ? status.toString().toLowerCase() : "good";
+                } else {
+                    st = raw != null ? raw.toString().toLowerCase() : "good";
+                }
                 switch (st) {
                     case "fair" -> { fair++; issueItems.add(item.getKey() + " (fair)"); }
                     case "poor" -> { poor++; issueItems.add(item.getKey() + " (poor)"); }

@@ -196,6 +196,8 @@ class ApiEndpoints {
       '/advisor/job-cards/$id/technician';
   static String advisorReminder(String id) => '/advisor/reminders/$id';
   static String inspectionDraft(String id) => '/inspections/$id/draft';
+  static String inspectionByJobCard(String jobCardId) =>
+      '/inspections/by-job-card/$jobCardId';
   static String technicianAssignedJobStatus(String id) =>
       '/technicians/assigned-jobs/$id/status';
   static String technicianTask(String jobCard, String task, String action) =>

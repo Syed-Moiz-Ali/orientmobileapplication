@@ -26,18 +26,25 @@ public class ApprovalService {
 
     public List<PendingApprovalResponse> getPendingApprovals() {
         List<Approval> approvals = approvalMapper.findPending();
-        return approvals.stream().map(a -> PendingApprovalResponse.builder()
-                .estimateId(a.getEstimateId())
-                .customerName(a.getCustomerName())
-                .vehicleId(a.getVehicleId())
-                .amount(a.getAmount() != null ? a.getAmount() : 0)
-                .timeAgo(timeAgo(a.getCreatedAt()))
-                .build()).collect(Collectors.toList());
+        return approvals.stream().map(a -> {
+            String target = a.getTargetId() != null ? a.getTargetId() : a.getEstimateId();
+            return PendingApprovalResponse.builder()
+                    .estimateId(target)
+                    .approvalType(a.getApprovalType() != null ? a.getApprovalType() : "estimate")
+                    .referenceId(target)
+                    .customerName(a.getCustomerName())
+                    .vehicleId(a.getVehicleId())
+                    .amount(a.getAmount() != null ? a.getAmount() : 0)
+                    .timeAgo(timeAgo(a.getCreatedAt()))
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     private static final Map<String, String> ACTIONS = Map.of(
             "approve", "approved",
+            "approved", "approved",
             "reject", "rejected",
+            "rejected", "rejected",
             "revise", "pending");
 
     @Transactional
@@ -50,10 +57,15 @@ public class ApprovalService {
         }
         Approval approval = approvalMapper.selectOne(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Approval>()
-                        .eq(Approval::getEstimateId, estimateId));
+                        .and(q -> q.eq(Approval::getEstimateId, estimateId)
+                                .or().eq(Approval::getTargetId, estimateId)));
         if (approval == null) throw new NotFoundException("Approval not found");
+        // Prevent overwriting a decision the customer/advisor already made.
+        if (!"pending".equalsIgnoreCase(approval.getAction())) {
+            throw new BadRequestException("This approval has already been decided");
+        }
         approval.setAction(storedAction);
-        approval.setCustomerName(req.getCustomerName());
+        if (req.getCustomerName() != null) approval.setCustomerName(req.getCustomerName());
         approval.setAmount(req.getAmount());
         approvalMapper.updateById(approval);
     }

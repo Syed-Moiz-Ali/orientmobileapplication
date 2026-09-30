@@ -14,4 +14,7 @@ public interface InspectionMapper extends BaseMapper<Inspection> {
 
     @Select("SELECT * FROM inspections WHERE job_card_id = #{jobCardId} ORDER BY created_at DESC")
     List<Inspection> findByJobCardId(@Param("jobCardId") Long jobCardId);
+
+    @Select("SELECT * FROM inspections WHERE job_card_id = #{jobCardId} ORDER BY created_at DESC LIMIT 1")
+    Optional<Inspection> findLatestByJobCardId(@Param("jobCardId") Long jobCardId);
 }

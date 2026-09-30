@@ -70,7 +70,7 @@ void main() {
       await _ignoreOutOfScopeImageFailures(tester);
 
       expect(find.byType(CustomerApprovalsPage), findsOneWidget);
-      expect(find.text('Estimate'), findsOneWidget);
+      expect(find.text('Approval'), findsOneWidget);
     });
 
     testWidgets('the pre-migration ?tab=3 opens Approvals, never Vehicles', (

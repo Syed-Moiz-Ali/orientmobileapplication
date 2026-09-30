@@ -64,7 +64,7 @@ void main() {
       await tester.tap(find.text('EST-2048'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Estimate'), findsOneWidget);
+      expect(find.text('Approval'), findsOneWidget);
       expect(find.text('Estimated total'), findsOneWidget);
     });
 
@@ -320,7 +320,7 @@ void main() {
     ) async {
       await _pumpApprovals(tester, detailFails: true, estimateId: 'EST-9999');
 
-      expect(find.text("We couldn't load this estimate"), findsOneWidget);
+      expect(find.text("We couldn't load this request"), findsOneWidget);
       expect(find.text('Try again'), findsOneWidget);
       expect(find.text('View all approvals'), findsOneWidget);
 

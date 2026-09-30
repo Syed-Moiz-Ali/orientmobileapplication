@@ -142,18 +142,18 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
         pa: pa,
         onApprove: () {
           Navigator.pop(context);
-          _persistApproval(pa, 'approved');
+          _persistApproval(pa, 'approve');
           _toast(
-            'Estimate ${pa.estimateId} approved',
+            '${pa.typeLabel} ${pa.estimateId} approved',
             icon: Icons.check_circle_outline,
             color: const Color(0xFF10B981),
           );
         },
         onReject: () {
           Navigator.pop(context);
-          _persistApproval(pa, 'rejected');
+          _persistApproval(pa, 'reject');
           _toast(
-            'Sent back for revision',
+            '${pa.typeLabel} ${pa.estimateId} rejected',
             icon: Icons.undo,
             color: colorScheme.secondary,
           );

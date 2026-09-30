@@ -1,0 +1,59 @@
+$ErrorActionPreference = "Stop"
+
+$updateJar = "G:\OrientBackend\orient-gateway.jar"
+$liveJar   = "G:\OrientBackend\orient-backend.jar"
+$backupDir = "G:\OrientBackup"
+
+if (-not (Test-Path $updateJar)) { throw "Uploaded JAR not found at $updateJar" }
+
+Write-Host "Uploaded JAR SHA256:" (Get-FileHash $updateJar -Algorithm SHA256).Hash
+
+New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
+
+$backupJar = Join-Path $backupDir ("orient-backend-before-update-{0}.jar" -f (Get-Date -Format "yyyyMMdd-HHmmss"))
+Copy-Item $liveJar $backupJar -Force
+Write-Host "Backup created: $backupJar"
+
+try {
+    Write-Host "Stopping backend..."
+    Stop-Service OrientBackend
+    (Get-Service OrientBackend).WaitForStatus(
+        [System.ServiceProcess.ServiceControllerStatus]::Stopped,
+        [TimeSpan]::FromSeconds(30))
+
+    Copy-Item $updateJar $liveJar -Force
+
+    Write-Host "Starting updated backend (Flyway will apply V22-V26 on first boot)..."
+    Start-Service OrientBackend
+
+    $healthy = $false
+    for ($attempt = 1; $attempt -le 24; $attempt++) {
+        Start-Sleep -Seconds 5
+        try {
+            $health = Invoke-RestMethod -Uri "http://127.0.0.1:8080/api/v1/health" `
+                       -Headers @{ Accept = "application/json" } -TimeoutSec 10
+            if ($health.code -eq 200 -and $health.data.status -eq "UP" -and $health.data.database -eq "UP") {
+                $healthy = $true
+                break
+            }
+        } catch {
+            Write-Host "Waiting for backend... attempt $attempt of 24"
+        }
+    }
+
+    if (-not $healthy) { throw "Updated backend did not become healthy." }
+
+    Write-Host "`n=== DEPLOYMENT SUCCESSFUL ==="
+    Write-Host "Backup: $backupJar"
+    Get-Service OrientBackend, MySQL80, W3SVC | Select-Object Name, Status, StartType
+    Write-Host "`n=== Local health ==="
+    $health | ConvertTo-Json -Depth 5
+}
+catch {
+    $deploymentError = $_.Exception.Message
+    Write-Host "`nDeployment failed. Restoring previous JAR..." -ForegroundColor Red
+    Stop-Service OrientBackend -Force -ErrorAction SilentlyContinue
+    Copy-Item $backupJar $liveJar -Force
+    Start-Service OrientBackend
+    throw "Deployment rolled back safely. Reason: $deploymentError"
+}

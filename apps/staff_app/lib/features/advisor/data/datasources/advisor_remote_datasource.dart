@@ -85,6 +85,13 @@ class AdvisorRemoteDataSource {
     return result.unwrapOrThrow();
   }
 
+  Future<InspectionSummaryResponse> getInspectionByJobCard(
+    String jobCardId,
+  ) async => (await _client.get<InspectionSummaryResponse>(
+    ApiEndpoints.inspectionByJobCard(jobCardId),
+    fromJson: (d) => InspectionSummaryResponse.fromJson(d),
+  )).when(success: (v) => v, failure: (_) => const InspectionSummaryResponse());
+
   Future<InspectionDraftResponse> getDraft(String id) async =>
       (await _client.get<InspectionDraftResponse>(
         ApiEndpoints.inspectionDraft(id),

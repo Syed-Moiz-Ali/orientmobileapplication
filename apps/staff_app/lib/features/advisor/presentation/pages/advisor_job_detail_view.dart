@@ -28,6 +28,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   String _assignedTech = '';
   Map<String, dynamic>? _hiveData;
   JobCardDetailResponse? _details;
+  InspectionSummaryResponse? _inspection;
   String get _detailLookupId => _jc.dbId > 0 ? '${_jc.dbId}' : _jc.id;
   String get _jobCardRef =>
       _details?.id.isNotEmpty == true ? _details!.id : _jc.id;
@@ -39,6 +40,19 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     _assignedTech = _jc.technician;
     _loadHiveData();
     _loadDetails();
+    _loadInspection();
+  }
+
+  Future<void> _loadInspection() async {
+    final id = _jc.dbId > 0 ? '${_jc.dbId}' : _detailLookupId;
+    if (!RegExp(r'^\d+$').hasMatch(id)) return;
+    try {
+      final summary = await ref
+          .read(advisorRemoteDataSourceProvider)
+          .getInspectionByJobCard(id);
+      if (!mounted) return;
+      setState(() => _inspection = summary);
+    } catch (_) {}
   }
 
   Future<void> _loadDetails() async {
@@ -80,6 +94,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         );
       });
     } catch (_) {}
+    await _loadInspection();
   }
 
   void _loadHiveData() {
@@ -323,7 +338,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           const SizedBox(height: 16),
           _buildWorkItemsSection(),
           const SizedBox(height: 16),
-          if (hasData) ...[
+          if (hasData || (_inspection?.found ?? false)) ...[
             _buildInspectionMediaSection(),
             const SizedBox(height: 16),
           ],
@@ -607,7 +622,34 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     );
   }
 
-  Widget _buildInspectionMediaSection() => const SizedBox.shrink();
+  Widget _buildInspectionMediaSection() {
+    final inspection = _inspection;
+    if (inspection == null || !inspection.found) return const SizedBox.shrink();
+    final colorScheme = Theme.of(context).colorScheme;
+    return _section('Inspection', [
+      if (inspection.inspectionRef.isNotEmpty)
+        _detailRow(
+          Icons.fact_check_outlined,
+          'Reference',
+          inspection.inspectionRef,
+          isMono: true,
+        ),
+      _detailRow(Icons.check_circle_outline, 'Good', '${inspection.good}'),
+      _detailRow(Icons.error_outline, 'Fair', '${inspection.fair}'),
+      _detailRow(Icons.warning_amber_outlined, 'Poor', '${inspection.poor}'),
+      if (inspection.summary.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        Text(
+          inspection.summary,
+          style: TextStyle(
+            fontSize: 13,
+            color: colorScheme.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
+      ],
+    ]);
+  }
 
   Widget _buildWorkflowActions() {
     final colorScheme = Theme.of(context).colorScheme;

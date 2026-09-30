@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:hive/hive.dart';
 import 'package:shared_core/src/constants/api_constants.dart' show ApiEndpoints;
 import 'package:shared_core/src/local/helpers/environment_config.dart';
 import 'package:shared_core/src/local/sync/sync_handler.dart';
@@ -44,6 +45,7 @@ class DioSyncHandler extends SyncHandler {
           response.statusCode! >= 200 &&
           response.statusCode! < 300) {
         if (operation.entityType == 'vehicle_customer') {
+          await _cacheIntakeResponse(operation, response.data);
           await _uploadIntakeMedia(response.data, operation.payload);
         }
         return true;
@@ -63,6 +65,34 @@ class DioSyncHandler extends SyncHandler {
         );
       }
       rethrow;
+    }
+  }
+
+  /// After the intake is accepted, store the server-assigned job card
+  /// reference on the local intake record so the follow-up inspection can be
+  /// linked to the exact job card the backend created.
+  Future<void> _cacheIntakeResponse(
+    SyncOperation operation,
+    dynamic responseBody,
+  ) async {
+    dynamic body = responseBody;
+    if (body is Map && body['data'] != null) body = body['data'];
+    if (body is! Map) return;
+    try {
+      final box = Hive.box<dynamic>('inspections');
+      final existing = box.get(operation.entityId);
+      final record = existing is Map
+          ? Map<String, dynamic>.from(existing)
+          : <String, dynamic>{
+              'id': operation.entityId,
+              'type': 'vehicle_customer',
+            };
+      record['jobCardRef'] = body['jobCardRef']?.toString() ?? '';
+      record['serverJobCardId'] = body['jobCardId']?.toString() ?? '';
+      record['inspectionId'] = body['id']?.toString() ?? '';
+      await box.put(operation.entityId, record);
+    } catch (_) {
+      // Local caching is best-effort; the server remains the source of truth.
     }
   }
 
@@ -101,6 +131,24 @@ class DioSyncHandler extends SyncHandler {
         path: advisorSignature,
         itemId: 'advisor-signature',
         type: 'signature',
+      ));
+    }
+    final registrationDocument =
+        payload['registrationDocumentPath']?.toString() ?? '';
+    if (registrationDocument.isNotEmpty) {
+      uploads.add((
+        path: registrationDocument,
+        itemId: 'registration-certificate',
+        type: 'document',
+      ));
+    }
+    final insuranceDocument =
+        payload['insuranceDocumentPath']?.toString() ?? '';
+    if (insuranceDocument.isNotEmpty) {
+      uploads.add((
+        path: insuranceDocument,
+        itemId: 'insurance-document',
+        type: 'document',
       ));
     }
 
@@ -327,76 +375,7 @@ class DioSyncHandler extends SyncHandler {
           'status': payload['status'] ?? 'inProgress',
         };
       case 'vehicle_customer':
-        // Flat intake form -> InspectionRequest shape:
-        // { type, status, bookingId, customer{...}, vehicle{...}, additional{...} }
-        return <String, dynamic>{
-          'type': 'vehicle_customer',
-          if (payload['status'] != null) 'status': payload['status'],
-          if (payload['bookingId'] != null) 'bookingId': payload['bookingId'],
-          'customer': <String, dynamic>{
-            if (payload['isB2B'] != null) 'isB2B': payload['isB2B'],
-            if (payload['customerName'] != null)
-              'customerName': payload['customerName'],
-            if (payload['phoneNumber'] != null)
-              'phoneNumber': payload['phoneNumber'],
-            if (payload['email'] != null) 'email': payload['email'],
-            if (payload['customerGroup'] != null)
-              'customerGroup': payload['customerGroup'],
-            if (payload['gender'] != null) 'gender': payload['gender'],
-            if (payload['address'] != null) 'address': payload['address'],
-            if (payload['taxNumber'] != null) 'taxNumber': payload['taxNumber'],
-            if (payload['source'] != null) 'source': payload['source'],
-          },
-          'vehicle': <String, dynamic>{
-            if (payload['emirate'] != null) 'emirate': payload['emirate'],
-            if (payload['plateCode'] != null) 'plateCode': payload['plateCode'],
-            if (payload['plateNumber'] != null)
-              'plateNumber': payload['plateNumber'],
-            if (payload['registrationNumber'] != null)
-              'registrationNumber': payload['registrationNumber'],
-            if (payload['vin'] != null) 'vin': payload['vin'],
-            if (payload['make'] != null) 'make': payload['make'],
-            if (payload['model'] != null) 'model': payload['model'],
-            if (payload['modelYear'] != null) 'modelYear': payload['modelYear'],
-            if (payload['cylinders'] != null) 'cylinders': payload['cylinders'],
-            if (payload['engineCapacity'] != null)
-              'engineCapacity': payload['engineCapacity'],
-            if (payload['vehicleColor'] != null)
-              'vehicleColor': payload['vehicleColor'],
-            if (payload['fuelType'] != null) 'fuelType': payload['fuelType'],
-            if (payload['engineNumber'] != null)
-              'engineNumber': payload['engineNumber'],
-            if (payload['insuranceProvider'] != null)
-              'insuranceProvider': payload['insuranceProvider'],
-            if (payload['insuranceTaxNumber'] != null)
-              'insuranceTaxNumber': payload['insuranceTaxNumber'],
-            if (payload['insuranceAddress'] != null)
-              'insuranceAddress': payload['insuranceAddress'],
-            if (payload['policyNumber'] != null)
-              'policyNumber': payload['policyNumber'],
-            if (payload['lpoNumber'] != null) 'lpoNumber': payload['lpoNumber'],
-            if (payload['accidentNumber'] != null)
-              'accidentNumber': payload['accidentNumber'],
-            if (payload['insuranceExpiryDate'] != null)
-              'insuranceExpiryDate': payload['insuranceExpiryDate'],
-          },
-          'additional': <String, dynamic>{
-            if (payload['odometerReading'] != null)
-              'odometerReading': payload['odometerReading'],
-            if (payload['fuelLevel'] != null) 'fuelLevel': payload['fuelLevel'],
-            if (payload['customerConsent'] != null)
-              'customerConsent': payload['customerConsent'],
-            if (payload['jobCategory'] != null)
-              'jobCategory': payload['jobCategory'],
-            if (payload['markupType'] != null)
-              'markupType': payload['markupType'],
-            if (payload['orderType'] != null) 'orderType': payload['orderType'],
-            if (payload['jobDescription'] != null)
-              'jobDescription': payload['jobDescription'],
-          },
-          if (payload['jobDescription'] != null)
-            'customerRequests': payload['jobDescription'],
-        };
+        return buildVehicleCustomerIntakePayload(payload);
       case 'work_item':
         // WorkItemActionRequest replay: { status | startTime | endTime }
         final action = payload['action'] ?? 'status';
@@ -481,4 +460,76 @@ class DioSyncHandler extends SyncHandler {
       _ => ApiEndpoints.inspectionMediaUpload(recordId),
     };
   }
+}
+
+/// Converts the flat advisor intake form payload into the backend
+/// `InspectionRequest` shape. Shared by the offline sync handler and the
+/// online intake call so both reach the backend identically.
+Map<String, dynamic> buildVehicleCustomerIntakePayload(
+  Map<String, dynamic> payload,
+) {
+  return <String, dynamic>{
+    'type': 'vehicle_customer',
+    if (payload['status'] != null) 'status': payload['status'],
+    if (payload['bookingId'] != null) 'bookingId': payload['bookingId'],
+    'customer': <String, dynamic>{
+      if (payload['isB2B'] != null) 'isB2B': payload['isB2B'],
+      if (payload['customerName'] != null)
+        'customerName': payload['customerName'],
+      if (payload['phoneNumber'] != null) 'phoneNumber': payload['phoneNumber'],
+      if (payload['email'] != null) 'email': payload['email'],
+      if (payload['customerGroup'] != null)
+        'customerGroup': payload['customerGroup'],
+      if (payload['gender'] != null) 'gender': payload['gender'],
+      if (payload['address'] != null) 'address': payload['address'],
+      if (payload['taxNumber'] != null) 'taxNumber': payload['taxNumber'],
+      if (payload['source'] != null) 'source': payload['source'],
+    },
+    'vehicle': <String, dynamic>{
+      if (payload['emirate'] != null) 'emirate': payload['emirate'],
+      if (payload['plateCode'] != null) 'plateCode': payload['plateCode'],
+      if (payload['plateNumber'] != null) 'plateNumber': payload['plateNumber'],
+      if (payload['registrationNumber'] != null)
+        'registrationNumber': payload['registrationNumber'],
+      if (payload['vin'] != null) 'vin': payload['vin'],
+      if (payload['make'] != null) 'make': payload['make'],
+      if (payload['model'] != null) 'model': payload['model'],
+      if (payload['modelYear'] != null) 'modelYear': payload['modelYear'],
+      if (payload['cylinders'] != null) 'cylinders': payload['cylinders'],
+      if (payload['engineCapacity'] != null)
+        'engineCapacity': payload['engineCapacity'],
+      if (payload['vehicleColor'] != null)
+        'vehicleColor': payload['vehicleColor'],
+      if (payload['fuelType'] != null) 'fuelType': payload['fuelType'],
+      if (payload['engineNumber'] != null)
+        'engineNumber': payload['engineNumber'],
+      if (payload['insuranceProvider'] != null)
+        'insuranceProvider': payload['insuranceProvider'],
+      if (payload['insuranceTaxNumber'] != null)
+        'insuranceTaxNumber': payload['insuranceTaxNumber'],
+      if (payload['insuranceAddress'] != null)
+        'insuranceAddress': payload['insuranceAddress'],
+      if (payload['policyNumber'] != null)
+        'policyNumber': payload['policyNumber'],
+      if (payload['lpoNumber'] != null) 'lpoNumber': payload['lpoNumber'],
+      if (payload['accidentNumber'] != null)
+        'accidentNumber': payload['accidentNumber'],
+      if (payload['insuranceExpiryDate'] != null)
+        'insuranceExpiryDate': payload['insuranceExpiryDate'],
+    },
+    'additional': <String, dynamic>{
+      if (payload['odometerReading'] != null)
+        'odometerReading': payload['odometerReading'],
+      if (payload['fuelLevel'] != null) 'fuelLevel': payload['fuelLevel'],
+      if (payload['customerConsent'] != null)
+        'customerConsent': payload['customerConsent'],
+      if (payload['jobCategory'] != null) 'jobCategory': payload['jobCategory'],
+      if (payload['markupType'] != null) 'markupType': payload['markupType'],
+      if (payload['orderType'] != null) 'orderType': payload['orderType'],
+      if (payload['jobDescription'] != null)
+        'jobDescription': payload['jobDescription'],
+    },
+    if (payload['jobDescription'] != null)
+      'customerRequests': payload['jobDescription'],
+  };
 }

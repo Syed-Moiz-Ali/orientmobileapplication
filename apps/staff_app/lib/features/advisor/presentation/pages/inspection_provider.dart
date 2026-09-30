@@ -130,7 +130,7 @@ class InspectionState {
       'garageRecommendations': garageRecommendations,
     if (estimatedDelivery != null)
       'estimatedDelivery': estimatedDelivery!.toIso8601String(),
-    'notifyOwnerSmsEmail': notifyOwnerSmsEmail,
+    'notifyOwnerSmsEmail': notifyOwner || notifyOwnerSmsEmail,
     if (tag.isNotEmpty) 'tag': tag,
     if (jobCardId.isNotEmpty) 'jobCardId': jobCardId,
     if (bookingId.isNotEmpty) 'bookingId': bookingId,
@@ -555,8 +555,24 @@ class InspectionNotifier extends Notifier<InspectionState> {
     final queue = ref.read(syncQueueProvider);
     final id = await IdGenerator.nextId('INS');
 
+    // An inspection must always belong to a real customer/vehicle/job card.
+    // Without a job card there is no customer or vehicle context, so refuse to
+    // persist an orphan inspection.
+    if (state.jobCardId.trim().isEmpty) {
+      return const Failure(
+        UnknownException(
+          'This inspection is not linked to a job card. Start the inspection '
+          'from a saved job card so the customer and vehicle are known.',
+        ),
+      );
+    }
+    if (state.statuses.isEmpty) {
+      return const Failure(
+        UnknownException('Rate at least one checkpoint before submitting.'),
+      );
+    }
+
     final payload = state.toPersistableMap();
-    final hasJobCard = state.jobCardId.trim().isNotEmpty;
     await local.saveInspection(id, payload);
 
     try {
@@ -569,42 +585,27 @@ class InspectionNotifier extends Notifier<InspectionState> {
       ref.read(advisorRefreshProvider.notifier).state++;
       ref.read(advisorWorkItemsRefreshProvider.notifier).state++;
       return const Success(null);
-    } catch (e) {
-      if (hasJobCard) {
-        return Failure(
-          UnknownException(
-            'Inspection could not be saved to the Job Card. Please retry. $e',
-          ),
-        );
-      }
-    }
-
-    final operation = SyncOperation(
-      id: id,
-      entityType: 'inspection',
-      entityId: id,
-      changeType: ChangeType.create,
-      payload: payload,
-      timestamp: DateTime.now().millisecondsSinceEpoch,
-    );
-    await queue.enqueue(operation);
-
-    await uploadInspectionMedia(id);
-    final syncEngine = ref.read(syncEngineProvider);
-    await syncEngine.syncAll();
-    if (syncEngine.status == SyncStatus.failure ||
-        syncEngine.status == SyncStatus.conflict) {
-      return const Failure(
-        UnknownException(
-          'Inspection could not be uploaded. It was saved and will retry.',
-        ),
+    } catch (_) {
+      // Offline or transient failure: keep the inspection durably and queue it
+      // for replay. The job card id is part of the payload so the backend can
+      // re-link the inspection to the correct customer and vehicle.
+      final operation = SyncOperation(
+        id: id,
+        entityType: 'inspection',
+        entityId: id,
+        changeType: ChangeType.create,
+        payload: payload,
+        timestamp: DateTime.now().millisecondsSinceEpoch,
       );
+      await queue.enqueue(operation);
+      await uploadInspectionMedia(id);
+      try {
+        await ref.read(syncEngineProvider).syncAll();
+      } catch (_) {}
+      ref.read(advisorRefreshProvider.notifier).state++;
+      ref.read(advisorWorkItemsRefreshProvider.notifier).state++;
+      return const Success(null);
     }
-
-    await local.deleteDraft();
-    Hive.box<dynamic>('inspections').delete('intake_booking_id');
-
-    return const Success(null);
   }
 
   Future<void> uploadInspectionMedia(String recordId) async {

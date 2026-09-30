@@ -74,3 +74,4 @@ android_keystore/
 # Build artifacts (accidentally committed in an earlier pass)
 **/build/
 /orient-backend-*.jar
+/dist/*.jar

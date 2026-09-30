@@ -37,7 +37,7 @@ class CustomerApprovalsPage extends ConsumerWidget {
         child: Column(
           children: [
             AppTopBar(
-              title: id.isEmpty ? 'Approvals & billing' : 'Estimate',
+              title: id.isEmpty ? 'Approvals & billing' : 'Approval',
               onBack: () => _back(context),
             ),
             Divider(height: 1, color: theme.colorScheme.outlineVariant),

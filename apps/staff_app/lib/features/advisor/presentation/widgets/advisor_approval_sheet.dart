@@ -36,9 +36,11 @@ class AdvisorApprovalSheet extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'AED ${pa.amount.toStringAsFixed(0)}',
+                pa.isEstimate
+                    ? 'AED ${pa.amount.toStringAsFixed(0)}'
+                    : pa.typeLabel,
                 style: TextStyle(
-                  fontSize: 34,
+                  fontSize: pa.isEstimate ? 34 : 24,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                   letterSpacing: 0,
@@ -64,8 +66,10 @@ class AdvisorApprovalSheet extends StatelessWidget {
           value: pa.vehicleId,
         ),
         AdvisorDetailLine(
-          icon: Icons.receipt_long_outlined,
-          label: 'Estimate',
+          icon: pa.isEstimate
+              ? Icons.receipt_long_outlined
+              : Icons.assignment_turned_in_outlined,
+          label: pa.typeLabel,
           value: pa.estimateId,
         ),
         const SizedBox(height: 16),

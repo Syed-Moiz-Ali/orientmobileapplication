@@ -67,4 +67,13 @@ public class InspectionController {
     public ApiResponse<Map<String, Object>> summary(@PathVariable Long id) {
         return ApiResponse.success(inspectionSummaryService.summarize(id));
     }
+
+    /**
+     * Advisor workflow: the inspection attached to a job card, so a completed
+     * checklist is visible from the job detail screen.
+     */
+    @GetMapping("/by-job-card/{jobCardId}")
+    public ApiResponse<Map<String, Object>> byJobCard(@PathVariable Long jobCardId) {
+        return ApiResponse.success(inspectionSummaryService.summarizeForJobCard(jobCardId));
+    }
 }
