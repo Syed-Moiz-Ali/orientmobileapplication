@@ -11,6 +11,7 @@ import 'package:staff_app/core/services/audio_recorder_service.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
+import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
 import 'inspection_provider.dart';
 
 class InspectionSheetView extends ConsumerStatefulWidget {
@@ -23,7 +24,8 @@ class InspectionSheetView extends ConsumerStatefulWidget {
 }
 
 class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
-  String _selectedSectionId = '';
+  static const _bodyConditionId = '_body_condition';
+  String _selectedSectionId = _bodyConditionId;
 
   @override
   void initState() {
@@ -44,7 +46,8 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
     final pct = state.progressPercent;
     final sections = state.filteredSections;
 
-    if (sections.isNotEmpty &&
+    if (_selectedSectionId != _bodyConditionId &&
+        sections.isNotEmpty &&
         !sections.any((section) => section.id == _selectedSectionId)) {
       _selectedSectionId = sections.first.id;
     }
@@ -130,55 +133,58 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
             child: AdvisorWorkflowIndicator(currentStep: 1),
           ),
           // ── 1. REAL-TIME PROGRESS & SEARCH ───────────────────────────────
-          Container(
-            color: colorScheme.surface,
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: Column(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: pct,
-                    minHeight: 6,
-                    backgroundColor: colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      colorScheme.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colorScheme.outlineVariant),
-                  ),
-                  child: TextField(
-                    onChanged: (q) => notifier.setGlobalSearch(q),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurface,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Quick find checkpoint...',
-                      hintStyle: TextStyle(
-                        fontSize: 12.5,
-                        color: colorScheme.onSurfaceVariant,
+          if (_selectedSectionId != _bodyConditionId)
+            Container(
+              color: colorScheme.surface,
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: pct,
+                      minHeight: 6,
+                      backgroundColor: colorScheme.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colorScheme.primary,
                       ),
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        color: colorScheme.onSurfaceVariant,
-                        size: 18,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: TextField(
+                      onChanged: (q) => notifier.setGlobalSearch(q),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.onSurface,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Quick find checkpoint...',
+                        hintStyle: TextStyle(
+                          fontSize: 12.5,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: colorScheme.onSurfaceVariant,
+                          size: 18,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
           // ── 2. QUICK SECTION SWITCHER PILLS ──────────────────────────────
           Container(
@@ -187,10 +193,53 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               scrollDirection: Axis.horizontal,
-              itemCount: sections.length,
+              itemCount: sections.length + 1,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (ctx, i) {
-                final sec = sections[i];
+                if (i == 0) {
+                  final inspected = state.vehiclePartInspections.values
+                      .where(
+                        (part) =>
+                            part.condition.name != 'uninspected' ||
+                            part.findings.isNotEmpty,
+                      )
+                      .length;
+                  final issues = state.vehiclePartInspections.values
+                      .expand((part) => part.findings)
+                      .length;
+                  final selected = _selectedSectionId == _bodyConditionId;
+                  return _PressScale(
+                    onTap: () =>
+                        setState(() => _selectedSectionId = _bodyConditionId),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? colorScheme.primary
+                            : colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(100),
+                        border: Border.all(
+                          color: selected
+                              ? Colors.transparent
+                              : colorScheme.outlineVariant,
+                        ),
+                      ),
+                      child: Text(
+                        'BODY CONDITION  $inspected checked · $issues issues',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: selected
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurface,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                final sec = sections[i - 1];
                 final isSelected = sec.id == _selectedSectionId;
                 final rated = sec.items
                     .asMap()
@@ -273,7 +322,9 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
 
           // ── 3. INTUITIVE CHECKPOINT CARDS LIST ───────────────────────────
           Expanded(
-            child: activeSection.items.isEmpty
+            child: _selectedSectionId == _bodyConditionId
+                ? const VehicleBodyConditionPanel()
+                : activeSection.items.isEmpty
                 ? const Center(
                     child: EmptyState(
                       icon: Icons.search_off_rounded,

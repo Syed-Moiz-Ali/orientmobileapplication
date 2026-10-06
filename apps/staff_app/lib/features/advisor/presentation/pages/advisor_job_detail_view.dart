@@ -29,9 +29,18 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   Map<String, dynamic>? _hiveData;
   JobCardDetailResponse? _details;
   InspectionSummaryResponse? _inspection;
+  bool _hasLocalSubmittedInspection = false;
   String get _detailLookupId => _jc.dbId > 0 ? '${_jc.dbId}' : _jc.id;
   String get _jobCardRef =>
       _details?.id.isNotEmpty == true ? _details!.id : _jc.id;
+  bool get _hasCompletedInspection =>
+      (_inspection?.found == true && _inspection!.total > 0) ||
+      _hasLocalSubmittedInspection;
+  bool get _inspectionRequired =>
+      !_hasCompletedInspection &&
+      _jc.status != JobCardStatus.completed &&
+      _jc.status != JobCardStatus.qualityCheckPassed &&
+      _jc.status != JobCardStatus.delivered;
 
   @override
   void initState() {
@@ -114,6 +123,22 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                 m?['vin'] == _jc.id),
         orElse: () => null,
       );
+
+      final jobIds = <String>{
+        _jc.id,
+        _detailLookupId,
+        if (_jc.dbId > 0) '${_jc.dbId}',
+        if ((_hiveData?['jobCardRef'] ?? '').toString().isNotEmpty)
+          _hiveData!['jobCardRef'].toString(),
+        if ((_hiveData?['serverJobCardId'] ?? '').toString().isNotEmpty)
+          _hiveData!['serverJobCardId'].toString(),
+      };
+      _hasLocalSubmittedInspection = allData.any((record) {
+        final statuses = record['statuses'];
+        return jobIds.contains(record['jobCardId']?.toString() ?? '') &&
+            statuses is Map &&
+            statuses.isNotEmpty;
+      });
 
       if (_hiveData != null && mounted) {
         setState(() {
@@ -347,8 +372,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
             ]),
           ],
           const SizedBox(height: 16),
-          _buildWorkItemsSection(),
-          const SizedBox(height: 16),
+          if (_hasCompletedInspection) ...[
+            _buildWorkItemsSection(),
+            const SizedBox(height: 16),
+          ],
           if (hasData || (_inspection?.found ?? false)) ...[
             _buildInspectionMediaSection(),
             const SizedBox(height: 16),
@@ -683,32 +710,41 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     ]);
   }
 
-  String get _primaryActionLabel => switch (_jc.status) {
-    JobCardStatus.vehicleReceived => 'Start Inspection',
-    JobCardStatus.inspected => 'Create Estimate',
-    JobCardStatus.waitingCustomerApproval => 'Waiting for Customer Approval',
-    JobCardStatus.approved => 'Assign Technician',
-    JobCardStatus.workAssigned ||
-    JobCardStatus.inProgress ||
-    JobCardStatus.waitingParts => 'Review Work Items',
-    JobCardStatus.completed ||
-    JobCardStatus.qualityCheckPassed => 'Deliver Vehicle',
-    JobCardStatus.delivered => 'Vehicle Delivered',
-    _ => 'Refresh Job Card',
-  };
+  String get _primaryActionLabel => _inspectionRequired
+      ? 'Add Inspection'
+      : switch (_jc.status) {
+          JobCardStatus.vehicleReceived => 'Start Inspection',
+          JobCardStatus.inspected => 'Create Estimate',
+          JobCardStatus.waitingCustomerApproval =>
+            'Waiting for Customer Approval',
+          JobCardStatus.approved => 'Assign Technician',
+          JobCardStatus.workAssigned ||
+          JobCardStatus.inProgress ||
+          JobCardStatus.waitingParts => 'Review Work Items',
+          JobCardStatus.completed ||
+          JobCardStatus.qualityCheckPassed => 'Deliver Vehicle',
+          JobCardStatus.delivered => 'Vehicle Delivered',
+          _ => 'Refresh Job Card',
+        };
 
-  IconData get _primaryActionIcon => switch (_jc.status) {
-    JobCardStatus.vehicleReceived => Icons.fact_check_outlined,
-    JobCardStatus.inspected => Icons.receipt_long_outlined,
-    JobCardStatus.waitingCustomerApproval => Icons.hourglass_top_rounded,
-    JobCardStatus.approved => Icons.assignment_ind_outlined,
-    JobCardStatus.completed ||
-    JobCardStatus.qualityCheckPassed ||
-    JobCardStatus.delivered => Icons.check_circle_outline,
-    _ => Icons.work_outline_rounded,
-  };
+  IconData get _primaryActionIcon => _inspectionRequired
+      ? Icons.fact_check_outlined
+      : switch (_jc.status) {
+          JobCardStatus.vehicleReceived => Icons.fact_check_outlined,
+          JobCardStatus.inspected => Icons.receipt_long_outlined,
+          JobCardStatus.waitingCustomerApproval => Icons.hourglass_top_rounded,
+          JobCardStatus.approved => Icons.assignment_ind_outlined,
+          JobCardStatus.completed ||
+          JobCardStatus.qualityCheckPassed ||
+          JobCardStatus.delivered => Icons.check_circle_outline,
+          _ => Icons.work_outline_rounded,
+        };
 
   void _runPrimaryAction() {
+    if (_inspectionRequired) {
+      _startInspection();
+      return;
+    }
     switch (_jc.status) {
       case JobCardStatus.vehicleReceived:
         _startInspection();
@@ -743,7 +779,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           onBack: () => Navigator.pop(context),
         ),
       ),
-    ).then((_) => _loadDetails());
+    ).then((_) async {
+      _loadHiveData();
+      await _loadDetails();
+    });
   }
 
   void _openEstimate() {

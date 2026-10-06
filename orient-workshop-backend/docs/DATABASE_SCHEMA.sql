@@ -222,6 +222,7 @@ CREATE TABLE inspections (
     tag             VARCHAR(50) DEFAULT '',
     is_draft        BOOLEAN DEFAULT FALSE,
     sections        JSON,
+    vehicle_body_condition JSON NULL,
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (job_card_id) REFERENCES job_cards(id),

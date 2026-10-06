@@ -19,7 +19,7 @@ class SyncEngine {
   SyncStatus _status = SyncStatus.idle;
   SyncStatus get status => _status;
 
-  bool _isOnline = true;
+  bool _isOnline = false;
   bool get isOnline => _isOnline;
 
   bool _disposed = false;
@@ -31,33 +31,50 @@ class SyncEngine {
     required Box failedBox,
     Connectivity? connectivity,
     Logger? logger,
-  })  : _queue = queue,
-        _failedBox = failedBox,
-        _connectivity = connectivity ?? Connectivity(),
-        _logger = logger ?? Logger() {
+  }) : _queue = queue,
+       _failedBox = failedBox,
+       _connectivity = connectivity ?? Connectivity(),
+       _logger = logger ?? Logger() {
     _initConnectivity();
   }
 
   void _initConnectivity() {
+    unawaited(_checkInitialConnectivity());
     _connectivitySub = _connectivity.onConnectivityChanged.listen((results) {
       if (_disposed) return;
       final online = results.any((r) => r != ConnectivityResult.none);
-      if (online && !_isOnline) {
+      if (online) {
         // FIX (audit P0): retry the failed box on reconnect too, not just the
         // active queue — previously failed ops were never retried at all.
-        if (_queue.length > 0) syncAll();
-        if (_failedBox.length > 0) retryFailed();
+        if (_queue.length > 0) unawaited(syncAll());
+        if (_failedBox.length > 0) unawaited(retryFailed());
       }
       _isOnline = online;
     });
   }
 
+  Future<void> _checkInitialConnectivity() async {
+    try {
+      final results = await _connectivity.checkConnectivity();
+      if (_disposed) return;
+      _isOnline = results.any((result) => result != ConnectivityResult.none);
+      if (_isOnline) {
+        if (_queue.length > 0) await syncAll();
+        if (_failedBox.length > 0) await retryFailed();
+      }
+    } catch (error, stackTrace) {
+      _logger.w(
+        'Initial connectivity check failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   /// Re-attempts every operation in the failed box (previously never retried).
   Future<void> retryFailed() async {
     if (_disposed || _status == SyncStatus.syncing) return;
-    final failed = _failedBox.values
-        .whereType<SyncOperation>()
-        .toList();
+    final failed = _failedBox.values.whereType<SyncOperation>().toList();
     if (failed.isEmpty) return;
 
     _notify(SyncStatus.syncing);
@@ -76,11 +93,10 @@ class SyncEngine {
           stackTrace: st,
         );
         op.retryCount++;
-        if (op.retryCount >= 3) {
-          await _failedBox.delete(op.id); // give up after 3 retries
-        } else {
-          await _failedBox.put(op.id, op);
-        }
+        // A failed mutation represents user data. Never discard it merely
+        // because the server was unavailable or rejected an older payload;
+        // keeping it allows a corrected app build to replay the same job.
+        await _failedBox.put(op.id, op);
       }
     }
     _notify(SyncStatus.idle);

@@ -20,4 +20,5 @@ public class InspectionDraftResponse {
     private String tag;
     private Boolean isDraft;
     private Map<String, Map<String, Object>> sections;
+    private Map<String, Object> vehicleBodyCondition;
 }

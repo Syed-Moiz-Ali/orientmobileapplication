@@ -217,6 +217,7 @@ class InspectionDraftResponse {
   final String tag;
   final bool? isDraft;
   final Map<String, Map<String, dynamic>>? sections;
+  final Map<String, dynamic>? vehicleBodyCondition;
   const InspectionDraftResponse({
     this.id = '',
     this.jobCardId = '',
@@ -229,6 +230,7 @@ class InspectionDraftResponse {
     this.tag = '',
     this.isDraft,
     this.sections,
+    this.vehicleBodyCondition,
   });
   factory InspectionDraftResponse.fromJson(Map<String, dynamic> j) =>
       InspectionDraftResponse(
@@ -243,6 +245,9 @@ class InspectionDraftResponse {
         tag: j['tag'] as String? ?? '',
         isDraft: j['isDraft'] as bool?,
         sections: j['sections'] as Map<String, Map<String, dynamic>>?,
+        vehicleBodyCondition: j['vehicleBodyCondition'] is Map
+            ? Map<String, dynamic>.from(j['vehicleBodyCondition'] as Map)
+            : null,
       );
 }
 

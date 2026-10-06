@@ -44,6 +44,7 @@ class _Body extends ConsumerStatefulWidget {
 
 class _BodyState extends ConsumerState<_Body> {
   String? _savedJobId;
+  bool _savedToServer = false;
   XFile? _registrationDocument;
   XFile? _insuranceDocument;
   final List<String> _jobPhotoPaths = [];
@@ -321,6 +322,7 @@ class _BodyState extends ConsumerState<_Body> {
                     // intake has synced so the follow-up inspection links to the
                     // exact job card the backend created.
                     var resolvedJobId = id;
+                    var savedToServer = false;
                     try {
                       final record = Hive.box<dynamic>('inspections').get(id);
                       if (record is Map) {
@@ -329,10 +331,14 @@ class _BodyState extends ConsumerState<_Body> {
                                     record['serverJobCardId'] ??
                                     '')
                                 .toString();
-                        if (ref.isNotEmpty) resolvedJobId = ref;
+                        if (ref.isNotEmpty) {
+                          resolvedJobId = ref;
+                          savedToServer = true;
+                        }
                       }
                     } catch (_) {}
                     _savedJobId = resolvedJobId;
+                    _savedToServer = savedToServer;
                     ref.read(advisorRefreshProvider.notifier).state++;
                     if (!context.mounted) return;
                     _showInspectionPrompt(context);
@@ -691,15 +697,19 @@ class _BodyState extends ConsumerState<_Body> {
                 color: AppColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppDimensions.r16),
               ),
-              child: const Icon(
-                Icons.search_outlined,
+              child: Icon(
+                _savedToServer
+                    ? Icons.cloud_done_outlined
+                    : Icons.cloud_upload_outlined,
                 color: AppColors.accent,
                 size: 28,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Job Card Created!',
+            Text(
+              _savedToServer
+                  ? 'Job Card Created & Synced'
+                  : 'Job Card Saved Locally',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -707,8 +717,10 @@ class _BodyState extends ConsumerState<_Body> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Would you like to add an inspection?\nYou can add photos, videos, notes, and pricing.',
+            Text(
+              _savedToServer
+                  ? 'Saved to this device and the server.\nWould you like to start the inspection?'
+                  : 'The API could not be reached. The job card is safely stored and queued for automatic sync.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -727,8 +739,12 @@ class _BodyState extends ConsumerState<_Body> {
                   final jobId = _savedJobId ?? '';
                   ref.read(inspectionProvider.notifier).setJobCardId(jobId);
                   final callbacks = InspectionCallbacks(
-                    onBack: () => context.pop(),
+                    onBack: () {
+                      ref.read(advisorRefreshProvider.notifier).state++;
+                      context.pop();
+                    },
                     onSaveDraft: () {
+                      ref.read(advisorRefreshProvider.notifier).state++;
                       context.pop();
                       context.pop();
                     },

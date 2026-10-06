@@ -180,6 +180,7 @@ public class InspectionService {
                 .notifyOwnerSmsEmail(req.getNotifyOwnerSmsEmail())
                 .tag(req.getTag())
                 .sections(sectionsJson)
+                .vehicleBodyCondition(toJson(req.getVehicleBodyCondition()))
                 .advisorId(principal != null ? principal.getUserId() : null)
                 .build();
         inspectionMapper.insert(inspection);
@@ -322,6 +323,9 @@ public class InspectionService {
         if (req.getSections() != null) {
             inspection.setSections(toJson(req.getSections()));
         }
+        if (req.getVehicleBodyCondition() != null) {
+            inspection.setVehicleBodyCondition(toJson(req.getVehicleBodyCondition()));
+        }
         if (req.getCustomerRequests() != null) inspection.setCustomerRequests(req.getCustomerRequests());
         if (req.getGarageRecommendations() != null) inspection.setGarageRecommendations(req.getGarageRecommendations());
         if (req.getReferenceNumber() != null) inspection.setReferenceNumber(req.getReferenceNumber());
@@ -356,6 +360,9 @@ public class InspectionService {
         verifyDraftOwnership(principal, id);
         if (req.getSections() != null) {
             inspection.setSections(toJson(req.getSections()));
+        }
+        if (req.getVehicleBodyCondition() != null) {
+            inspection.setVehicleBodyCondition(toJson(req.getVehicleBodyCondition()));
         }
         inspection.setCustomerRequests(req.getCustomerRequests());
         inspection.setGarageRecommendations(req.getGarageRecommendations());
@@ -457,9 +464,12 @@ public class InspectionService {
 
     private InspectionDraftResponse toDraftResponse(Inspection i) {
         Map<String, Map<String, Object>> sections = null;
+        Map<String, Object> vehicleBodyCondition = null;
         try {
             if (i.getSections() != null)
                 sections = objectMapper.readValue(i.getSections(), Map.class);
+            if (i.getVehicleBodyCondition() != null)
+                vehicleBodyCondition = objectMapper.readValue(i.getVehicleBodyCondition(), Map.class);
         } catch (JsonProcessingException e) {
             log.error("Failed to deserialize sections JSON for inspection {}", i.getId(), e);
             throw new BadRequestException("Stored sections payload is corrupt");
@@ -476,6 +486,7 @@ public class InspectionService {
                 .tag(i.getTag())
                 .isDraft(i.getIsDraft())
                 .sections(sections)
+                .vehicleBodyCondition(vehicleBodyCondition)
                 .build();
     }
 }

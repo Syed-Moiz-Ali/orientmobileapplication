@@ -4,11 +4,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
-final connectivityStatusProvider = StreamProvider<ConnectivityResult>((ref) {
-  return Connectivity().onConnectivityChanged.map((results) {
-    return results.isNotEmpty ? results.first : ConnectivityResult.none;
-  });
+final connectivityStatusProvider = StreamProvider<ConnectivityResult>((
+  ref,
+) async* {
+  final connectivity = Connectivity();
+  yield _effectiveConnectivity(await connectivity.checkConnectivity());
+  await for (final results in connectivity.onConnectivityChanged) {
+    yield _effectiveConnectivity(results);
+  }
 });
+
+ConnectivityResult _effectiveConnectivity(List<ConnectivityResult> results) {
+  return results.firstWhere(
+    (result) => result != ConnectivityResult.none,
+    orElse: () => ConnectivityResult.none,
+  );
+}
 
 class OfflineBanner extends ConsumerWidget {
   const OfflineBanner({super.key});
@@ -16,7 +27,7 @@ class OfflineBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(connectivityStatusProvider).value;
-    if (status != null && status != ConnectivityResult.none) {
+    if (status == null || status != ConnectivityResult.none) {
       return const SizedBox.shrink();
     }
 

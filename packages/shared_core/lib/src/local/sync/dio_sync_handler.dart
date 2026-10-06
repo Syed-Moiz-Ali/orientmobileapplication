@@ -64,6 +64,28 @@ class DioSyncHandler extends SyncHandler {
           'Conflict on ${operation.entityType} ${operation.entityId}',
         );
       }
+      // Some production nodes can temporarily run the previous intake DTO.
+      // Its nested classes reject newly added fields as an unreadable body.
+      // A 400 is safe to retry because deserialization failed before creation.
+      if (operation.entityType == 'vehicle_customer' &&
+          e.response?.statusCode == 400 &&
+          _isMalformedBody(e.response?.data)) {
+        final response = await _dio.request(
+          url,
+          data: _legacyVehicleCustomerIntakePayload(operation.payload),
+          options: Options(
+            method: method,
+            headers: {'Idempotency-Key': operation.id},
+          ),
+        );
+        if (response.statusCode != null &&
+            response.statusCode! >= 200 &&
+            response.statusCode! < 300) {
+          await _cacheIntakeResponse(operation, response.data);
+          await _uploadIntakeMedia(response.data, operation.payload);
+          return true;
+        }
+      }
       rethrow;
     }
   }
@@ -490,76 +512,190 @@ class DioSyncHandler extends SyncHandler {
   }
 }
 
+bool _isMalformedBody(dynamic responseBody) {
+  if (responseBody is Map) {
+    return responseBody['message']?.toString().toLowerCase().contains(
+          'malformed json',
+        ) ??
+        false;
+  }
+  return false;
+}
+
+/// Payload understood by production nodes from before the expanded vehicle
+/// and job-description DTO was deployed. The full record remains in Hive and
+/// customerRequests still carries the advisor's requested work.
+Map<String, dynamic> _legacyVehicleCustomerIntakePayload(
+  Map<String, dynamic> payload,
+) {
+  final modelYear = _intValue(payload['modelYear']);
+  final cylinders = _intValue(payload['cylinders']);
+  final fuelLevel = _intValue(payload['fuelLevel']);
+  final customerConsent = _boolValue(payload['customerConsent']);
+  return <String, dynamic>{
+    'type': 'vehicle_customer',
+    if (_stringValue(payload['status']) case final value?) 'status': value,
+    if (_stringValue(payload['bookingId']) case final value?)
+      'bookingId': value,
+    'customer': <String, dynamic>{
+      ..._stringFields(payload, const [
+        'customerName',
+        'phoneNumber',
+        'email',
+        'customerGroup',
+      ]),
+    },
+    'vehicle': <String, dynamic>{
+      ..._stringFields(payload, const [
+        'registrationNumber',
+        'vin',
+        'make',
+        'model',
+      ]),
+      if (modelYear != null) 'modelYear': modelYear,
+      if (cylinders != null) 'cylinders': cylinders,
+      ..._stringFields(payload, const [
+        'engineCapacity',
+        'vehicleColor',
+        'engineNumber',
+        'insuranceProvider',
+        'insuranceTaxNumber',
+        'insuranceAddress',
+        'policyNumber',
+        'insuranceExpiryDate',
+      ]),
+    },
+    'additional': <String, dynamic>{
+      ..._stringFields(payload, const ['odometerReading']),
+      if (fuelLevel != null) 'fuelLevel': fuelLevel,
+      if (customerConsent != null) 'customerConsent': customerConsent,
+    },
+    if (_stringValue(payload['jobDescription']) case final value?)
+      'customerRequests': value,
+  };
+}
+
 /// Converts the flat advisor intake form payload into the backend
 /// `InspectionRequest` shape. Shared by the offline sync handler and the
 /// online intake call so both reach the backend identically.
 Map<String, dynamic> buildVehicleCustomerIntakePayload(
   Map<String, dynamic> payload,
 ) {
+  final modelYear = _intValue(payload['modelYear']);
+  final cylinders = _intValue(payload['cylinders']);
+  final fuelLevel = _intValue(payload['fuelLevel']);
+  final isB2B = _boolValue(payload['isB2B']);
+  final customerConsent = _boolValue(payload['customerConsent']);
+  final jobDescriptions = _jobDescriptions(payload['jobDescriptions']);
   return <String, dynamic>{
     'type': 'vehicle_customer',
-    if (payload['status'] != null) 'status': payload['status'],
-    if (payload['bookingId'] != null) 'bookingId': payload['bookingId'],
+    if (_stringValue(payload['status']) case final value?) 'status': value,
+    if (_stringValue(payload['bookingId']) case final value?)
+      'bookingId': value,
     'customer': <String, dynamic>{
-      if (payload['isB2B'] != null) 'isB2B': payload['isB2B'],
-      if (payload['customerName'] != null)
-        'customerName': payload['customerName'],
-      if (payload['phoneNumber'] != null) 'phoneNumber': payload['phoneNumber'],
-      if (payload['email'] != null) 'email': payload['email'],
-      if (payload['customerGroup'] != null)
-        'customerGroup': payload['customerGroup'],
-      if (payload['gender'] != null) 'gender': payload['gender'],
-      if (payload['address'] != null) 'address': payload['address'],
-      if (payload['taxNumber'] != null) 'taxNumber': payload['taxNumber'],
-      if (payload['source'] != null) 'source': payload['source'],
+      if (isB2B != null) 'isB2B': isB2B,
+      ..._stringFields(payload, const [
+        'customerName',
+        'phoneNumber',
+        'email',
+        'customerGroup',
+        'gender',
+        'address',
+        'taxNumber',
+        'source',
+      ]),
     },
     'vehicle': <String, dynamic>{
-      if (payload['emirate'] != null) 'emirate': payload['emirate'],
-      if (payload['plateCode'] != null) 'plateCode': payload['plateCode'],
-      if (payload['plateNumber'] != null) 'plateNumber': payload['plateNumber'],
-      if (payload['registrationNumber'] != null)
-        'registrationNumber': payload['registrationNumber'],
-      if (payload['vin'] != null) 'vin': payload['vin'],
-      if (payload['make'] != null) 'make': payload['make'],
-      if (payload['model'] != null) 'model': payload['model'],
-      if (payload['modelYear'] != null) 'modelYear': payload['modelYear'],
-      if (payload['cylinders'] != null) 'cylinders': payload['cylinders'],
-      if (payload['engineCapacity'] != null)
-        'engineCapacity': payload['engineCapacity'],
-      if (payload['vehicleColor'] != null)
-        'vehicleColor': payload['vehicleColor'],
-      if (payload['fuelType'] != null) 'fuelType': payload['fuelType'],
-      if (payload['engineNumber'] != null)
-        'engineNumber': payload['engineNumber'],
-      if (payload['insuranceProvider'] != null)
-        'insuranceProvider': payload['insuranceProvider'],
-      if (payload['insuranceTaxNumber'] != null)
-        'insuranceTaxNumber': payload['insuranceTaxNumber'],
-      if (payload['insuranceAddress'] != null)
-        'insuranceAddress': payload['insuranceAddress'],
-      if (payload['policyNumber'] != null)
-        'policyNumber': payload['policyNumber'],
-      if (payload['lpoNumber'] != null) 'lpoNumber': payload['lpoNumber'],
-      if (payload['accidentNumber'] != null)
-        'accidentNumber': payload['accidentNumber'],
-      if (payload['insuranceExpiryDate'] != null)
-        'insuranceExpiryDate': payload['insuranceExpiryDate'],
+      ..._stringFields(payload, const [
+        'emirate',
+        'plateCode',
+        'plateNumber',
+        'registrationNumber',
+        'vin',
+        'make',
+        'model',
+      ]),
+      if (modelYear != null) 'modelYear': modelYear,
+      if (cylinders != null) 'cylinders': cylinders,
+      ..._stringFields(payload, const [
+        'engineCapacity',
+        'vehicleColor',
+        'fuelType',
+        'engineNumber',
+        'insuranceProvider',
+        'insuranceTaxNumber',
+        'insuranceAddress',
+        'policyNumber',
+        'lpoNumber',
+        'accidentNumber',
+        'insuranceExpiryDate',
+      ]),
     },
     'additional': <String, dynamic>{
-      if (payload['odometerReading'] != null)
-        'odometerReading': payload['odometerReading'],
-      if (payload['fuelLevel'] != null) 'fuelLevel': payload['fuelLevel'],
-      if (payload['customerConsent'] != null)
-        'customerConsent': payload['customerConsent'],
-      if (payload['jobCategory'] != null) 'jobCategory': payload['jobCategory'],
-      if (payload['markupType'] != null) 'markupType': payload['markupType'],
-      if (payload['orderType'] != null) 'orderType': payload['orderType'],
-      if (payload['jobDescription'] != null)
-        'jobDescription': payload['jobDescription'],
-      if (payload['jobDescriptions'] != null)
-        'jobDescriptions': payload['jobDescriptions'],
+      ..._stringFields(payload, const [
+        'odometerReading',
+        'jobCategory',
+        'markupType',
+        'orderType',
+        'jobDescription',
+      ]),
+      if (fuelLevel != null) 'fuelLevel': fuelLevel,
+      if (customerConsent != null) 'customerConsent': customerConsent,
+      if (jobDescriptions.isNotEmpty) 'jobDescriptions': jobDescriptions,
     },
-    if (payload['jobDescription'] != null)
-      'customerRequests': payload['jobDescription'],
+    if (_stringValue(payload['jobDescription']) case final value?)
+      'customerRequests': value,
   };
+}
+
+Map<String, String> _stringFields(
+  Map<String, dynamic> payload,
+  List<String> keys,
+) {
+  return <String, String>{
+    for (final key in keys)
+      if (_stringValue(payload[key]) case final value?) key: value,
+  };
+}
+
+String? _stringValue(Object? value) {
+  if (value == null) return null;
+  final result = value.toString().trim();
+  return result.isEmpty ? null : result;
+}
+
+bool? _boolValue(Object? value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  return switch (value?.toString().trim().toLowerCase()) {
+    'true' || '1' || 'yes' => true,
+    'false' || '0' || 'no' => false,
+    _ => null,
+  };
+}
+
+List<Map<String, String>> _jobDescriptions(Object? value) {
+  if (value is! List) return const [];
+  return value
+      .whereType<Map>()
+      .map((raw) {
+        final item = Map<Object?, Object?>.from(raw);
+        return <String, String>{
+          for (final key in const [
+            'id',
+            'description',
+            'priority',
+            'mediaItemId',
+          ])
+            if (_stringValue(item[key]) case final fieldValue?) key: fieldValue,
+        };
+      })
+      .where((item) => item.isNotEmpty)
+      .toList();
+}
+
+int? _intValue(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString().trim() ?? '');
 }

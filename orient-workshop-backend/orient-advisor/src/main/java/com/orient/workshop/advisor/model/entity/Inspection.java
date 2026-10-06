@@ -21,6 +21,7 @@ public class Inspection {
     private String tag;
     private Boolean isDraft;
     private String sections;
+    private String vehicleBodyCondition;
     // V2 added advisor_id for persisted draft ownership — previously drafts
     // were "owned" by an in-memory map that emptied on restart.
     private Long advisorId;

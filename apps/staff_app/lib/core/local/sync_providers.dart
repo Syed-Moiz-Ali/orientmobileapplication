@@ -24,6 +24,52 @@ const kSyncEntityTypes = [
   'job_card_technician',
 ];
 
+/// Restores sync work for advisor intakes that are still local-only. Older
+/// app versions could exhaust their retry count and remove the operation while
+/// leaving the intake safely stored in Hive.
+Future<void> recoverUnsyncedAdvisorIntakes() async {
+  final queue = Hive.box<SyncOperation>('sync_queue');
+  final failed = Hive.box<SyncOperation>('sync_failed');
+  final inspections = Hive.box<dynamic>('inspections');
+  final pendingEntityIds = <String>{
+    ...queue.values.map((operation) => operation.entityId),
+    ...failed.values.map((operation) => operation.entityId),
+  };
+
+  for (final entry in inspections.toMap().entries) {
+    final raw = entry.value;
+    if (raw is! Map || raw['type']?.toString() != 'vehicle_customer') {
+      continue;
+    }
+    final payload = Map<String, dynamic>.from(raw);
+    final entityId = (payload['id'] ?? entry.key).toString();
+    final serverReference =
+        (payload['jobCardRef'] ?? payload['serverJobCardId'] ?? '')
+            .toString()
+            .trim();
+    if (entityId.isEmpty ||
+        serverReference.isNotEmpty ||
+        pendingEntityIds.contains(entityId)) {
+      continue;
+    }
+
+    final operation = SyncOperation(
+      id: entityId,
+      entityType: 'vehicle_customer',
+      entityId: entityId,
+      changeType: ChangeType.create,
+      payload: payload,
+      timestamp:
+          DateTime.tryParse(
+            payload['createdAt']?.toString() ?? '',
+          )?.millisecondsSinceEpoch ??
+          DateTime.now().millisecondsSinceEpoch,
+    );
+    await queue.put(operation.id, operation);
+    pendingEntityIds.add(entityId);
+  }
+}
+
 final syncEngineProvider = Provider<SyncEngine>((ref) {
   final dio = ref.read(dioClientProvider);
   _discardDeprecatedJobCompleteOps();

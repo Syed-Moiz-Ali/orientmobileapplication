@@ -19,6 +19,7 @@ void main() async {
   AppErrorHandler.init(logger);
 
   await HiveRegistry.initHive();
+  await recoverUnsyncedAdvisorIntakes();
   await PushNotificationService.instance.initialize();
 
   runApp(
@@ -50,10 +51,16 @@ class _StaffAppState extends ConsumerState<StaffApp> {
   void initState() {
     super.initState();
     // Retry offline media uploads whenever connectivity returns.
-    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((
+      results,
+    ) async {
       final online = results.any((r) => r != ConnectivityResult.none);
       if (online) {
-        flushPendingMediaUploads(ref);
+        final engine = ref.read(syncEngineProvider);
+        await engine.syncAll();
+        await engine.retryFailed();
+        await flushPendingMediaUploads(ref);
+        ref.read(advisorRefreshProvider.notifier).state++;
       }
     });
   }

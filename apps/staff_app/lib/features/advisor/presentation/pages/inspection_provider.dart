@@ -6,6 +6,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
+import 'package:staff_app/features/advisor/inspection_pages/data/models/vehicle_damage_map_model.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 
@@ -30,6 +31,7 @@ class InspectionState {
   final String tag;
   final String jobCardId;
   final String bookingId;
+  final Map<String, VehiclePartInspection> vehiclePartInspections;
 
   const InspectionState({
     this.sections = kInspectionSections,
@@ -52,6 +54,7 @@ class InspectionState {
     this.tag = '',
     this.jobCardId = '',
     this.bookingId = '',
+    this.vehiclePartInspections = const {},
   });
 
   InspectionState copyWith({
@@ -75,6 +78,7 @@ class InspectionState {
     String? tag,
     String? jobCardId,
     String? bookingId,
+    Map<String, VehiclePartInspection>? vehiclePartInspections,
   }) {
     return InspectionState(
       sections: sections ?? this.sections,
@@ -98,6 +102,8 @@ class InspectionState {
       tag: tag ?? this.tag,
       jobCardId: jobCardId ?? this.jobCardId,
       bookingId: bookingId ?? this.bookingId,
+      vehiclePartInspections:
+          vehiclePartInspections ?? this.vehiclePartInspections,
     );
   }
 
@@ -119,6 +125,7 @@ class InspectionState {
     'tag': tag,
     'jobCardId': jobCardId,
     'bookingId': bookingId,
+    'vehicleBodyCondition': vehicleBodyConditionPayload,
   };
 
   Map<String, dynamic> toLiveRequestMap() => {
@@ -134,6 +141,16 @@ class InspectionState {
     if (tag.isNotEmpty) 'tag': tag,
     if (jobCardId.isNotEmpty) 'jobCardId': jobCardId,
     if (bookingId.isNotEmpty) 'bookingId': bookingId,
+    if (vehiclePartInspections.isNotEmpty)
+      'vehicleBodyCondition': vehicleBodyConditionPayload,
+  };
+
+  Map<String, dynamic> get vehicleBodyConditionPayload => {
+    'mapId': 'advisor_car_top',
+    'view': 'top',
+    'parts': vehiclePartInspections.map(
+      (partId, inspection) => MapEntry(partId, inspection.toJson()),
+    ),
   };
 
   Map<String, dynamic> _sectionsPayload() {
@@ -158,6 +175,12 @@ class InspectionState {
     final serviceLinesRaw = map['serviceLines'] as List<dynamic>? ?? [];
     final partLinesRaw = map['partLines'] as List<dynamic>? ?? [];
     final templateSectionsRaw = map['templateSections'] as List<dynamic>? ?? [];
+    final bodyRaw = map['vehicleBodyCondition'] is Map
+        ? _deepCastMap(map['vehicleBodyCondition'] as Map)
+        : const <String, dynamic>{};
+    final bodyParts = bodyRaw['parts'] is Map
+        ? _deepCastMap(bodyRaw['parts'] as Map)
+        : const <String, dynamic>{};
 
     return InspectionState(
       sections: templateSectionsRaw.isEmpty
@@ -209,6 +232,14 @@ class InspectionState {
       tag: map['tag']?.toString() ?? '',
       jobCardId: map['jobCardId']?.toString() ?? '',
       bookingId: map['bookingId']?.toString() ?? '',
+      vehiclePartInspections: bodyParts.map(
+        (partId, value) => MapEntry(
+          partId,
+          value is Map
+              ? VehiclePartInspection.fromJson(_deepCastMap(value))
+              : VehiclePartInspection(partId: partId),
+        ),
+      ),
     );
   }
 
@@ -406,6 +437,80 @@ class InspectionNotifier extends Notifier<InspectionState> {
 
   void setMedia(String itemId, ItemMedia media) {
     state = state.copyWith(media: {...state.media, itemId: media});
+    _persistDraft();
+  }
+
+  void setVehiclePartCondition(String partId, VehiclePartCondition condition) {
+    final current =
+        state.vehiclePartInspections[partId] ??
+        VehiclePartInspection(partId: partId);
+    state = state.copyWith(
+      vehiclePartInspections: {
+        ...state.vehiclePartInspections,
+        partId: current.copyWith(condition: condition),
+      },
+    );
+    _persistDraft();
+  }
+
+  void addVehicleDamageFinding(VehicleDamageFinding finding) {
+    final current =
+        state.vehiclePartInspections[finding.partId] ??
+        VehiclePartInspection(partId: finding.partId);
+    state = state.copyWith(
+      vehiclePartInspections: {
+        ...state.vehiclePartInspections,
+        finding.partId: current.copyWith(
+          findings: [...current.findings, finding],
+        ),
+      },
+      media: finding.photos.isEmpty
+          ? state.media
+          : {
+              ...state.media,
+              'vehicle-damage:${finding.id}': ItemMedia(
+                photoPaths: finding.photos,
+              ),
+            },
+    );
+    _persistDraft();
+  }
+
+  void updateVehicleDamageFinding(VehicleDamageFinding finding) {
+    final current = state.vehiclePartInspections[finding.partId];
+    if (current == null) return;
+    final findings = current.findings
+        .map((item) => item.id == finding.id ? finding : item)
+        .toList();
+    state = state.copyWith(
+      vehiclePartInspections: {
+        ...state.vehiclePartInspections,
+        finding.partId: current.copyWith(findings: findings),
+      },
+      media: {
+        ...state.media,
+        'vehicle-damage:${finding.id}': ItemMedia(photoPaths: finding.photos),
+      },
+    );
+    _persistDraft();
+  }
+
+  void removeVehicleDamageFinding(String partId, String findingId) {
+    final current = state.vehiclePartInspections[partId];
+    if (current == null) return;
+    final media = Map<String, ItemMedia>.from(state.media)
+      ..remove('vehicle-damage:$findingId');
+    state = state.copyWith(
+      vehiclePartInspections: {
+        ...state.vehiclePartInspections,
+        partId: current.copyWith(
+          findings: current.findings
+              .where((item) => item.id != findingId)
+              .toList(),
+        ),
+      },
+      media: media,
+    );
     _persistDraft();
   }
 

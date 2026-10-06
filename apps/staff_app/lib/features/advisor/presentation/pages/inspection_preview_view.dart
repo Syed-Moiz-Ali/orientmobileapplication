@@ -6,9 +6,10 @@ import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
+import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
 import 'inspection_provider.dart';
 
-class InspectionPreviewView extends ConsumerWidget {
+class InspectionPreviewView extends ConsumerStatefulWidget {
   final VoidCallback onBack;
   final String jobId;
 
@@ -19,7 +20,15 @@ class InspectionPreviewView extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InspectionPreviewView> createState() =>
+      _InspectionPreviewViewState();
+}
+
+class _InspectionPreviewViewState extends ConsumerState<InspectionPreviewView> {
+  bool _isSubmitting = false;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -34,7 +43,7 @@ class InspectionPreviewView extends ConsumerWidget {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: onBack,
+          onPressed: _isSubmitting ? null : widget.onBack,
         ),
         title: Text(
           'Inspection Review',
@@ -52,6 +61,20 @@ class InspectionPreviewView extends ConsumerWidget {
               children: [
                 _summaryCard(context, state),
                 const SizedBox(height: 16),
+                if (state.vehiclePartInspections.isNotEmpty) ...[
+                  Text(
+                    'VEHICLE BODY CONDITION',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const SizedBox(
+                    height: 680,
+                    child: VehicleBodyConditionPanel(readOnly: true),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 if (hasRatings) ...[
                   ...state.sections.expand(
                     (sec) => sec.items
@@ -74,7 +97,7 @@ class InspectionPreviewView extends ConsumerWidget {
               ],
             ),
           ),
-          _footer(context, ref, state, hasRatings),
+          _footer(context, state, hasRatings),
         ],
       ),
     );
@@ -159,25 +182,96 @@ class InspectionPreviewView extends ConsumerWidget {
     );
   }
 
-  Widget _footer(
-    BuildContext context,
-    WidgetRef ref,
-    InspectionState state,
-    bool hasRatings,
-  ) {
+  Widget _footer(BuildContext context, InspectionState state, bool hasRatings) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: colorScheme.surface),
-      child: ElevatedButton(
-        onPressed: () => _saveAndUpdate(context, ref),
-        child: const Text('Confirm & Save Inspection'),
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+          boxShadow: AppDimensions.shadowCard,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              hasRatings
+                  ? '${state.statuses.length} checkpoints ready to submit'
+                  : 'Rate at least one checkpoint before submitting',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isSubmitting ? null : widget.onBack,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Edit Inspection'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: !hasRatings || _isSubmitting
+                        ? null
+                        : _confirmAndSave,
+                    icon: _isSubmitting
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_upload_outlined),
+                    label: Text(
+                      _isSubmitting ? 'Submitting…' : 'Submit Inspection',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Future<void> _saveAndUpdate(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmAndSave() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.assignment_turned_in_outlined),
+        title: const Text('Submit this inspection?'),
+        content: const Text(
+          'Please confirm that the checkpoint ratings, body condition and attachments are correct.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Review Again'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _isSubmitting = true);
+    await _saveAndUpdate();
+    if (mounted) setState(() => _isSubmitting = false);
+  }
+
+  Future<void> _saveAndUpdate() async {
     final notifier = ref.read(inspectionProvider.notifier);
     final currentJobCardId = ref.read(inspectionProvider).jobCardId;
     final result = await notifier.submitInspection();
@@ -210,7 +304,7 @@ class InspectionPreviewView extends ConsumerWidget {
           // Offline: the inspection is queued and will sync later; we cannot
           // refresh the job card right now.
         }
-        if (!context.mounted) return;
+        if (!mounted) return;
         if (target != null) {
           context.pushReplacement(AppRoutes.advisorJobDetail, extra: target);
         } else {
@@ -221,7 +315,7 @@ class InspectionPreviewView extends ConsumerWidget {
               ),
             ),
           );
-          onBack();
+          widget.onBack();
         }
       },
       failure: (error) async {

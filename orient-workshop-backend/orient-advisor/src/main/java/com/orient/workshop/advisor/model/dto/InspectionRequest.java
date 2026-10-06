@@ -30,6 +30,7 @@ public class InspectionRequest {
     private Boolean notifyOwnerSmsEmail;
     private String tag;
     private Map<String, Map<String, Object>> sections;
+    private Map<String, Object> vehicleBodyCondition;
 
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class CustomerInfo {

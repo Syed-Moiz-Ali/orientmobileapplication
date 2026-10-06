@@ -338,6 +338,14 @@ public class SyncApplicationService {
                 throw new BadRequestException("Invalid inspection sections payload");
             }
         }
+        Object vehicleBodyCondition = body.get("vehicleBodyCondition");
+        if (vehicleBodyCondition != null) {
+            try {
+                inspection.setVehicleBodyCondition(objectMapper.writeValueAsString(vehicleBodyCondition));
+            } catch (Exception e) {
+                throw new BadRequestException("Invalid vehicle body condition payload");
+            }
+        }
         copyString(body, "referenceNumber", inspection::setReferenceNumber);
         copyString(body, "placeOfSupply", inspection::setPlaceOfSupply);
         copyString(body, "customerRequests", inspection::setCustomerRequests);

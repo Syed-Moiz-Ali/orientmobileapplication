@@ -69,7 +69,9 @@ class VehicleMapDefinition {
     final ordered = [...parts]
       ..sort((a, b) => b.hitTestPriority.compareTo(a.hitTestPriority));
     for (final part in ordered) {
-      if (part.path.contains(mapPoint)) return part;
+      if (part.path.contains(mapPoint)) {
+        return part;
+      }
     }
     return null;
   }
@@ -80,6 +82,7 @@ class VehicleDamageFinding {
   final String partId;
   final VehicleDamageType damageType;
   final VehicleDamageSeverity severity;
+  final String damageLocation;
   final String note;
   final List<String> photos;
   final VehicleRecommendedAction recommendedAction;
@@ -91,6 +94,7 @@ class VehicleDamageFinding {
     required this.partId,
     required this.damageType,
     required this.severity,
+    this.damageLocation = '',
     this.note = '',
     this.photos = const [],
     this.recommendedAction = VehicleRecommendedAction.noAction,
@@ -103,6 +107,7 @@ class VehicleDamageFinding {
     'partId': partId,
     'damageType': damageType.name,
     'severity': severity.name,
+    'damageLocation': damageLocation,
     'note': note,
     'photos': photos,
     'recommendedAction': recommendedAction.name,
@@ -129,6 +134,7 @@ class VehicleDamageFinding {
         json['severity'],
         VehicleDamageSeverity.minor,
       ),
+      damageLocation: json['damageLocation']?.toString() ?? '',
       note: json['note']?.toString() ?? '',
       photos: (json['photos'] as List? ?? const [])
           .map((item) => item.toString())
@@ -159,7 +165,8 @@ class VehiclePartInspection {
     if (findings.any((item) => item.severity == VehicleDamageSeverity.major)) {
       return VehiclePartCondition.major;
     }
-    if (findings.isNotEmpty && condition.index < VehiclePartCondition.minor.index) {
+    if (findings.isNotEmpty &&
+        condition.index < VehiclePartCondition.minor.index) {
       return VehiclePartCondition.minor;
     }
     return condition;
@@ -199,8 +206,7 @@ class VehiclePartInspection {
 }
 
 class VehicleMapLoader {
-  static const assetPath =
-      'assets/vehicle_maps/advisor_car_top_mapping.json';
+  static const assetPath = 'assets/vehicle_maps/advisor_car_top_mapping.json';
   static Future<VehicleMapDefinition>? _cached;
 
   static Future<VehicleMapDefinition> load() => _cached ??= _load();
@@ -211,7 +217,9 @@ class VehicleMapLoader {
     final json = Map<String, dynamic>.from(raw);
     final box = Map<String, dynamic>.from(json['viewBox'] as Map);
     final partsJson = json['parts'];
-    if (partsJson is! List) throw const FormatException('Map parts are missing');
+    if (partsJson is! List) {
+      throw const FormatException('Map parts are missing');
+    }
     final parts = <VehicleMapPart>[];
     for (var index = 0; index < partsJson.length; index++) {
       final item = Map<String, dynamic>.from(partsJson[index] as Map);

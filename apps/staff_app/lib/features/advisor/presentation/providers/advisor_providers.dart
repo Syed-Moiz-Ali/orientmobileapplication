@@ -55,25 +55,96 @@ final advisorRecentJobCardsProvider = FutureProvider<List<JobCardEntity>>((
 ) async {
   ref.watch(advisorRefreshProvider);
   final remote = ref.read(advisorRemoteDataSourceProvider);
-  final page = await remote.getJobCards(page: 1, size: 50);
-  return page.content.map((job) {
-    return JobCardEntity(
-      id: job.id,
-      dbId: job.dbId,
-      customerName: job.customerName,
-      vehicleInfo: job.vehicleInfo,
-      time: job.time,
-      createdDate: job.createdDate,
-      lastUpdated: job.lastUpdated,
-      status: JobCardStatus.values.firstWhere(
-        (status) => status.name == job.status,
-        orElse: () => JobCardStatus.inProgress,
-      ),
-      technician: job.technician,
-      odometer: job.odometer,
-      fuelLevel: job.fuelLevel,
+  final serverCards = <JobCardEntity>[];
+  try {
+    final page = await remote.getJobCards(page: 1, size: 50);
+    serverCards.addAll(
+      page.content.map((job) {
+        return JobCardEntity(
+          id: job.id,
+          dbId: job.dbId,
+          customerName: job.customerName,
+          vehicleInfo: job.vehicleInfo,
+          time: job.time,
+          createdDate: job.createdDate,
+          lastUpdated: job.lastUpdated,
+          status: JobCardStatus.values.firstWhere(
+            (status) => status.name == job.status,
+            orElse: () => JobCardStatus.inProgress,
+          ),
+          technician: job.technician,
+          odometer: job.odometer,
+          fuelLevel: job.fuelLevel,
+        );
+      }),
     );
-  }).toList();
+  } catch (error, stackTrace) {
+    ref
+        .read(loggerProvider)
+        .w(
+          'Using locally saved job cards because server loading failed',
+          error: error,
+          stackTrace: stackTrace,
+        );
+  }
+
+  // Intake is deliberately local-first. Keep a newly created card visible
+  // while its queued create request is syncing, then de-duplicate it against
+  // the server-assigned reference once the backend returns the real card.
+  final knownIds = serverCards.map((card) => card.id).toSet();
+  final knownDbIds = serverCards
+      .where((card) => card.dbId > 0)
+      .map((card) => card.dbId.toString())
+      .toSet();
+  final box = Hive.box<dynamic>('inspections');
+  final localCards = <JobCardEntity>[];
+  for (final entry in box.toMap().entries) {
+    final raw = entry.value;
+    if (raw is! Map || raw['type']?.toString() != 'vehicle_customer') {
+      continue;
+    }
+    final map = Map<String, dynamic>.from(raw);
+    final serverRef = map['jobCardRef']?.toString() ?? '';
+    final serverId = map['serverJobCardId']?.toString() ?? '';
+    if ((serverRef.isNotEmpty && knownIds.contains(serverRef)) ||
+        (serverId.isNotEmpty && knownDbIds.contains(serverId))) {
+      continue;
+    }
+    final localId = entry.key.toString();
+    final displayId = serverRef.isNotEmpty ? serverRef : localId;
+    final make = map['make']?.toString().trim() ?? '';
+    final model = map['model']?.toString().trim() ?? '';
+    final registration = map['registrationNumber']?.toString().trim() ?? '';
+    final vehicle = [
+      [make, model].where((value) => value.isNotEmpty).join(' '),
+      registration,
+    ].where((value) => value.isNotEmpty).join(' · ');
+    final statusName = map['status']?.toString() ?? 'inProgress';
+    localCards.add(
+      JobCardEntity(
+        id: displayId,
+        dbId: int.tryParse(serverId) ?? 0,
+        customerName: map['customerName']?.toString().trim().isNotEmpty == true
+            ? map['customerName'].toString().trim()
+            : 'New customer',
+        vehicleInfo: vehicle.isNotEmpty ? vehicle : 'Vehicle intake',
+        time: 'Pending sync',
+        createdDate: map['createdDate']?.toString() ?? '',
+        lastUpdated:
+            map['lastUpdated']?.toString() ??
+            map['createdDate']?.toString() ??
+            '',
+        status: JobCardStatus.values.firstWhere(
+          (status) => status.name == statusName,
+          orElse: () => JobCardStatus.inProgress,
+        ),
+        technician: map['technician']?.toString() ?? '',
+        odometer: int.tryParse(map['odometerReading']?.toString() ?? ''),
+        fuelLevel: map['fuelLevel']?.toString() ?? '',
+      ),
+    );
+  }
+  return [...localCards.reversed, ...serverCards];
 });
 
 final advisorPendingApprovalsProvider =
