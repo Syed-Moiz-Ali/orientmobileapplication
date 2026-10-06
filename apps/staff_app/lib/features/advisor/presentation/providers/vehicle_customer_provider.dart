@@ -132,17 +132,31 @@ const List<String> kJobPriorities = [
 class JobDescriptionEntry {
   final String description;
   final String priority;
+  final List<String> photoPaths;
+  final List<String> videoPaths;
+  final String audioPath;
 
   const JobDescriptionEntry({
     this.description = '',
     this.priority = kDefaultJobPriority,
+    this.photoPaths = const [],
+    this.videoPaths = const [],
+    this.audioPath = '',
   });
 
-  JobDescriptionEntry copyWith({String? description, String? priority}) =>
-      JobDescriptionEntry(
-        description: description ?? this.description,
-        priority: priority ?? this.priority,
-      );
+  JobDescriptionEntry copyWith({
+    String? description,
+    String? priority,
+    List<String>? photoPaths,
+    List<String>? videoPaths,
+    String? audioPath,
+  }) => JobDescriptionEntry(
+    description: description ?? this.description,
+    priority: priority ?? this.priority,
+    photoPaths: photoPaths ?? this.photoPaths,
+    videoPaths: videoPaths ?? this.videoPaths,
+    audioPath: audioPath ?? this.audioPath,
+  );
 
   Map<String, dynamic> toJson() => {
     'description': description,
@@ -153,6 +167,13 @@ class JobDescriptionEntry {
       JobDescriptionEntry(
         description: json['description']?.toString() ?? '',
         priority: json['priority']?.toString() ?? kDefaultJobPriority,
+        photoPaths: (json['photoPaths'] as List? ?? const [])
+            .map((e) => e.toString())
+            .toList(),
+        videoPaths: (json['videoPaths'] as List? ?? const [])
+            .map((e) => e.toString())
+            .toList(),
+        audioPath: json['audioPath']?.toString() ?? '',
       );
 }
 
@@ -461,6 +482,62 @@ class VehicleCustomerFormNotifier extends Notifier<VehicleCustomerFormState> {
       jobDescriptions: rows,
       jobDescription: _composeDescription(rows),
     );
+  }
+
+  void addJobDescriptionPhotos(int index, List<String> paths) {
+    if (index < 0 || index >= state.jobDescriptions.length || paths.isEmpty) {
+      return;
+    }
+    final row = state.jobDescriptions[index];
+    _replaceJobDescriptionRow(
+      index,
+      row.copyWith(photoPaths: [...row.photoPaths, ...paths]),
+    );
+  }
+
+  void addJobDescriptionVideo(int index, String path) {
+    if (index < 0 || index >= state.jobDescriptions.length || path.isEmpty) {
+      return;
+    }
+    final row = state.jobDescriptions[index];
+    _replaceJobDescriptionRow(
+      index,
+      row.copyWith(videoPaths: [...row.videoPaths, path]),
+    );
+  }
+
+  void setJobDescriptionAudio(int index, String path) {
+    if (index < 0 || index >= state.jobDescriptions.length) return;
+    _replaceJobDescriptionRow(
+      index,
+      state.jobDescriptions[index].copyWith(audioPath: path),
+    );
+  }
+
+  void removeJobDescriptionMedia(int index, String type, int mediaIndex) {
+    if (index < 0 || index >= state.jobDescriptions.length) return;
+    final row = state.jobDescriptions[index];
+    if (type == 'audio') {
+      _replaceJobDescriptionRow(index, row.copyWith(audioPath: ''));
+      return;
+    }
+    final paths = List<String>.from(
+      type == 'photo' ? row.photoPaths : row.videoPaths,
+    );
+    if (mediaIndex < 0 || mediaIndex >= paths.length) return;
+    paths.removeAt(mediaIndex);
+    _replaceJobDescriptionRow(
+      index,
+      type == 'photo'
+          ? row.copyWith(photoPaths: paths)
+          : row.copyWith(videoPaths: paths),
+    );
+  }
+
+  void _replaceJobDescriptionRow(int index, JobDescriptionEntry row) {
+    final rows = List<JobDescriptionEntry>.from(state.jobDescriptions);
+    rows[index] = row;
+    state = state.copyWith(jobDescriptions: rows);
   }
 
   void setInsuranceProvider(String? v) =>

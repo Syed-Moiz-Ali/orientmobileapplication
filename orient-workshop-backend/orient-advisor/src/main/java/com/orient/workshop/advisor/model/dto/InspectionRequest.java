@@ -90,5 +90,7 @@ public class InspectionRequest {
     public static class JobDescriptionItem {
         private String description;
         private String priority;
+        /** Stable media_assets.item_id used for this row's photos/video/audio. */
+        private String mediaItemId;
     }
 }

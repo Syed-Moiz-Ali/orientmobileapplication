@@ -3,9 +3,29 @@ import 'package:staff_app/features/common/presentation/providers/staff_attendanc
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/features/advisor/presentation/providers/vehicle_customer_provider.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 
 void main() {
+  group('JobDescriptionEntry attachments', () {
+    test('keeps local media while backend JSON excludes device paths', () {
+      final entry = const JobDescriptionEntry().copyWith(
+        description: 'Brake noise',
+        photoPaths: ['local/photo.jpg'],
+        videoPaths: ['local/video.mp4'],
+        audioPath: 'local/audio.m4a',
+      );
+
+      expect(entry.photoPaths, ['local/photo.jpg']);
+      expect(entry.videoPaths, ['local/video.mp4']);
+      expect(entry.audioPath, 'local/audio.m4a');
+      expect(entry.toJson(), {
+        'description': 'Brake noise',
+        'priority': kDefaultJobPriority,
+      });
+    });
+  });
+
   group('TechnicianJobEntity', () {
     test('parses from persisted map', () {
       final job = TechnicianJobEntity.fromJson({

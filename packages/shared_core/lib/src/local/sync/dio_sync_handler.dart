@@ -116,6 +116,15 @@ class DioSyncHandler extends SyncHandler {
         uploads.add((path: path.toString(), itemId: 'job-card', type: 'video'));
       }
     }
+    for (final raw in (payload['jobDescriptionMedia'] as List? ?? const [])) {
+      if (raw is! Map) continue;
+      final path = raw['path']?.toString() ?? '';
+      final itemId = raw['itemId']?.toString() ?? '';
+      final type = raw['type']?.toString() ?? '';
+      if (path.isNotEmpty && itemId.isNotEmpty && type.isNotEmpty) {
+        uploads.add((path: path, itemId: itemId, type: type));
+      }
+    }
     final customerSignature =
         payload['customerSignaturePath']?.toString() ?? '';
     if (customerSignature.isNotEmpty) {

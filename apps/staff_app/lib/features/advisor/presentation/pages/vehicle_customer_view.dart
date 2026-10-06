@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -11,7 +12,9 @@ import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:staff_app/core/platform/file_ops.dart';
+import 'package:staff_app/core/services/audio_recorder_service.dart';
 import 'inspection_provider.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/vehicle_customer_provider.dart';
@@ -241,9 +244,45 @@ class _BodyState extends ConsumerState<_Body> {
                       'markupType': formState.markupType,
                       'orderType': formState.orderType,
                       'jobDescription': formState.jobDescription,
-                      'jobDescriptions': formState.jobDescriptions
-                          .map((e) => e.toJson())
-                          .toList(),
+                      'jobDescriptions': [
+                        for (
+                          var i = 0;
+                          i < formState.jobDescriptions.length;
+                          i++
+                        )
+                          {
+                            ...formState.jobDescriptions[i].toJson(),
+                            'mediaItemId': 'job-description-${i + 1}',
+                          },
+                      ],
+                      'jobDescriptionMedia': [
+                        for (
+                          var i = 0;
+                          i < formState.jobDescriptions.length;
+                          i++
+                        ) ...[
+                          for (final path
+                              in formState.jobDescriptions[i].photoPaths)
+                            {
+                              'path': path,
+                              'itemId': 'job-description-${i + 1}',
+                              'type': 'photo',
+                            },
+                          for (final path
+                              in formState.jobDescriptions[i].videoPaths)
+                            {
+                              'path': path,
+                              'itemId': 'job-description-${i + 1}',
+                              'type': 'video',
+                            },
+                          if (formState.jobDescriptions[i].audioPath.isNotEmpty)
+                            {
+                              'path': formState.jobDescriptions[i].audioPath,
+                              'itemId': 'job-description-${i + 1}',
+                              'type': 'audio',
+                            },
+                        ],
+                      ],
                       'insuranceProvider': formState.insuranceProvider,
                       'insuranceTaxNumber': formState.insuranceTaxNumber,
                       'insuranceAddress': formState.insuranceAddress,
@@ -2009,8 +2048,233 @@ class _JobDescriptionTable extends StatelessWidget {
             onChanged: (v) =>
                 notifier.updateJobDescriptionRow(index, priority: v),
           ),
+          const SizedBox(height: 10),
+          Text('Attachments', style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _attachmentButton(
+                Icons.add_photo_alternate_outlined,
+                'Photos',
+                row.photoPaths.length,
+                () => _pickPhotos(context, notifier, index),
+              ),
+              _attachmentButton(
+                Icons.video_call_outlined,
+                'Video',
+                row.videoPaths.length,
+                () => _pickVideo(context, notifier, index),
+              ),
+              _attachmentButton(
+                Icons.mic_none_rounded,
+                'Audio',
+                row.audioPath.isEmpty ? 0 : 1,
+                () => _recordAudio(context, notifier, index, row),
+              ),
+            ],
+          ),
+          if (row.photoPaths.isNotEmpty || row.videoPaths.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _MediaThumbnailGrid(
+              photoPaths: row.photoPaths,
+              videoPaths: row.videoPaths,
+              onRemovePhoto: (i) =>
+                  notifier.removeJobDescriptionMedia(index, 'photo', i),
+              onRemoveVideo: (i) =>
+                  notifier.removeJobDescriptionMedia(index, 'video', i),
+            ),
+          ],
+          if (row.audioPath.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            InputChip(
+              avatar: const Icon(Icons.audiotrack_rounded, size: 18),
+              label: Text(
+                row.audioPath.split(RegExp(r'[/\\]')).last,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onDeleted: () =>
+                  notifier.removeJobDescriptionMedia(index, 'audio', 0),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _attachmentButton(
+    IconData icon,
+    String label,
+    int count,
+    VoidCallback onPressed,
+  ) => OutlinedButton.icon(
+    onPressed: onPressed,
+    icon: Icon(icon, size: 18),
+    label: Text(count == 0 ? label : '$label ($count)'),
+  );
+
+  Future<String> _persistAttachment(XFile file, String prefix) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final dot = file.path.lastIndexOf('.');
+    final extension = dot < 0 ? '' : file.path.substring(dot);
+    return persistMediaFile(
+      file.path,
+      '${dir.path}/${prefix}_${DateTime.now().microsecondsSinceEpoch}$extension',
+    );
+  }
+
+  Future<void> _pickPhotos(
+    BuildContext context,
+    VehicleCustomerFormNotifier notifier,
+    int index,
+  ) async {
+    try {
+      final files = await ImagePicker().pickMultiImage(imageQuality: 85);
+      final paths = <String>[];
+      for (final file in files) {
+        paths.add(await _persistAttachment(file, 'job_description_photo'));
+      }
+      notifier.addJobDescriptionPhotos(index, paths);
+    } catch (error) {
+      if (context.mounted) _showAttachmentError(context, error);
+    }
+  }
+
+  Future<void> _pickVideo(
+    BuildContext context,
+    VehicleCustomerFormNotifier notifier,
+    int index,
+  ) async {
+    try {
+      final file = await ImagePicker().pickVideo(source: ImageSource.gallery);
+      if (file == null) return;
+      notifier.addJobDescriptionVideo(
+        index,
+        await _persistAttachment(file, 'job_description_video'),
+      );
+    } catch (error) {
+      if (context.mounted) _showAttachmentError(context, error);
+    }
+  }
+
+  void _recordAudio(
+    BuildContext context,
+    VehicleCustomerFormNotifier notifier,
+    int index,
+    JobDescriptionEntry row,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => _JobDescriptionAudioDialog(
+        itemId: 'job-description-${index + 1}',
+        hasExisting: row.audioPath.isNotEmpty,
+        onSaved: (path) => notifier.setJobDescriptionAudio(index, path),
+      ),
+    );
+  }
+
+  void _showAttachmentError(BuildContext context, Object error) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Could not add attachment: $error')));
+  }
+}
+
+class _JobDescriptionAudioDialog extends StatefulWidget {
+  final String itemId;
+  final bool hasExisting;
+  final ValueChanged<String> onSaved;
+
+  const _JobDescriptionAudioDialog({
+    required this.itemId,
+    required this.hasExisting,
+    required this.onSaved,
+  });
+
+  @override
+  State<_JobDescriptionAudioDialog> createState() =>
+      _JobDescriptionAudioDialogState();
+}
+
+class _JobDescriptionAudioDialogState
+    extends State<_JobDescriptionAudioDialog> {
+  final AudioRecorderService _recorder = AudioRecorderService();
+  Timer? _timer;
+  bool _recording = false;
+  int _seconds = 0;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    if (_recording) _recorder.stopRecording();
+    super.dispose();
+  }
+
+  Future<void> _start() async {
+    final permission = await Permission.microphone.request();
+    if (!permission.isGranted) return;
+    final dir = await getApplicationDocumentsDirectory();
+    final path =
+        '${dir.path}/audio_${widget.itemId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    final started = await _recorder.startRecording(path);
+    if (!started || !mounted) return;
+    setState(() {
+      _recording = true;
+      _seconds = 0;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || !_recording) return;
+      setState(() => _seconds++);
+      if (_seconds >= 60) _stop();
+    });
+  }
+
+  Future<void> _stop() async {
+    _timer?.cancel();
+    final path = await _recorder.stopRecording();
+    if (!mounted) return;
+    setState(() => _recording = false);
+    if (path != null && path.isNotEmpty) {
+      widget.onSaved(path);
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return AlertDialog(
+      title: const Text('Job description audio'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _recording
+                ? 'Recording… $_seconds seconds'
+                : widget.hasExisting
+                ? 'Record again to replace the current audio.'
+                : 'Record a voice note up to 60 seconds.',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 18),
+          IconButton.filled(
+            onPressed: _recording ? _stop : _start,
+            icon: Icon(_recording ? Icons.stop_rounded : Icons.mic_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: _recording ? colors.error : colors.primary,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _recording ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
     );
   }
 }
