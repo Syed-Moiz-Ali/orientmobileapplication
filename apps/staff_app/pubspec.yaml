@@ -32,6 +32,8 @@ dependencies:
   url_launcher: ^6.3.0
   share_plus: ^10.1.0
   firebase_core: ^4.14.0
+  flutter_svg: ^2.2.1
+  path_drawing: ^1.0.1
 
 dev_dependencies:
   flutter_test:
@@ -41,5 +43,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/vehicle_maps/advisor_car_top_mapped.svg
+    - assets/vehicle_maps/advisor_car_top_mapping.json
 
 

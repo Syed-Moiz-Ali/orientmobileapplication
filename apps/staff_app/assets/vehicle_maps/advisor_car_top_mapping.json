@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "asset": "advisor_car_top_mapped.svg",
+  "view": "top",
+  "viewBox": {
+    "x": 0,
+    "y": 0,
+    "width": 1254,
+    "height": 1254
+  },
+  "coordinateSystem": "SVG viewBox coordinates; normalize using x/1254 and y/1254 if needed",
+  "parts": [
+    {
+      "id": "front_bumper",
+      "label": "Front Bumper",
+      "category": "body",
+      "svgPath": "M360 88 C372 49 420 25 490 25 L764 25 C834 25 883 49 895 88 L878 151 C842 129 806 115 767 106 L487 106 C448 115 412 129 376 151 Z"
+    },
+    {
+      "id": "hood",
+      "label": "Hood / Bonnet",
+      "category": "body",
+      "svgPath": "M440 102 C504 92 750 92 814 102 C824 157 827 232 811 301 C759 322 501 322 443 303 C426 234 429 158 440 102 Z"
+    },
+    {
+      "id": "front_left_headlight",
+      "label": "Front Left Headlight",
+      "category": "light",
+      "svgPath": "M365 63 C387 44 422 37 456 42 C478 50 489 68 482 92 C470 116 444 132 414 136 C386 132 369 114 363 92 Z"
+    },
+    {
+      "id": "front_right_headlight",
+      "label": "Front Right Headlight",
+      "category": "light",
+      "svgPath": "M772 42 C806 37 840 44 863 63 L865 92 C858 114 842 132 813 136 C783 132 758 116 746 92 C739 68 750 50 772 42 Z"
+    },
+    {
+      "id": "front_windshield",
+      "label": "Front Windshield",
+      "category": "glass",
+      "svgPath": "M451 304 C513 278 740 278 803 304 L787 436 C726 424 530 423 468 440 Z"
+    },
+    {
+      "id": "roof",
+      "label": "Roof",
+      "category": "body",
+      "svgPath": "M486 438 C542 425 712 425 768 438 L761 819 C704 831 550 831 493 819 Z"
+    },
+    {
+      "id": "rear_windshield",
+      "label": "Rear Windshield",
+      "category": "glass",
+      "svgPath": "M467 841 C531 822 724 822 788 841 L798 956 C724 986 529 986 451 956 Z"
+    },
+    {
+      "id": "trunk",
+      "label": "Boot / Trunk",
+      "category": "body",
+      "svgPath": "M452 966 C529 985 725 985 802 966 L790 1097 C720 1127 536 1127 465 1097 Z"
+    },
+    {
+      "id": "rear_bumper",
+      "label": "Rear Bumper",
+      "category": "body",
+      "svgPath": "M390 1052 C407 1139 463 1198 625 1217 C787 1198 844 1139 862 1052 L872 1120 C853 1186 785 1223 625 1232 C465 1223 397 1186 378 1120 Z"
+    },
+    {
+      "id": "front_left_fender",
+      "label": "Front Left Fender",
+      "category": "body",
+      "svgPath": "M286 129 C331 142 382 176 418 228 L426 333 C395 348 371 366 352 389 L309 350 C321 307 332 267 329 220 C327 179 305 150 286 129 Z"
+    },
+    {
+      "id": "front_right_fender",
+      "label": "Front Right Fender",
+      "category": "body",
+      "svgPath": "M968 129 C923 142 872 176 836 228 L828 333 C859 348 883 366 902 389 L945 350 C933 307 922 267 925 220 C927 179 949 150 968 129 Z"
+    },
+    {
+      "id": "front_left_door",
+      "label": "Front Left Door",
+      "category": "body",
+      "svgPath": "M237 359 C291 356 345 364 390 382 L455 491 L455 587 C383 580 309 570 237 579 Z"
+    },
+    {
+      "id": "rear_left_door",
+      "label": "Rear Left Door",
+      "category": "body",
+      "svgPath": "M237 589 C311 580 384 588 455 607 L455 758 C420 799 373 828 313 847 L237 779 Z"
+    },
+    {
+      "id": "front_right_door",
+      "label": "Front Right Door",
+      "category": "body",
+      "svgPath": "M1017 359 C963 356 909 364 864 382 L799 491 L799 587 C871 580 945 570 1017 579 Z"
+    },
+    {
+      "id": "rear_right_door",
+      "label": "Rear Right Door",
+      "category": "body",
+      "svgPath": "M1017 589 C943 580 870 588 799 607 L799 758 C834 799 881 828 941 847 L1017 779 Z"
+    },
+    {
+      "id": "rear_left_quarter",
+      "label": "Rear Left Quarter Panel",
+      "category": "body",
+      "svgPath": "M279 836 C330 827 379 806 420 769 L458 905 C438 958 383 1011 329 1055 L284 1049 C268 981 270 906 279 836 Z"
+    },
+    {
+      "id": "rear_right_quarter",
+      "label": "Rear Right Quarter Panel",
+      "category": "body",
+      "svgPath": "M975 836 C924 827 875 806 834 769 L796 905 C816 958 871 1011 925 1055 L970 1049 C986 981 984 906 975 836 Z"
+    },
+    {
+      "id": "left_mirror",
+      "label": "Left Mirror",
+      "category": "mirror",
+      "svgPath": "M356 327 C375 317 401 320 421 334 L428 352 C412 365 381 371 359 362 C350 352 349 338 356 327 Z"
+    },
+    {
+      "id": "right_mirror",
+      "label": "Right Mirror",
+      "category": "mirror",
+      "svgPath": "M898 327 C879 317 853 320 833 334 L826 352 C842 365 873 371 895 362 C904 352 905 338 898 327 Z"
+    },
+    {
+      "id": "front_left_wheel",
+      "label": "Front Left Wheel / Tyre",
+      "category": "wheel",
+      "svgPath": "M261 191 C302 191 332 224 332 267 C332 310 302 343 261 343 C220 343 198 310 198 267 C198 224 220 191 261 191 Z"
+    },
+    {
+      "id": "front_right_wheel",
+      "label": "Front Right Wheel / Tyre",
+      "category": "wheel",
+      "svgPath": "M993 191 C952 191 922 224 922 267 C922 310 952 343 993 343 C1034 343 1056 310 1056 267 C1056 224 1034 191 993 191 Z"
+    },
+    {
+      "id": "rear_left_wheel",
+      "label": "Rear Left Wheel / Tyre",
+      "category": "wheel",
+      "svgPath": "M261 826 C302 826 332 858 332 902 C332 945 302 980 261 980 C220 980 198 945 198 902 C198 858 220 826 261 826 Z"
+    },
+    {
+      "id": "rear_right_wheel",
+      "label": "Rear Right Wheel / Tyre",
+      "category": "wheel",
+      "svgPath": "M993 826 C952 826 922 858 922 902 C922 945 952 980 993 980 C1034 980 1056 945 1056 902 C1056 858 1034 826 993 826 Z"
+    },
+    {
+      "id": "rear_left_taillight",
+      "label": "Rear Left Tail Light",
+      "category": "light",
+      "svgPath": "M389 1016 C413 1038 440 1056 470 1063 L472 1118 C435 1113 404 1095 385 1069 Z"
+    },
+    {
+      "id": "rear_right_taillight",
+      "label": "Rear Right Tail Light",
+      "category": "light",
+      "svgPath": "M865 1016 C841 1038 814 1056 784 1063 L782 1118 C819 1113 850 1095 869 1069 Z"
+    }
+  ]
+}
