@@ -118,6 +118,44 @@ final advisorRemoteVehicleMatchesProvider =
       }
     });
 
+/// Default priority label; mirrors the client's reference mock-up.
+const String kDefaultJobPriority = 'Green: Normal / Low priority';
+
+/// Priority options for a job-description row.
+const List<String> kJobPriorities = [
+  kDefaultJobPriority,
+  'Yellow: Medium priority',
+  'Red: High priority',
+];
+
+/// One numbered job-description row: free text + a priority.
+class JobDescriptionEntry {
+  final String description;
+  final String priority;
+
+  const JobDescriptionEntry({
+    this.description = '',
+    this.priority = kDefaultJobPriority,
+  });
+
+  JobDescriptionEntry copyWith({String? description, String? priority}) =>
+      JobDescriptionEntry(
+        description: description ?? this.description,
+        priority: priority ?? this.priority,
+      );
+
+  Map<String, dynamic> toJson() => {
+    'description': description,
+    'priority': priority,
+  };
+
+  factory JobDescriptionEntry.fromJson(Map<String, dynamic> json) =>
+      JobDescriptionEntry(
+        description: json['description']?.toString() ?? '',
+        priority: json['priority']?.toString() ?? kDefaultJobPriority,
+      );
+}
+
 class VehicleCustomerFormState {
   final SearchMode searchMode;
   final String customerSearch;
@@ -152,6 +190,7 @@ class VehicleCustomerFormState {
   final String markupType;
   final String orderType;
   final String jobDescription;
+  final List<JobDescriptionEntry> jobDescriptions;
   final String insuranceProvider;
   final String insuranceTaxNumber;
   final String insuranceAddress;
@@ -199,6 +238,7 @@ class VehicleCustomerFormState {
     this.markupType = '',
     this.orderType = '',
     this.jobDescription = '',
+    this.jobDescriptions = const [JobDescriptionEntry()],
     this.insuranceProvider = '',
     this.insuranceTaxNumber = '',
     this.insuranceAddress = '',
@@ -247,6 +287,7 @@ class VehicleCustomerFormState {
     String? markupType,
     String? orderType,
     String? jobDescription,
+    List<JobDescriptionEntry>? jobDescriptions,
     String? insuranceProvider,
     String? insuranceTaxNumber,
     String? insuranceAddress,
@@ -294,6 +335,7 @@ class VehicleCustomerFormState {
       markupType: markupType ?? this.markupType,
       orderType: orderType ?? this.orderType,
       jobDescription: jobDescription ?? this.jobDescription,
+      jobDescriptions: jobDescriptions ?? this.jobDescriptions,
       insuranceProvider: insuranceProvider ?? this.insuranceProvider,
       insuranceTaxNumber: insuranceTaxNumber ?? this.insuranceTaxNumber,
       insuranceAddress: insuranceAddress ?? this.insuranceAddress,
@@ -380,6 +422,47 @@ class VehicleCustomerFormNotifier extends Notifier<VehicleCustomerFormState> {
   void setMarkupType(String v) => state = state.copyWith(markupType: v);
   void setOrderType(String v) => state = state.copyWith(orderType: v);
   void setJobDescription(String v) => state = state.copyWith(jobDescription: v);
+
+  String _composeDescription(List<JobDescriptionEntry> rows) => rows
+      .map((row) => row.description.trim())
+      .where((text) => text.isNotEmpty)
+      .join('\n');
+
+  /// Adds a new numbered job-description row.
+  void addJobDescriptionRow() {
+    state = state.copyWith(
+      jobDescriptions: [...state.jobDescriptions, const JobDescriptionEntry()],
+    );
+  }
+
+  void removeJobDescriptionRow(int index) {
+    if (index < 0 || index >= state.jobDescriptions.length) return;
+    final rows = List<JobDescriptionEntry>.from(state.jobDescriptions)
+      ..removeAt(index);
+    if (rows.isEmpty) rows.add(const JobDescriptionEntry());
+    state = state.copyWith(
+      jobDescriptions: rows,
+      jobDescription: _composeDescription(rows),
+    );
+  }
+
+  void updateJobDescriptionRow(
+    int index, {
+    String? description,
+    String? priority,
+  }) {
+    if (index < 0 || index >= state.jobDescriptions.length) return;
+    final rows = List<JobDescriptionEntry>.from(state.jobDescriptions);
+    rows[index] = rows[index].copyWith(
+      description: description,
+      priority: priority,
+    );
+    state = state.copyWith(
+      jobDescriptions: rows,
+      jobDescription: _composeDescription(rows),
+    );
+  }
+
   void setInsuranceProvider(String? v) =>
       state = state.copyWith(insuranceProvider: v ?? '');
   void setInsuranceTaxNumber(String v) =>

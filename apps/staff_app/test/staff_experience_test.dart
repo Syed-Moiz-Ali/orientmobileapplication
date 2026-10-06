@@ -109,7 +109,7 @@ void main() {
     );
 
     for (final label in [
-      'Intake',
+      'Job Card',
       'Inspect',
       'Estimate',
       'Repair',

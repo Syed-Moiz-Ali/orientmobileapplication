@@ -85,6 +85,16 @@ class AdvisorRemoteDataSource {
     return result.unwrapOrThrow();
   }
 
+  Future<void> saveInspectionNotes(
+    String inspectionId,
+    List<Map<String, String>> items,
+  ) async {
+    await _client.post(
+      ApiEndpoints.inspectionNotes(inspectionId),
+      data: {'items': items},
+    );
+  }
+
   Future<InspectionSummaryResponse> getInspectionByJobCard(
     String jobCardId,
   ) async => (await _client.get<InspectionSummaryResponse>(

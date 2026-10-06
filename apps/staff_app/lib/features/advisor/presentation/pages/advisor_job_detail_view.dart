@@ -335,6 +335,17 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               isMono: true,
             ),
           ]),
+          if ((_details?.customerRequests ?? '').trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _section('Customer Requests', [
+              AppMarkdownText(
+                _details!.customerRequests.trim(),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(height: 1.45),
+              ),
+            ]),
+          ],
           const SizedBox(height: 16),
           _buildWorkItemsSection(),
           const SizedBox(height: 16),

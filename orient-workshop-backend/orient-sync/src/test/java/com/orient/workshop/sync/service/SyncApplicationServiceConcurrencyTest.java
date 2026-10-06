@@ -15,6 +15,7 @@ import com.orient.workshop.core.repository.JobCardMapper;
 import com.orient.workshop.supervisor.repository.WorkAssignmentMapper;
 import com.orient.workshop.sync.model.entity.SyncLog;
 import com.orient.workshop.sync.repository.SyncLogMapper;
+import com.orient.workshop.sync.repository.SyncMediaNoteMapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -61,7 +62,8 @@ class SyncApplicationServiceConcurrencyTest {
                 mock(CustomerMapper.class),
                 mock(WorkAssignmentMapper.class),
                 new ObjectMapper(),
-                mock(TaskGeneratorService.class));
+                mock(TaskGeneratorService.class),
+                mock(SyncMediaNoteMapper.class));
 
         JwtUserPrincipal principal = JwtUserPrincipal.builder()
                 .userId(10L).branchId(5L).role("TECHNICIAN").build();

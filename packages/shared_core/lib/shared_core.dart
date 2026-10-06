@@ -32,6 +32,7 @@ export 'src/widgets/error_view.dart';
 export 'src/widgets/exit_confirmation_dialog.dart';
 export 'src/widgets/gradient_banner.dart';
 export 'src/widgets/loading_indicator.dart';
+export 'src/widgets/markdown_text.dart';
 export 'src/widgets/logout_dialog.dart';
 export 'src/widgets/notification_bell.dart';
 export 'src/widgets/resume_refresh_scope.dart';

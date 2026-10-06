@@ -82,5 +82,13 @@ public class InspectionRequest {
         private String markupType;
         private String orderType;
         private String jobDescription;
+        private java.util.List<JobDescriptionItem> jobDescriptions;
+    }
+
+    /** One numbered job-description row from the intake form. */
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class JobDescriptionItem {
+        private String description;
+        private String priority;
     }
 }

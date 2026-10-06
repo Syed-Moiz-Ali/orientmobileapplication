@@ -387,6 +387,25 @@ class DioSyncHandler extends SyncHandler {
           if (action == 'status')
             if (payload['status'] != null) 'status': payload['status'],
         };
+      case 'inspection':
+        // Carry checkpoint notes alongside the sections so an offline
+        // inspection also persists its notes when it eventually syncs.
+        final notes = <Map<String, String>>[];
+        final media = payload['media'];
+        if (media is Map) {
+          media.forEach((key, value) {
+            if (value is Map) {
+              final note = value['note']?.toString().trim() ?? '';
+              if (note.isNotEmpty) {
+                notes.add({'itemId': key.toString(), 'note': note});
+              }
+            }
+          });
+        }
+        return <String, dynamic>{
+          ...payload,
+          if (notes.isNotEmpty) 'itemNotes': notes,
+        };
       default:
         return payload;
     }
@@ -528,6 +547,8 @@ Map<String, dynamic> buildVehicleCustomerIntakePayload(
       if (payload['orderType'] != null) 'orderType': payload['orderType'],
       if (payload['jobDescription'] != null)
         'jobDescription': payload['jobDescription'],
+      if (payload['jobDescriptions'] != null)
+        'jobDescriptions': payload['jobDescriptions'],
     },
     if (payload['jobDescription'] != null)
       'customerRequests': payload['jobDescription'],

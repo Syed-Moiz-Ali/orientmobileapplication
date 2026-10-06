@@ -91,6 +91,9 @@ abstract final class AppTheme {
       useMaterial3: true,
       brightness: colorScheme.brightness,
       colorScheme: colorScheme,
+      // Set the family at ThemeData level so every Material component,
+      // overlay, route, dialog and unstyled Text inherits the same typeface.
+      fontFamily: AppFontFamilies.app,
       scaffoldBackgroundColor: scaffoldBackgroundColor,
       canvasColor: scaffoldBackgroundColor,
       textTheme: AppTypography.textTheme.apply(
@@ -199,6 +202,23 @@ abstract final class AppTheme {
           borderSide: BorderSide(color: colorScheme.error),
         ),
         hintStyle: AppTextStyles.body(color: colorScheme.onSurfaceVariant),
+        labelStyle: AppTextStyles.label(color: colorScheme.onSurfaceVariant),
+        floatingLabelStyle: AppTextStyles.label(color: primary),
+      ),
+
+      dropdownMenuTheme: DropdownMenuThemeData(
+        textStyle: AppTextStyles.body(color: colorScheme.onSurface),
+        inputDecorationTheme: InputDecorationTheme(
+          hintStyle: AppTextStyles.body(color: colorScheme.onSurfaceVariant),
+          labelStyle: AppTextStyles.label(color: colorScheme.onSurfaceVariant),
+        ),
+      ),
+
+      popupMenuTheme: PopupMenuThemeData(
+        textStyle: AppTextStyles.body(color: colorScheme.onSurface),
+        labelTextStyle: WidgetStatePropertyAll(
+          AppTextStyles.body(color: colorScheme.onSurface),
+        ),
       ),
 
       floatingActionButtonTheme: FloatingActionButtonThemeData(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_core/shared_core.dart';
 
 const kBlue = AppColors.primary;
@@ -51,16 +52,17 @@ class SectionCard extends StatelessWidget {
                     fontSize: 15,
                   ),
                 ),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: kTextColor,
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.cardTitle(
+                      color: kTextColor,
+                    ).copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
-                const Spacer(),
-                if (trailing != null) trailing!,
+                if (trailing != null) ...[const SizedBox(width: 8), trailing!],
               ],
             ),
           ),
@@ -83,17 +85,18 @@ class FieldLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: kLabelColor,
+          Flexible(
+            child: Text(
+              label,
+              style: AppTextStyles.label(
+                color: kLabelColor,
+              ).copyWith(fontWeight: FontWeight.w500),
             ),
           ),
           if (required)
-            const Text(' *', style: TextStyle(color: Colors.red, fontSize: 13)),
+            Text(' *', style: AppTextStyles.label(color: Colors.red)),
         ],
       ),
     );
@@ -108,7 +111,19 @@ class AdvisorTextField extends StatelessWidget {
   final int maxLines;
   final Widget? prefix;
   final Widget? suffix;
+
+  /// Inline prefix rendered on the text baseline (e.g. a country code or the
+  /// fixed registration prefix). Unlike [prefix], this aligns with the input.
+  final Widget? inlinePrefix;
+  final String? prefixText;
+  final List<TextInputFormatter>? inputFormatters;
   final bool filled;
+  final bool readOnly;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
+  final FocusNode? focusNode;
+  final TextCapitalization textCapitalization;
+  final EdgeInsets scrollPadding;
 
   const AdvisorTextField({
     super.key,
@@ -119,26 +134,55 @@ class AdvisorTextField extends StatelessWidget {
     this.maxLines = 1,
     this.prefix,
     this.suffix,
+    this.inlinePrefix,
+    this.prefixText,
+    this.inputFormatters,
     this.filled = false,
+    this.readOnly = false,
+    this.textInputAction,
+    this.onFieldSubmitted,
+    this.focusNode,
+    this.textCapitalization = TextCapitalization.none,
+    this.scrollPadding = const EdgeInsets.only(bottom: 140),
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return TextFormField(
       initialValue: initialValue,
       onChanged: onChanged,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: TextStyle(
-        fontSize: 13,
+      inputFormatters: inputFormatters,
+      readOnly: readOnly,
+      focusNode: focusNode,
+      textInputAction:
+          textInputAction ??
+          (maxLines > 1 ? TextInputAction.newline : TextInputAction.next),
+      textCapitalization: textCapitalization,
+      scrollPadding: scrollPadding,
+      onFieldSubmitted: onFieldSubmitted,
+      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+      style: theme.textTheme.bodyMedium?.copyWith(
         color: kTextColor,
-        fontWeight: filled ? FontWeight.w600 : FontWeight.normal,
+        fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: kHintColor, fontSize: 13),
+        hintStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: kHintColor,
+          fontWeight: FontWeight.w400,
+        ),
         prefixIcon: prefix,
+        prefix: inlinePrefix,
+        prefixText: prefixText,
+        prefixStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: kTextColor,
+          fontWeight: FontWeight.w600,
+        ),
         suffixIcon: suffix,
+        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         filled: true,
         fillColor: filled ? kTealLight : kFieldBg,
         border: OutlineInputBorder(
@@ -180,6 +224,7 @@ class AdvisorDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       decoration: BoxDecoration(
@@ -192,17 +237,19 @@ class AdvisorDropdown extends StatelessWidget {
           isExpanded: true,
           hint: Text(
             hint,
-            style: const TextStyle(color: kHintColor, fontSize: 13),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: kHintColor,
+              fontWeight: FontWeight.w400,
+            ),
           ),
           icon: const Icon(
             Icons.keyboard_arrow_down,
             color: kHintColor,
             size: 20,
           ),
-          style: TextStyle(
-            fontSize: 13,
+          style: theme.textTheme.bodyMedium?.copyWith(
             color: kTextColor,
-            fontWeight: filled ? FontWeight.w600 : FontWeight.normal,
+            fontWeight: FontWeight.w600,
           ),
           items: items
               .map(
@@ -210,12 +257,96 @@ class AdvisorDropdown extends StatelessWidget {
                   value: i,
                   child: Text(
                     i,
-                    style: const TextStyle(fontSize: 13, color: kTextColor),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: kTextColor,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               )
               .toList(),
-          onChanged: onChanged,
+          menuMaxHeight: 360,
+          selectedItemBuilder: (context) => items
+              .map(
+                (item) => Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    item,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: kTextColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (selection) {
+            FocusManager.instance.primaryFocus?.unfocus();
+            onChanged(selection);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// A normal platform switch with a tappable label and deliberately distinct
+/// thumb/track colours. This avoids the solid-filled appearance of the old
+/// intake toggles while retaining their existing state callbacks.
+class AdvisorToggleTile extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  const AdvisorToggleTile({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onChanged != null;
+    return Semantics(
+      toggled: value,
+      enabled: enabled,
+      button: true,
+      child: InkWell(
+        onTap: enabled ? () => onChanged!(!value) : null,
+        borderRadius: BorderRadius.circular(AppDimensions.r10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTextStyles.label(
+                    color: enabled ? kLabelColor : kHintColor,
+                  ).copyWith(fontWeight: FontWeight.w500),
+                ),
+              ),
+              const SizedBox(width: 12),
+              IgnorePointer(
+                child: Switch.adaptive(
+                  value: value,
+                  onChanged: enabled ? onChanged : null,
+                  activeThumbColor: Colors.white,
+                  activeTrackColor: AppColors.primary,
+                  inactiveThumbColor: Colors.white,
+                  inactiveTrackColor: AppColors.border,
+                  trackOutlineColor: WidgetStateProperty.resolveWith(
+                    (states) => states.contains(WidgetState.selected)
+                        ? AppColors.primary
+                        : AppColors.text4,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -236,11 +367,9 @@ class MoreLessLink extends StatelessWidget {
         onTap: onTap,
         child: Text(
           showMore ? 'LESS' : 'MORE',
-          style: const TextStyle(
+          style: AppTextStyles.metadata(
             color: kBlue,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
+          ).copyWith(fontWeight: FontWeight.w700),
         ),
       ),
     );

@@ -5,7 +5,7 @@ $apps = @(
     @{Name="CRM App";      Path="apps\crm_app"}
 )
 
-$mode = "debug"
+$mode = "release"
 if ($args[0] -eq "-r" -or $args[0] -eq "--release") {
     $mode = "release"
 }

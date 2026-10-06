@@ -29,6 +29,7 @@ public class JobCard {
     private String fuelLevel;
     private String tag;
     private String customerRequests;
+    private String jobDescriptionJson;
     private String jobCategory;
     private String markupType;
     private String orderType;

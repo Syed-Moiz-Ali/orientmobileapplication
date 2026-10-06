@@ -141,9 +141,8 @@ public class InspectionService {
                     .status(status)
                     .technician(req.getTechnician())
                     .tag(req.getTag())
-                    .customerRequests(req.getCustomerRequests() != null
-                            ? req.getCustomerRequests()
-                            : req.getAdditional() != null ? req.getAdditional().getJobDescription() : null)
+                    .customerRequests(composedRequests(req))
+                    .jobDescriptionJson(jobDescriptionsJson(req))
                     .jobCategory(req.getAdditional() != null ? req.getAdditional().getJobCategory() : null)
                     .markupType(req.getAdditional() != null ? req.getAdditional().getMarkupType() : null)
                     .orderType(req.getAdditional() != null ? req.getAdditional().getOrderType() : null)
@@ -155,7 +154,10 @@ public class InspectionService {
         } else {
             if (req.getTechnician() != null) jobCard.setTechnician(req.getTechnician());
             if (req.getTag() != null) jobCard.setTag(req.getTag());
-            if (req.getCustomerRequests() != null) jobCard.setCustomerRequests(req.getCustomerRequests());
+            String composed = composedRequests(req);
+            if (composed != null) jobCard.setCustomerRequests(composed);
+            String jobRowsJson = jobDescriptionsJson(req);
+            if (jobRowsJson != null) jobCard.setJobDescriptionJson(jobRowsJson);
             if (req.getGarageRecommendations() != null) jobCard.setGarageRecommendations(req.getGarageRecommendations());
             if (req.getEstimatedDelivery() != null) {
                 jobCard.setEstimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"));
@@ -203,6 +205,33 @@ public class InspectionService {
                 .jobCardId(String.valueOf(jobCard.getId()))
                 .jobCardRef(jobCard.getJobCardRef())
                 .build();
+    }
+
+    /** Serialises the structured job-description rows, or null when absent. */
+    private String jobDescriptionsJson(InspectionRequest req) {
+        if (req.getAdditional() == null) return null;
+        var rows = req.getAdditional().getJobDescriptions();
+        if (rows == null || rows.isEmpty()) return null;
+        return toJson(rows);
+    }
+
+    /** Plain-text customer requests, preferring explicit text then the rows. */
+    private String composedRequests(InspectionRequest req) {
+        if (req.getCustomerRequests() != null && !req.getCustomerRequests().isBlank()) {
+            return req.getCustomerRequests();
+        }
+        if (req.getAdditional() != null) {
+            var rows = req.getAdditional().getJobDescriptions();
+            if (rows != null && !rows.isEmpty()) {
+                String joined = rows.stream()
+                        .map(InspectionRequest.JobDescriptionItem::getDescription)
+                        .filter(d -> d != null && !d.isBlank())
+                        .collect(java.util.stream.Collectors.joining("\n"));
+                if (!joined.isBlank()) return joined;
+            }
+            return req.getAdditional().getJobDescription();
+        }
+        return null;
     }
 
     private void createCustomerApproval(

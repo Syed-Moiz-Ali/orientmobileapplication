@@ -580,6 +580,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
           .read(advisorRemoteDataSourceProvider)
           .createInspection(state.toLiveRequestMap());
       await uploadInspectionMedia(live.id.isNotEmpty ? live.id : id);
+      await _saveNotes(live.id.isNotEmpty ? live.id : id);
       await local.deleteDraft();
       Hive.box<dynamic>('inspections').delete('intake_booking_id');
       ref.read(advisorRefreshProvider.notifier).state++;
@@ -605,6 +606,24 @@ class InspectionNotifier extends Notifier<InspectionState> {
       ref.read(advisorRefreshProvider.notifier).state++;
       ref.read(advisorWorkItemsRefreshProvider.notifier).state++;
       return const Success(null);
+    }
+  }
+
+  /// Persists checkpoint notes to the backend so they are stored alongside the
+  /// uploaded photos/videos/audio in the media index.
+  Future<void> _saveNotes(String recordId) async {
+    final items = <Map<String, String>>[];
+    state.media.forEach((itemId, media) {
+      final note = media.note.trim();
+      if (note.isNotEmpty) items.add({'itemId': itemId, 'note': note});
+    });
+    if (items.isEmpty) return;
+    try {
+      await ref
+          .read(advisorRemoteDataSourceProvider)
+          .saveInspectionNotes(recordId, items);
+    } catch (_) {
+      // Notes are best-effort; the inspection itself already saved.
     }
   }
 

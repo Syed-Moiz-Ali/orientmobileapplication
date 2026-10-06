@@ -1,6 +1,7 @@
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/shared_auth.dart';
@@ -63,8 +64,12 @@ class _BodyState extends ConsumerState<_Body> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final state = ref.watch(vehicleCustomerFormProvider);
+    // The keyboard is open when the view insets are non-zero. While typing we
+    // hide the bottom action bar so it never covers fields or fights the IME.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
@@ -75,7 +80,7 @@ class _BodyState extends ConsumerState<_Body> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Vehicle & Customer Intake',
+          'Vehicle & Customer Job Card',
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w900,
             color: colorScheme.onSurface,
@@ -83,228 +88,238 @@ class _BodyState extends ConsumerState<_Body> {
         ),
         centerTitle: false,
       ),
-      body: Stack(
+      body: Column(
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AdvisorWorkflowIndicator(currentStep: 0),
-                const SizedBox(height: 16),
-                // ── Hint text ───────────────────────────────────────────
-                Text(
-                  'Type VIN / License Plate / Customer Name. If vehicle is not found, enter new vehicle details below.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-                if (widget.bookingId != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(AppDimensions.r12),
-                      border: Border.all(
-                        color: colorScheme.primary.withValues(alpha: 0.3),
-                      ),
+          Expanded(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AdvisorWorkflowIndicator(currentStep: 0),
+                  const SizedBox(height: 16),
+                  // ── Hint text ───────────────────────────────────────────
+                  Text(
+                    'Type VIN / License Plate / Customer Name. If vehicle is not found, enter new vehicle details below.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.event_available_rounded,
-                          color: colorScheme.primary,
-                          size: 18,
+                  ),
+                  if (widget.bookingId != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(AppDimensions.r12),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Intake from assigned booking — the booking will be linked to this job card.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurface,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.event_available_rounded,
+                            color: colorScheme.primary,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Job card from the assigned booking — it will be linked to this job card.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colorScheme.onSurface,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                  ],
+                  const SizedBox(height: 16),
+
+                  // ── Search mode (Image 1) ────────────────────────────────
+                  _SearchModeSection(
+                    state: state,
+                    ref: ref,
+                    onScanVin: () => _scanAndSetVin(context, ref),
+                    onScanQr: () => _scanVehicleQr(context, ref),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Customer Details (Images 3-5) ────────────────────────
+                  _CustomerDetailsSection(state: state, ref: ref),
+
+                  // ── Vehicle Details (Images 6-14) ────────────────────────
+                  _VehicleDetailsSection(
+                    state: state,
+                    ref: ref,
+                    onScanVin: () => _scanAndSetVin(context, ref),
+                    registrationDocumentName: _registrationDocument?.name,
+                    insuranceDocumentName: _insuranceDocument?.name,
+                    onRegistrationUpload: () => _pickDocument(true),
+                    onInsuranceUpload: () => _pickDocument(false),
+                  ),
+
+                  // ── Additional Information (Image 15) ────────────────────
+                  _AdditionalInfoSection(
+                    state: state,
+                    ref: ref,
+                    photoPaths: List<String>.from(_jobPhotoPaths),
+                    videoPaths: List<String>.from(_jobVideoPaths),
+                    hasCustomerSignature: _customerSignaturePath.isNotEmpty,
+                    hasAdvisorSignature: _advisorSignaturePath.isNotEmpty,
+                    onAddPhotos: _pickJobPhotos,
+                    onAddVideo: _pickJobVideo,
+                    onRemovePhoto: (i) =>
+                        setState(() => _jobPhotoPaths.removeAt(i)),
+                    onRemoveVideo: (i) =>
+                        setState(() => _jobVideoPaths.removeAt(i)),
+                    onCustomerSignature: () => _captureSignature(true),
+                    onAdvisorSignature: () => _captureSignature(false),
                   ),
                 ],
-                const SizedBox(height: 16),
-
-                // ── Search mode (Image 1) ────────────────────────────────
-                _SearchModeSection(
-                  state: state,
-                  ref: ref,
-                  onScanVin: () => _scanAndSetVin(context, ref),
-                  onScanQr: () => _scanVehicleQr(context, ref),
-                ),
-                const SizedBox(height: 16),
-
-                // ── Customer Details (Images 3-5) ────────────────────────
-                _CustomerDetailsSection(state: state, ref: ref),
-
-                // ── Vehicle Details (Images 6-14) ────────────────────────
-                _VehicleDetailsSection(
-                  state: state,
-                  ref: ref,
-                  onScanVin: () => _scanAndSetVin(context, ref),
-                  registrationDocumentName: _registrationDocument?.name,
-                  insuranceDocumentName: _insuranceDocument?.name,
-                  onRegistrationUpload: () => _pickDocument(true),
-                  onInsuranceUpload: () => _pickDocument(false),
-                ),
-
-                // ── Additional Information (Image 15) ────────────────────
-                _AdditionalInfoSection(
-                  state: state,
-                  ref: ref,
-                  photoCount: _jobPhotoPaths.length,
-                  videoCount: _jobVideoPaths.length,
-                  hasCustomerSignature: _customerSignaturePath.isNotEmpty,
-                  hasAdvisorSignature: _advisorSignaturePath.isNotEmpty,
-                  onAddPhotos: _pickJobPhotos,
-                  onAddVideo: _pickJobVideo,
-                  onCustomerSignature: () => _captureSignature(true),
-                  onAdvisorSignature: () => _captureSignature(false),
-                ),
-              ],
+              ),
             ),
           ),
 
-          // ── NEXT button ────────────────────────────────────────────────
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
+          // ── NEXT button (a real bar, not an overlay, so it never collides
+          // with the keyboard or the last fields) ────────────────────────────
+          if (!keyboardOpen)
+            Container(
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 16),
-              child: ElevatedButton(
-                onPressed: () async {
-                  final formState = ref.read(vehicleCustomerFormProvider);
-                  final errors = _validateForm(formState);
-                  if (errors.isNotEmpty) {
-                    _showValidationErrors(context, errors);
-                    return;
-                  }
-                  final local = GenericLocalDataSource(
-                    Hive.box<dynamic>('inspections'),
-                  );
-                  final id = await IdGenerator.nextId('JC');
-                  _savedJobId = id;
-                  final now = DateTime.now();
-                  final createdDate =
-                      '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                  final payload = {
-                    'id': id,
-                    'type': 'vehicle_customer',
-                    'bookingId': widget.bookingId ?? '',
-                    'customerName': formState.customerName,
-                    'phoneNumber': formState.phoneNumber,
-                    'email': formState.email,
-                    'isB2B': formState.isB2B,
-                    'customerGroup': formState.customerGroup,
-                    'gender': formState.gender,
-                    'address': formState.address,
-                    'taxNumber': formState.taxNumber,
-                    'source': formState.source,
-                    'emirate': formState.emirate,
-                    'plateCode': formState.plateCode,
-                    'plateNumber': formState.plateNumber,
-                    'vin': formState.vin,
-                    'make': formState.make,
-                    'model': formState.model,
-                    'modelYear': formState.modelYear,
-                    'registrationNumber': formState.registrationNumber,
-                    'cylinders': formState.cylinders,
-                    'engineCapacity': formState.engineCapacity,
-                    'vehicleColor': formState.vehicleColor,
-                    'fuelType': formState.fuelType,
-                    'engineNumber': formState.engineNumber,
-                    'jobCategory': formState.jobCategory,
-                    'markupType': formState.markupType,
-                    'orderType': formState.orderType,
-                    'jobDescription': formState.jobDescription,
-                    'insuranceProvider': formState.insuranceProvider,
-                    'insuranceTaxNumber': formState.insuranceTaxNumber,
-                    'insuranceAddress': formState.insuranceAddress,
-                    'policyNumber': formState.policyNumber,
-                    'lpoNumber': formState.lpoNumber,
-                    'accidentNumber': formState.accidentNumber,
-                    'insuranceExpiryDate': formState.insuranceExpiryDate,
-                    'jobPhotoPaths': List<String>.from(_jobPhotoPaths),
-                    'jobVideoPaths': List<String>.from(_jobVideoPaths),
-                    'customerSignaturePath': _customerSignaturePath,
-                    'advisorSignaturePath': _advisorSignaturePath,
-                    'odometerReading': formState.odometerReading,
-                    'fuelLevel': formState.fuelLevel,
-                    'customerConsent': formState.customerConsent,
-                    'registrationDocumentPath':
-                        _registrationDocument?.path ?? '',
-                    'insuranceDocumentPath': _insuranceDocument?.path ?? '',
-                    'status': 'inProgress',
-                    'createdDate': createdDate,
-                    'lastUpdated': createdDate,
-                  };
-                  await local.save(id, payload);
-                  final queue = ref.read(syncQueueProvider);
-                  await queue.enqueue(
-                    SyncOperation(
-                      id: id,
-                      entityType: 'vehicle_customer',
-                      entityId: id,
-                      changeType: ChangeType.create,
-                      payload: payload,
-                      timestamp: DateTime.now().millisecondsSinceEpoch,
-                    ),
-                  );
-                  await ref.read(syncEngineProvider).syncAll();
-                  // Prefer the server-assigned job card reference once the
-                  // intake has synced so the follow-up inspection links to the
-                  // exact job card the backend created.
-                  var resolvedJobId = id;
-                  try {
-                    final record = Hive.box<dynamic>('inspections').get(id);
-                    if (record is Map) {
-                      final ref =
-                          (record['jobCardRef'] ??
-                                  record['serverJobCardId'] ??
-                                  '')
-                              .toString();
-                      if (ref.isNotEmpty) resolvedJobId = ref;
+              child: SafeArea(
+                top: false,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final formState = ref.read(vehicleCustomerFormProvider);
+                    final errors = _validateForm(formState);
+                    if (errors.isNotEmpty) {
+                      _showValidationErrors(context, errors);
+                      return;
                     }
-                  } catch (_) {}
-                  _savedJobId = resolvedJobId;
-                  ref.read(advisorRefreshProvider.notifier).state++;
-                  if (!context.mounted) return;
-                  _showInspectionPrompt(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(AppDimensions.r10),
+                    final local = GenericLocalDataSource(
+                      Hive.box<dynamic>('inspections'),
+                    );
+                    final id = await IdGenerator.nextId('JC');
+                    _savedJobId = id;
+                    final now = DateTime.now();
+                    final createdDate =
+                        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+                    final payload = {
+                      'id': id,
+                      'type': 'vehicle_customer',
+                      'bookingId': widget.bookingId ?? '',
+                      'customerName': formState.customerName,
+                      'phoneNumber': formState.phoneNumber,
+                      'email': formState.email,
+                      'isB2B': formState.isB2B,
+                      'customerGroup': formState.customerGroup,
+                      'gender': formState.gender,
+                      'address': formState.address,
+                      'taxNumber': formState.taxNumber,
+                      'source': formState.source,
+                      'emirate': formState.emirate,
+                      'plateCode': formState.plateCode,
+                      'plateNumber': formState.plateNumber,
+                      'vin': formState.vin,
+                      'make': formState.make,
+                      'model': formState.model,
+                      'modelYear': formState.modelYear,
+                      'registrationNumber': formState.registrationNumber,
+                      'cylinders': formState.cylinders,
+                      'engineCapacity': formState.engineCapacity,
+                      'vehicleColor': formState.vehicleColor,
+                      'fuelType': formState.fuelType,
+                      'engineNumber': formState.engineNumber,
+                      'jobCategory': formState.jobCategory,
+                      'markupType': formState.markupType,
+                      'orderType': formState.orderType,
+                      'jobDescription': formState.jobDescription,
+                      'jobDescriptions': formState.jobDescriptions
+                          .map((e) => e.toJson())
+                          .toList(),
+                      'insuranceProvider': formState.insuranceProvider,
+                      'insuranceTaxNumber': formState.insuranceTaxNumber,
+                      'insuranceAddress': formState.insuranceAddress,
+                      'policyNumber': formState.policyNumber,
+                      'lpoNumber': formState.lpoNumber,
+                      'accidentNumber': formState.accidentNumber,
+                      'insuranceExpiryDate': formState.insuranceExpiryDate,
+                      'jobPhotoPaths': List<String>.from(_jobPhotoPaths),
+                      'jobVideoPaths': List<String>.from(_jobVideoPaths),
+                      'customerSignaturePath': _customerSignaturePath,
+                      'advisorSignaturePath': _advisorSignaturePath,
+                      'odometerReading': formState.odometerReading,
+                      'fuelLevel': formState.fuelLevel,
+                      'customerConsent': formState.customerConsent,
+                      'registrationDocumentPath':
+                          _registrationDocument?.path ?? '',
+                      'insuranceDocumentPath': _insuranceDocument?.path ?? '',
+                      'status': 'inProgress',
+                      'createdDate': createdDate,
+                      'lastUpdated': createdDate,
+                    };
+                    await local.save(id, payload);
+                    final queue = ref.read(syncQueueProvider);
+                    await queue.enqueue(
+                      SyncOperation(
+                        id: id,
+                        entityType: 'vehicle_customer',
+                        entityId: id,
+                        changeType: ChangeType.create,
+                        payload: payload,
+                        timestamp: DateTime.now().millisecondsSinceEpoch,
+                      ),
+                    );
+                    await ref.read(syncEngineProvider).syncAll();
+                    // Prefer the server-assigned job card reference once the
+                    // intake has synced so the follow-up inspection links to the
+                    // exact job card the backend created.
+                    var resolvedJobId = id;
+                    try {
+                      final record = Hive.box<dynamic>('inspections').get(id);
+                      if (record is Map) {
+                        final ref =
+                            (record['jobCardRef'] ??
+                                    record['serverJobCardId'] ??
+                                    '')
+                                .toString();
+                        if (ref.isNotEmpty) resolvedJobId = ref;
+                      }
+                    } catch (_) {}
+                    _savedJobId = resolvedJobId;
+                    ref.read(advisorRefreshProvider.notifier).state++;
+                    if (!context.mounted) return;
+                    _showInspectionPrompt(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(AppDimensions.r10),
+                      ),
                     ),
                   ),
-                ),
-                child: const Text(
-                  'NEXT',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
+                  child: const Text(
+                    'NEXT',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -791,6 +806,9 @@ class _SearchModeSection extends StatelessWidget {
             onChanged: (v) => ref
                 .read(vehicleCustomerFormProvider.notifier)
                 .setCustomerSearch(v),
+            textInputAction: TextInputAction.search,
+            textCapitalization: TextCapitalization.words,
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
             decoration: InputDecoration(
               hintText: 'Mobile, customer name, plate number, or VIN',
               hintStyle: const TextStyle(color: kHintColor, fontSize: 13),
@@ -941,13 +959,18 @@ class _OutlineButton extends StatelessWidget {
           children: [
             Icon(icon, color: AppColors.primary, size: 18),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                letterSpacing: 0.5,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
           ],
@@ -958,6 +981,71 @@ class _OutlineButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+class _LabeledControl extends StatelessWidget {
+  final String label;
+  final bool required;
+  final Widget child;
+
+  const _LabeledControl({
+    required this.label,
+    required this.child,
+    this.required = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      FieldLabel(label, required: required),
+      child,
+    ],
+  );
+}
+
+/// Uses available width without squeezing controls. Fields share a row only
+/// when every child can retain a practical input width; otherwise they stack.
+class _ResponsiveFieldGroup extends StatelessWidget {
+  static const double _spacing = 10;
+
+  final List<Widget> children;
+  final double minChildWidth;
+
+  const _ResponsiveFieldGroup({
+    required this.children,
+    this.minChildWidth = 180,
+  });
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final requiredWidth =
+          (minChildWidth * children.length) +
+          (_spacing * (children.length - 1));
+      if (constraints.maxWidth < requiredWidth) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var index = 0; index < children.length; index++) ...[
+              children[index],
+              if (index != children.length - 1)
+                const SizedBox(height: _spacing),
+            ],
+          ],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < children.length; index++) ...[
+            Expanded(child: children[index]),
+            if (index != children.length - 1) const SizedBox(width: _spacing),
+          ],
+        ],
+      );
+    },
+  );
+}
+
 //  CUSTOMER DETAILS (Images 3-5)
 // ─────────────────────────────────────────────────────────────────────────────
 class _CustomerDetailsSection extends StatelessWidget {
@@ -972,28 +1060,18 @@ class _CustomerDetailsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // B2B toggle
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              const Text(
-                'B2B Customer',
-                style: TextStyle(fontSize: 13, color: kLabelColor),
-              ),
-              const SizedBox(width: 8),
-              Switch(
-                value: state.isB2B,
-                onChanged: (v) =>
-                    ref.read(vehicleCustomerFormProvider.notifier).setB2B(v),
-                activeThumbColor: AppColors.primary,
-              ),
-            ],
+          AdvisorToggleTile(
+            label: 'B2B Customer',
+            value: state.isB2B,
+            onChanged: (v) =>
+                ref.read(vehicleCustomerFormProvider.notifier).setB2B(v),
           ),
           kGap12,
 
           FieldLabel('Customer Name', required: true),
           AdvisorTextField(
             hint: 'Customer Name',
+            textCapitalization: TextCapitalization.words,
             onChanged: (v) => ref
                 .read(vehicleCustomerFormProvider.notifier)
                 .setCustomerName(v),
@@ -1004,17 +1082,12 @@ class _CustomerDetailsSection extends StatelessWidget {
           AdvisorTextField(
             hint: 'Phone number',
             keyboardType: TextInputType.phone,
-            prefix: Padding(
-              padding: const EdgeInsets.only(left: 12, right: 4),
-              child: Text(
-                PhoneInputField.countries.first.code,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: kTextColor,
-                ),
-              ),
+            // prefixIcon (not prefix) so the country code is ALWAYS visible,
+            // not only while the field is focused.
+            prefix: _CountryCodePrefix(
+              code: PhoneInputField.countries.first.code,
             ),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onChanged: (v) =>
                 ref.read(vehicleCustomerFormProvider.notifier).setPhone(v),
           ),
@@ -1092,8 +1165,59 @@ class _CustomerDetailsSection extends StatelessWidget {
   }
 }
 
+/// Always-visible inline prefix for a text field. Rendered through
+/// `prefixIcon` (not `prefix`/`prefixText`, which Flutter hides until the
+/// field is focused or has text) so it never disappears while typing.
+class _AffixPrefix extends StatelessWidget {
+  final String text;
+  const _AffixPrefix(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 14, right: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: kTextColor,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(height: 20, width: 1, color: kBorderColor),
+        ],
+      ),
+    );
+  }
+}
+
+class _CountryCodePrefix extends StatelessWidget {
+  final String code;
+  const _CountryCodePrefix({required this.code});
+
+  @override
+  Widget build(BuildContext context) => _AffixPrefix(code);
+}
+
+class _PlatePrefix extends StatelessWidget {
+  final String emirate;
+  final String plateCode;
+  const _PlatePrefix({required this.emirate, required this.plateCode});
+
+  @override
+  Widget build(BuildContext context) => _AffixPrefix('$emirate-$plateCode');
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-//  VEHICLE DETAILS (Images 6-14)
+//  CUSTOMER DETAILS (Images 3-5)
 // ─────────────────────────────────────────────────────────────────────────────
 class _VehicleDetailsSection extends StatelessWidget {
   final VehicleCustomerFormState state;
@@ -1120,32 +1244,56 @@ class _VehicleDetailsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const FieldLabel('Emirate'),
-          AdvisorDropdown(
-            hint: 'Select Emirate',
-            value: state.emirate,
-            items: kEmirates,
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setEmirate(v),
-          ),
-          kGap12,
-
-          const FieldLabel('Plate Code'),
-          AdvisorTextField(
-            hint: 'Plate Code',
-            initialValue: state.plateCode,
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setPlateCode(v),
-          ),
-          kGap12,
-
-          FieldLabel('Plate Number', required: true),
-          AdvisorTextField(
-            hint: 'Plate Number',
-            initialValue: state.plateNumber,
-            onChanged: (v) => ref
-                .read(vehicleCustomerFormProvider.notifier)
-                .setPlateNumber(v),
+          _ResponsiveFieldGroup(
+            minChildWidth: 150,
+            children: [
+              _LabeledControl(
+                label: 'Emirate',
+                child: AdvisorDropdown(
+                  hint: 'Select Emirate',
+                  value: state.emirate,
+                  items: kEmirates,
+                  onChanged: (v) => ref
+                      .read(vehicleCustomerFormProvider.notifier)
+                      .setEmirate(v),
+                ),
+              ),
+              _LabeledControl(
+                label: 'Plate Code',
+                child: AdvisorTextField(
+                  hint: 'A',
+                  initialValue: state.plateCode,
+                  textCapitalization: TextCapitalization.characters,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp('[a-zA-Z0-9]')),
+                    LengthLimitingTextInputFormatter(4),
+                  ],
+                  onChanged: (v) => ref
+                      .read(vehicleCustomerFormProvider.notifier)
+                      .setPlateCode(v),
+                ),
+              ),
+              _LabeledControl(
+                label: 'Plate Number',
+                required: true,
+                child: AdvisorTextField(
+                  hint: '2500',
+                  initialValue: state.plateNumber,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  // Always-visible Emirate-PlateCode prefix, e.g. "Dubai-A".
+                  prefix: (state.emirate.isEmpty && state.plateCode.isEmpty)
+                      ? null
+                      : _PlatePrefix(
+                          emirate: state.emirate,
+                          plateCode: state.plateCode,
+                        ),
+                  onChanged: (v) => ref
+                      .read(vehicleCustomerFormProvider.notifier)
+                      .setPlateNumber(v),
+                ),
+              ),
+            ],
           ),
           kGap12,
 
@@ -1164,16 +1312,33 @@ class _VehicleDetailsSection extends StatelessWidget {
           ),
           kGap12,
 
-          FieldLabel('Make', required: true),
-          _BrandSelector(state: state, ref: ref),
-          kGap12,
+          _ResponsiveFieldGroup(
+            minChildWidth: 190,
+            children: [
+              _LabeledControl(
+                label: 'Make',
+                required: true,
+                child: _BrandSelector(state: state, ref: ref),
+              ),
+              _LabeledControl(
+                label: 'Model',
+                required: true,
+                child: _ModelSelector(state: state, ref: ref),
+              ),
+              _LabeledControl(
+                label: 'Model Year',
+                child: _ModelYearSelector(state: state, ref: ref),
+              ),
+            ],
+          ),
 
-          FieldLabel('Model', required: true),
-          _ModelSelector(state: state, ref: ref),
-          kGap12,
-
-          const FieldLabel('Model Year'),
-          _ModelYearSelector(state: state, ref: ref),
+          const SizedBox(height: 8),
+          MoreLessLink(
+            showMore: state.showMoreVehicle,
+            onTap: () => ref
+                .read(vehicleCustomerFormProvider.notifier)
+                .toggleVehicleMore(),
+          ),
 
           if (state.showMoreVehicle) ...[
             kGap12,
@@ -1244,7 +1409,7 @@ class _VehicleDetailsSection extends StatelessWidget {
                 .read(vehicleCustomerFormProvider.notifier)
                 .setJobCategory(v),
           ),
-
+          // Insurance fields appear directly under Job Category when needed.
           if (state.jobCategory == 'Insurance') ...[
             kGap12,
             const FieldLabel('Insurance Name'),
@@ -1312,14 +1477,34 @@ class _VehicleDetailsSection extends StatelessWidget {
               onTap: onInsuranceUpload,
             ),
           ],
-
-          const SizedBox(height: 8),
-          MoreLessLink(
-            showMore: state.showMoreVehicle,
-            onTap: () => ref
-                .read(vehicleCustomerFormProvider.notifier)
-                .toggleVehicleMore(),
+          kGap12,
+          _ResponsiveFieldGroup(
+            minChildWidth: 200,
+            children: [
+              _LabeledControl(
+                label: 'Markup Type',
+                child: AdvisorTextField(
+                  hint: 'Markup Type',
+                  onChanged: (v) => ref
+                      .read(vehicleCustomerFormProvider.notifier)
+                      .setMarkupType(v),
+                ),
+              ),
+              _LabeledControl(
+                label: 'Order Type',
+                child: AdvisorTextField(
+                  hint: 'Order Type',
+                  onChanged: (v) => ref
+                      .read(vehicleCustomerFormProvider.notifier)
+                      .setOrderType(v),
+                ),
+              ),
+            ],
           ),
+          // Job Description sits last, right before Additional Information.
+          kGap12,
+          const FieldLabel('Job Description'),
+          _JobDescriptionTable(state: state, ref: ref),
         ],
       ),
     );
@@ -1495,15 +1680,13 @@ class _ImageUploadButton extends StatelessWidget {
         selected ? Icons.check_circle_rounded : Icons.add_a_photo_outlined,
         color: selected ? AppColors.success : AppColors.primary,
       ),
-      label: Expanded(
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: selected ? AppColors.textPrimary : AppColors.primary,
-            fontWeight: FontWeight.w700,
-          ),
+      label: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: selected ? AppColors.textPrimary : AppColors.primary,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -1516,24 +1699,28 @@ class _ImageUploadButton extends StatelessWidget {
 class _AdditionalInfoSection extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
-  final int photoCount;
-  final int videoCount;
+  final List<String> photoPaths;
+  final List<String> videoPaths;
   final bool hasCustomerSignature;
   final bool hasAdvisorSignature;
   final VoidCallback onAddPhotos;
   final VoidCallback onAddVideo;
+  final ValueChanged<int> onRemovePhoto;
+  final ValueChanged<int> onRemoveVideo;
   final VoidCallback onCustomerSignature;
   final VoidCallback onAdvisorSignature;
 
   const _AdditionalInfoSection({
     required this.state,
     required this.ref,
-    required this.photoCount,
-    required this.videoCount,
+    required this.photoPaths,
+    required this.videoPaths,
     required this.hasCustomerSignature,
     required this.hasAdvisorSignature,
     required this.onAddPhotos,
     required this.onAddVideo,
+    required this.onRemovePhoto,
+    required this.onRemoveVideo,
     required this.onCustomerSignature,
     required this.onAdvisorSignature,
   });
@@ -1545,31 +1732,6 @@ class _AdditionalInfoSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const FieldLabel('Job Description'),
-          AdvisorTextField(
-            hint: 'Describe the requested work',
-            onChanged: (v) => ref
-                .read(vehicleCustomerFormProvider.notifier)
-                .setJobDescription(v),
-          ),
-          kGap12,
-
-          const FieldLabel('Markup Type'),
-          AdvisorTextField(
-            hint: 'Markup Type',
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setMarkupType(v),
-          ),
-          kGap12,
-
-          const FieldLabel('Order Type'),
-          AdvisorTextField(
-            hint: 'Order Type',
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setOrderType(v),
-          ),
-          kGap16,
-
           const FieldLabel('Odometer Reading(in Kms)'),
           AdvisorTextField(
             hint: 'Odometer (in Kms)',
@@ -1598,58 +1760,53 @@ class _AdditionalInfoSection extends StatelessWidget {
 
           // Customer Consent toggle
           Container(
-            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: kFieldBg,
               borderRadius: BorderRadius.all(
                 Radius.circular(AppDimensions.r10),
               ),
             ),
-            child: Row(
-              children: [
-                const Text(
-                  'Customer\nConsent',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: kLabelColor,
-                  ),
-                ),
-                const Spacer(),
-                Switch(
-                  value: state.customerConsent,
-                  onChanged: (v) => ref
-                      .read(vehicleCustomerFormProvider.notifier)
-                      .setConsent(v),
-                  activeThumbColor: AppColors.primary,
-                ),
-              ],
+            child: AdvisorToggleTile(
+              label: 'Customer Consent',
+              value: state.customerConsent,
+              onChanged: (v) =>
+                  ref.read(vehicleCustomerFormProvider.notifier).setConsent(v),
             ),
           ),
           kGap16,
 
           const FieldLabel('Job Card Photos and Videos'),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          Row(
             children: [
-              OutlinedButton.icon(
-                onPressed: onAddPhotos,
-                icon: const Icon(Icons.photo_library_outlined, size: 18),
-                label: Text(
-                  photoCount == 0 ? 'Add Photos' : 'Photos ($photoCount)',
+              Expanded(
+                child: _MediaAddTile(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Photos',
+                  count: photoPaths.length,
+                  onTap: onAddPhotos,
                 ),
               ),
-              OutlinedButton.icon(
-                onPressed: onAddVideo,
-                icon: const Icon(Icons.videocam_outlined, size: 18),
-                label: Text(
-                  videoCount == 0 ? 'Add Video' : 'Videos ($videoCount)',
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MediaAddTile(
+                  icon: Icons.videocam_outlined,
+                  label: 'Video',
+                  count: videoPaths.length,
+                  onTap: onAddVideo,
                 ),
               ),
             ],
           ),
+          if (photoPaths.isNotEmpty || videoPaths.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _MediaThumbnailGrid(
+              photoPaths: photoPaths,
+              videoPaths: videoPaths,
+              onRemovePhoto: onRemovePhoto,
+              onRemoveVideo: onRemoveVideo,
+            ),
+          ],
           kGap16,
 
           const FieldLabel('Digital Signatures'),
@@ -1664,13 +1821,16 @@ class _AdditionalInfoSection extends StatelessWidget {
                         ? Icons.check_circle_outline
                         : Icons.draw_outlined,
                     size: 18,
+                    color: hasCustomerSignature ? AppColors.success : null,
                   ),
-                  label: Text(
-                    hasCustomerSignature ? 'Customer Signed' : 'Customer',
+                  label: const Text(
+                    'Customer',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onAdvisorSignature,
@@ -1679,9 +1839,12 @@ class _AdditionalInfoSection extends StatelessWidget {
                         ? Icons.check_circle_outline
                         : Icons.draw_outlined,
                     size: 18,
+                    color: hasAdvisorSignature ? AppColors.success : null,
                   ),
-                  label: Text(
-                    hasAdvisorSignature ? 'Advisor Signed' : 'Advisor',
+                  label: const Text(
+                    'Advisor',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
@@ -1743,6 +1906,581 @@ class _DateField extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Numbered job-description rows (1, 2, 3, …), each with a rich text editor,
+/// a priority selector and an "Add Row" action — matching the client's
+/// reference table while staying usable on phones.
+class _JobDescriptionTable extends StatelessWidget {
+  final VehicleCustomerFormState state;
+  final WidgetRef ref;
+  const _JobDescriptionTable({required this.state, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    final rows = state.jobDescriptions;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var index = 0; index < rows.length; index++)
+          _row(context, notifier, index, rows[index]),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: notifier.addJobDescriptionRow,
+            icon: const Icon(Icons.add_circle_outline, size: 18),
+            label: const Text('Add another description'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _row(
+    BuildContext context,
+    VehicleCustomerFormNotifier notifier,
+    int index,
+    JobDescriptionEntry row,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: kFieldBg,
+        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Job Description',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: kTextColor,
+                  ),
+                ),
+              ),
+              if (state.jobDescriptions.length > 1)
+                IconButton(
+                  tooltip: 'Remove row',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => notifier.removeJobDescriptionRow(index),
+                  icon: const Icon(Icons.close, size: 18, color: kHintColor),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          _RichDescriptionEditor(
+            key: ValueKey('job-desc-$index'),
+            value: row.description,
+            onChanged: (v) =>
+                notifier.updateJobDescriptionRow(index, description: v),
+          ),
+          const SizedBox(height: 8),
+          _PrioritySelector(
+            value: row.priority,
+            onChanged: (v) =>
+                notifier.updateJobDescriptionRow(index, priority: v),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrioritySelector extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  const _PrioritySelector({required this.value, required this.onChanged});
+
+  Color _colorFor(String priority) {
+    if (priority.startsWith('Red:')) return AppColors.danger;
+    if (priority.startsWith('Yellow:')) return AppColors.warning;
+    return AppColors.success;
+  }
+
+  String _titleFor(String priority) => priority.split(':').first;
+
+  String _detailFor(String priority) {
+    final separator = priority.indexOf(':');
+    return separator < 0 ? priority : priority.substring(separator + 1).trim();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PopupMenuButton<String>(
+      initialValue: value,
+      tooltip: 'Select priority',
+      constraints: const BoxConstraints(minWidth: 260, maxWidth: 340),
+      onOpened: () => FocusManager.instance.primaryFocus?.unfocus(),
+      onSelected: onChanged,
+      itemBuilder: (context) => kJobPriorities
+          .map(
+            (priority) => PopupMenuItem<String>(
+              value: priority,
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: _colorFor(priority),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _titleFor(priority),
+                          style: theme.textTheme.labelLarge,
+                        ),
+                        Text(
+                          _detailFor(priority),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (priority == value)
+                    Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+      child: InputDecorator(
+        decoration: const InputDecoration(
+          labelText: 'Priority',
+          suffixIcon: Icon(Icons.keyboard_arrow_down_rounded),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: _colorFor(value),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _detailFor(value),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A small rich-text editor for the job description with a formatting toolbar
+/// (bold, italic, bullet list). Formatting is stored as lightweight markdown
+/// so it survives the round-trip to the backend and can be rendered later.
+class _RichDescriptionEditor extends StatefulWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+  const _RichDescriptionEditor({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  State<_RichDescriptionEditor> createState() => _RichDescriptionEditorState();
+}
+
+/// Paints markdown emphasis (bold/italic) while keeping the raw offsets intact,
+/// so the caret never drifts. Markers stay in the text but are dimmed.
+class _MarkdownEditingController extends TextEditingController {
+  _MarkdownEditingController({super.text});
+
+  static final RegExp _pattern = RegExp(r'\*\*(.+?)\*\*|\*(.+?)\*');
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final raw = text;
+    final base = style ?? const TextStyle();
+    final children = <TextSpan>[];
+    var cursor = 0;
+    for (final match in _pattern.allMatches(raw)) {
+      if (match.start > cursor) {
+        children.add(TextSpan(text: raw.substring(cursor, match.start)));
+      }
+      final bold = match.group(1) != null;
+      final inner = (bold ? match.group(1) : match.group(2)) ?? '';
+      final marker = bold ? '**' : '*';
+      final markerStyle = base.copyWith(
+        color: (base.color ?? Colors.black).withValues(alpha: 0.30),
+        fontWeight: FontWeight.normal,
+        fontStyle: FontStyle.normal,
+      );
+      children.add(TextSpan(text: marker, style: markerStyle));
+      children.add(
+        TextSpan(
+          text: inner,
+          style: base.copyWith(
+            fontWeight: bold ? FontWeight.w800 : base.fontWeight,
+            fontStyle: bold ? base.fontStyle : FontStyle.italic,
+          ),
+        ),
+      );
+      children.add(TextSpan(text: marker, style: markerStyle));
+      cursor = match.end;
+    }
+    if (cursor < raw.length) {
+      children.add(TextSpan(text: raw.substring(cursor)));
+    }
+    return TextSpan(style: base, children: children);
+  }
+}
+
+class _RichDescriptionEditorState extends State<_RichDescriptionEditor> {
+  late final _MarkdownEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = _MarkdownEditingController(text: widget.value);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant _RichDescriptionEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value && widget.value != _controller.text) {
+      _controller.value = TextEditingValue(
+        text: widget.value,
+        selection: TextSelection.collapsed(offset: widget.value.length),
+      );
+    }
+  }
+
+  void _emit() => widget.onChanged(_controller.text);
+
+  void _wrapSelection(String marker) {
+    final text = _controller.text;
+    final selection = _controller.selection;
+    if (!selection.isValid || selection.isCollapsed) {
+      final at = selection.isValid ? selection.start : text.length;
+      _controller.value = TextEditingValue(
+        text: text.substring(0, at) + marker + marker + text.substring(at),
+        selection: TextSelection.collapsed(offset: at + marker.length),
+      );
+    } else {
+      final selected = text.substring(selection.start, selection.end);
+      final wrapped =
+          selected.length >= marker.length * 2 &&
+          selected.startsWith(marker) &&
+          selected.endsWith(marker);
+      final replacement = wrapped
+          ? selected.substring(marker.length, selected.length - marker.length)
+          : '$marker$selected$marker';
+      _controller.value = TextEditingValue(
+        text:
+            text.substring(0, selection.start) +
+            replacement +
+            text.substring(selection.end),
+        selection: TextSelection.collapsed(
+          offset: selection.start + replacement.length,
+        ),
+      );
+    }
+    _emit();
+  }
+
+  void _toggleBullet() {
+    final text = _controller.text;
+    final selection = _controller.selection;
+    final at = selection.isValid ? selection.start : text.length;
+    final lineStart = text.lastIndexOf('\n', at > 0 ? at - 1 : 0) + 1;
+    final rawEnd = text.indexOf('\n', at);
+    final lineEnd = rawEnd == -1 ? text.length : rawEnd;
+    final line = text.substring(lineStart, lineEnd);
+    final newLine = line.startsWith('• ')
+        ? line.substring(2)
+        : (line.trim().isEmpty ? '• ' : '• $line');
+    _controller.value = TextEditingValue(
+      text: text.substring(0, lineStart) + newLine + text.substring(lineEnd),
+      selection: TextSelection.collapsed(offset: lineStart + newLine.length),
+    );
+    _emit();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: kFieldBg,
+        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.border)),
+            ),
+            child: Row(
+              children: [
+                _tool(Icons.format_bold, 'Bold', () => _wrapSelection('**')),
+                _tool(Icons.format_italic, 'Italic', () => _wrapSelection('*')),
+                _tool(Icons.format_list_bulleted, 'Bullet', _toggleBullet),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: TextField(
+              controller: _controller,
+              maxLines: null,
+              minLines: 4,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              textCapitalization: TextCapitalization.sentences,
+              scrollPadding: const EdgeInsets.only(bottom: 180),
+              onTapOutside: (_) =>
+                  FocusManager.instance.primaryFocus?.unfocus(),
+              onChanged: (_) => _emit(),
+              style: const TextStyle(
+                fontSize: 13,
+                color: kTextColor,
+                height: 1.5,
+              ),
+              decoration: const InputDecoration(
+                hintText:
+                    'Describe the requested work… use the toolbar to bold or add bullet points',
+                hintStyle: TextStyle(color: kHintColor, fontSize: 13),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tool(IconData icon, String tooltip, VoidCallback onTap) {
+    return IconButton(
+      tooltip: tooltip,
+      visualDensity: VisualDensity.compact,
+      onPressed: onTap,
+      icon: Icon(icon, size: 18, color: kTextColor),
+    );
+  }
+}
+
+class _MediaAddTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int count;
+  final VoidCallback onTap;
+  const _MediaAddTile({
+    required this.icon,
+    required this.label,
+    required this.count,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final active = count > 0;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: kFieldBg,
+          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+          border: Border.all(
+            color: active ? AppColors.primary : AppColors.border,
+            width: active ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: active ? AppColors.primary : kHintColor,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              count == 0 ? 'Add $label' : '$label ($count)',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: active ? AppColors.primary : kTextColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaThumbnailGrid extends StatelessWidget {
+  final List<String> photoPaths;
+  final List<String> videoPaths;
+  final ValueChanged<int> onRemovePhoto;
+  final ValueChanged<int> onRemoveVideo;
+  const _MediaThumbnailGrid({
+    required this.photoPaths,
+    required this.videoPaths,
+    required this.onRemovePhoto,
+    required this.onRemoveVideo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        for (var i = 0; i < photoPaths.length; i++)
+          _thumb(
+            photoPaths[i],
+            isVideo: false,
+            onRemove: () => onRemovePhoto(i),
+          ),
+        for (var i = 0; i < videoPaths.length; i++)
+          _thumb(
+            videoPaths[i],
+            isVideo: true,
+            onRemove: () => onRemoveVideo(i),
+          ),
+      ],
+    );
+  }
+
+  Widget _thumb(
+    String path, {
+    required bool isVideo,
+    required VoidCallback onRemove,
+  }) {
+    return SizedBox(
+      width: 84,
+      height: 84,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+            child: isVideo
+                ? Container(
+                    width: 84,
+                    height: 84,
+                    color: AppColors.surfaceAlt,
+                    child: const Center(
+                      child: Icon(
+                        Icons.play_circle_outline,
+                        size: 30,
+                        color: kTextColor,
+                      ),
+                    ),
+                  )
+                : (File(path).existsSync()
+                      ? Image.file(
+                          File(path),
+                          width: 84,
+                          height: 84,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          width: 84,
+                          height: 84,
+                          color: AppColors.surfaceAlt,
+                          child: const Icon(
+                            Icons.broken_image_outlined,
+                            color: kHintColor,
+                          ),
+                        )),
+          ),
+          if (isVideo)
+            const Positioned(
+              bottom: 4,
+              left: 4,
+              child: Icon(
+                Icons.videocam,
+                size: 14,
+                color: Colors.white,
+                shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+              ),
+            ),
+          Positioned(
+            top: -6,
+            right: -6,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: AppColors.danger,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, size: 12, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

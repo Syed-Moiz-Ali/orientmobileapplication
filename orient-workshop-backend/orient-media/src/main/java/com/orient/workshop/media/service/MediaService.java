@@ -1,8 +1,15 @@
 package com.orient.workshop.media.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.orient.workshop.common.util.IdGenerator;
+import com.orient.workshop.media.model.dto.MediaNoteRequest;
+import com.orient.workshop.media.model.entity.MediaAsset;
+import com.orient.workshop.media.repository.MediaAssetMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -31,8 +38,19 @@ public class MediaService {
     @Value("${app.media.public-url-prefix:/api/v1/media}")
     private String publicUrlPrefix;
 
+    // Optional injection so the plain unit test can construct the service
+    // without a database.
+    @Autowired(required = false)
+    private MediaAssetMapper mediaAssetMapper;
+
     public Map<String, String> uploadMedia(String tenant, String module, String recordId,
                                            MultipartFile file, String itemId, String type) {
+        return uploadMedia(tenant, module, recordId, file, itemId, type, null);
+    }
+
+    public Map<String, String> uploadMedia(String tenant, String module, String recordId,
+                                           MultipartFile file, String itemId, String type,
+                                           Long createdBy) {
         validatePathSegment(tenant);
         validatePathSegment(module);
         validatePathSegment(recordId);
@@ -62,13 +80,94 @@ public class MediaService {
             String prefix = normalizePublicUrlPrefix(publicUrlPrefix);
             String url = prefix + "/" + tenant + "/" + module + "/" + recordId + "/" + filename;
             log.info("Uploaded: {} ({} bytes)", url, file.getSize());
-            return Map.of(
-                    "url", url,
-                    "itemId", itemId == null ? "" : itemId,
-                    "type", type == null || type.isBlank() ? "photo" : type);
+            String ref = recordAsset(tenant, module, recordId, itemId, type,
+                    filename, url, detected, file.getSize(), createdBy);
+            Map<String, String> result = new java.util.HashMap<>();
+            result.put("url", url);
+            result.put("itemId", itemId == null ? "" : itemId);
+            result.put("type", type == null || type.isBlank() ? "photo" : type);
+            if (ref != null) result.put("ref", ref);
+            return result;
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }
+    }
+
+    /** Records the uploaded file in media_assets so it can be listed later. */
+    private String recordAsset(String tenant, String module, String recordId, String itemId,
+                               String type, String filename, String url, FileType detected,
+                               long size, Long createdBy) {
+        if (mediaAssetMapper == null) return null;
+        try {
+            MediaAsset asset = MediaAsset.builder()
+                    .ref(IdGenerator.shortRef("MED"))
+                    .tenant(tenant)
+                    .module(module)
+                    .recordId(recordId)
+                    .itemId(itemId == null ? "" : itemId)
+                    .mediaType(type == null || type.isBlank() ? "photo" : type)
+                    .url(url)
+                    .fileName(filename)
+                    .contentType(detected.mimeType)
+                    .sizeBytes(size)
+                    .createdBy(createdBy)
+                    .build();
+            mediaAssetMapper.insert(asset);
+            return asset.getRef();
+        } catch (Exception e) {
+            // Never fail an upload because indexing failed.
+            log.warn("Failed to record media asset for {}/{}: {}", module, recordId, e.getMessage());
+            return null;
+        }
+    }
+
+    /** Lists the media recorded for a record (e.g. inspections/INS-123). */
+    public List<MediaAsset> list(String module, String recordId) {
+        validatePathSegment(module);
+        validatePathSegment(recordId);
+        if (mediaAssetMapper == null) return List.of();
+        return mediaAssetMapper.findByRecord(module, recordId);
+    }
+
+    /**
+     * Replaces the text notes recorded for a record. Notes are stored on the
+     * same media index as photos/videos so one listing returns every asset.
+     */
+    @Transactional
+    public int recordNotes(String tenant, String module, String recordId,
+                           MediaNoteRequest request, Long createdBy) {
+        if (mediaAssetMapper == null) return 0;
+        validatePathSegment(tenant);
+        validatePathSegment(module);
+        validatePathSegment(recordId);
+        List<MediaNoteRequest.Item> items = request != null ? request.getItems() : null;
+        if (items == null || items.isEmpty()) return 0;
+
+        mediaAssetMapper.delete(new LambdaQueryWrapper<MediaAsset>()
+                .eq(MediaAsset::getModule, module)
+                .eq(MediaAsset::getRecordId, recordId)
+                .eq(MediaAsset::getMediaType, "note"));
+
+        int saved = 0;
+        for (MediaNoteRequest.Item item : items) {
+            if (item == null || item.getNote() == null || item.getNote().isBlank()) continue;
+            mediaAssetMapper.insert(MediaAsset.builder()
+                    .ref(IdGenerator.shortRef("MED"))
+                    .tenant(tenant)
+                    .module(module)
+                    .recordId(recordId)
+                    .itemId(item.getItemId() == null ? "" : item.getItemId())
+                    .mediaType("note")
+                    .url("")
+                    .note(item.getNote())
+                    .fileName("")
+                    .contentType("text/plain")
+                    .sizeBytes((long) item.getNote().length())
+                    .createdBy(createdBy)
+                    .build());
+            saved++;
+        }
+        return saved;
     }
 
     /**

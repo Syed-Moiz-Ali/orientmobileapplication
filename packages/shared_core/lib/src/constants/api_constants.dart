@@ -51,6 +51,10 @@ class ApiEndpoints {
   // Media upload (multipart, backend MediaController)
   static String inspectionMediaUpload(String inspectionId) =>
       '/inspections/$inspectionId/media';
+  static String inspectionNotes(String inspectionId) =>
+      '/inspections/$inspectionId/notes';
+  static String inspectionMediaList(String inspectionId) =>
+      '/inspections/$inspectionId/media';
   static String repairOrderMediaUpload(String repairOrderId) =>
       '/repair-orders/$repairOrderId/media';
 

@@ -269,7 +269,7 @@ class _EstimateRecord extends StatelessWidget {
               ),
             )
           else if (detail.description.trim().isNotEmpty)
-            Text(
+            AppMarkdownText(
               detail.description.trim(),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colors.onSurface,

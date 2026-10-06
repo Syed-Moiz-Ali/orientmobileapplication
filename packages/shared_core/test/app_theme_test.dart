@@ -29,6 +29,19 @@ void main() {
     expect(dark.scaffoldBackgroundColor, isNot(light.scaffoldBackgroundColor));
   });
 
+  test('all app themes use the shared global font family', () {
+    final brand = BrandConfig.orient;
+
+    expect(
+      AppTheme.light(brand).textTheme.bodyMedium?.fontFamily,
+      AppFontFamilies.app,
+    );
+    expect(
+      AppTheme.dark(brand).textTheme.bodyMedium?.fontFamily,
+      AppFontFamilies.app,
+    );
+  });
+
   test('semantic dimensions keep controls, cards, and modals distinct', () {
     expect(AppDimensions.radiusControl, lessThan(AppDimensions.radiusCard));
     expect(AppDimensions.radiusCard, lessThan(AppDimensions.radiusPanel));

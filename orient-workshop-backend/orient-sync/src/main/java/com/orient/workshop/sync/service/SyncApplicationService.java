@@ -28,6 +28,7 @@ import com.orient.workshop.supervisor.model.entity.WorkAssignment;
 import com.orient.workshop.supervisor.repository.WorkAssignmentMapper;
 import com.orient.workshop.sync.model.entity.SyncLog;
 import com.orient.workshop.sync.repository.SyncLogMapper;
+import com.orient.workshop.sync.repository.SyncMediaNoteMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -65,6 +66,7 @@ public class SyncApplicationService {
     private final WorkAssignmentMapper workAssignmentMapper;
     private final ObjectMapper objectMapper;
     private final TaskGeneratorService taskGeneratorService;
+    private final SyncMediaNoteMapper syncMediaNoteMapper;
 
     @Transactional
     public Map<String, String> syncInspection(JwtUserPrincipal principal, String id,
@@ -344,6 +346,27 @@ public class SyncApplicationService {
         if (isNew) inspectionMapper.insert(inspection); else inspectionMapper.updateById(inspection);
         taskGeneratorService.generateForJobCard(card.getId());
         linkBookingFromPayload(principal, body, card.getId());
+        storeItemNotes(principal, inspection, body);
+    }
+
+    /** Replays offline checkpoint notes into the shared media index. */
+    private void storeItemNotes(JwtUserPrincipal principal, Inspection inspection, Map<String, Object> body) {
+        Object raw = body.get("itemNotes");
+        if (!(raw instanceof List<?> notes) || notes.isEmpty()) return;
+        String recordId = String.valueOf(inspection.getId());
+        String tenant = principal != null && principal.getBranchId() != null
+                ? "branch-" + principal.getBranchId()
+                : principal != null && principal.getUserId() != null ? "user-" + principal.getUserId() : "default";
+        Long createdBy = principal != null ? principal.getUserId() : null;
+        syncMediaNoteMapper.deleteNotes("inspections", recordId);
+        for (Object entry : notes) {
+            if (!(entry instanceof Map<?, ?> item)) continue;
+            Object note = item.get("note");
+            if (note == null || note.toString().isBlank()) continue;
+            Object itemId = item.get("itemId");
+            syncMediaNoteMapper.insertNote(IdGenerator.shortRef("MED"), tenant, "inspections", recordId,
+                    itemId == null ? "" : itemId.toString(), note.toString(), note.toString().length(), createdBy);
+        }
     }
 
     private JobCard requireScopedJobCard(JwtUserPrincipal principal, String id) {
