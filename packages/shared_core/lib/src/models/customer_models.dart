@@ -132,7 +132,10 @@ class NotificationResponse {
         body: j['body'] as String? ?? '',
         time: j['time'] as String? ?? '',
         type: j['type'] as String? ?? 'carReady',
-        isRead: j['isRead'] as bool? ?? false,
+        // The customer DTO declares a primitive boolean isRead, which Jackson
+        // serialises as "read". Accept either key so a notification the
+        // customer has already read can never render as unread again.
+        isRead: (j['isRead'] ?? j['read']) as bool? ?? false,
       );
 }
 

@@ -31,6 +31,11 @@ class CustomerVehicleRecord extends StatelessWidget {
   final bool syncFailed;
   final VoidCallback? onRetrySync;
 
+  /// True when a removal the customer asked for terminally failed, so the
+  /// vehicle is still at the workshop and must stay visible with a retry.
+  final bool deleteFailed;
+  final VoidCallback? onRetryRemoval;
+
   const CustomerVehicleRecord({
     super.key,
     required this.vehicle,
@@ -43,6 +48,8 @@ class CustomerVehicleRecord extends StatelessWidget {
     this.onTrackService,
     this.syncFailed = false,
     this.onRetrySync,
+    this.deleteFailed = false,
+    this.onRetryRemoval,
   });
 
   @override
@@ -114,7 +121,10 @@ class CustomerVehicleRecord extends StatelessWidget {
                 onTrackService: onTrackService,
               ),
             ],
-            if (syncFailed) ...[
+            if (deleteFailed) ...[
+              const SizedBox(height: AppDimensions.s12),
+              _DeleteFailedNotice(busy: busy, onRetry: onRetryRemoval),
+            ] else if (syncFailed) ...[
               const SizedBox(height: AppDimensions.s12),
               _SyncFailedNotice(onRetry: onRetrySync),
             ],
@@ -125,7 +135,10 @@ class CustomerVehicleRecord extends StatelessWidget {
               busy: busy,
               onBookService: onBookService,
               onEdit: onEdit,
-              onRemove: onRemove,
+              // While removal recovery is active the normal Remove is withdrawn:
+              // a second delete must never be enqueued, and the single recovery
+              // control below is the only removal path.
+              onRemove: deleteFailed ? null : onRemove,
             ),
           ],
         ),
@@ -265,7 +278,9 @@ class _Actions extends StatelessWidget {
   final bool busy;
   final VoidCallback onBookService;
   final VoidCallback onEdit;
-  final VoidCallback onRemove;
+
+  /// Null while a removal recovery is active, so no second delete is offered.
+  final VoidCallback? onRemove;
 
   const _Actions({
     required this.busy,
@@ -301,15 +316,102 @@ class _Actions extends StatelessWidget {
           child: const Text('Edit'),
         ),
         // Removal stays tertiary and clearly destructive.
-        TextButton(
-          onPressed: busy ? null : onRemove,
-          style: TextButton.styleFrom(
-            foregroundColor: colors.error,
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s8),
+        if (onRemove != null)
+          TextButton(
+            onPressed: busy ? null : onRemove,
+            style: TextButton.styleFrom(
+              foregroundColor: colors.error,
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s8),
+            ),
+            child: const Text('Remove'),
           ),
-          child: const Text('Remove'),
-        ),
       ],
+    );
+  }
+}
+
+/// Truthful recovery for a removal the workshop never confirmed: the vehicle is
+/// still there, so it stays visible and offers a single retry.
+class _DeleteFailedNotice extends StatelessWidget {
+  final bool busy;
+  final VoidCallback? onRetry;
+
+  const _DeleteFailedNotice({required this.busy, this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      label:
+          "We couldn't remove this vehicle. "
+          'The vehicle is still in your workshop account.',
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.s10,
+          vertical: AppDimensions.s10,
+        ),
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+            colors.error.withValues(alpha: 0.05),
+            colors.surface,
+          ),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          border: Border.all(color: colors.error.withValues(alpha: 0.20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: AppDimensions.iconSm,
+                  color: colors.error,
+                ),
+                const SizedBox(width: AppDimensions.s6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "We couldn't remove this vehicle.",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.r2),
+                      Text(
+                        'The vehicle is still in your workshop account.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                height: AppDimensions.touchTarget,
+                child: FilledButton(
+                  onPressed: busy ? null : onRetry,
+                  child: Text(busy ? 'Retrying\u2026' : 'Retry removal'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

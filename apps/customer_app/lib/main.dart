@@ -59,6 +59,17 @@ class CustomerApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final brand = ref.watch(brandConfigProvider);
     ref.watch(syncEngineProvider);
+    // A session that ends or begins must never inherit the previous account's
+    // data: these feature providers outlive the sign-out, so they are cleared
+    // on every auth change. Without this, signing out and back in as another
+    // customer in the same process shows the first account's vehicles,
+    // bookings, invoices and profile until the next refresh.
+    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      ref.invalidate(customerDashboardProvider);
+      ref.invalidate(customerBookingsProvider);
+      ref.invalidate(customerApprovalsProvider);
+      ref.invalidate(customerInvoicesProvider);
+    });
     // FE-FIX (pre-deployment): refresh on app-resume so cross-app changes
     // (booking confirmed, estimate awaiting approval, invoice ready) appear
     // as soon as the customer returns to the app.

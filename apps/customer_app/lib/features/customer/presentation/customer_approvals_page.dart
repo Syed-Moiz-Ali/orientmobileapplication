@@ -408,7 +408,7 @@ class _SettledInvoices extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Settled invoices',
+                'Invoices',
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: colors.onSurface,
                   fontWeight: FontWeight.w800,
@@ -516,7 +516,9 @@ class _InvoiceRow extends StatelessWidget {
             ),
             const SizedBox(width: AppDimensions.s8),
             Text(
-              formatAmount(invoice.amount),
+              formatAmount(
+                invoice.grandTotal > 0 ? invoice.grandTotal : invoice.amount,
+              ),
               style: theme.textTheme.titleSmall?.copyWith(
                 color: colors.onSurface,
                 fontWeight: FontWeight.w800,

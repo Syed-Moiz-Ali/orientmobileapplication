@@ -126,7 +126,7 @@ class _AttentionRow extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.s4,
-            vertical: AppDimensions.s10,
+            vertical: AppDimensions.s14,
           ),
           child: Row(
             children: [

@@ -150,7 +150,7 @@ void main() {
       expect(find.text('A 12345'), findsWidgets);
     });
 
-    testWidgets('reports a queued save when the device is offline', (
+    testWidgets('never claims a save the device could not store', (
       tester,
     ) async {
       final remote = _FakeRemote(offline: true);
@@ -160,8 +160,16 @@ void main() {
       await tester.tap(find.text('Add vehicle').last);
       await tester.pumpAndSettle();
 
-      // The form closes with the vehicle it saved, even offline.
-      expect(find.text('POPPED'), findsOneWidget);
+      // No local store is available here (no Hive box), so the request cannot be
+      // replayed: the form must stay open with the input intact and must NOT
+      // report a queued save.
+      expect(find.text('POPPED'), findsNothing);
+      expect(
+        find.textContaining("couldn't save this vehicle on your device"),
+        findsOneWidget,
+      );
+      // The form is still open with its action available, so the input is kept.
+      expect(find.text('Add vehicle'), findsWidgets);
     });
   });
 
@@ -431,6 +439,7 @@ Future<void> _pumpForm(
     ProviderScope(
       overrides: [
         customerRemoteDataSourceProvider.overrideWithValue(dataSource),
+        syncQueueProvider.overrideWithValue(_ClosureQueue()),
         customerDashboardProvider.overrideWith(
           () => _FakeDashboardNotifier([if (editing != null) editing]),
         ),
@@ -478,4 +487,18 @@ Future<void> _loadFonts() async {
   await (FontLoader(
     'MaterialIcons',
   )..addFont(Future.value(ByteData.sublistView(iconBytes)))).load();
+}
+
+/// A queue that accepts operations without touching Hive, so the offline path
+/// can be exercised for real in a widget test.
+class _ClosureQueue implements SyncQueue {
+  final List<SyncOperation> enqueued = [];
+
+  @override
+  Future<void> enqueue(SyncOperation operation) async =>
+      enqueued.add(operation);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
 }

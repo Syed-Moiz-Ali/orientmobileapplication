@@ -74,11 +74,16 @@ class SyncEngine {
   /// Re-attempts every operation in the failed box (previously never retried).
   Future<void> retryFailed() async {
     if (_disposed || _status == SyncStatus.syncing) return;
-    final failed = _failedBox.values.whereType<SyncOperation>().toList();
-    if (failed.isEmpty) return;
+    final ids = [
+      for (final op in _failedBox.values.whereType<SyncOperation>()) op.id,
+    ];
+    if (ids.isEmpty) return;
 
     _notify(SyncStatus.syncing);
-    for (final op in failed) {
+    for (final id in ids) {
+      // Re-read: an earlier retry in this pass can already have removed it.
+      final op = _failedBox.get(id);
+      if (op == null) continue;
       try {
         final result = await _executeOperation(op);
         if (result) {
@@ -100,6 +105,46 @@ class SyncEngine {
       }
     }
     _notify(SyncStatus.idle);
+  }
+
+  /// Re-attempts ONE failed operation by its stable id.
+  ///
+  /// The operation keeps its identity and payload, so the request carries the
+  /// same idempotency key and cannot duplicate a mutation. Unrelated failed
+  /// operations are never touched. Returns true when the workshop accepted it
+  /// (the operation is then removed from the failed store).
+  Future<bool> retryFailedOperation(String id) async {
+    if (_disposed || _status == SyncStatus.syncing) return false;
+    final op = _failedBox.get(id);
+    if (op == null) return false;
+
+    _notify(SyncStatus.syncing);
+    var accepted = false;
+    try {
+      accepted = await _executeOperation(op);
+      if (accepted) {
+        await _failedBox.delete(op.id);
+      } else {
+        final current = _failedBox.get(op.id) ?? op;
+        current.retryCount++;
+        await _failedBox.put(current.id, current);
+      }
+    } on ConflictException {
+      // The server already holds the intended state.
+      await _failedBox.delete(op.id);
+      accepted = true;
+    } catch (e, st) {
+      _logger.e(
+        'Retry failed for operation ${op.id} (${op.entityType})',
+        error: e,
+        stackTrace: st,
+      );
+      final current = _failedBox.get(op.id) ?? op;
+      current.retryCount++;
+      await _failedBox.put(current.id, current);
+    }
+    _notify(accepted ? SyncStatus.success : SyncStatus.failure);
+    return accepted;
   }
 
   void dispose() {
@@ -133,9 +178,9 @@ class SyncEngine {
     if (_disposed || _status == SyncStatus.syncing) return;
 
     _notify(SyncStatus.syncing);
-    final operations = _queue.peekAll();
+    final ids = [for (final op in _queue.peekAll()) op.id];
 
-    if (operations.isEmpty) {
+    if (ids.isEmpty) {
       _notify(SyncStatus.success);
       return;
     }
@@ -143,7 +188,14 @@ class SyncEngine {
     bool hasFailure = false;
     bool hasConflict = false;
 
-    for (final op in operations) {
+    // The pass runs in the order of the initial scan, but each operation is
+    // re-read from the queue immediately before it executes: an earlier
+    // operation can rewrite a later one's payload mid-pass (a vehicle
+    // registration rewrites the queued booking that references its temporary
+    // id), and executing the stale snapshot would send the old id.
+    for (final id in ids) {
+      final op = _queue.getById(id);
+      if (op == null) continue; // removed or replaced mid-pass
       try {
         final result = await _executeOperation(op);
         if (result) {

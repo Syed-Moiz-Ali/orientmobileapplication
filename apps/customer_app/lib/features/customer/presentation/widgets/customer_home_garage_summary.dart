@@ -118,10 +118,6 @@ class _VehicleRow extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (vehicle.healthScore > 0) ...[
-                      const SizedBox(width: AppDimensions.s8),
-                      _HealthPill(score: vehicle.healthScore),
-                    ],
                   ],
                 ),
                 const SizedBox(height: AppDimensions.s6),
@@ -141,58 +137,11 @@ class _VehicleRow extends StatelessWidget {
                       ),
                   ],
                 ),
-                if (vehicle.nextDue.trim().isNotEmpty) ...[
-                  const SizedBox(height: AppDimensions.s6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.event_available_rounded,
-                        size: AppDimensions.iconSm,
-                        color: colors.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: AppDimensions.s6),
-                      Expanded(
-                        child: Text(
-                          'Next service due ${vehicle.nextDue.trim()}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _HealthPill extends StatelessWidget {
-  final int score;
-
-  const _HealthPill({required this.score});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final value = score.clamp(0, 100);
-    final tint = value >= 80
-        ? colors.tertiary
-        : value >= 60
-        ? colors.onSurfaceVariant
-        : colors.error;
-
-    return StatusPill(
-      label: 'Health $value%',
-      showDot: true,
-      bg: tint.withValues(alpha: 0.12),
-      fg: tint,
     );
   }
 }

@@ -8,8 +8,10 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
+import 'package:customer_app/features/customer/presentation/support/failed_booking_sync.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_booking_item.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_bookings_skeleton.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_failed_booking_item.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
@@ -28,13 +30,33 @@ class CustomerBookingsTab extends ConsumerWidget {
     final colors = theme.colorScheme;
     final dash = ref.watch(customerDashboardProvider);
     final bookingsAsync = ref.watch(customerBookingsProvider);
+    // Local bookings whose replay the workshop never accepted are terminal
+    // failures, not lifecycle records: they are pulled out of the workshop feed
+    // so they never render (or count) as an ordinary requested booking.
+    final failedBookings = ref.watch(customerFailedBookingsProvider);
+    final failedKeys = failedBookings
+        .map((booking) => booking.identityKey)
+        .toSet();
     final bookings =
-        bookingsAsync.valueOrNull ?? const <CustomerBookingEntity>[];
+        (bookingsAsync.valueOrNull ?? const <CustomerBookingEntity>[])
+            .where(
+              (booking) => !failedKeys.contains(
+                CustomerBookingsPresentation.bookingKey(
+                  vehicleName: booking.vehicleName,
+                  plateNumber: booking.plateNumber,
+                  service: booking.service,
+                  date: booking.date,
+                  time: booking.time,
+                ),
+              ),
+            )
+            .toList();
 
     // The bookings feed falls back to the local cache, so "nothing readable"
     // plus a reported failure is the only honest first-load error signal.
     final firstLoadFailed =
         bookings.isEmpty &&
+        failedBookings.isEmpty &&
         (bookingsAsync.hasError || dash.loadError.isNotEmpty);
 
     if (firstLoadFailed) {
@@ -135,7 +157,11 @@ class CustomerBookingsTab extends ConsumerWidget {
                   : () => context.push(AppRoutes.customerBookService),
             ),
             const SizedBox(height: AppDimensions.s20),
-            if (bookings.isEmpty)
+            if (failedBookings.isNotEmpty) ...[
+              _FailedBookingsSection(bookings: failedBookings),
+              const SizedBox(height: AppDimensions.s24),
+            ],
+            if (bookings.isEmpty && failedBookings.isEmpty)
               _NoBookings(
                 hasVehicles: dash.vehicles.isNotEmpty,
                 onBookService: () =>
@@ -150,7 +176,7 @@ class CustomerBookingsTab extends ConsumerWidget {
                 primary: sections[0],
                 secondary: sections[1],
               )
-            else
+            else if (sections.isNotEmpty)
               sections.single,
           ],
         ),
@@ -431,6 +457,113 @@ class _NoBookings extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The local bookings the workshop never received. Every recovery action
+/// targets one stable failed operation, so more than one failed booking is
+/// supported and each is handled on its own.
+class _FailedBookingsSection extends ConsumerStatefulWidget {
+  final List<FailedBooking> bookings;
+
+  const _FailedBookingsSection({required this.bookings});
+
+  @override
+  ConsumerState<_FailedBookingsSection> createState() =>
+      _FailedBookingsSectionState();
+}
+
+class _FailedBookingsSectionState
+    extends ConsumerState<_FailedBookingsSection> {
+  /// Operation ids with a recovery action in flight, so a second tap cannot
+  /// replay the same failed booking twice.
+  final Set<String> _busy = {};
+
+  Future<void> _retry(FailedBooking booking) async {
+    final id = booking.operationId;
+    if (_busy.contains(id)) return;
+    setState(() => _busy.add(id));
+
+    final accepted = await ref.read(failedBookingSyncProvider).retry(id);
+    if (!mounted) return;
+
+    // The terminal state is read from the failed operation, so a successful
+    // replay clears it whether or not the follow-up refresh succeeds. A failed
+    // refresh must never bring "Not sent" back — the workshop has the booking.
+    ref.invalidate(customerFailedBookingsProvider);
+    ref.invalidate(customerBookingsProvider);
+    await ref.read(customerDashboardProvider.notifier).refresh();
+    if (!mounted) return;
+
+    setState(() => _busy.remove(id));
+    if (!accepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("We couldn't send this booking. Please try again."),
+        ),
+      );
+    }
+  }
+
+  Future<void> _remove(FailedBooking booking) async {
+    final id = booking.operationId;
+    if (_busy.contains(id)) return;
+
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: 'Remove saved booking?',
+      message:
+          'This removes the booking stored on this device. The workshop has '
+          'not received it.',
+      confirmLabel: 'Remove booking',
+      cancelLabel: 'Keep booking',
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+
+    setState(() => _busy.add(id));
+    await ref.read(failedBookingSyncProvider).remove(id);
+    if (!mounted) return;
+    ref.invalidate(customerFailedBookingsProvider);
+    ref.invalidate(customerBookingsProvider);
+    setState(() => _busy.remove(id));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _BookingsSectionHeader(
+          title: 'Needs attention',
+          count: widget.bookings.length,
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: Column(
+            children: [
+              for (var index = 0; index < widget.bookings.length; index++) ...[
+                CustomerFailedBookingItem(
+                  booking: widget.bookings[index],
+                  busy: _busy.contains(widget.bookings[index].operationId),
+                  onRetry: () => _retry(widget.bookings[index]),
+                  onRemove: () => _remove(widget.bookings[index]),
+                ),
+                if (index < widget.bookings.length - 1)
+                  Divider(height: 1, color: colors.outlineVariant),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

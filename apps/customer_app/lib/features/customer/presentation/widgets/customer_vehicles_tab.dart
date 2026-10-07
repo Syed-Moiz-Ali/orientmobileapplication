@@ -8,6 +8,7 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_vehicle_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/failed_vehicle_delete.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicle_record.dart';
@@ -31,6 +32,10 @@ class CustomerVehiclesTab extends ConsumerStatefulWidget {
 class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
   String _removingId = '';
 
+  /// Server vehicle ids whose canonical reload has already been requested, so a
+  /// failed refresh cannot turn the restore into an endless reload loop.
+  final Set<String> _restoreRequested = {};
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -44,6 +49,27 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
         CustomerServiceTracking.isLiveService(dash.activeService)
         ? dash.activeService
         : null;
+
+    // A terminally failed delete means the workshop may still hold the vehicle,
+    // so the app must converge back to server truth instead of continuing to
+    // hide it. Reload once per missing vehicle; if the reload fails the
+    // persistent failed operation keeps the recovery available.
+    final failedDeletes = ref.watch(customerFailedVehicleDeletesProvider);
+    final failedByVehicle = <String, FailedVehicleDelete>{
+      for (final failed in failedDeletes) failed.vehicleId: failed,
+    };
+    final missing = failedByVehicle.keys.toSet().difference(
+      vehicles.map((vehicle) => vehicle.id).toSet(),
+    );
+    final toRestore = missing.difference(_restoreRequested);
+    if (toRestore.isNotEmpty) {
+      _restoreRequested.addAll(toRestore);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(customerDashboardProvider.notifier).refresh();
+        }
+      });
+    }
 
     final firstLoadFailed =
         vehicles.isEmpty && dash.loadError.isNotEmpty && !dash.isLoading;
@@ -73,6 +99,16 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
                       ref.read(customerDashboardProvider.notifier).refresh(),
                 ),
               ],
+              // A failed delete whose vehicle cannot yet be restored still needs
+              // a visible, retryable recovery path.
+              if (missing.isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.s16),
+                _UnmatchedDeleteRecovery(
+                  operations: [for (final id in missing) failedByVehicle[id]!],
+                  busyId: _removingId,
+                  onRetry: _retryRemoval,
+                ),
+              ],
               const SizedBox(height: AppDimensions.s20),
               if (firstLoadFailed)
                 _LoadFailure(
@@ -84,7 +120,7 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
                   onAdd: () => context.push(AppRoutes.customerAddVehicle),
                 )
               else
-                _records(vehicles, bookings, liveService),
+                _records(vehicles, bookings, liveService, failedByVehicle),
               const SizedBox(height: AppDimensions.s32),
             ],
           ],
@@ -97,6 +133,7 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
     List<CustomerVehicleEntity> vehicles,
     List<CustomerBookingEntity> bookings,
     CustomerServiceEntity? liveService,
+    Map<String, FailedVehicleDelete> failedByVehicle,
   ) {
     final records = [
       for (final vehicle in vehicles)
@@ -121,6 +158,8 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
               .watch(vehicleIdentityReaderProvider)
               .hasFailedCreate(vehicle.id),
           onRetrySync: () => customerRetryVehicleSync(ref),
+          deleteFailed: failedByVehicle.containsKey(vehicle.id),
+          onRetryRemoval: () => _retryRemoval(failedByVehicle[vehicle.id]!),
         ),
     ];
 
@@ -188,6 +227,32 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
               ),
       ),
     );
+  }
+
+  /// Replays one failed removal. The vehicle stays visible throughout; a failed
+  /// retry leaves the recovery in place, and a successful one never restores the
+  /// failure even if the follow-up refresh fails.
+  Future<void> _retryRemoval(FailedVehicleDelete failed) async {
+    if (_removingId.isNotEmpty) return;
+    setState(() => _removingId = failed.vehicleId);
+
+    final accepted = await ref
+        .read(failedVehicleDeleteSyncProvider)
+        .retry(failed.operationId);
+    if (!mounted) return;
+
+    ref.invalidate(customerFailedVehicleDeletesProvider);
+    await ref.read(customerDashboardProvider.notifier).refresh();
+    if (!mounted) return;
+    setState(() => _removingId = '');
+
+    if (!accepted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text("We couldn't remove this vehicle. Please try again."),
+        ),
+      );
+    }
   }
 }
 
@@ -371,6 +436,103 @@ class _LoadFailure extends StatelessWidget {
                 child: const Text('Retry'),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Page-level recovery for a failed removal whose vehicle cannot yet be shown
+/// (canonical reload pending or failing). It never fabricates the vehicle: it
+/// states the honest server truth and offers the single retry.
+class _UnmatchedDeleteRecovery extends StatelessWidget {
+  final List<FailedVehicleDelete> operations;
+  final String busyId;
+  final Future<void> Function(FailedVehicleDelete operation) onRetry;
+
+  const _UnmatchedDeleteRecovery({
+    required this.operations,
+    required this.busyId,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      label:
+          "We couldn't remove a vehicle. "
+          'The vehicle is still in your workshop account.',
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.s14),
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+            colors.error.withValues(alpha: 0.05),
+            colors.surface,
+          ),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          border: Border.all(color: colors.error.withValues(alpha: 0.20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: AppDimensions.iconSm,
+                  color: colors.error,
+                ),
+                const SizedBox(width: AppDimensions.s6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "We couldn't remove a vehicle.",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.r2),
+                      Text(
+                        'The vehicle is still in your workshop account.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            for (final operation in operations) ...[
+              const SizedBox(height: AppDimensions.s8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: SizedBox(
+                  height: AppDimensions.touchTarget,
+                  child: FilledButton(
+                    onPressed: busyId.isNotEmpty
+                        ? null
+                        : () => onRetry(operation),
+                    child: Text(
+                      busyId == operation.vehicleId
+                          ? 'Retrying\u2026'
+                          : 'Retry removal',
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

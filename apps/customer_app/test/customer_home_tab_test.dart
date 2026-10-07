@@ -163,9 +163,11 @@ void main() {
       expect(find.text('Your garage'), findsOneWidget);
       expect(find.text('Nissan Patrol'), findsOneWidget);
       expect(find.text('2021 \u00b7 48,200 km \u00b7 White'), findsOneWidget);
-      // Only the assessed vehicle carries a health pill.
-      expect(find.text('Health 82%'), findsOneWidget);
-      expect(find.textContaining('Health'), findsOneWidget);
+      // Health and service dates are client-written defaults rather than
+      // workshop assessments, so no vehicle carries such a claim on Home.
+      expect(find.textContaining('Health '), findsNothing);
+      expect(find.textContaining('Next service due'), findsNothing);
+      expect(find.textContaining('Health'), findsNothing);
       expect(find.text('Manage'), findsOneWidget);
     });
 

@@ -1,7 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:shared_core/shared_core.dart';
 
 void main() {
+  group('NotificationResponse', () {
+    test('understands the key the workshop really sends for a read item', () {
+      // The customer DTO declares a primitive `boolean isRead`, which Jackson
+      // serialises as "read"; the app must accept either key, or every
+      // notification would render as unread forever.
+      expect(NotificationResponse.fromJson({'read': true}).isRead, isTrue);
+      expect(NotificationResponse.fromJson({'isRead': true}).isRead, isTrue);
+      expect(NotificationResponse.fromJson({'read': false}).isRead, isFalse);
+      expect(NotificationResponse.fromJson(const {}).isRead, isFalse);
+    });
+  });
+
   group('CustomerBookingEntity', () {
     test('round-trips through JSON', () {
       const booking = CustomerBookingEntity(

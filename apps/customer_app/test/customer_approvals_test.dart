@@ -80,9 +80,9 @@ void main() {
     ) async {
       await _pumpApprovals(tester, invoices: const [_paidInvoice]);
 
-      expect(find.text('Settled invoices'), findsOneWidget);
+      expect(find.text('Invoices'), findsOneWidget);
       expect(find.text('INV-2048'), findsOneWidget);
-      expect(find.text('AED 1,695'), findsOneWidget);
+      expect(find.text('AED 1,780'), findsOneWidget);
       expect(find.text('PAID'), findsOneWidget);
 
       await tester.tap(find.text('INV-2048'));

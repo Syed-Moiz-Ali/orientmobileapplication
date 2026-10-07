@@ -2,6 +2,7 @@ import 'package:customer_app/core/local/vehicle_identity_store.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/failed_breakdown_sync.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
 import 'package:flutter/material.dart';
@@ -23,10 +24,12 @@ class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
   const CustomerBreakdownHelpView({super.key});
 
   @override
-  ConsumerState<CustomerBreakdownHelpView> createState() => _CustomerBreakdownHelpViewState();
+  ConsumerState<CustomerBreakdownHelpView> createState() =>
+      _CustomerBreakdownHelpViewState();
 }
 
-class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHelpView> {
+class _CustomerBreakdownHelpViewState
+    extends ConsumerState<CustomerBreakdownHelpView> {
   /// Symptoms only. The backend stores this text as the request's issue and
   /// promises no specific service, so nothing here names a service that may not
   /// exist.
@@ -46,6 +49,8 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
   String? _symptom;
   CustomerVehicleEntity? _vehicle;
   bool _sending = false;
+  bool _retrying = false;
+  bool _removing = false;
 
   @override
   void initState() {
@@ -62,7 +67,8 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
     super.dispose();
   }
 
-  List<CustomerVehicleEntity> get _vehicles => ref.watch(customerDashboardProvider).vehicles;
+  List<CustomerVehicleEntity> get _vehicles =>
+      ref.watch(customerDashboardProvider).vehicles;
 
   /// The single text field the contract has, filled from the symptom chip
   /// plus anything the customer adds, so no typed detail is thrown away.
@@ -89,7 +95,9 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
   }
 
   void _notice(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _submit() async {
@@ -117,7 +125,9 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
 
     setState(() => _sending = true);
     try {
-      final response = await ref.read(customerRemoteDataSourceProvider).createBreakdown(payload);
+      final response = await ref
+          .read(customerRemoteDataSourceProvider)
+          .createBreakdown(payload);
       if (!mounted) return;
       _showResult(sent: true, reference: response.id, location: location);
     } on NetworkException catch (e) {
@@ -131,14 +141,22 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
         );
         return;
       }
-      await _queue(payload);
+      if (!await _queue(payload)) {
+        // Nothing was saved, so the customer must not be told the request is
+        // waiting to reach the workshop; their input and the Call action remain.
+        return;
+      }
       if (!mounted) return;
       _showResult(sent: false, reference: '', location: location);
     } on UnauthorizedException {
       await ref.read(authNotifierProvider.notifier).logout();
     } catch (e) {
       if (!mounted) return;
-      _notice(e is AppException ? e.message : "We couldn't send your request. Please try again.");
+      _notice(
+        e is AppException
+            ? e.message
+            : "We couldn't send your request. Please try again.",
+      );
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -150,7 +168,8 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
   /// attempt counts as a failed retry, and a request that was never actually
   /// sent must not exhaust its retries. The sync engine sends it when the
   /// connection returns.
-  Future<void> _queue(Map<String, dynamic> payload) async {
+  /// True only when the request is durably queued for replay.
+  Future<bool> _queue(Map<String, dynamic> payload) async {
     final localId = 'breakdown-${DateTime.now().millisecondsSinceEpoch}';
     try {
       await ref
@@ -165,15 +184,61 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
               timestamp: DateTime.now().millisecondsSinceEpoch,
             ),
           );
+      return true;
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to queue breakdown request', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e('Failed to queue breakdown request', error: e, stackTrace: st);
       if (mounted) {
         _notice("We couldn't save this request on your device.");
       }
+      return false;
     }
   }
 
-  void _showResult({required bool sent, required String reference, required String location}) {
+  /// Replays the failed requests through the existing sync retry, so the same
+  /// operation (and the same delivery key) is re-sent rather than a new one.
+  Future<void> _retryFailedRequest() async {
+    if (_retrying || _removing) return;
+    setState(() => _retrying = true);
+    final cleared = await ref.read(failedBreakdownSyncProvider).retry();
+    if (!mounted) return;
+    setState(() => _retrying = false);
+    _notice(
+      cleared
+          ? 'Your saved request was sent to the workshop.'
+          : "We still couldn't send your request. The workshop has not received "
+                'it.',
+    );
+  }
+
+  /// Discards a saved request that cannot be delivered.
+  Future<void> _confirmRemoveFailedRequest() async {
+    if (_retrying || _removing) return;
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: 'Remove saved request?',
+      message:
+          'This removes the copy stored on this device. The workshop has not '
+          'received it.',
+      confirmLabel: 'Remove request',
+      cancelLabel: 'Keep request',
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _removing = true);
+    await ref.read(failedBreakdownSyncProvider).remove();
+    if (!mounted) return;
+    setState(() => _removing = false);
+    _notice('Saved request removed.');
+  }
+
+  void _showResult({
+    required bool sent,
+    required String reference,
+    required String location,
+  }) {
     context.pushReplacement(
       AppRoutes.customerBreakdownResult,
       extra: <String, dynamic>{
@@ -198,9 +263,16 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final vehicles = _vehicles;
+    final failedRequests = ref
+        .watch(failedBreakdownSyncProvider)
+        .failedBreakdowns();
 
     return Scaffold(
-      bottomNavigationBar: _Dock(sending: _sending, onCall: _callWorkshop, onSubmit: _submit),
+      bottomNavigationBar: _Dock(
+        sending: _sending,
+        onCall: _callWorkshop,
+        onSubmit: _submit,
+      ),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -213,11 +285,24 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (failedRequests.isNotEmpty) ...[
+                      _FailedRequestRecovery(
+                        requests: failedRequests,
+                        retrying: _retrying,
+                        removing: _removing,
+                        onRetry: _retryFailedRequest,
+                        onRemove: _confirmRemoveFailedRequest,
+                      ),
+                      const SizedBox(height: AppDimensions.s16),
+                    ],
                     const SizedBox(height: AppDimensions.s12),
                     Text(
                       'Tell the workshop which vehicle needs help, where it '
                       "is, and what's wrong.",
-                      style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant, height: 1.45),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        height: 1.45,
+                      ),
                     ),
                     const SizedBox(height: AppDimensions.s20),
                     _Section(
@@ -225,8 +310,10 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                       child: _VehicleField(
                         vehicles: vehicles,
                         selected: _vehicle,
-                        onSelect: (vehicle) => setState(() => _vehicle = vehicle),
-                        onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
+                        onSelect: (vehicle) =>
+                            setState(() => _vehicle = vehicle),
+                        onAddVehicle: () =>
+                            context.push(AppRoutes.customerAddVehicle),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.s16),
@@ -239,7 +326,8 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
                           hintText: 'Enter your current location or landmark',
-                          helperText: 'Type an address, exit or nearby landmark.',
+                          helperText:
+                              'Type an address, exit or nearby landmark.',
                           prefixIcon: Icon(Icons.location_on_outlined),
                         ),
                       ),
@@ -258,7 +346,18 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                                 ChoiceChip(
                                   label: Text(symptom),
                                   selected: _symptom == symptom,
-                                  onSelected: (selected) => setState(() => _symptom = selected ? symptom : null),
+                                  onSelected: (selected) => setState(
+                                    () => _symptom = selected ? symptom : null,
+                                  ),
+                                  // The app's chip theme labels in primary, which
+                                  // would be invisible on the primary fill.
+                                  labelStyle: theme.textTheme.labelLarge
+                                      ?.copyWith(
+                                        color: _symptom == symptom
+                                            ? colors.onPrimary
+                                            : colors.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                 ),
                             ],
                           ),
@@ -270,7 +369,8 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                             textInputAction: TextInputAction.done,
                             decoration: const InputDecoration(
                               labelText: 'Anything else? (optional)',
-                              hintText: 'e.g. Parked in the basement, hard to see',
+                              hintText:
+                                  'e.g. Parked in the basement, hard to see',
                             ),
                           ),
                         ],
@@ -288,6 +388,152 @@ class _CustomerBreakdownHelpViewState extends ConsumerState<CustomerBreakdownHel
                   ],
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Recovery for a roadside request the workshop never received.
+///
+/// This is recovery state, not history: it exists only while a request is still
+/// undelivered, and disappears the moment it is sent or removed.
+class _FailedRequestRecovery extends StatelessWidget {
+  final List<SyncOperation> requests;
+  final bool retrying;
+  final bool removing;
+  final VoidCallback onRetry;
+  final VoidCallback onRemove;
+
+  const _FailedRequestRecovery({
+    required this.requests,
+    required this.retrying,
+    required this.removing,
+    required this.onRetry,
+    required this.onRemove,
+  });
+
+  bool get _busy => retrying || removing;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final plural = requests.length > 1;
+
+    final payload = requests.first.payload;
+    final detail =
+        [payload['vehicleName'], payload['issue'], payload['location']]
+            .map((value) => (value ?? '').toString().trim())
+            .where((value) => value.isNotEmpty)
+            .join('  ·  ');
+
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: plural
+          ? "We couldn't send your saved roadside requests. The workshop has "
+                'not received them.'
+          : "We couldn't send your saved roadside request. The workshop has "
+                'not received it.',
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.s14),
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+            colors.error.withValues(alpha: 0.06),
+            colors.surface,
+          ),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.sync_problem_rounded,
+                  size: AppDimensions.iconMd,
+                  color: colors.error,
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
+                  child: Text(
+                    plural
+                        ? "We couldn't send your roadside requests"
+                        : "We couldn't send your roadside request",
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s6),
+            Text(
+              plural
+                  ? 'They are saved on this device, but the workshop has not '
+                        'received them. Try again, or call the workshop if you '
+                        'need help now.'
+                  : "It's saved on this device, but the workshop has not "
+                        'received it. Try sending it again, or call the '
+                        'workshop if you need help now.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurface,
+                height: 1.45,
+              ),
+            ),
+            if (detail.isNotEmpty) ...[
+              const SizedBox(height: AppDimensions.s6),
+              if (plural)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    '${requests.length} saved requests',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              Text(
+                detail,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: AppDimensions.s10),
+            Wrap(
+              spacing: AppDimensions.s8,
+              runSpacing: AppDimensions.s4,
+              children: [
+                FilledButton(
+                  onPressed: _busy ? null : onRetry,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, AppDimensions.touchTarget),
+                  ),
+                  child: Text(retrying ? 'Retrying…' : 'Retry sending'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : onRemove,
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: const Text('Remove request'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.error,
+                    minimumSize: const Size(0, AppDimensions.touchTarget),
+                    side: BorderSide(
+                      color: colors.error.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -359,13 +605,19 @@ class _VehicleField extends StatelessWidget {
             children: [
               Text(
                 'No vehicles registered yet',
-                style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurface, fontWeight: FontWeight.w700),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: AppDimensions.s4),
               Text(
                 'You can still send a request. Adding the vehicle helps the '
                 'workshop keep your history in one place.',
-                style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant, height: 1.4),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: AppDimensions.s8),
               Align(
@@ -409,7 +661,11 @@ class _VehicleOption extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _VehicleOption({required this.vehicle, required this.selected, required this.onTap});
+  const _VehicleOption({
+    required this.vehicle,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -423,32 +679,42 @@ class _VehicleOption extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s14, vertical: AppDimensions.s12),
-          child: Row(
-            children: [
-              Icon(
-                selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                size: AppDimensions.iconMd,
-                color: selected ? colors.primary : colors.outline,
-              ),
-              const SizedBox(width: AppDimensions.s12),
-              Expanded(
-                child: Text(
-                  vehicle.displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AppDimensions.touchTarget,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s14,
+              vertical: AppDimensions.s12,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  selected
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_off_rounded,
+                  size: AppDimensions.iconMd,
+                  color: selected ? colors.primary : colors.outline,
+                ),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Text(
+                    vehicle.displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              if (vehicle.plateNumber.trim().isNotEmpty) ...[
-                const SizedBox(width: AppDimensions.s8),
-                CustomerPlateChip(plate: vehicle.plateNumber),
+                if (vehicle.plateNumber.trim().isNotEmpty) ...[
+                  const SizedBox(width: AppDimensions.s8),
+                  CustomerPlateChip(plate: vehicle.plateNumber),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -462,7 +728,11 @@ class _Dock extends StatelessWidget {
   final VoidCallback onCall;
   final VoidCallback onSubmit;
 
-  const _Dock({required this.sending, required this.onCall, required this.onSubmit});
+  const _Dock({
+    required this.sending,
+    required this.onCall,
+    required this.onSubmit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -475,21 +745,34 @@ class _Dock extends StatelessWidget {
           color: colors.surface,
           border: Border(top: BorderSide(color: colors.outlineVariant)),
         ),
-        padding: const EdgeInsets.fromLTRB(AppDimensions.s16, AppDimensions.s12, AppDimensions.s16, 0),
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s16,
+          AppDimensions.s12,
+          AppDimensions.s16,
+          0,
+        ),
+        // A plain Row (not a Center) so the bar keeps its intrinsic height;
+        // centring here would make it claim the whole Scaffold.
         child: Row(
           children: [
             OutlinedButton.icon(
               onPressed: sending ? null : onCall,
               icon: const Icon(Icons.phone_outlined, size: 18),
               label: const Text('Call'),
-              style: OutlinedButton.styleFrom(minimumSize: const Size(96, AppDimensions.touchTarget)),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(96, AppDimensions.touchTarget),
+              ),
             ),
             const SizedBox(width: AppDimensions.s12),
             Expanded(
               child: FilledButton(
                 onPressed: sending ? null : onSubmit,
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(AppDimensions.touchTarget)),
-                child: Text(sending ? 'Sending request…' : 'Request assistance'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(AppDimensions.touchTarget),
+                ),
+                child: Text(
+                  sending ? 'Sending request…' : 'Request assistance',
+                ),
               ),
             ),
           ],

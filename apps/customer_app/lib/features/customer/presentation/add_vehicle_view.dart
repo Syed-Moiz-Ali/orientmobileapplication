@@ -449,10 +449,8 @@ class _Note extends StatelessWidget {
           Expanded(
             child: Text(
               hasWorkshopData
-                  ? 'Health and service dates come from the workshop and are '
-                        'kept as they are.'
-                  : 'Health and service dates are recorded by the workshop '
-                        'during a service — nothing is assumed here.',
+                  ? 'Service dates already on record are left untouched here.'
+                  : 'This screen never changes the service dates on record.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
                 height: 1.45,

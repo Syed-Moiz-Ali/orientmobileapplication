@@ -64,7 +64,13 @@ final customerBookingsProvider = FutureProvider<List<CustomerBookingEntity>>((
     // the submitted ISO value, so identity is compared on the real date, the
     // normalised plate and the service â€” never on raw strings.
     String keyOf(CustomerBookingEntity b) =>
-        '${CustomerBookingsPresentation.identityKey(vehicleName: b.vehicleName, plateNumber: b.plateNumber, date: b.date)}|${b.service.trim().toLowerCase()}|${b.time.trim()}';
+        CustomerBookingsPresentation.bookingKey(
+          vehicleName: b.vehicleName,
+          plateNumber: b.plateNumber,
+          service: b.service,
+          date: b.date,
+          time: b.time,
+        );
 
     final remoteKeys = remoteEntities.map(keyOf).toSet();
     final merged = [
@@ -281,7 +287,9 @@ class CustomerDashboardNotifier extends Notifier<CustomerDashboardState> {
         ),
         activeService: results[2] as CustomerServiceEntity,
         profile: results[3] as CustomerEntity,
-        unpaidInvoices: invoices.where((i) => i.status == 'unpaid').length,
+        unpaidInvoices: invoices
+            .where((i) => i.status == 'unpaid' || i.status == 'overdue')
+            .length,
       );
     } catch (e, st) {
       ref
@@ -624,6 +632,25 @@ Future<BookingSubmission> customerSubmitBooking(
     'time': bookingTime,
   };
 
+  if (resolution.outcome == VehicleBookingOutcome.pendingOffline) {
+    // The device is already known to be offline and the selected vehicle only
+    // has a temporary local id, so the booking is queued instead of attempted:
+    // the same operation identity is kept and the payload is rewritten with the
+    // server id when the vehicle finishes registering.
+    if (!await _queueBookingOffline(ref, apiPayload, localRecord, localId)) {
+      return const BookingSubmission(
+        accepted: false,
+        error: "We couldn't save this booking on your device. Try again.",
+      );
+    }
+    return BookingSubmission(
+      accepted: true,
+      queuedOffline: true,
+      bookingId: localId,
+      error: '',
+    );
+  }
+
   try {
     final response = await ref
         .read(customerRemoteDataSourceProvider)
@@ -655,7 +682,12 @@ Future<BookingSubmission> customerSubmitBooking(
               'so you do not book twice.',
         );
       }
-      await _queueBookingOffline(ref, apiPayload, localRecord, localId);
+      if (!await _queueBookingOffline(ref, apiPayload, localRecord, localId)) {
+        return const BookingSubmission(
+          accepted: false,
+          error: "We couldn't save this booking on your device. Try again.",
+        );
+      }
       return BookingSubmission(
         accepted: true,
         queuedOffline: true,
@@ -704,7 +736,7 @@ Future<void> _cacheBooking(
 
 /// Offline-first path: stored on the device and queued with the existing sync
 /// engine, which replays the documented API payload when connectivity returns.
-Future<void> _queueBookingOffline(
+Future<bool> _queueBookingOffline(
   WidgetRef ref,
   Map<String, dynamic> apiPayload,
   Map<String, dynamic> localRecord,
@@ -732,8 +764,17 @@ Future<void> _queueBookingOffline(
     ref
         .read(loggerProvider)
         .e('Failed to queue booking offline', error: e, stackTrace: st);
+    // Nothing was durably queued, so the provisional local booking must not
+    // remain as though the customer could rely on it.
+    try {
+      final box = Hive.box<dynamic>('customer_cache');
+      await GenericLocalDataSource(box).delete('booking_$localId');
+    } catch (_) {}
+    _refreshBookingState(ref);
+    return false;
   }
   _refreshBookingState(ref);
+  return true;
 }
 
 void _refreshBookingState(WidgetRef ref) {
@@ -838,13 +879,18 @@ Future<VehicleSaveResult> customerSaveVehicle(
   // is no server record to update. Its queued create is rewritten instead, so
   // editing never produces a second registration.
   if (isEdit && isVehiclePendingSync(ref, vehicle.id)) {
-    await _queueVehicleOffline(
+    if (!await _queueVehicleOffline(
       ref,
       vehicle: vehicle,
       isEdit: false,
       payload: payload,
       localId: vehicle.id,
-    );
+    )) {
+      return const VehicleSaveResult(
+        accepted: false,
+        error: "We couldn't save this vehicle on your device. Try again.",
+      );
+    }
     return VehicleSaveResult(
       accepted: true,
       queuedOffline: true,
@@ -856,7 +902,11 @@ Future<VehicleSaveResult> customerSaveVehicle(
     final response = isEdit
         ? await ref
               .read(customerRemoteDataSourceProvider)
-              .updateVehicle(vehicle.id, payload)
+              // A vehicle created offline may already have been registered, in
+              // which case the customer's copy still holds the temporary id:
+              // resolve it so the edit never targets a resource the workshop
+              // does not have.
+              .updateVehicle(VehicleIdentityStore.resolve(vehicle.id), payload)
         : await ref.read(customerRemoteDataSourceProvider).addVehicle(payload);
     final saved = _vehicleFrom(response, fallbackId: vehicle.id);
     notifier.addVehicle(saved);
@@ -871,13 +921,18 @@ Future<VehicleSaveResult> customerSaveVehicle(
       );
     }
     if (e is NetworkException) {
-      await _queueVehicleOffline(
+      if (!await _queueVehicleOffline(
         ref,
         vehicle: vehicle,
         isEdit: isEdit,
         payload: payload,
         localId: localId,
-      );
+      )) {
+        return const VehicleSaveResult(
+          accepted: false,
+          error: "We couldn't save this vehicle on your device. Try again.",
+        );
+      }
       return VehicleSaveResult(
         accepted: true,
         queuedOffline: true,
@@ -915,7 +970,7 @@ CustomerVehicleEntity _vehicleFrom(
 
 /// Stores the vehicle on the device and queues the documented payload, so the
 /// vehicle is usable (and bookable) before the server has it.
-Future<void> _queueVehicleOffline(
+Future<bool> _queueVehicleOffline(
   WidgetRef ref, {
   required CustomerVehicleEntity vehicle,
   required bool isEdit,
@@ -972,9 +1027,20 @@ Future<void> _queueVehicleOffline(
     ref
         .read(loggerProvider)
         .e('Failed to queue vehicle offline', error: e, stackTrace: st);
+    // The operation that will be replayed was not persisted, so the provisional
+    // cache entry must not survive as a deceptive local record.
+    try {
+      final box = Hive.box<dynamic>('customer_cache');
+      final cached = List<Map<String, dynamic>>.from(
+        (box.get('cached_vehicles') as List?)?.whereType<Map>() ?? const [],
+      )..removeWhere((entry) => (entry['id'] ?? '').toString() == id);
+      await box.put('cached_vehicles', cached);
+    } catch (_) {}
+    return false;
   }
   await VehicleIdentityStore.markPending(id);
   ref.read(customerDashboardProvider.notifier).addVehicle(local);
+  return true;
 }
 
 /// Removes one vehicle.
@@ -989,15 +1055,21 @@ Future<bool> customerRemoveVehicle(WidgetRef ref, String id) async {
   // that the vehicle is local-only.
   var isLocalOnly = false;
   try {
-    isLocalOnly = ref
-        .read(syncQueueProvider)
-        .peekAll()
-        .any(
-          (operation) =>
-              operation.entityType == 'vehicle' &&
-              operation.entityId == id &&
-              operation.changeType == ChangeType.create,
-        );
+    isLocalOnly =
+        // The durable pending marker, or a registration that already failed,
+        // means the workshop never accepted this vehicle — a create waiting in
+        // the queue is the third case.
+        VehicleIdentityStore.isPending(id) ||
+        VehicleIdentityStore.hasFailedCreate(id) ||
+        ref
+            .read(syncQueueProvider)
+            .peekAll()
+            .any(
+              (operation) =>
+                  operation.entityType == 'vehicle' &&
+                  operation.entityId == id &&
+                  operation.changeType == ChangeType.create,
+            );
   } catch (_) {
     isLocalOnly = false;
   }
@@ -1024,7 +1096,9 @@ Future<bool> customerRemoveVehicle(WidgetRef ref, String id) async {
           .read(loggerProvider)
           .e('Failed to withdraw queued vehicle', error: e, stackTrace: st);
     }
-    await VehicleIdentityStore.clearPending(id);
+    // Clears the pending marker, any failed registration and the identity
+    // mapping, so a removed vehicle can never be resurrected by a later retry.
+    await VehicleIdentityStore.forget(id);
     notifier.removeVehicleLocally(id);
   }
   await ref.read(customerDashboardProvider.notifier).refresh();

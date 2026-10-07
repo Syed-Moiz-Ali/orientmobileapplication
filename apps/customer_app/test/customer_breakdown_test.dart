@@ -10,12 +10,14 @@ import 'package:hive/hive.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
+import 'package:customer_app/core/local/vehicle_identity_store.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/data/datasources/customer_remote_datasource.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/customer_breakdown_help_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_breakdown_result_view.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/failed_breakdown_sync.dart';
 
 /// Roadside assistance is a request, not a dispatch: these tests pin the exact
 /// contract payload, the honest offline/success distinction, and the absence of
@@ -85,6 +87,17 @@ void main() {
     });
 
     testWidgets('never sends a temporary vehicle id', (tester) async {
+      // The real app marks an offline-created vehicle as pending, which is what
+      // tells the request path its id is not usable at the workshop yet. Hive
+      // work runs outside fake time, so it cannot deadlock the test.
+      await tester.runAsync(() async {
+        await Hive.openBox<dynamic>(
+          'customer_cache',
+        ).then((box) => box.clear());
+        await VehicleIdentityStore.markPending(_offlineVehicle.id);
+      });
+      addTearDown(() => VehicleIdentityStore.clearPending(_offlineVehicle.id));
+
       final remote = _FakeRemote();
       await _pumpForm(
         tester,
@@ -245,25 +258,25 @@ void main() {
   });
 
   group('Offline', () {
-    setUp(() async {
-      await Hive.openBox<SyncOperation>(
-        'sync_queue',
-      ).then((box) => box.clear());
-    });
-
     testWidgets('queues the request and says it has not been sent', (
       tester,
     ) async {
       final remote = _FakeRemote()
         ..failure = const NetworkException('Connection failed');
-      await _pumpForm(tester, vehicles: const [_camry], remote: remote);
+      final queue = _RecordingQueue();
+      await _pumpForm(
+        tester,
+        vehicles: const [_camry],
+        remote: remote,
+        queue: queue,
+      );
 
       await _choose(tester, 'Dead battery');
       await tester.enterText(_location, 'Level B2, Marina Mall');
       await tester.tap(find.text('Request assistance'));
       await tester.pumpAndSettle();
 
-      final queued = Hive.box<SyncOperation>('sync_queue').values.single;
+      final queued = queue.enqueued.single;
       expect(queued.entityType, 'breakdown');
       expect(queued.changeType, ChangeType.create);
       expect(queued.payload['issue'], 'Dead battery');
@@ -284,14 +297,20 @@ void main() {
         ..failure = const NetworkException(
           'We did not receive data from the server',
         );
-      await _pumpForm(tester, vehicles: const [_camry], remote: remote);
+      final queue = _RecordingQueue();
+      await _pumpForm(
+        tester,
+        vehicles: const [_camry],
+        remote: remote,
+        queue: queue,
+      );
 
       await _choose(tester, 'Flat tyre');
       await tester.enterText(_location, 'Level B2');
       await tester.tap(find.text('Request assistance'));
       await tester.pumpAndSettle();
 
-      expect(Hive.box<SyncOperation>('sync_queue'), isEmpty);
+      expect(queue.enqueued, isEmpty);
       expect(
         find.textContaining("couldn't confirm whether the workshop received"),
         findsOneWidget,
@@ -300,6 +319,185 @@ void main() {
     });
   });
 
+  group('Failed request recovery', () {
+    testWidgets('a queued request is never presented as a failure', (
+      tester,
+    ) async {
+      final remote = _FakeRemote()
+        ..failure = const NetworkException('Connection failed');
+      await _pumpForm(
+        tester,
+        vehicles: const [_camry],
+        remote: remote,
+        queue: _RecordingQueue(),
+      );
+
+      await _choose(tester, 'Dead battery');
+      await tester.enterText(_location, 'Level B2');
+      await tester.tap(find.text('Request assistance'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Request saved'), findsOneWidget);
+      expect(find.textContaining('workshop has not received'), findsNothing);
+      expect(find.text('Retry sending'), findsNothing);
+    });
+
+    testWidgets('a failed request states the workshop has not received it', (
+      tester,
+    ) async {
+      final failed = _FakeFailedBreakdownSync(
+        operations: [_failedBreakdownOperation()],
+      );
+      await _pumpForm(tester, vehicles: const [_camry], failedSync: failed);
+
+      expect(
+        find.text("We couldn't send your roadside request"),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('the workshop has not received it'),
+        findsOneWidget,
+      );
+      expect(find.text('Retry sending'), findsOneWidget);
+      expect(find.text('Remove request'), findsOneWidget);
+      expect(
+        find.textContaining('Flat tyre'),
+        findsWidgets,
+        reason: 'the saved request shows what was actually asked for',
+      );
+    });
+
+    testWidgets('retry replays the saved request, never a new submission', (
+      tester,
+    ) async {
+      final failed = _FakeFailedBreakdownSync(
+        operations: [_failedBreakdownOperation()],
+      );
+      final remote = _FakeRemote();
+      await _pumpForm(
+        tester,
+        vehicles: const [_camry],
+        remote: remote,
+        failedSync: failed,
+      );
+
+      await tester.tap(find.text('Retry sending'));
+      await tester.pumpAndSettle();
+
+      expect(failed.retryCalls, 1);
+      expect(
+        remote.payloads,
+        isEmpty,
+        reason: 'retry must reuse the stored request, not submit a new one',
+      );
+      expect(
+        find.text('Your saved request was sent to the workshop.'),
+        findsOneWidget,
+      );
+      expect(find.text('Retry sending'), findsNothing);
+    });
+
+    testWidgets('a second retry tap while one is running is ignored', (
+      tester,
+    ) async {
+      final failed = _FakeFailedBreakdownSync(
+        operations: [_failedBreakdownOperation()],
+      )..gate = Completer<void>();
+      await _pumpForm(tester, vehicles: const [_camry], failedSync: failed);
+
+      await tester.tap(find.text('Retry sending'));
+      await tester.pump();
+      expect(find.text('Retrying…'), findsOneWidget);
+
+      await tester.tap(find.text('Retrying…'));
+      await tester.pump();
+      expect(failed.retryCalls, 1);
+
+      failed.gate!.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('a retry that fails again keeps the recovery available', (
+      tester,
+    ) async {
+      final failed = _FakeFailedBreakdownSync(
+        operations: [_failedBreakdownOperation()],
+        retryClears: false,
+      );
+      await _pumpForm(tester, vehicles: const [_camry], failedSync: failed);
+
+      await tester.tap(find.text('Retry sending'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('workshop has not received it'), findsWidgets);
+      expect(find.text('Retry sending'), findsOneWidget);
+      expect(find.text('Remove request'), findsOneWidget);
+      expect(
+        find.textContaining("We still couldn't send your request"),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('removing asks first and only then discards it', (
+      tester,
+    ) async {
+      final failed = _FakeFailedBreakdownSync(
+        operations: [_failedBreakdownOperation()],
+      );
+      await _pumpForm(tester, vehicles: const [_camry], failedSync: failed);
+
+      await tester.tap(find.text('Remove request'));
+      await tester.pumpAndSettle();
+      expect(find.text('Remove saved request?'), findsOneWidget);
+      expect(
+        find.textContaining('The workshop has not received it.'),
+        findsOneWidget,
+      );
+
+      // Cancelling leaves the saved request exactly where it was.
+      await tester.tap(find.text('Keep request'));
+      await tester.pumpAndSettle();
+      expect(failed.removeCalls, 0);
+      expect(find.text('Retry sending'), findsOneWidget);
+
+      await tester.tap(find.text('Remove request'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove request').last);
+      await tester.pumpAndSettle();
+
+      expect(failed.removeCalls, 1);
+      expect(find.text('Retry sending'), findsNothing);
+      expect(find.text('Saved request removed.'), findsOneWidget);
+    });
+
+    testWidgets('the recovery copy never exposes technical detail', (
+      tester,
+    ) async {
+      final failed = _FakeFailedBreakdownSync(
+        operations: [_failedBreakdownOperation()],
+      );
+      await _pumpForm(tester, vehicles: const [_camry], failedSync: failed);
+
+      final rendered = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((text) => text.data ?? '')
+          .join(' ')
+          .toLowerCase();
+
+      for (final banned in const [
+        'sync',
+        'queue',
+        'hive',
+        'http',
+        'operation',
+        'retry count',
+        'entityid',
+        'failed box',
+      ]) {
+        expect(rendered.contains(banned), isFalse, reason: banned);
+      }
+    });
+  });
   group('Result', () {
     testWidgets('a sent request shows its real reference and details', (
       tester,
@@ -465,6 +663,106 @@ void main() {
     });
   });
 
+  group('Failed request store', () {
+    setUp(() async {
+      await Hive.openBox<SyncOperation>(
+        'sync_failed',
+      ).then((box) => box.clear());
+      await Hive.openBox<SyncOperation>(
+        'sync_queue',
+      ).then((box) => box.clear());
+    });
+
+    test('detects failed roadside creates and nothing else', () async {
+      final failed = Hive.box<SyncOperation>('sync_failed');
+      await failed.put('b1', _failedBreakdownOperation());
+      await failed.put(
+        'v1',
+        SyncOperation(
+          id: 'v1',
+          entityType: 'vehicle',
+          entityId: 'v1',
+          changeType: ChangeType.create,
+          payload: const {'brand': 'Toyota'},
+          timestamp: 1,
+          retryCount: 3,
+        ),
+      );
+      // Still only queued, so it is not a failure yet.
+      await Hive.box<SyncOperation>('sync_queue').put(
+        'b2',
+        SyncOperation(
+          id: 'b2',
+          entityType: 'breakdown',
+          entityId: 'b2',
+          changeType: ChangeType.create,
+          payload: const {'issue': 'Flat tyre'},
+          timestamp: 2,
+        ),
+      );
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final detected = container
+          .read(failedBreakdownSyncProvider)
+          .failedBreakdowns()
+          .map((operation) => operation.id)
+          .toList();
+
+      expect(detected, ['breakdown-1740000000000']);
+    });
+
+    test('removing deletes only the roadside request', () async {
+      final failed = Hive.box<SyncOperation>('sync_failed');
+      await failed.put('b1', _failedBreakdownOperation());
+      await failed.put(
+        'v1',
+        SyncOperation(
+          id: 'v1',
+          entityType: 'vehicle',
+          entityId: 'v1',
+          changeType: ChangeType.create,
+          payload: const {'brand': 'Toyota'},
+          timestamp: 1,
+          retryCount: 3,
+        ),
+      );
+      // A copy still waiting to be sent must go with it.
+      await Hive.box<SyncOperation>(
+        'sync_queue',
+      ).put('breakdown-1740000000000', _failedBreakdownOperation());
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await container.read(failedBreakdownSyncProvider).remove();
+
+      expect(failed.containsKey('breakdown-1740000000000'), isFalse);
+      expect(
+        failed.containsKey('v1'),
+        isTrue,
+        reason: 'an unrelated failed vehicle request is untouched',
+      );
+      expect(Hive.box<SyncOperation>('sync_queue').isEmpty, isTrue);
+    });
+
+    test('the failed state survives reopening the store', () async {
+      await Hive.box<SyncOperation>(
+        'sync_failed',
+      ).put('b1', _failedBreakdownOperation());
+
+      await Hive.box<SyncOperation>('sync_failed').close();
+      await Hive.openBox<SyncOperation>('sync_failed');
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(
+        container.read(failedBreakdownSyncProvider).failedBreakdowns(),
+        hasLength(1),
+      );
+    });
+  });
   group('Visual references', () {
     testWidgets('form mobile', (tester) async {
       await _pumpForm(tester, vehicles: const [_camry, _patrol]);
@@ -521,6 +819,20 @@ void main() {
       );
     });
 
+    testWidgets('failed sync mobile', (tester) async {
+      await _pumpForm(
+        tester,
+        vehicles: const [_camry],
+        failedSync: _FakeFailedBreakdownSync(
+          operations: [_failedBreakdownOperation()],
+        ),
+      );
+      await expectLater(
+        find.byType(CustomerBreakdownHelpView),
+        matchesGoldenFile('goldens/customer_breakdown_failed_sync_mobile.png'),
+      );
+    });
+
     testWidgets('form dark mobile', (tester) async {
       await _pumpForm(
         tester,
@@ -546,6 +858,52 @@ Future<void> _choose(WidgetTester tester, String symptom) async {
   await tester.pumpAndSettle();
 }
 
+/// A failed roadside request as the sync engine stores it, without a Hive box.
+class _FakeFailedBreakdownSync implements FailedBreakdownSync {
+  _FakeFailedBreakdownSync({
+    List<SyncOperation>? operations,
+    this.retryClears = true,
+  }) : operations = List.of(operations ?? const []);
+
+  List<SyncOperation> operations;
+  final bool retryClears;
+  int retryCalls = 0;
+  int removeCalls = 0;
+  Completer<void>? gate;
+
+  @override
+  List<SyncOperation> failedBreakdowns() => List.of(operations);
+
+  @override
+  Future<bool> retry() async {
+    retryCalls++;
+    if (gate != null) await gate!.future;
+    if (retryClears) operations = [];
+    return operations.isEmpty;
+  }
+
+  @override
+  Future<void> remove() async {
+    removeCalls++;
+    operations = [];
+  }
+}
+
+SyncOperation _failedBreakdownOperation() => SyncOperation(
+  id: 'breakdown-1740000000000',
+  entityType: 'breakdown',
+  entityId: 'breakdown-1740000000000',
+  changeType: ChangeType.create,
+  payload: const {
+    'issue': 'Flat tyre',
+    'vehicleName': 'Toyota Camry',
+    'vehiclePlate': 'A 12345',
+    'location': 'Level B2, Marina Mall',
+  },
+  timestamp: 1,
+  retryCount: 3,
+);
+
 class _FakeRemote implements CustomerRemoteDataSource {
   final List<Map<String, dynamic>> payloads = [];
   String reference = 'BD-TEST-0001';
@@ -564,6 +922,19 @@ class _FakeRemote implements CustomerRemoteDataSource {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName}');
+}
+
+/// Records what the request path would have queued, with no Hive and no real
+/// I/O, so the offline behaviour is deterministic inside a widget test.
+class _RecordingQueue implements SyncQueue {
+  final List<SyncOperation> enqueued = [];
+
+  @override
+  Future<void> enqueue(SyncOperation operation) async =>
+      enqueued.add(operation);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError('');
 }
 
 class _FakeAuth extends AuthNotifier {
@@ -596,6 +967,8 @@ Future<void> _pumpForm(
   WidgetTester tester, {
   required List<CustomerVehicleEntity> vehicles,
   _FakeRemote? remote,
+  _RecordingQueue? queue,
+  _FakeFailedBreakdownSync? failedSync,
   Size size = const Size(390, 844),
   TextScaler textScaler = TextScaler.noScaling,
   ThemeData? theme,
@@ -631,6 +1004,10 @@ Future<void> _pumpForm(
           remote ?? _FakeRemote(),
         ),
         authNotifierProvider.overrideWith(_FakeAuth.new),
+        if (queue != null) syncQueueProvider.overrideWithValue(queue),
+        failedBreakdownSyncProvider.overrideWithValue(
+          failedSync ?? _FakeFailedBreakdownSync(),
+        ),
         // The form pushes the result route through the app's router provider.
         appRouterProvider.overrideWith((ref) => router),
       ],

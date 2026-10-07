@@ -26,7 +26,9 @@ class CustomerBreakdownResultView extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final sent = _sent;
-    final accent = sent ? colors.primary : colors.tertiary;
+    // A queued request is not a success: it gets a neutral accent, not the
+    // positive tone, so the colour cannot contradict the copy.
+    final accent = sent ? colors.primary : colors.secondary;
 
     return Scaffold(
       body: SafeArea(

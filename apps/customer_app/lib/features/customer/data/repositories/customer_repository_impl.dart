@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:customer_app/features/customer/data/datasources/customer_remote_datasource.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/domain/repositories/customer_repository.dart';
+import 'package:customer_app/core/local/vehicle_identity_store.dart';
 import 'package:shared_core/shared_core.dart';
 
 class CustomerRepositoryImpl implements CustomerRepository {
@@ -48,8 +49,12 @@ class CustomerRepositoryImpl implements CustomerRepository {
             ),
           )
           .toList();
-      _cacheVehicles(entities);
-      return entities;
+      // A vehicle created offline is not on the server, so the server list
+      // must not hide it; keep the customer's own car until its registration
+      // completes, or they cannot see or book it at all.
+      final merged = _withLocalVehicles(entities);
+      _cacheVehicles(merged);
+      return merged;
     } catch (e) {
       if (e is UnauthorizedException) rethrow;
       return _loadCachedVehicles();
@@ -213,6 +218,23 @@ class CustomerRepositoryImpl implements CustomerRepository {
       avatarInitials: d['avatarInitials'] ?? '',
       memberId: d['memberId'] ?? '',
     );
+  }
+
+  /// Keeps vehicles that exist only on this device (created offline).
+  List<CustomerVehicleEntity> _withLocalVehicles(
+    List<CustomerVehicleEntity> fresh,
+  ) {
+    final ids = fresh.map((vehicle) => vehicle.id).toSet();
+    try {
+      final local = _loadCachedVehicles().where(
+        (vehicle) =>
+            !ids.contains(vehicle.id) &&
+            VehicleIdentityStore.isPending(vehicle.id),
+      );
+      return [...fresh, ...local];
+    } catch (_) {
+      return fresh;
+    }
   }
 
   void _cacheVehicles(List<CustomerVehicleEntity> list) =>

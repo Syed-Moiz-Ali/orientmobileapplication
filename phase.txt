@@ -1,0 +1,1195 @@
+You are performing the ABSOLUTE FINAL Customer release closure.
+
+Do NOT start another broad Customer audit.
+
+Do NOT redesign any completed Customer screen.
+
+Do NOT start Staff.
+
+The previous passes have already closed:
+
+- cross-account stale customer data after logout/login
+- notification `read` / `isRead` parsing
+- offline pending vehicle cache overwrite
+- fabricated Home vehicle health/service due
+- billing heading/total honesty
+- stale SyncEngine queue-snapshot race
+- temporary vehicle id reaching booking replay
+- AppTopBar clipping at 320px + 1.6×
+- Invoice Detail overflow/unsupported actions
+- offline queue-write honesty
+- vehicle create success without server id
+- failed vehicle-create resurrection
+- vehicle edit using stale temp id
+- sub-48px touch targets
+
+Current baseline:
+
+customer_app:
+467 / 467 passing
+
+70 goldens
+0 missing
+0 pixel mismatches
+
+dart analyze customer_app:
+clean
+
+There are only TWO RELEASE BLOCKERS remaining:
+
+BLOCKER 1
+A queued Booking CREATE can exhaust retries and move into `sync_failed`, while the customer-facing cached booking continues to look merely pending.
+
+The customer has:
+- no visible failure
+- no Retry
+- no Remove
+- no clear statement that the workshop did not receive it
+
+BLOCKER 2
+A queued Vehicle DELETE can exhaust retries after the client optimistically removes the vehicle locally.
+
+The customer then believes the vehicle is deleted even though the server/workshop still has it.
+
+Also complete these two low-risk cleanups before final freeze:
+
+- remove orphan Customer `/feedback` feature
+- add useful live-region semantics to meaningful asynchronous failure states
+
+==================================================
+STRICT SCOPE
+==================================================
+
+Only touch code required for:
+
+1. failed Booking CREATE recovery
+2. failed Vehicle DELETE recovery
+3. entity-specific failed-operation retry if needed
+4. orphan Customer Feedback cleanup
+5. meaningful async failure semantics
+6. tests/goldens directly related to those changes
+
+Do NOT reopen:
+
+Home
+Booking creation UX
+Booking Detail
+Status
+Approvals
+Vehicles layout
+Add/Edit Vehicle
+Profile
+Notifications
+Roadside
+Auth
+Invoice Detail
+
+unless a minimal integration change is required.
+
+==================================================
+MULTI-AGENT EXECUTION
+==================================================
+
+Use FOUR focused agents in parallel.
+
+Initial audit is READ ONLY.
+
+--------------------------------------------------
+AGENT 1 — FAILED BOOKING FORENSIC AUDIT
+--------------------------------------------------
+
+Inspect:
+
+SyncOperation for booking create
+sync_queue
+sync_failed
+cached booking representation
+Booking list grouping
+Booking identity/de-duplication
+retryFailed
+booking repository refresh
+
+Return:
+
+FAILED OP IDENTITY
+FAILED PAYLOAD
+CACHE IDENTITY
+HOW FAILED LOCAL BOOKING CURRENTLY RENDERS
+SAFE RETRY
+SAFE REMOVE
+SUCCESS RECONCILIATION
+FILES
+TESTS
+
+Verify whether multiple failed bookings can exist.
+
+Do not assume one.
+
+--------------------------------------------------
+AGENT 2 — FAILED VEHICLE DELETE FORENSIC AUDIT
+--------------------------------------------------
+
+Inspect:
+
+customerRemoveVehicle
+offline delete
+optimistic vehicle cache removal
+queued vehicle DELETE
+sync_failed
+getVehicles
+VehicleIdentityStore
+vehicle mappings
+retry behavior
+
+Return:
+
+DELETE OP IDENTITY
+WHAT DATA SURVIVES
+WHY VEHICLE REMAINS HIDDEN
+HOW SERVER TRUTH CAN BE RESTORED
+SAFE RETRY
+SAFE FAILURE PRESENTATION
+FILES
+TESTS
+
+--------------------------------------------------
+AGENT 3 — SYNCENGINE PRECISE RETRY AUDIT
+--------------------------------------------------
+
+Inspect current:
+
+SyncEngine.retryFailed()
+
+Determine the minimum safe API for retrying ONE failed operation.
+
+Preferred concept:
+
+retryFailedOperation(operationId)
+
+But do not copy that signature blindly.
+
+Required semantics:
+
+- locate authoritative failed operation by stable id
+- retry ONLY that operation
+- preserve original operation id
+- preserve original Idempotency-Key
+- remove failed operation on success
+- leave/update failed operation on failure
+- do not create another queue row
+- do not touch unrelated failed operations
+
+Return:
+
+CURRENT GLOBAL RETRY BEHAVIOR
+PROPOSED SINGLE-OP RETRY
+QUEUE/FAILED BOX TRANSITIONS
+CONCURRENCY RISKS
+SHARED APP IMPACT
+TEST PLAN
+
+--------------------------------------------------
+AGENT 4 — CLEANUP / ACCESSIBILITY AUDIT
+--------------------------------------------------
+
+Reconfirm exact dead Customer Feedback files:
+
+/feedback
+AppRoutes.customerFeedback
+CustomerFeedbackView
+Customer-only feedback provider/repository/datasource helpers
+
+Separate these from owner/backend feedback functionality.
+
+Also inspect meaningful async failure states for semantics.
+
+Return:
+
+SAFE DELETE SET
+KEEP SET
+LIVE REGION LOCATIONS
+TESTS
+
+==================================================
+LEAD SYNTHESIS
+==================================================
+
+Before implementation, verify:
+
+- exact Booking failed-op identity
+- exact vehicle DELETE failed-op identity
+- whether server refresh is sufficient after retry
+- whether local provisional booking can be removed safely
+- whether precise retry belongs in shared_core
+
+Then implement.
+
+==================================================
+PART 1 — ENTITY-SPECIFIC FAILED OPERATION RETRY
+==================================================
+
+If current `retryFailed()` retries every failed operation, add a small precise retry API.
+
+Conceptual behavior:
+
+retry one failed operation by id
+
+Do NOT build:
+
+Generic Sync Recovery Framework
+Sync Dashboard
+global failure manager
+
+This should be a small extension of current SyncEngine.
+
+==================================================
+RETRY INVARIANTS
+==================================================
+
+For one failed operation:
+
+SAME operation id
+
+SAME entity id
+
+SAME payload unless current authoritative payload has legitimately been rewritten
+
+SAME Idempotency-Key
+
+No duplicate POST/DELETE queue entry
+
+No unrelated failed operation retried
+
+==================================================
+RETRY SUCCESS
+==================================================
+
+Success:
+
+remove that operation from `sync_failed`
+
+do not create a duplicate queue row
+
+allow feature layer to refresh/reconcile canonical state
+
+==================================================
+RETRY FAILURE
+==================================================
+
+Failure:
+
+operation remains failed
+
+retry count/state may update according to existing engine semantics
+
+customer recovery remains visible
+
+==================================================
+CONCURRENT RETRY
+==================================================
+
+Prevent:
+
+double Retry tap
+→ same failed operation executed twice
+
+Use feature in-flight guard and/or engine guard as appropriate.
+
+==================================================
+SHARED ENGINE TESTS
+==================================================
+
+Add tests:
+
+1. retry one failed operation
+2. unrelated failed operation untouched
+3. successful retry removes only selected op
+4. failed retry keeps selected op
+5. original operation id preserved
+6. original payload preserved
+7. duplicate concurrent retry cannot execute twice if engine controls this
+8. existing retryFailed() behavior unchanged unless intentionally refactored
+
+==================================================
+PART 2 — FAILED BOOKING CREATE RECOVERY
+==================================================
+
+A booking that never reached the workshop must NOT look like an ordinary server-side pending booking.
+
+Canonical distinction:
+
+SERVER BOOKING
+Requested / Confirmed / etc.
+
+LOCAL QUEUED BOOKING
+Saved on device, waiting to send
+
+LOCAL FAILED BOOKING
+Not sent
+
+==================================================
+AUTHORITATIVE FAILURE SOURCE
+==================================================
+
+Use:
+
+sync_failed
+
+filter:
+
+entityType == booking
+changeType == create
+
+Do NOT infer failure from:
+
+age
+status string
+missing reference
+
+==================================================
+FAILED BOOKING PRESENTATION
+==================================================
+
+Use the existing Bookings page.
+
+Do NOT create another screen.
+
+Preferred approach:
+
+the provisional local booking row remains in the list but changes presentation based on terminal failure.
+
+It should communicate:
+
+Not sent
+
+plus concise supporting copy such as:
+
+"We couldn't send this booking to the workshop."
+
+Actions:
+
+Retry
+Remove
+
+If current list architecture makes row-level integration awkward, a compact recovery group above the relevant section is acceptable.
+
+But do NOT create:
+
+Sync failures
+Offline manager
+Technical errors
+
+==================================================
+SHOW REAL BOOKING INFORMATION
+==================================================
+
+Use only payload/cache data that actually exists:
+
+vehicle
+service
+appointment
+possibly notes if genuinely stored
+
+No fake booking reference.
+
+No fake server status.
+
+No fake workshop confirmation.
+
+==================================================
+SERVER RECEIPT HONESTY
+==================================================
+
+The failed state must explicitly distinguish:
+
+"The workshop hasn't received this booking."
+
+or equivalent.
+
+Do not say:
+
+Booking failed
+
+without explaining whether it reached the workshop.
+
+==================================================
+FAILED BOOKING RETRY
+==================================================
+
+Retry the SAME failed SyncOperation through the precise retry API.
+
+Do NOT:
+
+call createBooking directly from the widget
+
+enqueue a second booking
+
+generate another local id
+
+==================================================
+RETRYING STATE
+==================================================
+
+While retrying:
+
+Retry → Retrying…
+
+disable second submission
+
+keep Remove disabled or safe from race if appropriate
+
+==================================================
+RETRY SUCCESS
+==================================================
+
+After successful replay:
+
+refresh canonical bookings.
+
+Then remove/reconcile provisional local booking according to existing repository behavior.
+
+The final row must come from canonical server data when available.
+
+Do not fabricate:
+
+bookingRef
+status
+server id
+
+If server response is discarded by the sync handler and canonical GET is required:
+
+use GET.
+
+==================================================
+RETRY SUCCESS BUT REFRESH FAILURE
+==================================================
+
+Be careful.
+
+If retry POST succeeded but subsequent booking refresh fails:
+
+do NOT put the booking back into "Not sent".
+
+The workshop DID receive it.
+
+Remove terminal failed state because the SyncOperation succeeded.
+
+Then retain/refresh best available state and show a normal refresh notice.
+
+Do not resend.
+
+==================================================
+RETRY FAILURE
+==================================================
+
+Stay:
+
+Not sent
+
+Actions remain.
+
+Show restrained failure feedback.
+
+No second failed operation.
+
+==================================================
+REMOVE FAILED BOOKING
+==================================================
+
+Confirmation:
+
+Remove saved booking?
+
+Copy must explain:
+
+This removes the booking stored on this device. The workshop has not received it.
+
+Confirm action:
+
+Remove booking
+
+Cancel:
+
+Keep booking
+
+==================================================
+REMOVE MUST CLEAR
+==================================================
+
+matching sync_failed operation
+
+matching sync_queue copy if somehow present
+
+matching provisional cached booking
+
+any local helper state for that provisional booking
+
+Do NOT remove server bookings.
+
+Do NOT touch unrelated failed bookings.
+
+==================================================
+MULTIPLE FAILED BOOKINGS
+==================================================
+
+Support more than one.
+
+Each recovery action must target the specific failed operation.
+
+Do not use:
+
+firstWhere(...)
+without stable identity safeguards.
+
+==================================================
+BOOKINGS COUNTS / SECTIONS
+==================================================
+
+Do not count failed local bookings as:
+
+Requested
+Upcoming
+In service
+Past service
+
+unless the existing product intentionally has a separate local-saved count.
+
+Prefer failed rows in an honest:
+
+Needs attention
+
+or equivalent compact area if existing grouping permits.
+
+Do not distort server lifecycle counts.
+
+==================================================
+HOME
+==================================================
+
+Do NOT add failed booking recovery to Home unless absolutely necessary.
+
+Bookings page is the canonical recovery surface.
+
+Home should not suddenly become a sync-error dashboard.
+
+==================================================
+PART 3 — FAILED VEHICLE DELETE RECOVERY
+==================================================
+
+Current false journey:
+
+server vehicle exists
+
+→ user deletes offline
+
+→ local app removes vehicle
+
+→ DELETE queued
+
+→ replay fails terminally
+
+→ server still has vehicle
+
+→ client keeps hiding it
+
+This must be corrected.
+
+==================================================
+AUTHORITATIVE FAILURE SOURCE
+==================================================
+
+Use:
+
+sync_failed
+
+filter:
+
+entityType == vehicle
+changeType == delete
+
+Use actual operation entityId.
+
+==================================================
+RESTORE SERVER TRUTH
+==================================================
+
+When failed vehicle DELETE is detected:
+
+the local product must converge to the server.
+
+Preferred behavior:
+
+getVehicles()
+→ server vehicle returns
+→ cache receives real server vehicle
+→ Vehicles page displays it again
+
+Do NOT reconstruct a full vehicle from delete payload if payload lacks the data.
+
+Canonical server GET is safer.
+
+==================================================
+IMPORTANT CACHE INTERACTION
+==================================================
+
+Audit whether existing vehicle pending-merge logic might suppress or duplicate the restored server vehicle.
+
+Ensure:
+
+failed DELETE does not incorrectly merge as pending CREATE
+
+server vehicle appears once
+
+==================================================
+FAILED DELETE PRESENTATION
+==================================================
+
+Show a compact customer-facing notice:
+
+"We couldn't remove this vehicle."
+
+Supporting copy may explain:
+
+"The vehicle is still in your workshop account."
+
+Action:
+
+Retry removal
+
+Do NOT say:
+
+Workshop rejected removal
+
+unless known.
+
+Do NOT say:
+
+Removed locally
+
+Technical implementation is irrelevant to the customer.
+
+==================================================
+ROW-LEVEL VS PAGE-LEVEL
+==================================================
+
+If failed DELETE operation can be reliably matched to restored vehicle id:
+
+prefer attaching the recovery state to that vehicle row.
+
+Example concept:
+
+Toyota Camry
+A 12345
+
+Couldn't remove this vehicle
+[Retry removal]
+
+This is stronger than a disconnected page notice.
+
+Use page-level notice only if row-level mapping is unreliable.
+
+==================================================
+RETRY DELETE
+==================================================
+
+Retry the exact failed DELETE SyncOperation.
+
+Same idempotency identity.
+
+No second DELETE op.
+
+==================================================
+RETRY SUCCESS
+==================================================
+
+DELETE accepted or canonical 404 success:
+
+failed op removed
+
+refresh vehicles
+
+vehicle disappears
+
+recovery notice disappears
+
+==================================================
+RETRY FAILURE
+==================================================
+
+server vehicle remains visible
+
+recovery notice remains
+
+Retry remains available
+
+No false success snackbar.
+
+==================================================
+DO NOT OFFER LOCAL REMOVE
+==================================================
+
+This is different from a failed LOCAL CREATE.
+
+For a failed server DELETE:
+
+do NOT offer:
+
+"Remove anyway"
+
+because that would simply recreate the false state.
+
+The customer should see server truth.
+
+==================================================
+FAILED DELETE + APP RESTART
+==================================================
+
+After restart:
+
+sync_failed still contains the DELETE
+
+canonical vehicle fetch restores server vehicle
+
+recovery state must still be recognizable
+
+Test this.
+
+==================================================
+PART 4 — CUSTOMER FEEDBACK DEAD CODE
+==================================================
+
+Delete the proven Customer orphan if zero references remain.
+
+Remove only Customer-facing unused parts:
+
+customer feedback route
+
+route constant
+
+CustomerFeedbackView
+
+Customer-only invocation/provider wrapper if truly unused
+
+KEEP:
+
+backend Feedback entity/controller/services
+
+owner moderation screens
+
+shared feedback models if used elsewhere
+
+After deletion:
+
+repo-wide grep for:
+
+CustomerFeedbackView
+customerFeedback
+'/feedback'
+
+must show no unwanted Customer production references.
+
+==================================================
+PART 5 — LIVE REGION SEMANTICS
+==================================================
+
+Add useful live-region semantics to dynamic failure states introduced/used here:
+
+failed booking terminal state
+
+failed vehicle-delete terminal state
+
+queue-write failure if its existing notice is not already announced
+
+Do not over-announce normal rows.
+
+==================================================
+PART 6 — BOOKING NORMAL STATE REGRESSION
+==================================================
+
+Ensure existing Bookings behavior remains unchanged for:
+
+server requested booking
+
+confirmed/upcoming
+
+in service
+
+past
+
+approval attention
+
+Track
+
+View
+
+normal offline queued booking that has NOT terminally failed
+
+The new failed state is additive.
+
+==================================================
+PART 7 — VEHICLE NORMAL STATE REGRESSION
+==================================================
+
+Ensure:
+
+normal server vehicle
+
+pending offline create
+
+failed create
+
+reconciled vehicle
+
+normal server delete
+
+still work as currently frozen.
+
+Failed DELETE recovery must not collide with failed CREATE recovery.
+
+==================================================
+VISUAL DESIGN
+==================================================
+
+No broad redesign.
+
+Recovery state must use existing:
+
+CustomerSurfacePanel
+CustomerNoticePanel
+StatusPill
+action-row language
+
+where appropriate.
+
+No huge error cards.
+
+No decorative artwork.
+
+No giant red surfaces.
+
+==================================================
+MOBILE DENSITY
+==================================================
+
+At 390px:
+
+failed booking should still feel like a Booking record, not an error dashboard.
+
+failed vehicle delete should still feel like a Vehicle record.
+
+==================================================
+320 + 1.6×
+==================================================
+
+Mandatory for both new recovery states.
+
+No overflow.
+
+Retry / Remove labels readable.
+
+48px actions.
+
+==================================================
+TABLET / DESKTOP
+==================================================
+
+Recovery states must integrate with current wide layouts.
+
+Do not create a 400px error island.
+
+No dead whitespace changes required beyond normal screen behavior.
+
+==================================================
+DARK MODE
+==================================================
+
+Use ColorScheme tokens.
+
+Failure state must remain legible without relying solely on red.
+
+==================================================
+TESTS — BOOKING
+==================================================
+
+Required minimum:
+
+1. normal queued booking is not terminal failure
+2. failed booking CREATE detected from sync_failed
+3. failed booking does not count as ordinary requested server booking
+4. shows Not sent / equivalent
+5. says workshop has not received it
+6. Retry targets correct op
+7. unrelated failed op untouched
+8. duplicate Retry tap blocked
+9. Retry success removes failure
+10. Retry success refreshes canonical bookings
+11. refresh failure after successful replay does not reclassify as Not sent
+12. Retry failure retains recovery
+13. Remove confirmation
+14. cancel remove keeps booking
+15. confirm remove clears failed op
+16. provisional booking cache removed
+17. second failed booking unaffected
+18. restart persistence
+19. 320px
+20. 1.6×
+21. dark
+
+==================================================
+TESTS — VEHICLE DELETE
+==================================================
+
+Required minimum:
+
+1. queued delete not yet failed does not show terminal failure
+2. failed DELETE detected
+3. canonical getVehicles restores server vehicle
+4. recovery matches correct row
+5. Retry targets correct failed op
+6. unrelated failed CREATE unaffected
+7. unrelated failed booking unaffected
+8. duplicate retry blocked
+9. retry success removes vehicle
+10. retry failure retains vehicle
+11. server 404 remains success if existing contract says so
+12. restart preserves recovery state
+13. 320px
+14. 1.6×
+15. dark
+
+==================================================
+TESTS — SYNCENGINE PRECISE RETRY
+==================================================
+
+If new API added:
+
+test:
+
+selected failed op only
+
+identity preserved
+
+payload preserved
+
+other failed ops untouched
+
+success removes selected
+
+failure keeps selected
+
+concurrent duplicate prevented or feature-level guarded
+
+==================================================
+GOLDENS
+==================================================
+
+Add focused goldens only if appropriate:
+
+customer_bookings_failed_sync_mobile
+
+customer_vehicles_failed_delete_mobile
+
+Possibly:
+
+customer_bookings_failed_sync_dark
+
+Do NOT rebaseline normal Bookings/Vehicles unless actual intentional shared rendering changed.
+
+==================================================
+MANDATORY INDEPENDENT VISUAL QA
+==================================================
+
+Run a separate Visual Product QA agent.
+
+This is NOT optional.
+
+Review:
+
+failed Booking mobile
+
+failed Booking 320 / large text
+
+failed Booking dark
+
+failed Vehicle Delete mobile
+
+failed Vehicle Delete 320 / large text
+
+one normal Bookings baseline
+
+one normal Vehicles baseline
+
+Report:
+
+FAILURE STATE CLARITY
+
+WORKSHOP RECEIPT HONESTY
+
+SERVER VS LOCAL STATUS CLARITY
+
+RETRY HIERARCHY
+
+REMOVE HIERARCHY
+
+TOUCH TARGETS
+
+TEXT SCALE
+
+DARK MODE
+
+MOBILE DENSITY
+
+NORMAL-STATE REGRESSION
+
+FAKE CONTENT
+
+Any blocker must be fixed.
+
+==================================================
+FULL RELEASE RECHECK
+==================================================
+
+After implementation verify every previous release finding:
+
+cross-account data exposure
+→ CLOSED
+
+notification read key
+→ CLOSED
+
+pending vehicle overwrite
+→ CLOSED
+
+Home fake health
+→ CLOSED
+
+billing totals/label
+→ CLOSED
+
+D2 stale replay
+→ CLOSED
+
+AppTopBar accessibility
+→ CLOSED
+
+Invoice Detail
+→ CLOSED
+
+queue-write honesty
+→ CLOSED
+
+vehicle server-id missing
+→ CLOSED
+
+failed vehicle-create resurrection
+→ CLOSED
+
+vehicle edit temp id
+→ CLOSED
+
+touch targets
+→ CLOSED
+
+failed Booking recovery
+→ must be CLOSED
+
+failed Vehicle DELETE recovery
+→ must be CLOSED
+
+feedback orphan
+→ cleaned
+
+No new BLOCKER/HIGH issue may remain.
+
+==================================================
+FINAL VERIFICATION
+==================================================
+
+Run:
+
+dart format
+
+dart analyze customer_app
+
+dart analyze shared_core
+
+dart analyze staff_app
+
+dart analyze owner_app
+
+dart analyze crm_app
+
+flutter test customer_app
+
+flutter test shared_core
+
+Run focused sync tests independently if the known shared_core environment/golden setup failures still affect the full suite.
+
+Customer acceptance:
+
+0 failures
+
+0 missing goldens
+
+0 unexplained pixel mismatches
+
+==================================================
+FINAL REPORT
+==================================================
+
+Start exactly with:
+
+CUSTOMER FINAL FREEZE RESULT
+
+Then:
+
+IMPLEMENTATION SUMMARY
+
+ENTITY-SPECIFIC RETRY
+
+FAILED BOOKING RECOVERY
+
+FAILED VEHICLE DELETE RECOVERY
+
+FEEDBACK FEATURE REMOVAL
+
+ACCESSIBILITY / LIVE REGIONS
+
+BOOKING REGRESSION CHECK
+
+VEHICLE REGRESSION CHECK
+
+VISUAL QA
+
+TESTS ADDED / UPDATED
+
+GOLDENS
+
+ANALYZE RESULTS
+
+TEST RESULTS
+
+PREVIOUS RELEASE FINDINGS RECHECK
+
+REMAINING BACKEND LIMITATIONS
+- non-blocking only
+
+Then finish with EXACTLY ONE:
+
+CUSTOMER APP: READY TO FREEZE
+
+or
+
+CUSTOMER APP: NOT READY TO FREEZE — <specific blocking issue>
+
+==================================================
+STOP
+==================================================
+
+STOP after reporting.
+
+DO NOT begin Staff.
+
+DO NOT begin Owner.
+
+DO NOT begin CRM.

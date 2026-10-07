@@ -1,7 +1,13 @@
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 
-class CustomerInvoiceDetailView extends StatelessWidget {
+/// What an invoice actually is, from the fields the workshop really returns.
+///
+/// The backend offers no customer payment, receipt, PDF or by-ref fetch, so
+/// this screen presents no actions at all: it reports the invoice and stops.
+class CustomerInvoiceDetailView extends ConsumerWidget {
   final InvoiceResponse invoice;
 
   const CustomerInvoiceDetailView({super.key, required this.invoice});
@@ -9,30 +15,22 @@ class CustomerInvoiceDetailView extends StatelessWidget {
   (Color, Color) _getStatusColors(ColorScheme colors) {
     switch (invoice.status.toLowerCase()) {
       case 'paid':
-        return (
-          colors.tertiary,
-          colors.tertiary.withValues(alpha: 0.12),
-        );
+        return (colors.tertiary, colors.tertiary.withValues(alpha: 0.12));
       case 'overdue':
-        return (
-          colors.error,
-          colors.error.withValues(alpha: 0.12),
-        );
+        return (colors.error, colors.error.withValues(alpha: 0.12));
       default:
-        return (
-          colors.primary,
-          colors.primary.withValues(alpha: 0.12),
-        );
+        return (colors.primary, colors.primary.withValues(alpha: 0.12));
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final (statusColor, statusBg) = _getStatusColors(colorScheme);
     final total = invoice.grandTotal > 0 ? invoice.grandTotal : invoice.amount;
+    final formatAmount = ref.watch(customerDashboardProvider).formatAmount;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -82,7 +80,7 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                           ),
                           const SizedBox(height: AppDimensions.s10),
                           StatusPill(
-                            label: invoice.status.toUpperCase(),
+                            label: AppStatusLabels.invoice(invoice.status),
                             bg: statusBg,
                             fg: statusColor,
                           ),
@@ -92,14 +90,12 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                     const SizedBox(height: AppDimensions.s16),
                     AppAdaptiveGrid(
                       minChildWidth: 300,
-                      childAspectRatio: 2.6,
                       children: [
                         _InfoCard(
-                          label: 'Bill To',
+                          label: 'Billed to',
                           value: invoice.customerName,
                         ),
-                        const _InfoCard(label: 'Vehicle Info', value: '-'),
-                        _InfoCard(label: 'Date', value: invoice.date),
+                        _InfoCard(label: 'Issued', value: invoice.date),
                       ],
                     ),
                     const SizedBox(height: AppDimensions.s16),
@@ -108,39 +104,17 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                       color: colorScheme.surface,
                       borderColor: colorScheme.outlineVariant,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Line Items',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurface,
-                            ),
+                          _AmountRow(
+                            label: 'Subtotal',
+                            amount: formatAmount(invoice.amount),
                           ),
-                          const SizedBox(height: AppDimensions.s10),
-                          Text(
-                            'Itemised breakdown is not available yet.',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.s16),
-                    AppCard(
-                      borderRadius: AppDimensions.r20,
-                      color: colorScheme.surface,
-                      borderColor: colorScheme.outlineVariant,
-                      child: Column(
-                        children: [
-                          _AmountRow(label: 'Subtotal', amount: invoice.amount),
                           if (invoice.taxAmount > 0) ...[
                             const SizedBox(height: AppDimensions.s10),
                             _AmountRow(
                               label:
                                   'VAT (${(invoice.taxRate * 100).toStringAsFixed(0)}%)',
-                              amount: invoice.taxAmount,
+                              amount: formatAmount(invoice.taxAmount),
                             ),
                           ],
                           Padding(
@@ -162,12 +136,14 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                                 ),
                               ),
                               const Spacer(),
-                              Text(
-                                'AED ${total.toStringAsFixed(2)}',
-                                style: textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  fontFamily: AppFontFamilies.mono,
-                                  color: colorScheme.primary,
+                              Flexible(
+                                child: Text(
+                                  formatAmount(total),
+                                  textAlign: TextAlign.right,
+                                  style: textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: colorScheme.primary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -179,7 +155,6 @@ class CustomerInvoiceDetailView extends StatelessWidget {
                 ),
               ),
             ),
-            _InvoiceActions(invoice: invoice),
           ],
         ),
       ),
@@ -231,7 +206,7 @@ class _InfoCard extends StatelessWidget {
 
 class _AmountRow extends StatelessWidget {
   final String label;
-  final double amount;
+  final String amount;
 
   const _AmountRow({required this.label, required this.amount});
 
@@ -243,69 +218,26 @@ class _AmountRow extends StatelessWidget {
 
     return Row(
       children: [
-        Text(
-          label,
-          style: textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
+        Expanded(
+          child: Text(
+            label,
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
-        const Spacer(),
-        Text(
-          'AED ${amount.toStringAsFixed(2)}',
-          style: textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            fontFamily: AppFontFamilies.mono,
-            color: colorScheme.onSurface,
+        const SizedBox(width: AppDimensions.s12),
+        Flexible(
+          child: Text(
+            amount,
+            textAlign: TextAlign.right,
+            style: textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onSurface,
+            ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _InvoiceActions extends StatelessWidget {
-  final InvoiceResponse invoice;
-
-  const _InvoiceActions({required this.invoice});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final unpaid = invoice.status.toLowerCase() != 'paid';
-
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.s20),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (unpaid) ...[
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: null,
-                  child: const Text('Online payment unavailable'),
-                ),
-              ),
-              const SizedBox(height: AppDimensions.s12),
-            ],
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.download_rounded),
-                label: const Text('PDF receipt unavailable'),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

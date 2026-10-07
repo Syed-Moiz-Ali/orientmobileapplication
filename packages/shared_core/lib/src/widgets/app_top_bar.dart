@@ -28,7 +28,10 @@ class AppTopBar extends StatelessWidget {
 
     return Container(
       color: colorScheme.surface,
-      height: 60,
+      // A minimum, not a fixed height: at large text scales the title may need
+      // two lines, and clipping a page title is worse than a slightly taller
+      // bar. At normal scale this still measures exactly 60.
+      constraints: const BoxConstraints(minHeight: 60),
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s18),
       child: Row(
         children: [
@@ -47,6 +50,8 @@ class AppTopBar extends StatelessWidget {
           Expanded(
             child: Text(
               title,
+              maxLines: 2,
+              softWrap: true,
               style: textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: colorScheme.onSurface,

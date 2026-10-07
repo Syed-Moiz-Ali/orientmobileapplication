@@ -337,7 +337,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           if (extra is! InvoiceResponse) {
             return const _RouteErrorPage(
               title: 'Invoice unavailable',
-              message: 'Open this invoice again from Estimates & Invoices.',
+              message: 'Open your invoices again from Approvals & billing.',
+              actionLabel: 'Approvals & billing',
+              actionLocation: AppRoutes.customerApprovals,
             );
           }
 

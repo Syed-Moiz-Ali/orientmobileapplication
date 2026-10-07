@@ -42,13 +42,18 @@ class VehicleSyncHandler implements SyncHandler {
     }
 
     final serverId = _serverIdFrom(response.data);
-    if (serverId.isNotEmpty) {
-      await reconcileVehicleIdentity(
-        tempId: operation.entityId,
-        serverId: serverId,
-        queue: _queue,
-      );
+    if (serverId.isEmpty) {
+      // A 2xx without an authoritative vehicle id is not a reconciled
+      // success: keeping the pending marker and failing here lets the normal
+      // retry/failed semantics apply instead of leaving the vehicle pending
+      // forever with no way to recover it.
+      return false;
     }
+    await reconcileVehicleIdentity(
+      tempId: operation.entityId,
+      serverId: serverId,
+      queue: _queue,
+    );
     return true;
   }
 

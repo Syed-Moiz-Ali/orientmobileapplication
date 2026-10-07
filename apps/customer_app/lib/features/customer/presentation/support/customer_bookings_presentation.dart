@@ -93,6 +93,19 @@ abstract final class CustomerBookingsPresentation {
     return '${vehicleName.trim().toLowerCase()}|$plate|$day';
   }
 
+  /// Full identity of one booking across sources: the vehicle/plate/date
+  /// identity plus the service and time. Used to reconcile the device cache with
+  /// the workshop feed, and to match a failed local booking to its cached record.
+  static String bookingKey({
+    required String vehicleName,
+    required String plateNumber,
+    required String service,
+    required String date,
+    required String time,
+  }) =>
+      '${identityKey(vehicleName: vehicleName, plateNumber: plateNumber, date: date)}'
+      '|${service.trim().toLowerCase()}|${time.trim()}';
+
   static (int, int, int)? _parseDateParts(String raw) {
     final value = raw.trim();
     if (value.isEmpty) return null;

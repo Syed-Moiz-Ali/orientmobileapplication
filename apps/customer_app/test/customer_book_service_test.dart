@@ -386,7 +386,9 @@ void main() {
       expect(find.text('Brake Inspection'), findsWidgets);
     });
 
-    testWidgets('a booking made offline is queued, not lost', (tester) async {
+    testWidgets('a booking the device cannot store is not reported as saved', (
+      tester,
+    ) async {
       final probe = _FlowProbe();
       final remote = _FakeRemote(createOffline: true);
       await _pumpFlow(
@@ -402,10 +404,15 @@ void main() {
       await tester.tap(find.text('Confirm booking'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('queued=true'), findsOneWidget);
-      expect(find.textContaining('feed='), findsOneWidget);
-      // A queued booking is still the customer's booking: the feeds refresh.
-      expect(probe.dashboardRefreshes, greaterThan(0));
+      // With no local store the queued booking could never be replayed, so the
+      // flow must stay put with an honest error rather than claim it is saved.
+      expect(find.textContaining('queued=true'), findsNothing);
+      expect(
+        find.textContaining("couldn't save this booking on your device"),
+        findsOneWidget,
+      );
+      // The customer's choices are preserved.
+      expect(find.text('Confirm booking'), findsOneWidget);
     });
   });
 
@@ -1093,6 +1100,7 @@ Future<void> _pumpFlow(
     ProviderScope(
       overrides: [
         customerRemoteDataSourceProvider.overrideWithValue(dataSource),
+        syncQueueProvider.overrideWithValue(_ClosureQueue()),
         // The device's connectivity provider is plugin-backed; tests state it.
         connectivityStatusProvider.overrideWith(
           (ref) => Stream.value(
@@ -1194,4 +1202,18 @@ Future<void> _loadFonts() async {
   await (FontLoader(
     'MaterialIcons',
   )..addFont(Future.value(ByteData.sublistView(iconBytes)))).load();
+}
+
+/// A queue that accepts operations without touching Hive, so the offline path
+/// can be exercised for real in a widget test.
+class _ClosureQueue implements SyncQueue {
+  final List<SyncOperation> enqueued = [];
+
+  @override
+  Future<void> enqueue(SyncOperation operation) async =>
+      enqueued.add(operation);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
 }

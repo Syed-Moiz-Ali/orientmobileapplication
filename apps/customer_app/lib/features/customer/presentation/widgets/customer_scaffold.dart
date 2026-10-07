@@ -77,10 +77,8 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
         items: items,
         selectedIndex: state.selectedIndex,
         onSelected: notifier.selectTab,
-        headerBuilder: (ctx, ext) => OrientBrandMark(
-          workspace: 'Customer',
-          compact: !ext,
-        ),
+        headerBuilder: (ctx, ext) =>
+            OrientBrandMark(workspace: 'Customer', compact: !ext),
         footerBuilder: (ctx, ext) => InkWell(
           onTap: () => notifier.selectTab(3),
           borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
@@ -94,7 +92,9 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
                     children: [
                       CircleAvatar(
                         radius: 16,
-                        backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                        backgroundColor: Theme.of(
+                          ctx,
+                        ).colorScheme.primary.withValues(alpha: 0.14),
                         child: Text(
                           'C',
                           style: TextStyle(
@@ -122,7 +122,9 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
                     message: 'My Account',
                     child: CircleAvatar(
                       radius: 18,
-                      backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                      backgroundColor: Theme.of(
+                        ctx,
+                      ).colorScheme.primary.withValues(alpha: 0.14),
                       child: Text(
                         'C',
                         style: TextStyle(
