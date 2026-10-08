@@ -12,12 +12,16 @@ const kBorderColor = AppColors.border;
 
 class SectionCard extends StatelessWidget {
   final String title;
+  final String? subtitle;
+  final IconData? icon;
   final Widget child;
   final Widget? trailing;
 
   const SectionCard({
     super.key,
     required this.title,
+    this.subtitle,
+    this.icon,
     required this.child,
     this.trailing,
   });
@@ -25,15 +29,16 @@ class SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r12)),
+        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r16)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.035),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -41,25 +46,43 @@ class SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 13),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '– ',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                if (icon != null) ...[
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.09),
+                      borderRadius: BorderRadius.circular(AppDimensions.r10),
+                    ),
+                    child: Icon(icon, size: 19, color: AppColors.primary),
                   ),
-                ),
+                  const SizedBox(width: 11),
+                ],
                 Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.cardTitle(
-                      color: kTextColor,
-                    ).copyWith(fontWeight: FontWeight.w700),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.cardTitle(
+                          color: kTextColor,
+                        ).copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitle!,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.text3, height: 1.3),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 if (trailing != null) ...[const SizedBox(width: 8), trailing!],

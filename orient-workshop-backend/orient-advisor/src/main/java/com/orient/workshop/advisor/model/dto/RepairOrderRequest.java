@@ -20,6 +20,8 @@ public class RepairOrderRequest {
     private String garageRecommendations;
     private String estimatedDelivery;
     private Boolean notifyOwnerSmsEmail;
+    /** Customer reviewed and approved the estimate in person with the advisor. */
+    private Boolean advisorApproved;
 
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class LineItem {

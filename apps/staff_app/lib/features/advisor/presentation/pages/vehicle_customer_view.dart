@@ -53,6 +53,7 @@ class _BodyState extends ConsumerState<_Body> {
     'Model': GlobalKey(),
   };
   Map<String, String> _fieldErrors = const {};
+  bool _isCreatingJobCard = false;
   String? _savedJobId;
   bool _savedToServer = false;
   XFile? _registrationDocument;
@@ -91,7 +92,7 @@ class _BodyState extends ConsumerState<_Body> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: colorScheme.surface,
+      backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
         elevation: 0,
@@ -101,7 +102,7 @@ class _BodyState extends ConsumerState<_Body> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Vehicle & Customer Job Card',
+          'Create Job Card',
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w900,
             color: colorScheme.onSurface,
@@ -115,23 +116,15 @@ class _BodyState extends ConsumerState<_Body> {
             child: SingleChildScrollView(
               controller: _scrollController,
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const AdvisorWorkflowIndicator(currentStep: 0),
-                  const SizedBox(height: 16),
-                  // ── Hint text ───────────────────────────────────────────
-                  Text(
-                    'Type VIN / License Plate / Customer Name. If vehicle is not found, enter new vehicle details below.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant,
-                      height: 1.5,
-                    ),
-                  ),
+                  const SizedBox(height: 14),
+                  _JobCardIntro(isFromBooking: widget.bookingId != null),
                   if (widget.bookingId != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -151,10 +144,10 @@ class _BodyState extends ConsumerState<_Body> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Job card from the assigned booking — it will be linked to this job card.',
-                              style: TextStyle(
-                                fontSize: 12,
+                              'Linked to the assigned booking',
+                              style: textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -164,7 +157,6 @@ class _BodyState extends ConsumerState<_Body> {
                   ],
                   const SizedBox(height: 16),
 
-                  // ── Search mode (Image 1) ────────────────────────────────
                   _SearchModeSection(
                     state: state,
                     ref: ref,
@@ -197,20 +189,15 @@ class _BodyState extends ConsumerState<_Body> {
                   ),
 
                   // ── Additional Information (Image 15) ────────────────────
-                  const SizedBox(height: 16),
-                  Text(
-                    'Vehicle Body Condition',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.onSurface,
+                  SectionCard(
+                    title: 'Vehicle Body Condition',
+                    subtitle: 'Mark any existing damage before handover',
+                    icon: Icons.directions_car_outlined,
+                    child: const VehicleBodyConditionPanel(
+                      embedded: true,
+                      showTitle: false,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const VehicleBodyConditionPanel(
-                    embedded: true,
-                    showTitle: false,
-                  ),
-                  const SizedBox(height: 16),
 
                   _AdditionalInfoSection(
                     state: state,
@@ -237,178 +224,237 @@ class _BodyState extends ConsumerState<_Body> {
           // with the keyboard or the last fields) ────────────────────────────
           if (!keyboardOpen)
             Container(
-              color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: colorScheme.outlineVariant),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, -3),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
               child: SafeArea(
                 top: false,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    final formState = ref.read(vehicleCustomerFormProvider);
-                    final bodyCondition = ref
-                        .read(inspectionProvider)
-                        .vehicleBodyConditionPayload;
-                    final errors = _validateForm(formState);
-                    if (errors.isNotEmpty) {
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      setState(() => _fieldErrors = Map.fromEntries(errors));
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!mounted) return;
-                        final firstContext =
-                            _fieldKeys[errors.first.key]?.currentContext;
-                        if (firstContext != null) {
-                          Scrollable.ensureVisible(
-                            firstContext,
-                            duration: const Duration(milliseconds: 450),
-                            curve: Curves.easeOutCubic,
-                            alignment: 0.18,
+                  onPressed: _isCreatingJobCard
+                      ? null
+                      : () async {
+                          final formState = ref.read(
+                            vehicleCustomerFormProvider,
                           );
-                        }
-                      });
-                      return;
-                    }
-                    if (_fieldErrors.isNotEmpty) {
-                      setState(() => _fieldErrors = const {});
-                    }
-                    final local = GenericLocalDataSource(
-                      Hive.box<dynamic>('inspections'),
-                    );
-                    final id = await IdGenerator.nextId('JC');
-                    _savedJobId = id;
-                    final now = DateTime.now();
-                    final createdDate =
-                        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                    final payload = {
-                      'id': id,
-                      'type': 'vehicle_customer',
-                      'bookingId': widget.bookingId ?? '',
-                      'customerName': formState.customerName,
-                      'phoneNumber': formState.phoneNumber,
-                      'email': formState.email,
-                      'isB2B': formState.isB2B,
-                      'customerGroup': formState.customerGroup,
-                      'gender': formState.gender,
-                      'address': formState.address,
-                      'taxNumber': formState.taxNumber,
-                      'source': formState.source,
-                      'emirate': formState.emirate,
-                      'plateCode': formState.plateCode,
-                      'plateNumber': formState.plateNumber,
-                      'vin': formState.vin,
-                      'make': formState.make,
-                      'model': formState.model,
-                      'modelYear': formState.modelYear,
-                      'registrationNumber': formState.registrationNumber,
-                      'cylinders': formState.cylinders,
-                      'engineCapacity': formState.engineCapacity,
-                      'vehicleColor': formState.vehicleColor,
-                      'fuelType': formState.fuelType,
-                      'engineNumber': formState.engineNumber,
-                      'jobCategory': formState.jobCategory,
-                      'markupType': formState.markupType,
-                      'orderType': formState.orderType,
-                      'jobDescription': formState.jobDescription,
-                      'jobDescriptions': [
-                        for (
-                          var i = 0;
-                          i < formState.jobDescriptions.length;
-                          i++
-                        )
-                          {
-                            ...formState.jobDescriptions[i].toJson(),
-                            'mediaItemId': 'job-description-${i + 1}',
-                          },
-                      ],
-                      'jobDescriptionMedia': [
-                        for (
-                          var i = 0;
-                          i < formState.jobDescriptions.length;
-                          i++
-                        ) ...[
-                          for (final path
-                              in formState.jobDescriptions[i].photoPaths)
-                            {
-                              'path': path,
-                              'itemId': 'job-description-${i + 1}',
-                              'type': 'photo',
-                            },
-                          for (final path
-                              in formState.jobDescriptions[i].videoPaths)
-                            {
-                              'path': path,
-                              'itemId': 'job-description-${i + 1}',
-                              'type': 'video',
-                            },
-                          if (formState.jobDescriptions[i].audioPath.isNotEmpty)
-                            {
-                              'path': formState.jobDescriptions[i].audioPath,
-                              'itemId': 'job-description-${i + 1}',
-                              'type': 'audio',
-                            },
-                        ],
-                      ],
-                      'insuranceProvider': formState.insuranceProvider,
-                      'insuranceTaxNumber': formState.insuranceTaxNumber,
-                      'insuranceAddress': formState.insuranceAddress,
-                      'policyNumber': formState.policyNumber,
-                      'lpoNumber': formState.lpoNumber,
-                      'accidentNumber': formState.accidentNumber,
-                      'insuranceExpiryDate': formState.insuranceExpiryDate,
-                      'vehicleBodyCondition': bodyCondition,
-                      'jobPhotoPaths': List<String>.from(_jobPhotoPaths),
-                      'jobVideoPaths': List<String>.from(_jobVideoPaths),
-                      'customerSignaturePath': _customerSignaturePath,
-                      'advisorSignaturePath': _advisorSignaturePath,
-                      'odometerReading': formState.odometerReading,
-                      'fuelLevel': formState.fuelLevel,
-                      'customerConsent': formState.customerConsent,
-                      'registrationDocumentPath':
-                          _registrationDocument?.path ?? '',
-                      'insuranceDocumentPath': _insuranceDocument?.path ?? '',
-                      'status': 'inProgress',
-                      'createdDate': createdDate,
-                      'lastUpdated': createdDate,
-                    };
-                    await local.save(id, payload);
-                    final queue = ref.read(syncQueueProvider);
-                    await queue.enqueue(
-                      SyncOperation(
-                        id: id,
-                        entityType: 'vehicle_customer',
-                        entityId: id,
-                        changeType: ChangeType.create,
-                        payload: payload,
-                        timestamp: DateTime.now().millisecondsSinceEpoch,
-                      ),
-                    );
-                    await ref.read(syncEngineProvider).syncAll();
-                    // Prefer the server-assigned job card reference once the
-                    // intake has synced so the follow-up inspection links to the
-                    // exact job card the backend created.
-                    var resolvedJobId = id;
-                    var savedToServer = false;
-                    try {
-                      final record = Hive.box<dynamic>('inspections').get(id);
-                      if (record is Map) {
-                        final ref =
-                            (record['jobCardRef'] ??
-                                    record['serverJobCardId'] ??
-                                    '')
-                                .toString();
-                        if (ref.isNotEmpty) {
-                          resolvedJobId = ref;
-                          savedToServer = true;
-                        }
-                      }
-                    } catch (_) {}
-                    _savedJobId = resolvedJobId;
-                    _savedToServer = savedToServer;
-                    ref.read(advisorRefreshProvider.notifier).state++;
-                    if (!context.mounted) return;
-                    _showInspectionPrompt(context);
-                  },
+                          final bodyCondition = ref
+                              .read(inspectionProvider)
+                              .vehicleBodyConditionPayload;
+                          final errors = _validateForm(formState);
+                          if (errors.isNotEmpty) {
+                            FocusManager.instance.primaryFocus?.unfocus();
+                            setState(
+                              () => _fieldErrors = Map.fromEntries(errors),
+                            );
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (!mounted) return;
+                              final firstContext =
+                                  _fieldKeys[errors.first.key]?.currentContext;
+                              if (firstContext != null) {
+                                Scrollable.ensureVisible(
+                                  firstContext,
+                                  duration: const Duration(milliseconds: 450),
+                                  curve: Curves.easeOutCubic,
+                                  alignment: 0.18,
+                                );
+                              }
+                            });
+                            return;
+                          }
+                          if (_fieldErrors.isNotEmpty) {
+                            setState(() => _fieldErrors = const {});
+                          }
+                          setState(() => _isCreatingJobCard = true);
+                          try {
+                            final local = GenericLocalDataSource(
+                              Hive.box<dynamic>('inspections'),
+                            );
+                            final id = await IdGenerator.nextId('JC');
+                            _savedJobId = id;
+                            final now = DateTime.now();
+                            final createdDate =
+                                '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+                            final payload = {
+                              'id': id,
+                              'type': 'vehicle_customer',
+                              'bookingId': widget.bookingId ?? '',
+                              'customerName': formState.customerName,
+                              'phoneNumber': formState.phoneNumber,
+                              'email': formState.email,
+                              'isB2B': formState.isB2B,
+                              'customerGroup': formState.customerGroup,
+                              'gender': formState.gender,
+                              'address': formState.address,
+                              'taxNumber': formState.taxNumber,
+                              'source': formState.source,
+                              'emirate': formState.emirate,
+                              'plateCode': formState.plateCode,
+                              'plateNumber': formState.plateNumber,
+                              'vin': formState.vin,
+                              'make': formState.make,
+                              'model': formState.model,
+                              'modelYear': formState.modelYear,
+                              'registrationNumber':
+                                  formState.registrationNumber,
+                              'cylinders': formState.cylinders,
+                              'engineCapacity': formState.engineCapacity,
+                              'vehicleColor': formState.vehicleColor,
+                              'fuelType': formState.fuelType,
+                              'engineNumber': formState.engineNumber,
+                              'jobCategory': formState.jobCategory,
+                              'markupType': formState.markupType,
+                              'orderType': formState.orderType,
+                              'jobDescription': formState.jobDescription,
+                              'jobDescriptions': [
+                                for (
+                                  var i = 0;
+                                  i < formState.jobDescriptions.length;
+                                  i++
+                                )
+                                  {
+                                    ...formState.jobDescriptions[i].toJson(),
+                                    'mediaItemId': 'job-description-${i + 1}',
+                                  },
+                              ],
+                              'jobDescriptionMedia': [
+                                for (
+                                  var i = 0;
+                                  i < formState.jobDescriptions.length;
+                                  i++
+                                ) ...[
+                                  for (final path
+                                      in formState
+                                          .jobDescriptions[i]
+                                          .photoPaths)
+                                    {
+                                      'path': path,
+                                      'itemId': 'job-description-${i + 1}',
+                                      'type': 'photo',
+                                    },
+                                  for (final path
+                                      in formState
+                                          .jobDescriptions[i]
+                                          .videoPaths)
+                                    {
+                                      'path': path,
+                                      'itemId': 'job-description-${i + 1}',
+                                      'type': 'video',
+                                    },
+                                  if (formState
+                                      .jobDescriptions[i]
+                                      .audioPath
+                                      .isNotEmpty)
+                                    {
+                                      'path': formState
+                                          .jobDescriptions[i]
+                                          .audioPath,
+                                      'itemId': 'job-description-${i + 1}',
+                                      'type': 'audio',
+                                    },
+                                ],
+                              ],
+                              'insuranceProvider': formState.insuranceProvider,
+                              'insuranceTaxNumber':
+                                  formState.insuranceTaxNumber,
+                              'insuranceAddress': formState.insuranceAddress,
+                              'policyNumber': formState.policyNumber,
+                              'lpoNumber': formState.lpoNumber,
+                              'accidentNumber': formState.accidentNumber,
+                              'insuranceExpiryDate':
+                                  formState.insuranceExpiryDate,
+                              'vehicleBodyCondition': bodyCondition,
+                              'jobPhotoPaths': List<String>.from(
+                                _jobPhotoPaths,
+                              ),
+                              'jobVideoPaths': List<String>.from(
+                                _jobVideoPaths,
+                              ),
+                              'customerSignaturePath': _customerSignaturePath,
+                              'advisorSignaturePath': _advisorSignaturePath,
+                              'odometerReading': formState.odometerReading,
+                              'fuelLevel': formState.fuelLevel,
+                              'customerConsent': formState.customerConsent,
+                              'registrationDocumentPath':
+                                  _registrationDocument?.path ?? '',
+                              'insuranceDocumentPath':
+                                  _insuranceDocument?.path ?? '',
+                              'status': 'inProgress',
+                              'createdDate': createdDate,
+                              'lastUpdated': createdDate,
+                            };
+                            await local.save(id, payload);
+                            final queue = ref.read(syncQueueProvider);
+                            await queue.enqueue(
+                              SyncOperation(
+                                id: id,
+                                entityType: 'vehicle_customer',
+                                entityId: id,
+                                changeType: ChangeType.create,
+                                payload: payload,
+                                timestamp:
+                                    DateTime.now().millisecondsSinceEpoch,
+                              ),
+                            );
+                            await ref.read(syncEngineProvider).syncAll();
+                            // Prefer the server-assigned job card reference once the
+                            // intake has synced so the follow-up inspection links to the
+                            // exact job card the backend created.
+                            var resolvedJobId = id;
+                            var savedToServer = false;
+                            try {
+                              final record = Hive.box<dynamic>(
+                                'inspections',
+                              ).get(id);
+                              if (record is Map) {
+                                final serverRef =
+                                    (record['jobCardRef'] ??
+                                            record['serverJobCardId'] ??
+                                            '')
+                                        .toString();
+                                if (serverRef.isNotEmpty) {
+                                  resolvedJobId = serverRef;
+                                  savedToServer = true;
+                                }
+                              }
+                            } catch (_) {}
+                            _savedJobId = resolvedJobId;
+                            _savedToServer = savedToServer;
+                            ref.read(advisorRefreshProvider.notifier).state++;
+                            if (!context.mounted) return;
+                            _showInspectionPrompt(context);
+                          } catch (_) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text(
+                                  'We could not create the job card. Please check your connection and try again.',
+                                ),
+                                backgroundColor: colorScheme.error,
+                              ),
+                            );
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isCreatingJobCard = false);
+                            }
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.primary.withValues(
+                      alpha: 0.72,
+                    ),
+                    disabledForegroundColor: Colors.white,
                     elevation: 0,
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
@@ -417,13 +463,46 @@ class _BodyState extends ConsumerState<_Body> {
                       ),
                     ),
                   ),
-                  child: const Text(
-                    'CREATE JOB CARD',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                    ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: _isCreatingJobCard
+                        ? const Row(
+                            key: ValueKey('creating-job-card'),
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 19,
+                                height: 19,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.4,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Creating Job Card…',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Row(
+                            key: ValueKey('create-job-card'),
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_task_rounded, size: 20),
+                              SizedBox(width: 9),
+                              Text(
+                                'Create Job Card',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ),
@@ -757,6 +836,92 @@ class _BodyState extends ConsumerState<_Body> {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SEARCH MODE SECTION (Image 1)
 // ─────────────────────────────────────────────────────────────────────────────
+class _JobCardIntro extends StatelessWidget {
+  final bool isFromBooking;
+  const _JobCardIntro({required this.isFromBooking});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.12),
+            theme.colorScheme.primary.withValues(alpha: 0.035),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppDimensions.r16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.16),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(AppDimensions.r12),
+            ),
+            child: const Icon(
+              Icons.assignment_add,
+              color: Colors.white,
+              size: 23,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isFromBooking
+                      ? 'Complete the vehicle intake'
+                      : 'New vehicle intake',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Find an existing record or enter the customer and vehicle details below.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 15,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Only fields marked * are required',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SearchModeSection extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
@@ -799,17 +964,58 @@ class _SearchModeSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r12)),
+        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r16)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.035),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.09),
+                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                ),
+                child: const Icon(
+                  Icons.manage_search_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 11),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Find Existing Record',
+                      style: TextStyle(
+                        color: kTextColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Avoid duplicate customer and vehicle records',
+                      style: TextStyle(color: AppColors.text3, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
           TextField(
             onChanged: (v) => ref
                 .read(vehicleCustomerFormProvider.notifier)
@@ -900,39 +1106,38 @@ class _SearchModeSection extends StatelessWidget {
               ),
             ),
           ],
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'OR',
-              style: TextStyle(
-                color: AppColors.text3,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          // SCAN VIN
-          _OutlineButton(
-            icon: Icons.qr_code,
-            label: 'SCAN VIN',
-            onTap: onScanVin,
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'OR',
-              style: TextStyle(
-                color: AppColors.text3,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          // SCAN VEHICLE QR CODE
-          _OutlineButton(
-            icon: Icons.qr_code_scanner,
-            label: 'SCAN VEHICLE QR CODE',
-            onTap: onScanQr,
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final buttons = [
+                _OutlineButton(
+                  icon: Icons.document_scanner_outlined,
+                  label: 'Scan VIN',
+                  onTap: onScanVin,
+                ),
+                _OutlineButton(
+                  icon: Icons.qr_code_scanner,
+                  label: 'Scan Vehicle QR',
+                  onTap: onScanQr,
+                ),
+              ];
+              if (constraints.maxWidth < 390) {
+                return Column(
+                  children: [
+                    buttons.first,
+                    const SizedBox(height: 10),
+                    buttons.last,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: buttons.first),
+                  const SizedBox(width: 10),
+                  Expanded(child: buttons.last),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -1086,6 +1291,8 @@ class _CustomerDetailsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return SectionCard(
       title: 'Customer Details',
+      subtitle: 'Who is bringing in the vehicle?',
+      icon: Icons.person_outline_rounded,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1283,6 +1490,8 @@ class _VehicleDetailsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return SectionCard(
       title: 'Vehicle Details',
+      subtitle: 'Registration and service information',
+      icon: Icons.directions_car_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1814,6 +2023,8 @@ class _AdditionalInfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return SectionCard(
       title: 'Additional Information',
+      subtitle: 'Mileage, fuel, media and consent',
+      icon: Icons.fact_check_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

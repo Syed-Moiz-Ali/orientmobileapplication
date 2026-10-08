@@ -233,6 +233,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         (localBody is Map ? Map<String, dynamic>.from(localBody) : null);
 
     return Scaffold(
+      backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
         elevation: 0,
@@ -242,7 +243,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          _jc.id,
+          'Job Card Details',
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w900,
             color: colorScheme.onSurface,
@@ -250,174 +251,191 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
-        children: [
-          _headerCard(statusColor, hasData),
-          const SizedBox(height: 16),
-          _section('Customer Details', [
-            _detailRow(
-              Icons.person_outline_rounded,
-              'Name',
-              _apiVal(
-                _details?.customerName ?? '',
-                hasData ? _getVal('customerName') : _jc.customerName,
-              ),
-            ),
-            _detailRow(
-              Icons.phone_outlined,
-              'Phone',
-              _displayPhone.isEmpty ? '--' : _displayPhone,
-            ),
-            _detailRow(
-              Icons.email_outlined,
-              'Email',
-              _displayEmail.isEmpty ? '--' : _displayEmail,
-            ),
-            if (_apiVal(
-              _details?.customerGroup ?? '',
-              _getVal('customerGroup'),
-            ).isNotEmpty)
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _loadHiveData();
+          await _loadDetails();
+        },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
+          children: [
+            _headerCard(statusColor, hasData),
+            const SizedBox(height: 16),
+            _buildWorkflowActions(),
+            const SizedBox(height: 16),
+            _section('Customer Details', [
               _detailRow(
-                Icons.group_outlined,
-                'Group',
+                Icons.person_outline_rounded,
+                'Name',
                 _apiVal(
-                  _details?.customerGroup ?? '',
-                  _getVal('customerGroup'),
+                  _details?.customerName ?? '',
+                  hasData ? _getVal('customerName') : _jc.customerName,
                 ),
               ),
-          ]),
-          const SizedBox(height: 16),
-          _section('Vehicle Details', [
-            _detailRow(
-              Icons.directions_car_outlined,
-              'Vehicle',
-              _apiVal(
-                _details?.vehicleInfo ?? '',
-                hasData
-                    ? '${_getVal('make')} ${_getVal('model')}'
-                    : _jc.vehicleInfo,
-              ),
-            ),
-            _detailRow(
-              Icons.confirmation_number_outlined,
-              'Plate',
-              (_displayPlate.isEmpty ? '--' : _displayPlate).toUpperCase(),
-              isMono: true,
-            ),
-            _detailRow(
-              Icons.qr_code_rounded,
-              'VIN',
-              _apiVal(_details?.vin ?? '', _getVal('vin')),
-              isMono: true,
-            ),
-            if (_apiVal(
-              _details?.modelYear ?? '',
-              _getVal('modelYear'),
-            ).isNotEmpty)
               _detailRow(
-                Icons.calendar_today,
-                'Year',
-                _apiVal(_details?.modelYear ?? '', _getVal('modelYear')),
+                Icons.phone_outlined,
+                'Phone',
+                _displayPhone.isEmpty ? '--' : _displayPhone,
               ),
-            if (_apiVal(
-              _details?.vehicleColor ?? '',
-              _getVal('vehicleColor'),
-            ).isNotEmpty)
               _detailRow(
-                Icons.color_lens_outlined,
-                'Color',
-                _apiVal(_details?.vehicleColor ?? '', _getVal('vehicleColor')),
+                Icons.email_outlined,
+                'Email',
+                _displayEmail.isEmpty ? '--' : _displayEmail,
               ),
-            _detailRow(
-              Icons.speed_rounded,
-              'Odometer',
-              _displayOdometer.isEmpty ? '--' : '$_displayOdometer km',
-              isMono: true,
-            ),
-          ]),
-          const SizedBox(height: 16),
-          _section('Fuel Level', [_buildFuelLevelDisplay()]),
-          if (bodyCondition != null) ...[
+              if (_apiVal(
+                _details?.customerGroup ?? '',
+                _getVal('customerGroup'),
+              ).isNotEmpty)
+                _detailRow(
+                  Icons.group_outlined,
+                  'Group',
+                  _apiVal(
+                    _details?.customerGroup ?? '',
+                    _getVal('customerGroup'),
+                  ),
+                ),
+            ], icon: Icons.person_outline_rounded),
             const SizedBox(height: 16),
-            _section('Vehicle Body Condition', [
-              VehicleBodyConditionPanel(
-                readOnly: true,
-                embedded: true,
-                showTitle: false,
-                bodyCondition: bodyCondition,
-              ),
-            ]),
-          ],
-          const SizedBox(height: 16),
-          _section('Service Parameters', [
-            _detailRow(
-              Icons.build_outlined,
-              'Service Type',
-              'Vehicle Inspection',
-            ),
-            _detailRow(Icons.person_outline, 'Advisor', 'Assigned'),
-            if (_assignedTech.isNotEmpty)
+            _section('Vehicle Details', [
               _detailRow(
-                Icons.engineering_outlined,
-                'Technician',
-                _assignedTech,
+                Icons.directions_car_outlined,
+                'Vehicle',
+                _apiVal(
+                  _details?.vehicleInfo ?? '',
+                  hasData
+                      ? '${_getVal('make')} ${_getVal('model')}'
+                      : _jc.vehicleInfo,
+                ),
               ),
-            _detailRow(
-              Icons.schedule_outlined,
-              'Created',
-              _jc.createdDate.isNotEmpty ? _jc.createdDate : _jc.time,
-              isMono: true,
-            ),
-            _detailRow(
-              Icons.update_rounded,
-              'Last Updated',
-              _jc.lastUpdated.isNotEmpty ? _jc.lastUpdated : _jc.time,
-              isMono: true,
-            ),
-          ]),
-          if ((_details?.customerRequests ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _section('Customer Requests', [
-              AppMarkdownText(
-                _details!.customerRequests.trim(),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(height: 1.45),
+              _detailRow(
+                Icons.confirmation_number_outlined,
+                'Plate',
+                (_displayPlate.isEmpty ? '--' : _displayPlate).toUpperCase(),
+                isMono: true,
               ),
-            ]),
-          ],
-          const SizedBox(height: 16),
-          if (_hasCompletedInspection) ...[
-            _buildWorkItemsSection(),
+              _detailRow(
+                Icons.qr_code_rounded,
+                'VIN',
+                _apiVal(_details?.vin ?? '', _getVal('vin')),
+                isMono: true,
+              ),
+              if (_apiVal(
+                _details?.modelYear ?? '',
+                _getVal('modelYear'),
+              ).isNotEmpty)
+                _detailRow(
+                  Icons.calendar_today,
+                  'Year',
+                  _apiVal(_details?.modelYear ?? '', _getVal('modelYear')),
+                ),
+              if (_apiVal(
+                _details?.vehicleColor ?? '',
+                _getVal('vehicleColor'),
+              ).isNotEmpty)
+                _detailRow(
+                  Icons.color_lens_outlined,
+                  'Color',
+                  _apiVal(
+                    _details?.vehicleColor ?? '',
+                    _getVal('vehicleColor'),
+                  ),
+                ),
+              _detailRow(
+                Icons.speed_rounded,
+                'Odometer',
+                _displayOdometer.isEmpty ? '--' : '$_displayOdometer km',
+                isMono: true,
+              ),
+            ], icon: Icons.directions_car_outlined),
+            if (hasData || (_inspection?.found ?? false)) ...[
+              const SizedBox(height: 16),
+              _buildInspectionMediaSection(),
+            ],
             const SizedBox(height: 16),
-          ],
-          if (hasData || (_inspection?.found ?? false)) ...[
-            _buildInspectionMediaSection(),
+            _section('Fuel Level', [
+              _buildFuelLevelDisplay(),
+            ], icon: Icons.local_gas_station_outlined),
+            if (bodyCondition != null) ...[
+              const SizedBox(height: 16),
+              _section(
+                'Vehicle Body Condition',
+                [
+                  VehicleBodyConditionPanel(
+                    readOnly: true,
+                    embedded: true,
+                    showTitle: false,
+                    bodyCondition: bodyCondition,
+                  ),
+                ],
+                icon: Icons.car_crash_outlined,
+                subtitle: 'Existing marks and damage recorded at intake',
+              ),
+            ],
+            if (_hasCompletedInspection) ...[
+              const SizedBox(height: 16),
+              _buildWorkItemsSection(),
+            ],
             const SizedBox(height: 16),
-          ],
+            _section('Service Information', [
+              _detailRow(
+                Icons.build_outlined,
+                'Service Type',
+                'Vehicle Inspection',
+              ),
+              _detailRow(Icons.person_outline, 'Advisor', 'Assigned'),
+              if (_assignedTech.isNotEmpty)
+                _detailRow(
+                  Icons.engineering_outlined,
+                  'Technician',
+                  _assignedTech,
+                ),
+              _detailRow(
+                Icons.schedule_outlined,
+                'Created',
+                _jc.createdDate.isNotEmpty ? _jc.createdDate : _jc.time,
+                isMono: true,
+              ),
+              _detailRow(
+                Icons.update_rounded,
+                'Last Updated',
+                _jc.lastUpdated.isNotEmpty ? _jc.lastUpdated : _jc.time,
+                isMono: true,
+              ),
+            ], icon: Icons.build_outlined),
+            if ((_details?.customerRequests ?? '').trim().isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _section('Customer Requests', [
+                AppMarkdownText(
+                  _details!.customerRequests.trim(),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(height: 1.45),
+                ),
+              ], icon: Icons.chat_bubble_outline_rounded),
+            ],
 
-          // ── ACTION BUTTONS ────────────────────────────────────────────────
-          _buildWorkflowActions(),
-          const SizedBox(height: 10),
-          _actionButton(
-            'Call Customer',
-            Icons.phone_outlined,
-            colorScheme.surfaceContainerHighest,
-            _callCustomer,
-            textColor: colorScheme.onSurface,
-            iconColor: colorScheme.primary,
-          ),
-          if (_jc.status == JobCardStatus.completed) ...[
-            const SizedBox(height: 10),
+            // ── ACTION BUTTONS ────────────────────────────────────────────────
+            const SizedBox(height: 16),
             _actionButton(
-              'Deliver Vehicle',
-              Icons.check_circle_outline,
-              const Color(0xFF10B981),
-              _openDelivery,
+              'Call Customer',
+              Icons.phone_outlined,
+              colorScheme.surfaceContainerHighest,
+              _callCustomer,
+              textColor: colorScheme.onSurface,
+              iconColor: colorScheme.primary,
             ),
+            if (_jc.status == JobCardStatus.completed) ...[
+              const SizedBox(height: 10),
+              _actionButton(
+                'Deliver Vehicle',
+                Icons.check_circle_outline,
+                const Color(0xFF10B981),
+                _openDelivery,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -465,8 +483,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                     const SizedBox(height: 2),
                     Text(
                       _apiVal(
-                        _details?.customerName ?? '',
-                        hasData ? _getVal('customerName') : _jc.customerName,
+                        _details?.vehicleInfo ?? '',
+                        hasData
+                            ? '${_getVal('make')} ${_getVal('model')}'.trim()
+                            : _jc.vehicleInfo,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -502,34 +522,139 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person_outline_rounded,
+                  size: 18,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _apiVal(
+                      _details?.customerName ?? '',
+                      hasData ? _getVal('customerName') : _jc.customerName,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (_displayPlate.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: Text(
+                      _displayPlate.toUpperCase(),
+                      style: textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _section(String title, List<Widget> children) {
+  Widget _section(
+    String title,
+    List<Widget> children, {
+    IconData? icon,
+    String? subtitle,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.025),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: colorScheme.onSurface,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 15, 16, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (icon != null) ...[
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.09),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, size: 18, color: colorScheme.primary),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 14),
-          ...children,
+          Divider(height: 1, color: colorScheme.outlineVariant),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+          ),
         ],
       ),
     );
@@ -673,6 +798,8 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           ),
         );
       }).toList(),
+      icon: Icons.handyman_outlined,
+      subtitle: 'Tasks created from the completed inspection',
     );
   }
 
@@ -680,7 +807,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     final inspection = _inspection;
     if (inspection == null || !inspection.found) return const SizedBox.shrink();
     final colorScheme = Theme.of(context).colorScheme;
-    return _section('Inspection', [
+    return _section('Inspection Summary', [
       if (inspection.inspectionRef.isNotEmpty)
         _detailRow(
           Icons.fact_check_outlined,
@@ -688,9 +815,36 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           inspection.inspectionRef,
           isMono: true,
         ),
-      _detailRow(Icons.check_circle_outline, 'Good', '${inspection.good}'),
-      _detailRow(Icons.error_outline, 'Fair', '${inspection.fair}'),
-      _detailRow(Icons.warning_amber_outlined, 'Poor', '${inspection.poor}'),
+      Row(
+        children: [
+          Expanded(
+            child: _inspectionCount(
+              'Good',
+              inspection.good,
+              const Color(0xFF059669),
+              Icons.check_circle_outline_rounded,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _inspectionCount(
+              'Fair',
+              inspection.fair,
+              colorScheme.secondary,
+              Icons.error_outline_rounded,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _inspectionCount(
+              'Poor',
+              inspection.poor,
+              colorScheme.error,
+              Icons.warning_amber_rounded,
+            ),
+          ),
+        ],
+      ),
       if (inspection.summary.isNotEmpty) ...[
         const SizedBox(height: 8),
         Text(
@@ -702,28 +856,61 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           ),
         ),
       ],
-    ]);
+    ], icon: Icons.fact_check_outlined);
   }
+
+  Widget _inspectionCount(
+    String label,
+    int count,
+    Color color,
+    IconData icon,
+  ) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(height: 3),
+        Text(
+          '$count',
+          style: TextStyle(
+            color: color,
+            fontSize: 17,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildWorkflowActions() {
     final colorScheme = Theme.of(context).colorScheme;
-    return _section('Next Step', [
-      _actionButton(
-        _primaryActionLabel,
-        _primaryActionIcon,
-        colorScheme.primary,
-        _runPrimaryAction,
-      ),
-      if (_jc.status == JobCardStatus.approved) ...[
-        const SizedBox(height: 10),
+    return _section(
+      'Next Step',
+      [
         _actionButton(
-          'Assign Technician',
-          Icons.assignment_ind_outlined,
-          colorScheme.secondary,
-          _openAssignTasks,
+          _primaryActionLabel,
+          _primaryActionIcon,
+          colorScheme.primary,
+          _runPrimaryAction,
         ),
       ],
-    ]);
+      icon: Icons.bolt_rounded,
+      subtitle: _inspectionRequired
+          ? 'Complete the inspection before continuing'
+          : 'Continue this job card through the workshop',
+    );
   }
 
   String get _primaryActionLabel => _inspectionRequired

@@ -85,7 +85,7 @@ public class RepairOrderService {
         log.info("Repair order {} created for jobCardId={}, grandTotal={}", ref, jobCardId, ro.getGrandTotal());
 
         taskGeneratorService.generateForJobCard(jobCardId);
-        createApproval(jc, ref, ro);
+        createApproval(jc, ref, ro, Boolean.TRUE.equals(req.getAdvisorApproved()));
 
         return RepairOrderResponse.builder().id(ref).build();
     }
@@ -139,7 +139,7 @@ public class RepairOrderService {
         }
     }
 
-    private void createApproval(JobCard jc, String ref, RepairOrder ro) {
+    private void createApproval(JobCard jc, String ref, RepairOrder ro, boolean advisorApproved) {
         Customer customer = jc.getCustomerId() != null ? customerMapper.selectById(jc.getCustomerId()) : null;
         String customerName = customer != null && customer.getCustomerName() != null
                 ? customer.getCustomerName() : "";
@@ -152,15 +152,15 @@ public class RepairOrderService {
                 .customerName(customerName)
                 .vehicleId(jc.getVehicleId() != null ? String.valueOf(jc.getVehicleId()) : "")
                 .amount(ro.getGrandTotal())
-                .action("pending")
+                .action(advisorApproved ? "approved" : "pending")
                 .build());
 
         if (jc.getStatus() == null || !"awaitingSupervisor".equals(jc.getStatus())) {
-            jc.setStatus("waitingCustomerApproval");
+            jc.setStatus(advisorApproved ? "approved" : "waitingCustomerApproval");
             jobCardMapper.updateById(jc);
         }
 
-        if (customer != null && customer.getUserId() != null) {
+        if (!advisorApproved && customer != null && customer.getUserId() != null) {
             notificationService.emit(customer.getUserId(), jc.getBranchId(),
                     "approvalNeeded", "Approve your estimate",
                     "Estimate " + ref + " · " + String.format("%.2f", ro.getGrandTotal())

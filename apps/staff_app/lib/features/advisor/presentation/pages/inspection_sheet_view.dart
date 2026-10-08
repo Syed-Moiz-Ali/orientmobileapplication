@@ -60,6 +60,7 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
     );
 
     return Scaffold(
+      backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
         elevation: 0,
@@ -228,7 +229,7 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
                         ),
                       ),
                       child: Text(
-                        'BODY CONDITION  $inspected checked · $issues issues',
+                        'Body Map  $inspected · $issues issues',
                         style: textTheme.labelSmall?.copyWith(
                           color: selected
                               ? colorScheme.onPrimary
@@ -320,6 +321,22 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
           ),
           Divider(height: 1, color: colorScheme.outlineVariant),
 
+          if (_selectedSectionId != _bodyConditionId &&
+              activeSection.id.isNotEmpty)
+            _ActiveSectionHeader(
+              section: activeSection,
+              state: state,
+              onMarkRemainingGood: () {
+                HapticFeedback.lightImpact();
+                for (var i = 0; i < activeSection.items.length; i++) {
+                  final itemId = '${activeSection.id}_$i';
+                  if (!state.statuses.containsKey(itemId)) {
+                    notifier.setStatus(itemId, ItemStatus.good);
+                  }
+                }
+              },
+            ),
+
           // ── 3. INTUITIVE CHECKPOINT CARDS LIST ───────────────────────────
           Expanded(
             child: _selectedSectionId == _bodyConditionId
@@ -349,6 +366,76 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
 
           // ── 4. STICKY FOOTER ─────────────────────────────────────────────
           _StickyFooter(callbacks: widget.callbacks),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveSectionHeader extends StatelessWidget {
+  final InspectionSection section;
+  final InspectionState state;
+  final VoidCallback onMarkRemainingGood;
+
+  const _ActiveSectionHeader({
+    required this.section,
+    required this.state,
+    required this.onMarkRemainingGood,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    var completed = 0;
+    for (var i = 0; i < section.items.length; i++) {
+      if (state.statuses.containsKey('${section.id}_$i')) completed++;
+    }
+    final remaining = section.items.length - completed;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      color: theme.colorScheme.surface,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  section.label,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  remaining == 0
+                      ? 'All checkpoints completed'
+                      : '$remaining checkpoint${remaining == 1 ? '' : 's'} remaining',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: remaining == 0
+                        ? const Color(0xFF059669)
+                        : theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (remaining > 0)
+            OutlinedButton.icon(
+              onPressed: onMarkRemainingGood,
+              icon: const Icon(Icons.done_all_rounded, size: 17),
+              label: const Text('All Good'),
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 9,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -501,6 +588,15 @@ class _IntuitiveCheckpointCardState
           ),
           const SizedBox(height: 14),
 
+          Text(
+            'Choose condition',
+            style: textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+
           // ── 3-WAY LARGE SEGMENTED CONDITION SELECTOR ─────────────────────
           Row(
             children: [
@@ -579,8 +675,8 @@ class _IntuitiveCheckpointCardState
                       const SizedBox(width: 6),
                       Text(
                         totalFiles > 0
-                            ? 'Manage Evidence ($totalFiles)'
-                            : '+ Add Photo / Voice Note',
+                            ? 'Photos & notes ($totalFiles)'
+                            : 'Add photos or notes',
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w800,
@@ -611,7 +707,7 @@ class _IntuitiveCheckpointCardState
                     notifier.setStatus(widget.itemId, null);
                   },
                   child: Text(
-                    'Clear Rating',
+                    'Reset',
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
                       fontSize: 11,
@@ -1198,56 +1294,93 @@ class _StickyFooter extends ConsumerWidget {
     final notifier = ref.read(inspectionProvider.notifier);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
-      ),
-      child: Row(
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.notifications_active_outlined,
-                size: 16,
-                color: colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Notify Owner',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(width: 6),
-              Switch.adaptive(
-                value: state.notifyOwner,
-                activeTrackColor: colorScheme.primary,
-                onChanged: (_) {
-                  HapticFeedback.selectionClick();
-                  notifier.toggleNotifyOwner();
-                },
-              ),
-            ],
-          ),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              callbacks.onPreview();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              'Review Sheet',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -3),
           ),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withValues(alpha: 0.09),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.notifications_none_rounded,
+                    size: 18,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Notify owner',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        'Share an update after submission',
+                        style: TextStyle(fontSize: 11, color: AppColors.text3),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: state.notifyOwner,
+                  activeTrackColor: colorScheme.primary,
+                  onChanged: (_) {
+                    HapticFeedback.selectionClick();
+                    notifier.toggleNotifyOwner();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 9),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  callbacks.onPreview();
+                },
+                icon: const Icon(Icons.preview_outlined, size: 20),
+                label: const Text(
+                  'Review Inspection',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

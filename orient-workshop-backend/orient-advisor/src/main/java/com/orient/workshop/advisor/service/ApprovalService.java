@@ -3,9 +3,13 @@ package com.orient.workshop.advisor.service;
 import com.orient.workshop.advisor.model.dto.ApprovalActionRequest;
 import com.orient.workshop.advisor.model.dto.PendingApprovalResponse;
 import com.orient.workshop.advisor.model.entity.Approval;
+import com.orient.workshop.advisor.model.entity.RepairOrder;
 import com.orient.workshop.advisor.repository.ApprovalMapper;
+import com.orient.workshop.advisor.repository.RepairOrderMapper;
 import com.orient.workshop.common.exception.BadRequestException;
 import com.orient.workshop.common.exception.NotFoundException;
+import com.orient.workshop.core.model.entity.JobCard;
+import com.orient.workshop.core.repository.JobCardMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +27,8 @@ import java.util.stream.Collectors;
 public class ApprovalService {
 
     private final ApprovalMapper approvalMapper;
+    private final RepairOrderMapper repairOrderMapper;
+    private final JobCardMapper jobCardMapper;
 
     public List<PendingApprovalResponse> getPendingApprovals() {
         List<Approval> approvals = approvalMapper.findPending();
@@ -68,6 +74,24 @@ public class ApprovalService {
         if (req.getCustomerName() != null) approval.setCustomerName(req.getCustomerName());
         approval.setAmount(req.getAmount());
         approvalMapper.updateById(approval);
+
+        String approvalType = approval.getApprovalType() != null
+                ? approval.getApprovalType() : "estimate";
+        if ("estimate".equals(approvalType)) {
+            String targetId = approval.getTargetId() != null
+                    ? approval.getTargetId() : approval.getEstimateId();
+            RepairOrder order = repairOrderMapper.selectOne(
+                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<RepairOrder>()
+                            .eq(RepairOrder::getRepairOrderRef, targetId));
+            if (order != null && order.getJobCardId() != null) {
+                JobCard card = jobCardMapper.selectById(order.getJobCardId());
+                if (card != null) {
+                    if ("approved".equals(storedAction)) card.setStatus("approved");
+                    if ("rejected".equals(storedAction)) card.setStatus("inspected");
+                    jobCardMapper.updateById(card);
+                }
+            }
+        }
     }
 
     private String timeAgo(LocalDateTime dateTime) {
