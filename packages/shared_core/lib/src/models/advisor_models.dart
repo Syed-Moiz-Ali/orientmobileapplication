@@ -97,6 +97,7 @@ class JobCardDetailResponse {
   final String customerRequests;
   final String garageRecommendations;
   final String estimatedDelivery;
+  final Map<String, dynamic>? vehicleBodyCondition;
   const JobCardDetailResponse({
     this.id = '',
     this.dbId = 0,
@@ -124,6 +125,7 @@ class JobCardDetailResponse {
     this.customerRequests = '',
     this.garageRecommendations = '',
     this.estimatedDelivery = '',
+    this.vehicleBodyCondition,
   });
   factory JobCardDetailResponse.fromJson(Map<String, dynamic> j) =>
       JobCardDetailResponse(
@@ -172,6 +174,9 @@ class JobCardDetailResponse {
         customerRequests: j['customerRequests'] as String? ?? '',
         garageRecommendations: j['garageRecommendations'] as String? ?? '',
         estimatedDelivery: j['estimatedDelivery'] as String? ?? '',
+        vehicleBodyCondition: j['vehicleBodyCondition'] is Map
+            ? Map<String, dynamic>.from(j['vehicleBodyCondition'] as Map)
+            : null,
       );
 }
 

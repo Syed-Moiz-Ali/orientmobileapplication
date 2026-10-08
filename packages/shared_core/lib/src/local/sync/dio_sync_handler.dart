@@ -572,6 +572,10 @@ Map<String, dynamic> _legacyVehicleCustomerIntakePayload(
     },
     if (_stringValue(payload['jobDescription']) case final value?)
       'customerRequests': value,
+    if (payload['vehicleBodyCondition'] is Map)
+      'vehicleBodyCondition': Map<String, dynamic>.from(
+        payload['vehicleBodyCondition'] as Map,
+      ),
   };
 }
 
@@ -645,6 +649,10 @@ Map<String, dynamic> buildVehicleCustomerIntakePayload(
     },
     if (_stringValue(payload['jobDescription']) case final value?)
       'customerRequests': value,
+    if (payload['vehicleBodyCondition'] is Map)
+      'vehicleBodyCondition': Map<String, dynamic>.from(
+        payload['vehicleBodyCondition'] as Map,
+      ),
   };
 }
 

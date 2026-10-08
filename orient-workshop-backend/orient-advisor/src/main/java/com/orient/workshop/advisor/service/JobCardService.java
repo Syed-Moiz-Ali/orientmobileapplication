@@ -26,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +46,7 @@ public class JobCardService {
     private final com.orient.workshop.core.service.ActivityService activityService;
     private final com.orient.workshop.core.service.WebhookService webhookService;
     private final com.orient.workshop.core.service.JobWorkflowService jobWorkflowService;
+    private final ObjectMapper objectMapper;
 
     public PageResponse<JobCardResponse> listJobCards(String status, String search, int page, int limit,
                                                       JwtUserPrincipal principal) {
@@ -324,7 +326,18 @@ public class JobCardService {
                 .createdDate(c.getCreatedAt() != null ? c.getCreatedAt().format(fmt) : "")
                 .lastUpdated(c.getUpdatedAt() != null ? c.getUpdatedAt().format(fmt) : "")
                 .estimatedDelivery(c.getEstimatedDelivery() != null ? c.getEstimatedDelivery().toString() : "")
+                .vehicleBodyCondition(readBodyCondition(c.getVehicleBodyCondition()))
                 .build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> readBodyCondition(String json) {
+        if (json == null || json.isBlank()) return null;
+        try {
+            return objectMapper.readValue(json, Map.class);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private boolean inScope(JobCard card, JwtUserPrincipal principal) {

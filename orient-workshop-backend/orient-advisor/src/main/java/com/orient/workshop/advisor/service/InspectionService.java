@@ -143,6 +143,7 @@ public class InspectionService {
                     .tag(req.getTag())
                     .customerRequests(composedRequests(req))
                     .jobDescriptionJson(jobDescriptionsJson(req))
+                    .vehicleBodyCondition(toJson(req.getVehicleBodyCondition()))
                     .jobCategory(req.getAdditional() != null ? req.getAdditional().getJobCategory() : null)
                     .markupType(req.getAdditional() != null ? req.getAdditional().getMarkupType() : null)
                     .orderType(req.getAdditional() != null ? req.getAdditional().getOrderType() : null)
@@ -158,6 +159,9 @@ public class InspectionService {
             if (composed != null) jobCard.setCustomerRequests(composed);
             String jobRowsJson = jobDescriptionsJson(req);
             if (jobRowsJson != null) jobCard.setJobDescriptionJson(jobRowsJson);
+            if ("vehicle_customer".equals(req.getType()) && req.getVehicleBodyCondition() != null) {
+                jobCard.setVehicleBodyCondition(toJson(req.getVehicleBodyCondition()));
+            }
             if (req.getGarageRecommendations() != null) jobCard.setGarageRecommendations(req.getGarageRecommendations());
             if (req.getEstimatedDelivery() != null) {
                 jobCard.setEstimatedDelivery(DateParse.parseLocalDateTime(req.getEstimatedDelivery(), "estimatedDelivery"));
@@ -180,7 +184,8 @@ public class InspectionService {
                 .notifyOwnerSmsEmail(req.getNotifyOwnerSmsEmail())
                 .tag(req.getTag())
                 .sections(sectionsJson)
-                .vehicleBodyCondition(toJson(req.getVehicleBodyCondition()))
+                .vehicleBodyCondition("vehicle_customer".equals(req.getType())
+                        ? null : toJson(req.getVehicleBodyCondition()))
                 .advisorId(principal != null ? principal.getUserId() : null)
                 .build();
         inspectionMapper.insert(inspection);

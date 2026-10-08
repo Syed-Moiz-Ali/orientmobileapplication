@@ -323,7 +323,7 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
           // ── 3. INTUITIVE CHECKPOINT CARDS LIST ───────────────────────────
           Expanded(
             child: _selectedSectionId == _bodyConditionId
-                ? const VehicleBodyConditionPanel()
+                ? const VehicleBodyConditionPanel(showTitle: false)
                 : activeSection.items.isEmpty
                 ? const Center(
                     child: EmptyState(

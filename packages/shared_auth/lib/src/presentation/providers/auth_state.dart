@@ -67,7 +67,10 @@ class AuthNotifier extends Notifier<AuthState> {
       state = const AuthUnauthenticated();
       return;
     }
-    state = AuthAuthenticated(role: role, token: token);
+    // Stay on the startup route until /auth/me (or the offline TTL fallback)
+    // validates this cached session. Publishing AuthAuthenticated here made
+    // the router briefly open the role dashboard and fire protected requests
+    // with an expired token before validation could reject it.
     final valid = await validateSession();
     if (!valid && state is! AuthAuthenticated) {
       state = const AuthUnauthenticated();
@@ -224,6 +227,13 @@ class AuthNotifier extends Notifier<AuthState> {
     // flutter_secure_storage.deleteAll() can throw on some devices (e.g.
     // Android Keystore unavailable) — if it did, state stayed authenticated
     // and logout appeared to do nothing (user could not log out).
+    await _clearLocalSession(ref.read(tokenStorageProvider));
+    state = const AuthUnauthenticated();
+  }
+
+  /// Invalidates a rejected local session without calling the logout API.
+  /// Used after refresh fails or a freshly retried request is still 401.
+  Future<void> invalidateSession() async {
     await _clearLocalSession(ref.read(tokenStorageProvider));
     state = const AuthUnauthenticated();
   }

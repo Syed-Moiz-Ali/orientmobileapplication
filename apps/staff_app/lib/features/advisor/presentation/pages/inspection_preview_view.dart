@@ -71,7 +71,10 @@ class _InspectionPreviewViewState extends ConsumerState<InspectionPreviewView> {
                   const SizedBox(height: 8),
                   const SizedBox(
                     height: 680,
-                    child: VehicleBodyConditionPanel(readOnly: true),
+                    child: VehicleBodyConditionPanel(
+                      readOnly: true,
+                      showTitle: false,
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],

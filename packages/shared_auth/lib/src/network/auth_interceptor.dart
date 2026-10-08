@@ -36,8 +36,19 @@ class AuthInterceptor extends Interceptor {
     // and (with a revoked/failing refresh token) deadlocks on the single-flight
     // refresh future, leaving the user unable to log out.
     final path = err.requestOptions.path;
-    if (err.response?.statusCode != 401 ||
-        err.requestOptions.headers['X-Retry'] == 'true' ||
+    final isUnauthorized = err.response?.statusCode == 401;
+    final isRetriedRequest = err.requestOptions.headers['X-Retry'] == 'true';
+
+    // A request rejected even after a successful refresh proves that neither
+    // the old nor newly issued access token is usable. Fail closed: erase the
+    // cached credentials and let the router move directly to login.
+    if (isUnauthorized && isRetriedRequest) {
+      await _ref.read(authNotifierProvider.notifier).invalidateSession();
+      handler.next(err);
+      return;
+    }
+
+    if (!isUnauthorized ||
         path.endsWith('/auth/logout') ||
         path.endsWith('/auth/refresh')) {
       handler.next(err);
@@ -86,6 +97,9 @@ class AuthInterceptor extends Interceptor {
               error: e,
               stackTrace: st,
             );
+        if (e is DioException && e.response?.statusCode == 401) {
+          await _ref.read(authNotifierProvider.notifier).invalidateSession();
+        }
       }
     }
     handler.next(err);

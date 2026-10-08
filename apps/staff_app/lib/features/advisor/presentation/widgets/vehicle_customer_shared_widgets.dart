@@ -124,6 +124,7 @@ class AdvisorTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final TextCapitalization textCapitalization;
   final EdgeInsets scrollPadding;
+  final String? errorText;
 
   const AdvisorTextField({
     super.key,
@@ -144,6 +145,7 @@ class AdvisorTextField extends StatelessWidget {
     this.focusNode,
     this.textCapitalization = TextCapitalization.none,
     this.scrollPadding = const EdgeInsets.only(bottom: 140),
+    this.errorText,
   });
 
   @override
@@ -169,6 +171,12 @@ class AdvisorTextField extends StatelessWidget {
         fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
+        errorText: errorText,
+        errorMaxLines: 2,
+        errorStyle: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.error,
+          fontWeight: FontWeight.w600,
+        ),
         hintText: hint,
         hintStyle: theme.textTheme.bodyMedium?.copyWith(
           color: kHintColor,
@@ -191,11 +199,21 @@ class AdvisorTextField extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
-          borderSide: BorderSide.none,
+          borderSide: errorText == null
+              ? BorderSide.none
+              : BorderSide(color: theme.colorScheme.error, width: 1.2),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
           borderSide: const BorderSide(color: kBlue, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+          borderSide: BorderSide(color: theme.colorScheme.error, width: 1.2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+          borderSide: BorderSide(color: theme.colorScheme.error, width: 1.6),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,

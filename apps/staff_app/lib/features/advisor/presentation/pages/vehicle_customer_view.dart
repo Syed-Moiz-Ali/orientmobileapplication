@@ -24,6 +24,7 @@ import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_signature_pad.dart';
 import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.dart';
 import 'scan_vehicle_view.dart';
+import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
 
 class VehicleCustomerView extends ConsumerWidget {
   final String? bookingId;
@@ -43,6 +44,15 @@ class _Body extends ConsumerStatefulWidget {
 }
 
 class _BodyState extends ConsumerState<_Body> {
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey> _fieldKeys = {
+    'Customer Name': GlobalKey(),
+    'Phone Number': GlobalKey(),
+    'Plate Number': GlobalKey(),
+    'Make': GlobalKey(),
+    'Model': GlobalKey(),
+  };
+  Map<String, String> _fieldErrors = const {};
   String? _savedJobId;
   bool _savedToServer = false;
   XFile? _registrationDocument;
@@ -55,11 +65,18 @@ class _BodyState extends ConsumerState<_Body> {
   @override
   void initState() {
     super.initState();
+    Future.microtask(() => ref.read(inspectionProvider.notifier).reset());
     if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
       Hive.box<dynamic>(
         'inspections',
       ).put('intake_booking_id', widget.bookingId);
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -96,6 +113,7 @@ class _BodyState extends ConsumerState<_Body> {
         children: [
           Expanded(
             child: SingleChildScrollView(
+              controller: _scrollController,
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Column(
@@ -156,7 +174,13 @@ class _BodyState extends ConsumerState<_Body> {
                   const SizedBox(height: 16),
 
                   // ── Customer Details (Images 3-5) ────────────────────────
-                  _CustomerDetailsSection(state: state, ref: ref),
+                  _CustomerDetailsSection(
+                    state: state,
+                    ref: ref,
+                    errors: _fieldErrors,
+                    fieldKeys: _fieldKeys,
+                    onFieldChanged: _clearFieldError,
+                  ),
 
                   // ── Vehicle Details (Images 6-14) ────────────────────────
                   _VehicleDetailsSection(
@@ -167,9 +191,27 @@ class _BodyState extends ConsumerState<_Body> {
                     insuranceDocumentName: _insuranceDocument?.name,
                     onRegistrationUpload: () => _pickDocument(true),
                     onInsuranceUpload: () => _pickDocument(false),
+                    errors: _fieldErrors,
+                    fieldKeys: _fieldKeys,
+                    onFieldChanged: _clearFieldError,
                   ),
 
                   // ── Additional Information (Image 15) ────────────────────
+                  const SizedBox(height: 16),
+                  Text(
+                    'Vehicle Body Condition',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const VehicleBodyConditionPanel(
+                    embedded: true,
+                    showTitle: false,
+                  ),
+                  const SizedBox(height: 16),
+
                   _AdditionalInfoSection(
                     state: state,
                     ref: ref,
@@ -202,10 +244,30 @@ class _BodyState extends ConsumerState<_Body> {
                 child: ElevatedButton(
                   onPressed: () async {
                     final formState = ref.read(vehicleCustomerFormProvider);
+                    final bodyCondition = ref
+                        .read(inspectionProvider)
+                        .vehicleBodyConditionPayload;
                     final errors = _validateForm(formState);
                     if (errors.isNotEmpty) {
-                      _showValidationErrors(context, errors);
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      setState(() => _fieldErrors = Map.fromEntries(errors));
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted) return;
+                        final firstContext =
+                            _fieldKeys[errors.first.key]?.currentContext;
+                        if (firstContext != null) {
+                          Scrollable.ensureVisible(
+                            firstContext,
+                            duration: const Duration(milliseconds: 450),
+                            curve: Curves.easeOutCubic,
+                            alignment: 0.18,
+                          );
+                        }
+                      });
                       return;
+                    }
+                    if (_fieldErrors.isNotEmpty) {
+                      setState(() => _fieldErrors = const {});
                     }
                     final local = GenericLocalDataSource(
                       Hive.box<dynamic>('inspections'),
@@ -291,6 +353,7 @@ class _BodyState extends ConsumerState<_Body> {
                       'lpoNumber': formState.lpoNumber,
                       'accidentNumber': formState.accidentNumber,
                       'insuranceExpiryDate': formState.insuranceExpiryDate,
+                      'vehicleBodyCondition': bodyCondition,
                       'jobPhotoPaths': List<String>.from(_jobPhotoPaths),
                       'jobVideoPaths': List<String>.from(_jobVideoPaths),
                       'customerSignaturePath': _customerSignaturePath,
@@ -355,7 +418,7 @@ class _BodyState extends ConsumerState<_Body> {
                     ),
                   ),
                   child: const Text(
-                    'NEXT',
+                    'CREATE JOB CARD',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -373,149 +436,39 @@ class _BodyState extends ConsumerState<_Body> {
   List<MapEntry<String, String>> _validateForm(VehicleCustomerFormState s) {
     final errors = <MapEntry<String, String>>[];
     if (s.customerName.trim().isEmpty) {
-      errors.add(const MapEntry('Customer Name', 'Customer name is required'));
-    }
-    if (s.phoneNumber.trim().isEmpty) {
-      errors.add(const MapEntry('Phone Number', 'Phone number is required'));
-    } else if (s.phoneNumber.trim().length < 8) {
       errors.add(
-        const MapEntry(
-          'Phone Number',
-          'Enter a valid phone number (at least 8 digits)',
-        ),
+        const MapEntry('Customer Name', 'Please enter the customer name'),
       );
     }
-    if (s.registrationNumber.trim().isEmpty) {
+    if (s.phoneNumber.trim().isEmpty) {
       errors.add(
-        const MapEntry(
-          'Registration Number',
-          'Registration number is required',
-        ),
+        const MapEntry('Phone Number', 'Please enter a mobile number'),
+      );
+    } else if (s.phoneNumber.trim().length < 8) {
+      errors.add(
+        const MapEntry('Phone Number', 'Please enter a valid mobile number'),
+      );
+    }
+    if (s.plateNumber.trim().isEmpty) {
+      errors.add(
+        const MapEntry('Plate Number', 'Please enter the plate number'),
       );
     }
     if (s.make.trim().isEmpty) {
-      errors.add(const MapEntry('Make/Brand', 'Please select a vehicle brand'));
+      errors.add(const MapEntry('Make', 'Please select the vehicle brand'));
     }
     if (s.model.trim().isEmpty) {
-      errors.add(const MapEntry('Model', 'Please select a vehicle model'));
+      errors.add(const MapEntry('Model', 'Please select the vehicle model'));
     }
     return errors;
   }
 
-  void _showValidationErrors(
-    BuildContext context,
-    List<MapEntry<String, String>> errors,
-  ) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r16),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.dangerBg,
-                borderRadius: BorderRadius.circular(AppDimensions.r8),
-              ),
-              child: const Icon(
-                Icons.error_outline,
-                color: AppColors.danger,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'Validation Errors',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Please fix the following ${errors.length} issue(s):',
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.text2,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...errors.map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 2),
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.danger,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontSize: 13,
-                            height: 1.4,
-                            color: AppColors.textPrimary,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: '${e.key}: ',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            TextSpan(text: e.value),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.r10),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: const Text(
-                'OK, I\'ll Fix Them',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  void _clearFieldError(String field) {
+    if (!_fieldErrors.containsKey(field)) return;
+    setState(() {
+      final updated = Map<String, String>.from(_fieldErrors)..remove(field);
+      _fieldErrors = updated;
+    });
   }
 
   Future<void> _scanAndSetVin(BuildContext context, WidgetRef ref) async {
@@ -1040,11 +993,13 @@ class _LabeledControl extends StatelessWidget {
   final String label;
   final bool required;
   final Widget child;
+  final String? errorText;
 
   const _LabeledControl({
     required this.label,
     required this.child,
     this.required = false,
+    this.errorText,
   });
 
   @override
@@ -1053,6 +1008,16 @@ class _LabeledControl extends StatelessWidget {
     children: [
       FieldLabel(label, required: required),
       child,
+      if (errorText != null) ...[
+        const SizedBox(height: 6),
+        Text(
+          errorText!,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.error,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     ],
   );
 }
@@ -1106,7 +1071,16 @@ class _ResponsiveFieldGroup extends StatelessWidget {
 class _CustomerDetailsSection extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
-  const _CustomerDetailsSection({required this.state, required this.ref});
+  final Map<String, String> errors;
+  final Map<String, GlobalKey> fieldKeys;
+  final ValueChanged<String> onFieldChanged;
+  const _CustomerDetailsSection({
+    required this.state,
+    required this.ref,
+    required this.errors,
+    required this.fieldKeys,
+    required this.onFieldChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1125,17 +1099,22 @@ class _CustomerDetailsSection extends StatelessWidget {
 
           FieldLabel('Customer Name', required: true),
           AdvisorTextField(
+            key: fieldKeys['Customer Name'],
             hint: 'Customer Name',
+            errorText: errors['Customer Name'],
             textCapitalization: TextCapitalization.words,
-            onChanged: (v) => ref
-                .read(vehicleCustomerFormProvider.notifier)
-                .setCustomerName(v),
+            onChanged: (v) {
+              ref.read(vehicleCustomerFormProvider.notifier).setCustomerName(v);
+              if (v.trim().isNotEmpty) onFieldChanged('Customer Name');
+            },
           ),
           kGap12,
 
           FieldLabel('Phone Number', required: true),
           AdvisorTextField(
+            key: fieldKeys['Phone Number'],
             hint: 'Phone number',
+            errorText: errors['Phone Number'],
             keyboardType: TextInputType.phone,
             // prefixIcon (not prefix) so the country code is ALWAYS visible,
             // not only while the field is focused.
@@ -1143,8 +1122,10 @@ class _CustomerDetailsSection extends StatelessWidget {
               code: PhoneInputField.countries.first.code,
             ),
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setPhone(v),
+            onChanged: (v) {
+              ref.read(vehicleCustomerFormProvider.notifier).setPhone(v);
+              if (v.trim().length >= 8) onFieldChanged('Phone Number');
+            },
           ),
           kGap12,
 
@@ -1282,6 +1263,9 @@ class _VehicleDetailsSection extends StatelessWidget {
   final String? insuranceDocumentName;
   final VoidCallback onRegistrationUpload;
   final VoidCallback onInsuranceUpload;
+  final Map<String, String> errors;
+  final Map<String, GlobalKey> fieldKeys;
+  final ValueChanged<String> onFieldChanged;
   const _VehicleDetailsSection({
     required this.state,
     required this.ref,
@@ -1290,6 +1274,9 @@ class _VehicleDetailsSection extends StatelessWidget {
     required this.insuranceDocumentName,
     required this.onRegistrationUpload,
     required this.onInsuranceUpload,
+    required this.errors,
+    required this.fieldKeys,
+    required this.onFieldChanged,
   });
 
   @override
@@ -1332,7 +1319,9 @@ class _VehicleDetailsSection extends StatelessWidget {
                 label: 'Plate Number',
                 required: true,
                 child: AdvisorTextField(
+                  key: fieldKeys['Plate Number'],
                   hint: '2500',
+                  errorText: errors['Plate Number'],
                   initialValue: state.plateNumber,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1343,9 +1332,12 @@ class _VehicleDetailsSection extends StatelessWidget {
                           emirate: state.emirate,
                           plateCode: state.plateCode,
                         ),
-                  onChanged: (v) => ref
-                      .read(vehicleCustomerFormProvider.notifier)
-                      .setPlateNumber(v),
+                  onChanged: (v) {
+                    ref
+                        .read(vehicleCustomerFormProvider.notifier)
+                        .setPlateNumber(v);
+                    if (v.trim().isNotEmpty) onFieldChanged('Plate Number');
+                  },
                 ),
               ),
             ],
@@ -1373,12 +1365,26 @@ class _VehicleDetailsSection extends StatelessWidget {
               _LabeledControl(
                 label: 'Make',
                 required: true,
-                child: _BrandSelector(state: state, ref: ref),
+                errorText: errors['Make'],
+                child: _BrandSelector(
+                  key: fieldKeys['Make'],
+                  state: state,
+                  ref: ref,
+                  errorText: errors['Make'],
+                  onSelected: () => onFieldChanged('Make'),
+                ),
               ),
               _LabeledControl(
                 label: 'Model',
                 required: true,
-                child: _ModelSelector(state: state, ref: ref),
+                errorText: errors['Model'],
+                child: _ModelSelector(
+                  key: fieldKeys['Model'],
+                  state: state,
+                  ref: ref,
+                  errorText: errors['Model'],
+                  onSelected: () => onFieldChanged('Model'),
+                ),
               ),
               _LabeledControl(
                 label: 'Model Year',
@@ -1569,7 +1575,15 @@ class _VehicleDetailsSection extends StatelessWidget {
 class _BrandSelector extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
-  const _BrandSelector({required this.state, required this.ref});
+  final String? errorText;
+  final VoidCallback onSelected;
+  const _BrandSelector({
+    super.key,
+    required this.state,
+    required this.ref,
+    required this.errorText,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1586,6 +1600,7 @@ class _BrandSelector extends StatelessWidget {
         );
         if (result != null) {
           ref.read(vehicleCustomerFormProvider.notifier).setMake(result);
+          onSelected();
         }
       },
       child: Container(
@@ -1593,6 +1608,9 @@ class _BrandSelector extends StatelessWidget {
         decoration: BoxDecoration(
           color: state.make.isEmpty ? kFieldBg : kTealLight,
           borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+          border: errorText == null
+              ? null
+              : Border.all(color: Theme.of(context).colorScheme.error),
         ),
         child: Row(
           children: [
@@ -1619,7 +1637,15 @@ class _BrandSelector extends StatelessWidget {
 class _ModelSelector extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
-  const _ModelSelector({required this.state, required this.ref});
+  final String? errorText;
+  final VoidCallback onSelected;
+  const _ModelSelector({
+    super.key,
+    required this.state,
+    required this.ref,
+    required this.errorText,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1642,6 +1668,7 @@ class _ModelSelector extends StatelessWidget {
         );
         if (result != null) {
           ref.read(vehicleCustomerFormProvider.notifier).setModel(result);
+          onSelected();
         }
       },
       child: Container(
@@ -1649,6 +1676,9 @@ class _ModelSelector extends StatelessWidget {
         decoration: BoxDecoration(
           color: state.model.isEmpty ? kFieldBg : kTealLight,
           borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+          border: errorText == null
+              ? null
+              : Border.all(color: Theme.of(context).colorScheme.error),
         ),
         child: Row(
           children: [

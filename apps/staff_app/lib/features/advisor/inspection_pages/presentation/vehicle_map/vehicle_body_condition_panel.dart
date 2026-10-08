@@ -11,7 +11,16 @@ import 'vehicle_inspection_map.dart';
 
 class VehicleBodyConditionPanel extends ConsumerStatefulWidget {
   final bool readOnly;
-  const VehicleBodyConditionPanel({super.key, this.readOnly = false});
+  final bool embedded;
+  final bool showTitle;
+  final Map<String, dynamic>? bodyCondition;
+  const VehicleBodyConditionPanel({
+    super.key,
+    this.readOnly = false,
+    this.embedded = false,
+    this.showTitle = true,
+    this.bodyCondition,
+  });
 
   @override
   ConsumerState<VehicleBodyConditionPanel> createState() =>
@@ -23,11 +32,15 @@ class _VehicleBodyConditionPanelState
   late final Future<VehicleMapDefinition> _definition = VehicleMapLoader.load();
   final GlobalKey _mapKey = GlobalKey();
   String? _selectedPartId;
-  bool _placingMarker = false;
+  Offset? _selectedPoint;
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(inspectionProvider);
+    final state = widget.bodyCondition == null
+        ? ref.watch(inspectionProvider)
+        : InspectionState.fromPersistableMap({
+            'vehicleBodyCondition': widget.bodyCondition,
+          });
     return FutureBuilder<VehicleMapDefinition>(
       future: _definition,
       builder: (context, snapshot) {
@@ -50,18 +63,65 @@ class _VehicleBodyConditionPanelState
             final map = _map(definition, state);
             final details = _details(definition, selected, state);
             return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 100),
+              // This panel is embedded in the job-card form/detail scroll view.
+              // Let the parent own scrolling so this viewport always receives
+              // a finite height and does not throw an unbounded-height error.
+              shrinkWrap: widget.embedded,
+              primary: false,
+              physics: widget.embedded
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
+              padding: EdgeInsets.fromLTRB(
+                16,
+                14,
+                16,
+                widget.embedded ? 16 : 100,
+              ),
               children: [
-                Text(
-                  'Vehicle Body Condition',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _placingMarker
-                      ? 'Tap the damage location inside the selected part.'
-                      : 'Tap a vehicle part to inspect or mark damage.',
-                  style: Theme.of(context).textTheme.bodySmall,
+                if (widget.showTitle) ...[
+                  Text(
+                    'Vehicle Body Condition',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(AppDimensions.r10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.readOnly
+                            ? Icons.visibility_outlined
+                            : Icons.touch_app_outlined,
+                        size: 19,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          widget.readOnly
+                              ? 'Recorded body condition and damage locations.'
+                              : 'Tap the exact area, choose its condition, then add damage if needed.',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                height: 1.35,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 if (wide)
@@ -90,58 +150,41 @@ class _VehicleBodyConditionPanelState
     );
   }
 
-  Widget _map(
-    VehicleMapDefinition definition,
-    InspectionState state,
-  ) => AspectRatio(
-    key: _mapKey,
-    aspectRatio: 1,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: VehicleInspectionMap(
-          definition: definition,
-          inspections: state.vehiclePartInspections,
-          selectedPartId: _selectedPartId,
-          editable: !widget.readOnly,
-          placingMarker: _placingMarker,
-          onPartSelected: (part, normalized) {
-            if (_placingMarker) {
-              if (part.id != _selectedPartId) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Place the marker inside ${definition.partById(_selectedPartId ?? '')?.label ?? 'the selected part'}.',
-                    ),
-                  ),
-                );
-                return;
-              }
-              setState(() => _placingMarker = false);
-              _openFindingSheet(definition, part, normalized: normalized);
-              return;
-            }
-            setState(() {
-              _selectedPartId = part.id;
-              _placingMarker = false;
-            });
-          },
-          onFindingSelected: (finding) {
-            final part = definition.partById(finding.partId);
-            if (part != null) {
-              setState(() => _selectedPartId = part.id);
-              _openFindingSheet(definition, part, existing: finding);
-            }
-          },
+  Widget _map(VehicleMapDefinition definition, InspectionState state) =>
+      AspectRatio(
+        key: _mapKey,
+        aspectRatio: 1,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: VehicleInspectionMap(
+              definition: definition,
+              inspections: state.vehiclePartInspections,
+              selectedPartId: _selectedPartId,
+              editable: !widget.readOnly,
+              placingMarker: false,
+              onPartSelected: (part, normalized) {
+                setState(() {
+                  _selectedPartId = part.id;
+                  _selectedPoint = normalized;
+                });
+              },
+              onFindingSelected: (finding) {
+                final part = definition.partById(finding.partId);
+                if (part != null) {
+                  setState(() => _selectedPartId = part.id);
+                  _openFindingSheet(definition, part, existing: finding);
+                }
+              },
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 
   Widget _details(
     VehicleMapDefinition definition,
@@ -176,6 +219,22 @@ class _VehicleBodyConditionPanelState
                     (condition) => ChoiceChip(
                       label: Text(_conditionLabel(condition)),
                       selected: inspection.condition == condition,
+                      selectedColor: Theme.of(context).colorScheme.primary,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      checkmarkColor: Theme.of(context).colorScheme.onPrimary,
+                      labelStyle: TextStyle(
+                        color: inspection.condition == condition
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      side: BorderSide(
+                        color: inspection.condition == condition
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.outlineVariant,
+                      ),
                       onSelected: widget.readOnly
                           ? null
                           : (_) => ref
@@ -196,15 +255,10 @@ class _VehicleBodyConditionPanelState
                 ),
                 if (!widget.readOnly)
                   TextButton.icon(
-                    onPressed: () => _beginDamagePlacement(part),
-                    icon: Icon(
-                      _placingMarker
-                          ? Icons.close
-                          : Icons.add_location_alt_outlined,
-                    ),
-                    label: Text(
-                      _placingMarker ? 'Cancel Placement' : 'Add Damage',
-                    ),
+                    onPressed: () =>
+                        _addDamageAtSelectedPoint(definition, part),
+                    icon: const Icon(Icons.add_circle_outline_rounded),
+                    label: const Text('Add Damage'),
                   ),
               ],
             ),
@@ -227,33 +281,15 @@ class _VehicleBodyConditionPanelState
     );
   }
 
-  void _beginDamagePlacement(VehicleMapPart part) {
-    if (_placingMarker) {
-      setState(() => _placingMarker = false);
-      return;
-    }
-    setState(() {
-      _selectedPartId = part.id;
-      _placingMarker = true;
-    });
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('Tap the damage location inside ${part.label}.'),
-          duration: const Duration(seconds: 4),
-        ),
-      );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final mapContext = _mapKey.currentContext;
-      if (!mounted || mapContext == null) return;
-      Scrollable.ensureVisible(
-        mapContext,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOut,
-        alignment: 0.05,
-      );
-    });
+  void _addDamageAtSelectedPoint(
+    VehicleMapDefinition definition,
+    VehicleMapPart part,
+  ) {
+    _openFindingSheet(
+      definition,
+      part,
+      normalized: _selectedPoint ?? const Offset(0.5, 0.5),
+    );
   }
 
   Future<void> _openFindingSheet(

@@ -1,5 +1,7 @@
 package com.orient.workshop.advisor.model.dto;
 
+import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,4 +35,5 @@ public class JobCardDetailResponse {
     private String customerRequests;
     private String garageRecommendations;
     private String estimatedDelivery;
+    private Map<String, Object> vehicleBodyCondition;
 }

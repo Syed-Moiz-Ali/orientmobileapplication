@@ -19,6 +19,13 @@ void main() {
         'lpoNumber': 'LPO-1',
         'policyNumber': 'POL-2',
         'accidentNumber': 'ACC-9',
+        'vehicleBodyCondition': {
+          'mapId': 'advisor_car_top',
+          'view': 'top',
+          'parts': {
+            'hood': {'condition': 'damaged'},
+          },
+        },
       });
 
       expect(payload['type'], 'vehicle_customer');
@@ -43,6 +50,10 @@ void main() {
       expect(additional['orderType'], 'Retail');
       expect(additional['jobDescription'], 'Replace brake pads');
       expect(payload['customerRequests'], 'Replace brake pads');
+      expect(
+        (payload['vehicleBodyCondition'] as Map)['mapId'],
+        'advisor_car_top',
+      );
     });
 
     test('never forwards the obsolete client fields', () {

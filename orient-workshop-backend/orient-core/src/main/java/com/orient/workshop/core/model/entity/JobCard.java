@@ -30,6 +30,7 @@ public class JobCard {
     private String tag;
     private String customerRequests;
     private String jobDescriptionJson;
+    private String vehicleBodyCondition;
     private String jobCategory;
     private String markupType;
     private String orderType;

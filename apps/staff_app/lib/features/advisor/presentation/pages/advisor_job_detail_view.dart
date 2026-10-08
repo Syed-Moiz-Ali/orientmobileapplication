@@ -13,6 +13,7 @@ import 'package:staff_app/features/advisor/presentation/pages/choose_inspection_
 import 'package:staff_app/features/advisor/presentation/pages/inspection_provider.dart';
 import 'package:staff_app/features/advisor/presentation/pages/repair_order_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/vehicle_delivery_view.dart';
+import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
 
 class AdvisorJobDetailView extends ConsumerStatefulWidget {
   final JobCardEntity jc;
@@ -226,6 +227,10 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     final textTheme = theme.textTheme;
     final hasData = _hiveData != null;
     final statusColor = _statusColor(context, _jc.status);
+    final localBody = _hiveData?['vehicleBodyCondition'];
+    final bodyCondition =
+        _details?.vehicleBodyCondition ??
+        (localBody is Map ? Map<String, dynamic>.from(localBody) : null);
 
     return Scaffold(
       appBar: AppBar(
@@ -333,6 +338,17 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           ]),
           const SizedBox(height: 16),
           _section('Fuel Level', [_buildFuelLevelDisplay()]),
+          if (bodyCondition != null) ...[
+            const SizedBox(height: 16),
+            _section('Vehicle Body Condition', [
+              VehicleBodyConditionPanel(
+                readOnly: true,
+                embedded: true,
+                showTitle: false,
+                bodyCondition: bodyCondition,
+              ),
+            ]),
+          ],
           const SizedBox(height: 16),
           _section('Service Parameters', [
             _detailRow(
