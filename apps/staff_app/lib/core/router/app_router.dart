@@ -92,17 +92,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final matched = state.matchedLocation;
 
       final isAuthRoute =
-          matched == AppRoutes.login ||
-          matched == AppRoutes.supervisorLogin ||
-          matched == AppRoutes.forgotPassword;
+          matched == AppRoutes.login || matched == AppRoutes.supervisorLogin;
+      // Password recovery is the one auth-adjacent flow a signed-in staff
+      // member may legitimately open from Profile ("Reset password"), so it
+      // must stay reachable while authenticated instead of being redirected
+      // back to the dashboard.
+      final isPasswordRecoveryRoute = matched == AppRoutes.forgotPassword;
+      final isPublicRoute = isAuthRoute || isPasswordRecoveryRoute;
 
       return switch (authState) {
-        AuthUnauthenticated() => isAuthRoute ? null : AppRoutes.login,
+        AuthUnauthenticated() => isPublicRoute ? null : AppRoutes.login,
         AuthLoading() =>
           matched == AppRoutes.startup ? null : AppRoutes.startup,
-        AuthError() => isAuthRoute ? null : AppRoutes.login,
+        AuthError() => isPublicRoute ? null : AppRoutes.login,
         AuthAuthenticated(:final role) when !_isStaffRole(role) =>
-          isAuthRoute ? null : AppRoutes.login,
+          isPublicRoute ? null : AppRoutes.login,
         AuthAuthenticated(:final role) =>
           isAuthRoute ||
                   matched == AppRoutes.startup ||
@@ -399,6 +403,9 @@ bool _isRouteAllowedForRole(UserRole role, String location) {
     AppRoutes.shiftDetails,
     AppRoutes.settings,
     AppRoutes.attendance,
+    // Reachable from Profile's "Reset password"; it is a real, OTP-verified
+    // backend flow that also revokes refresh tokens server-side.
+    AppRoutes.forgotPassword,
   };
   if (commonRoutes.contains(location)) return true;
 

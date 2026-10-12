@@ -18,26 +18,10 @@ class TechnicianDashboardView extends ConsumerWidget {
   const TechnicianDashboardView({super.key});
 
   static const _navItems = <AppNavItem>[
-    AppNavItem(
-      selectedIcon: Icons.dashboard_rounded,
-      icon: Icons.dashboard_outlined,
-      label: 'Today',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.car_repair_rounded,
-      icon: Icons.car_repair_outlined,
-      label: 'Jobs',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.insights_rounded,
-      icon: Icons.insights_outlined,
-      label: 'Productivity',
-    ),
-    AppNavItem(
-      selectedIcon: Icons.person_rounded,
-      icon: Icons.person_outlined,
-      label: 'Profile',
-    ),
+    AppNavItem(selectedIcon: Icons.dashboard_rounded, icon: Icons.dashboard_outlined, label: 'Today'),
+    AppNavItem(selectedIcon: Icons.car_repair_rounded, icon: Icons.car_repair_outlined, label: 'Jobs'),
+    AppNavItem(selectedIcon: Icons.insights_rounded, icon: Icons.insights_outlined, label: 'Productivity'),
+    AppNavItem(selectedIcon: Icons.person_rounded, icon: Icons.person_outlined, label: 'Profile'),
   ];
 
   static const _pages = <Widget>[
@@ -52,9 +36,7 @@ class TechnicianDashboardView extends ConsumerWidget {
     final state = ref.watch(technicianDashboardProvider);
     final notifier = ref.read(technicianDashboardProvider.notifier);
     final adaptive = context.adaptive;
-    final effectiveIndex = state.selectedTab < _pages.length
-        ? state.selectedTab
-        : 0;
+    final effectiveIndex = state.selectedTab < _pages.length ? state.selectedTab : 0;
 
     return DashboardShell(
       appBar: TechnicianAppBar(selectedIndex: effectiveIndex),
@@ -62,24 +44,18 @@ class TechnicianDashboardView extends ConsumerWidget {
         items: _navItems,
         selectedIndex: effectiveIndex,
         onSelected: notifier.selectTab,
-        headerBuilder: (ctx, ext) =>
-            OrientBrandMark(workspace: 'Technician', compact: !ext),
+        headerBuilder: (ctx, ext) => OrientBrandMark(workspace: 'Technician', compact: !ext),
         footerBuilder: (ctx, ext) => InkWell(
           onTap: () => notifier.selectTab(3),
           borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
           child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: ext ? AppDimensions.s8 : 0,
-              vertical: AppDimensions.s4,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: ext ? AppDimensions.s8 : 0, vertical: AppDimensions.s4),
             child: ext
                 ? Row(
                     children: [
                       CircleAvatar(
                         radius: 16,
-                        backgroundColor: Theme.of(
-                          ctx,
-                        ).colorScheme.primary.withValues(alpha: 0.14),
+                        backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
                         child: Text(
                           'T',
                           style: TextStyle(
@@ -107,9 +83,7 @@ class TechnicianDashboardView extends ConsumerWidget {
                     message: 'Technician Profile',
                     child: CircleAvatar(
                       radius: 18,
-                      backgroundColor: Theme.of(
-                        ctx,
-                      ).colorScheme.primary.withValues(alpha: 0.14),
+                      backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
                       child: Text(
                         'T',
                         style: TextStyle(
@@ -126,11 +100,7 @@ class TechnicianDashboardView extends ConsumerWidget {
       ),
       bottomNavigationBar: adaptive.useNavigationRail
           ? null
-          : AppBottomNavigation(
-              items: _navItems,
-              selectedIndex: effectiveIndex,
-              onSelected: notifier.selectTab,
-            ),
+          : AppBottomNavigation(items: _navItems, selectedIndex: effectiveIndex, onSelected: notifier.selectTab),
     );
   }
 }
@@ -142,12 +112,7 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final int selectedIndex;
   const TechnicianAppBar({super.key, required this.selectedIndex});
 
-  static const _titles = [
-    'Workshop Bay',
-    'Jobs',
-    'Productivity',
-    'Technician Profile',
-  ];
+  static const _titles = ['Workshop Bay', 'Jobs', 'Productivity', 'Technician Profile'];
 
   static const _subtitles = [
     "Today's Workshop",
@@ -175,18 +140,14 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
       scrolledUnderElevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: theme.brightness == Brightness.dark
-            ? Brightness.light
-            : Brightness.dark,
+        statusBarIconBrightness: theme.brightness == Brightness.dark ? Brightness.light : Brightness.dark,
       ),
       titleSpacing: 4,
       leadingWidth: 58,
       leading: Padding(
         padding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
         child: UserAvatar(
-          initials: notifier.profile.avatarInitials.isNotEmpty
-              ? notifier.profile.avatarInitials
-              : 'T',
+          initials: notifier.profile.avatarInitials.isNotEmpty ? notifier.profile.avatarInitials : 'T',
           onTap: () {
             showProfileSheet(
               context,
@@ -260,9 +221,7 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return ProfileSheetData(
       name: name,
-      initials: profile.avatarInitials.isNotEmpty
-          ? profile.avatarInitials
-          : 'T',
+      initials: profile.avatarInitials.isNotEmpty ? profile.avatarInitials : 'T',
       roleLabel: role,
       roleBadge: profile.branch.isNotEmpty ? profile.branch : 'Workshop Bay',
       menuItems: [

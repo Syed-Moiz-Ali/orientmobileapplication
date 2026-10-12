@@ -7,6 +7,13 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/models/profile_data.dart';
 import 'package:staff_app/core/router/app_router.dart';
 
+/// Signed-in staff account surface shared by Technicians, Advisors and
+/// Supervisors: who am I, what work/contact details does the app actually
+/// know, the real account actions, and sign out.
+///
+/// Only values that can be sourced from the session profile are shown. There
+/// is no profile editing, no photo upload, no notification preferences and no
+/// performance content because no API or local contract exists for them.
 class StaffProfileScreen extends ConsumerWidget {
   final ProfileData? data;
 
@@ -14,16 +21,15 @@ class StaffProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final auth = ref.watch(authNotifierProvider);
     final me = auth is AuthAuthenticated ? auth.profile : null;
     final profile = _StaffProfile.from(profile: me, data: data);
 
     final canPop = Navigator.of(context).canPop();
+    final workFields = _workFields(profile);
+    final contactFields = _contactFields(profile);
 
     return Scaffold(
-      backgroundColor: colors.surfaceContainerLowest,
       body: SafeArea(
         child: AppPageFrame(
           title: 'Profile',
@@ -41,30 +47,48 @@ class StaffProfileScreen extends ConsumerWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 640;
+
               if (isWide) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 280,
-                      child: _IdentityCard(profile: profile),
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1000),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 300,
+                          child: _IdentityCard(profile: profile),
+                        ),
+                        const SizedBox(width: AppDimensions.s24),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (workFields.isNotEmpty) ...[
+                                _FieldGroupSection(
+                                  title: 'Work Information',
+                                  fields: workFields,
+                                ),
+                                const SizedBox(height: AppDimensions.s24),
+                              ],
+                              if (contactFields.isNotEmpty) ...[
+                                _FieldGroupSection(
+                                  title: 'Contact Details',
+                                  fields: contactFields,
+                                ),
+                                const SizedBox(height: AppDimensions.s24),
+                              ],
+                              const _AccountPanel(),
+                              const SizedBox(height: AppDimensions.s32),
+                              _SignOutSection(ref: ref),
+                              const SizedBox(height: AppDimensions.s24),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: AppDimensions.s24),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _WorkContextPanel(profile: profile),
-                          const SizedBox(height: AppDimensions.s20),
-                          _ContactInfoPanel(profile: profile),
-                          const SizedBox(height: AppDimensions.s24),
-                          const _AccountPanel(),
-                          const SizedBox(height: AppDimensions.s24),
-                          _SignOutSection(ref: ref),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 );
               }
 
@@ -72,13 +96,23 @@ class StaffProfileScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _IdentityCard(profile: profile),
-                  const SizedBox(height: AppDimensions.s20),
-                  _WorkContextPanel(profile: profile),
-                  const SizedBox(height: AppDimensions.s20),
-                  _ContactInfoPanel(profile: profile),
-                  const SizedBox(height: AppDimensions.s24),
+                  if (workFields.isNotEmpty) ...[
+                    const SizedBox(height: AppDimensions.s24),
+                    _FieldGroupSection(
+                      title: 'Work Information',
+                      fields: workFields,
+                    ),
+                  ],
+                  if (contactFields.isNotEmpty) ...[
+                    const SizedBox(height: AppDimensions.s24),
+                    _FieldGroupSection(
+                      title: 'Contact Details',
+                      fields: contactFields,
+                    ),
+                  ],
+                  const SizedBox(height: AppDimensions.s28),
                   const _AccountPanel(),
-                  const SizedBox(height: AppDimensions.s24),
+                  const SizedBox(height: AppDimensions.s32),
                   _SignOutSection(ref: ref),
                   const SizedBox(height: AppDimensions.s24),
                 ],
@@ -127,17 +161,17 @@ class _StaffProfile {
 
     return _StaffProfile(
       name: name,
-      initials: _firstNonEmpty([
-        data?.avatarInitials,
-        profile?.avatarInitials,
-        profile?.initials,
-        _initials(name),
-      ]),
-      empId: _firstNonEmpty([
-        data?.id,
-        profile?.empId,
-        profile?.staffId?.toString(),
-      ]),
+      initials: _normalizeInitials(
+        _firstNonEmpty([
+          data?.avatarInitials,
+          profile?.avatarInitials,
+          profile?.initials,
+          _initials(name),
+        ]),
+      ),
+      // Only the workshop-facing employee id is shown. The database primary
+      // key (staffId) is deliberately never displayed as an employee id.
+      empId: _firstNonEmpty([data?.id, profile?.empId]),
       role: role,
       branch: _firstNonEmpty([data?.branch, profile?.branchName]),
       shift: _firstNonEmpty([data?.shift, profile?.shift]),
@@ -149,7 +183,60 @@ class _StaffProfile {
   }
 }
 
-/// Compact, professional identity surface without giant circular avatars or fake chips.
+List<_ProfileField> _workFields(_StaffProfile profile) {
+  final showDesignation =
+      profile.designation.isNotEmpty &&
+      profile.designation.toLowerCase() != profile.role.toLowerCase();
+
+  return <_ProfileField>[
+    if (showDesignation)
+      _ProfileField(
+        icon: Icons.assignment_ind_outlined,
+        label: 'Designation',
+        value: profile.designation,
+      ),
+    if (profile.department.isNotEmpty)
+      _ProfileField(
+        icon: Icons.groups_2_outlined,
+        label: 'Department',
+        value: profile.department,
+      ),
+    if (profile.branch.isNotEmpty)
+      _ProfileField(
+        icon: Icons.business_outlined,
+        label: 'Branch',
+        value: profile.branch,
+      ),
+    if (profile.shift.isNotEmpty)
+      _ProfileField(
+        icon: Icons.schedule_outlined,
+        label: 'Shift',
+        value: profile.shift,
+      ),
+  ];
+}
+
+List<_ProfileField> _contactFields(_StaffProfile profile) {
+  return <_ProfileField>[
+    if (profile.email.isNotEmpty)
+      _ProfileField(
+        icon: Icons.email_outlined,
+        label: 'Email',
+        value: profile.email,
+      ),
+    if (profile.phone.isNotEmpty)
+      _ProfileField(
+        icon: Icons.phone_outlined,
+        label: 'Phone',
+        value: profile.phone,
+        isMono: true,
+      ),
+  ];
+}
+
+/// Compact, professional identity surface without giant circular avatars or
+/// fake chips. Values wrap instead of truncating so long names, emails and
+/// identifiers stay readable at 320px and at 1.6x text scaling.
 class _IdentityCard extends StatelessWidget {
   final _StaffProfile profile;
 
@@ -160,7 +247,6 @@ class _IdentityCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final hasEmpId = profile.empId.isNotEmpty;
-    final hasBranch = profile.branch.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(AppDimensions.s20),
@@ -174,6 +260,7 @@ class _IdentityCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 56,
@@ -200,14 +287,15 @@ class _IdentityCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      profile.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: colors.onSurface,
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        profile.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: colors.onSurface,
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -218,109 +306,52 @@ class _IdentityCard extends StatelessWidget {
                         color: colors.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          if (hasEmpId || hasBranch) ...[
+          if (hasEmpId) ...[
             const SizedBox(height: AppDimensions.s16),
             Divider(
               height: 1,
               color: colors.outlineVariant.withValues(alpha: 0.5),
             ),
             const SizedBox(height: AppDimensions.s12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (hasEmpId)
-                  Container(
-                    margin: EdgeInsets.only(
-                      bottom: hasBranch ? AppDimensions.s8 : 0,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.s8,
-                      vertical: AppDimensions.s4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.s8,
+                vertical: AppDimensions.s4,
+              ),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                border: Border.all(
+                  color: colors.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.badge_outlined,
+                    size: 13,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: AppDimensions.s4),
+                  Flexible(
+                    child: Text(
+                      profile.empId,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontFamily: AppFontFamilies.mono,
+                        fontWeight: FontWeight.w700,
+                        color: colors.onSurfaceVariant,
                       ),
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusXs,
-                      ),
-                      border: Border.all(
-                        color: colors.outlineVariant.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.badge_outlined,
-                          size: 13,
-                          color: colors.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: AppDimensions.s4),
-                        Flexible(
-                          child: Text(
-                            profile.empId,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontFamily: AppFontFamilies.mono,
-                              fontWeight: FontWeight.w700,
-                              color: colors.onSurfaceVariant,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                if (hasBranch)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.s8,
-                      vertical: AppDimensions.s4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
-                      ),
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusXs,
-                      ),
-                      border: Border.all(
-                        color: colors.outlineVariant.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 13,
-                          color: colors.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: AppDimensions.s4),
-                        Flexible(
-                          child: Text(
-                            profile.branch,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colors.onSurfaceVariant,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ],
         ],
@@ -329,96 +360,22 @@ class _IdentityCard extends StatelessWidget {
   }
 }
 
-/// Work context section grouping role, designation, branch, shift, and department.
-class _WorkContextPanel extends StatelessWidget {
-  final _StaffProfile profile;
+/// A labelled group of work/contact fields on a single grouped surface with
+/// subtle dividers.
+class _FieldGroupSection extends StatelessWidget {
+  final String title;
+  final List<_ProfileField> fields;
 
-  const _WorkContextPanel({required this.profile});
-
-  @override
-  Widget build(BuildContext context) {
-    final showDesignation =
-        profile.designation.isNotEmpty &&
-        profile.designation.toLowerCase() != profile.role.toLowerCase();
-
-    final items = <_ProfileField>[
-      if (profile.role.isNotEmpty)
-        _ProfileField(
-          icon: Icons.work_outline_rounded,
-          label: 'Role',
-          value: profile.role,
-        ),
-      if (showDesignation)
-        _ProfileField(
-          icon: Icons.assignment_ind_outlined,
-          label: 'Designation',
-          value: profile.designation,
-        ),
-      if (profile.department.isNotEmpty)
-        _ProfileField(
-          icon: Icons.groups_2_outlined,
-          label: 'Department',
-          value: profile.department,
-        ),
-      if (profile.branch.isNotEmpty)
-        _ProfileField(
-          icon: Icons.business_outlined,
-          label: 'Branch',
-          value: profile.branch,
-        ),
-      if (profile.shift.isNotEmpty)
-        _ProfileField(
-          icon: Icons.schedule_outlined,
-          label: 'Shift',
-          value: profile.shift,
-        ),
-    ];
-
-    if (items.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SectionHeader(title: 'Work Information'),
-        const SizedBox(height: AppDimensions.s8),
-        _FieldGroupCard(fields: items),
-      ],
-    );
-  }
-}
-
-/// Contact information section grouping email and phone.
-class _ContactInfoPanel extends StatelessWidget {
-  final _StaffProfile profile;
-
-  const _ContactInfoPanel({required this.profile});
+  const _FieldGroupSection({required this.title, required this.fields});
 
   @override
   Widget build(BuildContext context) {
-    final items = <_ProfileField>[
-      if (profile.email.isNotEmpty)
-        _ProfileField(
-          icon: Icons.email_outlined,
-          label: 'Email',
-          value: profile.email,
-        ),
-      if (profile.phone.isNotEmpty)
-        _ProfileField(
-          icon: Icons.phone_outlined,
-          label: 'Phone',
-          value: profile.phone,
-          isMono: true,
-        ),
-    ];
-
-    if (items.isEmpty) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeader(title: 'Contact Details'),
+        Semantics(header: true, child: SectionHeader(title: title)),
         const SizedBox(height: AppDimensions.s8),
-        _FieldGroupCard(fields: items),
+        _FieldGroupCard(fields: fields),
       ],
     );
   }
@@ -463,53 +420,56 @@ class _FieldGroupCard extends StatelessWidget {
                 horizontal: AppDimensions.s16,
                 vertical: AppDimensions.s12,
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest.withValues(
-                        alpha: 0.4,
-                      ),
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusSm,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      fields[i].icon,
-                      size: AppDimensions.iconSm,
-                      color: colors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: AppDimensions.s12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fields[i].label,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
+              child: MergeSemantics(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainerHighest.withValues(
+                          alpha: 0.4,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          fields[i].value,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colors.onSurface,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: fields[i].isMono
-                                ? AppFontFamilies.mono
-                                : null,
-                          ),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusSm,
                         ),
-                      ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        fields[i].icon,
+                        size: AppDimensions.iconSm,
+                        color: colors.primary,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: AppDimensions.s12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fields[i].label,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            fields[i].value,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: fields[i].isMono
+                                  ? AppFontFamilies.mono
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             if (i < fields.length - 1)
@@ -525,89 +485,145 @@ class _FieldGroupCard extends StatelessWidget {
   }
 }
 
-/// Real account actions only. Password reset routes to the existing shared
-/// forgot-password flow; nothing else is offered because nothing else exists.
+/// Real account actions only: the shared OTP password-reset flow and the
+/// Flutter open-source licence page. Nothing else is offered because nothing
+/// else exists.
 class _AccountPanel extends StatelessWidget {
   const _AccountPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(header: true, child: SectionHeader(title: 'Account')),
+        const SizedBox(height: AppDimensions.s8),
+        _AccountSurface(
+          children: [
+            _AccountActionRow(
+              icon: Icons.lock_reset_rounded,
+              title: 'Reset password',
+              subtitle: 'Uses the secure password reset flow',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                context.push(AppRoutes.forgotPassword);
+              },
+            ),
+            Divider(
+              height: 1,
+              indent: 64,
+              color: Theme.of(
+                context,
+              ).colorScheme.outlineVariant.withValues(alpha: 0.4),
+            ),
+            _AccountActionRow(
+              icon: Icons.article_outlined,
+              title: 'Open source licences',
+              subtitle: 'Legal notices for the software in this app',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                showLicensePage(
+                  context: context,
+                  applicationName: 'Orient Staff App',
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _AccountSurface extends StatelessWidget {
+  final List<Widget> children;
+
+  const _AccountSurface({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.8)),
+        boxShadow: AppDimensions.shadowCard,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
+    );
+  }
+}
+
+class _AccountActionRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _AccountActionRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SectionHeader(title: 'Account'),
-        const SizedBox(height: AppDimensions.s8),
-        Container(
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-            border: Border.all(
-              color: colors.outlineVariant.withValues(alpha: 0.8),
-            ),
-            boxShadow: AppDimensions.shadowCard,
+    return MergeSemantics(
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AppDimensions.touchTarget,
           ),
-          child: Semantics(
-            button: true,
-            label: 'Reset password',
-            child: InkWell(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                context.push(AppRoutes.forgotPassword);
-              },
-              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: AppDimensions.touchTarget,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.s16,
-                    vertical: AppDimensions.s12,
-                  ),
-                  child: Row(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s16,
+              vertical: AppDimensions.s12,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: AppDimensions.iconSm, color: colors.primary),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.lock_reset_rounded,
-                        size: AppDimensions.iconSm,
-                        color: colors.primary,
-                      ),
-                      const SizedBox(width: AppDimensions.s12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Reset password',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colors.onSurface,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Uses the secure password reset flow',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: colors.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        title,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: colors.onSurfaceVariant,
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: colors.onSurfaceVariant,
+                ),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -615,8 +631,8 @@ class _AccountPanel extends StatelessWidget {
 /// Sign out action with a truthful confirmation.
 ///
 /// Sign-out clears the device cache and any queued operations, so when work is
-/// still waiting to sync the technician is warned before signing out instead of
-/// silently losing changes saved on this device.
+/// still waiting to sync the technician is warned before signing out instead
+/// of silently losing changes saved on this device.
 class _SignOutSection extends StatelessWidget {
   final WidgetRef ref;
 
@@ -668,6 +684,11 @@ String _firstNonEmpty(List<String?> values) {
     if (trimmed.isNotEmpty) return trimmed;
   }
   return '';
+}
+
+String _normalizeInitials(String value) {
+  if (value.length <= 2) return value;
+  return value.substring(0, 2).toUpperCase();
 }
 
 String _initials(String name) {

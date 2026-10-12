@@ -8,6 +8,7 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/features/common/presentation/providers/staff_attendance_provider.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
 
@@ -77,11 +78,14 @@ class _StaffAppState extends ConsumerState<StaffApp> {
     final brand = ref.watch(brandConfigProvider);
     // Cross-account safety: when the session ends, drop the Technician role
     // providers so a different staff login can never see the previous user's
-    // in-memory jobs or profile. (Hive caches are cleared by logout itself.)
+    // in-memory jobs or profile, and drop the shared attendance state so a
+    // previous technician's punch state is never shown to the next user.
+    // (Hive caches are cleared by logout itself.)
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next is! AuthAuthenticated) {
         ref.invalidate(technicianDashboardProvider);
         ref.invalidate(technicianRefreshProvider);
+        ref.invalidate(staffAttendanceProvider);
       }
     });
     // FE-FIX (pre-deployment): on resume, refresh each role's live data so a
