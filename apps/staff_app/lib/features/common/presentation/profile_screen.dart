@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/models/profile_data.dart';
+import 'package:staff_app/core/router/app_router.dart';
 
 class StaffProfileScreen extends ConsumerWidget {
   final ProfileData? data;
@@ -56,7 +57,9 @@ class StaffProfileScreen extends ConsumerWidget {
                           _WorkContextPanel(profile: profile),
                           const SizedBox(height: AppDimensions.s20),
                           _ContactInfoPanel(profile: profile),
-                          const SizedBox(height: AppDimensions.s28),
+                          const SizedBox(height: AppDimensions.s24),
+                          const _AccountPanel(),
+                          const SizedBox(height: AppDimensions.s24),
                           _SignOutSection(ref: ref),
                         ],
                       ),
@@ -73,7 +76,9 @@ class StaffProfileScreen extends ConsumerWidget {
                   _WorkContextPanel(profile: profile),
                   const SizedBox(height: AppDimensions.s20),
                   _ContactInfoPanel(profile: profile),
-                  const SizedBox(height: AppDimensions.s28),
+                  const SizedBox(height: AppDimensions.s24),
+                  const _AccountPanel(),
+                  const SizedBox(height: AppDimensions.s24),
                   _SignOutSection(ref: ref),
                   const SizedBox(height: AppDimensions.s24),
                 ],
@@ -520,7 +525,98 @@ class _FieldGroupCard extends StatelessWidget {
   }
 }
 
-/// Sign out action with standard dialog confirmation.
+/// Real account actions only. Password reset routes to the existing shared
+/// forgot-password flow; nothing else is offered because nothing else exists.
+class _AccountPanel extends StatelessWidget {
+  const _AccountPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader(title: 'Account'),
+        const SizedBox(height: AppDimensions.s8),
+        Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            border: Border.all(
+              color: colors.outlineVariant.withValues(alpha: 0.8),
+            ),
+            boxShadow: AppDimensions.shadowCard,
+          ),
+          child: Semantics(
+            button: true,
+            label: 'Reset password',
+            child: InkWell(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                context.push(AppRoutes.forgotPassword);
+              },
+              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: AppDimensions.touchTarget,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s16,
+                    vertical: AppDimensions.s12,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lock_reset_rounded,
+                        size: AppDimensions.iconSm,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(width: AppDimensions.s12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Reset password',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colors.onSurface,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Uses the secure password reset flow',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Sign out action with a truthful confirmation.
+///
+/// Sign-out clears the device cache and any queued operations, so when work is
+/// still waiting to sync the technician is warned before signing out instead of
+/// silently losing changes saved on this device.
 class _SignOutSection extends StatelessWidget {
   final WidgetRef ref;
 
@@ -534,7 +630,7 @@ class _SignOutSection extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: colors.error,
         side: BorderSide(color: colors.error.withValues(alpha: 0.35)),
-        minimumSize: const Size.fromHeight(48),
+        minimumSize: const Size.fromHeight(AppDimensions.touchTarget),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
         ),
@@ -546,10 +642,21 @@ class _SignOutSection extends StatelessWidget {
       ),
       onPressed: () async {
         HapticFeedback.heavyImpact();
-        await showLogoutDialog(
+        final pending = HiveCleaner.hasPendingSync();
+        final confirmed = await showAppConfirmationDialog(
           context,
-          onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
+          title: pending ? 'Sign out with unsynced work?' : 'Sign out?',
+          message: pending
+              ? 'Some work is still waiting to sync. Signing out will remove '
+                    'the changes saved on this device.'
+              : 'You will need to sign in again to continue.',
+          confirmLabel: 'Sign out',
+          cancelLabel: 'Stay signed in',
+          icon: Icons.logout_rounded,
+          destructive: true,
         );
+        if (!confirmed) return;
+        await ref.read(authNotifierProvider.notifier).logout();
       },
     );
   }

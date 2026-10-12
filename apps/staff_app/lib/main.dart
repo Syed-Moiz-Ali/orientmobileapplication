@@ -75,6 +75,15 @@ class _StaffAppState extends ConsumerState<StaffApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     final brand = ref.watch(brandConfigProvider);
+    // Cross-account safety: when the session ends, drop the Technician role
+    // providers so a different staff login can never see the previous user's
+    // in-memory jobs or profile. (Hive caches are cleared by logout itself.)
+    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      if (next is! AuthAuthenticated) {
+        ref.invalidate(technicianDashboardProvider);
+        ref.invalidate(technicianRefreshProvider);
+      }
+    });
     // FE-FIX (pre-deployment): on resume, refresh each role's live data so a
     // booking assigned by the supervisor appears immediately for the advisor
     // and a completed job shows up in the supervisor's review tab.

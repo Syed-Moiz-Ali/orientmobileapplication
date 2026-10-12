@@ -62,10 +62,8 @@ class TechnicianDashboardView extends ConsumerWidget {
         items: _navItems,
         selectedIndex: effectiveIndex,
         onSelected: notifier.selectTab,
-        headerBuilder: (ctx, ext) => OrientBrandMark(
-          workspace: 'Technician',
-          compact: !ext,
-        ),
+        headerBuilder: (ctx, ext) =>
+            OrientBrandMark(workspace: 'Technician', compact: !ext),
         footerBuilder: (ctx, ext) => InkWell(
           onTap: () => notifier.selectTab(3),
           borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
@@ -79,7 +77,9 @@ class TechnicianDashboardView extends ConsumerWidget {
                     children: [
                       CircleAvatar(
                         radius: 16,
-                        backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                        backgroundColor: Theme.of(
+                          ctx,
+                        ).colorScheme.primary.withValues(alpha: 0.14),
                         child: Text(
                           'T',
                           style: TextStyle(
@@ -107,7 +107,9 @@ class TechnicianDashboardView extends ConsumerWidget {
                     message: 'Technician Profile',
                     child: CircleAvatar(
                       radius: 18,
-                      backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.14),
+                      backgroundColor: Theme.of(
+                        ctx,
+                      ).colorScheme.primary.withValues(alpha: 0.14),
                       child: Text(
                         'T',
                         style: TextStyle(
@@ -142,7 +144,7 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   static const _titles = [
     'Workshop Bay',
-    'My Job Cards',
+    'Jobs',
     'Productivity',
     'Technician Profile',
   ];
@@ -163,10 +165,7 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
     final notifier = ref.read(technicianDashboardProvider.notifier);
-    final profileName = notifier.profile.name.trim();
-    final firstName = profileName.isEmpty
-        ? 'Technician'
-        : profileName.split(' ').first;
+    final branch = notifier.profile.branch.trim();
     final isToday = selectedIndex == 0;
 
     return AppBar(
@@ -202,7 +201,7 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            isToday ? 'Good to see you, $firstName' : _titles[selectedIndex],
+            isToday ? 'Today' : _titles[selectedIndex],
             style: textTheme.titleMedium?.copyWith(
               color: colors.onSurface,
               fontWeight: FontWeight.w900,
@@ -212,7 +211,7 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
           const SizedBox(height: 1),
           Text(
             isToday
-                ? '${notifier.profile.branch.isEmpty ? 'Workshop bay' : notifier.profile.branch} · ${ref.watch(technicianDashboardProvider).attendanceStatus.label}'
+                ? '${branch.isEmpty ? 'Workshop bay' : branch} \u00b7 ${ref.watch(technicianDashboardProvider).attendanceStatus.label}'
                 : _subtitles[selectedIndex],
             style: textTheme.labelSmall?.copyWith(
               color: colors.onSurfaceVariant,

@@ -1,1195 +1,1320 @@
-You are performing the ABSOLUTE FINAL Customer release closure.
+You are continuing the Technician product modernization inside:
 
-Do NOT start another broad Customer audit.
+`apps/staff_app`
 
-Do NOT redesign any completed Customer screen.
+Technician Phase 1 is COMPLETE and FROZEN:
 
-Do NOT start Staff.
+- shell/navigation
+- Today workspace
+- current work
+- shift context
+- upcoming jobs
 
-The previous passes have already closed:
+Technician Phase 2 is COMPLETE and FROZEN:
 
-- cross-account stale customer data after logout/login
-- notification `read` / `isRead` parsing
-- offline pending vehicle cache overwrite
-- fabricated Home vehicle health/service due
-- billing heading/total honesty
-- stale SyncEngine queue-snapshot race
-- temporary vehicle id reaching booking replay
-- AppTopBar clipping at 320px + 1.6×
-- Invoice Detail overflow/unsupported actions
-- offline queue-write honesty
-- vehicle create success without server id
-- failed vehicle-create resurrection
-- vehicle edit using stale temp id
-- sub-48px touch targets
+- Jobs workspace
+- search/filter
+- queue
+- responsive list
 
-Current baseline:
+Technician Phase 3 is COMPLETE and FROZEN:
 
-customer_app:
-467 / 467 passing
+- Job Detail
+- task execution
+- Start/Complete task
+- delayed state
+- repair completion
+- QC handoff
 
-70 goldens
-0 missing
-0 pixel mismatches
+Technician Phase 4 is COMPLETE and FROZEN:
 
-dart analyze customer_app:
-clean
+- Parts Request
+- Escalation
 
-There are only TWO RELEASE BLOCKERS remaining:
+Technician Phase 5 is COMPLETE and FROZEN:
 
-BLOCKER 1
-A queued Booking CREATE can exhaust retries and move into `sync_failed`, while the customer-facing cached booking continues to look merely pending.
+- Productivity
+- truthful current-day metrics
+- queue breakdown
+- shift information
+- duplicate Technician component cleanup
 
-The customer has:
-- no visible failure
-- no Retry
-- no Remove
-- no clear statement that the workshop did not receive it
-
-BLOCKER 2
-A queued Vehicle DELETE can exhaust retries after the client optimistically removes the vehicle locally.
-
-The customer then believes the vehicle is deleted even though the server/workshop still has it.
-
-Also complete these two low-risk cleanups before final freeze:
-
-- remove orphan Customer `/feedback` feature
-- add useful live-region semantics to meaningful asynchronous failure states
+Do NOT redesign any completed domain.
 
 ==================================================
-STRICT SCOPE
+CURRENT TASK
 ==================================================
 
-Only touch code required for:
+Modernize the Technician PROFILE / ACCOUNT experience.
 
-1. failed Booking CREATE recovery
-2. failed Vehicle DELETE recovery
-3. entity-specific failed-operation retry if needed
-4. orphan Customer Feedback cleanup
-5. meaningful async failure semantics
-6. tests/goldens directly related to those changes
+This is the FINAL Technician implementation phase before the whole-product freeze audit.
 
-Do NOT reopen:
+The Profile should answer:
 
-Home
-Booking creation UX
-Booking Detail
-Status
-Approvals
-Vehicles layout
-Add/Edit Vehicle
-Profile
-Notifications
-Roadside
-Auth
-Invoice Detail
+1. Who am I signed in as?
+2. What workshop/company account am I working under?
+3. What useful employment/contact information does the app actually know?
+4. Where are my account/security actions?
+5. How do I sign out?
 
-unless a minimal integration change is required.
+It should NOT become:
+
+- another productivity screen
+- another shift screen
+- a technician performance report
+- an HR employee profile editor
+- a settings dumping ground
+- a fake support/help centre
 
 ==================================================
-MULTI-AGENT EXECUTION
+IMPORTANT SHARED PROFILE QUESTION
 ==================================================
 
-Use FOUR focused agents in parallel.
+The current Technician Profile uses:
 
-Initial audit is READ ONLY.
+`StaffProfileScreen`
+
+This may also be used by Advisor/Supervisor.
+
+DO NOT blindly redesign the shared screen and accidentally alter all staff personas.
+
+First determine:
+
+- who uses StaffProfileScreen
+- what data it receives
+- which elements are shared safely
+- whether Technician needs its own wrapper/configuration
+- whether improvements should be common Staff improvements
+- whether persona-specific content is currently hardcoded
+
+Prefer improving the shared implementation only when the change genuinely benefits all existing users without changing their product semantics.
+
+Otherwise keep Technician-specific composition isolated.
+
+==================================================
+SCOPE
+==================================================
+
+IN SCOPE:
+
+- Technician Profile tab
+- real signed-in staff identity
+- contact/work identity
+- company/branch information if real
+- security/account actions that actually exist
+- sign out
+- responsive mobile/tablet/desktop layout
+- loading/error states if profile data is async
+- accessibility
+- dark mode
+- profile-specific tests/goldens
+
+OUT OF SCOPE:
+
+- HR employee management
+- attendance redesign
+- productivity
+- notification preferences unless real
+- app-lock/security features unless real
+- editing backend profile fields unless endpoint exists
+- Advisor workflow redesign
+- Supervisor workflow redesign
+- Customer/Owner/CRM
+
+==================================================
+PHASE 0 — FOCUSED AUDIT
+==================================================
+
+Use FOUR small READ-ONLY agents in parallel.
+
+Do not perform a whole Staff audit.
 
 --------------------------------------------------
-AGENT 1 — FAILED BOOKING FORENSIC AUDIT
+AGENT 1 — PROFILE USAGE / ROUTE AUDIT
 --------------------------------------------------
 
 Inspect:
 
-SyncOperation for booking create
-sync_queue
-sync_failed
-cached booking representation
-Booking list grouping
-Booking identity/de-duplication
-retryFailed
-booking repository refresh
+`StaffProfileScreen`
+
+Technician dashboard/profile tab
+
+Advisor profile usage
+
+Supervisor profile usage
+
+routing
+
+auth/session objects
+
+profile providers
 
 Return:
 
-FAILED OP IDENTITY
-FAILED PAYLOAD
-CACHE IDENTITY
-HOW FAILED LOCAL BOOKING CURRENTLY RENDERS
-SAFE RETRY
-SAFE REMOVE
-SUCCESS RECONCILIATION
+WHO USES STAFF PROFILE
+
+TECHNICIAN ENTRY POINT
+
+ADVISOR ENTRY POINT
+
+SUPERVISOR ENTRY POINT
+
+SHARED VS PERSONA-SPECIFIC BEHAVIOR
+
+ROUTING
+
+CURRENT ACTIONS
+
+DEAD ACTIONS
+
 FILES
-TESTS
 
-Verify whether multiple failed bookings can exist.
-
-Do not assume one.
+Do not edit.
 
 --------------------------------------------------
-AGENT 2 — FAILED VEHICLE DELETE FORENSIC AUDIT
+AGENT 2 — PROFILE DATA CONTRACT AUDIT
 --------------------------------------------------
 
 Inspect:
 
-customerRemoveVehicle
-offline delete
-optimistic vehicle cache removal
-queued vehicle DELETE
-sync_failed
-getVehicles
-VehicleIdentityStore
-vehicle mappings
-retry behavior
+auth/session model
+
+staff profile model
+
+employee/user entity
+
+repositories
+
+remote datasource
+
+backend profile/auth endpoints
+
+local persistence
+
+Determine exactly which data is trustworthy:
+
+- name
+- employee id
+- email
+- phone
+- avatar/photo
+- initials
+- company/workshop
+- branch
+- designation/title
+- staff type
+- technician specialty
+- shift
+- joined date
+- attendance state
+- permissions
+- app version
+- account/security capabilities
+
+For every field return:
+
+FIELD
+
+SOURCE
+
+TRUSTWORTHY?
+
+EDITABLE?
+
+TECHNICIAN-USEFUL?
+
+Do not infer missing profile fields.
+
+--------------------------------------------------
+AGENT 3 — ACCOUNT / SECURITY ACTION AUDIT
+--------------------------------------------------
+
+Inspect existing real capabilities:
+
+- sign out
+- forgot/reset password
+- authenticated change password
+- profile editing
+- notification settings
+- language
+- theme
+- device/session management
+- support/contact
+- privacy/terms
+- licences
 
 Return:
 
-DELETE OP IDENTITY
-WHAT DATA SURVIVES
-WHY VEHICLE REMAINS HIDDEN
-HOW SERVER TRUTH CAN BE RESTORED
-SAFE RETRY
-SAFE FAILURE PRESENTATION
-FILES
-TESTS
+SUPPORTED ACTIONS
+
+UNSUPPORTED ACTIONS
+
+CURRENT FAKE/DEAD ITEMS
+
+SIGN-OUT SEMANTICS
+
+PASSWORD FLOW
+
+Do NOT invent missing endpoints.
 
 --------------------------------------------------
-AGENT 3 — SYNCENGINE PRECISE RETRY AUDIT
+AGENT 4 — UX / RESPONSIVE / TEST AUDIT
 --------------------------------------------------
 
-Inspect current:
+Inspect current profile at:
 
-SyncEngine.retryFailed()
+320
+360
+390
+430
+1.6×
+tablet
+desktop
+dark
 
-Determine the minimum safe API for retrying ONE failed operation.
-
-Preferred concept:
-
-retryFailedOperation(operationId)
-
-But do not copy that signature blindly.
-
-Required semantics:
-
-- locate authoritative failed operation by stable id
-- retry ONLY that operation
-- preserve original operation id
-- preserve original Idempotency-Key
-- remove failed operation on success
-- leave/update failed operation on failure
-- do not create another queue row
-- do not touch unrelated failed operations
+Also inspect tests.
 
 Return:
 
-CURRENT GLOBAL RETRY BEHAVIOR
-PROPOSED SINGLE-OP RETRY
-QUEUE/FAILED BOX TRANSITIONS
-CONCURRENCY RISKS
-SHARED APP IMPACT
-TEST PLAN
+CURRENT UX PROBLEMS
 
---------------------------------------------------
-AGENT 4 — CLEANUP / ACCESSIBILITY AUDIT
---------------------------------------------------
+EMPTY WHITESPACE
 
-Reconfirm exact dead Customer Feedback files:
+DUPLICATE INFORMATION
 
-/feedback
-AppRoutes.customerFeedback
-CustomerFeedbackView
-Customer-only feedback provider/repository/datasource helpers
+TOUCH TARGET RISKS
 
-Separate these from owner/backend feedback functionality.
+ACCESSIBILITY RISKS
 
-Also inspect meaningful async failure states for semantics.
+TEST COVERAGE
 
-Return:
-
-SAFE DELETE SET
-KEEP SET
-LIVE REGION LOCATIONS
-TESTS
+REQUIRED GOLDENS
 
 ==================================================
 LEAD SYNTHESIS
 ==================================================
 
-Before implementation, verify:
+Before implementation explicitly define:
 
-- exact Booking failed-op identity
-- exact vehicle DELETE failed-op identity
-- whether server refresh is sufficient after retry
-- whether local provisional booking can be removed safely
-- whether precise retry belongs in shared_core
+PROFILE RESPONSIBILITY
 
-Then implement.
+REAL IDENTITY FIELDS
 
-==================================================
-PART 1 — ENTITY-SPECIFIC FAILED OPERATION RETRY
-==================================================
+REAL ACCOUNT ACTIONS
 
-If current `retryFailed()` retries every failed operation, add a small precise retry API.
+TECHNICIAN-SPECIFIC CONTENT
 
-Conceptual behavior:
+SHARED STAFF CONTENT
 
-retry one failed operation by id
+UNSUPPORTED ITEMS TO REMOVE
 
-Do NOT build:
+RESPONSIVE STRATEGY
 
-Generic Sync Recovery Framework
-Sync Dashboard
-global failure manager
-
-This should be a small extension of current SyncEngine.
+Only then edit.
 
 ==================================================
-RETRY INVARIANTS
+PROFILE PRODUCT RESPONSIBILITY
 ==================================================
 
-For one failed operation:
+Keep Profile simple:
 
-SAME operation id
+IDENTITY
 
-SAME entity id
+WORK / CONTACT DETAILS
 
-SAME payload unless current authoritative payload has legitimately been rewritten
+ACCOUNT ACTIONS
 
-SAME Idempotency-Key
+ABOUT / SESSION
 
-No duplicate POST/DELETE queue entry
+SIGN OUT
 
-No unrelated failed operation retried
-
-==================================================
-RETRY SUCCESS
-==================================================
-
-Success:
-
-remove that operation from `sync_failed`
-
-do not create a duplicate queue row
-
-allow feature layer to refresh/reconcile canonical state
+Do not create a dashboard inside Profile.
 
 ==================================================
-RETRY FAILURE
+IDENTITY HEADER
 ==================================================
 
-Failure:
+Use real information only.
 
-operation remains failed
+Potential:
 
-retry count/state may update according to existing engine semantics
+MA
+Mohammed Ali
+Technician
 
-customer recovery remains visible
+EMP-1024
 
-==================================================
-CONCURRENT RETRY
-==================================================
+But only show values actually available.
 
-Prevent:
+If profile image does not exist:
 
-double Retry tap
-→ same failed operation executed twice
+use initials derived from real name.
 
-Use feature in-flight guard and/or engine guard as appropriate.
+Do not use stock avatars.
 
-==================================================
-SHARED ENGINE TESTS
-==================================================
-
-Add tests:
-
-1. retry one failed operation
-2. unrelated failed operation untouched
-3. successful retry removes only selected op
-4. failed retry keeps selected op
-5. original operation id preserved
-6. original payload preserved
-7. duplicate concurrent retry cannot execute twice if engine controls this
-8. existing retryFailed() behavior unchanged unless intentionally refactored
+Do not use generated portraits.
 
 ==================================================
-PART 2 — FAILED BOOKING CREATE RECOVERY
-==================================================
-
-A booking that never reached the workshop must NOT look like an ordinary server-side pending booking.
-
-Canonical distinction:
-
-SERVER BOOKING
-Requested / Confirmed / etc.
-
-LOCAL QUEUED BOOKING
-Saved on device, waiting to send
-
-LOCAL FAILED BOOKING
-Not sent
-
-==================================================
-AUTHORITATIVE FAILURE SOURCE
-==================================================
-
-Use:
-
-sync_failed
-
-filter:
-
-entityType == booking
-changeType == create
-
-Do NOT infer failure from:
-
-age
-status string
-missing reference
-
-==================================================
-FAILED BOOKING PRESENTATION
-==================================================
-
-Use the existing Bookings page.
-
-Do NOT create another screen.
-
-Preferred approach:
-
-the provisional local booking row remains in the list but changes presentation based on terminal failure.
-
-It should communicate:
-
-Not sent
-
-plus concise supporting copy such as:
-
-"We couldn't send this booking to the workshop."
-
-Actions:
-
-Retry
-Remove
-
-If current list architecture makes row-level integration awkward, a compact recovery group above the relevant section is acceptable.
-
-But do NOT create:
-
-Sync failures
-Offline manager
-Technical errors
-
-==================================================
-SHOW REAL BOOKING INFORMATION
-==================================================
-
-Use only payload/cache data that actually exists:
-
-vehicle
-service
-appointment
-possibly notes if genuinely stored
-
-No fake booking reference.
-
-No fake server status.
-
-No fake workshop confirmation.
-
-==================================================
-SERVER RECEIPT HONESTY
-==================================================
-
-The failed state must explicitly distinguish:
-
-"The workshop hasn't received this booking."
-
-or equivalent.
-
-Do not say:
-
-Booking failed
-
-without explaining whether it reached the workshop.
-
-==================================================
-FAILED BOOKING RETRY
-==================================================
-
-Retry the SAME failed SyncOperation through the precise retry API.
-
-Do NOT:
-
-call createBooking directly from the widget
-
-enqueue a second booking
-
-generate another local id
-
-==================================================
-RETRYING STATE
-==================================================
-
-While retrying:
-
-Retry → Retrying…
-
-disable second submission
-
-keep Remove disabled or safe from race if appropriate
-
-==================================================
-RETRY SUCCESS
-==================================================
-
-After successful replay:
-
-refresh canonical bookings.
-
-Then remove/reconcile provisional local booking according to existing repository behavior.
-
-The final row must come from canonical server data when available.
-
-Do not fabricate:
-
-bookingRef
-status
-server id
-
-If server response is discarded by the sync handler and canonical GET is required:
-
-use GET.
-
-==================================================
-RETRY SUCCESS BUT REFRESH FAILURE
+ROLE / STAFF TYPE
 ==================================================
 
 Be careful.
 
-If retry POST succeeded but subsequent booking refresh fails:
+If backend/session genuinely exposes:
 
-do NOT put the booking back into "Not sent".
+Technician
 
-The workshop DID receive it.
+it can be shown as account context.
 
-Remove terminal failed state because the SyncOperation succeeded.
+Do not manufacture designations such as:
 
-Then retain/refresh best available state and show a normal refresh notice.
+Senior Technician
+Master Technician
+Level 3 Mechanic
 
-Do not resend.
-
-==================================================
-RETRY FAILURE
-==================================================
-
-Stay:
-
-Not sent
-
-Actions remain.
-
-Show restrained failure feedback.
-
-No second failed operation.
+unless real.
 
 ==================================================
-REMOVE FAILED BOOKING
+EMPLOYEE ID
 ==================================================
 
-Confirmation:
+Show employee/workshop-facing identifier only if genuine and useful.
 
-Remove saved booking?
+Do not expose:
 
-Copy must explain:
+database primary key
+UUID
+JWT subject
 
-This removes the booking stored on this device. The workshop has not received it.
-
-Confirm action:
-
-Remove booking
-
-Cancel:
-
-Keep booking
+as employee ID.
 
 ==================================================
-REMOVE MUST CLEAR
+COMPANY / WORKSHOP
 ==================================================
 
-matching sync_failed operation
+If current session provides:
 
-matching sync_queue copy if somehow present
+company
+branch
+workshop
 
-matching provisional cached booking
+show it compactly.
 
-any local helper state for that provisional booking
-
-Do NOT remove server bookings.
-
-Do NOT touch unrelated failed bookings.
+Do not hardcode Orient workshop name if not coming from state/configuration.
 
 ==================================================
-MULTIPLE FAILED BOOKINGS
+CONTACT DETAILS
 ==================================================
 
-Support more than one.
+Potential real fields:
 
-Each recovery action must target the specific failed operation.
+Email
+Phone
 
-Do not use:
+Display only if present.
 
-firstWhere(...)
-without stable identity safeguards.
+Do not show:
 
-==================================================
-BOOKINGS COUNTS / SECTIONS
-==================================================
+Not provided
 
-Do not count failed local bookings as:
+repeatedly for optional missing fields unless necessary.
 
-Requested
-Upcoming
-In service
-Past service
-
-unless the existing product intentionally has a separate local-saved count.
-
-Prefer failed rows in an honest:
-
-Needs attention
-
-or equivalent compact area if existing grouping permits.
-
-Do not distort server lifecycle counts.
+Prefer omitting absent optional rows.
 
 ==================================================
-HOME
+WORK DETAILS
 ==================================================
 
-Do NOT add failed booking recovery to Home unless absolutely necessary.
+Only if real and useful.
 
-Bookings page is the canonical recovery surface.
+Potential:
 
-Home should not suddenly become a sync-error dashboard.
+Workshop / branch
+Employee ID
+Designation
 
-==================================================
-PART 3 — FAILED VEHICLE DELETE RECOVERY
-==================================================
+Do NOT duplicate:
 
-Current false journey:
+shift metrics
+jobs completed
+productivity
+attendance analytics
 
-server vehicle exists
-
-→ user deletes offline
-
-→ local app removes vehicle
-
-→ DELETE queued
-
-→ replay fails terminally
-
-→ server still has vehicle
-
-→ client keeps hiding it
-
-This must be corrected.
+Those already belong elsewhere.
 
 ==================================================
-AUTHORITATIVE FAILURE SOURCE
+ATTENDANCE / SHIFT
 ==================================================
 
-Use:
+Do not turn Profile into another shift surface.
 
+Today and Productivity already expose shift behavior.
+
+At most show a static work identity field if profile contract includes shift name.
+
+Do not show active shift controls here.
+
+==================================================
+PERMISSIONS
+==================================================
+
+Do NOT expose raw permission keys or RBAC details to Technician.
+
+No:
+
+TECHNICIAN_JOB_UPDATE
+
+permission list.
+
+==================================================
+ACCOUNT ACTIONS
+==================================================
+
+Audit real functionality.
+
+Possible legitimate actions:
+
+Reset password
+
+Licences
+
+Sign out
+
+Maybe theme/language if globally supported and actually user-configurable.
+
+Only include what really works.
+
+==================================================
+PASSWORD ACTION
+==================================================
+
+If there is no authenticated change-password endpoint:
+
+do NOT create a fake:
+
+Change password
+
+flow.
+
+If existing Staff can route through real Forgot/Reset Password:
+
+use truthful wording such as:
+
+Reset password
+
+and route to the actual flow.
+
+Audit post-reset auth semantics.
+
+==================================================
+PROFILE EDIT
+==================================================
+
+Do NOT add:
+
+Edit profile
+
+unless backend provides profile update.
+
+A pencil icon with no real save contract is forbidden.
+
+==================================================
+PHOTO EDIT
+==================================================
+
+Do not add:
+
+Change photo
+
+Upload avatar
+
+Camera icon
+
+unless API supports it.
+
+==================================================
+NOTIFICATION SETTINGS
+==================================================
+
+Do not add:
+
+Push notifications
+Email alerts
+Job alerts
+
+unless actual persisted preference APIs exist.
+
+==================================================
+LANGUAGE
+==================================================
+
+If global language switching exists and persists:
+
+it may be shown.
+
+If Staff app has no language setting infrastructure:
+
+do not fabricate it.
+
+==================================================
+THEME
+==================================================
+
+Same principle.
+
+Only expose appearance control if the app already supports user selection and persistence.
+
+Do not add a non-functional Dark mode toggle merely because dark mode exists.
+
+==================================================
+HELP / SUPPORT
+==================================================
+
+Do not add fake:
+
+Help centre
+Contact support
+FAQ
+Report a problem
+
+unless real navigation/contact details exist.
+
+If there is a genuine workshop/support contact:
+
+audit its provenance first.
+
+==================================================
+PRIVACY / TERMS
+==================================================
+
+Only show if real documents/routes exist.
+
+No dead links.
+
+==================================================
+OPEN-SOURCE LICENCES
+==================================================
+
+Flutter's real licences page may be retained if currently supported.
+
+Use existing product pattern.
+
+==================================================
+APP VERSION
+==================================================
+
+Show only if actual package metadata is available.
+
+Do not hardcode:
+
+v1.0.0
+
+unless it is dynamically sourced.
+
+Not mandatory.
+
+==================================================
+SIGN OUT
+==================================================
+
+Sign out is important.
+
+Keep it visually separated from ordinary navigation.
+
+Use destructive-but-calm treatment.
+
+==================================================
+SIGN-OUT CONFIRMATION
+==================================================
+
+Audit current behavior.
+
+If there may be unsynced Technician work:
+
+this is critical.
+
+Inspect SyncEngine / pending work-item operations.
+
+Determine whether logging out clears:
+
+sync_queue
 sync_failed
+cached Technician changes
 
-filter:
+If logout can discard unsynced repair changes:
 
-entityType == vehicle
-changeType == delete
+the confirmation MUST truthfully warn the Technician.
 
-Use actual operation entityId.
+Do not blindly use:
 
-==================================================
-RESTORE SERVER TRUTH
-==================================================
-
-When failed vehicle DELETE is detected:
-
-the local product must converge to the server.
-
-Preferred behavior:
-
-getVehicles()
-→ server vehicle returns
-→ cache receives real server vehicle
-→ Vehicles page displays it again
-
-Do NOT reconstruct a full vehicle from delete payload if payload lacks the data.
-
-Canonical server GET is safer.
+"Are you sure you want to sign out?"
 
 ==================================================
-IMPORTANT CACHE INTERACTION
+UNSYNCED WORK CHECK
 ==================================================
 
-Audit whether existing vehicle pending-merge logic might suppress or duplicate the restored server vehicle.
+Inspect whether Technician can query pending operations relevant to:
 
-Ensure:
+work_item
+task updates
+other Technician mutations
 
-failed DELETE does not incorrectly merge as pending CREATE
+If pending operations exist:
 
-server vehicle appears once
+potential sign-out warning:
 
-==================================================
-FAILED DELETE PRESENTATION
-==================================================
+"Some work is still waiting to sync. Signing out may remove changes saved on this device."
 
-Show a compact customer-facing notice:
+ONLY if technically accurate.
 
-"We couldn't remove this vehicle."
+If logout safely preserves queue across accounts:
 
-Supporting copy may explain:
-
-"The vehicle is still in your workshop account."
-
-Action:
-
-Retry removal
-
-Do NOT say:
-
-Workshop rejected removal
-
-unless known.
-
-Do NOT say:
-
-Removed locally
-
-Technical implementation is irrelevant to the customer.
+do not warn unnecessarily.
 
 ==================================================
-ROW-LEVEL VS PAGE-LEVEL
+CROSS-ACCOUNT SAFETY
 ==================================================
 
-If failed DELETE operation can be reliably matched to restored vehicle id:
+Verify sign out / account switch cannot expose previous staff profile or technician job data.
 
-prefer attaching the recovery state to that vehicle row.
+Do not assume this from Customer fixes.
 
-Example concept:
+Inspect Staff provider lifecycle.
 
-Toyota Camry
-A 12345
+This is a release-important check.
 
-Couldn't remove this vehicle
-[Retry removal]
+If stale Technician data can survive logout→different login:
 
-This is stronger than a disconnected page notice.
-
-Use page-level notice only if row-level mapping is unreliable.
+fix it in this phase because Profile owns account/session exit.
 
 ==================================================
-RETRY DELETE
+SIGN-OUT RESULT
 ==================================================
 
-Retry the exact failed DELETE SyncOperation.
+After logout:
 
-Same idempotency identity.
+auth state cleared
 
-No second DELETE op.
+Technician shell inaccessible
 
-==================================================
-RETRY SUCCESS
-==================================================
+login shown
 
-DELETE accepted or canonical 404 success:
-
-failed op removed
-
-refresh vehicles
-
-vehicle disappears
-
-recovery notice disappears
+back navigation must not reopen authenticated profile/job screens.
 
 ==================================================
-RETRY FAILURE
+PROFILE LOADING
 ==================================================
 
-server vehicle remains visible
+If identity comes synchronously from auth state:
 
-recovery notice remains
+do not add artificial skeleton.
 
-Retry remains available
+If additional profile API loads:
 
-No false success snackbar.
+use compact loading state.
 
-==================================================
-DO NOT OFFER LOCAL REMOVE
-==================================================
-
-This is different from a failed LOCAL CREATE.
-
-For a failed server DELETE:
-
-do NOT offer:
-
-"Remove anyway"
-
-because that would simply recreate the false state.
-
-The customer should see server truth.
+Do not flash fake placeholder name.
 
 ==================================================
-FAILED DELETE + APP RESTART
+PROFILE ERROR
 ==================================================
 
-After restart:
+If optional profile endpoint fails but auth identity exists:
 
-sync_failed still contains the DELETE
+show available identity.
 
-canonical vehicle fetch restores server vehicle
+Do not fail entire Profile.
 
-recovery state must still be recognizable
+If nothing usable exists:
 
-Test this.
-
-==================================================
-PART 4 — CUSTOMER FEEDBACK DEAD CODE
-==================================================
-
-Delete the proven Customer orphan if zero references remain.
-
-Remove only Customer-facing unused parts:
-
-customer feedback route
-
-route constant
-
-CustomerFeedbackView
-
-Customer-only invocation/provider wrapper if truly unused
-
-KEEP:
-
-backend Feedback entity/controller/services
-
-owner moderation screens
-
-shared feedback models if used elsewhere
-
-After deletion:
-
-repo-wide grep for:
-
-CustomerFeedbackView
-customerFeedback
-'/feedback'
-
-must show no unwanted Customer production references.
+show recoverable error.
 
 ==================================================
-PART 5 — LIVE REGION SEMANTICS
+MISSING DATA
 ==================================================
 
-Add useful live-region semantics to dynamic failure states introduced/used here:
+Prefer graceful omission.
 
-failed booking terminal state
+Example:
 
-failed vehicle-delete terminal state
+If phone absent:
 
-queue-write failure if its existing notice is not already announced
+do not create a big:
 
-Do not over-announce normal rows.
+Phone
+—
 
-==================================================
-PART 6 — BOOKING NORMAL STATE REGRESSION
-==================================================
-
-Ensure existing Bookings behavior remains unchanged for:
-
-server requested booking
-
-confirmed/upcoming
-
-in service
-
-past
-
-approval attention
-
-Track
-
-View
-
-normal offline queued booking that has NOT terminally failed
-
-The new failed state is additive.
+row unless consistent with product requirement.
 
 ==================================================
-PART 7 — VEHICLE NORMAL STATE REGRESSION
+MOBILE LAYOUT
 ==================================================
 
-Ensure:
+Verify:
 
-normal server vehicle
+320
+360
+390
+412
+430
 
-pending offline create
+Potential hierarchy:
 
-failed create
+Identity
 
-reconciled vehicle
+Contact / Work details
 
-normal server delete
+Account
 
-still work as currently frozen.
+About
 
-Failed DELETE recovery must not collide with failed CREATE recovery.
+Sign out
 
-==================================================
-VISUAL DESIGN
-==================================================
+Compact.
 
-No broad redesign.
-
-Recovery state must use existing:
-
-CustomerSurfacePanel
-CustomerNoticePanel
-StatusPill
-action-row language
-
-where appropriate.
-
-No huge error cards.
-
-No decorative artwork.
-
-No giant red surfaces.
+Do not use giant profile header consuming half the viewport.
 
 ==================================================
-MOBILE DENSITY
+TABLET
 ==================================================
 
-At 390px:
+Use width intentionally.
 
-failed booking should still feel like a Booking record, not an error dashboard.
+A good real-data composition may be:
 
-failed vehicle delete should still feel like a Vehicle record.
+LEFT
+identity + work/contact
 
-==================================================
-320 + 1.6×
-==================================================
+RIGHT
+account + about + sign out
 
-Mandatory for both new recovery states.
-
-No overflow.
-
-Retry / Remove labels readable.
-
-48px actions.
+Only if enough real information exists.
 
 ==================================================
-TABLET / DESKTOP
+DESKTOP
 ==================================================
 
-Recovery states must integrate with current wide layouts.
+Do NOT centre a narrow 390px profile column in 1440px.
 
-Do not create a 400px error island.
+Use a balanced bounded workspace.
 
-No dead whitespace changes required beyond normal screen behavior.
+Potential:
+
+two columns
+max width ~1000–1100
+
+Do not add filler cards.
+
+==================================================
+DESKTOP EMPTY SPACE
+==================================================
+
+The final Profile should be deliberately composed.
+
+But do not fill space with:
+
+performance
+fake preferences
+motivational content
+fake support
+
+==================================================
+SECTION STYLE
+==================================================
+
+Reuse existing Staff/Technician primitives where suitable.
+
+Do not make every field a separate elevated card.
+
+Prefer:
+
+grouped surface
+
+label/value rows
+
+subtle dividers
+
+clear section headers
+
+==================================================
+TOUCH TARGETS
+==================================================
+
+Every interactive row/button:
+
+>=48px
+
+Especially:
+
+Reset password
+Licences
+Sign out
+
+==================================================
+1.6× TEXT
+==================================================
+
+Verify:
+
+long Technician name
+
+long email
+
+long company/branch
+
+employee id
+
+actions
+
+confirmation dialog
+
+No clipping.
 
 ==================================================
 DARK MODE
 ==================================================
 
-Use ColorScheme tokens.
+Theme tokens only.
 
-Failure state must remain legible without relying solely on red.
+Identity surface
 
-==================================================
-TESTS — BOOKING
-==================================================
+details
 
-Required minimum:
+account actions
 
-1. normal queued booking is not terminal failure
-2. failed booking CREATE detected from sync_failed
-3. failed booking does not count as ordinary requested server booking
-4. shows Not sent / equivalent
-5. says workshop has not received it
-6. Retry targets correct op
-7. unrelated failed op untouched
-8. duplicate Retry tap blocked
-9. Retry success removes failure
-10. Retry success refreshes canonical bookings
-11. refresh failure after successful replay does not reclassify as Not sent
-12. Retry failure retains recovery
-13. Remove confirmation
-14. cancel remove keeps booking
-15. confirm remove clears failed op
-16. provisional booking cache removed
-17. second failed booking unaffected
-18. restart persistence
-19. 320px
-20. 1.6×
-21. dark
+sign out
+
+dialogs
+
+must remain legible.
 
 ==================================================
-TESTS — VEHICLE DELETE
+ACCESSIBILITY
 ==================================================
 
-Required minimum:
+Ensure:
 
-1. queued delete not yet failed does not show terminal failure
-2. failed DELETE detected
-3. canonical getVehicles restores server vehicle
-4. recovery matches correct row
-5. Retry targets correct failed op
-6. unrelated failed CREATE unaffected
-7. unrelated failed booking unaffected
-8. duplicate retry blocked
-9. retry success removes vehicle
-10. retry failure retains vehicle
-11. server 404 remains success if existing contract says so
-12. restart preserves recovery state
-13. 320px
-14. 1.6×
-15. dark
+profile name heading
+
+identity values grouped logically
+
+action rows have clear semantic labels
+
+destructive sign-out meaning clear
+
+confirmation dialog focus/order
+
+large text
+
+48px targets
+
+status not color-only
 
 ==================================================
-TESTS — SYNCENGINE PRECISE RETRY
+NO FAKE CONTENT
 ==================================================
 
-If new API added:
+Strictly forbid unsupported:
 
-test:
+Performance
+Rating
+Jobs completed
+Efficiency
+Technician level
+Achievements
+Certifications
+Badges
+Rewards
+Points
+Member since
+Joined date
+Shift preference
+Notification preference
+Emergency contact
+Manager
+Supervisor
+Workshop branch
 
-selected failed op only
+unless genuinely available.
 
-identity preserved
+==================================================
+SHARED STAFF PROFILE SAFETY
+==================================================
 
-payload preserved
+If `StaffProfileScreen` is shared:
 
-other failed ops untouched
+do not introduce Technician-specific strings such as:
 
-success removes selected
+Technician account
 
-failure keeps selected
+inside the generic shared widget if Advisor/Supervisor will see them.
 
-concurrent duplicate prevented or feature-level guarded
+Prefer:
+
+configuration
+
+role/account context
+
+or a Technician wrapper
+
+only where necessary.
+
+Avoid overengineering.
+
+==================================================
+SHARED PROFILE IMPROVEMENTS
+==================================================
+
+Safe common improvements may include:
+
+responsive composition
+
+theme cleanup
+
+touch targets
+
+identity grouping
+
+sign-out layout
+
+accessibility
+
+But verify all Staff personas before changing shared behavior.
+
+==================================================
+ADVISOR / SUPERVISOR REGRESSION
+==================================================
+
+If shared StaffProfileScreen changes:
+
+run focused Advisor and Supervisor profile tests or add lightweight regression tests.
+
+Do not redesign those personas.
+
+==================================================
+TESTS
+==================================================
+
+Add focused Technician Profile tests based on real contract.
+
+At minimum:
+
+1. real name
+
+2. real staff/technician identity
+
+3. real employee identifier if available
+
+4. email if available
+
+5. phone if available
+
+6. workshop/company/branch only if real
+
+7. absent optional fields handled cleanly
+
+8. no fake performance/productivity
+
+9. no fake profile-edit action
+
+10. no fake avatar-edit action
+
+11. no unsupported notification preferences
+
+12. password action matches real capability
+
+13. reset password navigation
+
+14. licences action if supported
+
+15. sign out action
+
+16. sign-out confirmation
+
+17. unsynced-work warning if applicable
+
+18. logout clears/authenticates correctly
+
+19. authenticated routes unavailable after logout
+
+20. cross-account profile data does not leak
+
+21. 320px
+
+22. 360px
+
+23. 390px
+
+24. 430px
+
+25. 1.6×
+
+26. tablet
+
+27. desktop
+
+28. dark
+
+29. >=48px actions
+
+30. no visible empty callbacks
+
+If shared profile changes:
+
+31. Advisor profile basic regression
+
+32. Supervisor profile basic regression
+
+==================================================
+SOURCE GUARDS
+==================================================
+
+Search Profile production code for unsupported:
+
+Performance
+Efficiency
+Rating
+Achievement
+Badge
+Reward
+Points
+Edit profile
+Change photo
+Upload
+Notifications
+Job alerts
+Member since
+Certification
+Manager
+Emergency contact
+
+Flag only if user-visible and unsupported.
+
+Also inspect:
+
+onTap: () {}
+onPressed: () {}
 
 ==================================================
 GOLDENS
 ==================================================
 
-Add focused goldens only if appropriate:
+Recommended:
 
-customer_bookings_failed_sync_mobile
+technician_profile_mobile
 
-customer_vehicles_failed_delete_mobile
+technician_profile_minimal_mobile
 
-Possibly:
+technician_profile_tablet
 
-customer_bookings_failed_sync_dark
+technician_profile_desktop
 
-Do NOT rebaseline normal Bookings/Vehicles unless actual intentional shared rendering changed.
+technician_profile_dark_mobile
+
+technician_profile_large_text_mobile
+
+If sign-out dialog meaningfully differs:
+
+technician_profile_signout_mobile
+
+Do not regenerate Phase 1–5 goldens unless a shared StaffProfile change intentionally affects them.
 
 ==================================================
-MANDATORY INDEPENDENT VISUAL QA
+VISUAL QA — MANDATORY
 ==================================================
 
-Run a separate Visual Product QA agent.
+Run an independent Visual Product QA agent.
 
-This is NOT optional.
+Review all Profile goldens plus:
 
-Review:
+one Today
 
-failed Booking mobile
+one Productivity
 
-failed Booking 320 / large text
+for Technician visual coherence.
 
-failed Booking dark
+If shared StaffProfile changed:
 
-failed Vehicle Delete mobile
+also inspect one Advisor/Supervisor profile rendering.
 
-failed Vehicle Delete 320 / large text
+Assess:
 
-one normal Bookings baseline
+IDENTITY CLARITY
 
-one normal Vehicles baseline
+ACCOUNT ACTION CLARITY
 
-Report:
+INFORMATION DENSITY
 
-FAILURE STATE CLARITY
+SIGN-OUT HIERARCHY
 
-WORKSHOP RECEIPT HONESTY
+FAKE SETTINGS
 
-SERVER VS LOCAL STATUS CLARITY
+MOBILE QUALITY
 
-RETRY HIERARCHY
+TABLET QUALITY
 
-REMOVE HIERARCHY
+DESKTOP COMPOSITION
 
-TOUCH TARGETS
-
-TEXT SCALE
+1.6× TEXT
 
 DARK MODE
 
-MOBILE DENSITY
+TOUCH TARGETS
 
-NORMAL-STATE REGRESSION
+DEAD WHITESPACE
 
-FAKE CONTENT
+TECHNICIAN VS ADMIN FEEL
 
 Any blocker must be fixed.
 
 ==================================================
-FULL RELEASE RECHECK
+DO NOT FIX THESE YET
 ==================================================
 
-After implementation verify every previous release finding:
+Do NOT reopen Today solely to change:
 
-cross-account data exposure
-→ CLOSED
+"Job on hold"
 
-notification read key
-→ CLOSED
+to:
 
-pending vehicle overwrite
-→ CLOSED
+"Delayed"
 
-Home fake health
-→ CLOSED
+Do NOT change Productivity status-label casing.
 
-billing totals/label
-→ CLOSED
-
-D2 stale replay
-→ CLOSED
-
-AppTopBar accessibility
-→ CLOSED
-
-Invoice Detail
-→ CLOSED
-
-queue-write honesty
-→ CLOSED
-
-vehicle server-id missing
-→ CLOSED
-
-failed vehicle-create resurrection
-→ CLOSED
-
-vehicle edit temp id
-→ CLOSED
-
-touch targets
-→ CLOSED
-
-failed Booking recovery
-→ must be CLOSED
-
-failed Vehicle DELETE recovery
-→ must be CLOSED
-
-feedback orphan
-→ cleaned
-
-No new BLOCKER/HIGH issue may remain.
+Those belong to the final Technician coherence audit.
 
 ==================================================
-FINAL VERIFICATION
+KNOWN BACKEND / PRODUCT LIMITATIONS
+==================================================
+
+Do not solve by fabrication:
+
+- no parts request history/status if backend lacks it
+- no escalation history/status if backend lacks it
+- Job Detail still depends on route extra for web refresh if unresolved
+- TaskStatus.onHold client-only/wire-mapped behavior
+- no productivity history
+
+Report them later.
+
+==================================================
+ANALYZE / TEST
 ==================================================
 
 Run:
 
 dart format
 
-dart analyze customer_app
-
-dart analyze shared_core
-
 dart analyze staff_app
 
-dart analyze owner_app
+focused Technician Profile tests
 
-dart analyze crm_app
+technician_today_test.dart
 
-flutter test customer_app
+technician_jobs_test.dart
 
-flutter test shared_core
+technician_job_detail_test.dart
 
-Run focused sync tests independently if the known shared_core environment/golden setup failures still affect the full suite.
+technician_support_flows_test.dart
 
-Customer acceptance:
+technician_productivity_test.dart
 
-0 failures
+technician_experience_test.dart
 
-0 missing goldens
+If shared StaffProfile changed:
 
-0 unexplained pixel mismatches
+run relevant Advisor/Supervisor profile tests.
+
+Then:
+
+flutter test staff_app
+
+Known unrelated Advisor failures may remain:
+
+`vehicle_customer_intake_layout_test.dart`
+×6 HiveError/overflow
+
+`staff_experience_test.dart`
+×1 duplicate "Estimate"
+
+Do not fix them in this phase.
 
 ==================================================
 FINAL REPORT
 ==================================================
 
-Start exactly with:
+Return:
 
-CUSTOMER FINAL FREEZE RESULT
+TECHNICIAN PHASE 6 RESULT
 
-Then:
+MULTI-AGENT AUDIT
 
-IMPLEMENTATION SUMMARY
+PROFILE PRODUCT RESPONSIBILITY
 
-ENTITY-SPECIFIC RETRY
+SHARED STAFF PROFILE DECISION
 
-FAILED BOOKING RECOVERY
+PROFILE DATA CONTRACT
 
-FAILED VEHICLE DELETE RECOVERY
+IDENTITY
 
-FEEDBACK FEATURE REMOVAL
+WORK / CONTACT DETAILS
 
-ACCESSIBILITY / LIVE REGIONS
+ACCOUNT ACTIONS
 
-BOOKING REGRESSION CHECK
+PASSWORD / SECURITY
 
-VEHICLE REGRESSION CHECK
+SIGN OUT
 
-VISUAL QA
+UNSYNCED WORK / LOGOUT SAFETY
 
-TESTS ADDED / UPDATED
+CROSS-ACCOUNT SAFETY
+
+REMOVED / REJECTED ITEMS
+
+LOADING / ERROR / MISSING DATA
+
+MOBILE DESIGN
+
+TABLET DESIGN
+
+DESKTOP DESIGN
+
+ACCESSIBILITY
+
+DARK MODE
+
+SHARED STAFF IMPACT
+
+TESTS
 
 GOLDENS
 
-ANALYZE RESULTS
+VISUAL QA
 
-TEST RESULTS
+ANALYZE RESULT
 
-PREVIOUS RELEASE FINDINGS RECHECK
+TEST RESULT
 
-REMAINING BACKEND LIMITATIONS
-- non-blocking only
+KNOWN FINAL-AUDIT ITEMS
 
-Then finish with EXACTLY ONE:
+Finish exactly:
 
-CUSTOMER APP: READY TO FREEZE
+TECHNICIAN PHASE 6: COMPLETE
 
-or
+or:
 
-CUSTOMER APP: NOT READY TO FREEZE — <specific blocking issue>
+TECHNICIAN PHASE 6: NOT COMPLETE — <reason>
 
 ==================================================
 STOP
 ==================================================
 
-STOP after reporting.
+STOP after Profile.
 
-DO NOT begin Staff.
+DO NOT run the final Technician freeze audit.
 
-DO NOT begin Owner.
+DO NOT begin Advisor.
 
-DO NOT begin CRM.
+DO NOT begin Supervisor.
+
+Wait for the next phase.

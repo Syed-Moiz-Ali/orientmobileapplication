@@ -2,103 +2,99 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
-import 'package:staff_app/features/technician/presentation/widgets/technician_metric_card.dart';
-import 'package:staff_app/features/technician/presentation/widgets/technician_section_header.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
 
+/// Technician Productivity — "what work have I completed / progressed through?".
+///
+/// Every figure is a real count from the technician's loaded work or the
+/// workshop's own today figure: no efficiency score, ranking, target, average
+/// repair time or chart, because the loaded data cannot honestly produce them.
 class TechnicianProductivityView extends ConsumerWidget {
   const TechnicianProductivityView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(technicianRefreshProvider);
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final state = ref.watch(technicianDashboardProvider);
     final notifier = ref.read(technicianDashboardProvider.notifier);
-    final prod = notifier.productivity;
-    final att = state.attendanceSummary;
-    final status = state.attendanceStatus;
+    final jobs = notifier.allJobs;
+    final tasks = notifier.allTasks;
+    final tasksCompleted = tasks
+        .where((entry) => entry.task.status == TaskStatus.completed)
+        .length;
+    final completedToday = notifier.productivity.completedToday;
+
+    final firstLoadError =
+        jobs.isEmpty && !state.isLoading && state.dashboardError.isNotEmpty;
+    final showSkeleton = state.isLoading && jobs.isEmpty;
+    final empty = jobs.isEmpty && completedToday == 0 && !state.isLoading;
+
+    final summary = _SummaryColumn(
+      tasksCompleted: tasksCompleted,
+      tasksTotal: tasks.length,
+      completedToday: completedToday,
+      jobs: jobs,
+    );
+    final shift = _ShiftColumn(
+      status: state.attendanceStatus,
+      summary: state.attendanceSummary,
+      notifier: notifier,
+      onPunchIn: notifier.punchIn,
+      onStartBreak: notifier.startBreak,
+      onEndBreak: notifier.endBreak,
+      onPunchOut: notifier.punchOut,
+    );
 
     return RefreshIndicator(
       onRefresh: notifier.refresh,
       child: AppResponsivePage(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(context.pagePadding.left, 18, context.pagePadding.right, 40),
+        maxContentWidth: 1180,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const TechnicianSectionHeader(
-              eyebrow: 'SHIFT PERFORMANCE',
-              title: 'Productivity & Shift',
-              subtitle: 'Workshop turnaround, duration, and attendance records.',
+              eyebrow: 'TODAY',
+              title: "Today's productivity",
             ),
-            const SizedBox(height: 20),
-
-            // Productivity Summary Card
-            _ProductivitySummaryCard(stats: prod),
-            const SizedBox(height: 18),
-
-            // Operational KPI Grid (2x2)
-            Row(
-              children: [
-                Expanded(
-                  child: TechnicianMetricCard(
-                    label: 'Completed Today',
-                    value: '${prod.completedToday}',
-                    subtitle: 'Repairs finished',
-                    icon: Icons.task_alt_rounded,
-                    color: const Color(0xFF0F9D73),
-                  ),
+            const SizedBox(height: AppDimensions.s16),
+            if (showSkeleton)
+              const _ProductivitySkeleton()
+            else if (firstLoadError)
+              Semantics(
+                liveRegion: true,
+                child: TechnicianEmptyState(
+                  icon: Icons.cloud_off_rounded,
+                  title: "We couldn't load your productivity",
+                  message: 'Check your connection and try again.',
+                  actionLabel: 'Retry',
+                  onAction: notifier.refresh,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TechnicianMetricCard(
-                    label: 'In Progress',
-                    value: '${prod.inProgress}',
-                    subtitle: 'Active bay repairs',
-                    icon: Icons.run_circle_outlined,
-                    color: colors.primary,
-                  ),
-                ),
+              )
+            else if (empty)
+              const TechnicianEmptyState(
+                icon: Icons.insights_outlined,
+                title: 'No productivity data yet',
+                message:
+                    'Completed work will appear here as you progress through '
+                    'your assigned jobs.',
+              )
+            else ...[
+              if (state.dashboardError.isNotEmpty) ...[
+                _OfflineNotice(message: state.dashboardError),
+                const SizedBox(height: AppDimensions.s16),
               ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TechnicianMetricCard(
-                    label: 'Avg Repair Time',
-                    value: prod.avgTimePerJob.isNotEmpty ? prod.avgTimePerJob : '--',
-                    subtitle: 'Per job card',
-                    icon: Icons.timer_outlined,
-                    color: colors.secondary,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TechnicianMetricCard(
-                    label: 'Total Worked',
-                    value: prod.totalHoursWorked.isNotEmpty
-                        ? prod.totalHoursWorked
-                        : (att.workHours.isNotEmpty ? att.workHours : '0h 0m'),
-                    subtitle: 'Today\'s duration',
-                    icon: Icons.hourglass_bottom_rounded,
-                    color: colors.tertiary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Attendance & Shift Timeline Card
-            Text(
-              'Shift Attendance & Punch Records',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: colors.onSurface),
-            ),
-            const SizedBox(height: 12),
-            _AttendanceBreakdownCard(status: status, summary: att, notifier: notifier),
+              AppSplitView(
+                primaryFlex: 3,
+                secondaryFlex: 2,
+                spacing: AppDimensions.s24,
+                primary: summary,
+                secondary: shift,
+              ),
+            ],
           ],
         ),
       ),
@@ -106,270 +102,21 @@ class TechnicianProductivityView extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PRODUCTIVITY SUMMARY CARD
-// ─────────────────────────────────────────────────────────────────────────────
-class _ProductivitySummaryCard extends StatelessWidget {
-  final TechnicianStatsEntity stats;
-  const _ProductivitySummaryCard({required this.stats});
+class _SummaryColumn extends StatelessWidget {
+  final int tasksCompleted;
+  final int tasksTotal;
+  final int completedToday;
+  final List<TechnicianJobEntity> jobs;
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final pct = stats.normalizedEfficiencyPercent;
+  const _SummaryColumn({
+    required this.tasksCompleted,
+    required this.tasksTotal,
+    required this.completedToday,
+    required this.jobs,
+  });
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 72,
-            height: 72,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: pct > 0 ? (pct / 100).clamp(0.0, 1.0) : 0.0,
-                  strokeWidth: 7,
-                  backgroundColor: colors.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation(colors.primary),
-                ),
-                Text(
-                  pct > 0 ? '$pct%' : '--',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'TURNAROUND EFFICIENCY',
-                    style: TextStyle(
-                      color: colors.primary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  pct >= 90
-                      ? 'High Turnaround Pace'
-                      : pct >= 70
-                          ? 'Consistent Pace'
-                          : 'Shift Active',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  pct > 0
-                      ? 'Based on completed vehicle repair orders and elapsed work duration.'
-                      : 'Efficiency metrics will populate as repair orders are completed.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// KPI TILE
-// ─────────────────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// ATTENDANCE BREAKDOWN CARD
-// ─────────────────────────────────────────────────────────────────────────────
-class _AttendanceBreakdownCard extends StatelessWidget {
-  final AttendanceStatus status;
-  final AttendanceSummaryEntity summary;
-  final TechnicianNotifier notifier;
-
-  const _AttendanceBreakdownCard({required this.status, required this.summary, required this.notifier});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          // Row 1: Status pill + punch control button
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: status.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: status.color.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: status.color),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      status.label,
-                      style: TextStyle(color: status.color, fontWeight: FontWeight.w800, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-              _buildPunchActionButton(context),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const Divider(height: 1),
-          const SizedBox(height: 18),
-
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final items = [
-                _TimelineItem(label: 'Punch In', time: summary.punchIn, icon: Icons.login_rounded),
-                _TimelineItem(label: 'Break Taken', time: summary.breakTime, icon: Icons.coffee_outlined),
-                _TimelineItem(label: 'Net Hours', time: summary.workHours, icon: Icons.timelapse_rounded),
-                _TimelineItem(label: 'Punch Out', time: summary.punchOut, icon: Icons.logout_rounded),
-              ];
-              if (constraints.maxWidth < 420) {
-                return GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 18,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 2.5,
-                  children: items,
-                );
-              }
-              return Row(children: [for (final item in items) Expanded(child: item)]);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPunchActionButton(BuildContext context) {
-    switch (status) {
-      case AttendanceStatus.notPunchedIn:
-        return FilledButton.icon(
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            notifier.punchIn();
-          },
-          icon: const Icon(Icons.fingerprint_rounded, size: 16),
-          label: const Text('Clock In'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(0, 36),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-          ),
-        );
-      case AttendanceStatus.working:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            OutlinedButton.icon(
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                notifier.startBreak();
-              },
-              icon: const Icon(Icons.coffee_rounded, size: 16),
-              label: const Text('Break'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 36),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-              ),
-            ),
-            const SizedBox(width: 6),
-            FilledButton.tonalIcon(
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                notifier.punchOut();
-              },
-              icon: const Icon(Icons.logout_rounded, size: 16),
-              label: const Text('Clock Out'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 36),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-              ),
-            ),
-          ],
-        );
-      case AttendanceStatus.onBreak:
-        return FilledButton.icon(
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            notifier.endBreak();
-          },
-          icon: const Icon(Icons.play_arrow_rounded, size: 16),
-          label: const Text('End Break'),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFF59E0B),
-            foregroundColor: Colors.white,
-            minimumSize: const Size(0, 36),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-          ),
-        );
-      case AttendanceStatus.punchedOut:
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-          child: const Text('Shift Ended', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-        );
-    }
-  }
-}
-
-class _TimelineItem extends StatelessWidget {
-  final String label;
-  final String time;
-  final IconData icon;
-
-  const _TimelineItem({required this.label, required this.time, required this.icon});
+  int _count(TechJobStatus status) =>
+      jobs.where((job) => job.status == status).length;
 
   @override
   Widget build(BuildContext context) {
@@ -377,15 +124,361 @@ class _TimelineItem extends StatelessWidget {
     final colors = theme.colorScheme;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Icon(icon, size: 18, color: colors.onSurfaceVariant),
-        const SizedBox(height: 6),
-        Text(
-          time.isEmpty ? '--:--' : time,
-          style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900, color: colors.onSurface),
+        Container(
+          padding: const EdgeInsets.all(AppDimensions.s18),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'WORK COMPLETED',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s10),
+              Text(
+                '$completedToday',
+                style: theme.textTheme.displaySmall?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.r4),
+              Text(
+                completedToday == 1
+                    ? 'repair completed today'
+                    : 'repairs completed today',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (tasksTotal > 0) ...[
+                const SizedBox(height: AppDimensions.s16),
+                TechnicianTaskProgress(
+                  completed: tasksCompleted,
+                  total: tasksTotal,
+                ),
+              ] else ...[
+                const SizedBox(height: AppDimensions.s12),
+                Text(
+                  'No tasks recorded in your loaded work.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
-        const SizedBox(height: 2),
-        Text(label, style: theme.textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant, fontSize: 10)),
+        const SizedBox(height: AppDimensions.s20),
+        TechnicianSectionHeader(
+          eyebrow: 'YOUR QUEUE',
+          title: '${jobs.length} assigned',
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        _BreakdownRow(
+          label: 'In progress',
+          count: _count(TechJobStatus.inProgress),
+        ),
+        _BreakdownRow(label: 'Pending', count: _count(TechJobStatus.pending)),
+        _BreakdownRow(label: 'Delayed', count: _count(TechJobStatus.delayed)),
+        _BreakdownRow(
+          label: 'QC review',
+          count: _count(TechJobStatus.qcReview),
+        ),
+        _BreakdownRow(
+          label: 'Completed',
+          count: _count(TechJobStatus.completed),
+        ),
+      ],
+    );
+  }
+}
+
+/// One real status count. The label always carries the meaning, so the state is
+/// never conveyed by colour alone.
+class _BreakdownRow extends StatelessWidget {
+  final String label;
+  final int count;
+
+  const _BreakdownRow({required this.label, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppDimensions.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s14,
+        vertical: AppDimensions.s12,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Text(
+            '$count',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact shift context with the real punch record and clock controls.
+class _ShiftColumn extends StatelessWidget {
+  final AttendanceStatus status;
+  final AttendanceSummaryEntity summary;
+  final TechnicianNotifier notifier;
+  final VoidCallback onPunchIn;
+  final VoidCallback onStartBreak;
+  final VoidCallback onEndBreak;
+  final VoidCallback onPunchOut;
+
+  const _ShiftColumn({
+    required this.status,
+    required this.summary,
+    required this.notifier,
+    required this.onPunchIn,
+    required this.onStartBreak,
+    required this.onEndBreak,
+    required this.onPunchOut,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TechnicianSectionHeader(eyebrow: 'SHIFT', title: status.label),
+        const SizedBox(height: AppDimensions.s12),
+        Container(
+          padding: const EdgeInsets.all(AppDimensions.s16),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _ShiftLine(
+                icon: Icons.login_rounded,
+                label: 'Clocked in',
+                value: summary.punchIn,
+              ),
+              _ShiftLine(
+                icon: Icons.coffee_outlined,
+                label: 'Break taken',
+                value: summary.breakTime,
+              ),
+              _ShiftLine(
+                icon: Icons.timelapse_rounded,
+                label: 'Net hours',
+                value: summary.workHours,
+              ),
+              _ShiftLine(
+                icon: Icons.logout_rounded,
+                label: 'Clocked out',
+                value: summary.punchOut,
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              ..._punchControls(context),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _punchControls(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    Widget wrap(
+      VoidCallback onPressed,
+      IconData icon,
+      String label, {
+      bool filled = true,
+    }) {
+      return SizedBox(
+        height: AppDimensions.touchTarget,
+        child: filled
+            ? FilledButton.icon(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  onPressed();
+                },
+                icon: Icon(icon, size: 18),
+                label: Text(label),
+              )
+            : OutlinedButton.icon(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  onPressed();
+                },
+                icon: Icon(icon, size: 18),
+                label: Text(label),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colors.onSurface,
+                ),
+              ),
+      );
+    }
+
+    switch (status) {
+      case AttendanceStatus.notPunchedIn:
+        return [wrap(onPunchIn, Icons.fingerprint_rounded, 'Start shift')];
+      case AttendanceStatus.working:
+        return [
+          wrap(onStartBreak, Icons.coffee_rounded, 'Take break', filled: false),
+          const SizedBox(height: AppDimensions.s8),
+          wrap(onPunchOut, Icons.logout_rounded, 'End shift'),
+        ];
+      case AttendanceStatus.onBreak:
+        return [wrap(onEndBreak, Icons.play_arrow_rounded, 'Resume shift')];
+      case AttendanceStatus.punchedOut:
+        return [
+          Text(
+            'Shift complete for today.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+          ),
+        ];
+    }
+  }
+}
+
+class _ShiftLine extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ShiftLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.s6),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: AppDimensions.iconSm,
+            color: colors.onSurfaceVariant,
+          ),
+          const SizedBox(width: AppDimensions.s8),
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Text(
+            value.isEmpty ? '--:--' : value,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OfflineNotice extends StatelessWidget {
+  final String message;
+
+  const _OfflineNotice({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.s12),
+        decoration: BoxDecoration(
+          color: colors.tertiaryContainer,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.cloud_off_rounded, color: colors.onTertiaryContainer),
+            const SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: Text(
+                message,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colors.onTertiaryContainer,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductivitySkeleton extends StatelessWidget {
+  const _ProductivitySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: const [
+        AppSkeleton.card(height: 150),
+        SizedBox(height: AppDimensions.s20),
+        AppSkeleton.card(height: 52),
+        SizedBox(height: AppDimensions.s8),
+        AppSkeleton.card(height: 52),
+        SizedBox(height: AppDimensions.s8),
+        AppSkeleton.card(height: 52),
       ],
     );
   }

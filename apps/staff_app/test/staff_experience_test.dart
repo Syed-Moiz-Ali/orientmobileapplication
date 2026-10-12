@@ -33,11 +33,10 @@ void main() {
   ) async {
     await _pumpExperience(tester, const TechnicianJobsView());
 
-    expect(find.text('Jobs for this shift'), findsOneWidget);
     expect(find.text('Toyota Land Cruiser'), findsOneWidget);
     expect(find.text('Nissan Patrol'), findsOneWidget);
     expect(find.text('JOB CARD #'), findsNothing);
-    expect(find.text('Search job, vehicle or plate'), findsOneWidget);
+    expect(find.text('Search jobs'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -62,10 +61,10 @@ void main() {
       textScaler: const TextScaler.linear(1.25),
     );
 
-    expect(find.text('Work Tasks'), findsOneWidget);
-    expect(find.text('Brake inspection and measurement'), findsOneWidget);
+    expect(find.text('ALL TASKS'), findsOneWidget);
+    expect(find.text('Brake inspection and measurement'), findsWidgets);
     expect(find.text('S.No'), findsNothing);
-    expect(find.text('Start'), findsWidgets);
+    expect(find.text('Complete task'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
@@ -82,7 +81,7 @@ void main() {
     );
 
     expect(find.text('Request a part'), findsOneWidget);
-    expect(find.text('Send part request'), findsOneWidget);
+    expect(find.text('Send request'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await _pumpExperience(
@@ -95,7 +94,7 @@ void main() {
     );
 
     expect(find.text('Escalate an issue'), findsOneWidget);
-    expect(find.text('Notify supervisor'), findsOneWidget);
+    expect(find.text('Escalate issue'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -264,7 +263,7 @@ class _FakeTechnicianNotifier extends TechnicianNotifier {
         job.vehicleModel.toLowerCase().contains(state.searchQuery) ||
         job.plateNumber.toLowerCase().contains(state.searchQuery);
     final matchesFilter =
-        state.selectedFilter == 'All Status' ||
+        state.selectedFilter == 'All' ||
         job.status.label == state.selectedFilter;
     return matchesSearch && matchesFilter;
   }).toList();

@@ -49,13 +49,21 @@ extension AttendanceStatusX on AttendanceStatus {
   }
 }
 
-enum AssignedJobStatus { inProgress, pending, waitingParts, completed, qcReview }
+enum AssignedJobStatus {
+  inProgress,
+  pending,
+  waitingParts,
+  completed,
+  qcReview,
+}
 
 extension AssignedJobStatusX on AssignedJobStatus {
   static AssignedJobStatus parse(String raw) {
     final status = raw.trim().replaceAll('_', '').toLowerCase();
     return switch (status) {
-      'inprogress' || 'approved' || 'workassigned' => AssignedJobStatus.inProgress,
+      'inprogress' ||
+      'approved' ||
+      'workassigned' => AssignedJobStatus.inProgress,
       'waitingparts' => AssignedJobStatus.waitingParts,
       'awaitingsupervisor' || 'qualitycheck' => AssignedJobStatus.qcReview,
       'completed' || 'qualitycheckpassed' => AssignedJobStatus.completed,
@@ -212,14 +220,15 @@ class TechnicianProfileEntity {
     'avatarInitials': avatarInitials,
   };
 
-  factory TechnicianProfileEntity.fromJson(Map<String, dynamic> json) => TechnicianProfileEntity(
-    name: json['name'] as String? ?? '',
-    empId: json['empId'] as String? ?? '',
-    role: json['role'] as String? ?? 'Technician',
-    branch: json['branch'] as String? ?? '',
-    shift: json['shift'] as String? ?? '',
-    avatarInitials: json['avatarInitials'] as String? ?? 'T',
-  );
+  factory TechnicianProfileEntity.fromJson(Map<String, dynamic> json) =>
+      TechnicianProfileEntity(
+        name: json['name'] as String? ?? '',
+        empId: json['empId'] as String? ?? '',
+        role: json['role'] as String? ?? 'Technician',
+        branch: json['branch'] as String? ?? '',
+        shift: json['shift'] as String? ?? '',
+        avatarInitials: json['avatarInitials'] as String? ?? 'T',
+      );
 }
 
 class AttendanceSummaryEntity {
@@ -237,7 +246,12 @@ class AttendanceSummaryEntity {
 
   static const empty = AttendanceSummaryEntity();
 
-  AttendanceSummaryEntity copyWith({String? punchIn, String? punchOut, String? breakTime, String? workHours}) {
+  AttendanceSummaryEntity copyWith({
+    String? punchIn,
+    String? punchOut,
+    String? breakTime,
+    String? workHours,
+  }) {
     return AttendanceSummaryEntity(
       punchIn: punchIn ?? this.punchIn,
       punchOut: punchOut ?? this.punchOut,
@@ -255,7 +269,6 @@ class AttendanceSummaryEntity {
     );
   }
 }
-
 
 class TechnicianStatsEntity {
   final int assignedJobs;
@@ -346,9 +359,11 @@ class TechnicianJobEntity {
     this.notes = '',
   });
 
-  int get completedTasks => tasks.where((t) => t.status == TaskStatus.completed).length;
+  int get completedTasks =>
+      tasks.where((t) => t.status == TaskStatus.completed).length;
 
-  double get progressPercent => tasks.isEmpty ? 0.0 : completedTasks / tasks.length;
+  double get progressPercent =>
+      tasks.isEmpty ? 0.0 : completedTasks / tasks.length;
 
   TechnicianJobEntity copyWith({
     String? jobCardNo,
@@ -391,7 +406,9 @@ class TechnicianJobEntity {
       status: TechJobStatusX.parse((json['status'] ?? '').toString()),
       tasks:
           (json['tasks'] as List<dynamic>?)
-              ?.map((t) => WorkTaskEntity.fromJson(Map<String, dynamic>.from(t)))
+              ?.map(
+                (t) => WorkTaskEntity.fromJson(Map<String, dynamic>.from(t)),
+              )
               .toList() ??
           [],
       notes: (json['notes'] as String?) ?? '',

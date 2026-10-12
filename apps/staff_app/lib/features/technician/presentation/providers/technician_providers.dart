@@ -33,7 +33,7 @@ class TechnicianState {
     this.quickJobError = '',
     this.dashboardError = '',
     this.searchQuery = '',
-    this.selectedFilter = 'All Status',
+    this.selectedFilter = 'All',
     this.selectedJob,
   });
 
@@ -66,7 +66,8 @@ class TechnicianState {
     );
   }
 
-  String get currentDateTime => DateFormat('EEEE, MMMM d, yyyy \'at\' hh:mm a').format(DateTime.now());
+  String get currentDateTime =>
+      DateFormat('EEEE, MMMM d, yyyy \'at\' hh:mm a').format(DateTime.now());
 }
 
 class TechnicianNotifier extends Notifier<TechnicianState> {
@@ -91,26 +92,46 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   );
 
   final TextEditingController jobCardController = TextEditingController();
-  final List<String> filterOptions = const ['All Status', 'In Progress', 'Completed', 'Delayed', 'Pending'];
+
+  /// Canonical Technician job-status filters in workflow order: the real
+  /// [TechJobStatus] labels plus the `All` reset. No invented states.
+  final List<String> filterOptions = const [
+    'All',
+    'Pending',
+    'In Progress',
+    'Delayed',
+    'QC Review',
+    'Completed',
+  ];
 
   final List<TechnicianJobEntity> _allJobs = [];
 
   List<TechnicianJobEntity> get allJobs => _allJobs;
 
+  /// Jobs matching the current search and status filter. Search covers only
+  /// real fields (reference, vehicle, plate, customer) and plates are compared
+  /// without punctuation or case.
   List<TechnicianJobEntity> get filteredJobs => _allJobs.where((j) {
-    final q = state.searchQuery;
+    final q = state.searchQuery.trim();
     final matchSearch =
         q.isEmpty ||
         j.jobCardNo.toLowerCase().contains(q) ||
         j.vehicleBrand.toLowerCase().contains(q) ||
         j.vehicleModel.toLowerCase().contains(q) ||
-        j.plateNumber.toLowerCase().contains(q);
-    final matchFilter = state.selectedFilter == 'All Status' || j.status.label == state.selectedFilter;
+        j.customerName.toLowerCase().contains(q) ||
+        (q.isNotEmpty &&
+            _normalizedPlate(j.plateNumber).contains(_normalizedPlate(q)));
+    final matchFilter =
+        state.selectedFilter == 'All' || j.status.label == state.selectedFilter;
     return matchSearch && matchFilter;
   }).toList();
 
+  static String _normalizedPlate(String value) =>
+      value.replaceAll(RegExp('[^A-Za-z0-9]'), '').toUpperCase();
+
   int get totalJobs => _allJobs.length;
-  int get inProgressJobs => _allJobs.where((j) => j.status == TechJobStatus.inProgress).length;
+  int get inProgressJobs =>
+      _allJobs.where((j) => j.status == TechJobStatus.inProgress).length;
   int get completedJobs => _allJobs
       .where(
         (j) =>
@@ -118,14 +139,21 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
             j.status == TechJobStatus.qcReview,
       )
       .length;
-  int get delayedJobs => _allJobs.where((j) => j.status == TechJobStatus.delayed).length;
+  int get delayedJobs =>
+      _allJobs.where((j) => j.status == TechJobStatus.delayed).length;
 
   @override
   TechnicianState build() {
     ref.onDispose(jobCardController.dispose);
     _loadFromHive();
     _loadFromRemote();
-    return TechnicianState(attendanceSummary: const AttendanceSummaryEntity(), assignedJobs: const []);
+    // The workspace starts loading: Today shows an operational skeleton until
+    // the first canonical load settles, never a false "no jobs" empty state.
+    return const TechnicianState(
+      isLoading: true,
+      attendanceSummary: AttendanceSummaryEntity(),
+      assignedJobs: [],
+    );
   }
 
   Future<void> _loadFromRemote() async {
@@ -139,8 +167,12 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       final profileResponse = await remote.getProfile('');
       profile = TechnicianProfileEntity(
         name: profileResponse.name,
-        empId: profileResponse.empId.isEmpty ? profile.empId : profileResponse.empId,
-        role: profileResponse.role.isEmpty ? 'Technician' : profileResponse.role,
+        empId: profileResponse.empId.isEmpty
+            ? profile.empId
+            : profileResponse.empId,
+        role: profileResponse.role.isEmpty
+            ? 'Technician'
+            : profileResponse.role,
         branch: profileResponse.branch,
         shift: profileResponse.shift,
         avatarInitials: profileResponse.avatarInitials.isEmpty
@@ -149,7 +181,9 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       );
       // Persist the resolved identity so offline Hive keys are user-correct.
       try {
-        Hive.box<dynamic>('technician_jobs').put('technician_profile', profile.toJson());
+        Hive.box<dynamic>(
+          'technician_jobs',
+        ).put('technician_profile', profile.toJson());
       } catch (_) {}
 
       final empId = profile.empId;
@@ -160,7 +194,9 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         ..addAll(jobs.map(_jobFromResponse));
 
       final assigned = await remote.getAssignedJobs(empId);
-      state = state.copyWith(assignedJobs: assigned.map(_assignedFromResponse).toList());
+      state = state.copyWith(
+        assignedJobs: assigned.map(_assignedFromResponse).toList(),
+      );
 
       final att = await remote.getAttendance(empId);
       if (att.status.isNotEmpty && att.status != 'notPunchedIn') {
@@ -191,10 +227,15 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       }
 
       ref.read(technicianRefreshProvider.notifier).state++;
-      state = state.copyWith(dashboardError: '');
+      state = state.copyWith(dashboardError: '', isLoading: false);
     } catch (e, st) {
-      logger.e('Failed to load technician data from remote', error: e, stackTrace: st);
+      logger.e(
+        'Failed to load technician data from remote',
+        error: e,
+        stackTrace: st,
+      );
       state = state.copyWith(
+        isLoading: false,
         dashboardError: _allJobs.isEmpty
             ? 'Could not load live workshop data. Tap to retry.'
             : 'Showing saved jobs while the workshop service reconnects.',
@@ -211,7 +252,10 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
           id: int.tryParse(t.id) ?? i + 1,
           ref: t.id,
           description: t.description,
-          status: TaskStatus.values.firstWhere((e) => e.name == t.status, orElse: () => TaskStatus.pending),
+          status: TaskStatus.values.firstWhere(
+            (e) => e.name == t.status,
+            orElse: () => TaskStatus.pending,
+          ),
           startTime: t.startTime.isEmpty ? null : t.startTime,
           endTime: t.endTime.isEmpty ? null : t.endTime,
         ),
@@ -250,7 +294,8 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final parts = name.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty || parts.first.isEmpty) return 'T';
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-    return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
   }
 
   void _loadFromHive() {
@@ -260,13 +305,19 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       // Hive keys and displays are user-correct on shared tablets.
       final savedProfile = box.get('technician_profile');
       final auth = ref.read(authNotifierProvider);
-      final authenticatedProfile = auth is AuthAuthenticated ? auth.profile : null;
+      final authenticatedProfile = auth is AuthAuthenticated
+          ? auth.profile
+          : null;
       final authenticatedEmpId = authenticatedProfile?.empId ?? '';
       var cachedIdentityMatches = authenticatedEmpId.isEmpty;
       if (savedProfile != null) {
         try {
-          final cachedProfile = TechnicianProfileEntity.fromJson(Map<String, dynamic>.from(savedProfile));
-          cachedIdentityMatches = authenticatedEmpId.isEmpty || cachedProfile.empId == authenticatedEmpId;
+          final cachedProfile = TechnicianProfileEntity.fromJson(
+            Map<String, dynamic>.from(savedProfile),
+          );
+          cachedIdentityMatches =
+              authenticatedEmpId.isEmpty ||
+              cachedProfile.empId == authenticatedEmpId;
           if (cachedIdentityMatches) profile = cachedProfile;
         } catch (_) {}
       }
@@ -295,7 +346,11 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
           .whereType<Map>()
           .map((m) => Map<String, dynamic>.from(m))
           .where((v) => v['jobCardNo'] != null)
-          .where((v) => v['empId'] == profile.empId || (v['empId'] == null && cachedIdentityMatches))
+          .where(
+            (v) =>
+                v['empId'] == profile.empId ||
+                (v['empId'] == null && cachedIdentityMatches),
+          )
           .map((v) => TechnicianJobEntity.fromJson(v))
           .toList();
       if (savedJobs.isNotEmpty) {
@@ -303,7 +358,13 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         _allJobs.addAll(savedJobs);
       }
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to load technician jobs from Hive', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e(
+            'Failed to load technician jobs from Hive',
+            error: e,
+            stackTrace: st,
+          );
     }
   }
 
@@ -320,20 +381,22 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   }
 
   Future<void> punchIn() async {
-    if (state.isSaving || state.attendanceStatus != AttendanceStatus.notPunchedIn) {
+    if (state.isSaving ||
+        state.attendanceStatus != AttendanceStatus.notPunchedIn) {
       return;
     }
     state = state.copyWith(isSaving: true, dashboardError: '');
     try {
-      final response = await ref.read(technicianRemoteDataSourceProvider).punchIn({
-        'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-      });
+      final response = await ref
+          .read(technicianRemoteDataSourceProvider)
+          .punchIn({'date': DateFormat('yyyy-MM-dd').format(DateTime.now())});
       _applyAttendanceResponse(response);
     } catch (e, st) {
       ref.read(loggerProvider).e('Punch in failed', error: e, stackTrace: st);
       state = state.copyWith(
         isSaving: false,
-        dashboardError: 'Punch in requires a connection so the server can record the correct time.',
+        dashboardError:
+            'Punch in requires a connection so the server can record the correct time.',
       );
     }
   }
@@ -347,13 +410,16 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     state = state.copyWith(isSaving: true, dashboardError: '');
     final remote = ref.read(technicianRemoteDataSourceProvider);
     try {
-      await remote.punchOut({'date': DateFormat('yyyy-MM-dd').format(DateTime.now())});
+      await remote.punchOut({
+        'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      });
       _applyAttendanceResponse(await remote.getAttendance(profile.empId));
     } catch (e, st) {
       ref.read(loggerProvider).e('Punch out failed', error: e, stackTrace: st);
       state = state.copyWith(
         isSaving: false,
-        dashboardError: 'Punch out requires a connection so the server can record the correct time.',
+        dashboardError:
+            'Punch out requires a connection so the server can record the correct time.',
       );
     }
   }
@@ -368,8 +434,13 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       await remote.breakStart({});
       _applyAttendanceResponse(await remote.getAttendance(profile.empId));
     } catch (e, st) {
-      ref.read(loggerProvider).e('Break start failed', error: e, stackTrace: st);
-      state = state.copyWith(isSaving: false, dashboardError: 'Could not start break.');
+      ref
+          .read(loggerProvider)
+          .e('Break start failed', error: e, stackTrace: st);
+      state = state.copyWith(
+        isSaving: false,
+        dashboardError: 'Could not start break.',
+      );
     }
   }
 
@@ -384,7 +455,10 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       _applyAttendanceResponse(await remote.getAttendance(profile.empId));
     } catch (e, st) {
       ref.read(loggerProvider).e('Break end failed', error: e, stackTrace: st);
-      state = state.copyWith(isSaving: false, dashboardError: 'Could not end break.');
+      state = state.copyWith(
+        isSaving: false,
+        dashboardError: 'Could not end break.',
+      );
     }
   }
 
@@ -425,18 +499,28 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
         ),
       );
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to enqueue $entityType sync op', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e('Failed to enqueue $entityType sync op', error: e, stackTrace: st);
     }
   }
 
   static Future<String> _generateId(String entityType) {
     final prefix =
-        {'attendance': 'ATT', 'assigned_job': 'AJOB', 'technician_job': 'TJOB', 'job_complete': 'JCMP'}[entityType] ??
+        {
+          'attendance': 'ATT',
+          'assigned_job': 'AJOB',
+          'technician_job': 'TJOB',
+          'job_complete': 'JCMP',
+        }[entityType] ??
         'SYNC';
     return IdGenerator.nextId(prefix);
   }
 
-  Future<void> updateAssignedJobStatus(String id, AssignedJobStatus status) async {
+  Future<void> updateAssignedJobStatus(
+    String id,
+    AssignedJobStatus status,
+  ) async {
     final jobs = List<AssignedJobEntity>.from(state.assignedJobs);
     final idx = jobs.indexWhere((j) => j.id == id);
     if (idx == -1) return;
@@ -454,7 +538,9 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
       state = state.copyWith(quickJobError: 'Please enter a job card number.');
       return;
     }
-    final match = _allJobs.where((j) => j.jobCardNo.toLowerCase() == val.toLowerCase()).toList();
+    final match = _allJobs
+        .where((j) => j.jobCardNo.toLowerCase() == val.toLowerCase())
+        .toList();
     if (match.isEmpty) {
       state = state.copyWith(quickJobError: 'Job card "$val" not found.');
     } else {
@@ -508,12 +594,18 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final idx = job.tasks.indexWhere((t) => t.id == task.id);
     if (idx == -1) return;
     final updatedTasks = List<WorkTaskEntity>.from(job.tasks);
-    updatedTasks[idx] = task.copyWith(status: TaskStatus.inProgress, startTime: now);
+    updatedTasks[idx] = task.copyWith(
+      status: TaskStatus.inProgress,
+      startTime: now,
+    );
     final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
     _persistJob(updatedJob);
     state = state.copyWith(selectedJob: updatedJob);
     final taskRef = task.ref.isNotEmpty ? task.ref : task.id.toString();
-    _pushTaskAction(job.jobCardNo, taskRef, 'start', {'taskId': taskRef, 'startTime': now});
+    _pushTaskAction(job.jobCardNo, taskRef, 'start', {
+      'taskId': taskRef,
+      'startTime': now,
+    });
   }
 
   void completeTask(TechnicianJobEntity job, WorkTaskEntity task) {
@@ -521,15 +613,25 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final idx = job.tasks.indexWhere((t) => t.id == task.id);
     if (idx == -1) return;
     final updatedTasks = List<WorkTaskEntity>.from(job.tasks);
-    updatedTasks[idx] = task.copyWith(status: TaskStatus.completed, endTime: now);
+    updatedTasks[idx] = task.copyWith(
+      status: TaskStatus.completed,
+      endTime: now,
+    );
     final updatedJob = _syncJobStatus(job.copyWith(tasks: updatedTasks));
     _persistJob(updatedJob);
     state = state.copyWith(selectedJob: updatedJob);
     final taskRef = task.ref.isNotEmpty ? task.ref : task.id.toString();
-    _pushTaskAction(job.jobCardNo, taskRef, 'complete', {'taskId': taskRef, 'endTime': now});
+    _pushTaskAction(job.jobCardNo, taskRef, 'complete', {
+      'taskId': taskRef,
+      'endTime': now,
+    });
   }
 
-  void updateTaskStatus(TechnicianJobEntity job, WorkTaskEntity task, TaskStatus newStatus) {
+  void updateTaskStatus(
+    TechnicianJobEntity job,
+    WorkTaskEntity task,
+    TaskStatus newStatus,
+  ) {
     final now = DateFormat('HH:mm').format(DateTime.now());
     final idx = job.tasks.indexWhere((t) => t.id == task.id);
     if (idx == -1) return;
@@ -543,28 +645,56 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     _persistJob(updatedJob);
     state = state.copyWith(selectedJob: updatedJob);
     final taskRef = task.ref.isNotEmpty ? task.ref : task.id.toString();
-    _pushTaskAction(job.jobCardNo, taskRef, 'status', {'taskId': taskRef, 'status': newStatus.name});
+    _pushTaskAction(job.jobCardNo, taskRef, 'status', {
+      'taskId': taskRef,
+      // A held task is sent to the workshop as not-started: the backend task
+      // enum only knows pending / inProgress / completed.
+      'status': newStatus == TaskStatus.onHold ? 'pending' : newStatus.name,
+    });
   }
 
   /// Pushes a per-task action to the backend (which advances the item and
   /// triggers the supervisor review gate when ALL items are done). Falls back
   /// to the offline sync queue when the request fails.
-  Future<void> _pushTaskAction(String jobCardNo, String taskId, String action, Map<String, dynamic> payload) async {
+  Future<void> _pushTaskAction(
+    String jobCardNo,
+    String taskId,
+    String action,
+    Map<String, dynamic> payload,
+  ) async {
     if (taskId.isEmpty) return;
     final remote = ref.read(technicianRemoteDataSourceProvider);
     try {
       switch (action) {
         case 'start':
-          await remote.startTask(jobCardNo, taskId, payload['startTime'] as String? ?? '');
+          await remote.startTask(
+            jobCardNo,
+            taskId,
+            payload['startTime'] as String? ?? '',
+          );
           break;
         case 'complete':
-          await remote.completeTask(jobCardNo, taskId, payload['endTime'] as String? ?? '');
+          await remote.completeTask(
+            jobCardNo,
+            taskId,
+            payload['endTime'] as String? ?? '',
+          );
           break;
         default:
-          await remote.updateTaskStatus(jobCardNo, taskId, payload['status'] as String? ?? 'inProgress');
+          await remote.updateTaskStatus(
+            jobCardNo,
+            taskId,
+            payload['status'] as String? ?? 'inProgress',
+          );
       }
     } catch (e, st) {
-      ref.read(loggerProvider).e('Failed to push task action $action for $taskId', error: e, stackTrace: st);
+      ref
+          .read(loggerProvider)
+          .e(
+            'Failed to push task action $action for $taskId',
+            error: e,
+            stackTrace: st,
+          );
       final queue = ref.read(syncQueueProvider);
       final id = await IdGenerator.nextId('WT');
       await queue.enqueue(
@@ -573,7 +703,12 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
           entityType: 'work_item',
           entityId: '$jobCardNo|$taskId|$action',
           changeType: ChangeType.update,
-          payload: {'jobCardNo': jobCardNo, 'taskId': taskId, 'action': action, ...payload},
+          payload: {
+            'jobCardNo': jobCardNo,
+            'taskId': taskId,
+            'action': action,
+            ...payload,
+          },
           timestamp: DateTime.now().millisecondsSinceEpoch,
         ),
       );
@@ -650,10 +785,16 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
     final updatedTasks = List<WorkTaskEntity>.from(job.tasks);
     for (var i = 0; i < updatedTasks.length; i++) {
       if (updatedTasks[i].status != TaskStatus.completed) {
-        updatedTasks[i] = updatedTasks[i].copyWith(status: TaskStatus.completed, endTime: now);
+        updatedTasks[i] = updatedTasks[i].copyWith(
+          status: TaskStatus.completed,
+          endTime: now,
+        );
       }
     }
-    final updatedJob = job.copyWith(tasks: updatedTasks, status: TechJobStatus.qcReview);
+    final updatedJob = job.copyWith(
+      tasks: updatedTasks,
+      status: TechJobStatus.qcReview,
+    );
 
     _persistJob(updatedJob);
 
@@ -669,4 +810,7 @@ class TechnicianNotifier extends Notifier<TechnicianState> {
   }
 }
 
-final technicianDashboardProvider = NotifierProvider<TechnicianNotifier, TechnicianState>(TechnicianNotifier.new);
+final technicianDashboardProvider =
+    NotifierProvider<TechnicianNotifier, TechnicianState>(
+      TechnicianNotifier.new,
+    );

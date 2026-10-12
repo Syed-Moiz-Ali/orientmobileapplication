@@ -1,16 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:staff_app/features/technician/data/datasources/technician_providers.dart';
+import 'package:shared_core/shared_core.dart';
 
+import 'package:staff_app/features/technician/data/datasources/technician_providers.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
+
+/// Contextual parts request, launched from Job Detail.
+///
+/// A short workshop-floor form: what part, how many, and why. It carries the
+/// current job context automatically and never browses inventory (the Technician
+/// API exposes none). Success means exactly what the endpoint confirms — the
+/// request was accepted — not that a part is ordered, approved or arriving.
 class PartsRequestSheet extends ConsumerStatefulWidget {
   final String jobCardRef;
   final String technicianEmpId;
+  final String vehicleLabel;
+  final String plateNumber;
 
   const PartsRequestSheet({
     super.key,
     required this.jobCardRef,
     required this.technicianEmpId,
+    this.vehicleLabel = '',
+    this.plateNumber = '',
   });
 
   @override
@@ -25,6 +38,7 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
   int _quantity = 1;
   String _urgency = 'Normal';
   bool _isLoading = false;
+  String _error = '';
 
   @override
   void dispose() {
@@ -35,10 +49,16 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
   }
 
   Future<void> _submit() async {
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
     HapticFeedback.mediumImpact();
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
     try {
+      // Exact established request body; the endpoint has no response body, no
+      // status and no idempotency key, so nothing beyond "sent" is claimed.
       await ref.read(technicianRemoteDataSourceProvider).requestPart({
         'jobCardRef': widget.jobCardRef,
         'technicianEmpId': widget.technicianEmpId,
@@ -49,16 +69,18 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
         'notes': _notesCtrl.text.trim(),
       });
       if (!mounted) return;
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Part request sent to the parts desk')),
-      );
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Part request sent.')));
     } catch (_) {
+      // Keep the form and the technician's input; a retryable inline message.
       if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not send the request. Try again.')),
-      );
+      setState(() {
+        _isLoading = false;
+        _error =
+            "We couldn't send the request. Check your connection and try again.";
+      });
     }
   }
 
@@ -74,240 +96,247 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
         padding: EdgeInsets.only(bottom: bottomInset),
-        child: Center(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          heightFactor: 1,
           child: Container(
             constraints: BoxConstraints(
-              maxWidth: 540,
+              maxWidth: 560,
               maxHeight: MediaQuery.sizeOf(context).height * 0.92,
             ),
             decoration: BoxDecoration(
               color: colors.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
             ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 42,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colors.outlineVariant,
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  _SheetHeader(
-                    icon: Icons.inventory_2_outlined,
-                    title: 'Request a part',
-                    subtitle: '${widget.jobCardRef} • Sent to the parts desk',
-                    onClose: _isLoading ? null : () => Navigator.pop(context),
-                  ),
-                  const SizedBox(height: 22),
-                  TextFormField(
-                    controller: _partNameCtrl,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Part name',
-                      hintText: 'Example: Front brake pad set',
-                      prefixIcon: Icon(Icons.build_outlined),
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter the required part'
-                        : null,
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _partNumberCtrl,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Part number (optional)',
-                      hintText: 'OEM or workshop reference',
-                      prefixIcon: Icon(Icons.tag_rounded),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: colors.outlineVariant),
-                    ),
-                    child: Row(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.s20,
+                AppDimensions.s10,
+                AppDimensions.s20,
+                AppDimensions.s24,
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
                       children: [
                         Expanded(
-                          child: Column(
+                          child: Semantics(
+                            header: true,
+                            child: Text(
+                              'Request a part',
+                              style: text.titleLarge?.copyWith(
+                                color: colors.onSurface,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Close',
+                          onPressed: _isLoading
+                              ? null
+                              : () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppDimensions.s12),
+                    TechnicianJobContext(
+                      jobCardNo: widget.jobCardRef,
+                      vehicleLabel: widget.vehicleLabel,
+                      plateNumber: widget.plateNumber,
+                    ),
+                    const SizedBox(height: AppDimensions.s20),
+                    TextFormField(
+                      controller: _partNameCtrl,
+                      textInputAction: TextInputAction.next,
+                      autofocus: false,
+                      decoration: const InputDecoration(
+                        labelText: 'Part name',
+                        hintText: 'What part or material do you need?',
+                        prefixIcon: Icon(Icons.build_outlined),
+                      ),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Enter the part you need'
+                          : null,
+                    ),
+                    const SizedBox(height: AppDimensions.s14),
+                    TextFormField(
+                      controller: _partNumberCtrl,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'Part number (optional)',
+                        hintText: 'OEM or workshop reference',
+                        prefixIcon: Icon(Icons.tag_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s18),
+                    Container(
+                      padding: const EdgeInsets.all(AppDimensions.s14),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusControl,
+                        ),
+                        border: Border.all(color: colors.outlineVariant),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Quantity',
+                                  style: text.titleSmall?.copyWith(
+                                    color: colors.onSurface,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Text(
+                                  'Units needed',
+                                  style: text.bodySmall?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton.filledTonal(
+                            tooltip: 'Decrease quantity',
+                            onPressed: _quantity > 1
+                                ? () => setState(() => _quantity--)
+                                : null,
+                            icon: const Icon(Icons.remove_rounded),
+                          ),
+                          SizedBox(
+                            width: 44,
+                            child: Text(
+                              '$_quantity',
+                              textAlign: TextAlign.center,
+                              style: text.titleMedium?.copyWith(
+                                color: colors.onSurface,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          IconButton.filled(
+                            tooltip: 'Increase quantity',
+                            onPressed: _quantity < 999
+                                ? () => setState(() => _quantity++)
+                                : null,
+                            icon: const Icon(Icons.add_rounded),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s18),
+                    Text(
+                      'Urgency',
+                      style: text.titleSmall?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.s8),
+                    SegmentedButton<String>(
+                      showSelectedIcon: false,
+                      segments: const [
+                        ButtonSegment(
+                          value: 'Normal',
+                          icon: Icon(Icons.schedule_rounded),
+                          label: Text('Normal'),
+                        ),
+                        ButtonSegment(
+                          value: 'Urgent',
+                          icon: Icon(Icons.bolt_rounded),
+                          label: Text('Urgent'),
+                        ),
+                      ],
+                      selected: {_urgency},
+                      onSelectionChanged: (value) {
+                        HapticFeedback.selectionClick();
+                        setState(() => _urgency = value.first);
+                      },
+                    ),
+                    const SizedBox(height: AppDimensions.s18),
+                    TextFormField(
+                      controller: _notesCtrl,
+                      minLines: 3,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes (optional)',
+                        hintText: 'Fitment details or preferred alternatives',
+                        alignLabelWithHint: true,
+                      ),
+                    ),
+                    if (_error.isNotEmpty) ...[
+                      const SizedBox(height: AppDimensions.s16),
+                      Semantics(
+                        liveRegion: true,
+                        child: Container(
+                          padding: const EdgeInsets.all(AppDimensions.s12),
+                          decoration: BoxDecoration(
+                            color: colors.errorContainer,
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.radiusControl,
+                            ),
+                          ),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Quantity',
-                                style: text.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
+                              Icon(
+                                Icons.error_outline_rounded,
+                                size: AppDimensions.iconSm,
+                                color: colors.onErrorContainer,
                               ),
-                              Text(
-                                'Units needed',
-                                style: text.bodySmall?.copyWith(
-                                  color: colors.onSurfaceVariant,
+                              const SizedBox(width: AppDimensions.s8),
+                              Expanded(
+                                child: Text(
+                                  _error,
+                                  style: text.bodySmall?.copyWith(
+                                    color: colors.onErrorContainer,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        IconButton.filledTonal(
-                          tooltip: 'Decrease quantity',
-                          onPressed: _quantity > 1
-                              ? () => setState(() => _quantity--)
-                              : null,
-                          icon: const Icon(Icons.remove_rounded),
-                        ),
-                        SizedBox(
-                          width: 38,
-                          child: Text(
-                            '$_quantity',
-                            textAlign: TextAlign.center,
-                            style: text.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        IconButton.filled(
-                          tooltip: 'Increase quantity',
-                          onPressed: () => setState(() => _quantity++),
-                          icon: const Icon(Icons.add_rounded),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Priority',
-                    style: text.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SegmentedButton<String>(
-                    showSelectedIcon: false,
-                    segments: const [
-                      ButtonSegment(
-                        value: 'Normal',
-                        icon: Icon(Icons.schedule_rounded),
-                        label: Text('Normal'),
-                      ),
-                      ButtonSegment(
-                        value: 'Urgent',
-                        icon: Icon(Icons.bolt_rounded),
-                        label: Text('Urgent'),
                       ),
                     ],
-                    selected: {_urgency},
-                    onSelectionChanged: (value) {
-                      HapticFeedback.selectionClick();
-                      setState(() => _urgency = value.first);
-                    },
-                  ),
-                  const SizedBox(height: 18),
-                  TextFormField(
-                    controller: _notesCtrl,
-                    minLines: 3,
-                    maxLines: 5,
-                    decoration: const InputDecoration(
-                      labelText: 'Notes (optional)',
-                      hintText: 'Add fitment details or preferred alternatives',
-                      alignLabelWithHint: true,
+                    const SizedBox(height: AppDimensions.s20),
+                    FilledButton.icon(
+                      onPressed: _isLoading ? null : _submit,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(
+                          AppDimensions.touchTarget,
+                        ),
+                      ),
+                      icon: _isLoading
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send_rounded),
+                      label: Text(
+                        _isLoading ? 'Sending\u2026' : 'Send request',
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 22),
-                  FilledButton.icon(
-                    onPressed: _isLoading ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(54),
-                    ),
-                    icon: _isLoading
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send_rounded),
-                    label: Text(
-                      _isLoading ? 'Sending request…' : 'Send part request',
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
-}
-
-class _SheetHeader extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onClose;
-
-  const _SheetHeader({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onClose,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: colors.primaryContainer,
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Icon(icon, color: colors.onPrimaryContainer),
-        ),
-        const SizedBox(width: 13),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: text.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.4,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                subtitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
-              ),
-            ],
-          ),
-        ),
-        IconButton(
-          tooltip: 'Close',
-          onPressed: onClose,
-          icon: const Icon(Icons.close_rounded),
-        ),
-      ],
     );
   }
 }

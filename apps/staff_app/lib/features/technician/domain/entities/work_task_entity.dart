@@ -1,4 +1,9 @@
-enum TaskStatus { pending, inProgress, completed }
+/// Task execution state.
+///
+/// [onHold] is a technician-side pause: the task is kept on the device as held
+/// so it stays visible with its own action, while the workshop is told the task
+/// is not started (`pending`) — the backend enum has no "hold".
+enum TaskStatus { pending, inProgress, onHold, completed }
 
 extension TaskStatusX on TaskStatus {
   String get label {
@@ -7,6 +12,8 @@ extension TaskStatusX on TaskStatus {
         return 'Pending';
       case TaskStatus.inProgress:
         return 'In Progress';
+      case TaskStatus.onHold:
+        return 'On Hold';
       case TaskStatus.completed:
         return 'Completed';
     }
