@@ -33,7 +33,7 @@ Phase 05 which owns the auth screens (mounted by every app):
 | shared_auth (all apps) | LoginView (password / email-OTP / SMS-OTP / registration) | packages/shared_auth/lib/src/presentation/pages/login_view.dart | `/login` (all apps) | 05 | ✓ | ✓ | ✓ | ✓ | ✓ |
 | shared_auth (all apps) | ForgotPasswordView (3-stage recovery) | packages/shared_auth/lib/src/presentation/pages/forgot_password_view.dart | `/forgot-password` (all apps) | 05 | ✓ | ✓ | ✓ | ✓ | ✓ |
 | S | SupervisorLoginView | apps/staff_app/lib/features/supervisor/presentation/supervisor_login_view.dart | `/supervisor-login` | 05 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| shared_auth | Legacy: AuthBackground, AuthHeader, PhoneInputField, OtpInputField | packages/shared_auth/lib/src/presentation/widgets/ | — | 05 (remove/absorb) | — | — | — | — | — |
+| shared_auth | Legacy: AuthBackground, AuthHeader, PhoneInputField, OtpInputField | packages/shared_auth/lib/src/presentation/widgets/ | — | 05 (removed; dial-code data retained as `phone_country.dart`) | — | — | — | — | — |
 
 ## Staff app — Advisor
 
@@ -189,3 +189,10 @@ Phase 05 which owns the auth screens (mounted by every app):
 - Screens that require product confirmation before redesign (marked in their
   phase): `PendingApprovalsView` drill-down (13A), CRM conversation rows (19B),
   `/feedback` in-app entry point (18), CRM dark toggle honesty (19C).
+
+## Phase status notes
+
+- **Phase 05 (Auth)** and **Phase 06 (Staff: Advisor Home & Jobs)** are
+  implemented (reports at `phases/reports/PHASE_05|06/`). The advisor rows above
+  are delivered; the staff-intake rows (07A) and inspection rows (07B) remain
+  pending. No row reassignments were required by Phase 06.

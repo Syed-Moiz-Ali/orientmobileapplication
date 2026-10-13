@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
@@ -33,6 +34,7 @@ class OfflineBanner extends ConsumerWidget {
 
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = SharedCoreL10n.of(context);
     final background = Color.alphaBlend(
       AppColors.warning.withValues(alpha: 0.12),
       colors.surface,
@@ -40,7 +42,7 @@ class OfflineBanner extends ConsumerWidget {
 
     return Semantics(
       liveRegion: true,
-      label: 'Offline mode. Changes will sync when connection is restored.',
+      label: t.offlineBannerSemantics,
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -62,7 +64,7 @@ class OfflineBanner extends ConsumerWidget {
             const SizedBox(width: AppDimensions.s8),
             Flexible(
               child: Text(
-                'Offline mode — changes will sync when connection is restored',
+                t.offlineBannerMessage,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w700,

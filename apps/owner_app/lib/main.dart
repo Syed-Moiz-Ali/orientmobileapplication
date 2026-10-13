@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:owner_app/l10n/gen/owner_localizations.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:owner_app/core/router/app_router.dart';
@@ -38,6 +40,10 @@ class OwnerApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final brand = ref.watch(brandConfigProvider);
+    final effectiveLocale = AppLocales.resolve(
+      persisted: ref.watch(localeProvider),
+      system: WidgetsBinding.instance.platformDispatcher.locale,
+    );
     // FE-FIX (pre-deployment): real dashboard + job-card reload on resume so
     // payments recorded by a customer and completions from the shop floor
     // show up without a manual pull.
@@ -51,11 +57,19 @@ class OwnerApp extends ConsumerWidget {
           debugShowCheckedModeBanner: false,
           routerConfig: router,
           title: brand.appName,
-          theme: AppTheme.light(brand),
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(0.85)),
-            child: child ?? const SizedBox.shrink(),
-          ),
+          onGenerateTitle: (context) =>
+              OwnerLocalizations.of(context)?.appTitle ?? brand.appName,
+          locale: effectiveLocale,
+          supportedLocales: AppLocales.supported,
+          localizationsDelegates: const [
+            OwnerLocalizations.delegate,
+            SharedCoreLocalizations.delegate,
+            SharedAuthLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: AppTheme.light(brand, locale: effectiveLocale),
         ),
       ),
     );

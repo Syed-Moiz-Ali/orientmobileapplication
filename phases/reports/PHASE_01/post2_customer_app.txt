@@ -1,0 +1,771 @@
+﻿00:00 +0: loading E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart
+00:00 +0: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +7: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +8: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +9: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +10: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +11: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:00 +12: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/booking_detail_cancel_test.dart: Booking detail cancellation a confirmed booking can be cancelled from the detail screen
+00:01 +13: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route renders the approvals overview with a back affordance
+00:01 +14: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route renders the approvals overview with a back affordance
+00:01 +15: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route renders the approvals overview with a back affordance
+00:01 +16: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route renders the approvals overview with a back affordance
+00:01 +17: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route renders the approvals overview with a back affordance
+00:01 +18: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route renders the approvals overview with a back affordance
+00:01 +19: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab states shows a bookings-shaped skeleton on first load
+00:01 +20: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab states shows a bookings-shaped skeleton on first load
+00:02 +21: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route renders the booking passed through route extra
+00:02 +22: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route renders the booking passed through route extra
+00:02 +23: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route renders the booking passed through route extra
+00:02 +24: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route renders the booking passed through route extra
+00:02 +25: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route renders the booking passed through route extra
+00:02 +26: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route renders the booking passed through route extra
+00:02 +27: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route renders the booking passed through route extra
+00:02 +28: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route renders the booking passed through route extra
+00:02 +29: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:02 +30: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:02 +31: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:02 +32: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:02 +33: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:02 +34: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:02 +35: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:02 +36: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:02 +37: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:02 +38: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:03 +39: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:03 +40: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity represents the booking the customer opened
+00:03 +41: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route a booking-less deep link recovers to Bookings
+00:03 +42: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route a booking-less deep link recovers to Bookings
+00:03 +43: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route a booking-less deep link recovers to Bookings
+00:03 +44: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route a booking-less deep link recovers to Bookings
+00:03 +45: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route a booking-less deep link recovers to Bookings
+00:03 +46: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_route_test.dart: booking detail route a booking-less deep link recovers to Bookings
+00:03 +47: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the pre-migration ?tab=3 keeps its estimate id
+00:03 +48: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity never shows fabricated workshop or demo content
+00:03 +49: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail identity never shows fabricated workshop or demo content
+00:03 +50: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView confirms before approving and sends the decision
+00:03 +51: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView confirms before approving and sends the decision
+00:03 +52: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView confirms before approving and sends the decision
+00:03 +53: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView confirms before approving and sends the decision
+00:03 +54: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView confirms before approving and sends the decision
+00:03 +55: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView confirms before approving and sends the decision
+00:03 +56: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView confirms before approving and sends the decision
+00:03 +57: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView confirms before approving and sends the decision
+00:03 +58: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail lifecycle a pending request reads as upcoming, not as work
+00:03 +59: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:03 +60: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:03 +61: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:03 +62: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:03 +63: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:03 +64: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:03 +65: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:03 +66: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:03 +67: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:04 +68: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route the other legacy indices keep their original meaning
+00:04 +69: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView cannot send the same decision twice
+00:04 +70: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_test.dart: CustomerApprovalDetailView cannot send the same decision twice
+00:04 +71: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail lifecycle opens the contextual Service Status from the summary
+00:04 +72: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_detail_test.dart: CustomerBookingDetail lifecycle opens the contextual Service Status from the summary
+00:04 +73: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route an unauthenticated approvals deep link goes to sign in
+00:04 +74: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route an unauthenticated approvals deep link goes to sign in
+00:04 +75: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route an unauthenticated approvals deep link goes to sign in
+00:04 +76: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route an unauthenticated approvals deep link goes to sign in
+00:04 +77: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_approvals_route_test.dart: canonical approvals route an unauthenticated approvals deep link goes to sign in
+00:04 +78: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +79: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +80: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +81: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +82: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +83: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +84: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +85: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +86: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +87: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +88: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +89: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +90: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +91: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +92: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:04 +93: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +94: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +95: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +96: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +97: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +98: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +99: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +100: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +101: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +102: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +103: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +104: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_booking_success_test.dart: CustomerBookingSuccessView reports the real booking the workshop returned
+00:05 +105: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:05 +106: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:05 +107: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:05 +108: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:05 +109: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:05 +110: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:05 +111: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:05 +112: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:06 +113: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:06 +114: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:06 +115: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö vehicle offers adding a vehicle when the garage is empty
+00:06 +116: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +117: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +118: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +119: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +120: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +121: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +122: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +123: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +124: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +125: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +126: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +127: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +128: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +129: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +130: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +131: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +132: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +133: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +134: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +135: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +136: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +137: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:06 +138: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +139: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +140: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +141: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +142: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +143: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +144: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +145: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +146: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +147: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +148: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract sends exactly the fields the workshop accepts
+00:07 +149: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_booking_test.dart: Bookings failed-local recovery a queued local booking is not a terminal failure
+00:07 +150: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_booking_test.dart: Bookings failed-local recovery a queued local booking is not a terminal failure
+00:07 +151: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_booking_test.dart: Bookings failed-local recovery a queued local booking is not a terminal failure
+00:07 +152: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:07 +153: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +154: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +155: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +156: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +157: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +158: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +159: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +160: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +161: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +162: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +163: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +164: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +165: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a queued delete is not a terminal failure
+00:08 +166: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_home_tab_test.dart: CustomerHomeTab states shows a composition-matched skeleton on first load
+00:08 +167: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_home_tab_test.dart: CustomerHomeTab states shows a composition-matched skeleton on first load
+00:08 +168: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_home_tab_test.dart: CustomerHomeTab states shows a composition-matched skeleton on first load
+00:08 +169: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_home_tab_test.dart: CustomerHomeTab states shows a composition-matched skeleton on first load
+00:09 +170: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_home_tab_test.dart: CustomerHomeTab states shows a composition-matched skeleton on first load
+00:09 +171: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_home_tab_test.dart: CustomerHomeTab states shows a composition-matched skeleton on first load
+00:09 +172: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_home_tab_test.dart: CustomerHomeTab states shows a composition-matched skeleton on first load
+00:09 +173: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_home_tab_test.dart: CustomerHomeTab states shows a composition-matched skeleton on first load
+00:09 +174: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +175: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +176: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +177: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +178: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +179: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +180: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +181: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +182: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +183: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +184: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +185: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +186: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +187: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_bookings_tab_test.dart: CustomerBookingsTab real-world states the real shell survives every supported phone width
+00:09 +188: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Request contract a selected vehicle is used
+00:09 +189: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission reviews exactly what will be sent and can change it
+00:09 +190: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission reviews exactly what will be sent and can change it
+00:09 +191: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission reviews exactly what will be sent and can change it
+00:09 +192: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission reviews exactly what will be sent and can change it
+00:09 +193: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission reviews exactly what will be sent and can change it
+00:09 +194: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission reviews exactly what will be sent and can change it
+00:09 +195: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission reviews exactly what will be sent and can change it
+00:10 +196: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission reviews exactly what will be sent and can change it
+00:10 +197: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery a failed retry keeps the vehicle visible with recovery
+00:10 +198: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_home_tab_test.dart: CustomerHomeTab states shows a not-yet-started booking when no job card exists
+00:10 +199: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Validation requires a location the workshop can find
+00:10 +200: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Validation requires a location the workshop can find
+00:10 +201: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Validation requires a location the workshop can find
+00:10 +202: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Validation requires a location the workshop can find
+00:10 +203: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission creates the booking and carries the result forward
+00:10 +204: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission creates the booking and carries the result forward
+00:10 +205: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission creates the booking and carries the result forward
+00:10 +206: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission creates the booking and carries the result forward
+00:10 +207: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission creates the booking and carries the result forward
+00:10 +208: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission creates the booking and carries the result forward
+00:10 +209: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission creates the booking and carries the result forward
+00:10 +210: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission creates the booking and carries the result forward
+00:10 +211: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Submission shows a sending state and never submits twice
+00:10 +212: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Submission shows a sending state and never submits twice
+00:10 +213: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Submission shows a sending state and never submits twice
+00:10 +214: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_failed_delete_test.dart: Vehicles failed-delete recovery failed-delete mobile golden
+00:10 +215: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:10 +216: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:10 +217: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +218: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +219: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +220: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +221: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +222: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +223: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +224: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +225: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +226: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +227: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +228: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +229: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +230: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +231: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +232: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +233: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +234: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +235: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +236: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +237: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission cannot create the same booking twice
+00:11 +238: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_navigation_test.dart: Customer workspace destinations fit the bottom navigation without a More slot
+00:11 +239: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_navigation_test.dart: Customer workspace destinations fit the bottom navigation without a More slot
+00:11 +240: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_navigation_test.dart: Customer workspace destinations fit the bottom navigation without a More slot
+00:11 +241: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_navigation_test.dart: Customer workspace destinations fit the bottom navigation without a More slot
+00:11 +242: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +243: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +244: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +245: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +246: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +247: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +248: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +249: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +249: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission keeps every selection when creation fails
+[38;5;196mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;196mΓöé Instance of 'ValidationException'[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé #0   _FakeRemote.createBooking (file:///E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart:948:7)[0m
+[38;5;196mΓöé #1   customerSubmitBooking (package:customer_app/features/customer/presentation/providers/customer_providers.dart:657:10)[0m
+[38;5;196mΓöé #2   _CustomerBookServiceViewState._confirm (package:customer_app/features/customer/presentation/customer_book_service_view.dart:240:28)[0m
+[38;5;196mΓöé #3   _CustomerBookServiceViewState.build.<anonymous closure> (package:customer_app/features/customer/presentation/customer_book_service_view.dart:330:13)[0m
+[38;5;196mΓöé #4   _InkResponseState.handleTap (package:flutter/src/material/ink_well.dart:1204:21)[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé 16:43:10.778 (+0:00:00.000000)[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé Failed to create booking[0m
+[38;5;196mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:11 +250: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +251: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:11 +252: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +253: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +254: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +255: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +256: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +257: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +258: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +259: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +260: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +261: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +262: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Notification destinations a booking notification opens the bookings destination
+00:12 +263: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Account identity renders the real name, initials and reference
+00:12 +264: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Account identity renders the real name, initials and reference
+00:12 +265: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Account identity renders the real name, initials and reference
+00:12 +266: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Account identity renders the real name, initials and reference
+00:12 +267: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Account identity renders the real name, initials and reference
+00:12 +268: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Account identity renders the real name, initials and reference
+00:12 +269: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Account identity renders the real name, initials and reference
+00:13 +270: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Account identity renders the real name, initials and reference
+00:13 +271: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +272: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +273: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +274: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +275: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +276: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +277: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +278: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +279: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +280: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+00:13 +281: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö review and submission a booking the device cannot store is not reported as saved
+[38;5;196mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;196mΓöé HiveError: Box not found. Did you forget to call Hive.openBox()?[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé #0   HiveImpl._getBoxInternal (package:hive/src/hive_impl.dart:186:7)[0m
+[38;5;196mΓöé #1   HiveImpl.box (package:hive/src/hive_impl.dart:197:33)[0m
+[38;5;196mΓöé #2   _queueBookingOffline (package:customer_app/features/customer/presentation/providers/customer_providers.dart:746:22)[0m
+[38;5;196mΓöé #3   customerSubmitBooking (package:customer_app/features/customer/presentation/providers/customer_providers.dart:685:18)[0m
+[38;5;196mΓöé #4   _CustomerBookServiceViewState._confirm (package:customer_app/features/customer/presentation/customer_book_service_view.dart:240:28)[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé 16:43:12.324 (+0:00:01.546431)[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé Failed to queue booking offline[0m
+[38;5;196mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:13 +282: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +283: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +284: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +285: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +286: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +287: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +288: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +289: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +290: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +291: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +292: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +293: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +294: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +295: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +296: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +297: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +298: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +299: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_push_test.dart: Foreground push refreshes canonical state without navigating
+00:13 +300: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_notifications_test.dart: Inbox states twenty notifications render and scroll
+00:14 +301: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö layout and imagery stays overflow-free on every supported phone width
+00:14 +302: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö layout and imagery stays overflow-free on every supported phone width
+00:14 +303: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö layout and imagery stays overflow-free on every supported phone width
+00:14 +304: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö layout and imagery stays overflow-free on every supported phone width
+00:14 +305: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö layout and imagery stays overflow-free on every supported phone width
+00:14 +306: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö layout and imagery stays overflow-free on every supported phone width
+00:14 +307: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +308: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +309: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +310: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +311: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +312: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +313: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +314: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +315: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +316: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +317: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +318: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +319: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +320: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +321: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +322: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +323: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +324: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +325: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +326: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +327: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards stays overflow-free on every supported width
+00:14 +328: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:14 +329: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:14 +330: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +331: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +332: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +333: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +334: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +335: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +336: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +337: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +338: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +339: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +339: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references schedule step mobile
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following assertion was thrown while running async test code:
+Golden "goldens/customer_book_service_schedule_mobile.png": Pixel test failed, 0.81%, 2666px diff
+detected.
+Failure feedback can be found at
+/E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:123:26)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart:516:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:15 +339 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +339 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references schedule step mobile [E]
+  Test failed. See exception logs above.
+  The test description was: schedule step mobile
+  
+00:15 +340 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_service_status_route_test.dart: canonical service status route renders the canonical tracking experience with a back affordance
+00:15 +341 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_breakdown_test.dart: Layout and guards survives 1.6x text, tablet, desktop and dark mode
+00:15 +342 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Sign out confirming clears the session
+00:15 +343 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Sign out confirming clears the session
+00:15 +344 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Sign out confirming clears the session
+00:15 +345 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Sign out confirming clears the session
+00:15 +346 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Sign out confirming clears the session
+00:15 +347 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:15 +348 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:15 +349 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:15 +350 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:15 +351 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:15 +352 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:15 +353 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:16 +354 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:16 +355 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:16 +356 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:16 +357 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+00:16 +358 -1: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following assertion was thrown while running async test code:
+Golden "goldens/customer_book_service_review_mobile.png": Pixel test failed, 0.52%, 1699px diff
+detected.
+Failure feedback can be found at
+/E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:123:26)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart:527:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:16 +358 -2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:16 +358 -2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile [E]
+  Test failed. See exception logs above.
+  The test description was: review step mobile
+  
+00:16 +359 -2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:16 +360 -2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:16 +361 -2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:16 +362 -2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:16 +363 -2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:16 +364 -2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:16 +364 -2: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references tablet composition
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following assertion was thrown while running async test code:
+Golden "goldens/customer_book_service_tablet.png": Pixel test failed, 0.10%, 949px diff detected.
+Failure feedback can be found at
+/E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:123:26)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart:540:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:16 +364 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:16 +364 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references tablet composition [E]
+  Test failed. See exception logs above.
+  The test description was: tablet composition
+  
+00:16 +365 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:16 +366 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:17 +367 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:17 +368 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:17 +369 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:17 +370 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:17 +371 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_status_tab_test.dart: CustomerServiceStatusTab ├óΓé¼ΓÇ¥ active workshop job leads with what is happening to the vehicle
+00:17 +372 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references dark mode mobile
+00:17 +373 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references dark mode mobile
+00:17 +374 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Profile layout puts the actions beside the identity when there is room
+00:17 +375 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_profile_test.dart: Profile layout puts the actions beside the identity when there is room
+00:17 +376 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +377 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +378 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +379 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +380 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +381 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +382 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +383 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +384 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +385 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:17 +386 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +387 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +388 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +389 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +390 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +391 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +392 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +393 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +394 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +395 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +396 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab states shows a vehicles-shaped skeleton while loading
+00:18 +397 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow ΓÇö layout and imagery never renders stock vehicle imagery
+00:18 +398 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +399 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +400 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +401 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +402 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +403 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +404 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +405 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +406 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +407 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +408 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +409 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +410 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +411 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +412 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +413 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +414 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +415 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +416 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +417 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:18 +418 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +419 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +420 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +421 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +422 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +423 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +424 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +425 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +426 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +427 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +428 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +429 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +430 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +431 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +432 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +433 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +434 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +435 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +436 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +436 -3: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references schedule step mobile
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following assertion was thrown while running async test code:
+Golden "goldens/customer_book_service_schedule_mobile.png": Pixel test failed, 0.81%, 2666px diff
+detected.
+Failure feedback can be found at
+/E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:123:26)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart:719:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:19 +436 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +436 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references schedule step mobile [E]
+  Test failed. See exception logs above.
+  The test description was: schedule step mobile
+  
+00:19 +437 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +438 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +439 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +440 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +441 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:19 +442 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +443 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +444 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +445 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +446 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +447 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +448 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +449 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +450 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +451 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +451 -4: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following assertion was thrown while running async test code:
+Golden "goldens/customer_book_service_review_mobile.png": Pixel test failed, 0.52%, 1699px diff
+detected.
+Failure feedback can be found at
+/E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:123:26)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart:730:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:20 +451 -5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form requires only the make and the plate
+00:20 +451 -5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references review step mobile [E]
+  Test failed. See exception logs above.
+  The test description was: review step mobile
+  
+00:20 +452 -5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/invoice_detail_widget_test.dart: renders only the fields the workshop really returns
+00:20 +453 -5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/invoice_detail_widget_test.dart: renders only the fields the workshop really returns
+00:20 +454 -5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/invoice_detail_widget_test.dart: renders only the fields the workshop really returns
+00:20 +455 -5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/invoice_detail_widget_test.dart: renders only the fields the workshop really returns
+00:20 +456 -5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references tablet composition
+00:20 +457 -5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references tablet composition
+00:21 +458 -5: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references tablet composition
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following assertion was thrown while running async test code:
+Golden "goldens/customer_book_service_tablet.png": Pixel test failed, 0.10%, 949px diff detected.
+Failure feedback can be found at
+/E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:123:26)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart:743:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:21 +458 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form sends exactly the documented contract
+00:21 +458 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_book_service_test.dart: Booking flow visual references tablet composition [E]
+  Test failed. See exception logs above.
+  The test description was: tablet composition
+  
+00:21 +459 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form sends exactly the documented contract
+00:21 +460 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form sends exactly the documented contract
+00:21 +461 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form sends exactly the documented contract
+00:21 +462 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +463 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +464 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +465 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +466 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +467 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +468 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +469 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +470 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +471 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +472 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +473 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +474 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +475 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:21 +476 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:22 +477 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold + CustomerHomeTab at 1.0x on phone
+00:22 +478 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles tab layout and imagery guards stays overflow-free on every supported width
+00:22 +479 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form prevents a double submission and keeps values on failure
+00:22 +480 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form prevents a double submission and keeps values on failure
+00:22 +481 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form prevents a double submission and keeps values on failure
+[38;5;196mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;196mΓöé Instance of 'ValidationException'[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé #0   test\customer_vehicle_form_test.dart 333:21                    _FakeRemote.completeCreate[0m
+[38;5;196mΓöé #1   test\customer_vehicle_form_test.dart 143:14                    main.<fn>.<fn>[0m
+[38;5;196mΓöé #2   ===== asynchronous gap ===========================[0m
+[38;5;196mΓöé #3   test\customer_vehicle_form_test.dart 133:7                     main.<fn>.<fn>[0m
+[38;5;196mΓöé #4   package:flutter_test/src/widget_tester.dart 192:29             testWidgets.<fn>.<fn>[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé 16:43:17.663 (+0:00:00.000000)[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé Failed to save vehicle[0m
+[38;5;196mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:22 +482 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold lays out at 800.0 px, 1.3x
+00:22 +483 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold lays out at 800.0 px, 1.3x
+00:22 +484 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold lays out at 800.0 px, 1.3x
+00:22 +485 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form never claims a save the device could not store
+00:22 +486 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form never claims a save the device could not store
+00:22 +487 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form never claims a save the device could not store
+00:22 +488 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form never claims a save the device could not store
+00:22 +489 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form never claims a save the device could not store
+00:22 +490 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form never claims a save the device could not store
+00:22 +491 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Add vehicle form never claims a save the device could not store
+[38;5;196mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;196mΓöé HiveError: Box not found. Did you forget to call Hive.openBox()?[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé #0   HiveImpl._getBoxInternal (package:hive/src/hive_impl.dart:186:7)[0m
+[38;5;196mΓöé #1   HiveImpl.box (package:hive/src/hive_impl.dart:197:33)[0m
+[38;5;196mΓöé #2   _queueVehicleOffline (package:customer_app/features/customer/presentation/providers/customer_providers.dart:995:22)[0m
+[38;5;196mΓöé #3   customerSaveVehicle (package:customer_app/features/customer/presentation/providers/customer_providers.dart:924:18)[0m
+[38;5;196mΓöé #4   _AddVehicleViewState._save (package:customer_app/features/customer/presentation/add_vehicle_view.dart:133:26)[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé 16:43:18.021 (+0:00:00.358530)[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé Failed to queue vehicle offline[0m
+[38;5;196mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:22 +492 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold lays out at 1280.0 px, 1.3x
+00:22 +493 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold lays out at 1280.0 px, 1.3x
+00:22 +494 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold lays out at 1280.0 px, 1.3x
+00:23 +495 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Edit vehicle form prepopulates only genuine stored values
+00:23 +496 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles visual references empty mobile
+00:23 +497 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/phase01_layout_smoke_test.dart: CustomerScaffold survives 320 px at 1.3x
+00:23 +498 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Edit vehicle form represents unknown values honestly
+00:23 +499 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles visual references tablet
+00:23 +500 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Edit vehicle form preserves workshop data and saves through the API
+00:23 +501 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Edit vehicle form preserves workshop data and saves through the API
+00:23 +502 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicles_test.dart: Vehicles visual references dark mobile
+00:23 +503 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Vehicle form layout stays usable on a narrow phone and at large text
+00:23 +504 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Vehicle form layout renders in dark theme
+00:23 +505 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Vehicle form visual references add mobile
+00:23 +506 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Vehicle form visual references add tablet
+00:24 +507 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Vehicle form visual references add dark
+00:24 +508 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: Vehicle form visual references edit mobile
+00:24 +509 -6: E:/syed_moiz_ali/orientmobileapplication/apps/customer_app/test/customer_vehicle_form_test.dart: (tearDownAll)
+00:24 +509 -6: Some tests failed.

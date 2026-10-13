@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
+/// Compact icon + label metadata pill used in the advisor header.
 class AdvisorMetaPill extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -8,26 +9,32 @@ class AdvisorMetaPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s10,
+        vertical: AppDimensions.s6,
+      ),
       decoration: BoxDecoration(
         color: colors.surfaceContainerHighest,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r20)),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
         border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: colors.primary, size: 11),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: colors.onSurfaceVariant,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
+          Icon(icon, color: colors.primary, size: AppDimensions.iconXs),
+          const SizedBox(width: AppDimensions.s6),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

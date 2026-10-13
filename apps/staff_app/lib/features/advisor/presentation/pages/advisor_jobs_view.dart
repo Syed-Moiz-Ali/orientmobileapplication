@@ -7,7 +7,11 @@ import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_job_card_row.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
+/// Jobs tab: search first, status filter chips, then the working list of job
+/// cards rendered with the shared record-row grammar.
 class AdvisorJobsListView extends ConsumerStatefulWidget {
   final void Function(JobCardEntity) onJobCard;
   const AdvisorJobsListView({super.key, required this.onJobCard});
@@ -18,14 +22,6 @@ class AdvisorJobsListView extends ConsumerStatefulWidget {
 
 class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
   final _searchCtrl = TextEditingController();
-  final _filterChips = [
-    'All',
-    'In Progress',
-    'Completed',
-    'Pending',
-    'QC Check',
-    'Cancelled',
-  ];
 
   @override
   void dispose() {
@@ -33,129 +29,129 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     super.dispose();
   }
 
+  List<(String, String)> _chips(StaffLocalizations t) => [
+    ('all', t.advisorFilterAll),
+    ('inProgress', t.advisorFilterInProgress),
+    ('completed', t.advisorFilterCompleted),
+    ('pending', t.advisorFilterPending),
+    ('qc', t.advisorFilterQc),
+    ('cancelled', t.advisorFilterCancelled),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
 
     final jobsAsync = ref.watch(advisorRecentJobCardsProvider);
     final bookingsAsync = ref.watch(advisorAssignedBookingsProvider);
     final jobCards = jobsAsync.value ?? const <JobCardEntity>[];
     final selectedFilter = ref.watch(_jobsFilterProvider);
+    final isLoading = jobsAsync.isLoading || bookingsAsync.isLoading;
+    final hasError = jobsAsync.hasError || bookingsAsync.hasError;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          'Workshop Job Cards',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-            letterSpacing: -0.3,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (isLoading && jobCards.isEmpty)
+          const LinearProgressIndicator(minHeight: 3),
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            context.pagePadding.left,
+            context.pagePadding.top,
+            context.pagePadding.right,
+            AppDimensions.s12,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                t.advisorJobsTitle,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colors.onSurface,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              if (hasError) ...[
+                AppInfoPanel.danger(
+                  message: t.advisorDataError,
+                  action: TextButton(
+                    onPressed: () {
+                      ref.invalidate(advisorRecentJobCardsProvider);
+                      ref.invalidate(advisorAssignedBookingsProvider);
+                    },
+                    child: Text(t.advisorActionRefreshJobCard),
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s12),
+              ],
+              AppSearchField(
+                controller: _searchCtrl,
+                hintText: t.advisorJobsSearchHint,
+                onChanged: (v) =>
+                    ref.read(_jobsSearchProvider.notifier).state = v,
+                onClear: () =>
+                    ref.read(_jobsSearchProvider.notifier).state = '',
+              ),
+            ],
           ),
         ),
-      ),
-      body: Column(
-        children: [
-          if (jobsAsync.isLoading || bookingsAsync.isLoading)
-            const LinearProgressIndicator(minHeight: 3),
-          if (jobsAsync.hasError || bookingsAsync.hasError)
-            _JobsDataNotice(
-              onRetry: () {
-                ref.invalidate(advisorRecentJobCardsProvider);
-                ref.invalidate(advisorAssignedBookingsProvider);
-              },
-            ),
-          // ── SEARCH FIELD ────────────────────────────────────────────────
-          Container(
-            color: colorScheme.surface,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: AppSearchField(
-              controller: _searchCtrl,
-              hintText: 'Search by registration, customer, or ID...',
-              onChanged: (v) => ref.read(_jobsSearchProvider.notifier).state = v,
-              onClear: () => ref.read(_jobsSearchProvider.notifier).state = '',
-            ),
+        SizedBox(
+          height: 44,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: context.pagePadding.left),
+            itemCount: _chips(t).length,
+            separatorBuilder: (_, __) =>
+                const SizedBox(width: AppDimensions.s8),
+            itemBuilder: (_, i) {
+              final (key, label) = _chips(t)[i];
+              final active = key == selectedFilter;
+              return Center(
+                child: ChoiceChip(
+                  label: Text(label),
+                  selected: active,
+                  onSelected: (_) {
+                    HapticFeedback.selectionClick();
+                    ref.read(_jobsFilterProvider.notifier).state = key;
+                  },
+                ),
+              );
+            },
           ),
-
-          // ── FILTER CHIPS ─────────────────────────────────────────────────
-          SizedBox(
-            height: 38,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _filterChips.map((f) {
-                final active = f == selectedFilter;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      ref.read(_jobsFilterProvider.notifier).state = f;
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: active
-                            ? colorScheme.primary
-                            : colorScheme.surface,
-                        borderRadius: BorderRadius.circular(100),
-                        border: Border.all(
-                          color: active
-                              ? Colors.transparent
-                              : colorScheme.outlineVariant,
-                        ),
-                      ),
-                      child: Text(
-                        f,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
-                          color: active
-                              ? colorScheme.onPrimary
-                              : colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        Expanded(
+          child: RefreshIndicator(
+            color: colors.primary,
+            backgroundColor: colors.surface,
+            onRefresh: () async =>
+                ref.read(advisorRefreshProvider.notifier).state++,
+            child: _buildJobList(t, jobCards, selectedFilter, isLoading),
           ),
-          const SizedBox(height: 8),
-
-          Expanded(
-            child: RefreshIndicator(
-              color: colorScheme.primary,
-              backgroundColor: colorScheme.surface,
-              onRefresh: () async =>
-                  ref.read(advisorRefreshProvider.notifier).state++,
-              child: _buildJobList(jobCards, selectedFilter),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildJobList(List<JobCardEntity> allCards, String filter) {
+  Widget _buildJobList(
+    StaffLocalizations t,
+    List<JobCardEntity> allCards,
+    String filter,
+    bool isLoading,
+  ) {
     final query = ref.watch(_jobsSearchProvider).toLowerCase();
     final bookings =
         ref.watch(advisorAssignedBookingsProvider).value ??
         const <AdvisorBookingResponse>[];
     final showBookings =
-        query.isEmpty && filter == 'All' && bookings.isNotEmpty;
+        query.isEmpty && filter == 'all' && bookings.isNotEmpty;
 
     final filtered = allCards.where((jc) {
       final matchesFilter =
-          filter == 'All' || _statusLabel(jc.status) == filter;
+          filter == 'all' || advisorStatusFilterKey(jc.status) == filter;
       final matchesSearch =
           query.isEmpty ||
           jc.id.toLowerCase().contains(query) ||
@@ -164,21 +160,50 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
       return matchesFilter && matchesSearch;
     }).toList();
 
-    if (filtered.isEmpty && !showBookings) {
-      return const Center(
-        child: EmptyState(
-          icon: Icons.assignment_outlined,
-          message: 'No matching job cards located',
+    if (isLoading && allCards.isEmpty) {
+      return ListView(
+        padding: EdgeInsets.fromLTRB(
+          context.pagePadding.left,
+          AppDimensions.s8,
+          context.pagePadding.right,
+          (AppDimensions.s64 + AppDimensions.s24),
         ),
+        children: const [AppSkeleton.listRows(rows: 4)],
+      );
+    }
+
+    if (filtered.isEmpty && !showBookings) {
+      final hasQuery = query.isNotEmpty || filter != 'all';
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.s32),
+        children: [
+          hasQuery
+              ? EmptyState.noMatch(
+                  icon: Icons.search_off_rounded,
+                  message: t.advisorNoMatchingJobs,
+                )
+              : EmptyState(
+                  icon: Icons.assignment_outlined,
+                  title: t.advisorNoJobs,
+                  message: t.advisorNoJobsHint,
+                ),
+        ],
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        context.pagePadding.left,
+        AppDimensions.s8,
+        context.pagePadding.right,
+        (AppDimensions.s64 + AppDimensions.s24),
+      ),
       itemCount: filtered.length + (showBookings ? 1 : 0),
       itemBuilder: (_, i) {
         if (showBookings && i == 0) {
-          return _buildAssignedBookingsSection(bookings);
+          return _buildAssignedBookingsSection(t, bookings);
         }
         final index = showBookings ? i - 1 : i;
         if (index < 0 || index >= filtered.length) {
@@ -189,136 +214,76 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     );
   }
 
-  Widget _buildAssignedBookingsSection(List<AdvisorBookingResponse> bookings) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildAssignedBookingsSection(
+    StaffLocalizations t,
+    List<AdvisorBookingResponse> bookings,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.event_available_rounded,
-                size: 18,
-                color: colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Assigned intake queue',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimensions.s14),
+      child: AppCard.standard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.event_available_rounded,
+                  size: AppDimensions.iconMd,
+                  color: colors.primary,
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${bookings.length} Pending',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: colorScheme.primary,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ...bookings
-              .take(3)
-              .map(
-                (b) => ListTile(
-                  dense: true,
-                  title: Text('${b.serviceType} · ${b.vehicleName}'),
-                  subtitle: Text('${b.customerName} · ${b.bookingDate}'),
-                  trailing: ElevatedButton(
-                    onPressed: () {
-                      context.push(
-                        AppRoutes.advisorCheckIn,
-                        extra: {
-                          'bookingId': '${b.id}',
-                          'customerName': b.customerName,
-                          'vehicleInfo': b.vehicleName,
-                        },
-                      );
-                    },
-                    child: const Text('Check In'),
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
+                  child: Text(
+                    t.advisorAssignedIntakeQueue,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colors.onSurface,
+                    ),
                   ),
                 ),
-              ),
-        ],
+                StatusPill.info(t.advisorPendingCount(bookings.length)),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s12),
+            ...bookings
+                .take(3)
+                .map(
+                  (b) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+                    child: AppRecordRow(
+                      leading: Icon(
+                        Icons.directions_car_rounded,
+                        color: colors.primary,
+                      ),
+                      title: '${b.serviceType} · ${b.vehicleName}',
+                      subtitle: '${b.customerName} · ${b.bookingDate}',
+                      trailing: PrimaryButton(
+                        label: t.advisorActionCheckIn,
+                        isExpanded: false,
+                        height: AppDimensions.touchTarget,
+                        onPressed: () => context.push(
+                          AppRoutes.advisorCheckIn,
+                          extra: {
+                            'bookingId': '${b.id}',
+                            'customerName': b.customerName,
+                            'vehicleInfo': b.vehicleName,
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+          ],
+        ),
       ),
     );
   }
-
-  String _statusLabel(JobCardStatus s) => switch (s) {
-    JobCardStatus.inProgress => 'In Progress',
-    JobCardStatus.pendingApproval => 'Pending',
-    JobCardStatus.completed => 'Completed',
-    JobCardStatus.waitingParts => 'Waiting Parts',
-    JobCardStatus.qualityCheck => 'QC Check',
-    JobCardStatus.cancelled => 'Cancelled',
-    JobCardStatus.pending => 'Pending',
-    JobCardStatus.awaitingSupervisor => 'Awaiting Supervisor',
-    JobCardStatus.vehicleReceived => 'Vehicle Received',
-    JobCardStatus.inspected => 'Inspected',
-    JobCardStatus.approved => 'Approved',
-    JobCardStatus.workAssigned => 'Work Assigned',
-    JobCardStatus.waitingCustomerApproval => 'Waiting Customer Approval',
-    JobCardStatus.delivered => 'Delivered',
-    JobCardStatus.qualityCheckPassed => 'QC Passed',
-  };
 }
 
 final _jobsSearchProvider = StateProvider<String>((ref) => '');
-final _jobsFilterProvider = StateProvider<String>((ref) => 'All');
-
-class _JobsDataNotice extends StatelessWidget {
-  final VoidCallback onRetry;
-
-  const _JobsDataNotice({required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-      padding: const EdgeInsets.fromLTRB(13, 10, 8, 10),
-      decoration: BoxDecoration(
-        color: colors.errorContainer.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.cloud_off_rounded,
-            color: colors.onErrorContainer,
-            size: 20,
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              'Some live workshop data could not be loaded.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colors.onErrorContainer,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Retry',
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-      ),
-    );
-  }
-}
+final _jobsFilterProvider = StateProvider<String>((ref) => 'all');

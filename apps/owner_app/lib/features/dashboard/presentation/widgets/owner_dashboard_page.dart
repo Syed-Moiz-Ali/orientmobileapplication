@@ -102,11 +102,15 @@ class OwnerDashboardPage extends ConsumerWidget {
         ),
       ),
       const SizedBox(width: 10),
-      Text(
-        text,
-        style: textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w800,
-          color: colorScheme.onSurface,
+      Expanded(
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: colorScheme.onSurface,
+          ),
         ),
       ),
     ],

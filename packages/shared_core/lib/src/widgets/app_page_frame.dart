@@ -9,6 +9,13 @@ import 'package:shared_core/src/widgets/app_page_header.dart';
 /// - Comfortable tablet (600px - 1024px): bounded content, padded gutters
 /// - Contained desktop (1024px - 1440px): max-width centered reading/working area
 /// - Full dashboard desktop: optional [isFullWidth] mode for wide operational views
+///
+/// **Phase 04 usage rule:** [AppPageFrame] is the canonical page container for
+/// workspace and pushed pages going forward (it composes the optional header,
+/// subheader and sticky footer slots plus the responsive gutters/content cap).
+/// [AppResponsivePage] stays supported for simple scroll + padding layouts and
+/// is **not** deprecated; new pages prefer [AppPageFrame] so gutters, max width
+/// and slots stay consistent across the family.
 class AppPageFrame extends StatelessWidget {
   /// The primary content of the page.
   final Widget child;
@@ -167,11 +174,7 @@ class AppPageFrame extends StatelessWidget {
 
     return ColoredBox(
       color: bg,
-      child: SafeArea(
-        top: false,
-        bottom: false,
-        child: mainSection,
-      ),
+      child: SafeArea(top: false, bottom: false, child: mainSection),
     );
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/widgets/directional_icon.dart';
 import 'package:shared_core/src/widgets/notification_bell.dart';
 
 class AppTopBar extends StatelessWidget {
@@ -25,6 +27,7 @@ class AppTopBar extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = SharedCoreL10n.of(context);
 
     return Container(
       color: colorScheme.surface,
@@ -38,13 +41,13 @@ class AppTopBar extends StatelessWidget {
           if (showBack)
             IconButton(
               onPressed: onBack ?? () => Navigator.maybePop(context),
-              tooltip: 'Back',
+              tooltip: t.topBarBackTooltip,
               style: IconButton.styleFrom(
                 backgroundColor: colorScheme.surfaceContainerLow,
                 side: BorderSide(color: colorScheme.outline),
                 minimumSize: const Size.square(AppDimensions.touchTarget),
               ),
-              icon: const Icon(Icons.arrow_back_rounded),
+              icon: const DirectionalIcon(Icons.arrow_back_rounded),
             ),
           if (showBack) const SizedBox(width: AppDimensions.s12),
           Expanded(
@@ -84,6 +87,7 @@ class CustomerTopBar extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = SharedCoreL10n.of(context);
 
     return Container(
       color: colorScheme.surface,
@@ -119,7 +123,7 @@ class CustomerTopBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back,',
+                  t.profileWelcomeBack,
                   style: textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,

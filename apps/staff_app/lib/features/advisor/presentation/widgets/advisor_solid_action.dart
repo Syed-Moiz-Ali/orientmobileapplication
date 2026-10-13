@@ -1,51 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
+/// Solid primary action for advisor sheets and dialogs. The [color] drives the
+/// fill and a subtle elevation; the label uses the inverse ink token.
 class AdvisorSolidAction extends StatelessWidget {
   final String label;
   final IconData icon;
-  final List<Color> gradient;
-  final VoidCallback onTap;
+  final Color color;
+  final VoidCallback? onTap;
   const AdvisorSolidAction({
     super.key,
     required this.label,
     required this.icon,
-    required this.gradient,
+    required this.color,
     required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: gradient),
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        boxShadow: [
-          BoxShadow(
-            color: gradient.first.withValues(alpha: 0.30),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: AppDimensions.touchTarget,
+      child: Material(
+        color: color,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              DirectionalIcon(
+                icon,
+                color: AppColors.textInverse,
+                size: AppDimensions.iconSm,
+                mirrorInRtl: DirectionalIcon.isDirectional(icon),
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.textInverse,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 15),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }

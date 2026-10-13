@@ -129,6 +129,61 @@ class AppColors {
   static const Color navyBorder = Color(0xFF2A3A5E);
 
   // ---------------------------------------------------------------------------
+  // Phase 01 — Extended semantic roles (frozen Phase 00 values)
+  // ---------------------------------------------------------------------------
+  /// Modal / bottom-sheet / drawer scrim over page content
+  /// (`#0B1526` at 42 %). Never used as a decorative overlay.
+  static const Color overlayScrim = Color(0x6B0B1526);
+
+  /// Secondary ink for supporting copy on navy high-emphasis surfaces
+  /// (labels, metadata, sub-lines on `surfaceStrong`). Pairs with
+  /// `textInverse` for primary copy on navy.
+  static const Color onNavySecondary = Color(0xFFAAB5C8);
+
+  /// 2 px focus indicator ring (spec §2.1: focus ring = primary), rendered
+  /// with an offset so it is visible on both canvas and cards.
+  static const Color focusRing = primary;
+
+  /// Feedback / rating star ink (service reviews, satisfaction ratings).
+  /// Warm gold that stays legible on light and dark surfaces; always paired
+  /// with a numeric value or label (never color alone).
+  static const Color ratingStar = Color(0xFFE9AD3A);
+
+  // ---------------------------------------------------------------------------
+  // Skeleton loaders (Phase 03B)
+  // ---------------------------------------------------------------------------
+  /// Base ink for skeleton placeholder shapes. Pairs with [skeletonHighlight];
+  /// `AppSkeleton` interpolates between the two so shimmer stays honest per
+  /// brightness (Phase 01 §11.1 token gap closed here).
+  static const Color skeletonBase = Color(0xFFE7ECF3);
+
+  /// Highlight ink for the skeleton shimmer pulse.
+  static const Color skeletonHighlight = Color(0xFFF4F7FB);
+
+  /// Chart series encoding (light) shared by every chart in the suite so
+  /// owner / advisor / CRM charts read identically. Max two series per chart
+  /// (spec §V8); series are assigned in order.
+  static const List<Color> chartSeries = [
+    Color(0xFF3157D5), // primary cobalt
+    Color(0xFF0FA97C), // accent teal
+    Color(0xFF6D5DF6), // info indigo
+    Color(0xFFE09A1F), // warning amber
+    Color(0xFF0F8B5F), // success green
+    Color(0xFF14213D), // navy
+  ];
+
+  /// Chart series encoding (dark) — the approved dark parity of
+  /// [chartSeries] (brighter inks for dark surfaces).
+  static const List<Color> chartSeriesDark = [
+    Color(0xFF6E8BFF),
+    Color(0xFF35C79A),
+    Color(0xFF9B8DFF),
+    Color(0xFFF0B34C),
+    Color(0xFF3DC795),
+    Color(0xFF93A7D8),
+  ];
+
+  // ---------------------------------------------------------------------------
   // Backward-Compatible Legacy Aliases
   // ---------------------------------------------------------------------------
   static const Color bg = canvas;
@@ -174,4 +229,90 @@ class AppColors {
   static const Color gray500 = Color(0xFF6B7280);
   static const Color gray700 = Color(0xFF374151);
   static const Color gray900 = Color(0xFF111827);
+}
+
+/// Dark-theme parity map for the ORIENT design system.
+///
+/// Approved as the Phase 01 dark parity map (`00_VISUAL_DIRECTION.md` §3,
+/// 2026-10-13) and codified here exactly from the approved Phase 00 prototype
+/// palette (`ProtoPalette.dark`). It is a true parity map — not an inverted
+/// lightness — so every role keeps its semantic meaning while meeting
+/// contrast on dark surfaces.
+///
+/// Phase 01.1 accessibility amendment (product-owner sign-off): the dark
+/// `onPrimary` / `onError` inks are dark (not white) so normal-sized button
+/// labels meet WCAG AA 4.5:1. See [onPrimary] and [onError].
+///
+/// Dark remains non-default in the shipped apps (`ThemeMode.light`); these
+/// tokens exist so `AppTheme.dark` is complete, testable and consistent.
+class AppDarkColors {
+  AppDarkColors._();
+
+  // Canvas & surfaces
+  static const Color canvas = Color(0xFF0C1120);
+  static const Color surface = Color(0xFF151C2E);
+  static const Color surfaceSubtle = Color(0xFF1A2236);
+  static const Color surfaceRaised = Color(0xFF1B2439);
+  static const Color surfaceSunken = Color(0xFF101627);
+  static const Color surfaceStrong = Color(0xFF14213D);
+  static const Color navySurfaceRaised = Color(0xFF1C2C50);
+
+  // Inks
+  static const Color textPrimary = Color(0xFFF2F5FB);
+  static const Color textSecondary = Color(0xFFC6CEDF);
+  static const Color textMuted = Color(0xFF8F9AB0);
+  static const Color textDisabled = Color(0xFF5E6981);
+  static const Color textInverse = Color(0xFFFFFFFF);
+  static const Color onNavySecondary = Color(0xFFAAB5C8);
+
+  // Borders
+  static const Color borderSubtle = Color(0xFF202A40);
+  static const Color borderDefault = Color(0xFF2A354D);
+  static const Color borderStrong = Color(0xFF3E4B66);
+
+  // Primary / selection
+  static const Color primary = Color(0xFF6E8BFF);
+  static const Color primaryHover = Color(0xFF84A0FF);
+  static const Color primaryPressed = Color(0xFF5C79F0);
+  static const Color primarySubtle = Color(0xFF1B2440);
+  static const Color primaryBorder = Color(0xFF32406E);
+  static const Color selected = Color(0xFF1D2A4D);
+  static const Color hover = Color(0xFF1A2440);
+  static const Color focus = Color(0xFF84A0FF);
+  static const Color focusRing = focus;
+
+  /// Ink for normal-sized labels/icons on bright primary fills
+  /// (`primary` background). Phase 01.1 accessibility amendment — replaces
+  /// white (≈3.1:1) with the dark canvas ink: ≈6.1:1 at rest and ≥5.1:1 under
+  /// the Material hover/pressed/focus overlays that derive from this ink.
+  static const Color onPrimary = Color(0xFF0C1120);
+
+  /// Ink for normal-sized labels/icons on bright danger fills (`danger`
+  /// background). Same ink and ratios as [onPrimary] (≈6.6:1 at rest,
+  /// ≥5.5:1 under interaction overlays).
+  static const Color onError = onPrimary;
+
+  // Semantics
+  static const Color success = Color(0xFF3DC795);
+  static const Color successSubtle = Color(0xFF11291F);
+  static const Color successBorder = Color(0xFF1E4A36);
+  static const Color warning = Color(0xFFF0B34C);
+  static const Color warningSubtle = Color(0xFF2C2311);
+  static const Color warningBorder = Color(0xFF4D3D18);
+  static const Color danger = Color(0xFFF1707F);
+  static const Color dangerSubtle = Color(0xFF31151B);
+  static const Color dangerBorder = Color(0xFF55222B);
+  static const Color info = Color(0xFF9B8DFF);
+  static const Color infoSubtle = Color(0xFF1D1A3C);
+  static const Color infoBorder = Color(0xFF37316E);
+
+  /// Feedback / rating star — same warm gold as light (legible on both).
+  static const Color ratingStar = Color(0xFFE9AD3A);
+
+  // Skeleton loaders (Phase 03B) — dark parity.
+  static const Color skeletonBase = Color(0xFF232C42);
+  static const Color skeletonHighlight = Color(0xFF313D57);
+
+  /// Modal scrim on dark surfaces (`#0B1526` at 80 %).
+  static const Color overlayScrim = Color(0xCC0B1526);
 }

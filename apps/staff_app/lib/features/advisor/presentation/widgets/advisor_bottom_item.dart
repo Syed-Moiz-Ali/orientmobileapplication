@@ -73,4 +73,3 @@ class AdvisorBottomItem extends StatelessWidget {
     );
   }
 }
-

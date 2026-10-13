@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_auth/src/presentation/providers/login_provider.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
@@ -23,6 +24,7 @@ class LoginView extends ConsumerStatefulWidget {
   final String appName;
   final String appPurpose;
   final String intendedUsers;
+  final String? securityNotice;
 
   const LoginView({
     super.key,
@@ -33,6 +35,7 @@ class LoginView extends ConsumerStatefulWidget {
     this.appPurpose =
         'Manage workshop bookings, job cards, approvals, and service updates.',
     this.intendedUsers = 'Workshop users',
+    this.securityNotice,
   });
 
   @override
@@ -97,6 +100,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
   }
 
   void _changeMode(_SignInMode mode, LoginNotifier notifier) {
+    if (_mode == mode) return;
     setState(() => _mode = mode);
     notifier.reset();
   }
@@ -107,74 +111,187 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     final state = ref.watch(loginProvider);
     final notifier = ref.read(loginProvider.notifier);
+    final t = SharedAuthL10n.of(context);
     final registering = state.isRegistering;
     final codeMode = !registering && _mode == _SignInMode.code;
 
     final String title;
     final String subtitle;
     if (registering) {
-      title = 'Create your account';
-      subtitle = 'Set up your account in under a minute.';
+      title = t.loginRegisterTitle;
+      subtitle = t.loginRegisterSubtitle;
     } else if (codeMode) {
-      title = 'Security code';
+      title = t.loginSecurityCodeTitle;
       subtitle = state.otpSent
-          ? 'Enter the 6-digit code we sent you.'
-          : 'Get a one-time code on your email or mobile.';
+          ? t.loginOtpSentSubtitle
+          : t.loginSecurityCodeSubtitle;
     } else {
-      title = 'Welcome back';
-      subtitle = 'Sign in with your email or mobile number.';
+      title = t.loginWelcomeTitle;
+      subtitle = t.loginWelcomeSubtitle;
     }
 
     return AuthShell(
       appName: widget.appName,
       appPurpose: widget.appPurpose,
       intendedUsers: widget.intendedUsers,
+      securityNotice: widget.securityNotice,
       title: title,
       subtitle: subtitle,
-      child: AnimatedSwitcher(
-        duration: AppMotion.standard,
-        switchInCurve: AppMotion.enter,
-        switchOutCurve: AppMotion.exit,
-        layoutBuilder: (currentChild, previousChildren) => Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            ...previousChildren,
-            if (currentChild != null) currentChild,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (!registering) ...[
+            _MethodSwitcher(
+              mode: _mode,
+              passwordLabel: t.authMethodPassword,
+              codeLabel: t.authMethodCode,
+              onChanged: (mode) => _changeMode(mode, notifier),
+            ),
+            const SizedBox(height: AppDimensions.s20),
           ],
-        ),
-        child: registering
-            ? _RegisterForm(
-                key: const ValueKey('register'),
-                state: state,
-                notifier: notifier,
-                identifierCtrl: _identifierCtrl,
-                passwordCtrl: _passwordCtrl,
-                nameCtrl: _nameCtrl,
-                onSubmit: () => _submitPassword(state, notifier),
-                onIdentifierChanged: () => _syncIdentifier(notifier),
-              )
-            : codeMode
-            ? _CodeForm(
-                key: const ValueKey('code'),
-                state: state,
-                notifier: notifier,
-                identifierCtrl: _identifierCtrl,
-                onUsePassword: () =>
-                    _changeMode(_SignInMode.password, notifier),
-                onSendCode: () => _sendCode(notifier),
-              )
-            : _SignInPasswordForm(
-                key: const ValueKey('password'),
-                state: state,
-                notifier: notifier,
-                identifierCtrl: _identifierCtrl,
-                passwordCtrl: _passwordCtrl,
-                allowRegistration: widget.allowRegistration,
-                onForgotPassword: widget.onForgotPassword,
-                onUseCode: () => _changeMode(_SignInMode.code, notifier),
-                onSubmit: () => _submitPassword(state, notifier),
-                onIdentifierChanged: () => _syncIdentifier(notifier),
+          AnimatedSwitcher(
+            duration: AppMotion.resolve(context, AppMotion.standard),
+            switchInCurve: AppMotion.enter,
+            switchOutCurve: AppMotion.exit,
+            layoutBuilder: (currentChild, previousChildren) => Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                ...previousChildren,
+                if (currentChild != null) currentChild,
+              ],
+            ),
+            child: registering
+                ? _RegisterForm(
+                    key: const ValueKey('register'),
+                    state: state,
+                    notifier: notifier,
+                    identifierCtrl: _identifierCtrl,
+                    passwordCtrl: _passwordCtrl,
+                    nameCtrl: _nameCtrl,
+                    onSubmit: () => _submitPassword(state, notifier),
+                    onIdentifierChanged: () => _syncIdentifier(notifier),
+                  )
+                : codeMode
+                ? _CodeForm(
+                    key: const ValueKey('code'),
+                    state: state,
+                    notifier: notifier,
+                    identifierCtrl: _identifierCtrl,
+                    onSendCode: () => _sendCode(notifier),
+                  )
+                : _SignInPasswordForm(
+                    key: const ValueKey('password'),
+                    state: state,
+                    notifier: notifier,
+                    identifierCtrl: _identifierCtrl,
+                    passwordCtrl: _passwordCtrl,
+                    allowRegistration: widget.allowRegistration,
+                    onForgotPassword: widget.onForgotPassword,
+                    onSubmit: () => _submitPassword(state, notifier),
+                    onIdentifierChanged: () => _syncIdentifier(notifier),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Two-option segmented control for the password / one-time-code sign-in
+/// methods (spec §7). Preserves the exact [AuthMethod] transitions owned by
+/// [LoginNotifier]; it only chooses which method the form presents.
+class _MethodSwitcher extends StatelessWidget {
+  final _SignInMode mode;
+  final String passwordLabel;
+  final String codeLabel;
+  final ValueChanged<_SignInMode> onChanged;
+
+  const _MethodSwitcher({
+    required this.mode,
+    required this.passwordLabel,
+    required this.codeLabel,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.s4),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          _tab(
+            context,
+            passwordLabel,
+            mode == _SignInMode.password,
+            () => onChanged(_SignInMode.password),
+          ),
+          _tab(
+            context,
+            codeLabel,
+            mode == _SignInMode.code,
+            () => onChanged(_SignInMode.code),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tab(
+    BuildContext context,
+    String label,
+    bool selected,
+    VoidCallback onTap,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+            child: AnimatedContainer(
+              duration: AppMotion.resolve(context, AppMotion.fast),
+              curve: AppMotion.enter,
+              constraints: const BoxConstraints(minHeight: 40),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.s8,
+                vertical: AppDimensions.s10,
               ),
+              decoration: BoxDecoration(
+                color: selected ? colors.surface : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                border: Border.all(
+                  color: selected ? colors.outlineVariant : Colors.transparent,
+                ),
+                boxShadow: selected ? AppDimensions.shadowSurface : null,
+              ),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: selected ? colors.onSurface : colors.onSurfaceVariant,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -187,7 +304,6 @@ class _SignInPasswordForm extends StatelessWidget {
   final TextEditingController passwordCtrl;
   final bool allowRegistration;
   final VoidCallback? onForgotPassword;
-  final VoidCallback onUseCode;
   final VoidCallback onSubmit;
   final VoidCallback onIdentifierChanged;
 
@@ -199,7 +315,6 @@ class _SignInPasswordForm extends StatelessWidget {
     required this.passwordCtrl,
     required this.allowRegistration,
     required this.onForgotPassword,
-    required this.onUseCode,
     required this.onSubmit,
     required this.onIdentifierChanged,
   });
@@ -207,6 +322,7 @@ class _SignInPasswordForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final busy = state.isLoading;
+    final t = SharedAuthL10n.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -214,20 +330,21 @@ class _SignInPasswordForm extends StatelessWidget {
         AuthNoticeSlot(message: state.error),
         AuthTextField(
           controller: identifierCtrl,
-          label: 'Email or mobile number',
-          hint: 'name@company.com or 501234567',
+          label: t.loginFieldIdentifier,
+          hint: t.loginFieldIdentifierHint,
           icon: Icons.alternate_email_rounded,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           autofillHints: const [AutofillHints.username],
+          textDirection: TextDirection.ltr,
           enabled: !busy,
           onChanged: (_) => onIdentifierChanged(),
         ),
         const SizedBox(height: AppDimensions.s16),
         AuthTextField(
           controller: passwordCtrl,
-          label: 'Password',
-          hint: 'Enter your password',
+          label: t.loginFieldPassword,
+          hint: t.loginFieldPasswordHint,
           icon: Icons.lock_outline_rounded,
           obscureText: true,
           textInputAction: TextInputAction.done,
@@ -239,33 +356,25 @@ class _SignInPasswordForm extends StatelessWidget {
         if (onForgotPassword != null) ...[
           const SizedBox(height: AppDimensions.s4),
           Align(
-            alignment: Alignment.centerRight,
+            alignment: AlignmentDirectional.centerEnd,
             child: AuthLinkButton(
-              label: 'Forgot password?',
+              label: t.loginActionForgotPassword,
               onPressed: busy ? null : onForgotPassword,
             ),
           ),
         ],
         const SizedBox(height: AppDimensions.s20),
         AuthPrimaryButton(
-          label: 'Continue',
+          label: t.loginActionContinue,
           icon: Icons.arrow_forward_rounded,
           isLoading: state.isLoading,
           onPressed: onSubmit,
         ),
-        const SizedBox(height: AppDimensions.s12),
-        Center(
-          child: AuthLinkButton(
-            label: 'Use one-time code instead',
-            icon: Icons.password_rounded,
-            onPressed: busy ? null : onUseCode,
-          ),
-        ),
         if (allowRegistration) ...[
-          const SizedBox(height: AppDimensions.s8),
+          const SizedBox(height: AppDimensions.s12),
           Center(
             child: AuthLinkButton(
-              label: 'New customer? Create an account',
+              label: t.loginNewCustomer,
               onPressed: busy ? null : notifier.toggleRegister,
             ),
           ),
@@ -299,6 +408,7 @@ class _RegisterForm extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final busy = state.isLoading;
+    final t = SharedAuthL10n.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -306,8 +416,8 @@ class _RegisterForm extends StatelessWidget {
         AuthNoticeSlot(message: state.error),
         AuthTextField(
           controller: nameCtrl,
-          label: 'Full name',
-          hint: 'Your full name',
+          label: t.loginFieldFullName,
+          hint: t.loginFieldFullNameHint,
           icon: Icons.person_outline_rounded,
           keyboardType: TextInputType.name,
           textInputAction: TextInputAction.next,
@@ -319,27 +429,28 @@ class _RegisterForm extends StatelessWidget {
         const SizedBox(height: AppDimensions.s16),
         AuthTextField(
           controller: identifierCtrl,
-          label: 'Email or mobile number',
-          hint: 'name@company.com or 501234567',
+          label: t.loginFieldIdentifier,
+          hint: t.loginFieldIdentifierHint,
           icon: Icons.alternate_email_rounded,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           autofillHints: const [AutofillHints.username],
+          textDirection: TextDirection.ltr,
           enabled: !busy,
           onChanged: (_) => onIdentifierChanged(),
         ),
         const SizedBox(height: AppDimensions.s16),
         AuthTextField(
           controller: passwordCtrl,
-          label: 'Create a password',
-          hint: 'At least 6 characters',
+          label: t.loginFieldCreatePassword,
+          hint: t.loginFieldCreatePasswordHint,
           icon: Icons.lock_outline_rounded,
           obscureText: true,
           textInputAction: TextInputAction.done,
           autofillHints: const [AutofillHints.newPassword],
           enabled: !busy,
           labelTrailing: Text(
-            'Min. 6 characters',
+            t.loginMinCharacters,
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
@@ -350,7 +461,7 @@ class _RegisterForm extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.s24),
         AuthPrimaryButton(
-          label: 'Create account',
+          label: t.loginActionCreateAccount,
           icon: Icons.arrow_forward_rounded,
           isLoading: state.isLoading,
           onPressed: onSubmit,
@@ -358,7 +469,7 @@ class _RegisterForm extends StatelessWidget {
         const SizedBox(height: AppDimensions.s8),
         Center(
           child: AuthLinkButton(
-            label: 'Already have an account? Sign in',
+            label: t.loginAlreadyHaveAccount,
             onPressed: busy ? null : notifier.toggleRegister,
           ),
         ),
@@ -371,7 +482,6 @@ class _CodeForm extends StatelessWidget {
   final LoginState state;
   final LoginNotifier notifier;
   final TextEditingController identifierCtrl;
-  final VoidCallback onUsePassword;
   final VoidCallback onSendCode;
 
   const _CodeForm({
@@ -379,7 +489,6 @@ class _CodeForm extends StatelessWidget {
     required this.state,
     required this.notifier,
     required this.identifierCtrl,
-    required this.onUsePassword,
     required this.onSendCode,
   });
 
@@ -387,6 +496,7 @@ class _CodeForm extends StatelessWidget {
   Widget build(BuildContext context) {
     final email = state.method == AuthMethod.email;
     final busy = state.isLoading;
+    final t = SharedAuthL10n.of(context);
 
     if (state.otpSent) {
       return Column(
@@ -394,7 +504,7 @@ class _CodeForm extends StatelessWidget {
         children: [
           AuthNotice(
             icon: email ? Icons.mark_email_read_outlined : Icons.sms_outlined,
-            text: 'Code sent to ${email ? state.email : state.phone}.',
+            text: t.loginCodeSent(email ? state.email : state.phone),
           ),
           const SizedBox(height: AppDimensions.s20),
           AuthOtpField(
@@ -406,7 +516,7 @@ class _CodeForm extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s24),
           AuthPrimaryButton(
-            label: 'Verify code',
+            label: t.loginActionVerifyCode,
             icon: Icons.verified_rounded,
             isLoading: state.isLoading,
             onPressed: () =>
@@ -419,13 +529,13 @@ class _CodeForm extends StatelessWidget {
             runSpacing: AppDimensions.s4,
             children: [
               AuthLinkButton(
-                label: 'Change email or mobile',
+                label: t.loginActionChangeIdentifier,
                 onPressed: busy ? null : notifier.reset,
               ),
               AuthLinkButton(
                 label: state.resendCooldown > 0
-                    ? 'Resend in ${state.resendCooldown}s'
-                    : 'Resend code',
+                    ? t.loginActionResendIn(state.resendCooldown)
+                    : t.loginActionResendCode,
                 subtle: true,
                 onPressed: state.resendCooldown > 0 || busy ? null : onSendCode,
               ),
@@ -441,29 +551,22 @@ class _CodeForm extends StatelessWidget {
         AuthNoticeSlot(message: state.error),
         AuthTextField(
           controller: identifierCtrl,
-          label: 'Email or mobile number',
-          hint: 'name@company.com or 501234567',
+          label: t.loginFieldIdentifier,
+          hint: t.loginFieldIdentifierHint,
           icon: Icons.alternate_email_rounded,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.done,
           autofillHints: const [AutofillHints.username],
+          textDirection: TextDirection.ltr,
           enabled: !busy,
           onSubmitted: (_) => onSendCode(),
         ),
         const SizedBox(height: AppDimensions.s20),
         AuthPrimaryButton(
-          label: 'Send code',
+          label: t.loginActionSendCode,
           icon: Icons.arrow_forward_rounded,
           isLoading: state.isLoading,
           onPressed: onSendCode,
-        ),
-        const SizedBox(height: AppDimensions.s12),
-        Center(
-          child: AuthLinkButton(
-            label: 'Use password instead',
-            icon: Icons.lock_outline_rounded,
-            onPressed: busy ? null : onUsePassword,
-          ),
         ),
       ],
     );

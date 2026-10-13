@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/local/hive/hive_cleaner.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/widgets/app_confirmation_dialog.dart';
 
 Future<bool?> showLogoutDialog(
   BuildContext context, {
   VoidCallback? onLogout,
 }) async {
+  final t = SharedCoreL10n.of(context);
   if (HiveCleaner.hasPendingSync()) {
     final force = await showAppConfirmationDialog(
       context,
-      title: 'Unsynced changes',
-      message:
-          'Some local changes have not reached the workshop yet. Signing out now will clear those pending changes.',
-      confirmLabel: 'Sign out anyway',
+      title: t.logoutUnsyncedTitle,
+      message: t.logoutUnsyncedMessage,
+      confirmLabel: t.logoutUnsyncedConfirm,
       icon: Icons.sync_problem_rounded,
       destructive: true,
     );
@@ -20,9 +21,9 @@ Future<bool?> showLogoutDialog(
   } else {
     final confirmed = await showAppConfirmationDialog(
       context,
-      title: 'Sign out?',
-      message: 'You will need to authenticate again to access this workspace.',
-      confirmLabel: 'Sign out',
+      title: t.logoutDialogTitle,
+      message: t.logoutDialogMessage,
+      confirmLabel: t.logoutDialogConfirm,
       icon: Icons.logout_rounded,
       destructive: true,
     );

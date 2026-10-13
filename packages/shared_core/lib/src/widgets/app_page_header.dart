@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_text_styles.dart';
+import 'package:shared_core/src/widgets/app_breadcrumbs.dart';
 
 /// A consistent task-oriented heading for pages and workspace sections.
 class AppPageHeader extends StatelessWidget {
@@ -13,6 +15,10 @@ class AppPageHeader extends StatelessWidget {
   final Widget? trailing;
   final List<Widget> actions;
 
+  /// Optional desktop wayfinding trail (depth ≥2 pages, spec §6.5). Rendered
+  /// above the eyebrow; omit for root/workspace pages.
+  final List<AppBreadcrumbItem>? breadcrumbs;
+
   const AppPageHeader({
     super.key,
     required this.title,
@@ -23,6 +29,7 @@ class AppPageHeader extends StatelessWidget {
     this.secondaryAction,
     this.trailing,
     this.actions = const [],
+    this.breadcrumbs,
   });
 
   @override
@@ -30,6 +37,7 @@ class AppPageHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
 
     final resolvedActions = <Widget>[
       ...actions,
@@ -53,13 +61,17 @@ class AppPageHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (breadcrumbs != null && breadcrumbs!.isNotEmpty) ...[
+                AppBreadcrumbs(items: breadcrumbs!),
+                const SizedBox(height: AppDimensions.s6),
+              ],
               if (eyebrow != null) ...[
                 Text(
-                  eyebrow!.toUpperCase(),
+                  arabic ? eyebrow! : eyebrow!.toUpperCase(),
                   style: textTheme.labelSmall?.copyWith(
                     color: colors.primary,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
+                    letterSpacing: arabic ? 0 : 0.8,
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s4),

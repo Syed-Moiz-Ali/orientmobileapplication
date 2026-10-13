@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 
 class UserAvatar extends StatelessWidget {
   final String initials;
@@ -48,7 +49,7 @@ class UserAvatar extends StatelessWidget {
     if (onTap == null) return avatar;
     return Semantics(
       button: true,
-      label: 'Open profile',
+      label: SharedCoreL10n.of(context).userAvatarOpenProfile,
       child: Material(
         color: Colors.transparent,
         shape: const CircleBorder(),

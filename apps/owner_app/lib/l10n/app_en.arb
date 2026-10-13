@@ -1,0 +1,14 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Orient Owner",
+  "@appTitle": { "description": "Application title shown by the OS task switcher" },
+  "loginAppName": "Orient Owner App",
+  "@loginAppName": { "description": "App identity name shown on the shared auth shell" },
+  "loginAppPurpose": "Monitor branches, job cards, staff, revenue, approvals, inventory, and workshop performance.",
+  "@loginAppPurpose": { "description": "App purpose shown on the shared auth shell" },
+  "loginIntendedUsers": "For workshop owners and admins",
+  "@loginIntendedUsers": { "description": "Intended users shown on the shared auth shell" },
+  "authSecurityNotice": "By signing in, you agree to the Orient Owner App Terms of Service and Privacy Policy.",
+  "@authSecurityNotice": { "description": "App-specific legal notice under the shared auth form" }
+}

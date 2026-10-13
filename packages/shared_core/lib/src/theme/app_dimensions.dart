@@ -124,6 +124,24 @@ class AppDimensions {
   static const double contentStandard = 1180;
   static const double contentWide = 1320;
 
+  /// Base minimum height of a compact KPI tile (Phase 00 decision log,
+  /// 2026-10-13): 156 px covers the Arabic line-height (×1.05) at 320 px and
+  /// the label/sub text stack at 1.0× text scale. Tiles grow with the system
+  /// text scale (clamped 1.0–2.0×) — see `AppKpiCard`.
+  static const double kpiTileMinHeight = 156;
+
+  // ---------------------------------------------------------------------------
+  // Table density (Phase 03B, spec §13)
+  // ---------------------------------------------------------------------------
+  /// Compact desktop table data-row height (dense registers).
+  static const double tableRowCompact = 36;
+
+  /// Standard desktop table data-row height.
+  static const double tableRowRegular = 44;
+
+  /// Desktop table header height.
+  static const double tableHeaderHeight = 40;
+
   // ---------------------------------------------------------------------------
   // Backward-Compatible Numeric Radii Aliases
   // ---------------------------------------------------------------------------

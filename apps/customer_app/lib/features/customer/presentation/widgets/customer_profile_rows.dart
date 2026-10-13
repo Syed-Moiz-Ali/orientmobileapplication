@@ -136,7 +136,7 @@ class _ActionRow extends StatelessWidget {
                 ),
               ],
               const SizedBox(width: AppDimensions.s6),
-              Icon(
+              DirectionalIcon(
                 Icons.chevron_right_rounded,
                 size: AppDimensions.iconMd,
                 color: colors.outline,

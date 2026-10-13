@@ -1,4 +1,6 @@
+import 'package:crm_app/l10n/gen/crm_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_auth/shared_auth.dart';
@@ -37,6 +39,10 @@ class CrmApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final brand = ref.watch(brandConfigProvider);
+    final effectiveLocale = AppLocales.resolve(
+      persisted: ref.watch(localeProvider),
+      system: WidgetsBinding.instance.platformDispatcher.locale,
+    );
     // FE-FIX (pre-deployment): reload CRM data on resume so new leads /
     // WhatsApp conversations appear without a manual refresh.
     return ResumeRefreshScope(
@@ -46,11 +52,19 @@ class CrmApp extends ConsumerWidget {
           debugShowCheckedModeBanner: false,
           routerConfig: router,
           title: brand.appName,
-          theme: AppTheme.light(brand),
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(0.85)),
-            child: child ?? const SizedBox.shrink(),
-          ),
+          onGenerateTitle: (context) =>
+              CrmLocalizations.of(context)?.appTitle ?? brand.appName,
+          locale: effectiveLocale,
+          supportedLocales: AppLocales.supported,
+          localizationsDelegates: const [
+            CrmLocalizations.delegate,
+            SharedCoreLocalizations.delegate,
+            SharedAuthLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: AppTheme.light(brand, locale: effectiveLocale),
         ),
       ),
     );

@@ -122,19 +122,19 @@ class CrmDashboardPage extends ConsumerWidget {
     final columns = adaptive.isSmallMobile
         ? 1
         : adaptive.pick(compact: 2, medium: 2, expanded: 4, large: 4);
+    // Phase 01 (scale-lock removal): tiles grow with the system text scale so
+    // the value/label stack never clips at 1.3x+. At 1.0x the layout is
+    // identical to the shipped dashboard.
+    final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
+    final baseAspect = adaptive.isSmallMobile
+        ? 2.65
+        : adaptive.pick(compact: 1.35, medium: 1.75, expanded: 2.05, large: 2.15);
     return AppAdaptiveGrid(
       columns: columns,
       minChildWidth: adaptive.isCompact ? 142 : 190,
       spacing: adaptive.itemSpacing,
       runSpacing: adaptive.itemSpacing,
-      childAspectRatio: adaptive.isSmallMobile
-          ? 2.65
-          : adaptive.pick(
-              compact: 1.35,
-              medium: 1.75,
-              expanded: 2.05,
-              large: 2.15,
-            ),
+      childAspectRatio: baseAspect / textScale,
       children: [for (final kpi in kpis) CrmKpiCard(kpi: kpi)],
     );
   }
@@ -313,13 +313,17 @@ class CrmDashboardPage extends ConsumerWidget {
         ),
       ),
       const SizedBox(width: AppDimensions.s10),
-      Text(
-        text,
-        style: const TextStyle(
-          color: CrmColors.textH,
-          fontSize: 19,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
+      Expanded(
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: CrmColors.textH,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     ],

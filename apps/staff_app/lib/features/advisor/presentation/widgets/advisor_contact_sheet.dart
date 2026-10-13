@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/followup_reminder_entity.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'advisor_sheet.dart';
-import 'advisor_handle.dart';
-import 'advisor_divider.dart';
 import 'advisor_contact_option.dart';
 import 'advisor_solid_action.dart';
 
+/// Reach-the-customer sheet: call / WhatsApp / SMS plus mark-reminder-done.
 class AdvisorContactSheet extends StatelessWidget {
   final FollowupReminderEntity r;
   final VoidCallback onCall, onWhatsApp, onSms, onDone;
@@ -20,97 +20,89 @@ class AdvisorContactSheet extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => AdvisorSheet(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const AdvisorHandle(),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.2),
-                  width: 1.5,
-                ),
-              ),
-              child: Center(
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+
+    return AdvisorSheet(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: colors.primary.withValues(alpha: 0.12),
                 child: Text(
-                  r.customerName.substring(0, 1),
-                  style: TextStyle(
-                    color: AppColors.accent,
+                  r.customerName.isNotEmpty ? r.customerName[0] : 'C',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colors.primary,
                     fontWeight: FontWeight.w900,
-                    fontSize: 22,
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    r.customerName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: 0.3,
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r.customerName,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                      ),
                     ),
-                  ),
-                  Text(
-                    '${r.vehicleId} · ${r.task}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.text2,
+                    Text(
+                      '${r.vehicleId} · ${r.task}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        const AdvisorDivider(),
-        const SizedBox(height: 18),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            AdvisorContactOption(
-              icon: Icons.phone_rounded,
-              label: 'Call',
-              color: AppColors.accent,
-              onTap: onCall,
-            ),
-            AdvisorContactOption(
-              icon: Icons.chat_rounded,
-              label: 'WhatsApp',
-              color: const Color(0xFF25D366),
-              onTap: onWhatsApp,
-            ),
-            AdvisorContactOption(
-              icon: Icons.sms_outlined,
-              label: 'SMS',
-              color: AppColors.info,
-              onTap: onSms,
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        AdvisorSolidAction(
-          label: 'Mark Reminder as Done',
-          icon: Icons.check_circle_outline_rounded,
-          gradient: const [AppColors.success, Color(0xFF2DD4BF)],
-          onTap: onDone,
-        ),
-        const SizedBox(height: 6),
-      ],
-    ),
-  );
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s20),
+          const Divider(height: 1),
+          const SizedBox(height: AppDimensions.s18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              AdvisorContactOption(
+                icon: Icons.phone_rounded,
+                label: t.advisorContactCall,
+                color: colors.primary,
+                onTap: onCall,
+              ),
+              AdvisorContactOption(
+                icon: Icons.chat_rounded,
+                label: t.advisorContactWhatsApp,
+                color: AppColors.success,
+                onTap: onWhatsApp,
+              ),
+              AdvisorContactOption(
+                icon: Icons.sms_outlined,
+                label: t.advisorContactSms,
+                color: AppColors.info,
+                onTap: onSms,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s18),
+          AdvisorSolidAction(
+            label: t.advisorActionMarkReminderDone,
+            icon: Icons.check_circle_outline_rounded,
+            color: AppColors.success,
+            onTap: onDone,
+          ),
+        ],
+      ),
+    );
+  }
 }

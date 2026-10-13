@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/widgets/security_badge.dart';
 import 'package:shared_core/shared_core.dart';
 
-/// Shared authentication shell used by every Orient app.
+/// Shared authentication shell used by every Orient app (spec §14 T8).
 ///
 /// Layout strategy:
-/// - compact (< 600): a single focused column. No decorative panel, so the
-///   authentication task owns the whole screen.
+/// - compact (< 600): a single focused column with a condensed identity block
+///   so the authentication task owns the whole screen.
 /// - medium (600 - 899): the same column boxed on a surface card so the extra
 ///   width reads as deliberate instead of stretched.
-/// - expanded (>= 900): a split layout. The left pane carries the Orient
-///   identity and application context; the right pane stays focused on the
-///   authentication task.
+/// - expanded (>= 900): a split layout. The reading-start pane is the navy
+///   [AppColors.navy] identity panel (brand mark, app identity, trust points);
+///   the reading-end pane stays focused on the authentication task.
 ///
 /// The shell is intentionally independent of Riverpod so it can be rendered in
 /// isolation (tests, previews) and reused by [LoginView], [ForgotPasswordView]
@@ -27,6 +28,10 @@ class AuthShell extends StatelessWidget {
   final Widget child;
   final Widget? footer;
 
+  /// App-aware legal notice passed to [SecurityBadge]. When null the shared
+  /// generic wording is used.
+  final String? securityNotice;
+
   const AuthShell({
     super.key,
     this.top,
@@ -38,6 +43,7 @@ class AuthShell extends StatelessWidget {
     this.intendedUsers = 'Workshop users',
     required this.child,
     this.footer,
+    this.securityNotice,
   });
 
   @override
@@ -50,52 +56,51 @@ class AuthShell extends StatelessWidget {
         statusBarIconBrightness: theme.brightness == Brightness.dark
             ? Brightness.light
             : Brightness.dark,
-        systemNavigationBarColor: AppColors.canvas,
+        systemNavigationBarColor: theme.scaffoldBackgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.canvas,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final desktop = constraints.maxWidth >= 900;
-              final compact = constraints.maxWidth < 600;
+          child: FocusTraversalGroup(
+            policy: ReadingOrderTraversalPolicy(),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final split = width >= 900;
+                final compact = width < 600;
 
-              final form = _AuthFormPane(
-                title: title,
-                subtitle: subtitle,
-                appName: appName,
-                appPurpose: appPurpose,
-                intendedUsers: intendedUsers,
-                top: top,
-                footer: footer,
-                showBrand: !desktop,
-                showContext: !desktop,
-                boxed: !compact,
-                child: child,
-              );
+                final form = _AuthFormPane(
+                  title: title,
+                  subtitle: subtitle,
+                  appName: appName,
+                  appPurpose: appPurpose,
+                  intendedUsers: intendedUsers,
+                  top: top,
+                  footer: footer ?? SecurityBadge(text: securityNotice),
+                  showBrand: !split,
+                  showContext: !split,
+                  boxed: !split && !compact,
+                  child: child,
+                );
 
-              if (!desktop) return form;
+                if (!split) return form;
 
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: _AuthIdentityPanel(
-                      appName: appName,
-                      appPurpose: appPurpose,
-                      intendedUsers: intendedUsers,
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: _AuthIdentityPanel(
+                        appName: appName,
+                        appPurpose: appPurpose,
+                        intendedUsers: intendedUsers,
+                      ),
                     ),
-                  ),
-                  VerticalDivider(
-                    width: 1,
-                    thickness: 1,
-                    color: AppColors.borderDefault,
-                  ),
-                  Expanded(flex: 6, child: form),
-                ],
-              );
-            },
+                    Expanded(flex: 6, child: form),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -111,7 +116,7 @@ class _AuthFormPane extends StatelessWidget {
   final String intendedUsers;
   final Widget? top;
   final Widget child;
-  final Widget? footer;
+  final Widget footer;
   final bool showBrand;
   final bool showContext;
   final bool boxed;
@@ -137,6 +142,7 @@ class _AuthFormPane extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, viewport) {
+        final adaptive = AppResponsive.specFor(context, constraints: viewport);
         final width = viewport.maxWidth;
         final horizontal = boxed
             ? AppDimensions.s24
@@ -146,7 +152,6 @@ class _AuthFormPane extends StatelessWidget {
             ? AppDimensions.s20
             : AppDimensions.s24;
         final vertical = boxed ? AppDimensions.s32 : AppDimensions.s28;
-        final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
         final minHeight = (viewport.maxHeight - vertical * 2).clamp(
           0.0,
           double.infinity,
@@ -157,7 +162,7 @@ class _AuthFormPane extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (showBrand) ...[
-              const _AuthBrandMark(),
+              const _AuthBrandLockup(),
               const SizedBox(height: AppDimensions.s24),
             ],
             if (top != null) ...[
@@ -169,6 +174,7 @@ class _AuthFormPane extends StatelessWidget {
                 appName: appName,
                 appPurpose: appPurpose,
                 intendedUsers: intendedUsers,
+                onDark: false,
               ),
               const SizedBox(height: AppDimensions.s28),
             ],
@@ -179,28 +185,28 @@ class _AuthFormPane extends StatelessWidget {
                 style: theme.textTheme.headlineMedium?.copyWith(
                   color: colors.onSurface,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
+                  letterSpacing: AppTypography.tracking(context, -0.5),
                   height: 1.15,
                 ),
               ),
             ),
-            const SizedBox(height: AppDimensions.s8),
+            const SizedBox(height: AppDimensions.s6),
             Text(
               subtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
-                height: 1.45,
+                height: 1.5,
               ),
             ),
-            const SizedBox(height: AppDimensions.s24),
+            const SizedBox(height: AppDimensions.s20),
             child,
             const SizedBox(height: AppDimensions.s28),
-            footer ?? const SecurityBadge(),
+            footer,
           ],
         );
 
         Widget panel = ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: boxed ? 440 : 480),
+          constraints: const BoxConstraints(maxWidth: 460),
           child: content,
         );
 
@@ -209,7 +215,7 @@ class _AuthFormPane extends StatelessWidget {
             decoration: BoxDecoration(
               color: colors.surface,
               borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
-              border: Border.all(color: AppColors.borderDefault),
+              border: Border.all(color: colors.outlineVariant),
               boxShadow: AppDimensions.shadowCard,
             ),
             padding: const EdgeInsets.all(AppDimensions.s28),
@@ -226,7 +232,9 @@ class _AuthFormPane extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: minHeight),
             child: Align(
-              alignment: keyboardOpen ? Alignment.topCenter : Alignment.center,
+              alignment: adaptive.keyboardOpen
+                  ? adaptive.focusedFlowAlignment
+                  : Alignment.center,
               child: panel,
             ),
           ),
@@ -250,10 +258,10 @@ class _AuthIdentityPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final t = SharedAuthL10n.of(context);
 
-    return Container(
-      color: colors.surfaceContainerLow,
+    return ColoredBox(
+      color: AppColors.navy,
       child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -266,54 +274,56 @@ class _AuthIdentityPanel extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _AuthBrandMark(size: 46),
-                const SizedBox(height: AppDimensions.s40),
-                Text(
-                  'Automotive Garage ERP & Workshop Suite.',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.s14),
-                Text(
-                  'End-to-end management for vehicle check-in, multi-point '
-                  'inspections, digital job cards, customer estimates, and parts procurement.',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    height: 1.55,
-                  ),
-                ),
+                const _AuthBrandLockup(onDark: true, size: 46),
                 const SizedBox(height: AppDimensions.s32),
+                Text(
+                  t.authIdentityHeadline,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: AppColors.textInverse,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: AppTypography.tracking(context, -0.5),
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s12),
+                Text(
+                  t.authIdentityBody,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.onNavySecondary,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s28),
                 Container(
-                  padding: const EdgeInsets.all(AppDimensions.s18),
+                  padding: const EdgeInsets.all(AppDimensions.s16),
                   decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-                    border: Border.all(color: colors.outlineVariant),
+                    color: AppColors.navySurfaceRaised,
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusCard,
+                    ),
+                    border: Border.all(color: AppColors.borderDark),
                   ),
                   child: _AuthContextBlock(
                     appName: appName,
                     appPurpose: appPurpose,
                     intendedUsers: intendedUsers,
+                    onDark: true,
                   ),
                 ),
-                const SizedBox(height: AppDimensions.s32),
-                const _AuthTrustPoint(
+                const SizedBox(height: AppDimensions.s28),
+                _AuthTrustPoint(
                   icon: Icons.verified_user_outlined,
-                  label: 'Role-based access & audit compliance',
+                  label: t.authTrustRoles,
                 ),
-                const SizedBox(height: AppDimensions.s14),
-                const _AuthTrustPoint(
+                const SizedBox(height: AppDimensions.s12),
+                _AuthTrustPoint(
                   icon: Icons.sync_rounded,
-                  label: 'Encrypted telemetry & offline sync',
+                  label: t.authTrustSync,
                 ),
-                const SizedBox(height: AppDimensions.s14),
-                const _AuthTrustPoint(
+                const SizedBox(height: AppDimensions.s12),
+                _AuthTrustPoint(
                   icon: Icons.speed_rounded,
-                  label: 'Optimized for high-throughput workshop bays',
+                  label: t.authTrustBays,
                 ),
               ],
             ),
@@ -328,11 +338,13 @@ class _AuthContextBlock extends StatelessWidget {
   final String appName;
   final String appPurpose;
   final String intendedUsers;
+  final bool onDark;
 
   const _AuthContextBlock({
     required this.appName,
     required this.appPurpose,
     required this.intendedUsers,
+    required this.onDark,
   });
 
   @override
@@ -340,6 +352,11 @@ class _AuthContextBlock extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final roles = _roleTokens(intendedUsers);
+    final accent = onDark ? AppDarkColors.primary : colors.primary;
+    final titleColor = onDark ? AppColors.textInverse : colors.onSurface;
+    final bodyColor = onDark
+        ? AppColors.onNavySecondary
+        : colors.onSurfaceVariant;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,7 +368,7 @@ class _AuthContextBlock extends StatelessWidget {
               Container(
                 width: 3,
                 decoration: BoxDecoration(
-                  color: colors.primary,
+                  color: accent,
                   borderRadius: BorderRadius.circular(AppDimensions.rPill),
                 ),
               ),
@@ -364,7 +381,7 @@ class _AuthContextBlock extends StatelessWidget {
                     Text(
                       appName,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        color: colors.onSurface,
+                        color: titleColor,
                         fontWeight: FontWeight.w700,
                         height: 1.2,
                       ),
@@ -374,9 +391,9 @@ class _AuthContextBlock extends StatelessWidget {
                       Text(
                         roles.join(' \u2022 '),
                         style: theme.textTheme.labelMedium?.copyWith(
-                          color: colors.primary,
+                          color: accent,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
+                          letterSpacing: AppTypography.tracking(context, 0.2),
                           height: 1.3,
                         ),
                       ),
@@ -394,8 +411,8 @@ class _AuthContextBlock extends StatelessWidget {
             maxLines: MediaQuery.sizeOf(context).width < 600 ? 2 : 3,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              height: 1.45,
+              color: bodyColor,
+              height: 1.5,
             ),
           ),
         ],
@@ -406,15 +423,17 @@ class _AuthContextBlock extends StatelessWidget {
 
 /// Compact Orient lockup. Uses a programmatic mark rather than the bundled
 /// image asset, which belongs to the technology vendor and not the brand.
-class _AuthBrandMark extends StatelessWidget {
+class _AuthBrandLockup extends StatelessWidget {
   final double size;
+  final bool onDark;
 
-  const _AuthBrandMark({this.size = 38});
+  const _AuthBrandLockup({this.size = 38, this.onDark = false});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = SharedAuthL10n.of(context);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -425,17 +444,19 @@ class _AuthBrandMark extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.primary,
             borderRadius: BorderRadius.circular(size * 0.28),
-            boxShadow: [
-              BoxShadow(
-                color: colors.primary.withValues(alpha: 0.28),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: onDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: colors.primary.withValues(alpha: 0.28),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
           ),
           child: Icon(
             Icons.build_rounded,
-            color: colors.onPrimary,
+            color: AppColors.textInverse,
             size: size * 0.5,
           ),
         ),
@@ -446,27 +467,27 @@ class _AuthBrandMark extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ORIENT',
+                t.authBrandName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  color: colors.onSurface,
-                  fontSize: 15,
+                  color: onDark ? AppColors.textInverse : colors.onSurface,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.6,
+                  letterSpacing: AppTypography.tracking(context, 1.6),
                   height: 1,
                 ),
               ),
               const SizedBox(height: AppDimensions.s4),
               Text(
-                'WORKSHOP SUITE',
+                t.authBrandSub,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  fontSize: 10,
+                  color: onDark
+                      ? AppColors.onNavySecondary
+                      : colors.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1.1,
+                  letterSpacing: AppTypography.tracking(context, 1.1),
                   height: 1,
                 ),
               ),
@@ -482,15 +503,11 @@ class _AuthTrustPoint extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _AuthTrustPoint({
-    required this.icon,
-    required this.label,
-  });
+  const _AuthTrustPoint({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     return Row(
       children: [
@@ -498,21 +515,17 @@ class _AuthTrustPoint extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.1),
+            color: AppColors.navySurfaceRaised,
             borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
           ),
-          child: Icon(
-            icon,
-            size: 17,
-            color: colors.primary,
-          ),
+          child: Icon(icon, size: 17, color: AppDarkColors.primary),
         ),
         const SizedBox(width: AppDimensions.s12),
         Expanded(
           child: Text(
             label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colors.onSurface,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.onNavySecondary,
               fontWeight: FontWeight.w600,
             ),
           ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/models/profile_data.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'package:staff_app/features/common/presentation/profile_screen.dart';
 import 'package:staff_app/features/common/presentation/simple_pages.dart';
 import 'package:staff_app/features/common/presentation/staff_attendance_screen.dart';
@@ -123,30 +124,44 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         name: AppRoutes.login,
-        builder: (context, state) => LoginView(
-          appName: 'Orient Staff App',
-          intendedUsers: 'For advisors, technicians, and supervisors',
-          appPurpose:
-              'Confirm bookings, check in vehicles, run inspections, assign repair work, update tasks, and complete QC.',
-          onLoginSuccess: () {
-            final authState = ref.read(authNotifierProvider);
-            if (authState is AuthAuthenticated) {
-              context.go(AppRoutes.dashboardForRole(authState.role));
-            }
-          },
-          onForgotPassword: () => context.push(AppRoutes.forgotPassword),
-        ),
+        builder: (context, state) {
+          final t = StaffLocalizations.of(context);
+          return LoginView(
+            appName: t?.loginAppName ?? 'Orient Staff App',
+            intendedUsers:
+                t?.loginIntendedUsers ??
+                'For advisors, technicians, and supervisors',
+            appPurpose:
+                t?.loginAppPurpose ??
+                'Confirm bookings, check in vehicles, run inspections, assign repair work, update tasks, and complete QC.',
+            securityNotice: t?.authSecurityNotice,
+            onLoginSuccess: () {
+              final authState = ref.read(authNotifierProvider);
+              if (authState is AuthAuthenticated) {
+                context.go(AppRoutes.dashboardForRole(authState.role));
+              }
+            },
+            onForgotPassword: () => context.push(AppRoutes.forgotPassword),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) => ForgotPasswordView(
-          onBackToLogin: () => context.pop(),
-          appName: 'Orient Staff App',
-          intendedUsers: 'For advisors, technicians, and supervisors',
-          appPurpose:
-              'Confirm bookings, check in vehicles, run inspections, assign repair work, update tasks, and complete QC.',
-        ),
+        builder: (context, state) {
+          final t = StaffLocalizations.of(context);
+          return ForgotPasswordView(
+            onBackToLogin: () => context.pop(),
+            appName: t?.loginAppName ?? 'Orient Staff App',
+            intendedUsers:
+                t?.loginIntendedUsers ??
+                'For advisors, technicians, and supervisors',
+            appPurpose:
+                t?.loginAppPurpose ??
+                'Confirm bookings, check in vehicles, run inspections, assign repair work, update tasks, and complete QC.',
+            securityNotice: t?.authSecurityNotice,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.advisorDashboard,

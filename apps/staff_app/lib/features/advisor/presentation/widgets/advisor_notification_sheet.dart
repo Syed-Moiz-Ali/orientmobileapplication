@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'advisor_sheet.dart';
-import 'advisor_handle.dart';
 import 'advisor_notification_data.dart';
 import 'advisor_notification_row.dart';
 
+/// Notification inbox sheet. Shared with the technician dashboard (Phase 10),
+/// so its import path and presentation contract are preserved.
 class AdvisorNotificationSheet extends ConsumerWidget {
   const AdvisorNotificationSheet({super.key});
 
@@ -23,7 +25,7 @@ class AdvisorNotificationSheet extends ConsumerWidget {
               m['title'] as String? ?? '',
               m['message'] as String? ?? '',
               Icons.notifications_outlined,
-              AppColors.accent,
+              AppColors.info,
               m['timeAgo'] as String? ?? '',
             ),
           )
@@ -33,8 +35,25 @@ class AdvisorNotificationSheet extends ConsumerWidget {
     return [];
   }
 
+  void _clearAll() {
+    try {
+      final box = Hive.box<dynamic>('inspections');
+      final keys = box.keys.where((k) {
+        final v = box.get(k);
+        return v is Map && v['type'] == 'notification';
+      }).toList();
+      for (final k in keys) {
+        box.delete(k);
+      }
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+
     final localItems = _loadNotifications();
     final remoteAsync = ref.watch(advisorNotificationsProvider);
     final remoteItems =
@@ -46,107 +65,55 @@ class AdvisorNotificationSheet extends ConsumerWidget {
                 n.isRead
                     ? Icons.notifications_outlined
                     : Icons.notifications_active_rounded,
-                n.isRead ? AppColors.text3 : AppColors.accent,
+                n.isRead ? colors.onSurfaceVariant : AppColors.info,
                 n.time,
               ),
             )
             .toList();
     final items = [...remoteItems, ...localItems];
+
     return AdvisorSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AdvisorHandle(),
-          const SizedBox(height: 16),
           Row(
             children: [
-              Text(
-                'Notifications',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
+              Expanded(
+                child: Text(
+                  t.advisorNotificationsTitle,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurface,
+                  ),
                 ),
               ),
-              const Spacer(),
               if (items.isNotEmpty)
-                GestureDetector(
-                  onTap: () {
-                    try {
-                      final box = Hive.box<dynamic>('inspections');
-                      final keys = box.keys.where((k) {
-                        final v = box.get(k);
-                        return v is Map && v['type'] == 'notification';
-                      }).toList();
-                      for (final k in keys) {
-                        box.delete(k);
-                      }
-                    } catch (_) {}
+                TextButton(
+                  onPressed: () {
+                    _clearAll();
                     Navigator.pop(context);
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r8),
-                      ),
-                    ),
-                    child: Text(
-                      'Clear all',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.primary,
+                    minimumSize: const Size(0, AppDimensions.touchTarget),
                   ),
+                  child: Text(t.advisorClearAll),
                 ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppDimensions.s12),
           if (items.isNotEmpty)
-            ...items.map((n) => AdvisorNotificationRow(n: n)),
-          if (items.isEmpty)
+            ...items.map((n) => AdvisorNotificationRow(n: n))
+          else
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 30),
-              child: Column(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: AppColors.canvas,
-                      borderRadius: BorderRadius.circular(AppDimensions.r16),
-                    ),
-                    child: const Icon(
-                      Icons.notifications_off_outlined,
-                      color: AppColors.text3,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'No notifications yet',
-                    style: TextStyle(
-                      color: AppColors.text3,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Approval updates and reminders will appear here.',
-                    style: TextStyle(color: AppColors.text4, fontSize: 11),
-                  ),
-                ],
+              padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
+              child: EmptyState(
+                icon: Icons.notifications_off_outlined,
+                title: t.advisorNoNotifications,
+                message: t.advisorNoNotificationsHint,
               ),
             ),
-          const SizedBox(height: 8),
         ],
       ),
     );

@@ -41,30 +41,32 @@ final class AppErrorHandler {
   }
 
   static Widget _buildErrorScreen(FlutterErrorDetails details) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Material(
-        color: const Color(0xFF0F172A),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
-                const SizedBox(height: 16),
-                const Text(
-                  'Something went wrong',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  kDebugMode ? details.exceptionAsString() : 'Please restart the application.',
-                  style: const TextStyle(color: Colors.white60, fontSize: 13),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+    // Phase 02: the previous forced-LTR Directionality wrapper was removed so
+    // the crash surface follows the ambient layout direction. This surface is
+    // the one audited exception to "no hard-coded English": [ErrorWidget.builder]
+    // receives no BuildContext, so localized copy cannot be resolved here.
+    // Copy stays minimal, bilingual-neutral, and is never shown in normal use.
+    return Material(
+      color: const Color(0xFF0F172A),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
+              const SizedBox(height: 16),
+              const Text(
+                'Something went wrong',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                kDebugMode ? details.exceptionAsString() : 'Please restart the application.',
+                style: const TextStyle(color: Colors.white60, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       ),

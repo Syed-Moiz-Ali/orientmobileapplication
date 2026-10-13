@@ -1,5 +1,15 @@
+export 'package:shared_core/l10n/gen/shared_core_localizations.dart';
+
+export 'src/localization/app_locales.dart';
+export 'src/localization/app_formatters.dart';
+export 'src/localization/language_switcher.dart';
+export 'src/localization/locale_provider.dart';
+export 'src/localization/shared_core_l10n.dart';
+
 export 'src/theme/app_colors.dart';
 export 'src/theme/app_dimensions.dart';
+export 'src/theme/app_interaction_states.dart';
+export 'src/theme/app_chart_theme.dart';
 export 'src/theme/app_motion.dart';
 export 'src/theme/app_text_styles.dart';
 export 'src/theme/app_fonts.dart';
@@ -11,6 +21,7 @@ export 'src/layout/app_adaptive_navigation.dart';
 export 'src/layout/app_responsive.dart';
 
 export 'src/widgets/app_card.dart';
+export 'src/widgets/directional_icon.dart';
 export 'src/widgets/app_action_bar.dart';
 export 'src/widgets/app_bottom_sheet.dart';
 export 'src/widgets/app_confirmation_dialog.dart';
@@ -20,8 +31,17 @@ export 'src/widgets/app_kpi_card.dart';
 export 'src/widgets/app_page_frame.dart';
 export 'src/widgets/app_progress.dart';
 export 'src/widgets/app_skeleton.dart';
+export 'src/widgets/app_table.dart';
+export 'src/widgets/app_list_surface.dart';
+export 'src/widgets/app_breadcrumbs.dart';
+export 'src/widgets/workspace_app_bar.dart';
+export 'src/widgets/app_master_detail_scaffold.dart';
 export 'src/widgets/app_text_field.dart';
 export 'src/widgets/app_dropdown_button.dart';
+export 'src/widgets/app_quantity_stepper.dart';
+export 'src/widgets/app_selection_sheet.dart';
+export 'src/widgets/app_snackbar.dart';
+export 'src/widgets/pending_sync_chip.dart';
 export 'src/widgets/app_top_bar.dart';
 export 'src/widgets/app_page_header.dart';
 export 'src/widgets/app_record_row.dart';

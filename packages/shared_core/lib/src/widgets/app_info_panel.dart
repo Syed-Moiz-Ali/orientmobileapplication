@@ -83,38 +83,42 @@ class AppInfoPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final dark = theme.brightness == Brightness.dark;
 
     final (bgColor, borderColor, fgColor, iconColor) = switch (variant) {
       AppInfoPanelVariant.neutral => (
-        AppColors.surfaceSubtle,
-        AppColors.borderDefault,
-        theme.colorScheme.onSurface,
-        theme.colorScheme.onSurfaceVariant,
+        dark ? AppDarkColors.surfaceSunken : AppColors.surfaceSubtle,
+        dark ? AppDarkColors.borderDefault : AppColors.borderDefault,
+        colors.onSurface,
+        colors.onSurfaceVariant,
       ),
       AppInfoPanelVariant.primary => (
-        AppColors.primarySubtle,
-        AppColors.primary.withValues(alpha: 0.3),
-        theme.colorScheme.onSurface,
-        AppColors.primary,
+        dark ? AppDarkColors.primarySubtle : AppColors.primarySubtle,
+        dark
+            ? AppDarkColors.primaryBorder
+            : AppColors.primary.withValues(alpha: 0.3),
+        colors.onSurface,
+        dark ? AppDarkColors.primary : AppColors.primary,
       ),
       AppInfoPanelVariant.success => (
-        const Color(0xFFF0FDF4),
-        const Color(0xFFBBF7D0),
-        const Color(0xFF166534),
-        AppColors.success,
+        dark ? AppDarkColors.successSubtle : AppColors.successSubtle,
+        dark ? AppDarkColors.successBorder : AppColors.successBorder,
+        dark ? AppDarkColors.success : const Color(0xFF166534),
+        dark ? AppDarkColors.success : AppColors.success,
       ),
       AppInfoPanelVariant.warning => (
-        const Color(0xFFFFFBEB),
-        const Color(0xFFFDE68A),
-        const Color(0xFF92400E),
-        AppColors.warning,
+        dark ? AppDarkColors.warningSubtle : AppColors.warningSubtle,
+        dark ? AppDarkColors.warningBorder : AppColors.warningBorder,
+        dark ? AppDarkColors.warning : const Color(0xFF92400E),
+        dark ? AppDarkColors.warning : AppColors.warning,
       ),
       AppInfoPanelVariant.danger => (
-        const Color(0xFFFEF2F2),
-        const Color(0xFFFECACA),
-        const Color(0xFF991B1B),
-        AppColors.danger,
+        dark ? AppDarkColors.dangerSubtle : AppColors.dangerSubtle,
+        dark ? AppDarkColors.dangerBorder : AppColors.dangerBorder,
+        dark ? AppDarkColors.danger : const Color(0xFF991B1B),
+        dark ? AppDarkColors.danger : AppColors.danger,
       ),
       AppInfoPanelVariant.navy => (
         AppColors.navy,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pinput/pinput.dart';
+import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_core/shared_core.dart';
 
 /// Auth-scoped text field used across the shared authentication surfaces.
@@ -23,6 +24,11 @@ class AuthTextField extends StatefulWidget {
   final bool enabled;
   final String? errorText;
   final Widget? labelTrailing;
+
+  /// Forces a fixed text direction for the control content. Identifier fields
+  /// (email, mobile, username) set this to [TextDirection.ltr] so mixed
+  /// Arabic/Latin entry stays legible inside RTL layouts (spec §6).
+  final TextDirection? textDirection;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
 
@@ -40,6 +46,7 @@ class AuthTextField extends StatefulWidget {
     this.enabled = true,
     this.errorText,
     this.labelTrailing,
+    this.textDirection,
     this.onChanged,
     this.onSubmitted,
   });
@@ -86,6 +93,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = SharedAuthL10n.of(context);
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
     final accent = hasError
         ? colors.error
@@ -129,6 +137,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           autofillHints: widget.autofillHints,
           autocorrect: false,
           obscureText: _hidden,
+          textDirection: widget.textDirection,
           cursorColor: colors.primary,
           cursorRadius: const Radius.circular(AppDimensions.r2),
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -166,7 +175,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
                       size: AppDimensions.iconMd,
                     ),
                     color: colors.onSurfaceVariant,
-                    tooltip: _hidden ? 'Show password' : 'Hide password',
+                    tooltip: _hidden ? t.authShowPassword : t.authHidePassword,
                   )
                 : null,
             border: outline(AppColors.borderDefault),
@@ -201,7 +210,9 @@ class AuthOtpField extends StatefulWidget {
   final ValueChanged<String>? onSubmitted;
   final String? errorText;
   final bool enabled;
-  final String label;
+
+  /// Label. When null it resolves to the localized "Verification code".
+  final String? label;
   final bool autofocus;
 
   const AuthOtpField({
@@ -210,7 +221,7 @@ class AuthOtpField extends StatefulWidget {
     this.onSubmitted,
     this.errorText,
     this.enabled = true,
-    this.label = 'Verification code',
+    this.label,
     this.autofocus = true,
   });
 
@@ -231,7 +242,9 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final t = SharedAuthL10n.of(context);
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
+    final resolvedLabel = widget.label ?? t.loginFieldVerificationCode;
 
     PinTheme pinTheme({
       required double width,
@@ -261,7 +274,7 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.label,
+          resolvedLabel,
           style: theme.textTheme.labelMedium?.copyWith(
             color: hasError ? colorScheme.error : colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,

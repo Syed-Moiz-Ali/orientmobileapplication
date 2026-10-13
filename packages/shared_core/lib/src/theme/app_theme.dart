@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/src/branding/brand_config.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_interaction_states.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
 
 abstract final class AppTheme {
   AppTheme._();
 
-  static ThemeData light(BrandConfig brand) {
+  /// Light theme. Pass [locale] so the typography follows the active language
+  /// (Arabic → IBM Plex Sans Arabic with ×1.05 line-height, V11). Latin output
+  /// is byte-identical whether [locale] is null or English.
+  static ThemeData light(BrandConfig brand, {Locale? locale}) {
     final primary = brand.buttonColor;
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primary,
@@ -35,57 +39,80 @@ abstract final class AppTheme {
     );
 
     return _buildTheme(
-      brand: brand,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.canvas,
       inputFillColor: AppColors.surface,
       appBarBackgroundColor: AppColors.canvas,
+      primary: brand.buttonColor,
+      locale: locale,
     );
   }
 
-  static ThemeData dark(BrandConfig brand) {
-    final primary = brand.buttonColor;
+  /// Dark theme built on the approved Phase 01 dark parity map
+  /// ([AppDarkColors] — frozen in `00_VISUAL_DIRECTION.md` §3, 2026-10-13).
+  ///
+  /// Dark stays opt-in (`ThemeMode.light` is the shipped default); it must
+  /// compile, render and pass tests. Component themes are produced by the same
+  /// builder as [light] so both brightnesses always cover the same surface.
+  static ThemeData dark(BrandConfig brand, {Locale? locale}) {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: primary,
+      seedColor: AppDarkColors.primary,
       brightness: Brightness.dark,
-      primary: primary,
-      onPrimary: Colors.white,
-      secondary: const Color(0xFFFFD166),
-      onSecondary: const Color(0xFF171100),
-      tertiary: const Color(0xFF5DE2D1),
-      onTertiary: const Color(0xFF001B18),
-      error: const Color(0xFFFF6B7A),
-      onError: Colors.white,
-      surface: const Color(0xFF111722),
-      surfaceContainerLow: const Color(0xFF0F141D),
-      surfaceContainerHighest: const Color(0xFF192231),
-      outline: const Color(0xFF2A3444),
-      outlineVariant: const Color(0xFF344155),
-      onSurface: const Color(0xFFEAF0FF),
-      onSurfaceVariant: const Color(0xFFAAB5C8),
-      inverseSurface: const Color(0xFFF5F7FB),
-      onInverseSurface: const Color(0xFF111827),
+      primary: AppDarkColors.primary,
+      // Phase 01.1 accessibility amendment: dark ink keeps normal-sized
+      // button labels at WCAG AA on the bright dark primary/danger fills
+      // (white was ≈3.1:1 on #6E8BFF and ≈2.9:1 on #F1707F).
+      onPrimary: AppDarkColors.onPrimary,
+      primaryContainer: AppDarkColors.primarySubtle,
+      onPrimaryContainer: const Color(0xFFD5DEFF),
+      secondary: AppDarkColors.info,
+      onSecondary: AppDarkColors.textInverse,
+      secondaryContainer: AppDarkColors.infoSubtle,
+      onSecondaryContainer: const Color(0xFFE4E0FF),
+      tertiary: AppDarkColors.success,
+      onTertiary: AppDarkColors.textInverse,
+      tertiaryContainer: AppDarkColors.successSubtle,
+      onTertiaryContainer: const Color(0xFFC9F2E1),
+      error: AppDarkColors.danger,
+      onError: AppDarkColors.onError,
+      errorContainer: AppDarkColors.dangerSubtle,
+      onErrorContainer: const Color(0xFFFFD9DE),
+      surface: AppDarkColors.surface,
+      surfaceContainerLowest: AppDarkColors.canvas,
+      surfaceContainerLow: AppDarkColors.surfaceSubtle,
+      surfaceContainer: AppDarkColors.surfaceSubtle,
+      surfaceContainerHigh: AppDarkColors.surfaceSunken,
+      surfaceContainerHighest: AppDarkColors.surfaceSunken,
+      outline: AppDarkColors.borderDefault,
+      outlineVariant: AppDarkColors.borderStrong,
+      onSurface: AppDarkColors.textPrimary,
+      onSurfaceVariant: AppDarkColors.textMuted,
+      inverseSurface: AppDarkColors.surfaceStrong,
+      onInverseSurface: AppDarkColors.textInverse,
       shadow: Colors.black,
+      scrim: AppDarkColors.overlayScrim,
     );
 
     return _buildTheme(
-      brand: brand,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFF070A10),
-      inputFillColor: const Color(0xFF0F141D),
-      appBarBackgroundColor: const Color(0xFF070A10),
+      scaffoldBackgroundColor: AppDarkColors.canvas,
+      inputFillColor: AppDarkColors.surfaceSubtle,
+      appBarBackgroundColor: AppDarkColors.canvas,
+      primary: AppDarkColors.primary,
+      locale: locale,
     );
   }
 
   static ThemeData _buildTheme({
-    required BrandConfig brand,
     required ColorScheme colorScheme,
     required Color scaffoldBackgroundColor,
     required Color inputFillColor,
     required Color appBarBackgroundColor,
+    required Color primary,
+    Locale? locale,
   }) {
-    final primary = brand.buttonColor;
     final onPrimary = colorScheme.onPrimary;
+    final arabic = AppTypography.isArabic(locale);
 
     return ThemeData(
       useMaterial3: true,
@@ -93,10 +120,10 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       // Set the family at ThemeData level so every Material component,
       // overlay, route, dialog and unstyled Text inherits the same typeface.
-      fontFamily: AppFontFamilies.app,
+      fontFamily: arabic ? AppFontFamilies.arabic : AppFontFamilies.app,
       scaffoldBackgroundColor: scaffoldBackgroundColor,
       canvasColor: scaffoldBackgroundColor,
-      textTheme: AppTypography.textTheme.apply(
+      textTheme: AppTypography.forLocale(locale).apply(
         bodyColor: colorScheme.onSurface,
         displayColor: colorScheme.onSurface,
       ),
@@ -113,59 +140,83 @@ abstract final class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTextStyles.pageTitle(color: colorScheme.onSurface),
+        titleTextStyle: AppTextStyles.pageTitle(
+          color: colorScheme.onSurface,
+          arabic: arabic,
+        ),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: onPrimary,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          minimumSize: const Size(0, AppDimensions.touchTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: AppTextStyles.button(color: onPrimary),
-        ),
+        style:
+            ElevatedButton.styleFrom(
+              backgroundColor: primary,
+              foregroundColor: onPrimary,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              minimumSize: const Size(0, AppDimensions.touchTarget),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              textStyle: AppTextStyles.button(color: onPrimary, arabic: arabic),
+            ).copyWith(
+              overlayColor: AppInteractionStates.overlays(primary, onPrimary),
+            ),
       ),
 
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: onPrimary,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          minimumSize: const Size(0, AppDimensions.touchTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          textStyle: AppTextStyles.button(color: onPrimary),
-        ),
+        style:
+            FilledButton.styleFrom(
+              backgroundColor: primary,
+              foregroundColor: onPrimary,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              minimumSize: const Size(0, AppDimensions.touchTarget),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              textStyle: AppTextStyles.button(color: onPrimary, arabic: arabic),
+            ).copyWith(
+              overlayColor: AppInteractionStates.overlays(primary, onPrimary),
+            ),
       ),
 
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: colorScheme.onSurface,
-          minimumSize: const Size(0, AppDimensions.touchTarget),
-          side: BorderSide(color: colorScheme.outlineVariant),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: AppTextStyles.button(color: colorScheme.onSurface),
-        ),
+        style:
+            OutlinedButton.styleFrom(
+              foregroundColor: colorScheme.onSurface,
+              minimumSize: const Size(0, AppDimensions.touchTarget),
+              side: BorderSide(color: colorScheme.outlineVariant),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              textStyle: AppTextStyles.button(
+                color: colorScheme.onSurface,
+                arabic: arabic,
+              ),
+            ).copyWith(
+              overlayColor: AppInteractionStates.overlays(
+                colorScheme.surface,
+                colorScheme.onSurface,
+              ),
+            ),
       ),
 
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: primary,
-          minimumSize: const Size(0, AppDimensions.touchTarget),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          textStyle: AppTextStyles.button(color: primary),
-        ),
+        style:
+            TextButton.styleFrom(
+              foregroundColor: primary,
+              minimumSize: const Size(0, AppDimensions.touchTarget),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: AppTextStyles.button(color: primary, arabic: arabic),
+            ).copyWith(
+              overlayColor: AppInteractionStates.overlays(
+                colorScheme.surface,
+                primary,
+              ),
+            ),
       ),
 
       iconButtonTheme: IconButtonThemeData(
@@ -201,23 +252,41 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
           borderSide: BorderSide(color: colorScheme.error),
         ),
-        hintStyle: AppTextStyles.body(color: colorScheme.onSurfaceVariant),
-        labelStyle: AppTextStyles.label(color: colorScheme.onSurfaceVariant),
-        floatingLabelStyle: AppTextStyles.label(color: primary),
+        hintStyle: AppTextStyles.body(
+          color: colorScheme.onSurfaceVariant,
+          arabic: arabic,
+        ),
+        labelStyle: AppTextStyles.label(
+          color: colorScheme.onSurfaceVariant,
+          arabic: arabic,
+        ),
+        floatingLabelStyle: AppTextStyles.label(color: primary, arabic: arabic),
       ),
 
       dropdownMenuTheme: DropdownMenuThemeData(
-        textStyle: AppTextStyles.body(color: colorScheme.onSurface),
+        textStyle: AppTextStyles.body(
+          color: colorScheme.onSurface,
+          arabic: arabic,
+        ),
         inputDecorationTheme: InputDecorationTheme(
-          hintStyle: AppTextStyles.body(color: colorScheme.onSurfaceVariant),
-          labelStyle: AppTextStyles.label(color: colorScheme.onSurfaceVariant),
+          hintStyle: AppTextStyles.body(
+            color: colorScheme.onSurfaceVariant,
+            arabic: arabic,
+          ),
+          labelStyle: AppTextStyles.label(
+            color: colorScheme.onSurfaceVariant,
+            arabic: arabic,
+          ),
         ),
       ),
 
       popupMenuTheme: PopupMenuThemeData(
-        textStyle: AppTextStyles.body(color: colorScheme.onSurface),
+        textStyle: AppTextStyles.body(
+          color: colorScheme.onSurface,
+          arabic: arabic,
+        ),
         labelTextStyle: WidgetStatePropertyAll(
-          AppTextStyles.body(color: colorScheme.onSurface),
+          AppTextStyles.body(color: colorScheme.onSurface, arabic: arabic),
         ),
       ),
 
@@ -254,9 +323,11 @@ abstract final class AppTheme {
         ),
         titleTextStyle: AppTextStyles.sectionTitle(
           color: colorScheme.onSurface,
+          arabic: arabic,
         ),
         contentTextStyle: AppTextStyles.body(
           color: colorScheme.onSurfaceVariant,
+          arabic: arabic,
         ),
       ),
 
@@ -297,6 +368,7 @@ abstract final class AppTheme {
           final selected = states.contains(WidgetState.selected);
           return AppTextStyles.label(
             color: selected ? primary : colorScheme.onSurfaceVariant,
+            arabic: arabic,
           );
         }),
       ),
@@ -307,9 +379,13 @@ abstract final class AppTheme {
         indicatorColor: primary.withValues(alpha: 0.12),
         selectedIconTheme: IconThemeData(color: primary),
         unselectedIconTheme: IconThemeData(color: colorScheme.onSurfaceVariant),
-        selectedLabelTextStyle: AppTextStyles.label(color: primary),
+        selectedLabelTextStyle: AppTextStyles.label(
+          color: primary,
+          arabic: arabic,
+        ),
         unselectedLabelTextStyle: AppTextStyles.label(
           color: colorScheme.onSurfaceVariant,
+          arabic: arabic,
         ),
       ),
 
@@ -331,7 +407,7 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
         ),
-        labelStyle: AppTextStyles.label(color: primary),
+        labelStyle: AppTextStyles.label(color: primary, arabic: arabic),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       ),
 
@@ -340,6 +416,7 @@ abstract final class AppTheme {
         backgroundColor: colorScheme.inverseSurface,
         contentTextStyle: AppTextStyles.body(
           color: colorScheme.onInverseSurface,
+          arabic: arabic,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
@@ -381,7 +458,10 @@ abstract final class AppTheme {
           color: colorScheme.inverseSurface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
         ),
-        textStyle: AppTextStyles.bodySmall(color: colorScheme.onInverseSurface),
+        textStyle: AppTextStyles.bodySmall(
+          color: colorScheme.onInverseSurface,
+          arabic: arabic,
+        ),
         waitDuration: const Duration(milliseconds: 400),
       ),
     );

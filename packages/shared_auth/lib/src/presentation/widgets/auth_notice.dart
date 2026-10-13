@@ -6,10 +6,9 @@ enum AuthNoticeTone { error, info, success }
 
 /// Inline authentication feedback shared by every Orient auth screen.
 ///
-/// Errors, information and success states share one silhouette so feedback
-/// stays predictable across sign-in, recovery and reset, and differ only by
-/// accent colour. Every notice is announced as a live region for assistive
-/// technology.
+/// Restyled onto the shared [AppInfoPanel] grammar (spec §7): errors, information
+/// and success states share one silhouette and differ only by semantic tone.
+/// Every notice is announced as a live region for assistive technology.
 class AuthNotice extends StatelessWidget {
   final IconData icon;
   final String text;
@@ -24,46 +23,15 @@ class AuthNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final accent = switch (tone) {
-      AuthNoticeTone.error => colors.error,
-      AuthNoticeTone.info => colors.primary,
-      AuthNoticeTone.success => colors.tertiary,
+    final variant = switch (tone) {
+      AuthNoticeTone.error => AppInfoPanelVariant.danger,
+      AuthNoticeTone.info => AppInfoPanelVariant.primary,
+      AuthNoticeTone.success => AppInfoPanelVariant.success,
     };
 
     return Semantics(
       liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.s12),
-        decoration: BoxDecoration(
-          color: Color.alphaBlend(
-            accent.withValues(alpha: 0.08),
-            colors.surface,
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
-          border: Border.all(color: accent.withValues(alpha: 0.35)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 18, color: accent),
-            const SizedBox(width: AppDimensions.s10),
-            Expanded(
-              child: Text(
-                text,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colors.onSurface,
-                  height: 1.4,
-                  fontWeight: tone == AuthNoticeTone.error
-                      ? FontWeight.w600
-                      : FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: AppInfoPanel(variant: variant, icon: icon, message: text),
     );
   }
 }
@@ -86,7 +54,7 @@ class AuthNoticeSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = message;
     return AnimatedSize(
-      duration: AppMotion.standard,
+      duration: AppMotion.resolve(context, AppMotion.standard),
       curve: AppMotion.standardCurve,
       alignment: Alignment.topCenter,
       child: text == null || text.isEmpty

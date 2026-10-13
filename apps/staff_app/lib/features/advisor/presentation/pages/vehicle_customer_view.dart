@@ -1325,9 +1325,7 @@ class _CustomerDetailsSection extends StatelessWidget {
             keyboardType: TextInputType.phone,
             // prefixIcon (not prefix) so the country code is ALWAYS visible,
             // not only while the field is focused.
-            prefix: _CountryCodePrefix(
-              code: PhoneInputField.countries.first.code,
-            ),
+            prefix: _CountryCodePrefix(code: phoneCountries.first.code),
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onChanged: (v) {
               ref.read(vehicleCustomerFormProvider.notifier).setPhone(v);

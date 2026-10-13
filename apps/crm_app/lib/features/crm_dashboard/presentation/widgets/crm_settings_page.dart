@@ -68,6 +68,9 @@ class CrmSettingsPage extends ConsumerWidget {
               onChanged: (_) => notifier.toggleDarkMode(),
             ),
           ),
+          const SizedBox(height: AppDimensions.s10),
+          // Phase 02: minimal language entry point (self-labeling).
+          const LanguageSwitcher(),
           const SizedBox(height: AppDimensions.s16),
           Text(
             'Appearance preferences are saved to this workspace profile.',

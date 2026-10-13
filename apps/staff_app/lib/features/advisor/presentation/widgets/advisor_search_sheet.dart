@@ -7,9 +7,11 @@ import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'advisor_sheet.dart';
-import 'advisor_handle.dart';
 
+/// Global find sheet: search across job cards, customers/vehicles and
+/// approvals, with a scan shortcut. Hive search behavior is unchanged.
 class AdvisorSearchSheet extends ConsumerStatefulWidget {
   final VoidCallback onScan;
   const AdvisorSearchSheet({super.key, required this.onScan});
@@ -41,11 +43,17 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
         .toList();
   }
 
-  List<PendingApprovalEntity> _searchApprovals(List<PendingApprovalEntity> approvals) {
+  List<PendingApprovalEntity> _searchApprovals(
+    List<PendingApprovalEntity> approvals,
+  ) {
     if (_query.isEmpty) return [];
     final q = _query.toLowerCase();
     return approvals
-        .where((a) => a.customerName.toLowerCase().contains(q) || a.estimateId.toLowerCase().contains(q))
+        .where(
+          (a) =>
+              a.customerName.toLowerCase().contains(q) ||
+              a.estimateId.toLowerCase().contains(q),
+        )
         .toList();
   }
 
@@ -59,7 +67,9 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
           .map((m) => Map<String, dynamic>.from(m))
           .where(
             (m) =>
-                (m['customerName'] as String? ?? '').toLowerCase().contains(q) ||
+                (m['customerName'] as String? ?? '').toLowerCase().contains(
+                  q,
+                ) ||
                 (m['make'] as String? ?? '').toLowerCase().contains(q) ||
                 (m['model'] as String? ?? '').toLowerCase().contains(q) ||
                 (m['plateNumber'] as String? ?? '').toLowerCase().contains(q) ||
@@ -74,172 +84,164 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final jobCardsAsync = ref.watch(advisorRecentJobCardsProvider);
-    final approvalsAsync = ref.watch(advisorPendingApprovalsProvider);
-    final jobCards = jobCardsAsync.value ?? const <JobCardEntity>[];
-    final approvals = approvalsAsync.value ?? const <PendingApprovalEntity>[];
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final jobCards =
+        ref.watch(advisorRecentJobCardsProvider).value ??
+        const <JobCardEntity>[];
+    final approvals =
+        ref.watch(advisorPendingApprovalsProvider).value ??
+        const <PendingApprovalEntity>[];
     final cardResults = _searchJobCards(jobCards);
     final approvalResults = _searchApprovals(approvals);
     final customerResults = _searchCustomers();
-    final hasResults = cardResults.isNotEmpty || approvalResults.isNotEmpty || customerResults.isNotEmpty;
+    final hasResults =
+        cardResults.isNotEmpty ||
+        approvalResults.isNotEmpty ||
+        customerResults.isNotEmpty;
 
     return AdvisorSheet(
-      child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AdvisorHandle(),
-            const SizedBox(height: 14),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Search',
-                style: const TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            t.advisorSearchTitle,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colors.onSurface,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          Row(
+            children: [
+              Expanded(
+                child: AppSearchField(
+                  controller: _ctrl,
+                  autofocus: true,
+                  hintText: t.advisorSearchHint,
+                  onChanged: (v) => setState(() => _query = v),
                 ),
               ),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _ctrl,
-              autofocus: true,
-              onChanged: (v) => setState(() => _query = v),
-              style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: 'Search customers, vehicles, job cards, approvals...',
-                hintStyle: const TextStyle(color: AppColors.text3, fontSize: 13),
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.text3, size: 20),
-                suffixIcon: GestureDetector(
-                  onTap: widget.onScan,
-                  child: Container(
-                    margin: const EdgeInsets.all(8),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [AppColors.navy, AppColors.accent]),
-                      borderRadius: BorderRadius.circular(AppDimensions.r8),
-                    ),
-                    child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 16),
-                  ),
-                ),
-                filled: true,
-                fillColor: AppColors.canvas,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  borderSide: const BorderSide(color: AppColors.line),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  borderSide: const BorderSide(color: AppColors.line),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 13),
+              const SizedBox(width: AppDimensions.s8),
+              IconButton.filledTonal(
+                onPressed: widget.onScan,
+                tooltip: t.advisorActionScanTitle,
+                icon: const Icon(Icons.qr_code_scanner_rounded),
               ),
-            ),
-            if (_query.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              if (!hasResults)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Text('No results found', style: TextStyle(color: AppColors.text3, fontSize: 13)),
-                )
-              else ...[
-                if (cardResults.isNotEmpty) ...[
-                  _sectionHeader('Job Cards', cardResults.length),
-                  const SizedBox(height: 6),
-                  ...cardResults.map(
-                    (j) => _resultItem(
-                      Icons.assignment_rounded,
-                      AppColors.accent,
-                      j.customerName,
-                      '${j.vehicleInfo}  \u00b7  ${j.id}',
-                      () {
-                        final router = GoRouter.of(context);
-                        Navigator.pop(context);
-                        router.push(AppRoutes.advisorJobDetail, extra: j);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                if (customerResults.isNotEmpty) ...[
-                  _sectionHeader('Customers / Vehicles', customerResults.length),
-                  const SizedBox(height: 6),
-                  ...customerResults.map(
-                    (c) => _resultItem(
-                      Icons.person_rounded,
-                      AppColors.success,
-                      c['customerName'] as String? ?? '',
-                      '${c['make'] ?? ''} ${c['model'] ?? ''}  \u00b7  ${c['plateNumber'] ?? ''}',
-                      () => Navigator.pop(context),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                if (approvalResults.isNotEmpty) ...[
-                  _sectionHeader('Approvals', approvalResults.length),
-                  const SizedBox(height: 6),
-                  ...approvalResults.map(
-                    (a) => _resultItem(
-                      Icons.thumb_up_rounded,
-                      AppColors.warning,
-                      a.customerName,
-                      '${a.estimateId}  \u00b7  AED ${a.amount.toStringAsFixed(0)}',
-                      () => Navigator.pop(context),
-                    ),
-                  ),
-                ],
-              ],
             ],
-            const SizedBox(height: 8),
+          ),
+          if (_query.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s16),
+            if (!hasResults)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimensions.s24,
+                ),
+                child: EmptyState.noMatch(
+                  icon: Icons.search_off_rounded,
+                  message: t.advisorNoResults,
+                ),
+              )
+            else
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 380),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (cardResults.isNotEmpty) ...[
+                        _groupHeader(
+                          context,
+                          t.advisorSearchGroupJobCards,
+                          cardResults.length,
+                        ),
+                        ...cardResults.map(
+                          (j) => _result(
+                            context,
+                            icon: Icons.assignment_rounded,
+                            title: j.customerName,
+                            subtitle: '${j.vehicleInfo} · ${j.id}',
+                            onTap: () {
+                              final router = GoRouter.of(context);
+                              Navigator.pop(context);
+                              router.push(AppRoutes.advisorJobDetail, extra: j);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: AppDimensions.s8),
+                      ],
+                      if (customerResults.isNotEmpty) ...[
+                        _groupHeader(
+                          context,
+                          t.advisorSearchGroupCustomers,
+                          customerResults.length,
+                        ),
+                        ...customerResults.map(
+                          (c) => _result(
+                            context,
+                            icon: Icons.person_rounded,
+                            title: c['customerName'] as String? ?? '',
+                            subtitle:
+                                '${c['make'] ?? ''} ${c['model'] ?? ''} · ${c['plateNumber'] ?? ''}',
+                            onTap: () => Navigator.pop(context),
+                          ),
+                        ),
+                        const SizedBox(height: AppDimensions.s8),
+                      ],
+                      if (approvalResults.isNotEmpty) ...[
+                        _groupHeader(
+                          context,
+                          t.advisorSearchGroupApprovals,
+                          approvalResults.length,
+                        ),
+                        ...approvalResults.map(
+                          (a) => _result(
+                            context,
+                            icon: Icons.thumb_up_rounded,
+                            title: a.customerName,
+                            subtitle:
+                                '${a.estimateId} · ${AppFormatters.of(context).moneyAED(a.amount)}',
+                            onTap: () => Navigator.pop(context),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _sectionHeader(String label, int count) => Row(
-    children: [
-      Text(
-        '$label ($count)',
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.text2, letterSpacing: 0.3),
+  Widget _groupHeader(BuildContext context, String label, int count) => Padding(
+    padding: const EdgeInsets.only(
+      top: AppDimensions.s4,
+      bottom: AppDimensions.s6,
+    ),
+    child: Text(
+      '$label ($count)',
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
-    ],
+    ),
   );
 
-  Widget _resultItem(IconData icon, Color color, String title, String subtitle, VoidCallback onTap) {
-    return GestureDetector(
+  Widget _result(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return AppRecordRow(
+      leading: Icon(icon, size: AppDimensions.iconMd),
+      title: title,
+      subtitle: subtitle,
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(color: AppColors.canvas, borderRadius: BorderRadius.circular(10)),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                  ),
-                  Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.text3)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
-

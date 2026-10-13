@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 /// Opens a responsive modal surface:
@@ -99,7 +100,7 @@ Future<T?> showAppModalSheet<T>({
                       IconButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
                         icon: const Icon(Icons.close_rounded),
-                        tooltip: 'Close',
+                        tooltip: SharedCoreL10n.of(context).dialogCloseTooltip,
                       ),
                     ],
                   ),

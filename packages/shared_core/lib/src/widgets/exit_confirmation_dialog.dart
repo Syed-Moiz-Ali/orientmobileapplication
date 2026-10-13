@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/widgets/app_confirmation_dialog.dart';
 
 class ExitConfirmationWrapper extends StatelessWidget {
@@ -22,11 +23,12 @@ class ExitConfirmationWrapper extends StatelessWidget {
 }
 
 Future<bool> showExitConfirmationDialog(BuildContext context) {
+  final t = SharedCoreL10n.of(context);
   return showAppConfirmationDialog(
     context,
-    title: 'Exit Orient Workshop?',
-    message: 'Your current work is saved. Close the application now?',
-    confirmLabel: 'Exit',
+    title: t.exitDialogTitle,
+    message: t.exitDialogMessage,
+    confirmLabel: t.exitDialogConfirm,
     icon: Icons.exit_to_app_rounded,
     destructive: true,
   );

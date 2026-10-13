@@ -33,6 +33,10 @@ class KpiCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            // Phase 01: the sub chip takes its natural width and only shrinks
+            // when it genuinely cannot fit — a Spacer would split the row
+            // 50/50 and ellipsize "6 due today" at 1.0x scale.
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 width: 38,
@@ -43,8 +47,8 @@ class KpiCard extends StatelessWidget {
                 ),
                 child: Icon(kpi.icon, color: kpi.color, size: 19),
               ),
-              const Spacer(),
-              if (kpi.sub.isNotEmpty)
+              if (kpi.sub.isNotEmpty) ...[
+                const SizedBox(width: 8),
                 Flexible(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -67,6 +71,7 @@ class KpiCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 10),

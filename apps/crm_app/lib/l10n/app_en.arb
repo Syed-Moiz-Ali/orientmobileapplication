@@ -1,0 +1,14 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Orient CRM",
+  "@appTitle": { "description": "Application title shown by the OS task switcher" },
+  "loginAppName": "Orient CRM App",
+  "@loginAppName": { "description": "App identity name shown on the shared auth shell" },
+  "loginAppPurpose": "Manage customer follow-ups, service communication, leads, reminders, and support activity.",
+  "@loginAppPurpose": { "description": "App purpose shown on the shared auth shell" },
+  "loginIntendedUsers": "For CRM and customer support users",
+  "@loginIntendedUsers": { "description": "Intended users shown on the shared auth shell" },
+  "authSecurityNotice": "By signing in, you agree to the Orient CRM App Terms of Service and Privacy Policy.",
+  "@authSecurityNotice": { "description": "App-specific legal notice under the shared auth form" }
+}

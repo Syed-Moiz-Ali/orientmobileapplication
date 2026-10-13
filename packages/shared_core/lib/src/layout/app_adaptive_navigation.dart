@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_motion.dart';
 
@@ -158,9 +159,18 @@ bool _isNewSelection(int index, int selectedIndex) => index != selectedIndex;
 /// itself so individual applications do not each have to remember it.
 void _selectHaptic() => HapticFeedback.selectionClick();
 
-String _destinationSemantics(String label, {int? count, bool dot = false}) {
-  if (count != null && count > 0) return '$label, $count new';
-  if (dot) return '$label, new activity';
+/// Localized screen-reader label for a navigation destination (Phase 04):
+/// a numeric badge count or a dot activity marker is announced via the shared
+/// `shared_core` copy so navigation semantics localize in EN and AR.
+String _destinationSemantics(
+  BuildContext context,
+  String label, {
+  int? count,
+  bool dot = false,
+}) {
+  final t = SharedCoreL10n.of(context);
+  if (count != null && count > 0) return t.navBadgeCount(label, count);
+  if (dot) return t.navBadgeDot(label);
   return label;
 }
 
@@ -242,6 +252,7 @@ class _NavDestinationTile extends StatelessWidget {
       selected: selected,
       excludeSemantics: true,
       label: _destinationSemantics(
+        context,
         item.label,
         count: badgeCount,
         dot: showBadgeDot,
@@ -250,7 +261,7 @@ class _NavDestinationTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
         child: AnimatedContainer(
-          duration: AppMotion.fast,
+          duration: AppMotion.resolve(context, AppMotion.fast),
           curve: AppMotion.standardCurve,
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(
@@ -359,10 +370,10 @@ class AppBottomNavigation extends StatelessWidget {
               if (_hasOverflow)
                 Expanded(
                   child: _BottomDestination(
-                    item: const AppNavItem(
+                    item: AppNavItem(
                       selectedIcon: Icons.more_horiz_rounded,
                       icon: Icons.more_horiz_rounded,
-                      label: 'More',
+                      label: SharedCoreL10n.of(context).commonMore,
                     ),
                     selected: overflowSelected,
                     badgeCount: overflowBadge?.count,
@@ -447,6 +458,7 @@ class _BottomDestination extends StatelessWidget {
       selected: selected,
       excludeSemantics: true,
       label: _destinationSemantics(
+        context,
         item.label,
         count: badgeCount,
         dot: showBadgeDot,
@@ -487,9 +499,9 @@ class _BottomDestination extends StatelessWidget {
                     ),
                   ),
                   if (badge)
-                    Positioned(
+                    PositionedDirectional(
                       top: -4,
-                      right: 3,
+                      end: 3,
                       child: _NavBadge(count: badgeCount),
                     ),
                 ],
@@ -548,7 +560,7 @@ class _NavOverflowSheet extends StatelessWidget {
               AppDimensions.s12,
             ),
             child: Text(
-              'More',
+              SharedCoreL10n.of(context).commonMore,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -633,7 +645,11 @@ class AppNavigationRail extends StatelessWidget {
       color: colors.surface,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(right: BorderSide(color: colors.outlineVariant)),
+          // Mirrors with reading direction: the rail's inner edge sits at the
+          // reading-end side in both LTR and RTL (Phase 04 RTL rule).
+          border: BorderDirectional(
+            end: BorderSide(color: colors.outlineVariant),
+          ),
         ),
         child: SafeArea(
           top: false,
@@ -745,6 +761,7 @@ class _RailIconDestination extends StatelessWidget {
         selected: selected,
         excludeSemantics: true,
         label: _destinationSemantics(
+          context,
           item.label,
           count: badgeCount,
           dot: showBadgeDot,
@@ -780,9 +797,9 @@ class _RailIconDestination extends StatelessWidget {
                     ),
                   ),
                   if (badge)
-                    Positioned(
+                    PositionedDirectional(
                       top: 4,
-                      right: 5,
+                      end: 5,
                       child: _NavBadge(count: badgeCount),
                     ),
                 ],

@@ -15,10 +15,18 @@ void main() {
       isNotNull,
       reason: 'textButtonTheme missing',
     );
+    // Phase 01: the approved dark parity map (00_VISUAL_DIRECTION.md §3,
+    // 2026-10-13) defines dark primary #6E8BFF for all actions, including the
+    // FAB. Light keeps the brand button color.
     expect(
       dark.floatingActionButtonTheme.backgroundColor,
-      brand.buttonColor,
+      AppDarkColors.primary,
       reason: 'floatingActionButtonTheme missing or wrong',
+    );
+    expect(
+      light.floatingActionButtonTheme.backgroundColor,
+      brand.buttonColor,
+      reason: 'light floatingActionButtonTheme must stay brand-driven',
     );
     expect(
       dark.bottomNavigationBarTheme.showUnselectedLabels,

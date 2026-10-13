@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 Future<bool> showAppConfirmationDialog(
@@ -6,13 +7,15 @@ Future<bool> showAppConfirmationDialog(
   required String title,
   required String message,
   required String confirmLabel,
-  String cancelLabel = 'Cancel',
+  String? cancelLabel,
   IconData icon = Icons.help_outline_rounded,
   bool destructive = false,
 }) async {
   final theme = Theme.of(context);
   final colors = theme.colorScheme;
   final accent = destructive ? colors.error : colors.primary;
+  final effectiveCancelLabel =
+      cancelLabel ?? SharedCoreL10n.of(context).commonCancel;
 
   final confirmed = await showDialog<bool>(
     context: context,
@@ -31,8 +34,11 @@ Future<bool> showAppConfirmationDialog(
       actionsAlignment: MainAxisAlignment.end,
       actions: [
         TextButton(
+          // Destructive confirmations put the safe choice (cancel) under the
+          // thumb and give it initial focus (spec §8.7 — safest choice first).
+          autofocus: destructive,
           onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: Text(cancelLabel),
+          child: Text(effectiveCancelLabel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(dialogContext).pop(true),

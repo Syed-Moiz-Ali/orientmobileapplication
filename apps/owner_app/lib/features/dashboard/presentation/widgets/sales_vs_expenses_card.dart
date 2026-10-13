@@ -39,14 +39,17 @@ class SalesVsExpensesCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                'Sales vs Expenses',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: colorScheme.onSurface,
+              Expanded(
+                child: Text(
+                  'Sales vs Expenses',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ),
-              const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(

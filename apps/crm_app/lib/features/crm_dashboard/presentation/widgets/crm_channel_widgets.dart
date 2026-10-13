@@ -10,17 +10,29 @@ class CrmChannelGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final adaptive = context.adaptive;
+    // Phase 01 (scale-lock removal): below 360 px the grid drops to a single
+    // full-width column (same rule as the KPI grids) so the icon + value +
+    // trend row never crushes the label column at 320 px, and cards grow with
+    // the system text scale so the value/label stack never clips at 1.3x+.
+    // At 1.0x on wider phones the layout is identical to the shipped
+    // dashboard.
+    final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
+    final baseAspect = adaptive.isSmallMobile
+        ? 3.4
+        : adaptive.pick(
+            compact: 2.15,
+            medium: 2.6,
+            expanded: 2.8,
+            large: 3.0,
+          );
     return AppAdaptiveGrid(
-      columns: adaptive.pick(compact: 2, medium: 2, expanded: 2, large: 2),
+      columns: adaptive.isSmallMobile
+          ? 1
+          : adaptive.pick(compact: 2, medium: 2, expanded: 2, large: 2),
       minChildWidth: adaptive.isCompact ? 140 : 210,
       spacing: adaptive.itemSpacing,
       runSpacing: adaptive.itemSpacing,
-      childAspectRatio: adaptive.pick(
-        compact: 2.15,
-        medium: 2.6,
-        expanded: 2.8,
-        large: 3.0,
-      ),
+      childAspectRatio: baseAspect / textScale,
       children: [
         for (final channel in channels) _CrmChannelCard(channel: channel),
       ],

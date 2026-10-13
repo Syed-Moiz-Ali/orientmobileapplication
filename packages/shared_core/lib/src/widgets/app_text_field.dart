@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 class AppTextField extends StatelessWidget {
@@ -12,6 +13,8 @@ class AppTextField extends StatelessWidget {
   final Color? fillColor;
   final TextInputType? keyboardType;
   final int? maxLength;
+  final int maxLines;
+  final int? minLines;
   final TextInputAction? textInputAction;
   final TextCapitalization textCapitalization;
   final List<TextInputFormatter>? inputFormatters;
@@ -22,6 +25,16 @@ class AppTextField extends StatelessWidget {
   final bool readOnly;
   final FocusNode? focusNode;
   final ValueChanged<String>? onSubmitted;
+  final VoidCallback? onTap;
+
+  /// When provided, renders a localized reveal/hide password toggle as the
+  /// suffix icon (the parent owns the obscured state).
+  final VoidCallback? onToggleObscure;
+
+  /// Identifier variant (Phase 02): forces LTR content direction and Latin
+  /// keyboard hints regardless of the UI locale for VIN/plate/phone/SKU/email
+  /// values, while the surrounding label/hint still localize.
+  final bool isIdentifier;
 
   const AppTextField({
     super.key,
@@ -34,6 +47,8 @@ class AppTextField extends StatelessWidget {
     this.fillColor,
     this.keyboardType,
     this.maxLength,
+    this.maxLines = 1,
+    this.minLines,
     this.textInputAction,
     this.textCapitalization = TextCapitalization.none,
     this.inputFormatters,
@@ -44,6 +59,9 @@ class AppTextField extends StatelessWidget {
     this.readOnly = false,
     this.focusNode,
     this.onSubmitted,
+    this.onTap,
+    this.onToggleObscure,
+    this.isIdentifier = false,
   });
 
   @override
@@ -52,6 +70,28 @@ class AppTextField extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
+    // Identifier values (VIN, plate, phone, SKU, email) always render and type
+    // left-to-right with Latin glyphs, even inside an Arabic/RTL form.
+    final textDirection = isIdentifier ? TextDirection.ltr : null;
+    final resolvedTextAlign = isIdentifier ? TextAlign.left : null;
+
+    final effectiveSuffix =
+        suffixIcon ??
+        (onToggleObscure != null
+            ? IconButton(
+                tooltip: obscureText
+                    ? SharedCoreL10n.of(context).commonShowPassword
+                    : SharedCoreL10n.of(context).commonHidePassword,
+                onPressed: onToggleObscure,
+                icon: Icon(
+                  obscureText
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  size: AppDimensions.iconMd,
+                ),
+              )
+            : null);
+
     return TextField(
       controller: controller,
       enabled: enabled,
@@ -59,12 +99,17 @@ class AppTextField extends StatelessWidget {
       focusNode: focusNode,
       obscureText: obscureText,
       onChanged: onChanged,
+      onTap: onTap,
       keyboardType: keyboardType,
       maxLength: maxLength,
+      maxLines: obscureText ? 1 : maxLines,
+      minLines: minLines,
       textInputAction: textInputAction,
       textCapitalization: textCapitalization,
       inputFormatters: inputFormatters,
       onSubmitted: onSubmitted,
+      textDirection: textDirection,
+      textAlign: resolvedTextAlign ?? TextAlign.start,
       style: textTheme.bodyLarge?.copyWith(
         color: colorScheme.onSurface,
         fontWeight: FontWeight.w500,
@@ -81,7 +126,7 @@ class AppTextField extends StatelessWidget {
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: colorScheme.onSurfaceVariant, size: 20)
             : null,
-        suffixIcon: suffixIcon,
+        suffixIcon: effectiveSuffix,
         filled: true,
         fillColor: fillColor ?? colorScheme.surfaceContainerLow,
         contentPadding: const EdgeInsets.symmetric(

@@ -2,7 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_interaction_states.dart';
 import 'package:shared_core/src/theme/app_motion.dart';
+import 'package:shared_core/src/widgets/directional_icon.dart';
+
+/// Resolves the border side of a control, applying the 2 px focus ring when the
+/// control is focused and the resting border otherwise (spec §8.4).
+WidgetStateProperty<BorderSide?> _focusableBorder(
+  Color ring,
+  Color resting, {
+  double restingWidth = 1,
+}) {
+  return WidgetStateProperty.resolveWith((states) {
+    if (states.contains(WidgetState.focused)) {
+      return BorderSide(
+        color: ring,
+        width: AppInteractionStates.focusRingWidth,
+      );
+    }
+    return BorderSide(color: resting, width: restingWidth);
+  });
+}
 
 class PrimaryButton extends StatelessWidget {
   final String label;
@@ -11,6 +31,11 @@ class PrimaryButton extends StatelessWidget {
   final Color? backgroundColor;
   final Color? foregroundColor;
   final IconData? icon;
+
+  /// When true a directional [icon] mirrors horizontally in RTL layouts.
+  /// Defaults to false; [AppButton] flips known directional glyphs
+  /// automatically.
+  final bool mirrorIcon;
   final double height;
   final bool isExpanded;
 
@@ -22,6 +47,7 @@ class PrimaryButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.icon,
+    this.mirrorIcon = false,
     this.height = 52.0,
     this.isExpanded = true,
   });
@@ -37,23 +63,46 @@ class PrimaryButton extends StatelessWidget {
     final effectiveForegroundColor = foregroundColor ?? colorScheme.onPrimary;
     final effectiveHeight = height == 52.0 ? adaptive.controlHeight : height;
 
+    final style =
+        ElevatedButton.styleFrom(
+          backgroundColor: effectiveBackgroundColor,
+          foregroundColor: effectiveForegroundColor,
+          // Phase 01.1 accessibility amendment: a busy button keeps its
+          // active-strength fill and ink so the loading spinner and any label
+          // remain WCAG-compliant (previously the 50 % fill reduced them).
+          // Genuinely disabled buttons keep the established dimmed treatment.
+          disabledBackgroundColor: isLoading
+              ? effectiveBackgroundColor
+              : effectiveBackgroundColor.withValues(alpha: 0.5),
+          disabledForegroundColor: isLoading
+              ? effectiveForegroundColor
+              : effectiveForegroundColor.withValues(alpha: 0.7),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s20),
+          minimumSize: Size(isExpanded ? double.infinity : 0, effectiveHeight),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
+          ),
+        ).copyWith(
+          // Phase 03A accessibility correction: contrast-increasing interaction
+          // overlays + a visible 2 px focus ring, resolved centrally.
+          overlayColor: AppInteractionStates.overlays(
+            effectiveBackgroundColor,
+            effectiveForegroundColor,
+          ),
+          side: AppInteractionStates.focusRing(
+            colorScheme.brightness == Brightness.dark
+                ? AppDarkColors.focusRing
+                : colorScheme.primary,
+          ),
+        );
+
     final button = ElevatedButton(
       onPressed: isLoading ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: effectiveBackgroundColor,
-        foregroundColor: effectiveForegroundColor,
-        disabledBackgroundColor: effectiveBackgroundColor.withValues(alpha: 0.5),
-        disabledForegroundColor: effectiveForegroundColor.withValues(alpha: 0.7),
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s20),
-        minimumSize: Size(isExpanded ? double.infinity : 0, effectiveHeight),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
-        ),
-      ),
+      style: style,
       child: AnimatedSwitcher(
-        duration: AppMotion.standard,
+        duration: AppMotion.resolve(context, AppMotion.standard),
         switchInCurve: AppMotion.enter,
         switchOutCurve: AppMotion.exit,
         child: isLoading
@@ -74,7 +123,12 @@ class PrimaryButton extends StatelessWidget {
                 mainAxisSize: isExpanded ? MainAxisSize.max : MainAxisSize.min,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: AppDimensions.iconSm),
+                    DirectionalIcon(
+                      icon!,
+                      size: AppDimensions.iconSm,
+                      color: effectiveForegroundColor,
+                      mirrorInRtl: mirrorIcon,
+                    ),
                     const SizedBox(width: AppDimensions.s8),
                   ],
                   Flexible(
@@ -110,6 +164,8 @@ class SecondaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final IconData? trailingIcon;
   final IconData? leadingIcon;
+  final bool mirrorLeadingIcon;
+  final bool mirrorTrailingIcon;
   final Color? foregroundColor;
   final Color? borderColor;
   final double height;
@@ -121,6 +177,8 @@ class SecondaryButton extends StatelessWidget {
     this.onPressed,
     this.trailingIcon,
     this.leadingIcon,
+    this.mirrorLeadingIcon = false,
+    this.mirrorTrailingIcon = false,
     this.foregroundColor,
     this.borderColor,
     this.height = 52.0,
@@ -135,33 +193,47 @@ class SecondaryButton extends StatelessWidget {
     final adaptive = context.adaptive;
 
     final effectiveForegroundColor = foregroundColor ?? colorScheme.onSurface;
-    final effectiveBorderColor =
-        borderColor ?? AppColors.borderStrong;
+    final effectiveBorderColor = borderColor ?? AppColors.borderStrong;
     final effectiveHeight = height == 52.0 ? adaptive.controlHeight : height;
 
     final button = OutlinedButton(
       onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: effectiveForegroundColor,
-        disabledForegroundColor: effectiveForegroundColor.withValues(
-          alpha: 0.38,
-        ),
-        side: BorderSide(color: effectiveBorderColor),
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s20),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
-        ),
-        minimumSize: Size(isExpanded ? double.infinity : 0, effectiveHeight),
-      ),
+      style:
+          OutlinedButton.styleFrom(
+            foregroundColor: effectiveForegroundColor,
+            disabledForegroundColor: effectiveForegroundColor.withValues(
+              alpha: 0.38,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s20),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
+            ),
+            minimumSize: Size(
+              isExpanded ? double.infinity : 0,
+              effectiveHeight,
+            ),
+          ).copyWith(
+            side: _focusableBorder(
+              colorScheme.brightness == Brightness.dark
+                  ? AppDarkColors.focusRing
+                  : colorScheme.primary,
+              effectiveBorderColor,
+            ),
+            overlayColor: AppInteractionStates.overlays(
+              colorScheme.surface,
+              effectiveForegroundColor,
+            ),
+          ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: isExpanded ? MainAxisSize.max : MainAxisSize.min,
         children: [
           if (leadingIcon != null) ...[
-            Icon(
-              leadingIcon,
+            DirectionalIcon(
+              leadingIcon!,
               size: AppDimensions.iconSm,
               color: effectiveForegroundColor,
+              mirrorInRtl: mirrorLeadingIcon,
             ),
             const SizedBox(width: AppDimensions.s8),
           ],
@@ -179,10 +251,11 @@ class SecondaryButton extends StatelessWidget {
           ),
           if (trailingIcon != null) ...[
             const SizedBox(width: AppDimensions.s8),
-            Icon(
-              trailingIcon,
+            DirectionalIcon(
+              trailingIcon!,
               size: AppDimensions.iconSm,
               color: effectiveForegroundColor,
+              mirrorInRtl: mirrorTrailingIcon,
             ),
           ],
         ],
@@ -199,7 +272,8 @@ class SecondaryButton extends StatelessWidget {
   }
 }
 
-/// Unified Action System representing primary, secondary, tertiary, danger, quietIcon, and compactInline.
+/// Unified Action System representing primary, secondary, tertiary, danger,
+/// quietIcon, and compactInline.
 class AppButton {
   AppButton._();
 
@@ -219,6 +293,7 @@ class AppButton {
       onPressed: onPressed,
       isLoading: isLoading,
       icon: icon,
+      mirrorIcon: icon != null && DirectionalIcon.isDirectional(icon),
       isExpanded: isExpanded,
       height: height,
     );
@@ -240,12 +315,16 @@ class AppButton {
       onPressed: onPressed,
       leadingIcon: leadingIcon,
       trailingIcon: trailingIcon,
+      mirrorLeadingIcon:
+          leadingIcon != null && DirectionalIcon.isDirectional(leadingIcon),
+      mirrorTrailingIcon:
+          trailingIcon != null && DirectionalIcon.isDirectional(trailingIcon),
       isExpanded: isExpanded,
       height: height,
     );
   }
 
-  /// Tertiary / ghost text button with guaranteed 48px touch target
+  /// Tertiary / ghost text button with guaranteed 48 px touch target
   static Widget tertiary({
     Key? key,
     required String label,
@@ -256,19 +335,33 @@ class AppButton {
     return Builder(
       builder: (context) {
         final fg = color ?? Theme.of(context).colorScheme.primary;
+        final theme = Theme.of(context);
         return TextButton(
           key: key,
           onPressed: onPressed,
-          style: TextButton.styleFrom(
-            foregroundColor: fg,
-            minimumSize: const Size(48, AppDimensions.touchTarget),
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s12),
-          ),
+          style:
+              TextButton.styleFrom(
+                foregroundColor: fg,
+                minimumSize: const Size(48, AppDimensions.touchTarget),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.s12,
+                ),
+              ).copyWith(
+                overlayColor: AppInteractionStates.overlays(
+                  theme.colorScheme.surface,
+                  fg,
+                ),
+              ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: AppDimensions.iconSm, color: fg),
+                DirectionalIcon(
+                  icon,
+                  size: AppDimensions.iconSm,
+                  color: fg,
+                  mirrorInRtl: DirectionalIcon.isDirectional(icon),
+                ),
                 const SizedBox(width: AppDimensions.s6),
               ],
               Text(
@@ -286,7 +379,15 @@ class AppButton {
     );
   }
 
-  /// Danger / destructive action button
+  /// Danger / destructive action button.
+  ///
+  /// Uses the brightness-aware semantic error pair so the label keeps WCAG AA
+  /// contrast in both themes (Phase 01.1 accessibility amendment: the light
+  /// danger ink was hard-coded; dark now pairs `#F1707F` with the dark ink).
+  ///
+  /// Phase 03A: [PrimaryButton] now derives contrast-increasing overlays
+  /// centrally, so the light danger button no longer dips below 4.5:1 in its
+  /// pressed/hovered states (previously ≈4.21:1 pressed).
   static Widget danger({
     Key? key,
     required String label,
@@ -296,19 +397,26 @@ class AppButton {
     bool isExpanded = true,
     double height = 52.0,
   }) {
-    return PrimaryButton(
-      key: key,
-      label: label,
-      onPressed: onPressed,
-      isLoading: isLoading,
-      icon: icon,
-      backgroundColor: AppColors.danger,
-      isExpanded: isExpanded,
-      height: height,
+    return Builder(
+      builder: (context) {
+        final colors = Theme.of(context).colorScheme;
+        return PrimaryButton(
+          key: key,
+          label: label,
+          onPressed: onPressed,
+          isLoading: isLoading,
+          icon: icon,
+          mirrorIcon: icon != null && DirectionalIcon.isDirectional(icon),
+          backgroundColor: colors.error,
+          foregroundColor: colors.onError,
+          isExpanded: isExpanded,
+          height: height,
+        );
+      },
     );
   }
 
-  /// Quiet icon button with guaranteed 48px hit area and soft hover/pressed feedback
+  /// Quiet icon button with guaranteed 48 px hit area and soft hover/pressed feedback
   static Widget quietIcon({
     Key? key,
     required IconData icon,
@@ -339,7 +447,8 @@ class AppButton {
     );
   }
 
-  /// Compact inline action for table rows or cards (36px visual height, 48px touch target hit area)
+  /// Compact inline action for table rows or cards (36 px visual height, 48 px
+  /// touch target hit area). Directional [icon]s flip in RTL.
   static Widget compactInline({
     Key? key,
     required String label,
@@ -350,30 +459,52 @@ class AppButton {
     return Builder(
       builder: (context) {
         final colors = Theme.of(context).colorScheme;
+        final fg = isPrimary ? colors.onPrimary : colors.onSurface;
         return ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: AppDimensions.touchTarget),
+          constraints: const BoxConstraints(
+            minHeight: AppDimensions.touchTarget,
+          ),
           child: Center(
             child: SizedBox(
               height: 36,
               child: ElevatedButton(
                 key: key,
                 onPressed: onPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isPrimary ? colors.primary : colors.surface,
-                  foregroundColor: isPrimary ? colors.onPrimary : colors.onSurface,
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                  side: isPrimary ? null : BorderSide(color: AppColors.borderDefault),
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-                  ),
-                ),
+                style:
+                    ElevatedButton.styleFrom(
+                      backgroundColor: isPrimary
+                          ? colors.primary
+                          : colors.surface,
+                      foregroundColor: fg,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      side: isPrimary
+                          ? null
+                          : BorderSide(color: AppColors.borderDefault),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.s12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusControl,
+                        ),
+                      ),
+                    ).copyWith(
+                      overlayColor: AppInteractionStates.overlays(
+                        isPrimary ? colors.primary : colors.surface,
+                        fg,
+                      ),
+                    ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (icon != null) ...[
-                      Icon(icon, size: 14),
+                      DirectionalIcon(
+                        icon,
+                        size: 14,
+                        color: fg,
+                        mirrorInRtl: DirectionalIcon.isDirectional(icon),
+                      ),
                       const SizedBox(width: AppDimensions.s4),
                     ],
                     Text(
@@ -393,4 +524,3 @@ class AppButton {
     );
   }
 }
-

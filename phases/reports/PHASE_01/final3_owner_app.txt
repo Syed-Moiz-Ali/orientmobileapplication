@@ -1,0 +1,21 @@
+﻿00:00 +0: loading E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/chart_painters_test.dart
+00:00 +0: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/chart_painters_test.dart: BarChartPainter does not crash on empty data
+00:00 +1: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/chart_painters_test.dart: BarChartPainter paints normally with data
+00:00 +2: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/chart_painters_test.dart: DualLinePainter does not crash on empty data
+00:00 +3: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/chart_painters_test.dart: DualLinePainter does not crash on a single data point
+00:00 +4: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/logic_test.dart: JobCard copyWith updates status only
+00:00 +5: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/logic_test.dart: JobCard vehicleDisplay combines vehicle and plate
+00:00 +6: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/logic_test.dart: Message holds recipient and body
+00:00 +7: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/logic_test.dart: DashboardUiState copyWith resets message text
+00:00 +8: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/logic_test.dart: ActivityResponse parsing parses backend activity payload
+00:00 +9: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/logic_test.dart: owner attendance parses staff and shift status
+00:00 +10: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/phase01_layout_smoke_test.dart: OwnerDashboardPage lays out at 1.0x on phone
+00:01 +11: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/phase01_layout_smoke_test.dart: OwnerDashboardPage lays out at 1.0x on phone
+00:01 +12: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/phase01_layout_smoke_test.dart: OwnerDashboardPage lays out at 1.0x on phone
+00:01 +13: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/phase01_layout_smoke_test.dart: OwnerDashboardPage lays out at 1.0x on phone
+00:01 +14: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/responsive_dashboard_widgets_test.dart: owner KPI grid is overflow-free at 1440.0px
+00:01 +15: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/phase01_layout_smoke_test.dart: OwnerDashboardPage lays out at 1.3x on phone
+00:01 +16: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/phase01_layout_smoke_test.dart: OwnerDashboardPage lays out at 800.0 px, 1.3x
+00:02 +17: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/phase01_layout_smoke_test.dart: OwnerDashboardPage lays out at 1280.0 px, 1.3x
+00:02 +18: E:/syed_moiz_ali/orientmobileapplication/apps/owner_app/test/phase01_layout_smoke_test.dart: OwnerDashboardPage survives 320 px at 1.3x
+00:02 +19: All tests passed!

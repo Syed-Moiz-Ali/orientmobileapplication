@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/core/router/app_router.dart';
@@ -76,6 +78,11 @@ class _StaffAppState extends ConsumerState<StaffApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     final brand = ref.watch(brandConfigProvider);
+    // Effective locale: persisted selection → system → English (AppLocales).
+    final effectiveLocale = AppLocales.resolve(
+      persisted: ref.watch(localeProvider),
+      system: WidgetsBinding.instance.platformDispatcher.locale,
+    );
     // Cross-account safety: when the session ends, drop the Technician role
     // providers so a different staff login can never see the previous user's
     // in-memory jobs or profile, and drop the shared attendance state so a
@@ -114,11 +121,19 @@ class _StaffAppState extends ConsumerState<StaffApp> {
           debugShowCheckedModeBanner: false,
           routerConfig: router,
           title: brand.appName,
-          theme: AppTheme.light(brand),
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(0.85)),
-            child: child ?? const SizedBox.shrink(),
-          ),
+          onGenerateTitle: (context) =>
+              StaffLocalizations.of(context)?.appTitle ?? brand.appName,
+          locale: effectiveLocale,
+          supportedLocales: AppLocales.supported,
+          localizationsDelegates: const [
+            StaffLocalizations.delegate,
+            SharedCoreLocalizations.delegate,
+            SharedAuthLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: AppTheme.light(brand, locale: effectiveLocale),
         ),
       ),
     );

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'advisor_sheet.dart';
@@ -55,7 +55,8 @@ class AdvisorJobCardSheet extends StatelessWidget {
       'Cancelled',
       AppColors.text3,
       AppColors.surfaceAlt,
-    ),    JobCardStatus.pending => _StatusStyle(
+    ),
+    JobCardStatus.pending => _StatusStyle(
       'Pending',
       AppColors.warning,
       AppColors.warningBg,
@@ -189,7 +190,7 @@ class AdvisorJobCardSheet extends StatelessWidget {
                 child: AdvisorSolidAction(
                   label: 'Open Job Card',
                   icon: Icons.open_in_new_rounded,
-                  gradient: const [AppColors.navy, AppColors.accent],
+                  color: AppColors.primary,
                   onTap: onOpen,
                 ),
               ),

@@ -175,6 +175,14 @@ class CustomerProfileTab extends ConsumerWidget {
   /// The account actions and about group, using only routes that already exist.
   Widget _groups(BuildContext context, WidgetRef ref) {
     final vehicles = ref.watch(customerDashboardProvider).vehicles.length;
+    // Phase 02: minimal language entry point. The row uses this screen's own
+    // action grammar and opens the shared language picker.
+    final t = SharedCoreL10n.of(context);
+    final selectedLocale =
+        ref.watch(localeProvider) ?? Localizations.localeOf(context);
+    final languageLabel = selectedLocale.languageCode == 'ar'
+        ? t.commonArabic
+        : t.commonEnglish;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -211,6 +219,13 @@ class CustomerProfileTab extends ConsumerWidget {
         const SizedBox(height: AppDimensions.s8),
         _Group(
           children: [
+            _ActionRow(
+              icon: Icons.language_rounded,
+              title: t.commonLanguage,
+              subtitle: languageLabel,
+              trailingText: languageLabel,
+              onTap: () => showLanguagePickerSheet(context),
+            ),
             _ActionRow(
               icon: Icons.article_outlined,
               title: 'Open source licences',

@@ -150,10 +150,13 @@ class AdvisorHeader extends StatelessWidget {
                         child: Container(
                           height: 44,
                           decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+                            color: colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+                              color: colorScheme.outlineVariant.withValues(
+                                alpha: 0.8,
+                              ),
                             ),
                           ),
                           child: Row(
@@ -195,7 +198,9 @@ class AdvisorHeader extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: colorScheme.primary.withValues(alpha: 0.08),
+                              color: colorScheme.primary.withValues(
+                                alpha: 0.08,
+                              ),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -238,8 +243,12 @@ class AdvisorHeader extends StatelessWidget {
             Container(
               height: 20,
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                color: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
               ),
             ),
           ],

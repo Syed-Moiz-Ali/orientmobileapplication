@@ -33,14 +33,17 @@ class JobCardRegisterCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                'Job Card Register',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: colorScheme.onSurface,
+              Expanded(
+                child: Text(
+                  'Job Card Register',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ),
-              const Spacer(),
               TextButton.icon(
                 onPressed: () => Navigator.push(
                   context,

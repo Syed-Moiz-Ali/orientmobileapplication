@@ -13,6 +13,7 @@ import 'package:customer_app/features/customer/presentation/customer_invoice_det
 import 'package:customer_app/features/customer/presentation/customer_notifications_view.dart';
 import 'package:customer_app/features/customer/presentation/customer_service_status_page.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -198,26 +199,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         name: AppRoutes.login,
-        builder: (context, state) => LoginView(
-          appName: 'Orient Customer App',
-          intendedUsers: 'For vehicle owners and service customers',
-          appPurpose:
-              'Book service, track your vehicle, review estimates, approve repairs, and view invoices.',
-          onLoginSuccess: () => context.go(AppRoutes.customerDashboard),
-          onForgotPassword: () => context.push(AppRoutes.forgotPassword),
-          allowRegistration: true,
-        ),
+        builder: (context, state) {
+          final t = CustomerLocalizations.of(context);
+          return LoginView(
+            appName: t?.loginAppName ?? 'Orient Customer App',
+            intendedUsers:
+                t?.loginIntendedUsers ??
+                'For vehicle owners and service customers',
+            appPurpose:
+                t?.loginAppPurpose ??
+                'Book service, track your vehicle, review estimates, approve repairs, and view invoices.',
+            securityNotice: t?.authSecurityNotice,
+            onLoginSuccess: () => context.go(AppRoutes.customerDashboard),
+            onForgotPassword: () => context.push(AppRoutes.forgotPassword),
+            allowRegistration: true,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) => ForgotPasswordView(
-          onBackToLogin: () => context.go(AppRoutes.login),
-          appName: 'Orient Customer App',
-          intendedUsers: 'For vehicle owners and service customers',
-          appPurpose:
-              'Book service, track your vehicle, review estimates, approve repairs, and view invoices.',
-        ),
+        builder: (context, state) {
+          final t = CustomerLocalizations.of(context);
+          return ForgotPasswordView(
+            onBackToLogin: () => context.go(AppRoutes.login),
+            appName: t?.loginAppName ?? 'Orient Customer App',
+            intendedUsers:
+                t?.loginIntendedUsers ??
+                'For vehicle owners and service customers',
+            appPurpose:
+                t?.loginAppPurpose ??
+                'Book service, track your vehicle, review estimates, approve repairs, and view invoices.',
+            securityNotice: t?.authSecurityNotice,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.customerDashboard,

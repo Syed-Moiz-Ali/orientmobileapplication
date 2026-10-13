@@ -28,6 +28,9 @@ class HiveRegistry {
     // "box not opened" because this box was never registered.
     await Hive.openBox<dynamic>('pending_media');
     await Hive.openBox<int>('id_counters');
+    // Phase 02: user preferences (locale selection). Opened here so the locale
+    // provider can hydrate the persisted language before the first frame.
+    await Hive.openBox<dynamic>('settings');
 
     _initialized = true;
 

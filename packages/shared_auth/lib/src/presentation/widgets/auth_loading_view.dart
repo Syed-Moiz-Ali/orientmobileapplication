@@ -1,52 +1,76 @@
 import 'package:flutter/material.dart';
+import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_core/shared_core.dart';
 
+/// Branded startup splash shown at `/` while the session is restored.
+///
+/// Renders on the signature navy surface with the Orient mark and a calm
+/// progress indicator, so the first frame is intentional rather than a blank
+/// flash before the login / workspace decision. Announced as a live region.
 class AuthLoadingView extends StatelessWidget {
   const AuthLoadingView({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final t = SharedAuthL10n.of(context);
+
     return Scaffold(
-      backgroundColor: colors.surfaceContainerLowest,
+      backgroundColor: AppColors.navy,
       body: Semantics(
         liveRegion: true,
-        label: 'Restoring your secure session',
+        label: t.authRestoringSessionSemantics,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  color: colors.primaryContainer,
+                  color: theme.colorScheme.primary,
                   borderRadius: BorderRadius.circular(
                     AppDimensions.radiusPanel,
                   ),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.build_rounded,
-                  color: colors.onPrimaryContainer,
-                  size: 26,
+                  color: AppColors.textInverse,
+                  size: 30,
                 ),
               ),
-              const SizedBox(height: AppDimensions.s16),
+              const SizedBox(height: AppDimensions.s20),
               Text(
-                'Restoring your session',
+                t.authBrandName,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w700,
+                  color: AppColors.textInverse,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: AppTypography.tracking(context, 1.6),
                 ),
               ),
-              const SizedBox(height: AppDimensions.s12),
+              const SizedBox(height: AppDimensions.s6),
+              Text(
+                t.authBrandSub,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: AppColors.onNavySecondary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: AppTypography.tracking(context, 1.1),
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s32),
               SizedBox(
                 width: 22,
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: colors.primary,
+                  color: AppColors.textInverse,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s16),
+              Text(
+                t.authRestoringSession,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.onNavySecondary,
                 ),
               ),
             ],

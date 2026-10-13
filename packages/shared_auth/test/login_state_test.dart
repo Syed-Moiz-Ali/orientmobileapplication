@@ -45,13 +45,13 @@ void main() {
 
   group('Country options', () {
     test('UAE is the first (default) country', () {
-      expect(PhoneInputField.countries.first.code, '+971');
-      expect(PhoneInputField.countries.first.expectedLength, 9);
+      expect(phoneCountries.first.code, '+971');
+      expect(phoneCountries.first.expectedLength, 9);
     });
 
     test('all countries have unique codes', () {
-      final codes = PhoneInputField.countries.map((c) => c.code).toSet();
-      expect(codes.length, PhoneInputField.countries.length);
+      final codes = phoneCountries.map((c) => c.code).toSet();
+      expect(codes.length, phoneCountries.length);
     });
   });
 }

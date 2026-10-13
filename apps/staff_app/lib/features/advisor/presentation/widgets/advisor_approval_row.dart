@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
+/// A pending approval card. Uses a narrow-safe composition (Expanded title +
+/// money, and a wrapping status row) so it never overflows at 320 px / 1.3x.
 class AdvisorApprovalRow extends StatelessWidget {
   final PendingApprovalEntity pa;
   final void Function(PendingApprovalEntity) onTap;
@@ -9,102 +12,79 @@ class AdvisorApprovalRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onTap(pa),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(13),
-        decoration: BoxDecoration(
-          color: AppColors.warningBg,
-          borderRadius: BorderRadius.circular(AppDimensions.r14),
-          border: Border.all(color: AppColors.warningBorder),
-        ),
-        child: Row(
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final money = AppFormatters.of(context).moneyAED(pa.amount);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+      child: AppCard.standard(
+        onTap: () => onTap(pa),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppDimensions.r10),
-                border: Border.all(color: AppColors.warningBorder),
-              ),
-              child: const Icon(
-                Icons.receipt_long_outlined,
-                color: AppColors.warning,
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+            Row(
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  color: colors.primary,
+                  size: AppDimensions.iconMd,
+                ),
+                const SizedBox(width: AppDimensions.s10),
+                Expanded(
+                  child: Text(
                     pa.estimateId,
-                    style: TextStyle(
-                      fontSize: 13,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: 0.3,
+                      color: colors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                ),
+                if (pa.isEstimate) ...[
+                  const SizedBox(width: AppDimensions.s8),
                   Text(
-                    pa.typeLabel,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.warning,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${pa.customerName} · ${pa.vehicleId}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.text2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    pa.timeAgo,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.text3,
+                    money,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colors.primary,
                     ),
                   ),
                 ],
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s4),
+            Text(
+              '${pa.customerName} · ${pa.vehicleId}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            const SizedBox(height: AppDimensions.s8),
+            Wrap(
+              spacing: AppDimensions.s8,
+              runSpacing: AppDimensions.s4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (pa.isEstimate)
+                StatusPill.warning(pa.typeLabel),
+                Text(
+                  pa.timeAgo,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+                if (!pa.isEstimate)
                   Text(
-                    'AED ${pa.amount.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontSize: 13,
+                    t.advisorActionReview,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.primary,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.warning,
-                      letterSpacing: 0,
-                    ),
-                  )
-                else
-                  const Text(
-                    'Review',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.warning,
                     ),
                   ),
-                const SizedBox(height: 4),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.stroke,
-                  size: 14,
-                ),
               ],
             ),
           ],

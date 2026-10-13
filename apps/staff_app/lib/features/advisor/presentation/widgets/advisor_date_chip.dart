@@ -1,48 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
+/// Locale-aware date chip (Latin digits, localized month name).
 class AdvisorDateChip extends StatelessWidget {
   const AdvisorDateChip({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final label = '${now.day} ${months[now.month - 1]} ${now.year}';
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final label = AppFormatters.of(context).dateShort(DateTime.now());
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s12,
+        vertical: AppDimensions.s6,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r20),
-        border: Border.all(color: AppColors.line),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 12,
-          color: AppColors.text2,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: colors.onSurfaceVariant,
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
         ),
       ),
     );

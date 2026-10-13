@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 class AppSearchField extends StatefulWidget {
   final TextEditingController? controller;
-  final String hintText;
+
+  /// Hint text. When null it resolves to the localized "Search".
+  final String? hintText;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
+  final ValueChanged<String>? onSubmitted;
+  final FocusNode? focusNode;
   final bool autofocus;
   final bool enabled;
 
   const AppSearchField({
     super.key,
     this.controller,
-    this.hintText = 'Search',
+    this.hintText,
     this.onChanged,
     this.onClear,
+    this.onSubmitted,
+    this.focusNode,
     this.autofocus = false,
     this.enabled = true,
   });
@@ -64,19 +71,22 @@ class _AppSearchFieldState extends State<AppSearchField> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final t = SharedCoreL10n.of(context);
     return TextField(
       controller: _controller,
+      focusNode: widget.focusNode,
       autofocus: widget.autofocus,
       enabled: widget.enabled,
       onChanged: widget.onChanged,
+      onSubmitted: widget.onSubmitted,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
-        hintText: widget.hintText,
+        hintText: widget.hintText ?? t.commonSearchHint,
         prefixIcon: const Icon(Icons.search_rounded),
         suffixIcon: _controller.text.isEmpty
             ? null
             : IconButton(
-                tooltip: 'Clear search',
+                tooltip: t.commonClearSearch,
                 onPressed: _clear,
                 icon: const Icon(Icons.close_rounded),
               ),

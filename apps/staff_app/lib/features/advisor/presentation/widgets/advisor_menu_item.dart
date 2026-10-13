@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
+/// A menu row for advisor sheets, built on the shared record-row grammar.
 class AdvisorMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -20,31 +21,25 @@ class AdvisorMenuItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final c = color ?? colors.onSurface;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
+    return AppRecordRow(
       leading: Container(
         width: 34,
         height: 34,
         decoration: BoxDecoration(
           color: c.withValues(alpha: 0.07),
-          borderRadius: BorderRadius.circular(AppDimensions.r9),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
         ),
         child: Icon(icon, color: c, size: 17),
       ),
-      title: Text(
-        label,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: c,
-          letterSpacing: 0.2,
-        ),
-      ),
-      trailing: showChevron
-          ? Icon(Icons.chevron_right_rounded, color: colors.outlineVariant, size: 18)
-          : null,
+      title: label,
       onTap: onTap,
+      trailing: showChevron
+          ? DirectionalIcon(
+              Icons.chevron_right_rounded,
+              color: colors.outlineVariant,
+              size: 18,
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

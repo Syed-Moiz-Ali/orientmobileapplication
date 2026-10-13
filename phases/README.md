@@ -173,8 +173,8 @@ A phase is complete only when **all** of these hold:
 ## 7. How to track progress
 
 ```
-Phase 00 [x] | 01 [ ] | 02 [ ] | 03A [ ] | 03B [ ] | 04 [ ] | 05 [ ]
-06 [ ] | 07A [ ] | 07B [ ] | 08 [ ] | 09 [ ] | 10 [ ] | 11 [ ]
+Phase 00 [x] | 01 [x] | 02 [x] | 03A [x] | 03B [x] | 04 [x] | 05 [x]
+06 [x] | 07A [ ] | 07B [ ] | 08 [ ] | 09 [ ] | 10 [ ] | 11 [ ]
 12 [ ] | 13A [ ] | 13B [ ] | 14 [ ] | 15A [ ] | 15B [ ] | 16 [ ] | 17 [ ] | 18 [ ]
 19A [ ] | 19B [ ] | 19C [ ] | 20 [ ]
 ```
@@ -185,8 +185,119 @@ blockers; refinements assigned to implementation phases. Frozen values, sign-off
 and handoff prerequisites: `00_VISUAL_DIRECTION.md` (§1–§7);
 execution record: `PHASE_00_VISUAL_DESIGN_VALIDATION.md` §N.
 
+Phase 01 status: **COMPLETE — accepted by the product owner (2026-10-13)**
+after the final Phase 01.1 accessibility correction (WCAG AA dark control
+inks: `onPrimary`/`onError` = `#0C1120`, ≈6.1:1/≈6.6:1 at rest and ≥5.1:1 in
+all enabled states; amended in `00_VISUAL_DIRECTION.md` §3). Deliverable
+Report + evidence pack: `phases/reports/PHASE_01/PHASE_01_COMPLETION.md`
+(33-render pack in `PHASE_01/screens/`, baseline/final logs,
+`scale_polish_list.md`). Zero new test failures vs. baseline across the six
+suites (pre-existing sets recorded separately); prototype untouched
+(299/299); `dart analyze` 0 issues on all six units.
+
+Phase 02 status: **IMPLEMENTATION COMPLETE — in review (awaiting product-owner
+acceptance, 2026-10-13)**. Six l10n units (shared_core/shared_auth + four apps)
+with distinct generated classes; `AppLocales` + Hive-persisted `localeProvider`
+hydrated before the first frame; IBM Plex Sans Arabic bundled and applied through
+locale-aware `AppTypography.forLocale`/`AppTheme`; shared copy + auth copy
+localized EN+AR; `AppFormatters`, `LanguageSwitcher`, `DirectionalIcon` and the
+identifier `AppTextField` variant shipped; forced LTR removed; RTL mirrors shared
+chrome (damage-map exception reserved for 07B). Deliverable Report + evidence
+pack: `phases/reports/PHASE_02/PHASE_02_COMPLETION.md` (11 EN/AR renders in
+`PHASE_02/screens/`, baseline/final logs, capture harnesses). **Zero new test
+failures** vs. baseline across the six suites + prototype (prototype untouched,
+299/299); `dart analyze` 0 issues on all six units + prototype; 7 customer-profile
+goldens intentionally re-baselined after review (additive language row).
+**Phase 03A is ready to start — not started; awaiting explicit authorization.**
+
+Phase 03A status: **IMPLEMENTATION COMPLETE — in review (awaiting product-owner
+acceptance, 2026-10-13)**. The shared interactive primitive catalog is finalized
+in `packages/shared_core` — buttons/actions, inputs/search/select, quantity
+stepper, cards/panels, record rows, KPI tiles, status pills, progress, action
+bar, dialogs/sheets and form primitives — plus the five proven gaps
+(`AppQuantityStepper`, `AppSelectionSheet`/`showAppSelectionSheet`,
+`showAppSnackBar`, `PendingSyncChip`, identifier `AppTextField`). The Phase 01.1
+light-danger pressed-state contrast deviation (≈4.21:1) is fixed centrally
+through the new `AppInteractionStates` (all enabled button states now ≥4.5:1).
+14 new EN+AR ARB keys; EN/AR + RTL + 1.6× verified; 8 new component goldens
+(390/834/1400 × EN/AR + dark) in `phases/reports/PHASE_03A/screens/`. Deliverable
+Report + evidence pack: `phases/reports/PHASE_03A/PHASE_03A_COMPLETION.md`.
+**Zero new test failures** across the six suites + prototype (prototype
+untouched, 299/299); `shared_core` 189/6 (3 component goldens resolved vs. the
+155/9 baseline; the 6 remaining are non-component, owned by 04/01);
+`dart analyze` 0 issues on all seven units. Public APIs additive-only.
+**Phase 03B is ready to start — not started; awaiting explicit authorization.**
+
+Phase 03B status: **IMPLEMENTATION COMPLETE — in review (awaiting product-owner
+acceptance, 2026-10-13)**. The data-display half of the catalog is finalized in
+`packages/shared_core` — `AppSkeleton` variants (text/list/card/grid/chart/table,
+one controller per composite, reduced-motion static, dark `skeleton*` tokens),
+`EmptyState` empty/no-match/error + `ErrorView` details, the `AppTable*` desktop
+primitives with a proven `<600 px` `AppRecordRow` fallback, `AppChartTheme` +
+`AppChartPlaceholder` (palette/typography/tooltip/gridlines/RTL order/empty — no
+`fl_chart` dependency), the documented `AppListSurface` list-surface recipe, and
+the `ShimmerLoading` deprecation. 2 new EN+AR ARB keys; RTL table/chart order,
+1.6× and 320 px verified; 6 new data-display goldens
+(`phases/reports/PHASE_03B/screens/`). Deliverable Report + evidence pack:
+`phases/reports/PHASE_03B/PHASE_03B_COMPLETION.md`. **Zero new test failures**
+across the six suites + prototype (prototype untouched, 299/299); `shared_core`
+216/6 (the 6 remaining are non-component, owned by 04/01); `dart analyze` 0
+issues on all seven units. Public APIs additive-only. **Phase 04 is ready to
+start — not started; awaiting explicit authorization.**
+
+Phase 04 status: **IMPLEMENTATION COMPLETE — in review (awaiting product-owner
+acceptance, 2026-10-13)**. The family-wide shell and navigation are finalized in
+`packages/shared_core` — one shell contract (`DashboardShell`, keyboard/FAB
+clearance), RTL-mirrored rail/drawer/bottom-bar (mirrored rail
+`BorderDirectional`, direction-aware badges, localized "More" + destination
+semantics), the single `WorkspaceAppBar` header composition, `AppBreadcrumbs` +
+`AppPageHeader` breadcrumb slot, and the `AppMasterDetailScaffold` /
+`AppThreePaneScaffold` templates. 3 new EN+AR ARB keys; RTL rail/bottom-bar/
+drawer mirroring, master–detail degradation, breadcrumbs, Escape-closes-modal
+and 1.6× nav rendering all test-proven. Deliverable Report + evidence pack:
+`phases/reports/PHASE_04/PHASE_04_COMPLETION.md` (15 renders in
+`PHASE_04/screens/`). **Zero new test failures** across the six suites +
+prototype (prototype untouched, 299/299); `shared_core` 245/1 (**5
+`shell_family` goldens resolved**; the 1 remaining is non-shell, owned by 01);
+`dart analyze` 0 issues on all seven units. Public APIs additive; no
+route/provider/feature changes. **Phase 05 is ready to start — not started;
+awaiting explicit authorization.**
+
+Phase 05 status: **IMPLEMENTATION COMPLETE — in review (awaiting product-owner
+acceptance, 2026-10-13)**. The authentication experience is redesigned on the
+approved system — navy `AuthShell` identity panel, segmented password/one-time-code
+control, `AppStepProgress` recovery stages, branded navy splash, `AppInfoPanel`-tone
+notices and app-aware `SecurityBadge` — for `LoginView`, `ForgotPasswordView`,
+`AuthLoadingView` and the rebuilt staff `SupervisorLoginView`. `shared_auth` ships
+74 EN keys (EN+AR parity green; ICU plural countdown); each app adds a localized
+`authSecurityNotice`. Legacy `AuthHeader`/`AuthBackground`/`OtpInputField`/
+`PhoneInputField` removed (dial-code data retained as `phoneCountries`).
+Deliverable Report + evidence pack: `phases/reports/PHASE_05/PHASE_05_COMPLETION.md`
+(24 renders in `PHASE_05/screens/`). **Zero new test failures** across the six
+suites + prototype (prototype untouched, 0 changes); `shared_auth` **73/0** (11
+missing auth goldens resolved + 27 new tests); staff **282/7** (baseline set
+unchanged); `dart analyze` 0 issues on all six units. **Phase 06 is ready to start
+— not started; awaiting explicit authorization.**
+
+Phase 06 status: **IMPLEMENTATION COMPLETE — in review (awaiting product-owner
+acceptance, 2026-10-13)**. The advisor daily workspace is redesigned on the
+approved system — Today as a command surface (shift header → attention → metrics →
+recent → quick actions), a search-first Jobs list on `AppRecordRow`, a
+segmented-range Reports view on the shared chart language, and a job-detail
+workspace hub with `AppTopBar` and error+retry; every advisor sheet/dialog and kit
+widget is tokenized, localized and RTL-correct. 155 new `advisor*` ARB keys
+(EN+AR parity green; 168 total). Deliverable Report + evidence pack:
+`phases/reports/PHASE_06/PHASE_06_COMPLETION.md` (14 renders in
+`PHASE_06/screens/`). **Zero new test failures** (staff **312/7** — the 7 are the
+identical pre-existing intake/advisor-workflow set; `shared_auth` 73/0;
+`shared_core` 245/1; owner 21/0; crm 14/0; customer 509/8 with 2 additional
+sub-pixel dark-mode golden diffs in an untouched app, recorded as environmental);
+`dart analyze` 0 issues on all six units; prototype untouched. **Phase 07A is ready
+to start — not started; awaiting explicit authorization.**
+
 Statuses: `not started → in progress → in review → done`. A phase is done only
-after its Deliverable Report + evidence pack exist.
+after its Deliverable Report + evidence pack exist and the product owner
+accepts the review.
 
 ---
 

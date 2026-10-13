@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/localization/language_switcher.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/widgets/app_record_row.dart';
+import 'package:shared_core/src/widgets/directional_icon.dart';
 import 'package:shared_core/src/widgets/logout_dialog.dart';
 import 'package:shared_core/src/widgets/status_pill.dart';
 
@@ -57,6 +60,7 @@ class _ProfileSheetContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = SharedCoreL10n.of(context);
 
     return SafeArea(
       top: false,
@@ -132,7 +136,7 @@ class _ProfileSheetContent extends StatelessWidget {
                   child: AppRecordRow(
                     leading: Icon(item.icon, color: colors.onSurfaceVariant),
                     title: item.label,
-                    trailing: Icon(
+                    trailing: DirectionalIcon(
                       Icons.chevron_right_rounded,
                       color: colors.onSurfaceVariant,
                     ),
@@ -144,6 +148,11 @@ class _ProfileSheetContent extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(height: AppDimensions.s8),
+            // Phase 02: minimal language entry point so every app using the
+            // shared profile sheet can switch EN/AR. Final placement/styling is
+            // refined in the owning feature phases.
+            const LanguageSwitcher(),
             const SizedBox(height: AppDimensions.s16),
             OutlinedButton.icon(
               onPressed: () {
@@ -154,8 +163,8 @@ class _ProfileSheetContent extends StatelessWidget {
                 foregroundColor: colors.error,
                 side: BorderSide(color: colors.error),
               ),
-              icon: const Icon(Icons.logout_rounded),
-              label: const Text('Sign out'),
+              icon: const DirectionalIcon(Icons.logout_rounded),
+              label: Text(t.profileSignOut),
             ),
           ],
         ),

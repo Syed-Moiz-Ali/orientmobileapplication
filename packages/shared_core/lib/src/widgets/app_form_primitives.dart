@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/widgets/app_card.dart';
@@ -7,6 +8,10 @@ import 'package:shared_core/src/widgets/app_card.dart';
 class AppFormField extends StatelessWidget {
   final String? label;
   final bool isRequired;
+
+  /// Marks the field as optional with a single consistent "Optional" marker
+  /// (spec §12.2). Ignored when [isRequired] is true.
+  final bool isOptional;
   final String? helperText;
   final String? errorText;
   final Widget? trailing;
@@ -16,6 +21,7 @@ class AppFormField extends StatelessWidget {
     super.key,
     this.label,
     this.isRequired = false,
+    this.isOptional = false,
     this.helperText,
     this.errorText,
     this.trailing,
@@ -26,6 +32,7 @@ class AppFormField extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
+    final t = SharedCoreL10n.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,6 +63,14 @@ class AppFormField extends StatelessWidget {
                             color: AppColors.danger,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
+                          ),
+                        ),
+                      ] else if (isOptional) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          t.commonOptional,
+                          style: textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -201,7 +216,9 @@ class AppFormPanel extends StatelessWidget {
 /// Clean Date/Time selector trigger button styled as a form input.
 class AppDateSelectorShell extends StatelessWidget {
   final String? value;
-  final String hint;
+
+  /// Hint text. When null it resolves to the localized "Select date".
+  final String? hint;
   final VoidCallback onTap;
   final IconData icon;
   final bool enabled;
@@ -209,7 +226,7 @@ class AppDateSelectorShell extends StatelessWidget {
   const AppDateSelectorShell({
     super.key,
     this.value,
-    this.hint = 'Select date',
+    this.hint,
     required this.onTap,
     this.icon = Icons.calendar_today_rounded,
     this.enabled = true,
@@ -219,6 +236,7 @@ class AppDateSelectorShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasValue = value != null && value!.isNotEmpty;
+    final resolvedHint = hint ?? SharedCoreL10n.of(context).dateSelectorHint;
 
     return Material(
       color: Colors.transparent,
@@ -226,7 +244,9 @@ class AppDateSelectorShell extends StatelessWidget {
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
         child: Container(
-          constraints: const BoxConstraints(minHeight: AppDimensions.touchTarget),
+          constraints: const BoxConstraints(
+            minHeight: AppDimensions.touchTarget,
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.s16,
             vertical: AppDimensions.s12,
@@ -246,11 +266,13 @@ class AppDateSelectorShell extends StatelessWidget {
               const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Text(
-                  hasValue ? value! : hint,
+                  hasValue ? value! : resolvedHint,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: hasValue
                         ? theme.colorScheme.onSurface
-                        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        : theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.7,
+                          ),
                     fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
@@ -270,25 +292,42 @@ class AppDateSelectorShell extends StatelessWidget {
 
 /// Clean media upload / attachment dropzone trigger.
 class AppMediaUploadShell extends StatelessWidget {
-  final String label;
+  /// Label text. When null it resolves to the localized upload copy.
+  final String? label;
+
+  /// Helper text. When null it resolves to the localized helper copy.
   final String? helperText;
   final VoidCallback onTap;
   final IconData icon;
   final bool isLoading;
 
+  /// Failed-upload treatment (danger border + retry).
+  final bool hasError;
+
+  /// Contextual error copy shown when [hasError] is true.
+  final String? errorLabel;
+  final VoidCallback? onRetry;
+
   const AppMediaUploadShell({
     super.key,
-    this.label = 'Click to upload inspection photos or documents',
-    this.helperText = 'Supports JPG, PNG, PDF up to 25MB',
+    this.label,
+    this.helperText,
     required this.onTap,
     this.icon = Icons.cloud_upload_outlined,
     this.isLoading = false,
+    this.hasError = false,
+    this.errorLabel,
+    this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = SharedCoreL10n.of(context);
+    final resolvedLabel = label ?? t.mediaUploadLabel;
+    final resolvedHelper = helperText ?? t.mediaUploadHelper;
+    final borderColor = hasError ? colors.error : AppColors.borderStrong;
 
     return Material(
       color: Colors.transparent,
@@ -301,9 +340,7 @@ class AppMediaUploadShell extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-            border: Border.all(
-              color: AppColors.borderStrong,
-            ),
+            border: Border.all(color: borderColor, width: hasError ? 1.5 : 1),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -319,28 +356,42 @@ class AppMediaUploadShell extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primarySubtle,
+                    color: hasError
+                        ? colors.errorContainer
+                        : colors.primary.withValues(alpha: 0.10),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: colors.primary, size: 24),
+                  child: Icon(
+                    hasError ? Icons.error_outline_rounded : icon,
+                    color: hasError ? colors.error : colors.primary,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(height: AppDimensions.s12),
                 Text(
-                  label,
+                  hasError && errorLabel != null ? errorLabel! : resolvedLabel,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: colors.onSurface,
+                    color: hasError ? colors.error : colors.onSurface,
                   ),
                 ),
-                if (helperText != null) ...[
+                if (!hasError && resolvedHelper.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
-                    helperText!,
+                    resolvedHelper,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
+                  ),
+                ],
+                if (hasError && onRetry != null) ...[
+                  const SizedBox(height: AppDimensions.s8),
+                  TextButton.icon(
+                    onPressed: onRetry,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: Text(t.commonRetry),
                   ),
                 ],
               ],

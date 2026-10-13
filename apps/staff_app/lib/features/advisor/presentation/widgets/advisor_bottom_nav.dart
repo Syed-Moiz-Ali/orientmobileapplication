@@ -84,4 +84,3 @@ class AdvisorBottomNav extends StatelessWidget {
     );
   }
 }
-

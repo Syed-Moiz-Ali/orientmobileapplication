@@ -25,7 +25,7 @@ void main() {
     await _pumpLogin(tester, const Size(390, 844));
 
     expect(find.text('Welcome back'), findsOneWidget);
-    await tester.tap(find.text('Use one-time code instead'));
+    await tester.tap(find.text('One-time code'));
     await tester.pumpAndSettle();
     expect(find.text('Security code'), findsOneWidget);
     expect(find.text('Send code'), findsOneWidget);
@@ -77,7 +77,7 @@ void main() {
     expect(find.text('Create a password'), findsOneWidget);
     expect(find.text('Create account'), findsOneWidget);
     expect(find.text('Already have an account? Sign in'), findsOneWidget);
-    expect(find.text('Use one-time code instead'), findsNothing);
+    expect(find.text('One-time code'), findsNothing);
   });
 
   testWidgets('registration offers both password and code modes', (
@@ -85,12 +85,12 @@ void main() {
   ) async {
     await _pumpLogin(tester, const Size(390, 844), allowRegistration: true);
 
-    await tester.tap(find.text('Use one-time code instead'));
+    await tester.tap(find.text('One-time code'));
     await tester.pumpAndSettle();
     expect(find.text('Security code'), findsOneWidget);
     expect(find.text('Send code'), findsOneWidget);
 
-    await tester.tap(find.text('Use password instead'));
+    await tester.tap(find.text('Password'));
     await tester.pumpAndSettle();
     expect(find.text('Welcome back'), findsOneWidget);
     expect(find.text('New customer? Create an account'), findsOneWidget);
@@ -132,7 +132,7 @@ void main() {
 
   testWidgets('one-time code mode mobile visual reference', (tester) async {
     await _pumpLogin(tester, const Size(390, 844));
-    await tester.tap(find.text('Use one-time code instead'));
+    await tester.tap(find.text('One-time code'));
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(LoginView),
@@ -175,7 +175,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Use one-time code instead'));
+    await tester.tap(find.text('One-time code'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -276,7 +276,7 @@ void main() {
     expect(find.text('Forgot your password?'), findsOneWidget);
     expect(find.text('Email or mobile number'), findsOneWidget);
     expect(find.text('Send recovery code'), findsOneWidget);
-    expect(find.text('Step 1 of 2'), findsOneWidget);
+    expect(find.text('Verify account'), findsOneWidget);
 
     await tester.tap(find.text('Sign in'));
     expect(backTaps, 1);
@@ -291,7 +291,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Enter your email or mobile number.'), findsOneWidget);
-    expect(find.text('Step 1 of 2'), findsOneWidget);
+    expect(find.text('Verify account'), findsOneWidget);
   });
 
   testWidgets('recovery surfaces a backend failure as a live notice', (
@@ -354,11 +354,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('Step 2 of 2'), findsOneWidget);
+    expect(find.text('Verify account'), findsOneWidget);
     expect(find.text('Choose a new password'), findsOneWidget);
     expect(find.textContaining('Recovery code sent to'), findsOneWidget);
     expect(find.text('Recovery code'), findsOneWidget);
-    expect(find.text('Resend in 30s'), findsOneWidget);
+    expect(find.text('Resend in 30 seconds'), findsOneWidget);
     expect(find.text('Change email or mobile'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 31));
@@ -514,47 +514,14 @@ void main() {
     );
   });
 
-  testWidgets('legacy phone and OTP contracts remain visually aligned', (
+  testWidgets('legacy auth controls are removed from the public surface', (
     tester,
   ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
-    addTearDown(tester.view.reset);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(BrandConfig.orient),
-        home: Scaffold(
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimensions.s16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PhoneInputField(error: null, onChanged: (_) {}),
-                const SizedBox(height: AppDimensions.s32),
-                OtpInputField(
-                  phone: '+971 50 123 4567',
-                  error: null,
-                  isLoading: false,
-                  resendCooldown: 0,
-                  onResend: () {},
-                  onChangePhone: () {},
-                  onOtpChanged: (_) {},
-                  onVerify: () {},
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(tester.takeException(), isNull);
-    await expectLater(
-      find.byType(Scaffold),
-      matchesGoldenFile('goldens/auth_controls_mobile.png'),
-    );
+    // Phase 05 retired AuthHeader, AuthBackground, PhoneInputField and
+    // OtpInputField; the live components (AuthTextField/AuthOtpField) are
+    // covered by the tests above. The country dial-code data is retained as
+    // `phoneCountries` for the advisor intake form.
+    expect(phoneCountries.first.code, '+971');
   });
 }
 

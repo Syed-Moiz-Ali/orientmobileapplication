@@ -28,6 +28,10 @@ class CrmKpiCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            // Phase 01: the trend chip takes its natural width and only
+            // shrinks when it genuinely cannot fit — a Spacer would split the
+            // row 50/50 and ellipsize the trend at larger text scales.
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 width: 28,
@@ -38,7 +42,7 @@ class CrmKpiCard extends StatelessWidget {
                 ),
                 child: Icon(kpi.icon, color: kpi.color, size: 15),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(

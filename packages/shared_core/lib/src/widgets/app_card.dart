@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../shared_core.dart';
 
+/// Internal structural style for [AppCard]. Resolved against the active
+/// brightness in [AppCard.build] so the named variants keep their exact light
+/// appearance and gain proper dark parity (Phase 03A).
+enum _AppCardStyle { plain, standard, subtle, outlined, selected }
+
 /// A restrained grouped surface. Prefer page structure, rows, and dividers before
 /// reaching for a card.
 class AppCard extends StatelessWidget {
@@ -17,6 +22,7 @@ class AppCard extends StatelessWidget {
   final double? height;
   final Clip clipBehavior;
   final VoidCallback? onTap;
+  final _AppCardStyle _style;
 
   const AppCard({
     super.key,
@@ -32,7 +38,7 @@ class AppCard extends StatelessWidget {
     this.height,
     this.clipBehavior = Clip.antiAlias,
     this.onTap,
-  });
+  }) : _style = _AppCardStyle.plain;
 
   const AppCard.surface({
     super.key,
@@ -48,7 +54,7 @@ class AppCard extends StatelessWidget {
     this.height,
     this.clipBehavior = Clip.antiAlias,
     this.onTap,
-  });
+  }) : _style = _AppCardStyle.plain;
 
   /// Standard elevated white card with subtle 1px border and soft shadow.
   AppCard.standard({
@@ -60,11 +66,12 @@ class AppCard extends StatelessWidget {
     this.height,
     this.clipBehavior = Clip.antiAlias,
     this.onTap,
-  }) : color = AppColors.surface,
-       borderColor = AppColors.borderDefault,
-       border = Border.all(color: AppColors.borderDefault),
-       boxShadow = AppDimensions.shadowCard,
-       elevation = null;
+  }) : color = null,
+       borderColor = null,
+       border = null,
+       boxShadow = null,
+       elevation = null,
+       _style = _AppCardStyle.standard;
 
   /// Subtle card with soft tinted background and no shadow, ideal for secondary groupings.
   AppCard.subtle({
@@ -76,11 +83,12 @@ class AppCard extends StatelessWidget {
     this.height,
     this.clipBehavior = Clip.antiAlias,
     this.onTap,
-  }) : color = AppColors.surfaceSubtle,
-       borderColor = AppColors.borderDefault,
-       border = Border.all(color: AppColors.borderDefault),
+  }) : color = null,
+       borderColor = null,
+       border = null,
        boxShadow = null,
-       elevation = 0;
+       elevation = null,
+       _style = _AppCardStyle.subtle;
 
   /// Clean outlined card with transparent/surface background and crisp border.
   AppCard.outlined({
@@ -92,11 +100,12 @@ class AppCard extends StatelessWidget {
     this.height,
     this.clipBehavior = Clip.antiAlias,
     this.onTap,
-  }) : color = AppColors.surface,
-       borderColor = AppColors.borderStrong,
-       border = Border.all(color: AppColors.borderStrong),
+  }) : color = null,
+       borderColor = null,
+       border = null,
        boxShadow = null,
-       elevation = 0;
+       elevation = null,
+       _style = _AppCardStyle.outlined;
 
   /// Interactive card with guaranteed minimum touch target and hover/pressed states.
   AppCard.interactive({
@@ -108,11 +117,12 @@ class AppCard extends StatelessWidget {
     this.width,
     this.height,
     this.clipBehavior = Clip.antiAlias,
-  }) : color = AppColors.surface,
-       borderColor = AppColors.borderDefault,
-       border = Border.all(color: AppColors.borderDefault),
-       boxShadow = AppDimensions.shadowCard,
-       elevation = null;
+  }) : color = null,
+       borderColor = null,
+       border = null,
+       boxShadow = null,
+       elevation = null,
+       _style = _AppCardStyle.standard;
 
   /// Selected state card with primary subtle background and electric blue border.
   AppCard.selected({
@@ -124,11 +134,12 @@ class AppCard extends StatelessWidget {
     this.height,
     this.clipBehavior = Clip.antiAlias,
     this.onTap,
-  }) : color = AppColors.primarySubtle,
-       borderColor = AppColors.primary,
-       border = Border.all(color: AppColors.primary, width: 1.5),
+  }) : color = null,
+       borderColor = null,
+       border = null,
        boxShadow = null,
-       elevation = 0;
+       elevation = null,
+       _style = _AppCardStyle.selected;
 
   /// High-emphasis dark navy surface with white text and dark theme propagation.
   factory AppCard.navy({
@@ -153,7 +164,10 @@ class AppCard extends StatelessWidget {
       child: Theme(
         data: ThemeData(
           brightness: Brightness.dark,
-          colorScheme: const ColorScheme.dark(surface: AppColors.navy, primary: Color(0xFF60A5FA)),
+          colorScheme: const ColorScheme.dark(
+            surface: AppColors.navy,
+            primary: Color(0xFF60A5FA),
+          ),
         ),
         child: Padding(padding: padding, child: child),
       ),
@@ -191,17 +205,64 @@ class AppCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final adaptive = context.adaptive;
+    final dark = theme.brightness == Brightness.dark;
 
-    final effectiveBackgroundColor = color ?? colorScheme.surface;
-    final effectiveBorderColor = borderColor ?? colorScheme.outline;
+    // Resolve the named variant against the active brightness. Light values
+    // are byte-identical to the pre-03A constants; dark values use the frozen
+    // dark parity tokens so text is never white-on-white.
+    late final Color variantBg;
+    late final Color variantBorder;
+    late final double variantBorderWidth;
+    late final List<BoxShadow>? variantShadow;
+    switch (_style) {
+      case _AppCardStyle.plain:
+        variantBg = color ?? colorScheme.surface;
+        variantBorder = borderColor ?? colorScheme.outline;
+        variantBorderWidth = 1;
+        variantShadow = null;
+      case _AppCardStyle.standard:
+        variantBg = dark ? AppDarkColors.surface : AppColors.surface;
+        variantBorder = dark
+            ? AppDarkColors.borderDefault
+            : AppColors.borderDefault;
+        variantBorderWidth = 1;
+        variantShadow = AppDimensions.shadowCard;
+      case _AppCardStyle.subtle:
+        variantBg = dark
+            ? AppDarkColors.surfaceSubtle
+            : AppColors.surfaceSubtle;
+        variantBorder = dark
+            ? AppDarkColors.borderDefault
+            : AppColors.borderDefault;
+        variantBorderWidth = 1;
+        variantShadow = null;
+      case _AppCardStyle.outlined:
+        variantBg = dark ? AppDarkColors.surface : AppColors.surface;
+        variantBorder = dark
+            ? AppDarkColors.borderStrong
+            : AppColors.borderStrong;
+        variantBorderWidth = 1;
+        variantShadow = null;
+      case _AppCardStyle.selected:
+        variantBg = dark ? AppDarkColors.selected : AppColors.primarySubtle;
+        variantBorder = dark ? AppDarkColors.primary : AppColors.primary;
+        variantBorderWidth = 1.5;
+        variantShadow = null;
+    }
 
-    final effectiveRadius = borderRadius == AppDimensions.r14 ? adaptive.radius : borderRadius;
+    final effectiveBackgroundColor = variantBg;
+    final effectiveBorderColor = variantBorder;
+
+    final effectiveRadius = borderRadius == AppDimensions.r14
+        ? adaptive.radius
+        : borderRadius;
 
     final effectivePadding = padding ?? EdgeInsets.all(adaptive.itemSpacing);
 
     final List<BoxShadow>? effectiveShadows = elevation == 0
         ? null
         : boxShadow ??
+              variantShadow ??
               (elevation == null
                   ? null
                   : [
@@ -212,10 +273,12 @@ class AppCard extends StatelessWidget {
                       ),
                     ]);
 
-    final effectiveBorder = border ?? Border.all(color: effectiveBorderColor);
+    final effectiveBorder =
+        border ??
+        Border.all(color: effectiveBorderColor, width: variantBorderWidth);
 
     return AnimatedContainer(
-      duration: AppMotion.standard,
+      duration: AppMotion.resolve(context, AppMotion.standard),
       curve: AppMotion.enter,
       width: width,
       height: height,

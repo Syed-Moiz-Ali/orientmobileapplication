@@ -36,13 +36,31 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
     final colorScheme = theme.colorScheme;
     final disabled = widget.onPressed == null || widget.isLoading;
 
+    // Phase 01.1 accessibility amendment: the label previously inherited the
+    // theme text color (onSurface), which overrode the button ink and failed
+    // AA in both themes (dark #111827 on cobalt in light; light #F2F5FB on
+    // cobalt in dark). The label now explicitly follows the button ink:
+    // on-primary while enabled/busy, the neutral disabled ink when disabled.
+    final genuinelyDisabled = widget.onPressed == null && !widget.isLoading;
+    final labelColor = genuinelyDisabled
+        ? colorScheme.onSurfaceVariant
+        : colorScheme.onPrimary;
+
     Widget button = FilledButton(
       onPressed: disabled ? null : widget.onPressed,
       style: FilledButton.styleFrom(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        disabledBackgroundColor: colorScheme.surfaceContainerHighest,
-        disabledForegroundColor: colorScheme.onSurfaceVariant,
+        // Phase 01.1 accessibility amendment: while busy, the button keeps its
+        // active-strength fill and ink so the spinner + label stay WCAG AA
+        // (the neutral disabled fill reduced them, e.g. white-on-grey in
+        // light). Genuinely disabled buttons keep the neutral treatment.
+        disabledBackgroundColor: widget.isLoading
+            ? colorScheme.primary
+            : colorScheme.surfaceContainerHighest,
+        disabledForegroundColor: widget.isLoading
+            ? colorScheme.onPrimary
+            : colorScheme.onSurfaceVariant,
         elevation: 0,
         shadowColor: Colors.transparent,
         minimumSize: const Size.fromHeight(52),
@@ -71,7 +89,12 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
             ),
             const SizedBox(width: AppDimensions.s10),
           ] else if (widget.icon != null) ...[
-            Icon(widget.icon, size: 18),
+            DirectionalIcon(
+              widget.icon!,
+              size: 18,
+              color: labelColor,
+              mirrorInRtl: DirectionalIcon.isDirectional(widget.icon!),
+            ),
             const SizedBox(width: AppDimensions.s8),
           ],
           Flexible(
@@ -82,6 +105,7 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
               style: theme.textTheme.labelLarge?.copyWith(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
+                color: labelColor,
               ),
             ),
           ),
@@ -159,7 +183,12 @@ class AuthLinkButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 18),
+            DirectionalIcon(
+              icon!,
+              size: 18,
+              color: color,
+              mirrorInRtl: DirectionalIcon.isDirectional(icon!),
+            ),
             const SizedBox(width: AppDimensions.s6),
           ],
           Flexible(

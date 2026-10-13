@@ -5,16 +5,21 @@ import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
-import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
+import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
 import 'package:staff_app/features/advisor/presentation/pages/advisor_assign_tasks_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/choose_inspection_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/inspection_provider.dart';
 import 'package:staff_app/features/advisor/presentation/pages/repair_order_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/vehicle_delivery_view.dart';
-import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
+import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
+/// Job workspace hub: identity header, contextual primary action, then the
+/// work / inspection / estimate / history sections. Every action targets the
+/// same routes as before; failed loads surface an error with retry.
 class AdvisorJobDetailView extends ConsumerStatefulWidget {
   final JobCardEntity jc;
   const AdvisorJobDetailView({super.key, required this.jc});
@@ -31,6 +36,8 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   JobCardDetailResponse? _details;
   InspectionSummaryResponse? _inspection;
   bool _hasLocalSubmittedInspection = false;
+  bool _detailsError = false;
+
   String get _detailLookupId => _jc.dbId > 0 ? '${_jc.dbId}' : _jc.id;
   String get _jobCardRef =>
       _details?.id.isNotEmpty == true ? _details!.id : _jc.id;
@@ -73,6 +80,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       if (!mounted) return;
       setState(() {
         _details = details;
+        _detailsError = false;
         if (details.technician.isNotEmpty) _assignedTech = details.technician;
         _jc = _jc.copyWith(
           id: details.id.isNotEmpty ? details.id : _jc.id,
@@ -103,7 +111,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           ),
         );
       });
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) setState(() => _detailsError = true);
+    }
     await _loadInspection();
   }
 
@@ -149,45 +159,6 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     } catch (_) {}
   }
 
-  Color _statusColor(BuildContext context, JobCardStatus status) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return switch (status) {
-      JobCardStatus.inProgress => colorScheme.primary,
-      JobCardStatus.pendingApproval ||
-      JobCardStatus.pending ||
-      JobCardStatus.awaitingSupervisor ||
-      JobCardStatus.inspected ||
-      JobCardStatus.approved ||
-      JobCardStatus.workAssigned ||
-      JobCardStatus.waitingCustomerApproval => colorScheme.secondary,
-      JobCardStatus.completed ||
-      JobCardStatus.delivered ||
-      JobCardStatus.qualityCheckPassed => const Color(0xFF10B981),
-      JobCardStatus.waitingParts => colorScheme.error,
-      JobCardStatus.qualityCheck ||
-      JobCardStatus.vehicleReceived => colorScheme.primary,
-      JobCardStatus.cancelled => colorScheme.onSurfaceVariant,
-    };
-  }
-
-  String _statusLabel(JobCardStatus status) => switch (status) {
-    JobCardStatus.inProgress => 'In Progress',
-    JobCardStatus.pendingApproval => 'Pending Approval',
-    JobCardStatus.completed => 'Completed',
-    JobCardStatus.waitingParts => 'Waiting Parts',
-    JobCardStatus.qualityCheck => 'QC Check',
-    JobCardStatus.cancelled => 'Cancelled',
-    JobCardStatus.pending => 'Pending',
-    JobCardStatus.awaitingSupervisor => 'Awaiting Supervisor',
-    JobCardStatus.vehicleReceived => 'Vehicle Received',
-    JobCardStatus.inspected => 'Inspected',
-    JobCardStatus.approved => 'Approved',
-    JobCardStatus.workAssigned => 'Work Assigned',
-    JobCardStatus.waitingCustomerApproval => 'Waiting Approval',
-    JobCardStatus.delivered => 'Delivered',
-    JobCardStatus.qualityCheckPassed => 'QC Passed',
-  };
-
   String _getVal(String key) => _hiveData?[key] as String? ?? '';
 
   String _apiVal(String value, String fallback) =>
@@ -223,247 +194,123 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final t = StaffLocalizations.of(context)!;
     final hasData = _hiveData != null;
-    final statusColor = _statusColor(context, _jc.status);
     final localBody = _hiveData?['vehicleBodyCondition'];
-    final bodyCondition =
+    final Map<String, dynamic>? bodyCondition =
         _details?.vehicleBodyCondition ??
         (localBody is Map ? Map<String, dynamic>.from(localBody) : null);
 
+    final sections = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _customerSection(t, hasData),
+        const SizedBox(height: AppDimensions.s16),
+        _vehicleSection(t, hasData),
+        if (hasData || (_inspection?.found ?? false)) ...[
+          const SizedBox(height: AppDimensions.s16),
+          _inspectionSection(t),
+        ],
+        if (_hasCompletedInspection) ...[
+          const SizedBox(height: AppDimensions.s16),
+          _workItemsSection(t),
+        ],
+        const SizedBox(height: AppDimensions.s16),
+        _fuelSection(t),
+        if (bodyCondition != null) ...[
+          const SizedBox(height: AppDimensions.s16),
+          _bodyConditionSection(t, bodyCondition),
+        ],
+        const SizedBox(height: AppDimensions.s16),
+        _serviceSection(t),
+        if ((_details?.customerRequests ?? '').trim().isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.s16),
+          _requestsSection(t),
+        ],
+      ],
+    );
+
+    final rail = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _identityHeader(t, hasData),
+        const SizedBox(height: AppDimensions.s16),
+        _nextStepSection(t),
+        const SizedBox(height: AppDimensions.s16),
+        _actionsSection(t),
+      ],
+    );
+
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainerLowest,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Job Card Details',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: AppTopBar(title: t.advisorJobDetailsTitle),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
           _loadHiveData();
           await _loadDetails();
         },
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
-          children: [
-            _headerCard(statusColor, hasData),
-            const SizedBox(height: 16),
-            _buildWorkflowActions(),
-            const SizedBox(height: 16),
-            _section('Customer Details', [
-              _detailRow(
-                Icons.person_outline_rounded,
-                'Name',
-                _apiVal(
-                  _details?.customerName ?? '',
-                  hasData ? _getVal('customerName') : _jc.customerName,
-                ),
-              ),
-              _detailRow(
-                Icons.phone_outlined,
-                'Phone',
-                _displayPhone.isEmpty ? '--' : _displayPhone,
-              ),
-              _detailRow(
-                Icons.email_outlined,
-                'Email',
-                _displayEmail.isEmpty ? '--' : _displayEmail,
-              ),
-              if (_apiVal(
-                _details?.customerGroup ?? '',
-                _getVal('customerGroup'),
-              ).isNotEmpty)
-                _detailRow(
-                  Icons.group_outlined,
-                  'Group',
-                  _apiVal(
-                    _details?.customerGroup ?? '',
-                    _getVal('customerGroup'),
-                  ),
-                ),
-            ], icon: Icons.person_outline_rounded),
-            const SizedBox(height: 16),
-            _section('Vehicle Details', [
-              _detailRow(
-                Icons.directions_car_outlined,
-                'Vehicle',
-                _apiVal(
-                  _details?.vehicleInfo ?? '',
-                  hasData
-                      ? '${_getVal('make')} ${_getVal('model')}'
-                      : _jc.vehicleInfo,
-                ),
-              ),
-              _detailRow(
-                Icons.confirmation_number_outlined,
-                'Plate',
-                (_displayPlate.isEmpty ? '--' : _displayPlate).toUpperCase(),
-                isMono: true,
-              ),
-              _detailRow(
-                Icons.qr_code_rounded,
-                'VIN',
-                _apiVal(_details?.vin ?? '', _getVal('vin')),
-                isMono: true,
-              ),
-              if (_apiVal(
-                _details?.modelYear ?? '',
-                _getVal('modelYear'),
-              ).isNotEmpty)
-                _detailRow(
-                  Icons.calendar_today,
-                  'Year',
-                  _apiVal(_details?.modelYear ?? '', _getVal('modelYear')),
-                ),
-              if (_apiVal(
-                _details?.vehicleColor ?? '',
-                _getVal('vehicleColor'),
-              ).isNotEmpty)
-                _detailRow(
-                  Icons.color_lens_outlined,
-                  'Color',
-                  _apiVal(
-                    _details?.vehicleColor ?? '',
-                    _getVal('vehicleColor'),
-                  ),
-                ),
-              _detailRow(
-                Icons.speed_rounded,
-                'Odometer',
-                _displayOdometer.isEmpty ? '--' : '$_displayOdometer km',
-                isMono: true,
-              ),
-            ], icon: Icons.directions_car_outlined),
-            if (hasData || (_inspection?.found ?? false)) ...[
-              const SizedBox(height: 16),
-              _buildInspectionMediaSection(),
-            ],
-            const SizedBox(height: 16),
-            _section('Fuel Level', [
-              _buildFuelLevelDisplay(),
-            ], icon: Icons.local_gas_station_outlined),
-            if (bodyCondition != null) ...[
-              const SizedBox(height: 16),
-              _section(
-                'Vehicle Body Condition',
-                [
-                  VehicleBodyConditionPanel(
-                    readOnly: true,
-                    embedded: true,
-                    showTitle: false,
-                    bodyCondition: bodyCondition,
-                  ),
-                ],
-                icon: Icons.car_crash_outlined,
-                subtitle: 'Existing marks and damage recorded at intake',
-              ),
-            ],
-            if (_hasCompletedInspection) ...[
-              const SizedBox(height: 16),
-              _buildWorkItemsSection(),
-            ],
-            const SizedBox(height: 16),
-            _section('Service Information', [
-              _detailRow(
-                Icons.build_outlined,
-                'Service Type',
-                'Vehicle Inspection',
-              ),
-              _detailRow(Icons.person_outline, 'Advisor', 'Assigned'),
-              if (_assignedTech.isNotEmpty)
-                _detailRow(
-                  Icons.engineering_outlined,
-                  'Technician',
-                  _assignedTech,
-                ),
-              _detailRow(
-                Icons.schedule_outlined,
-                'Created',
-                _jc.createdDate.isNotEmpty ? _jc.createdDate : _jc.time,
-                isMono: true,
-              ),
-              _detailRow(
-                Icons.update_rounded,
-                'Last Updated',
-                _jc.lastUpdated.isNotEmpty ? _jc.lastUpdated : _jc.time,
-                isMono: true,
-              ),
-            ], icon: Icons.build_outlined),
-            if ((_details?.customerRequests ?? '').trim().isNotEmpty) ...[
-              const SizedBox(height: 16),
-              _section('Customer Requests', [
-                AppMarkdownText(
-                  _details!.customerRequests.trim(),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(height: 1.45),
-                ),
-              ], icon: Icons.chat_bubble_outline_rounded),
-            ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= 1024;
+            final content = wide
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 3, child: sections),
+                      const SizedBox(width: AppDimensions.s24),
+                      SizedBox(width: 380, child: rail),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      rail,
+                      const SizedBox(height: AppDimensions.s16),
+                      sections,
+                    ],
+                  );
 
-            // ── ACTION BUTTONS ────────────────────────────────────────────────
-            const SizedBox(height: 16),
-            _actionButton(
-              'Call Customer',
-              Icons.phone_outlined,
-              colorScheme.surfaceContainerHighest,
-              _callCustomer,
-              textColor: colorScheme.onSurface,
-              iconColor: colorScheme.primary,
-            ),
-            if (_jc.status == JobCardStatus.completed) ...[
-              const SizedBox(height: 10),
-              _actionButton(
-                'Deliver Vehicle',
-                Icons.check_circle_outline,
-                const Color(0xFF10B981),
-                _openDelivery,
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                context.pagePadding.left,
+                AppDimensions.s16,
+                context.pagePadding.right,
+                (AppDimensions.s64 + AppDimensions.s24),
               ),
-            ],
-          ],
+              children: [
+                if (_detailsError && _details == null) ...[
+                  AppInfoPanel.danger(
+                    message: t.advisorJobDetailLoadError,
+                    action: TextButton(
+                      onPressed: _loadDetails,
+                      child: Text(t.advisorActionRefreshJobCard),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.s16),
+                ],
+                content,
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _headerCard(Color statusColor, bool hasData) {
+  Widget _identityHeader(StaffLocalizations t, bool hasData) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard.standard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
@@ -473,12 +320,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                       _jc.id,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.onSurface,
-                        letterSpacing: -0.5,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
+                      style: AppTextStyles.mono(color: colors.onSurface),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -490,173 +332,404 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+              const SizedBox(width: AppDimensions.s12),
+              advisorStatusPill(t, _jc.status),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          Row(
+            children: [
+              Icon(
+                Icons.person_outline_rounded,
+                size: AppDimensions.iconMd,
+                color: colors.primary,
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Expanded(
+                child: Text(
+                  _apiVal(
+                    _details?.customerName ?? '',
+                    hasData ? _getVal('customerName') : _jc.customerName,
                   ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    _statusLabel(_jc.status),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.person_outline_rounded,
-                  size: 18,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
+              if (_displayPlate.isNotEmpty) ...[
+                const SizedBox(width: AppDimensions.s8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s10,
+                    vertical: AppDimensions.s4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusControl,
+                    ),
+                  ),
                   child: Text(
-                    _apiVal(
-                      _details?.customerName ?? '',
-                      hasData ? _getVal('customerName') : _jc.customerName,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    _displayPlate.toUpperCase(),
+                    style: AppTextStyles.mono(color: colors.onSurface),
                   ),
                 ),
-                if (_displayPlate.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: colorScheme.outlineVariant),
-                    ),
-                    child: Text(
-                      _displayPlate.toUpperCase(),
-                      style: textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _section(
-    String title,
-    List<Widget> children, {
-    IconData? icon,
-    String? subtitle,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.025),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
+  Widget _nextStepSection(StaffLocalizations t) {
+    return AppCard.standard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SectionHeader(
+            title: t.advisorSectionNextStep,
+            subtitle: _inspectionRequired
+                ? t.advisorNextStepInspectionHint
+                : t.advisorNextStepContinueHint,
+            leadingIcon: Icons.bolt_rounded,
+            padding: const EdgeInsets.only(bottom: AppDimensions.s12),
+          ),
+          PrimaryButton(
+            label: _primaryActionLabel(t),
+            icon: _primaryActionIcon,
+            onPressed: _runPrimaryAction,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _actionsSection(StaffLocalizations t) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SecondaryButton(
+          label: t.advisorActionCallCustomer,
+          leadingIcon: Icons.phone_outlined,
+          onPressed: _callCustomer,
+        ),
+        if (_jc.status == JobCardStatus.completed) ...[
+          const SizedBox(height: AppDimensions.s10),
+          PrimaryButton(
+            label: t.advisorActionDeliverVehicle,
+            icon: Icons.check_circle_outline,
+            onPressed: _openDelivery,
+          ),
+        ],
+        const SizedBox(height: AppDimensions.s10),
+        SecondaryButton(
+          label: t.advisorActionRefreshJobCard,
+          leadingIcon: Icons.refresh_rounded,
+          onPressed: () {
+            _loadHiveData();
+            _loadDetails();
+          },
+          foregroundColor: colors.onSurfaceVariant,
+        ),
+      ],
+    );
+  }
+
+  Widget _section(
+    StaffLocalizations t,
+    String title,
+    IconData icon,
+    List<Widget> children, {
+    String? subtitle,
+  }) {
+    return AppCard.standard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SectionHeader(
+            title: title,
+            subtitle: subtitle,
+            leadingIcon: icon,
+            padding: const EdgeInsets.only(bottom: AppDimensions.s12),
+          ),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _customerSection(StaffLocalizations t, bool hasData) => _section(
+    t,
+    t.advisorSectionCustomerDetails,
+    Icons.person_outline_rounded,
+    [
+      _detailRow(
+        Icons.person_outline_rounded,
+        t.advisorFieldName,
+        _apiVal(
+          _details?.customerName ?? '',
+          hasData ? _getVal('customerName') : _jc.customerName,
+        ),
+      ),
+      _detailRow(
+        Icons.phone_outlined,
+        t.advisorFieldPhone,
+        _displayPhone.isEmpty ? '--' : _displayPhone,
+      ),
+      _detailRow(
+        Icons.email_outlined,
+        t.advisorFieldEmail,
+        _displayEmail.isEmpty ? '--' : _displayEmail,
+      ),
+      if (_apiVal(
+        _details?.customerGroup ?? '',
+        _getVal('customerGroup'),
+      ).isNotEmpty)
+        _detailRow(
+          Icons.group_outlined,
+          t.advisorFieldGroup,
+          _apiVal(_details?.customerGroup ?? '', _getVal('customerGroup')),
+        ),
+    ],
+  );
+
+  Widget _vehicleSection(StaffLocalizations t, bool hasData) => _section(
+    t,
+    t.advisorSectionVehicleDetails,
+    Icons.directions_car_outlined,
+    [
+      _detailRow(
+        Icons.directions_car_outlined,
+        t.advisorFieldVehicle,
+        _apiVal(
+          _details?.vehicleInfo ?? '',
+          hasData ? '${_getVal('make')} ${_getVal('model')}' : _jc.vehicleInfo,
+        ),
+      ),
+      _detailRow(
+        Icons.confirmation_number_outlined,
+        t.advisorFieldPlate,
+        (_displayPlate.isEmpty ? '--' : _displayPlate).toUpperCase(),
+        isMono: true,
+      ),
+      _detailRow(
+        Icons.qr_code_rounded,
+        t.advisorFieldVin,
+        _apiVal(_details?.vin ?? '', _getVal('vin')),
+        isMono: true,
+      ),
+      if (_apiVal(_details?.modelYear ?? '', _getVal('modelYear')).isNotEmpty)
+        _detailRow(
+          Icons.calendar_today,
+          t.advisorFieldYear,
+          _apiVal(_details?.modelYear ?? '', _getVal('modelYear')),
+        ),
+      if (_apiVal(
+        _details?.vehicleColor ?? '',
+        _getVal('vehicleColor'),
+      ).isNotEmpty)
+        _detailRow(
+          Icons.color_lens_outlined,
+          t.advisorFieldColor,
+          _apiVal(_details?.vehicleColor ?? '', _getVal('vehicleColor')),
+        ),
+      _detailRow(
+        Icons.speed_rounded,
+        t.advisorFieldOdometer,
+        _displayOdometer.isEmpty
+            ? '--'
+            : t.advisorOdometerValue(_displayOdometer),
+        isMono: true,
+      ),
+    ],
+  );
+
+  Widget _fuelSection(StaffLocalizations t) => _section(
+    t,
+    t.advisorSectionFuelLevel,
+    Icons.local_gas_station_outlined,
+    [_buildFuelLevelDisplay(t)],
+  );
+
+  Widget _bodyConditionSection(
+    StaffLocalizations t,
+    Map<String, dynamic> bodyCondition,
+  ) => _section(
+    t,
+    t.advisorSectionBodyCondition,
+    Icons.car_crash_outlined,
+    [
+      VehicleBodyConditionPanel(
+        readOnly: true,
+        embedded: true,
+        showTitle: false,
+        bodyCondition: bodyCondition,
+      ),
+    ],
+    subtitle: t.advisorBodyConditionHint,
+  );
+
+  Widget _serviceSection(StaffLocalizations t) =>
+      _section(t, t.advisorSectionServiceInformation, Icons.build_outlined, [
+        _detailRow(
+          Icons.build_outlined,
+          t.advisorFieldServiceType,
+          t.advisorServiceTypeInspection,
+        ),
+        _detailRow(
+          Icons.person_outline,
+          t.advisorFieldAdvisor,
+          t.advisorAdvisorAssigned,
+        ),
+        if (_assignedTech.isNotEmpty)
+          _detailRow(
+            Icons.engineering_outlined,
+            t.advisorFieldTechnician,
+            _assignedTech,
+          ),
+        _detailRow(
+          Icons.schedule_outlined,
+          t.advisorFieldCreated,
+          _jc.createdDate.isNotEmpty ? _jc.createdDate : _jc.time,
+          isMono: true,
+        ),
+        _detailRow(
+          Icons.update_rounded,
+          t.advisorFieldLastUpdated,
+          _jc.lastUpdated.isNotEmpty ? _jc.lastUpdated : _jc.time,
+          isMono: true,
+        ),
+      ]);
+
+  Widget _requestsSection(StaffLocalizations t) => _section(
+    t,
+    t.advisorSectionCustomerRequests,
+    Icons.chat_bubble_outline_rounded,
+    [
+      AppMarkdownText(
+        _details!.customerRequests.trim(),
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.45),
+      ),
+    ],
+  );
+
+  Widget _inspectionSection(StaffLocalizations t) {
+    final inspection = _inspection;
+    if (inspection == null || !inspection.found) return const SizedBox.shrink();
+    final colors = Theme.of(context).colorScheme;
+    return _section(
+      t,
+      t.advisorSectionInspectionSummary,
+      Icons.fact_check_outlined,
+      [
+        if (inspection.inspectionRef.isNotEmpty)
+          _detailRow(
+            Icons.fact_check_outlined,
+            t.advisorFieldReference,
+            inspection.inspectionRef,
+            isMono: true,
+          ),
+        Row(
+          children: [
+            Expanded(
+              child: _inspectionCount(
+                t.advisorInspectionGood,
+                inspection.good,
+                AppColors.success,
+                Icons.check_circle_outline_rounded,
+              ),
+            ),
+            const SizedBox(width: AppDimensions.s8),
+            Expanded(
+              child: _inspectionCount(
+                t.advisorInspectionFair,
+                inspection.fair,
+                AppColors.warning,
+                Icons.error_outline_rounded,
+              ),
+            ),
+            const SizedBox(width: AppDimensions.s8),
+            Expanded(
+              child: _inspectionCount(
+                t.advisorInspectionPoor,
+                inspection.poor,
+                colors.error,
+                Icons.warning_amber_rounded,
+              ),
+            ),
+          ],
+        ),
+        if (inspection.summary.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.s8),
+          Text(
+            inspection.summary,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _workItemsSection(StaffLocalizations t) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    ref.watch(advisorWorkItemsRefreshProvider);
+    final items =
+        ref.watch(advisorWorkItemsProvider(_jobCardRef)).value ??
+        const <WorkItemResponse>[];
+    if (items.isEmpty) return const SizedBox.shrink();
+    final done = items.where((i) => i.status == 'completed').length;
+
+    return _section(
+      t,
+      t.advisorSectionWorkItems,
+      Icons.handyman_outlined,
+      [
+        for (final item in items)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 15, 16, 12),
+            padding: const EdgeInsets.symmetric(vertical: AppDimensions.s4),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (icon != null) ...[
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.09),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(icon, size: 18, color: colorScheme.primary),
-                  ),
-                  const SizedBox(width: 10),
-                ],
+                Icon(
+                  item.status == 'completed'
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  color: item.status == 'completed'
+                      ? AppColors.success
+                      : colors.onSurfaceVariant,
+                  size: AppDimensions.iconSm,
+                ),
+                const SizedBox(width: AppDimensions.s8),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ],
+                  child: Text(
+                    item.description,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: item.status == 'completed'
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          Divider(height: 1, color: colorScheme.outlineVariant),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            ),
-          ),
-        ],
-      ),
+      ],
+      subtitle:
+          '${t.advisorWorkItemsHint} · ${t.advisorWorkItemsProgress(done, items.length)}',
     );
   }
 
@@ -667,38 +740,40 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     bool isMono = false,
   }) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
+    final colors = theme.colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: AppDimensions.s10),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
-          const SizedBox(width: 10),
+          Icon(
+            icon,
+            size: AppDimensions.iconSm,
+            color: colors.onSurfaceVariant,
+          ),
+          const SizedBox(width: AppDimensions.s10),
           SizedBox(
-            width: 88,
+            width: 96,
             child: Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+                color: colors.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppDimensions.s10),
           Expanded(
             child: Text(
               value.isEmpty ? '--' : value,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colorScheme.onSurface,
-                fontFeatures: isMono
-                    ? const [FontFeature.tabularFigures()]
-                    : null,
-              ),
+              textAlign: TextAlign.end,
+              style: isMono
+                  ? AppTextStyles.mono(color: colors.onSurface)
+                  : theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
+                    ),
             ),
           ),
         ],
@@ -706,8 +781,9 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     );
   }
 
-  Widget _buildFuelLevelDisplay() {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildFuelLevelDisplay(StaffLocalizations t) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final fuelLevelValue = _displayFuelLevel;
     final numericFuel = int.tryParse(fuelLevelValue);
     final fuelLevel =
@@ -727,136 +803,22 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       children: [
         Icon(
           Icons.local_gas_station_rounded,
-          size: 16,
-          color: colorScheme.primary,
+          size: AppDimensions.iconSm,
+          color: colors.primary,
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppDimensions.s10),
         Text(
-          'Gauge Level',
-          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
-        ),
-        const Spacer(),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: fuelLevel / 10,
-              minHeight: 8,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-            ),
+          t.advisorFieldGaugeLevel,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colors.onSurfaceVariant,
           ),
         ),
-        const SizedBox(width: 8),
-        Text(
-          fuelLabel,
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: colorScheme.onSurface,
-            fontSize: 12,
-          ),
-        ),
+        const SizedBox(width: AppDimensions.s12),
+        Expanded(child: AppLinearProgress(value: fuelLevel / 10, height: 8)),
+        const SizedBox(width: AppDimensions.s8),
+        Text(fuelLabel, style: AppTextStyles.mono(color: colors.onSurface)),
       ],
     );
-  }
-
-  Widget _buildWorkItemsSection() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    ref.watch(advisorWorkItemsRefreshProvider);
-    final items =
-        ref.watch(advisorWorkItemsProvider(_jobCardRef)).value ??
-        const <WorkItemResponse>[];
-    if (items.isEmpty) return const SizedBox.shrink();
-
-    return _section(
-      'Work Items (${items.where((i) => i.status == 'completed').length}/${items.length} done)',
-      items.map((item) {
-        final done = item.status == 'completed';
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              Icon(
-                done
-                    ? Icons.check_circle_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                color: done
-                    ? const Color(0xFF10B981)
-                    : colorScheme.onSurfaceVariant,
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  item.description,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: done ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-      icon: Icons.handyman_outlined,
-      subtitle: 'Tasks created from the completed inspection',
-    );
-  }
-
-  Widget _buildInspectionMediaSection() {
-    final inspection = _inspection;
-    if (inspection == null || !inspection.found) return const SizedBox.shrink();
-    final colorScheme = Theme.of(context).colorScheme;
-    return _section('Inspection Summary', [
-      if (inspection.inspectionRef.isNotEmpty)
-        _detailRow(
-          Icons.fact_check_outlined,
-          'Reference',
-          inspection.inspectionRef,
-          isMono: true,
-        ),
-      Row(
-        children: [
-          Expanded(
-            child: _inspectionCount(
-              'Good',
-              inspection.good,
-              const Color(0xFF059669),
-              Icons.check_circle_outline_rounded,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _inspectionCount(
-              'Fair',
-              inspection.fair,
-              colorScheme.secondary,
-              Icons.error_outline_rounded,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _inspectionCount(
-              'Poor',
-              inspection.poor,
-              colorScheme.error,
-              Icons.warning_amber_rounded,
-            ),
-          ),
-        ],
-      ),
-      if (inspection.summary.isNotEmpty) ...[
-        const SizedBox(height: 8),
-        Text(
-          inspection.summary,
-          style: TextStyle(
-            fontSize: 13,
-            color: colorScheme.onSurfaceVariant,
-            height: 1.4,
-          ),
-        ),
-      ],
-    ], icon: Icons.fact_check_outlined);
   }
 
   Widget _inspectionCount(
@@ -865,28 +827,22 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     Color color,
     IconData icon,
   ) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 10),
+    padding: const EdgeInsets.symmetric(vertical: AppDimensions.s10),
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
     ),
     child: Column(
       children: [
-        Icon(icon, size: 18, color: color),
+        Icon(icon, size: AppDimensions.iconMd, color: color),
         const SizedBox(height: 3),
-        Text(
-          '$count',
-          style: TextStyle(
-            color: color,
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
+        Text('$count', style: AppTextStyles.bodyStrong(color: color)),
         Text(
           label,
-          style: TextStyle(
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: color,
-            fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -894,40 +850,21 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     ),
   );
 
-  Widget _buildWorkflowActions() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return _section(
-      'Next Step',
-      [
-        _actionButton(
-          _primaryActionLabel,
-          _primaryActionIcon,
-          colorScheme.primary,
-          _runPrimaryAction,
-        ),
-      ],
-      icon: Icons.bolt_rounded,
-      subtitle: _inspectionRequired
-          ? 'Complete the inspection before continuing'
-          : 'Continue this job card through the workshop',
-    );
-  }
-
-  String get _primaryActionLabel => _inspectionRequired
-      ? 'Add Inspection'
+  String _primaryActionLabel(StaffLocalizations t) => _inspectionRequired
+      ? t.advisorActionAddInspection
       : switch (_jc.status) {
-          JobCardStatus.vehicleReceived => 'Start Inspection',
-          JobCardStatus.inspected => 'Create Estimate',
+          JobCardStatus.vehicleReceived => t.advisorActionStartInspection,
+          JobCardStatus.inspected => t.advisorActionCreateEstimate,
           JobCardStatus.waitingCustomerApproval =>
-            'Waiting for Customer Approval',
-          JobCardStatus.approved => 'Assign Technician',
+            t.advisorActionWaitingApproval,
+          JobCardStatus.approved => t.advisorActionAssignTechnician,
           JobCardStatus.workAssigned ||
           JobCardStatus.inProgress ||
-          JobCardStatus.waitingParts => 'Review Work Items',
+          JobCardStatus.waitingParts => t.advisorActionReviewWorkItems,
           JobCardStatus.completed ||
-          JobCardStatus.qualityCheckPassed => 'Deliver Vehicle',
-          JobCardStatus.delivered => 'Vehicle Delivered',
-          _ => 'Refresh Job Card',
+          JobCardStatus.qualityCheckPassed => t.advisorActionDeliverVehicle,
+          JobCardStatus.delivered => t.advisorStatusDelivered,
+          _ => t.advisorActionRefreshJobCard,
         };
 
   IconData get _primaryActionIcon => _inspectionRequired
@@ -962,7 +899,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         _openDelivery();
       case JobCardStatus.delivered:
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vehicle already delivered')),
+          SnackBar(
+            content: Text(
+              StaffLocalizations.of(context)!.advisorVehicleAlreadyDelivered,
+            ),
+          ),
         );
       default:
         _loadDetails();
@@ -1020,93 +961,11 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     ).then((_) => _loadDetails());
   }
 
-  Widget _actionButton(
-    String label,
-    IconData icon,
-    Color bg,
-    VoidCallback onTap, {
-    Color? textColor,
-    Color? iconColor,
-  }) {
-    return _PressScale(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: iconColor ?? Colors.white, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: textColor ?? Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _callCustomer() {
     final phone = _displayPhone.replaceAll(RegExp(r'[^\d+]'), '');
-    if (phone.isNotEmpty) launchUrl(Uri.parse('tel:$phone'));
-  }
-}
-
-class _PressScale extends StatefulWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-  const _PressScale({required this.child, this.onTap});
-
-  @override
-  State<_PressScale> createState() => _PressScaleState();
-}
-
-class _PressScaleState extends State<_PressScale>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-      reverseDuration: const Duration(milliseconds: 140),
-    );
-    _scale = Tween<double>(
-      begin: 1.0,
-      end: 0.97,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => _ctrl.forward(),
-      onTapUp: (_) => _ctrl.reverse(),
-      onTapCancel: () => _ctrl.reverse(),
-      onTap: widget.onTap,
-      child: ScaleTransition(scale: _scale, child: widget.child),
-    );
+    if (phone.isNotEmpty) {
+      HapticFeedback.lightImpact();
+      launchUrl(Uri.parse('tel:$phone'));
+    }
   }
 }

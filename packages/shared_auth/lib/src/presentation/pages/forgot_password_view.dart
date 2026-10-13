@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_auth/l10n/gen/shared_auth_localizations.dart';
+import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
@@ -20,6 +22,7 @@ class ForgotPasswordView extends ConsumerStatefulWidget {
   final String appName;
   final String appPurpose;
   final String intendedUsers;
+  final String? securityNotice;
 
   const ForgotPasswordView({
     super.key,
@@ -28,6 +31,7 @@ class ForgotPasswordView extends ConsumerStatefulWidget {
     this.appPurpose =
         'Manage workshop bookings, job cards, approvals, and service updates.',
     this.intendedUsers = 'Workshop users',
+    this.securityNotice,
   });
 
   @override
@@ -94,14 +98,15 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   Future<void> _sendOtp() async {
     final input = _identifierCtrl.text.trim();
     final email = _looksLikeEmail(input);
+    final t = SharedAuthL10n.forLocale(ref.read(localeProvider));
 
     String? fieldError;
     if (input.isEmpty) {
-      fieldError = 'Enter your email or mobile number.';
+      fieldError = t.validationEnterIdentifier;
     } else if (email && !input.contains('@')) {
-      fieldError = 'Enter a valid email address.';
+      fieldError = t.validationEnterValidEmailAddress;
     } else if (!email && input.replaceAll(RegExp(r'[^0-9]'), '').length < 8) {
-      fieldError = 'Enter a valid mobile number.';
+      fieldError = t.validationEnterValidMobile;
     }
 
     if (fieldError != null) {
@@ -138,19 +143,20 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
       },
       failure: (error) => setState(() {
         _isLoading = false;
-        _bannerError = _friendlyError(error);
+        _bannerError = _friendlyError(error, t);
       }),
     );
   }
 
   Future<void> _resetPassword() async {
+    final t = SharedAuthL10n.forLocale(ref.read(localeProvider));
     String? codeError;
     String? passwordError;
     if (_otp.length != 6) {
-      codeError = 'Enter the 6-digit recovery code.';
+      codeError = t.validationEnter6DigitRecovery;
     }
     if (_password.length < 6) {
-      passwordError = 'Use at least 6 characters.';
+      passwordError = t.validationUseAtLeast6;
     }
 
     if (codeError != null || passwordError != null) {
@@ -188,7 +194,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
       },
       failure: (error) => setState(() {
         _isLoading = false;
-        _bannerError = _friendlyError(error);
+        _bannerError = _friendlyError(error, t);
       }),
     );
   }
@@ -220,26 +226,18 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
 
   @override
   Widget build(BuildContext context) {
+    final t = SharedAuthL10n.of(context);
     final (title, subtitle) = switch (_stage) {
-      _RecoveryStage.identifier => (
-        'Forgot your password?',
-        'Enter the email address or mobile number linked to your account and '
-            'we will send you a recovery code.',
-      ),
-      _RecoveryStage.reset => (
-        'Choose a new password',
-        'Enter the code and set a new password.',
-      ),
-      _RecoveryStage.done => (
-        'Password updated',
-        'Sign in with your new password to continue.',
-      ),
+      _RecoveryStage.identifier => (t.forgotTitle, t.forgotSubtitle),
+      _RecoveryStage.reset => (t.forgotResetTitle, t.forgotResetSubtitle),
+      _RecoveryStage.done => (t.forgotDoneTitle, t.forgotDoneSubtitle),
     };
 
     return AuthShell(
       appName: widget.appName,
       appPurpose: widget.appPurpose,
       intendedUsers: widget.intendedUsers,
+      securityNotice: widget.securityNotice,
       top: _stage == _RecoveryStage.done
           ? null
           : _RecoveryProgress(
@@ -249,7 +247,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
       title: title,
       subtitle: subtitle,
       child: AnimatedSwitcher(
-        duration: AppMotion.standard,
+        duration: AppMotion.resolve(context, AppMotion.standard),
         switchInCurve: AppMotion.enter,
         switchOutCurve: AppMotion.exit,
         layoutBuilder: (currentChild, previousChildren) => Stack(
@@ -303,7 +301,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   }
 }
 
-/// Step counter plus the always-available route back to sign in. Placed in the
+/// Step progress plus the always-available route back to sign in. Placed in the
 /// shell's `top` slot so back navigation is consistent with the system back
 /// gesture, which also leaves recovery for sign in.
 class _RecoveryProgress extends StatelessWidget {
@@ -314,41 +312,32 @@ class _RecoveryProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final t = SharedAuthL10n.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AuthLinkButton(
-                  label: 'Sign in',
-                  icon: Icons.arrow_back_rounded,
-                  onPressed: onBackToLogin,
-                ),
-              ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: AuthLinkButton(
+            label: t.forgotSignIn,
+            icon: Icons.arrow_back_rounded,
+            onPressed: onBackToLogin,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        AppStepProgress(
+          currentStep: step - 1,
+          steps: [
+            AppProgressStep(
+              label: t.authRecoveryStepIdentify,
+              icon: Icons.alternate_email_rounded,
             ),
-            Text(
-              'Step $step of 2',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-              ),
+            AppProgressStep(
+              label: t.authRecoveryStepReset,
+              icon: Icons.lock_reset_rounded,
             ),
           ],
-        ),
-        const SizedBox(height: AppDimensions.s4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimensions.rPill),
-          child: LinearProgressIndicator(
-            value: step / 2,
-            minHeight: 4,
-            backgroundColor: colors.surfaceContainerHighest,
-          ),
         ),
       ],
     );
@@ -375,18 +364,20 @@ class _IdentifierStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = SharedAuthL10n.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AuthNoticeSlot(message: bannerError),
         AuthTextField(
           controller: controller,
-          label: 'Email or mobile number',
-          hint: 'name@company.com or 501234567',
+          label: t.loginFieldIdentifier,
+          hint: t.loginFieldIdentifierHint,
           icon: Icons.alternate_email_rounded,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.done,
           autofillHints: const [AutofillHints.username],
+          textDirection: TextDirection.ltr,
           enabled: !isLoading,
           errorText: error,
           onChanged: (_) => onChanged(),
@@ -394,15 +385,14 @@ class _IdentifierStep extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.s24),
         AuthPrimaryButton(
-          label: 'Send recovery code',
+          label: t.forgotActionSendRecoveryCode,
           icon: Icons.arrow_forward_rounded,
           isLoading: isLoading,
           onPressed: onSubmit,
         ),
         const SizedBox(height: AppDimensions.s20),
         Text(
-          'Can\u2019t access this email or mobile number? Contact your workshop '
-          'support team.',
+          t.forgotContactSupport,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -449,18 +439,19 @@ class _ResetStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resendAvailable = resendCooldown == 0 && !isLoading;
+    final t = SharedAuthL10n.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AuthNotice(
           icon: Icons.lock_reset_rounded,
-          text: 'Recovery code sent to $maskedDestination.',
+          text: t.forgotCodeSent(maskedDestination),
         ),
         const SizedBox(height: AppDimensions.s20),
         AuthNoticeSlot(message: bannerError),
         AuthOtpField(
-          label: 'Recovery code',
+          label: t.forgotFieldRecoveryCode,
           onChanged: onOtpChanged,
           errorText: codeError,
           enabled: !isLoading,
@@ -468,8 +459,8 @@ class _ResetStep extends StatelessWidget {
         const SizedBox(height: AppDimensions.s20),
         AuthTextField(
           controller: passwordCtrl,
-          label: 'New password',
-          hint: 'Enter a new password',
+          label: t.forgotFieldNewPassword,
+          hint: t.forgotFieldNewPasswordHint,
           icon: Icons.lock_outline_rounded,
           obscureText: true,
           textInputAction: TextInputAction.done,
@@ -485,7 +476,7 @@ class _ResetStep extends StatelessWidget {
         ],
         const SizedBox(height: AppDimensions.s24),
         AuthPrimaryButton(
-          label: 'Update password',
+          label: t.forgotActionUpdatePassword,
           icon: Icons.check_rounded,
           isLoading: isLoading,
           onPressed: onSubmit,
@@ -497,13 +488,13 @@ class _ResetStep extends StatelessWidget {
           runSpacing: AppDimensions.s4,
           children: [
             AuthLinkButton(
-              label: 'Change email or mobile',
+              label: t.loginActionChangeIdentifier,
               onPressed: isLoading ? null : onEditIdentifier,
             ),
             AuthLinkButton(
               label: resendCooldown > 0
-                  ? 'Resend in ${resendCooldown}s'
-                  : 'Resend code',
+                  ? t.loginActionResendIn(resendCooldown)
+                  : t.loginActionResendCode,
               subtle: true,
               onPressed: resendAvailable ? onResend : null,
             ),
@@ -524,8 +515,12 @@ class _PasswordRequirement extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = SharedAuthL10n.of(context);
     final met = password.length >= 6;
-    final color = met ? colors.tertiary : colors.onSurfaceVariant;
+    final success = theme.brightness == Brightness.dark
+        ? AppDarkColors.success
+        : AppColors.success;
+    final color = met ? success : colors.onSurfaceVariant;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -538,7 +533,7 @@ class _PasswordRequirement extends StatelessWidget {
         const SizedBox(width: AppDimensions.s6),
         Flexible(
           child: Text(
-            'At least 6 characters',
+            t.forgotAtLeast6Characters,
             style: theme.textTheme.labelSmall?.copyWith(
               color: color,
               fontWeight: FontWeight.w600,
@@ -557,7 +552,11 @@ class _RecoverySuccess extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final t = SharedAuthL10n.of(context);
+    final success = theme.brightness == Brightness.dark
+        ? AppDarkColors.success
+        : AppColors.success;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -567,15 +566,15 @@ class _RecoverySuccess extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: colors.tertiary.withValues(alpha: 0.12),
+              color: success.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.check_rounded, size: 32, color: colors.tertiary),
+            child: Icon(Icons.check_rounded, size: 32, color: success),
           ),
         ),
         const SizedBox(height: AppDimensions.s24),
         AuthPrimaryButton(
-          label: 'Back to sign in',
+          label: t.forgotBackToSignIn,
           icon: Icons.login_rounded,
           onPressed: onBackToLogin,
         ),
@@ -592,15 +591,15 @@ final _technicalMessage = RegExp(
 
 /// Keeps backend validation messages (they are user facing) while replacing
 /// transport-level noise with calm, actionable copy.
-String _friendlyError(AppException error) {
+String _friendlyError(AppException error, SharedAuthLocalizations t) {
   final raw = error.message.trim();
   if (error is NetworkException || _technicalMessage.hasMatch(raw)) {
-    return 'We couldn\u2019t reach Orient. Check your connection and try again.';
+    return t.errorUnreachable;
   }
   if (error is UnknownException) {
-    return 'Something went wrong on our side. Please try again.';
+    return t.errorServerGeneric;
   }
-  if (raw.isEmpty) return 'Something went wrong. Please try again.';
+  if (raw.isEmpty) return t.errorGeneric;
   return raw;
 }
 

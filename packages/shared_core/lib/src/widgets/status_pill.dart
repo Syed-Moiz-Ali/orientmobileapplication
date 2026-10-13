@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_text_styles.dart';
 
 class StatusPill extends StatelessWidget {
   final String label;
@@ -84,6 +85,7 @@ class StatusPill extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
 
     final effectiveBg =
         bg ?? colorScheme.primaryContainer.withValues(alpha: 0.5);
@@ -127,7 +129,7 @@ class StatusPill extends StatelessWidget {
               style: textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: effectiveFg,
-                letterSpacing: 0.2,
+                letterSpacing: arabic ? 0 : 0.2,
               ),
             ),
           ),

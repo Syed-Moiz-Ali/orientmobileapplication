@@ -1,8 +1,9 @@
+import 'package:crm_app/features/crm_dashboard/presentation/crm_dashboard_view.dart';
+import 'package:crm_app/l10n/gen/crm_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/crm_dashboard_view.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -51,25 +52,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         name: AppRoutes.login,
-        builder: (context, state) => LoginView(
-          appName: 'Orient CRM App',
-          intendedUsers: 'For CRM and customer support users',
-          appPurpose:
-              'Manage customer follow-ups, service communication, leads, reminders, and support activity.',
-          onLoginSuccess: () => context.go(AppRoutes.crmDashboard),
-          onForgotPassword: () => context.push(AppRoutes.forgotPassword),
-        ),
+        builder: (context, state) {
+          final t = CrmLocalizations.of(context);
+          return LoginView(
+            appName: t?.loginAppName ?? 'Orient CRM App',
+            intendedUsers:
+                t?.loginIntendedUsers ?? 'For CRM and customer support users',
+            appPurpose:
+                t?.loginAppPurpose ??
+                'Manage customer follow-ups, service communication, leads, reminders, and support activity.',
+            securityNotice: t?.authSecurityNotice,
+            onLoginSuccess: () => context.go(AppRoutes.crmDashboard),
+            onForgotPassword: () => context.push(AppRoutes.forgotPassword),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) => ForgotPasswordView(
-          onBackToLogin: () => context.pop(),
-          appName: 'Orient CRM App',
-          intendedUsers: 'For CRM and customer support users',
-          appPurpose:
-              'Manage customer follow-ups, service communication, leads, reminders, and support activity.',
-        ),
+        builder: (context, state) {
+          final t = CrmLocalizations.of(context);
+          return ForgotPasswordView(
+            onBackToLogin: () => context.pop(),
+            appName: t?.loginAppName ?? 'Orient CRM App',
+            intendedUsers:
+                t?.loginIntendedUsers ?? 'For CRM and customer support users',
+            appPurpose:
+                t?.loginAppPurpose ??
+                'Manage customer follow-ups, service communication, leads, reminders, and support activity.',
+            securityNotice: t?.authSecurityNotice,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.crmDashboard,

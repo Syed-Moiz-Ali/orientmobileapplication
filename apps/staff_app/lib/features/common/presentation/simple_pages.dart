@@ -500,6 +500,10 @@ class SettingsPage extends StatelessWidget {
                   ],
                 ),
               ),
+              // Phase 02: minimal, reachable language entry point. The row
+              // self-labels with the localized "Language" copy.
+              const SizedBox(height: AppDimensions.s24),
+              const LanguageSwitcher(),
               if (version != null) ...[
                 const SizedBox(height: AppDimensions.s24),
                 const SectionHeader(title: 'Application'),

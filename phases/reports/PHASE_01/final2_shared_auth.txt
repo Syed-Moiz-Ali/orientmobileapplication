@@ -1,0 +1,395 @@
+﻿00:00 +0: loading E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart
+00:00 +0: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: (setUpAll)
+00:00 +0: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login switches between password and code modes
+00:00 +1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login switches between password and code modes
+00:00 +2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login switches between password and code modes
+00:00 +3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login switches between password and code modes
+00:00 +4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login switches between password and code modes
+00:00 +5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login switches between password and code modes
+00:00 +6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login switches between password and code modes
+00:00 +7: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login switches between password and code modes
+00:01 +8: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/phase01_layout_smoke_test.dart: LoginView lays out at 1.0x on a compact phone
+00:01 +9: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/phase01_layout_smoke_test.dart: LoginView lays out at 1.0x on a compact phone
+00:02 +10: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login mobile visual reference
+00:02 +11: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login mobile visual reference
+00:02 +12: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login mobile visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/auth_login_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "LoginView": [
+            LoginView(dependencies: [UncontrolledProviderScope], state: _LoginViewState#7dea7),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_login_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      _expectLoginGolden (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:567:3)
+<asynchronous suspension>
+#10     main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:51:5)
+<asynchronous suspension>
+#11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  login mobile visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:02 +12 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/phase01_layout_smoke_test.dart: LoginView lays out at 1.3x on desktop
+00:02 +12 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login mobile visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: login mobile visual reference
+  
+00:02 +13 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login desktop visual reference
+00:02 +14 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login desktop visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/auth_login_desktop.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "LoginView": [
+            LoginView(dependencies: [UncontrolledProviderScope], state: _LoginViewState#01565),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_login_desktop.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      _expectLoginGolden (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:567:3)
+<asynchronous suspension>
+#10     main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:59:5)
+<asynchronous suspension>
+#11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  login desktop visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:02 +14 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login desktop visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: login desktop visual reference
+  
+00:02 +14 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: customer registration mode presents its own fields and action
+00:02 +15 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: registration offers both password and code modes
+00:03 +16 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login lays out on the smallest supported phone
+00:03 +17 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: login remains usable at an increased text scale
+00:03 +18 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: one-time code mode mobile visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image
+"goldens/auth_login_code_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "LoginView": [
+            LoginView(dependencies: [UncontrolledProviderScope], state: _LoginViewState#d4e27),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_login_code_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:137:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  one-time code mode mobile visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:03 +18 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: one-time code mode mobile visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: one-time code mode mobile visual reference
+  
+00:03 +18 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: registration mobile visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/auth_register_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "LoginView": [
+            LoginView(dependencies: [UncontrolledProviderScope], state: _LoginViewState#9e7f6),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_register_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:147:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  registration mobile visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:03 +18 -4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: registration mobile visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: registration mobile visual reference
+  
+00:03 +18 -4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: one-time code sent state renders and is announced
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/auth_otp_sent_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "LoginView": [
+            LoginView(dependencies: [UncontrolledProviderScope], state: _LoginViewState#a8b1e),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_otp_sent_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:186:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  one-time code sent state renders and is announced
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:03 +18 -5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: one-time code sent state renders and is announced [E]
+  Test failed. See exception logs above.
+  The test description was: one-time code sent state renders and is announced
+  
+00:03 +18 -5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: registration stays usable at an increased text scale
+00:04 +19 -5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: reset password visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/auth_reset_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "AuthShell": [
+            AuthShell(dependencies: [InheritedCupertinoTheme, _InheritedTheme,
+_LocalizationsScope-[GlobalKey#f87ba]]),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_reset_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:264:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  reset password visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:04 +19 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: reset password visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: reset password visual reference
+  
+00:04 +19 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery asks for an identifier and offers a route to sign in
+00:04 +20 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery validates the identifier locally before sending
+00:04 +21 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery surfaces a backend failure as a live notice
+00:04 +22 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery replaces transport failures with friendly copy
+00:04 +23 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery surfaces the code-sent state with resend actions
+00:04 +24 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery validates the code and password locally
+00:04 +25 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery confirms success and returns the user to sign in
+00:05 +26 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery stays usable on the smallest supported phone
+00:05 +27 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery stays usable at an increased text scale
+00:05 +28 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: forgot password mobile visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/auth_forgot_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "ForgotPasswordView": [
+            ForgotPasswordView(state: _ForgotPasswordViewState#07a7b),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_forgot_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:441:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  forgot password mobile visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:05 +28 -7: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: forgot password mobile visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: forgot password mobile visual reference
+  
+00:05 +28 -7: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: forgot password desktop visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/auth_forgot_desktop.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "ForgotPasswordView": [
+            ForgotPasswordView(state: _ForgotPasswordViewState#46486),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_forgot_desktop.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:450:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  forgot password desktop visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:05 +28 -8: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: forgot password desktop visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: forgot password desktop visual reference
+  
+00:05 +28 -8: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery sent state visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image
+"goldens/auth_forgot_sent_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "ForgotPasswordView": [
+            ForgotPasswordView(state: _ForgotPasswordViewState#f83d0),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_forgot_sent_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:464:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  recovery sent state visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:05 +28 -9: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery sent state visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: recovery sent state visual reference
+  
+00:05 +28 -9: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery success state visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image
+"goldens/auth_forgot_success_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "ForgotPasswordView": [
+            ForgotPasswordView(state: _ForgotPasswordViewState#4b75e),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_forgot_success_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:489:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  recovery success state visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:06 +28 -10: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: recovery success state visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: recovery success state visual reference
+  
+00:06 +28 -10: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: session loading view exposes progress semantics
+00:06 +29 -10: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: legacy phone and OTP contracts remain visually aligned
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/auth_controls_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "Scaffold": [
+            Scaffold(dependencies: [Directionality, InheritedCupertinoTheme, MediaQuery,
+UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#65bd4],
+_ScaffoldMessengerScope], state: ScaffoldState#a65d7(tickers: tracking 3 tickers)),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/auth_controls_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart:554:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  legacy phone and OTP contracts remain visually aligned
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:06 +29 -11: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: legacy phone and OTP contracts remain visually aligned [E]
+  Test failed. See exception logs above.
+  The test description was: legacy phone and OTP contracts remain visually aligned
+  
+00:06 +29 -11: E:/syed_moiz_ali/orientmobileapplication/packages/shared_auth/test/auth_experience_test.dart: (tearDownAll)
+00:06 +29 -11: Some tests failed.

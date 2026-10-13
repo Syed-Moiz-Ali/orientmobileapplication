@@ -33,9 +33,20 @@ class LoadingIndicator extends StatelessWidget {
     );
   }
 
+  /// Deprecated (Phase 03B): use a shape-matched `AppSkeleton` variant
+  /// (`AppSkeleton.listRows` / `.card` / `.table` / `.chart`) instead — a
+  /// generic shimmer line does not mirror the final layout.
+  @Deprecated(
+    'Use an AppSkeleton variant (Phase 03B). Removed in a later phase.',
+  )
   static const shimmer = ShimmerLoading();
 }
 
+/// Deprecated (Phase 03B): superseded by `AppSkeleton`, which mirrors the final
+/// layout and honours reduced motion. Retained for source compatibility until
+/// the owning feature phases replace their consumers
+/// (owner/staff/customer shimmer files — see the 03B completion report).
+@Deprecated('Use an AppSkeleton variant (Phase 03B). Removed in a later phase.')
 class ShimmerLoading extends StatelessWidget {
   const ShimmerLoading({super.key});
 

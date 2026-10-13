@@ -70,10 +70,16 @@ those clarifications are part of the freeze.
 | 2026-10-13 | **APPROVED by product owner** | AWAITING USER APPROVAL → **APPROVED** | Product owner | Approval conveyed after reviewing the prototype and audit; all V1–V14 frozen as proposed; clarifications above included |
 | 2026-10-13 | Dark palette approved for foundation | proposal → approved as the Phase 01 dark parity map | Product owner (via direction approval) | Dark remains foundation-only; `ThemeMode.light` stays the shipped default (V-exposure question in §4) |
 | 2026-10-13 | KPI tile sizing approved | scale-aware minimum 156 px (grows with system text scale) | Product owner (via direction approval) | Carry into Phase 03A `AppKpiCard`; verified 1.15×/1.3× clean |
+| 2026-10-13 | **Phase 01.1 accessibility amendment — dark control ink** | white `onPrimary`/`onError` on `#6E8BFF` / `#F1707F` (≈3.1:1 / ≈2.9:1) → dark ink `#0C1120` (**≈6.1:1 / ≈6.6:1** at rest; ≥5.1:1 under Material hover/pressed/focus overlays) | Product owner (Phase 01 sign-off) | WCAG AA correction for normal-sized button labels. Dark map amended; light map unchanged. Applied centrally via `AppDarkColors.onPrimary`/`onError` → `AppTheme.dark` → shared buttons. Exact values: `phases/reports/PHASE_01/PHASE_01_COMPLETION.md` §7.2 |
 
 Amendments made during review are edited first in
 `apps/design_prototype/lib/design/provisional_tokens.dart`, re-captured in the
 screenshot pack, and recorded here. Phase 01 codifies only **frozen** values.
+The 2026-10-13 Phase 01.1 accessibility amendment is a **production-map**
+amendment (post-prototype): the phase-00 prototype render remains the approved
+visual reference; the amendment changes only the dark ink on bright fills and
+is verified by `app_button_accessibility_test.dart` + the re-baselined dark
+goldens.
 
 ---
 

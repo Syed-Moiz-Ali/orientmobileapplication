@@ -6,36 +6,40 @@ import 'package:hive/hive.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
+import 'package:staff_app/core/models/profile_data.dart';
 import 'package:staff_app/core/router/app_router.dart';
-import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/features/advisor/domain/entities/followup_reminder_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
-import 'package:staff_app/features/advisor/domain/entities/followup_reminder_entity.dart';
-import '../../../../core/models/profile_data.dart';
+import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'advisor_jobs_view.dart';
 import 'advisor_reports_view.dart';
-import '../widgets/advisor_profile_sheet.dart';
-import '../widgets/advisor_notification_sheet.dart';
+import '../widgets/advisor_approval_row.dart';
 import '../widgets/advisor_approval_sheet.dart';
 import '../widgets/advisor_contact_sheet.dart';
+import '../widgets/advisor_job_card_row.dart';
+import '../widgets/advisor_meta_pill.dart';
+import '../widgets/advisor_notification_sheet.dart';
+import '../widgets/advisor_profile_sheet.dart';
 import '../widgets/advisor_search_sheet.dart';
 import '../widgets/advisor_stat_dialog.dart';
 
-const _advisorNavItems = <AppNavItem>[
+List<AppNavItem> _advisorNavItems(StaffLocalizations t) => <AppNavItem>[
   AppNavItem(
     selectedIcon: Icons.dashboard_rounded,
     icon: Icons.dashboard_outlined,
-    label: 'Today',
+    label: t.advisorNavToday,
   ),
   AppNavItem(
     selectedIcon: Icons.receipt_long_rounded,
     icon: Icons.receipt_long_outlined,
-    label: 'Jobs',
+    label: t.advisorNavJobs,
   ),
   AppNavItem(
     selectedIcon: Icons.bar_chart_rounded,
     icon: Icons.bar_chart_outlined,
-    label: 'Reports',
+    label: t.advisorNavReports,
   ),
 ];
 
@@ -75,15 +79,18 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
         content: Row(
           children: [
             if (icon != null) ...[
-              Icon(icon, color: Colors.white, size: 16),
-              const SizedBox(width: 8),
+              Icon(
+                icon,
+                color: AppColors.textInverse,
+                size: AppDimensions.iconSm,
+              ),
+              const SizedBox(width: AppDimensions.s8),
             ],
             Expanded(
               child: Text(
                 msg,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13.5,
+                  color: AppColors.textInverse,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -92,9 +99,6 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
         ),
         backgroundColor: color ?? colorScheme.primary,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 84),
-        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -136,7 +140,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
 
   void _onApproval(PendingApprovalEntity pa) {
     HapticFeedback.mediumImpact();
-    final colorScheme = Theme.of(context).colorScheme;
+    final t = StaffLocalizations.of(context)!;
     _sheet(
       AdvisorApprovalSheet(
         pa: pa,
@@ -144,18 +148,18 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
           Navigator.pop(context);
           _persistApproval(pa, 'approve');
           _toast(
-            '${pa.typeLabel} ${pa.estimateId} approved',
+            t.advisorToastApproved(pa.typeLabel, pa.estimateId),
             icon: Icons.check_circle_outline,
-            color: const Color(0xFF10B981),
+            color: AppColors.success,
           );
         },
         onReject: () {
           Navigator.pop(context);
           _persistApproval(pa, 'reject');
           _toast(
-            '${pa.typeLabel} ${pa.estimateId} rejected',
+            t.advisorToastRejected(pa.typeLabel, pa.estimateId),
             icon: Icons.undo,
-            color: colorScheme.secondary,
+            color: Theme.of(context).colorScheme.primary,
           );
         },
       ),
@@ -193,31 +197,35 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
 
   void _onContact(FollowupReminderEntity r) {
     HapticFeedback.lightImpact();
+    final t = StaffLocalizations.of(context)!;
     _sheet(
       AdvisorContactSheet(
         r: r,
         onCall: () {
           Navigator.pop(context);
-          _toast('Calling ${r.customerName}…', icon: Icons.phone_outlined);
+          _toast(
+            t.advisorToastCalling(r.customerName),
+            icon: Icons.phone_outlined,
+          );
         },
         onWhatsApp: () {
           Navigator.pop(context);
           _toast(
-            'Opening WhatsApp…',
+            t.advisorToastOpeningWhatsApp,
             icon: Icons.chat_outlined,
-            color: const Color(0xFF10B981),
+            color: AppColors.success,
           );
         },
         onSms: () {
           Navigator.pop(context);
-          _toast('SMS sent', icon: Icons.sms_outlined);
+          _toast(t.advisorToastSmsSent, icon: Icons.sms_outlined);
         },
         onDone: () {
           Navigator.pop(context);
           _toast(
-            'Marked as completed',
+            t.advisorToastMarkedDone,
             icon: Icons.check_circle_outline_rounded,
-            color: const Color(0xFF10B981),
+            color: AppColors.success,
           );
         },
       ),
@@ -236,21 +244,28 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
   void _onStat(String label, int count, Color color) {
     showDialog(
       context: context,
-      builder: (_) =>
-          AdvisorStatDialog(label: label, count: count, color: color),
+      builder: (_) => AdvisorStatDialog(
+        label: label,
+        count: count,
+        color: color,
+        onViewAll: () => setState(() => _navIndex = 1),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final adaptive = context.adaptive;
+    final t = StaffLocalizations.of(context)!;
+    final items = _advisorNavItems(t);
+
     return DashboardShell(
       body: AppAdaptiveNavigationFrame(
-        items: _advisorNavItems,
+        items: items,
         selectedIndex: _navIndex,
         onSelected: (index) => setState(() => _navIndex = index),
         headerBuilder: (ctx, ext) =>
-            OrientBrandMark(workspace: 'Advisor', compact: !ext),
+            OrientBrandMark(workspace: t.advisorWorkspaceName, compact: !ext),
         footerBuilder: (ctx, ext) => InkWell(
           onTap: _showProfile,
           borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
@@ -262,24 +277,11 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
             child: ext
                 ? Row(
                     children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Theme.of(
-                          ctx,
-                        ).colorScheme.primary.withValues(alpha: 0.14),
-                        child: Text(
-                          'A',
-                          style: TextStyle(
-                            color: Theme.of(ctx).colorScheme.primary,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
+                      _AdvisorAvatar(radius: 16),
                       const SizedBox(width: AppDimensions.s10),
                       Expanded(
                         child: Text(
-                          'Advisor Profile',
+                          t.advisorProfileLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(ctx).textTheme.labelMedium?.copyWith(
@@ -291,21 +293,8 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
                     ],
                   )
                 : Tooltip(
-                    message: 'Advisor Profile',
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Theme.of(
-                        ctx,
-                      ).colorScheme.primary.withValues(alpha: 0.14),
-                      child: Text(
-                        'A',
-                        style: TextStyle(
-                          color: Theme.of(ctx).colorScheme.primary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
+                    message: t.advisorProfileLabel,
+                    child: _AdvisorAvatar(radius: 18),
                   ),
           ),
         ),
@@ -313,7 +302,6 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
           index: _navIndex,
           children: [
             _AdvisorDashboardContent(
-              onShowProfile: _showProfile,
               onShowNotifications: _showNotifications,
               onShowSearch: _showSearch,
               onOpenScan: _openScan,
@@ -333,7 +321,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
       bottomNavigationBar: adaptive.useNavigationRail
           ? null
           : AppBottomNavigation(
-              items: _advisorNavItems,
+              items: items,
               selectedIndex: _navIndex,
               onSelected: (index) => setState(() => _navIndex = index),
             ),
@@ -341,9 +329,30 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
   }
 }
 
+class _AdvisorAvatar extends StatelessWidget {
+  final double radius;
+  const _AdvisorAvatar({required this.radius});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: colors.primary.withValues(alpha: 0.14),
+      child: Text(
+        'A',
+        style: TextStyle(
+          color: colors.primary,
+          fontWeight: FontWeight.w800,
+          fontSize: radius * 0.8,
+        ),
+      ),
+    );
+  }
+}
+
 // ─── ADVISOR DASHBOARD TAB CONTENT ───────────────────────────────────────────
 class _AdvisorDashboardContent extends ConsumerWidget {
-  final VoidCallback onShowProfile;
   final VoidCallback onShowNotifications;
   final VoidCallback onShowSearch;
   final VoidCallback onOpenScan;
@@ -356,7 +365,6 @@ class _AdvisorDashboardContent extends ConsumerWidget {
   final void Function(int) onNavigateTab;
 
   const _AdvisorDashboardContent({
-    required this.onShowProfile,
     required this.onShowNotifications,
     required this.onShowSearch,
     required this.onOpenScan,
@@ -371,25 +379,36 @@ class _AdvisorDashboardContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final info = ref.watch(advisorInfoProvider);
 
     final recentJobsState = ref.watch(advisorRecentJobCardsProvider);
     final bookingsState = ref.watch(advisorAssignedBookingsProvider);
+    final approvalsState = ref.watch(advisorPendingApprovalsProvider);
+    final reminders = ref.watch(advisorFollowupRemindersProvider);
+
     final recentJobs = recentJobsState.value ?? const <JobCardEntity>[];
     final assignedBookings =
         bookingsState.value ?? const <AdvisorBookingResponse>[];
+    final approvals = approvalsState.value ?? const <PendingApprovalEntity>[];
     final activeBooking = assignedBookings.firstOrNull;
-    final hasDataError = recentJobsState.hasError || bookingsState.hasError;
+
+    final hasDataError =
+        recentJobsState.hasError ||
+        bookingsState.hasError ||
+        approvalsState.hasError;
     final isInitialLoading =
         (recentJobsState.isLoading || bookingsState.isLoading) &&
         recentJobs.isEmpty &&
         assignedBookings.isEmpty;
 
+    final attentionCount = approvals.length + reminders.length;
+
     return RefreshIndicator(
       onRefresh: () async => ref.read(advisorRefreshProvider.notifier).state++,
-      color: colorScheme.primary,
-      backgroundColor: colorScheme.surface,
+      color: colors.primary,
+      backgroundColor: colors.surface,
       child: AppResponsivePage(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
@@ -401,106 +420,150 @@ class _AdvisorDashboardContent extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── 1. CLEAN ADVISOR OPERATIONAL HEADER ───────────────────────
+            // ── 1. SHIFT HEADER ───────────────────────────────────────────
             _AdvisorHeader(
+              name: info.name,
+              branch: info.branch,
+              shift: info.shift,
               onNotificationTap: onShowNotifications,
-              onProfileTap: () {
-                final info = ref.read(advisorInfoProvider);
-                context.push(
-                  AppRoutes.profile,
-                  extra: ProfileData(
-                    name: info.name,
-                    id: info.id,
-                    role: 'Service Advisor',
-                    branch: info.branch,
-                    shift: info.shift,
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 18),
-            if (isInitialLoading) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: const LinearProgressIndicator(minHeight: 4),
+              onProfileTap: () => context.push(
+                AppRoutes.profile,
+                extra: ProfileData(
+                  name: info.name,
+                  id: info.id,
+                  role: t.advisorWorkspaceName,
+                  branch: info.branch,
+                  shift: info.shift,
+                ),
               ),
-              const SizedBox(height: 14),
+            ),
+            const SizedBox(height: AppDimensions.s18),
+
+            if (isInitialLoading) ...[
+              const AppSkeleton.listRows(rows: 3),
+              const SizedBox(height: AppDimensions.s16),
             ],
             if (hasDataError) ...[
-              _AdvisorDataNotice(
-                onRetry: () =>
-                    ref.read(advisorRefreshProvider.notifier).state++,
+              AppInfoPanel.danger(
+                message: t.advisorDataError,
+                action: TextButton(
+                  onPressed: () =>
+                      ref.read(advisorRefreshProvider.notifier).state++,
+                  child: Text(t.advisorActionRefreshJobCard),
+                ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppDimensions.s16),
             ],
             if (activeBooking != null) ...[
               _ActiveIntakeCard(
                 booking: activeBooking,
                 onTap: () => onNavigateTab(1),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppDimensions.s18),
             ],
 
-            // ── 2. QUICK INTAKE SEARCH PILL ───────────────────────────────
+            // ── 2. SEARCH PILL ────────────────────────────────────────────
             _AdvisorSearchPill(onTap: onShowSearch),
-            const SizedBox(height: 18),
+            const SizedBox(height: AppDimensions.s18),
 
-            // ── 3. OPERATIONAL QUICK ACTIONS MATRIX ───────────────────────
-            _AdvisorQuickActionsMatrix(
+            // ── 3. ATTENTION BLOCK ────────────────────────────────────────
+            if (attentionCount > 0) ...[
+              SectionHeader(
+                title: t.advisorAttentionTitle,
+                count: attentionCount,
+                leadingIcon: Icons.notifications_active_outlined,
+              ),
+              if (approvals.isNotEmpty)
+                ...approvals
+                    .take(3)
+                    .map((pa) => AdvisorApprovalRow(pa: pa, onTap: onApproval)),
+              if (reminders.isNotEmpty)
+                ...reminders
+                    .take(3)
+                    .map(
+                      (r) => Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: AppDimensions.s8,
+                        ),
+                        child: AppRecordRow(
+                          leading: Icon(
+                            Icons.alarm_rounded,
+                            color: colors.primary,
+                          ),
+                          title: r.customerName,
+                          subtitle: r.task,
+                          metadata: Text(
+                            r.dueDate,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: colors.onSurfaceVariant),
+                          ),
+                          onTap: () => onContact(r),
+                        ),
+                      ),
+                    ),
+              const SizedBox(height: AppDimensions.s20),
+            ],
+
+            // ── 4. QUICK ACTIONS ──────────────────────────────────────────
+            Text(
+              t.advisorQuickActionsEyebrow.toUpperCase(),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+                letterSpacing: AppTypography.tracking(context, 0.8),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s12),
+            _AdvisorQuickActionsGrid(
               onScan: onOpenScan,
               onNewJob: onNewJobCard,
               onInspection: onOpenInspection,
               onReports: () => onNavigateTab(2),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: AppDimensions.s28),
 
-            // ── 4. WORK SUMMARY QUICK METRICS ─────────────────────────────
-            _SectionHeadingWithAction(
-              title: 'Work Summary',
-              actionText: 'Analytics',
+            // ── 5. WORK SUMMARY METRICS ───────────────────────────────────
+            SectionHeader(
+              title: t.advisorWorkSummary,
+              action: t.advisorActionAnalytics,
               onAction: () => onNavigateTab(2),
             ),
-            const SizedBox(height: 14),
-            _AdvisorShiftMetricsRow(
+            _AdvisorShiftMetrics(
               totalCount: recentJobs.length,
               inProgressCount: recentJobs
                   .where((j) => j.status == JobCardStatus.inProgress)
                   .length,
               completedCount: recentJobs
-                  .where((j) => j.status == JobCardStatus.completed)
+                  .where(
+                    (j) =>
+                        j.status == JobCardStatus.completed ||
+                        j.status == JobCardStatus.delivered,
+                  )
                   .length,
+              onStat: onStat,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppDimensions.s28),
 
-            // ── 5. ASSIGNED WORK ORDERS LIST ──────────────────────────────
-            _SectionHeadingWithAction(
-              title: 'Assigned Work Orders',
-              actionText: 'View All (${recentJobs.length})',
+            // ── 6. RECENT WORK ORDERS ─────────────────────────────────────
+            SectionHeader(
+              title: t.advisorAssignedWorkOrders,
+              action: t.advisorViewAll(recentJobs.length),
               onAction: () => onNavigateTab(1),
             ),
-            const SizedBox(height: 14),
             if (recentJobs.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimensions.s24,
+                ),
                 child: EmptyState(
                   icon: Icons.assignment_outlined,
-                  message: 'No active job cards assigned',
+                  message: t.advisorNoActiveJobs,
                 ),
               )
             else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: recentJobs.take(3).length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (ctx, i) {
-                  final jc = recentJobs[i];
-                  return _AdvisorJobCardTile(
-                    job: jc,
-                    onTap: () => onJobCard(jc),
-                  );
-                },
-              ),
+              ...recentJobs
+                  .take(3)
+                  .map((jc) => AdvisorJobCardRow(jc: jc, onTap: onJobCard)),
           ],
         ),
       ),
@@ -508,50 +571,18 @@ class _AdvisorDashboardContent extends ConsumerWidget {
   }
 }
 
-// ─── 1. ADVISOR NOTICE ───────────────────────────────────────────────────────
-class _AdvisorDataNotice extends StatelessWidget {
-  final VoidCallback onRetry;
-
-  const _AdvisorDataNotice({required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: colors.errorContainer,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onRetry,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Icon(Icons.cloud_off_rounded, color: colors.onErrorContainer),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Some live workshop data could not be loaded.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.onErrorContainer,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Icon(Icons.refresh_rounded, color: colors.onErrorContainer),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
+// ─── 1. SHIFT HEADER ─────────────────────────────────────────────────────────
 class _AdvisorHeader extends StatelessWidget {
+  final String name;
+  final String branch;
+  final String shift;
   final VoidCallback onNotificationTap;
   final VoidCallback onProfileTap;
 
   const _AdvisorHeader({
+    required this.name,
+    required this.branch,
+    required this.shift,
     required this.onNotificationTap,
     required this.onProfileTap,
   });
@@ -559,105 +590,88 @@ class _AdvisorHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final contextLine = [
+      branch,
+      shift,
+    ].where((s) => s.trim().isNotEmpty).join(' · ');
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'SERVICE ADVISOR',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.1,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
               Text(
-                'Service Desk',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                  letterSpacing: -0.6,
+                t.advisorRoleEyebrow.toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: AppTypography.tracking(context, 1.1),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+              const SizedBox(height: AppDimensions.s4),
+              Text(
+                t.advisorDeskTitle,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colors.onSurface,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppDimensions.s4),
+              Text(
+                t.advisorGreeting(name),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+              if (contextLine.isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.s6),
+                Wrap(
+                  spacing: AppDimensions.s8,
+                  runSpacing: AppDimensions.s4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    AdvisorMetaPill(
+                      icon: Icons.store_mall_directory_outlined,
+                      label: contextLine,
+                    ),
+                    AdvisorMetaPill(
+                      icon: Icons.cloud_done_outlined,
+                      label: t.advisorFreshnessLive,
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppDimensions.s12),
         Row(
           children: [
-            _PressScale(
-              onTap: () {
+            IconButton(
+              onPressed: () {
                 HapticFeedback.selectionClick();
                 onNotificationTap();
               },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerLow,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colorScheme.outlineVariant),
-                ),
-                child: Icon(
-                  Icons.notifications_none_rounded,
-                  color: colorScheme.onSurface,
-                  size: 20,
-                ),
-              ),
+              tooltip: t.advisorNotificationsTitle,
+              icon: const Icon(Icons.notifications_none_rounded),
             ),
-            const SizedBox(width: 10),
-            _PressScale(
-              onTap: () {
+            IconButton(
+              onPressed: () {
                 HapticFeedback.selectionClick();
                 onProfileTap();
               },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    'A',
-                    style: TextStyle(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
+              tooltip: t.advisorProfileLabel,
+              icon: const Icon(Icons.person_outline_rounded),
             ),
           ],
         ),
@@ -666,7 +680,7 @@ class _AdvisorHeader extends StatelessWidget {
   }
 }
 
-// ─── 2. UBER-STYLE QUICK INTAKE SEARCH ───────────────────────────────────────
+// ─── 2. QUICK INTAKE SEARCH PILL ─────────────────────────────────────────────
 class _AdvisorSearchPill extends StatelessWidget {
   final VoidCallback onTap;
   const _AdvisorSearchPill({required this.onTap});
@@ -674,82 +688,89 @@ class _AdvisorSearchPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
 
-    return _PressScale(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.search_rounded,
-                color: colorScheme.primary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Search intake, customer, or VIN...',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.onSurface,
-                    ),
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s16,
+            vertical: AppDimensions.s12,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppDimensions.s8),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusControl,
                   ),
-                  Text(
-                    'Lookup repair orders, estimates & history',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+                ),
+                child: Icon(
+                  Icons.search_rounded,
+                  color: colors.primary,
+                  size: AppDimensions.iconMd,
+                ),
               ),
-            ),
-            Icon(
-              Icons.qr_code_scanner_rounded,
-              color: colorScheme.onSurfaceVariant,
-              size: 18,
-            ),
-          ],
+              const SizedBox(width: AppDimensions.s14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.advisorSearchPillTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                    Text(
+                      t.advisorSearchPillSubtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Icon(
+                Icons.qr_code_scanner_rounded,
+                color: colors.onSurfaceVariant,
+                size: AppDimensions.iconMd,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ─── 3. OPERATIONAL QUICK ACTIONS MATRIX ─────────────────────────────────────
-class _AdvisorQuickActionsMatrix extends StatelessWidget {
+// ─── 3. QUICK ACTIONS GRID ───────────────────────────────────────────────────
+class _AdvisorQuickActionsGrid extends StatelessWidget {
   final VoidCallback onScan;
   final VoidCallback onNewJob;
   final VoidCallback onInspection;
   final VoidCallback onReports;
 
-  const _AdvisorQuickActionsMatrix({
+  const _AdvisorQuickActionsGrid({
     required this.onScan,
     required this.onNewJob,
     required this.onInspection,
@@ -758,60 +779,51 @@ class _AdvisorQuickActionsMatrix extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
+    final t = StaffLocalizations.of(context)!;
+    final tiles = <Widget>[
+      _AdvisorActionTile(
+        title: t.advisorActionScanTitle,
+        subtitle: t.advisorActionScanSubtitle,
+        icon: Icons.qr_code_scanner_rounded,
+        isPrimary: true,
+        onTap: onScan,
+      ),
+      _AdvisorActionTile(
+        title: t.advisorActionNewJobTitle,
+        subtitle: t.advisorActionNewJobSubtitle,
+        icon: Icons.add_to_photos_rounded,
+        isPrimary: false,
+        onTap: onNewJob,
+      ),
+      _AdvisorActionTile(
+        title: t.advisorActionInspectionTitle,
+        subtitle: t.advisorActionInspectionSubtitle,
+        icon: Icons.fact_check_rounded,
+        isPrimary: false,
+        onTap: onInspection,
+      ),
+      _AdvisorActionTile(
+        title: t.advisorActionReportsTitle,
+        subtitle: t.advisorActionReportsSubtitle,
+        icon: Icons.bar_chart_rounded,
+        isPrimary: false,
+        onTap: onReports,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final gap = AppDimensions.cardGap;
+        final columns = constraints.maxWidth >= 720 ? 4 : 2;
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
           children: [
-            Expanded(
-              flex: 3,
-              child: _AdvisorActionTile(
-                title: 'Scan Vehicle\nVIN / Plate',
-                subtitle: 'Camera scanner',
-                icon: Icons.qr_code_scanner_rounded,
-                isPrimary: true,
-                onTap: onScan,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: _AdvisorActionTile(
-                title: 'New Job\nCard',
-                subtitle: 'Client intake',
-                icon: Icons.add_to_photos_rounded,
-                isPrimary: false,
-                onTap: onNewJob,
-              ),
-            ),
+            for (final tile in tiles) SizedBox(width: width, child: tile),
           ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: _AdvisorActionTile(
-                title: 'Vehicle\nInspection',
-                subtitle: 'Checkpoints',
-                icon: Icons.fact_check_rounded,
-                isPrimary: false,
-                onTap: onInspection,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 3,
-              child: _AdvisorActionTile(
-                title: 'Workshop\nReports',
-                subtitle: 'Performance logs',
-                icon: Icons.bar_chart_rounded,
-                isPrimary: false,
-                onTap: onReports,
-              ),
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -834,94 +846,81 @@ class _AdvisorActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
+    final bgColor = isPrimary ? colors.primary : colors.surface;
+    final fgColor = isPrimary ? colors.onPrimary : colors.onSurface;
 
-    final bgColor = isPrimary ? colorScheme.primary : colorScheme.surface;
-    final fgColor = isPrimary ? colorScheme.onPrimary : colorScheme.onSurface;
-
-    return _PressScale(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 104),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isPrimary ? Colors.transparent : colorScheme.outlineVariant,
-          ),
-          boxShadow: isPrimary
-              ? [
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(alpha: 0.28),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
+    return Material(
+      color: bgColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
+        side: BorderSide(
+          color: isPrimary ? Colors.transparent : colors.outlineVariant,
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.s14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppDimensions.s6),
+                    decoration: BoxDecoration(
+                      color: isPrimary
+                          ? colors.onPrimary.withValues(alpha: 0.18)
+                          : colors.primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusControl,
+                      ),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: isPrimary ? fgColor : colors.primary,
+                      size: AppDimensions.iconMd,
+                    ),
                   ),
-                ]
-              : [
-                  BoxShadow(
-                    color: colorScheme.shadow.withValues(alpha: 0.04),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                  Icon(
+                    Icons.arrow_outward_rounded,
+                    color: isPrimary
+                        ? colors.onPrimary.withValues(alpha: 0.6)
+                        : colors.onSurfaceVariant,
+                    size: AppDimensions.iconSm,
                   ),
                 ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isPrimary
-                        ? colorScheme.onPrimary.withValues(alpha: 0.18)
-                        : colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: fgColor, size: 18),
+              ),
+              const SizedBox(height: AppDimensions.s10),
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: fgColor,
+                  fontWeight: FontWeight.w800,
                 ),
-                Icon(
-                  Icons.arrow_outward_rounded,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
                   color: isPrimary
-                      ? colorScheme.onPrimary.withValues(alpha: 0.6)
-                      : colorScheme.onSurfaceVariant,
-                  size: 16,
+                      ? colors.onPrimary.withValues(alpha: 0.8)
+                      : colors.onSurfaceVariant,
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: textTheme.titleSmall?.copyWith(
-                    color: fgColor,
-                    fontWeight: FontWeight.w900,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: isPrimary
-                        ? colorScheme.onPrimary.withValues(alpha: 0.8)
-                        : colorScheme.onSurfaceVariant,
-                    fontSize: 10.5,
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -938,403 +937,152 @@ class _ActiveIntakeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
 
-    return _PressScale(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: colorScheme.primary.withValues(alpha: 0.35),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.primary.withValues(alpha: 0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'ACTIVE ARRIVAL',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  'CONFIRMED APPOINTMENT',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.secondary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    Icons.directions_car_rounded,
-                    color: colorScheme.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${booking.serviceType} · ${booking.vehicleName}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        'Client: ${booking.customerName} · ${booking.bookingDate}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ],
-            ),
-          ],
-        ),
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
+        side: BorderSide(color: colors.primary.withValues(alpha: 0.35)),
       ),
-    );
-  }
-}
-
-// ─── 5. PHOTOGRAPHIC OPERATIONAL HERO BANNER ─────────────────────────────────
-// ─── 6. SHIFT METRICS QUICK ROW ──────────────────────────────────────────────
-class _AdvisorShiftMetricsRow extends StatelessWidget {
-  final int totalCount;
-  final int inProgressCount;
-  final int completedCount;
-
-  const _AdvisorShiftMetricsRow({
-    required this.totalCount,
-    required this.inProgressCount,
-    required this.completedCount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Row(
-      children: [
-        _MetricTile(
-          label: 'Total Orders',
-          value: '$totalCount',
-          color: colorScheme.primary,
-        ),
-        const SizedBox(width: 8),
-        _MetricTile(
-          label: 'In Progress',
-          value: '$inProgressCount',
-          color: colorScheme.secondary,
-        ),
-        const SizedBox(width: 8),
-        _MetricTile(
-          label: 'Delivered',
-          value: '$completedCount',
-          color: const Color(0xFF10B981),
-        ),
-      ],
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _MetricTile({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: colorScheme.outlineVariant),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: color,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-                fontSize: 10.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── 7. ADVISOR JOB CARD TILE ────────────────────────────────────────────────
-class _AdvisorJobCardTile extends StatelessWidget {
-  final JobCardEntity job;
-  final VoidCallback onTap;
-
-  const _AdvisorJobCardTile({required this.job, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    final statusColor = job.status == JobCardStatus.completed
-        ? const Color(0xFF10B981)
-        : job.status == JobCardStatus.inProgress
-        ? colorScheme.secondary
-        : colorScheme.primary;
-
-    return _PressScale(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colorScheme.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              child: Text(
-                job.customerName.isNotEmpty ? job.customerName[0] : 'C',
-                style: TextStyle(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.s18),
+          child: Column(
+            children: [
+              Row(
                 children: [
+                  StatusPill.info(t.advisorActiveArrival, showDot: true),
+                  const Spacer(),
                   Text(
-                    job.customerName,
-                    style: textTheme.titleSmall?.copyWith(
+                    t.advisorConfirmedAppointment.toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.primary,
                       fontWeight: FontWeight.w800,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  Text(
-                    '${job.vehicleInfo} · ${job.id}',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
+              const SizedBox(height: AppDimensions.s14),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppDimensions.s12),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusInput,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.directions_car_rounded,
+                      color: colors.primary,
+                      size: AppDimensions.iconLg,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.s14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${booking.serviceType} · ${booking.vehicleName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: colors.onSurface,
+                          ),
+                        ),
+                        Text(
+                          '${t.advisorClientPrefix(booking.customerName)} · ${booking.bookingDate}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  DirectionalIcon(
+                    Icons.chevron_right_rounded,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ],
               ),
-              child: Text(
-                job.status.name.toUpperCase(),
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ─── HEADINGS & MOTION HELPERS ───────────────────────────────────────────────
-class _SectionHeadingWithAction extends StatelessWidget {
-  final String title;
-  final String actionText;
-  final VoidCallback onAction;
+// ─── 5. SHIFT METRICS ────────────────────────────────────────────────────────
+class _AdvisorShiftMetrics extends StatelessWidget {
+  final int totalCount;
+  final int inProgressCount;
+  final int completedCount;
+  final void Function(String, int, Color) onStat;
 
-  const _SectionHeadingWithAction({
-    required this.title,
-    required this.actionText,
-    required this.onAction,
+  const _AdvisorShiftMetrics({
+    required this.totalCount,
+    required this.inProgressCount,
+    required this.completedCount,
+    required this.onStat,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = Theme.of(context).colorScheme;
+    final t = StaffLocalizations.of(context)!;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: colorScheme.onSurface,
-              letterSpacing: -0.4,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            onAction();
-          },
-          child: Text(
-            actionText,
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: colorScheme.primary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PressScale extends StatefulWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-
-  const _PressScale({required this.child, this.onTap});
-
-  @override
-  State<_PressScale> createState() => _PressScaleState();
-}
-
-class _PressScaleState extends State<_PressScale>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-      reverseDuration: const Duration(milliseconds: 140),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutCubic,
-        reverseCurve: Curves.easeInCubic,
+    final tiles = <Widget>[
+      AppKpiCard.compact(
+        label: t.advisorMetricTotalOrders,
+        value: '$totalCount',
+        icon: Icons.assignment_outlined,
+        onTap: () =>
+            onStat(t.advisorMetricTotalOrders, totalCount, colors.primary),
       ),
-    );
-  }
+      AppKpiCard.compact(
+        label: t.advisorMetricInProgress,
+        value: '$inProgressCount',
+        icon: Icons.build_circle_outlined,
+        semanticState: KpiSemanticState.info,
+        onTap: () =>
+            onStat(t.advisorMetricInProgress, inProgressCount, AppColors.info),
+      ),
+      AppKpiCard.compact(
+        label: t.advisorMetricDelivered,
+        value: '$completedCount',
+        icon: Icons.verified_outlined,
+        semanticState: KpiSemanticState.success,
+        onTap: () =>
+            onStat(t.advisorMetricDelivered, completedCount, AppColors.success),
+      ),
+    ];
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) => _controller.reverse(),
-      onTapCancel: () => _controller.reverse(),
-      onTap: widget.onTap,
-      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final gap = AppDimensions.cardGap;
+        final columns = constraints.maxWidth >= 560 ? 3 : 2;
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final tile in tiles) SizedBox(width: width, child: tile),
+          ],
+        );
+      },
     );
   }
 }

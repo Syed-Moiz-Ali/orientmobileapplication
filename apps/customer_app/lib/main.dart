@@ -1,4 +1,6 @@
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_auth/shared_auth.dart';
@@ -58,6 +60,10 @@ class CustomerApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final brand = ref.watch(brandConfigProvider);
+    final effectiveLocale = AppLocales.resolve(
+      persisted: ref.watch(localeProvider),
+      system: WidgetsBinding.instance.platformDispatcher.locale,
+    );
     ref.watch(syncEngineProvider);
     // A session that ends or begins must never inherit the previous account's
     // data: these feature providers outlive the sign-out, so they are cleared
@@ -90,13 +96,21 @@ class CustomerApp extends ConsumerWidget {
             debugShowCheckedModeBanner: false,
             routerConfig: router,
             title: brand.appName,
-            theme: AppTheme.light(brand),
-            darkTheme: AppTheme.dark(brand),
+            onGenerateTitle: (context) =>
+                CustomerLocalizations.of(context)?.appTitle ?? brand.appName,
+            locale: effectiveLocale,
+            supportedLocales: AppLocales.supported,
+            localizationsDelegates: const [
+              CustomerLocalizations.delegate,
+              SharedCoreLocalizations.delegate,
+              SharedAuthLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            theme: AppTheme.light(brand, locale: effectiveLocale),
+            darkTheme: AppTheme.dark(brand, locale: effectiveLocale),
             themeMode: ThemeMode.light,
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(0.85)),
-              child: child ?? const SizedBox.shrink(),
-            ),
           ),
         ),
       ),

@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   flutter_riverpod: ^2.6.1
   hive: ^2.2.3
   hive_flutter: ^1.1.0
@@ -30,6 +32,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/.env
     - assets/images/logo.png
@@ -48,3 +51,13 @@ flutter:
           weight: 700
         - asset: assets/fonts/plus_jakarta_sans/PlusJakartaSans-Variable.ttf
           weight: 800
+    - family: IBM Plex Sans Arabic
+      fonts:
+        - asset: assets/fonts/ibm_plex_sans_arabic/IBMPlexSansArabic-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/ibm_plex_sans_arabic/IBMPlexSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ibm_plex_sans_arabic/IBMPlexSansArabic-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ibm_plex_sans_arabic/IBMPlexSansArabic-Bold.ttf
+          weight: 700

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'advisor_sheet.dart';
-import 'advisor_handle.dart';
 import 'advisor_detail_line.dart';
 import 'advisor_outline_action.dart';
 import 'advisor_solid_action.dart';
 
+/// Estimate approval sheet: record summary plus approve / send-back actions.
 class AdvisorApprovalSheet extends StatelessWidget {
   final PendingApprovalEntity pa;
   final VoidCallback onApprove;
@@ -19,83 +20,88 @@ class AdvisorApprovalSheet extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => AdvisorSheet(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const AdvisorHandle(),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
-          decoration: BoxDecoration(
-            color: AppColors.canvas,
-            borderRadius: BorderRadius.circular(AppDimensions.r14),
-            border: Border.all(color: AppColors.line),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final money = AppFormatters.of(context).moneyAED(pa.amount);
+
+    return AdvisorSheet(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: AppDimensions.s20,
+              horizontal: AppDimensions.s16,
+            ),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  pa.isEstimate ? money : pa.typeLabel,
+                  style: AppTextStyles.displayMedium(color: colors.onSurface),
+                ),
+                const SizedBox(height: AppDimensions.s4),
+                Text(
+                  '${pa.estimateId} · ${pa.customerName}',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  pa.timeAgo,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
-          child: Column(
+          const SizedBox(height: AppDimensions.s16),
+          AdvisorDetailLine(
+            icon: Icons.directions_car_outlined,
+            label: t.advisorFieldVehicle,
+            value: pa.vehicleId,
+          ),
+          AdvisorDetailLine(
+            icon: pa.isEstimate
+                ? Icons.receipt_long_outlined
+                : Icons.assignment_turned_in_outlined,
+            label: pa.typeLabel,
+            value: pa.estimateId,
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          Row(
             children: [
-              Text(
-                pa.isEstimate
-                    ? 'AED ${pa.amount.toStringAsFixed(0)}'
-                    : pa.typeLabel,
-                style: TextStyle(
-                  fontSize: pa.isEstimate ? 34 : 24,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0,
+              Expanded(
+                child: AdvisorOutlineAction(
+                  label: t.advisorActionSendBack,
+                  icon: Icons.undo_rounded,
+                  color: colors.error,
+                  onTap: onReject,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                '${pa.estimateId} · ${pa.customerName}',
-                style: const TextStyle(fontSize: 13, color: AppColors.text2),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                pa.timeAgo,
-                style: const TextStyle(fontSize: 11, color: AppColors.text3),
+              const SizedBox(width: AppDimensions.s10),
+              Expanded(
+                child: AdvisorSolidAction(
+                  label: t.advisorActionApprove,
+                  icon: Icons.check_rounded,
+                  color: AppColors.success,
+                  onTap: onApprove,
+                ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
-        AdvisorDetailLine(
-          icon: Icons.directions_car_outlined,
-          label: 'Vehicle',
-          value: pa.vehicleId,
-        ),
-        AdvisorDetailLine(
-          icon: pa.isEstimate
-              ? Icons.receipt_long_outlined
-              : Icons.assignment_turned_in_outlined,
-          label: pa.typeLabel,
-          value: pa.estimateId,
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: AdvisorOutlineAction(
-                label: 'Send Back',
-                icon: Icons.undo_rounded,
-                color: AppColors.danger,
-                onTap: onReject,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: AdvisorSolidAction(
-                label: 'Approve',
-                icon: Icons.check_rounded,
-                gradient: const [AppColors.success, Color(0xFF2DD4BF)],
-                onTap: onApprove,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

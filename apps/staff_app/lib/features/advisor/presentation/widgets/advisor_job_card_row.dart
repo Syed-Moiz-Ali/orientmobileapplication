@@ -1,185 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-class _StatusStyle {
-  final String label;
-  final Color color;
-  final Color bg;
-  const _StatusStyle(this.label, this.color, this.bg);
-}
-
+/// A job card rendered with the shared record-row grammar (spec §7):
+/// identifier chip, customer title, vehicle subtitle, time + status metadata.
+/// The status pill lives in the metadata row (which wraps) rather than the
+/// trailing slot so the row never overflows at 320 px / 1.3x.
 class AdvisorJobCardRow extends StatelessWidget {
   final JobCardEntity jc;
   final void Function(JobCardEntity) onTap;
   const AdvisorJobCardRow({super.key, required this.jc, required this.onTap});
 
-  _StatusStyle _getStatusStyle(BuildContext context, JobCardStatus status) {
-    final colors = Theme.of(context).colorScheme;
-    return switch (status) {
-      JobCardStatus.inProgress => _StatusStyle(
-        'In Progress',
-        colors.primary,
-        colors.primary.withValues(alpha: 0.12),
-      ),
-      JobCardStatus.pendingApproval ||
-      JobCardStatus.pending ||
-      JobCardStatus.awaitingSupervisor ||
-      JobCardStatus.waitingCustomerApproval => _StatusStyle(
-        'Pending',
-        colors.secondary,
-        colors.secondary.withValues(alpha: 0.12),
-      ),
-      JobCardStatus.completed ||
-      JobCardStatus.approved ||
-      JobCardStatus.delivered ||
-      JobCardStatus.qualityCheckPassed => const _StatusStyle(
-        'Completed',
-        Color(0xFF10B981),
-        Color(0x1A10B981),
-      ),
-      JobCardStatus.waitingParts => _StatusStyle(
-        'Waiting Parts',
-        colors.error,
-        colors.errorContainer,
-      ),
-      JobCardStatus.qualityCheck ||
-      JobCardStatus.vehicleReceived ||
-      JobCardStatus.inspected => _StatusStyle(
-        'QC Check',
-        colors.primary,
-        colors.primaryContainer,
-      ),
-      JobCardStatus.cancelled => _StatusStyle(
-        'Cancelled',
-        colors.onSurfaceVariant,
-        colors.surfaceContainerHighest,
-      ),
-      JobCardStatus.workAssigned => _StatusStyle(
-        'Work Assigned',
-        colors.primary,
-        colors.primary.withValues(alpha: 0.12),
-      ),
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
-    final s = _getStatusStyle(context, jc.status);
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          onTap: () => onTap(jc),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withValues(alpha: 0.05),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: s.color,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              jc.id,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: colorScheme.onSurface,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: StatusPill(
-                              label: s.label,
-                              fg: s.color,
-                              bg: s.bg,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        jc.customerName,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.directions_car_rounded,
-                            size: 14,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              jc.vehicleInfo,
-                              style: textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            jc.time,
-                            style: textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: colorScheme.outlineVariant,
-                  size: 20,
-                ),
-              ],
+      padding: const EdgeInsets.only(bottom: AppDimensions.s12),
+      child: AppRecordRow(
+        identifier: jc.id,
+        leading: CircleAvatar(
+          radius: 20,
+          backgroundColor: colors.primary.withValues(alpha: 0.12),
+          child: Text(
+            jc.customerName.isNotEmpty ? jc.customerName[0] : 'C',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: colors.primary,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
+        title: jc.customerName,
+        subtitle: jc.vehicleInfo,
+        metadata: Wrap(
+          spacing: AppDimensions.s8,
+          runSpacing: AppDimensions.s4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.schedule_rounded,
+                  size: AppDimensions.iconXs,
+                  color: colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppDimensions.s6),
+                Text(
+                  jc.time,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            advisorStatusPill(t, jc.status),
+          ],
+        ),
+        onTap: () => onTap(jc),
       ),
     );
   }

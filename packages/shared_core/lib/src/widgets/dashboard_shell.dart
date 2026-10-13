@@ -10,6 +10,16 @@ import 'package:shared_core/src/widgets/offline_banner.dart';
 /// System bar styling is provided once here as an [AnnotatedRegion] instead of
 /// being pushed imperatively from individual screens, so status/navigation bar
 /// contrast stays correct in both light and dark themes.
+///
+/// Layout contract (Phase 04):
+/// - [resizeToAvoidBottomInset] is on, so the keyboard lifts the body and the
+///   [bottomNavigationBar] together — the bottom bar never overlaps the
+///   keyboard and FABs float above it.
+/// - The [floatingActionButton] honors [floatingActionButtonLocation]; when a
+///   bottom bar is present use `FloatingActionButtonLocation.endFloat` so the
+///   FAB clears the bar.
+/// - The [body] is wrapped in a [FocusTraversalGroup]; modal surfaces use
+///   `showAppModalSheet`/dialogs which respond to Escape on desktop.
 class DashboardShell extends ConsumerWidget {
   final PreferredSizeWidget? appBar;
   final Widget body;
@@ -49,6 +59,7 @@ class DashboardShell extends ConsumerWidget {
       child: ExitConfirmationWrapper(
         child: Scaffold(
           appBar: appBar,
+          resizeToAvoidBottomInset: true,
           // FE-FIX (pre-deployment): honest offline indicator — offline writes
           // are queued, so users must know they will sync later.
           body: ColoredBox(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
 
 class NotificationBell extends StatelessWidget {
@@ -26,11 +27,13 @@ class NotificationBell extends StatelessWidget {
       fontWeight: FontWeight.w800,
     );
 
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
         IconButton(
-          tooltip: 'Notifications',
+          tooltip: SharedCoreL10n.of(context).notificationsTooltip,
           icon: Icon(
             Icons.notifications_outlined,
             color: effectiveForeground,
@@ -40,7 +43,9 @@ class NotificationBell extends StatelessWidget {
         ),
         if (showBadge)
           Positioned(
-            right: 4,
+            // The badge follows the top-end corner in both directions.
+            right: rtl ? null : 4,
+            left: rtl ? 4 : null,
             top: 4,
             child: badgeCount != null
                 ? Container(

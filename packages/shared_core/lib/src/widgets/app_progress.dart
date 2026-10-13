@@ -3,12 +3,17 @@ import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 
 /// Clean linear progress bar with optional label and percentage.
+///
+/// Pass `value: null` for an indeterminate (unknown-duration) progress. The
+/// determinate indicator mirrors the start edge in RTL; the indeterminate
+/// animation stays direction-neutral (spec §5 RTL rule 5).
 class AppLinearProgress extends StatelessWidget {
-  final double value; // 0.0 to 1.0
+  final double? value; // 0.0 to 1.0, or null for indeterminate
   final String? label;
   final bool showPercentage;
   final Color? color;
   final double height;
+  final Color? trackColor;
 
   const AppLinearProgress({
     super.key,
@@ -17,6 +22,7 @@ class AppLinearProgress extends StatelessWidget {
     this.showPercentage = false,
     this.color,
     this.height = 6.0,
+    this.trackColor,
   });
 
   @override
@@ -24,25 +30,29 @@ class AppLinearProgress extends StatelessWidget {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final progressColor = color ?? theme.colorScheme.primary;
-    final clampedValue = value.clamp(0.0, 1.0);
+    final clampedValue = value?.clamp(0.0, 1.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (label != null || showPercentage) ...[
+        if (label != null || (showPercentage && clampedValue != null)) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (label != null)
-                Text(
-                  label!,
-                  style: textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
+                Expanded(
+                  child: Text(
+                    label!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                 ),
-              if (showPercentage)
+              if (showPercentage && clampedValue != null)
                 Text(
                   '${(clampedValue * 100).round()}%',
                   style: textTheme.labelSmall?.copyWith(
@@ -59,7 +69,8 @@ class AppLinearProgress extends StatelessWidget {
           child: LinearProgressIndicator(
             value: clampedValue,
             minHeight: height,
-            backgroundColor: AppColors.borderDefault,
+            backgroundColor:
+                trackColor ?? theme.colorScheme.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation<Color>(progressColor),
           ),
         ),
@@ -74,11 +85,7 @@ class AppProgressStep {
   final String? subtitle;
   final IconData? icon;
 
-  const AppProgressStep({
-    required this.label,
-    this.subtitle,
-    this.icon,
-  });
+  const AppProgressStep({required this.label, this.subtitle, this.icon});
 }
 
 /// Step-by-step numbered/icon progress indicator (completed, active, upcoming).
@@ -115,8 +122,8 @@ class AppStepProgress extends StatelessWidget {
                         color: i == 0
                             ? Colors.transparent
                             : (i <= currentStep
-                                ? colors.primary
-                                : AppColors.borderDefault),
+                                  ? colors.primary
+                                  : colors.outline),
                       ),
                     ),
                     // Step bubble
@@ -128,31 +135,37 @@ class AppStepProgress extends StatelessWidget {
                         color: i < currentStep
                             ? AppColors.success
                             : (i == currentStep
-                                ? colors.primary
-                                : colors.surface),
+                                  ? colors.primary
+                                  : colors.surface),
                         border: Border.all(
                           color: i < currentStep
                               ? AppColors.success
                               : (i == currentStep
-                                  ? colors.primary
-                                  : AppColors.borderStrong),
+                                    ? colors.primary
+                                    : AppColors.borderStrong),
                           width: 1.5,
                         ),
                       ),
                       child: Center(
                         child: i < currentStep
-                            ? const Icon(
+                            ? Icon(
                                 Icons.check_rounded,
                                 size: 16,
-                                color: Colors.white,
+                                color: theme.brightness == Brightness.dark
+                                    ? AppDarkColors.onPrimary
+                                    : Colors.white,
                               )
                             : Text(
                                 '${i + 1}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
+                                  // Phase 01.1: the step number is normal-sized
+                                  // text on the primary fill — it follows the
+                                  // brightness-aware on-primary ink (white on
+                                  // light, dark ink on the bright dark primary).
                                   color: i == currentStep
-                                      ? Colors.white
+                                      ? colors.onPrimary
                                       : colors.onSurfaceVariant,
                                 ),
                               ),
@@ -165,8 +178,8 @@ class AppStepProgress extends StatelessWidget {
                         color: i == steps.length - 1
                             ? Colors.transparent
                             : (i < currentStep
-                                ? colors.primary
-                                : AppColors.borderDefault),
+                                  ? colors.primary
+                                  : colors.outline),
                       ),
                     ),
                   ],

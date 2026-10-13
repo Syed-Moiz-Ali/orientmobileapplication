@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_auth/l10n/gen/shared_auth_localizations.dart';
+import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_core/src/errors/result.dart';
+import 'package:shared_core/src/localization/locale_provider.dart';
 
 enum AuthMethod { sms, email, password }
 
@@ -79,6 +82,11 @@ class LoginNotifier extends Notifier<LoginState> {
     return const LoginState();
   }
 
+  /// Localized validation copy for the active locale (Phase 02). Resolved from
+  /// the shared locale provider because notifiers run outside the widget tree.
+  SharedAuthLocalizations get _t =>
+      SharedAuthL10n.forLocale(ref.read(localeProvider));
+
   void cancelCooldown() {
     _cooldownTimer?.cancel();
     _cooldownTimer = null;
@@ -130,7 +138,7 @@ class LoginNotifier extends Notifier<LoginState> {
   Future<void> sendSmsOtp() async {
     final p = state.phone.replaceAll(RegExp(r'[^\d]'), '');
     if (p.isEmpty || p.length < 8) {
-      state = state.copyWith(error: 'Enter a valid phone number');
+      state = state.copyWith(error: _t.validationEnterValidPhone);
       return;
     }
     state = state.copyWith(isLoading: true);
@@ -146,7 +154,7 @@ class LoginNotifier extends Notifier<LoginState> {
   Future<void> verifySmsOtp() async {
     final o = state.otp.replaceAll(RegExp(r'[^\d]'), '');
     if (o.length != 6) {
-      state = state.copyWith(error: 'Enter 6-digit OTP');
+      state = state.copyWith(error: _t.validationEnter6Otp);
       return;
     }
     state = state.copyWith(isLoading: true);
@@ -166,7 +174,7 @@ class LoginNotifier extends Notifier<LoginState> {
 
   Future<void> sendEmailOtp() async {
     if (state.email.isEmpty || !state.email.contains('@')) {
-      state = state.copyWith(error: 'Enter a valid email');
+      state = state.copyWith(error: _t.validationEnterValidEmail);
       return;
     }
     state = state.copyWith(isLoading: true);
@@ -182,7 +190,7 @@ class LoginNotifier extends Notifier<LoginState> {
   Future<void> verifyEmailOtp() async {
     final o = state.otp.replaceAll(RegExp(r'[^\d]'), '');
     if (o.length != 6) {
-      state = state.copyWith(error: 'Enter 6-digit OTP');
+      state = state.copyWith(error: _t.validationEnter6Otp);
       return;
     }
     state = state.copyWith(isLoading: true);
@@ -202,17 +210,17 @@ class LoginNotifier extends Notifier<LoginState> {
 
   Future<void> loginWithPassword() async {
     if (state.password.isEmpty) {
-      state = state.copyWith(error: 'Enter your password');
+      state = state.copyWith(error: _t.validationEnterPassword);
       return;
     }
     if (state.identifier == PasswordIdentifier.email &&
         (state.email.isEmpty || !state.email.contains('@'))) {
-      state = state.copyWith(error: 'Enter a valid email');
+      state = state.copyWith(error: _t.validationEnterValidEmail);
       return;
     }
     if (state.identifier == PasswordIdentifier.phone &&
         state.phone.length < 8) {
-      state = state.copyWith(error: 'Enter a valid phone number');
+      state = state.copyWith(error: _t.validationEnterValidPhone);
       return;
     }
     state = state.copyWith(isLoading: true);
@@ -235,21 +243,21 @@ class LoginNotifier extends Notifier<LoginState> {
 
   Future<void> register() async {
     if (state.name.isEmpty) {
-      state = state.copyWith(error: 'Enter your name');
+      state = state.copyWith(error: _t.validationEnterName);
       return;
     }
     if (state.password.length < 6) {
-      state = state.copyWith(error: 'Password must be 6+ chars');
+      state = state.copyWith(error: _t.validationPassword6Chars);
       return;
     }
     if (state.identifier == PasswordIdentifier.email &&
         (state.email.isEmpty || !state.email.contains('@'))) {
-      state = state.copyWith(error: 'Enter a valid email');
+      state = state.copyWith(error: _t.validationEnterValidEmail);
       return;
     }
     if (state.identifier == PasswordIdentifier.phone &&
         state.phone.length < 8) {
-      state = state.copyWith(error: 'Enter a valid phone number');
+      state = state.copyWith(error: _t.validationEnterValidPhone);
       return;
     }
     state = state.copyWith(isLoading: true);

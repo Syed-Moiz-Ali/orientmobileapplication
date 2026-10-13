@@ -39,14 +39,17 @@ class SalesTrendCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                'Sales & Profit Trend',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: colorScheme.onSurface,
+              Expanded(
+                child: Text(
+                  'Sales & Profit Trend',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ),
-              const Spacer(),
               _chip(
                 colorScheme.primary,
                 colorScheme.primary.withValues(alpha: 0.12),

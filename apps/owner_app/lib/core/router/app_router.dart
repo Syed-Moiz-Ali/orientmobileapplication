@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:owner_app/l10n/gen/owner_localizations.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:owner_app/features/dashboard/presentation/dashboard_view.dart';
 import 'package:owner_app/features/dashboard/presentation/pages/accounts_receivable_view.dart';
@@ -73,25 +74,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         name: AppRoutes.login,
-        builder: (context, state) => LoginView(
-          appName: 'Orient Owner App',
-          intendedUsers: 'For workshop owners and admins',
-          appPurpose:
-              'Monitor branches, job cards, staff, revenue, approvals, inventory, and workshop performance.',
-          onLoginSuccess: () => context.go(AppRoutes.ownerDashboard),
-          onForgotPassword: () => context.push(AppRoutes.forgotPassword),
-        ),
+        builder: (context, state) {
+          final t = OwnerLocalizations.of(context);
+          return LoginView(
+            appName: t?.loginAppName ?? 'Orient Owner App',
+            intendedUsers:
+                t?.loginIntendedUsers ?? 'For workshop owners and admins',
+            appPurpose:
+                t?.loginAppPurpose ??
+                'Monitor branches, job cards, staff, revenue, approvals, inventory, and workshop performance.',
+            securityNotice: t?.authSecurityNotice,
+            onLoginSuccess: () => context.go(AppRoutes.ownerDashboard),
+            onForgotPassword: () => context.push(AppRoutes.forgotPassword),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: AppRoutes.forgotPassword,
-        builder: (context, state) => ForgotPasswordView(
-          onBackToLogin: () => context.pop(),
-          appName: 'Orient Owner App',
-          intendedUsers: 'For workshop owners and admins',
-          appPurpose:
-              'Monitor branches, job cards, staff, revenue, approvals, inventory, and workshop performance.',
-        ),
+        builder: (context, state) {
+          final t = OwnerLocalizations.of(context);
+          return ForgotPasswordView(
+            onBackToLogin: () => context.pop(),
+            appName: t?.loginAppName ?? 'Orient Owner App',
+            intendedUsers:
+                t?.loginIntendedUsers ?? 'For workshop owners and admins',
+            appPurpose:
+                t?.loginAppPurpose ??
+                'Monitor branches, job cards, staff, revenue, approvals, inventory, and workshop performance.',
+            securityNotice: t?.authSecurityNotice,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.ownerDashboard,
