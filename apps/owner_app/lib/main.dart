@@ -52,6 +52,10 @@ class OwnerApp extends ConsumerWidget {
           routerConfig: router,
           title: brand.appName,
           theme: AppTheme.light(brand),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(0.85)),
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );

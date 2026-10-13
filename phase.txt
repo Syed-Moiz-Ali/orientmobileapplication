@@ -1,1320 +1,980 @@
-You are continuing the Technician product modernization inside:
+# MASTER CODEX PROMPT — COMPLETE 2026 UI/UX REDESIGN ANALYSIS & PHASE-WISE IMPLEMENTATION PLAN
 
-`apps/staff_app`
+## ROLE
 
-Technician Phase 1 is COMPLETE and FROZEN:
+Act as a **Principal Product Designer, Senior UI/UX Architect, Design Systems Engineer, and Senior Frontend Architect** with extensive experience designing production-grade enterprise applications in 2026.
 
-- shell/navigation
-- Today workspace
-- current work
-- shift context
-- upcoming jobs
+You are responsible for planning a **complete visual, interaction, navigation, and responsive experience redesign** of the application in this repository.
 
-Technician Phase 2 is COMPLETE and FROZEN:
+This is not a small UI enhancement, theme adjustment, spacing correction, or bug-fixing exercise.
 
-- Jobs workspace
-- search/filter
-- queue
-- responsive list
+**The objective is to transform the existing application into a completely modern, premium, cohesive, intuitive, responsive, multilingual product.**
 
-Technician Phase 3 is COMPLETE and FROZEN:
+The current application is functional, but its existing UI/UX must NOT be treated as the design standard.
 
-- Job Detail
-- task execution
-- Start/Complete task
-- delayed state
-- repair completion
-- QC handoff
+Its current presentation is not visually appealing or sufficiently polished.
 
-Technician Phase 4 is COMPLETE and FROZEN:
+You have full freedom to propose a significantly better UI/UX architecture while preserving existing business functionality.
 
-- Parts Request
-- Escalation
+---
 
-Technician Phase 5 is COMPLETE and FROZEN:
+# 1. IMPORTANT — EXECUTION MODE
 
-- Productivity
-- truthful current-day metrics
-- queue breakdown
-- shift information
-- duplicate Technician component cleanup
+Your immediate responsibility is **PROJECT ANALYSIS + REDESIGN STRATEGY + DETAILED PHASE PROMPT GENERATION**.
 
-Do NOT redesign any completed domain.
+Do not start implementing the redesign.
 
-==================================================
-CURRENT TASK
-==================================================
+First:
 
-Modernize the Technician PROFILE / ACCOUNT experience.
+1. Explore the entire repository.
+2. Understand the application and its business workflows.
+3. Identify every module, screen, route, navigation flow, and shared component.
+4. Understand the existing theme, UI architecture, state management, and localization.
+5. Evaluate the application from the perspective of a first-time user.
+6. Define a new 2026 visual and UX direction.
+7. Plan a complete application-wide redesign.
+8. Divide implementation into logical, independently verifiable phases.
+9. Generate a separate, detailed Codex implementation prompt for EVERY phase.
+10. Save all generated prompts in a `phases/` folder at the project root.
 
-This is the FINAL Technician implementation phase before the whole-product freeze audit.
+**Do not implement any redesign phases until I explicitly instruct you to execute one.**
 
-The Profile should answer:
+Do not limit the number of phases arbitrarily. Determine the correct number based on the actual application size and complexity.
 
-1. Who am I signed in as?
-2. What workshop/company account am I working under?
-3. What useful employment/contact information does the app actually know?
-4. Where are my account/security actions?
-5. How do I sign out?
+---
 
-It should NOT become:
+# 2. COMPLETE REPOSITORY ANALYSIS
 
-- another productivity screen
-- another shift screen
-- a technician performance report
-- an HR employee profile editor
-- a settings dumping ground
-- a fake support/help centre
+Inspect the real codebase, not just the README or a small sample of screens.
 
-==================================================
-IMPORTANT SHARED PROFILE QUESTION
-==================================================
+Analyze:
 
-The current Technician Profile uses:
+- Application architecture and entry points.
+- Folder structure and feature modules.
+- Routing, nested routes, and navigation.
+- Authentication and onboarding flows.
+- Dashboard and home screens.
+- Main application screens.
+- Feature-specific screens.
+- Detail views and operational workflows.
+- Create/edit forms.
+- Filters, searches, and sorting.
+- Lists, tables, and grids.
+- Modals, drawers, dialogs, and bottom sheets.
+- Shared widgets and design components.
+- Existing themes and design tokens.
+- Typography and icons.
+- Assets and fonts.
+- Loading, empty, error, and success states.
+- Localization and translation architecture.
+- Existing RTL support.
+- Responsive layout implementation.
+- Platform-specific implementations.
+- Accessibility and interaction patterns.
+- Permission-dependent navigation and actions.
+- Existing tests relevant to UI behavior.
 
-`StaffProfileScreen`
+Discover all application modules dynamically.
 
-This may also be used by Advisor/Supervisor.
+Do not assume the application only contains the modules listed in documentation.
 
-DO NOT blindly redesign the shared screen and accidentally alter all staff personas.
+The repository itself is the authoritative source.
 
-First determine:
+Build an actual screen inventory with:
 
-- who uses StaffProfileScreen
-- what data it receives
-- which elements are shared safely
-- whether Technician needs its own wrapper/configuration
-- whether improvements should be common Staff improvements
-- whether persona-specific content is currently hardcoded
+- Screen name.
+- Feature/module.
+- File path.
+- Route.
+- Screen purpose.
+- Primary user actions.
+- Existing shared components.
+- Navigation dependencies.
+- Permissions, if applicable.
+- Localization requirements.
+- Required responsive variants.
+- Proposed redesign phase.
 
-Prefer improving the shared implementation only when the change genuinely benefits all existing users without changing their product semantics.
+Do not ignore secondary, administrative, or less frequently used screens.
 
-Otherwise keep Technician-specific composition isolated.
+Ensure that every discovered screen is assigned to a future implementation phase.
 
-==================================================
-SCOPE
-==================================================
-
-IN SCOPE:
-
-- Technician Profile tab
-- real signed-in staff identity
-- contact/work identity
-- company/branch information if real
-- security/account actions that actually exist
-- sign out
-- responsive mobile/tablet/desktop layout
-- loading/error states if profile data is async
-- accessibility
-- dark mode
-- profile-specific tests/goldens
-
-OUT OF SCOPE:
-
-- HR employee management
-- attendance redesign
-- productivity
-- notification preferences unless real
-- app-lock/security features unless real
-- editing backend profile fields unless endpoint exists
-- Advisor workflow redesign
-- Supervisor workflow redesign
-- Customer/Owner/CRM
-
-==================================================
-PHASE 0 — FOCUSED AUDIT
-==================================================
-
-Use FOUR small READ-ONLY agents in parallel.
-
-Do not perform a whole Staff audit.
-
---------------------------------------------------
-AGENT 1 — PROFILE USAGE / ROUTE AUDIT
---------------------------------------------------
-
-Inspect:
-
-`StaffProfileScreen`
-
-Technician dashboard/profile tab
-
-Advisor profile usage
-
-Supervisor profile usage
-
-routing
-
-auth/session objects
-
-profile providers
-
-Return:
-
-WHO USES STAFF PROFILE
-
-TECHNICIAN ENTRY POINT
-
-ADVISOR ENTRY POINT
-
-SUPERVISOR ENTRY POINT
-
-SHARED VS PERSONA-SPECIFIC BEHAVIOR
-
-ROUTING
-
-CURRENT ACTIONS
-
-DEAD ACTIONS
-
-FILES
-
-Do not edit.
-
---------------------------------------------------
-AGENT 2 — PROFILE DATA CONTRACT AUDIT
---------------------------------------------------
-
-Inspect:
-
-auth/session model
-
-staff profile model
-
-employee/user entity
-
-repositories
-
-remote datasource
-
-backend profile/auth endpoints
-
-local persistence
-
-Determine exactly which data is trustworthy:
-
-- name
-- employee id
-- email
-- phone
-- avatar/photo
-- initials
-- company/workshop
-- branch
-- designation/title
-- staff type
-- technician specialty
-- shift
-- joined date
-- attendance state
-- permissions
-- app version
-- account/security capabilities
-
-For every field return:
-
-FIELD
-
-SOURCE
-
-TRUSTWORTHY?
-
-EDITABLE?
-
-TECHNICIAN-USEFUL?
-
-Do not infer missing profile fields.
-
---------------------------------------------------
-AGENT 3 — ACCOUNT / SECURITY ACTION AUDIT
---------------------------------------------------
-
-Inspect existing real capabilities:
-
-- sign out
-- forgot/reset password
-- authenticated change password
-- profile editing
-- notification settings
-- language
-- theme
-- device/session management
-- support/contact
-- privacy/terms
-- licences
-
-Return:
-
-SUPPORTED ACTIONS
-
-UNSUPPORTED ACTIONS
-
-CURRENT FAKE/DEAD ITEMS
-
-SIGN-OUT SEMANTICS
-
-PASSWORD FLOW
-
-Do NOT invent missing endpoints.
-
---------------------------------------------------
-AGENT 4 — UX / RESPONSIVE / TEST AUDIT
---------------------------------------------------
-
-Inspect current profile at:
-
-320
-360
-390
-430
-1.6×
-tablet
-desktop
-dark
-
-Also inspect tests.
-
-Return:
-
-CURRENT UX PROBLEMS
-
-EMPTY WHITESPACE
-
-DUPLICATE INFORMATION
-
-TOUCH TARGET RISKS
-
-ACCESSIBILITY RISKS
-
-TEST COVERAGE
-
-REQUIRED GOLDENS
-
-==================================================
-LEAD SYNTHESIS
-==================================================
-
-Before implementation explicitly define:
-
-PROFILE RESPONSIBILITY
-
-REAL IDENTITY FIELDS
-
-REAL ACCOUNT ACTIONS
-
-TECHNICIAN-SPECIFIC CONTENT
-
-SHARED STAFF CONTENT
-
-UNSUPPORTED ITEMS TO REMOVE
-
-RESPONSIVE STRATEGY
-
-Only then edit.
-
-==================================================
-PROFILE PRODUCT RESPONSIBILITY
-==================================================
-
-Keep Profile simple:
-
-IDENTITY
-
-WORK / CONTACT DETAILS
-
-ACCOUNT ACTIONS
-
-ABOUT / SESSION
-
-SIGN OUT
-
-Do not create a dashboard inside Profile.
-
-==================================================
-IDENTITY HEADER
-==================================================
-
-Use real information only.
-
-Potential:
-
-MA
-Mohammed Ali
-Technician
-
-EMP-1024
-
-But only show values actually available.
-
-If profile image does not exist:
-
-use initials derived from real name.
-
-Do not use stock avatars.
-
-Do not use generated portraits.
-
-==================================================
-ROLE / STAFF TYPE
-==================================================
-
-Be careful.
-
-If backend/session genuinely exposes:
-
-Technician
-
-it can be shown as account context.
-
-Do not manufacture designations such as:
-
-Senior Technician
-Master Technician
-Level 3 Mechanic
-
-unless real.
-
-==================================================
-EMPLOYEE ID
-==================================================
-
-Show employee/workshop-facing identifier only if genuine and useful.
-
-Do not expose:
-
-database primary key
-UUID
-JWT subject
-
-as employee ID.
-
-==================================================
-COMPANY / WORKSHOP
-==================================================
-
-If current session provides:
-
-company
-branch
-workshop
-
-show it compactly.
-
-Do not hardcode Orient workshop name if not coming from state/configuration.
-
-==================================================
-CONTACT DETAILS
-==================================================
-
-Potential real fields:
-
-Email
-Phone
-
-Display only if present.
-
-Do not show:
-
-Not provided
-
-repeatedly for optional missing fields unless necessary.
-
-Prefer omitting absent optional rows.
-
-==================================================
-WORK DETAILS
-==================================================
-
-Only if real and useful.
-
-Potential:
-
-Workshop / branch
-Employee ID
-Designation
-
-Do NOT duplicate:
-
-shift metrics
-jobs completed
-productivity
-attendance analytics
-
-Those already belong elsewhere.
-
-==================================================
-ATTENDANCE / SHIFT
-==================================================
-
-Do not turn Profile into another shift surface.
-
-Today and Productivity already expose shift behavior.
-
-At most show a static work identity field if profile contract includes shift name.
-
-Do not show active shift controls here.
-
-==================================================
-PERMISSIONS
-==================================================
-
-Do NOT expose raw permission keys or RBAC details to Technician.
-
-No:
-
-TECHNICIAN_JOB_UPDATE
-
-permission list.
-
-==================================================
-ACCOUNT ACTIONS
-==================================================
-
-Audit real functionality.
-
-Possible legitimate actions:
-
-Reset password
-
-Licences
-
-Sign out
-
-Maybe theme/language if globally supported and actually user-configurable.
-
-Only include what really works.
-
-==================================================
-PASSWORD ACTION
-==================================================
-
-If there is no authenticated change-password endpoint:
-
-do NOT create a fake:
-
-Change password
-
-flow.
-
-If existing Staff can route through real Forgot/Reset Password:
-
-use truthful wording such as:
-
-Reset password
-
-and route to the actual flow.
-
-Audit post-reset auth semantics.
-
-==================================================
-PROFILE EDIT
-==================================================
-
-Do NOT add:
-
-Edit profile
-
-unless backend provides profile update.
-
-A pencil icon with no real save contract is forbidden.
-
-==================================================
-PHOTO EDIT
-==================================================
-
-Do not add:
-
-Change photo
-
-Upload avatar
-
-Camera icon
-
-unless API supports it.
-
-==================================================
-NOTIFICATION SETTINGS
-==================================================
-
-Do not add:
-
-Push notifications
-Email alerts
-Job alerts
-
-unless actual persisted preference APIs exist.
-
-==================================================
-LANGUAGE
-==================================================
-
-If global language switching exists and persists:
-
-it may be shown.
-
-If Staff app has no language setting infrastructure:
-
-do not fabricate it.
-
-==================================================
-THEME
-==================================================
-
-Same principle.
-
-Only expose appearance control if the app already supports user selection and persistence.
-
-Do not add a non-functional Dark mode toggle merely because dark mode exists.
-
-==================================================
-HELP / SUPPORT
-==================================================
-
-Do not add fake:
-
-Help centre
-Contact support
-FAQ
-Report a problem
-
-unless real navigation/contact details exist.
-
-If there is a genuine workshop/support contact:
-
-audit its provenance first.
-
-==================================================
-PRIVACY / TERMS
-==================================================
-
-Only show if real documents/routes exist.
-
-No dead links.
-
-==================================================
-OPEN-SOURCE LICENCES
-==================================================
-
-Flutter's real licences page may be retained if currently supported.
-
-Use existing product pattern.
-
-==================================================
-APP VERSION
-==================================================
-
-Show only if actual package metadata is available.
-
-Do not hardcode:
-
-v1.0.0
-
-unless it is dynamically sourced.
-
-Not mandatory.
-
-==================================================
-SIGN OUT
-==================================================
-
-Sign out is important.
-
-Keep it visually separated from ordinary navigation.
-
-Use destructive-but-calm treatment.
-
-==================================================
-SIGN-OUT CONFIRMATION
-==================================================
-
-Audit current behavior.
-
-If there may be unsynced Technician work:
-
-this is critical.
-
-Inspect SyncEngine / pending work-item operations.
-
-Determine whether logging out clears:
-
-sync_queue
-sync_failed
-cached Technician changes
-
-If logout can discard unsynced repair changes:
-
-the confirmation MUST truthfully warn the Technician.
-
-Do not blindly use:
-
-"Are you sure you want to sign out?"
-
-==================================================
-UNSYNCED WORK CHECK
-==================================================
-
-Inspect whether Technician can query pending operations relevant to:
-
-work_item
-task updates
-other Technician mutations
-
-If pending operations exist:
-
-potential sign-out warning:
-
-"Some work is still waiting to sync. Signing out may remove changes saved on this device."
-
-ONLY if technically accurate.
-
-If logout safely preserves queue across accounts:
-
-do not warn unnecessarily.
-
-==================================================
-CROSS-ACCOUNT SAFETY
-==================================================
-
-Verify sign out / account switch cannot expose previous staff profile or technician job data.
-
-Do not assume this from Customer fixes.
-
-Inspect Staff provider lifecycle.
-
-This is a release-important check.
-
-If stale Technician data can survive logout→different login:
-
-fix it in this phase because Profile owns account/session exit.
-
-==================================================
-SIGN-OUT RESULT
-==================================================
-
-After logout:
-
-auth state cleared
-
-Technician shell inaccessible
-
-login shown
-
-back navigation must not reopen authenticated profile/job screens.
-
-==================================================
-PROFILE LOADING
-==================================================
-
-If identity comes synchronously from auth state:
-
-do not add artificial skeleton.
-
-If additional profile API loads:
-
-use compact loading state.
-
-Do not flash fake placeholder name.
-
-==================================================
-PROFILE ERROR
-==================================================
-
-If optional profile endpoint fails but auth identity exists:
-
-show available identity.
-
-Do not fail entire Profile.
-
-If nothing usable exists:
-
-show recoverable error.
-
-==================================================
-MISSING DATA
-==================================================
-
-Prefer graceful omission.
+---
+
+# 3. REDESIGN PHILOSOPHY — NOT EXISTING UI FIXES
+
+**Very important: Do NOT make the redesign plan a collection of existing UI bug fixes.**
+
+I already know the current application design is not satisfactory.
+
+Do not spend the majority of your analysis reporting:
+
+- Existing padding inconsistencies.
+- Existing alignment issues.
+- Existing poor spacing.
+- Existing outdated cards.
+- Existing unattractive colors.
+- Existing weak typography.
+
+These findings may inform the redesign, but they are NOT the intended deliverable.
+
+Instead, focus on:
+
+**What should an excellent, modern application look and feel like if designed professionally from the ground up in 2026?**
+
+Design the experience around:
+
+- Modern product design principles.
+- Strong visual identity.
+- Clear information hierarchy.
+- Intuitive task-driven navigation.
+- Consistent interaction patterns.
+- Modern enterprise SaaS design where appropriate.
+- Human-centered UX.
+- Progressive disclosure.
+- Reduced cognitive load.
+- Content-first layouts.
+- Meaningful visual hierarchy.
+- Refined typography.
+- Consistent spacing rhythm.
+- Appropriate visual density.
+- Contextual actions.
+- Thoughtful animation and motion.
+- Accessibility.
+- Platform-adaptive interactions.
+- High-quality responsive experiences.
+- Professional microinteractions.
+- Predictable navigation.
+- Clear system feedback.
+
+Do not blindly follow fashionable visual trends.
+
+Evaluate every proposed design pattern against the application's real business workflows.
+
+The result should feel like a professionally designed product, not a generic UI kit or an auto-generated dashboard.
+
+---
+
+# 4. DEFINE A BRAND-NEW DESIGN DIRECTION
+
+Before creating screen implementation phases, establish a clear, unified visual design direction.
+
+The proposed design should be:
+
+- Premium.
+- Modern.
+- Elegant.
+- Calm.
+- Professional.
+- Visually engaging.
+- Highly readable.
+- Consistent across all modules.
+- Suitable for frequent daily use.
+- Practical for data-heavy workflows.
+
+Avoid:
+
+- Generic Material Design defaults without customization.
+- Excessive rounded cards everywhere.
+- Unnecessary nested containers.
+- Heavy gradients.
+- Excessive shadows.
+- Oversaturated colors.
+- Huge empty spaces.
+- Unnecessary animations.
+- Inconsistent icon styles.
+- Outdated dashboard patterns.
+- Overloaded forms.
+- Unreadable compact interfaces.
+- Purely decorative elements without functional value.
+
+Define the complete design language, including:
+
+### 4.1 Colors
+
+Create a semantic color system for:
+
+- Primary branding.
+- Secondary accents.
+- Neutral surfaces.
+- Backgrounds.
+- Text.
+- Borders.
+- Dividers.
+- Interactive states.
+- Disabled states.
+- Success.
+- Warning.
+- Error.
+- Information.
+- Selected items.
+- Hovered elements.
+- Focus indicators.
+
+Support both light and dark themes where the application architecture supports them, or explicitly plan the necessary foundation.
+
+### 4.2 Typography
+
+Define a professional typography system with:
+
+- Primary font family.
+- Suitable Arabic font family.
+- Display typography.
+- Page titles.
+- Section titles.
+- Body text.
+- Supporting labels.
+- Form labels.
+- Captions.
+- Numeric and data typography.
+- Font weights.
+- Line heights.
+- Letter spacing where appropriate.
+
+Arabic typography must be designed intentionally rather than treated as an afterthought.
+
+### 4.3 Spacing and Layout
+
+Define:
+
+- Consistent spacing scale.
+- Page gutters.
+- Content maximum widths.
+- Form maximum widths.
+- Grid spacing.
+- Section spacing.
+- Component padding.
+- Border radius scale.
+- Elevation and surface hierarchy.
+- Responsive density rules.
+
+Do not force the same content width or density on every screen type.
+
+### 4.4 Component Language
+
+Design consistent specifications for:
+
+- Buttons.
+- Inputs.
+- Search fields.
+- Dropdowns.
+- Selectors.
+- Checkboxes.
+- Radio controls.
+- Switches.
+- Tabs.
+- Segmented controls.
+- Cards.
+- List items.
+- Status indicators.
+- Tables.
+- Data grids.
+- Dialogs.
+- Bottom sheets.
+- Toasts and notifications.
+- Tooltips.
+- Navigation components.
+- Menus.
+- Date and time selectors.
+- File and image inputs.
+- Form validation.
+- Loading skeletons.
+- Empty states.
+- Error states.
+- Confirmation flows.
+
+Define interaction states, variants, accessibility rules, and usage guidelines.
+
+Do not redesign every screen using unrelated component styles.
+
+---
+
+# 5. RESPONSIVE DESIGN — MOBILE, TABLET, WEB, DESKTOP
+
+The entire redesign must support responsive layouts.
+
+Do not make desktop layouts by simply stretching mobile layouts.
+
+Do not make mobile layouts by simply shrinking desktop layouts.
+
+Each form factor must have an intentionally designed experience.
+
+## 5.1 Mobile
+
+Design for small and large mobile screens.
+
+Consider:
+
+- Compact navigation.
+- Bottom navigation when appropriate.
+- Responsive app bars.
+- Prioritized primary actions.
+- Touch-friendly controls.
+- Adaptive forms.
+- Mobile filtering.
+- Mobile-friendly record details.
+- Bottom sheets for contextual interactions.
+- Proper keyboard handling.
+- Safe areas.
+- Long translated text.
+- Scroll behavior.
+- Accessible touch targets.
+
+Avoid horizontal overflow and tiny desktop-like controls.
+
+## 5.2 Tablet
+
+Treat tablet as a real form factor, not just an enlarged phone.
+
+Consider:
+
+- Navigation rails.
+- Two-column layouts.
+- Master-detail patterns.
+- Adaptive grids.
+- Split-view workflows.
+- Larger content regions.
+- Landscape and portrait support.
+- Contextual side panels.
+
+## 5.3 Web / Desktop
+
+Design for both compact browser windows and large displays.
+
+Consider:
+
+- Professional navigation sidebar.
+- Collapsible navigation.
+- Header/toolbars.
+- Breadcrumbs where useful.
+- Responsive grids.
+- Data-dense but readable tables.
+- Useful sorting and filtering.
+- Bulk actions.
+- Detail side panels.
+- Form layouts.
+- Keyboard interactions.
+- Hover and focus states.
+- Appropriate content maximum widths.
+- Efficient utilization of widescreen space.
+
+Do not place all important content on the extreme left of a large display.
+
+Do not stretch content across enormous widths merely because space is available.
+
+## 5.4 Adaptive Behavior
+
+Establish a centralized responsive system.
+
+Define:
+
+- Breakpoint strategy.
+- Layout adaptation.
+- Navigation adaptation.
+- Component adaptations.
+- Density differences.
+- Typography behavior.
+- Overflow prevention.
+- Orientation handling.
+- Large-screen constraints.
+- Minimum supported widths.
+
+Breakpoints must be based on available layout space and actual content needs, not arbitrary device names alone.
+
+Every phase prompt must explicitly specify which responsive layouts must be implemented and tested.
+
+---
+
+# 6. MULTILINGUAL DESIGN — ENGLISH + ARABIC
+
+The redesigned application must properly support:
+
+1. English — left-to-right.
+2. Arabic — right-to-left.
+
+Localization must be a first-class architectural requirement.
+
+Analyze the existing translation infrastructure and preserve compatibility where possible.
+
+Plan for:
+
+- Full English translation coverage.
+- Full Arabic translation coverage.
+- Proper RTL layout direction.
+- Mirrored directional navigation.
+- Correct directional icons.
+- Correct text alignment.
+- Arabic-friendly typography.
+- Dynamic language switching where supported.
+- Translation-safe component sizing.
+- Long text handling.
+- Mixed Arabic/English content.
+- Numbers and numeric input.
+- Dates and time formatting.
+- Currency and units.
+- Search and input behavior.
+- Form validation messages.
+- Dialogs and notifications.
+- Tables and data layouts.
+- Chart labels where applicable.
+- Accessibility labels.
+
+Avoid:
+
+- Hardcoded visible strings.
+- Manually reversing every row.
+- Assuming Arabic text has the same dimensions as English.
+- Translating technical identifiers that should remain unchanged.
+- Breaking input behavior in RTL.
+- Misaligned directional icons.
+- Hardcoded left/right spacing where start/end semantics are needed.
+
+Make RTL correctness a mandatory acceptance criterion in EVERY phase.
+
+A screen is not complete if it only looks correct in English.
+
+---
+
+# 7. COMPLETE USER EXPERIENCE REDESIGN
+
+Evaluate not just visual appearance but the complete journey users take through the application.
+
+Redesign relevant workflows covering:
+
+### Navigation
+
+- Global navigation.
+- Module navigation.
+- Submodule navigation.
+- Screen transitions.
+- Breadcrumbs.
+- Back navigation.
+- Deep linking.
+- Active navigation state.
+- Navigation on mobile/tablet/desktop.
+
+### Dashboard
+
+- Information hierarchy.
+- User-relevant summaries.
+- Priority actions.
+- Activity indicators.
+- Quick access.
+- Visual organization.
+- Empty and loading states.
+
+### Data Listing
+
+- Search.
+- Filtering.
+- Sorting.
+- Pagination/infinite loading as appropriate.
+- Record selection.
+- Bulk operations where supported.
+- Status visualization.
+- Empty results.
+- Mobile alternatives to desktop tables.
+
+### Forms
+
+- Information grouping.
+- Required fields.
+- Inline validation.
+- Error recovery.
+- Multi-step flows when justified.
+- Save/cancel behavior.
+- Form progress.
+- Clear primary actions.
+- Keyboard management.
+- Responsive layouts.
+
+### Detail Screens
+
+- Overview.
+- Important metadata.
+- Activity/history.
+- Status.
+- Related records.
+- Contextual actions.
+- Tabs or sections where justified.
+- Mobile and large-screen arrangements.
+
+### Feedback
+
+- Loading.
+- Empty states.
+- Success.
+- Error.
+- Retry.
+- Confirmation.
+- Destructive actions.
+- Offline or connectivity feedback where applicable.
+
+For every significant workflow, describe how the redesigned experience improves clarity, efficiency, and usability.
+
+---
+
+# 8. PRESERVE EXISTING FUNCTIONALITY
+
+The redesign is a major UI/UX modernization project.
+
+It must not become an uncontrolled business logic rewrite.
+
+Preserve:
+
+- Existing APIs and contracts.
+- Authentication behavior.
+- Existing authorization logic.
+- Permission enforcement.
+- State management.
+- Business rules.
+- Data validation.
+- Existing persistence.
+- Feature behaviors.
+- Domain workflows.
+- Existing routes where compatibility is required.
+- Notifications and deep links.
+- Existing integrations.
+
+You may propose targeted architectural refactoring where necessary to implement a coherent design system.
+
+However, clearly separate:
+
+1. UI/UX redesign work.
+2. UI architecture improvements.
+3. Unavoidable integration changes.
+4. Out-of-scope business logic changes.
+
+If a proposed redesign changes a workflow, specify how the existing functional capabilities and permission boundaries remain intact.
+
+Do not invent new backend functionality merely to improve the appearance of a screen.
+
+---
+
+# 9. PHASE PLANNING STRATEGY
+
+Divide the complete redesign into a logical implementation roadmap.
+
+The exact number of phases must emerge from the repository analysis.
+
+Use the following as a suggested structure, not as an inflexible phase count:
+
+**Foundation phases**
+
+- Design direction and design tokens.
+- Typography, themes, and common visual foundations.
+- Responsive architecture.
+- Localization and RTL foundations.
+- Shared component library.
+
+**Application shell phases**
+
+- Main application layout.
+- Global navigation.
+- Module navigation.
+- App bars and toolbars.
+- Dashboard shell.
+- Shared page templates.
+
+**Feature redesign phases**
+
+- Authentication and onboarding.
+- Dashboard.
+- High-priority business modules.
+- Data listing screens.
+- Create/edit workflows.
+- Detail workflows.
+- Settings and configuration.
+- Reports and analytical views.
+- Profile and account flows.
+- Remaining discovered modules and screens.
+
+**Final integration phases**
+
+- Shared interactions and animations.
+- Loading/empty/error state consistency.
+- Accessibility.
+- RTL and translation audit.
+- Cross-platform responsive validation.
+- Regression testing.
+- Final visual consistency review.
+
+Use feature-level or workflow-level phases where this produces a safer and more understandable implementation sequence.
+
+Do not create dozens of tiny phases unnecessarily.
+
+Do not combine unrelated large modules into one unmanageable phase.
+
+Identify dependencies explicitly.
+
+A phase should be executable by Codex without requiring it to rediscover the entire design strategy.
+
+---
+
+# 10. GENERATE DETAILED IMPLEMENTATION PROMPTS
+
+For every identified phase, create a dedicated Markdown file in:
+
+`phases/`
+
+Each file must be a **complete, standalone Codex implementation prompt**, not a short checklist.
+
+Use descriptive filenames with an ordered numeric prefix.
 
 Example:
 
-If phone absent:
+`phases/PHASE_01_DESIGN_SYSTEM_FOUNDATION.md`
 
-do not create a big:
+Every phase file must contain:
 
-Phone
-—
+## A. Phase identity
 
-row unless consistent with product requirement.
+- Phase number.
+- Phase title.
+- Objective.
+- Priority.
+- Dependencies.
+- Estimated scope (small/medium/large, without artificial time promises).
 
-==================================================
-MOBILE LAYOUT
-==================================================
+## B. Repository context
 
-Verify:
+- Relevant module.
+- Relevant screen inventory.
+- Relevant file paths.
+- Existing architecture to preserve.
+- Shared dependencies.
 
-320
-360
-390
-412
-430
+Use real discovered paths, not fabricated filenames.
 
-Potential hierarchy:
+## C. Design objectives
 
-Identity
+Describe the exact intended user experience.
 
-Contact / Work details
+Explain how the finished screens should look, behave, and feel.
 
-Account
+Do not use vague instructions like "make it modern."
 
-About
+Define actionable visual and interaction expectations.
 
-Sign out
+## D. Screens and workflows
 
-Compact.
+List every screen to be redesigned within the phase.
 
-Do not use giant profile header consuming half the viewport.
+For each screen explain:
 
-==================================================
-TABLET
-==================================================
+- Screen purpose.
+- New visual hierarchy.
+- Main sections.
+- Navigation.
+- Actions.
+- Expected interactions.
+- Feedback states.
+- Components.
+- Layout variants.
+- Permission-dependent behavior.
+- Integration requirements.
 
-Use width intentionally.
+## E. Responsive specifications
 
-A good real-data composition may be:
+Explain separately:
 
-LEFT
-identity + work/contact
+- Mobile layout.
+- Tablet layout.
+- Web/desktop layout.
+- What changes between them.
+- Navigation adaptations.
+- Overflow constraints.
+- Orientation considerations.
 
-RIGHT
-account + about + sign out
+## F. Localization and RTL
 
-Only if enough real information exists.
+Specify:
 
-==================================================
-DESKTOP
-==================================================
+- Translation requirements.
+- English behavior.
+- Arabic behavior.
+- RTL mirroring.
+- Directional components.
+- Formatting.
+- Text overflow considerations.
 
-Do NOT centre a narrow 390px profile column in 1440px.
+## G. Design system integration
 
-Use a balanced bounded workspace.
+Specify the shared components and tokens that should be used.
 
-Potential:
+Do not permit arbitrary hardcoded styles where reusable design primitives already exist.
 
-two columns
-max width ~1000–1100
+## H. Technical implementation
 
-Do not add filler cards.
+Define:
 
-==================================================
-DESKTOP EMPTY SPACE
-==================================================
+- Expected code areas to modify.
+- New components if needed.
+- Existing components to reuse.
+- Architecture constraints.
+- State management preservation.
+- Navigation preservation.
+- API compatibility.
+- UI integration requirements.
 
-The final Profile should be deliberately composed.
+Do not force new packages unless justified.
 
-But do not fill space with:
+## I. Functional preservation
 
-performance
-fake preferences
-motivational content
-fake support
+Identify behavior that MUST continue working.
 
-==================================================
-SECTION STYLE
-==================================================
+Include permission-related and data-related regression considerations.
 
-Reuse existing Staff/Technician primitives where suitable.
+## J. Testing requirements
 
-Do not make every field a separate elevated card.
+Include:
 
-Prefer:
+- Static analysis.
+- Existing test suite.
+- Widget/component tests where applicable.
+- Responsive layout tests.
+- RTL tests.
+- English and Arabic tests.
+- Navigation tests.
+- Workflow/regression tests.
+- Loading/empty/error states.
+- Accessibility checks.
 
-grouped surface
+Require representative testing across small phone, large phone, tablet, and desktop/web layouts.
 
-label/value rows
+## K. Acceptance criteria
 
-subtle dividers
+Write concrete, verifiable completion criteria.
 
-clear section headers
+Examples:
 
-==================================================
-TOUCH TARGETS
-==================================================
+- All screens assigned to the phase are redesigned.
+- No horizontal overflow at defined test widths.
+- English and Arabic layouts render correctly.
+- Shared design tokens are used.
+- Existing permissions and workflows remain functional.
+- Existing API contracts remain unchanged.
+- Loading, error, empty, and success states are covered.
+- Relevant automated checks pass.
 
-Every interactive row/button:
+## L. Deliverables
 
->=48px
+Specify what Codex must produce after completing the phase:
 
-Especially:
+- Implemented changes.
+- Affected file summary.
+- Reusable components added or modified.
+- Tests executed.
+- Results.
+- Known limitations.
+- Screenshots or visual evidence where tooling supports them.
+- Any newly discovered follow-up work.
 
-Reset password
-Licences
-Sign out
+## M. Completion gate
 
-==================================================
-1.6× TEXT
-==================================================
+Require Codex to stop after implementing that phase.
 
-Verify:
+It must not automatically begin the next phase.
 
-long Technician name
+Each phase must be independently reviewable and verifiable.
 
-long email
+---
 
-long company/branch
+# 11. ADD A SCREEN-TO-PHASE COVERAGE MATRIX
 
-employee id
+Create a separate screen coverage document.
 
-actions
+It must map all discovered screens to their redesign phases.
 
-confirmation dialog
+Include:
 
-No clipping.
+| Module | Screen | File path | Route | Assigned phase | Mobile | Tablet | Desktop | EN | AR/RTL |
+|---|---|---|---|---|---|---|---|---|---|
 
-==================================================
-DARK MODE
-==================================================
+Every discovered screen must appear.
 
-Theme tokens only.
+Do not silently omit difficult or low-priority screens.
 
-Identity surface
+If a screen cannot be analyzed because its source is missing or dynamically generated, mark it as requiring investigation.
 
-details
+---
 
-account actions
+# 12. CREATE A CENTRAL DESIGN SPECIFICATION
 
-sign out
+Create a reusable design specification containing:
 
-dialogs
+- Product design vision.
+- Visual direction.
+- Color system.
+- Typography.
+- Spacing.
+- Layout and grids.
+- Responsive rules.
+- Breakpoints.
+- Navigation patterns.
+- Component specifications.
+- Accessibility requirements.
+- Localization rules.
+- RTL requirements.
+- Interaction patterns.
+- Animation guidelines.
+- Form UX guidelines.
+- Data-density guidelines.
+- Screen templates.
+- Consistency rules.
+- Anti-patterns.
+- Definition of done.
 
-must remain legible.
+This specification will become the design authority for every implementation phase.
 
-==================================================
-ACCESSIBILITY
-==================================================
+Every phase prompt must reference the specification and implement the same coherent design language.
 
-Ensure:
+When feasible, provide concrete design token proposals using the repository's actual frontend framework.
 
-profile name heading
+---
 
-identity values grouped logically
+# 13. QUALITY STANDARDS
 
-action rows have clear semantic labels
+Target a high-quality production application, not a prototype.
 
-destructive sign-out meaning clear
+The redesign must demonstrate:
 
-confirmation dialog focus/order
+### Visual excellence
 
-large text
+- Polished typography.
+- Professional composition.
+- Intentional color usage.
+- Balanced density.
+- Consistent styling.
+- Clear hierarchy.
 
-48px targets
+### UX excellence
 
-status not color-only
+- Intuitive workflows.
+- Minimal unnecessary steps.
+- Clear user actions.
+- Easy information discovery.
+- Predictable interactions.
+- Helpful feedback.
 
-==================================================
-NO FAKE CONTENT
-==================================================
+### Technical excellence
 
-Strictly forbid unsupported:
+- Maintainable design system.
+- Reusable components.
+- Responsive implementation.
+- Good performance.
+- Controlled rebuilds/rendering.
+- Testable UI behavior.
+- Minimal duplication.
 
-Performance
-Rating
-Jobs completed
-Efficiency
-Technician level
-Achievements
-Certifications
-Badges
-Rewards
-Points
-Member since
-Joined date
-Shift preference
-Notification preference
-Emergency contact
-Manager
-Supervisor
-Workshop branch
+### Inclusive design
 
-unless genuinely available.
+- Accessible contrast.
+- Keyboard accessibility where applicable.
+- Semantic labeling.
+- Reasonable focus order.
+- Screen reader considerations.
+- Support for text scaling without broken layouts.
+- Full Arabic RTL support.
 
-==================================================
-SHARED STAFF PROFILE SAFETY
-==================================================
+### Visual consistency
 
-If `StaffProfileScreen` is shared:
+The application should feel as though one professional product design team created every screen.
 
-do not introduce Technician-specific strings such as:
+Not as though each module was designed independently.
 
-Technician account
+---
 
-inside the generic shared widget if Advisor/Supervisor will see them.
+# 14. REQUIRED OUTPUT DIRECTORY
 
-Prefer:
+Create this structure at the project root:
 
-configuration
+```text
+phases/
+│
+├── README.md
+├── 00_PROJECT_ANALYSIS.md
+├── 00_REDESIGN_VISION.md
+├── 00_DESIGN_SYSTEM_SPEC.md
+├── 00_RESPONSIVE_STRATEGY.md
+├── 00_LOCALIZATION_RTL_STRATEGY.md
+├── 00_SCREEN_COVERAGE_MATRIX.md
+├── 00_PHASE_DEPENDENCY_MAP.md
+│
+├── PHASE_01_<ACTUAL_PHASE_NAME>.md
+├── PHASE_02_<ACTUAL_PHASE_NAME>.md
+├── PHASE_03_<ACTUAL_PHASE_NAME>.md
+├── ...
+└── PHASE_XX_FINAL_VALIDATION.md
+```
 
-role/account context
+The final phase count and filenames must reflect the actual repository.
 
-or a Technician wrapper
+`README.md` must explain:
 
-only where necessary.
+- The purpose of this redesign.
+- The overall design direction.
+- What was discovered.
+- Total number of screens.
+- Total number of phases.
+- The implementation order.
+- Phase dependencies.
+- How to execute a phase using Codex.
+- How to validate phase completion.
+- How to track progress.
+- How to handle shared design changes.
+- How to prevent regressions.
 
-Avoid overengineering.
+`00_PROJECT_ANALYSIS.md` must explain the actual application structure and workflows, not just list existing visual problems.
 
-==================================================
-SHARED PROFILE IMPROVEMENTS
-==================================================
+`00_REDESIGN_VISION.md` must explain the proposed new user experience and visual identity.
 
-Safe common improvements may include:
+`00_PHASE_DEPENDENCY_MAP.md` must clearly identify the phase execution order and prerequisites.
 
-responsive composition
+---
 
-theme cleanup
+# 15. ANALYSIS AND COVERAGE VERIFICATION
 
-touch targets
+Before finishing your work:
 
-identity grouping
+1. Recheck the module inventory against the actual repository.
+2. Recheck the screen inventory against routes and screen/widget definitions.
+3. Ensure all discovered screens are assigned to a phase.
+4. Ensure shared UI foundations are implemented before dependent feature phases.
+5. Ensure no phase assumes missing components from a later phase.
+6. Ensure each phase has mobile, tablet, and desktop expectations.
+7. Ensure each phase explicitly includes English and Arabic RTL requirements.
+8. Ensure every phase has meaningful acceptance criteria.
+9. Ensure the proposed design language remains consistent.
+10. Ensure phase prompts contain enough implementation detail for another Codex session to execute them.
+11. Ensure the plan preserves all current functional behavior.
+12. Ensure no vague placeholder instructions remain.
 
-sign-out layout
+If the repository is too large to inspect exhaustively, identify the coverage limitation explicitly and create a discovery phase for unresolved areas instead of pretending that all screens were analyzed.
 
-accessibility
+---
 
-But verify all Staff personas before changing shared behavior.
+# 16. FINAL RESPONSE FORMAT
 
-==================================================
-ADVISOR / SUPERVISOR REGRESSION
-==================================================
+After creating the `phases/` folder, provide a concise summary containing:
 
-If shared StaffProfileScreen changes:
+1. Application framework and architecture discovered.
+2. Number of feature modules.
+3. Number of screens discovered.
+4. Proposed 2026 UI/UX design direction.
+5. Responsive design strategy.
+6. English/Arabic localization strategy.
+7. Number of implementation phases generated.
+8. Phase-by-phase roadmap with each phase objective.
+9. Exact files created under `phases/`.
+10. Recommended first phase.
 
-run focused Advisor and Supervisor profile tests or add lightweight regression tests.
+Do not start implementing Phase 1.
 
-Do not redesign those personas.
+Do not modify the application UI in this task.
 
-==================================================
-TESTS
-==================================================
+Only produce the complete analysis, design specifications, and detailed phase-wise Codex implementation prompts.
 
-Add focused Technician Profile tests based on real contract.
+## FINAL INSTRUCTION
 
-At minimum:
-
-1. real name
-
-2. real staff/technician identity
-
-3. real employee identifier if available
-
-4. email if available
-
-5. phone if available
-
-6. workshop/company/branch only if real
-
-7. absent optional fields handled cleanly
-
-8. no fake performance/productivity
-
-9. no fake profile-edit action
-
-10. no fake avatar-edit action
-
-11. no unsupported notification preferences
-
-12. password action matches real capability
-
-13. reset password navigation
-
-14. licences action if supported
-
-15. sign out action
-
-16. sign-out confirmation
-
-17. unsynced-work warning if applicable
-
-18. logout clears/authenticates correctly
-
-19. authenticated routes unavailable after logout
-
-20. cross-account profile data does not leak
-
-21. 320px
-
-22. 360px
-
-23. 390px
-
-24. 430px
-
-25. 1.6×
-
-26. tablet
-
-27. desktop
-
-28. dark
-
-29. >=48px actions
-
-30. no visible empty callbacks
-
-If shared profile changes:
-
-31. Advisor profile basic regression
-
-32. Supervisor profile basic regression
-
-==================================================
-SOURCE GUARDS
-==================================================
-
-Search Profile production code for unsupported:
-
-Performance
-Efficiency
-Rating
-Achievement
-Badge
-Reward
-Points
-Edit profile
-Change photo
-Upload
-Notifications
-Job alerts
-Member since
-Certification
-Manager
-Emergency contact
-
-Flag only if user-visible and unsupported.
-
-Also inspect:
-
-onTap: () {}
-onPressed: () {}
-
-==================================================
-GOLDENS
-==================================================
-
-Recommended:
-
-technician_profile_mobile
-
-technician_profile_minimal_mobile
-
-technician_profile_tablet
-
-technician_profile_desktop
-
-technician_profile_dark_mobile
-
-technician_profile_large_text_mobile
-
-If sign-out dialog meaningfully differs:
-
-technician_profile_signout_mobile
-
-Do not regenerate Phase 1–5 goldens unless a shared StaffProfile change intentionally affects them.
-
-==================================================
-VISUAL QA — MANDATORY
-==================================================
-
-Run an independent Visual Product QA agent.
-
-Review all Profile goldens plus:
-
-one Today
-
-one Productivity
-
-for Technician visual coherence.
-
-If shared StaffProfile changed:
-
-also inspect one Advisor/Supervisor profile rendering.
-
-Assess:
-
-IDENTITY CLARITY
-
-ACCOUNT ACTION CLARITY
-
-INFORMATION DENSITY
-
-SIGN-OUT HIERARCHY
-
-FAKE SETTINGS
-
-MOBILE QUALITY
-
-TABLET QUALITY
-
-DESKTOP COMPOSITION
-
-1.6× TEXT
-
-DARK MODE
-
-TOUCH TARGETS
-
-DEAD WHITESPACE
-
-TECHNICIAN VS ADMIN FEEL
-
-Any blocker must be fixed.
-
-==================================================
-DO NOT FIX THESE YET
-==================================================
-
-Do NOT reopen Today solely to change:
-
-"Job on hold"
-
-to:
-
-"Delayed"
-
-Do NOT change Productivity status-label casing.
-
-Those belong to the final Technician coherence audit.
-
-==================================================
-KNOWN BACKEND / PRODUCT LIMITATIONS
-==================================================
-
-Do not solve by fabrication:
-
-- no parts request history/status if backend lacks it
-- no escalation history/status if backend lacks it
-- Job Detail still depends on route extra for web refresh if unresolved
-- TaskStatus.onHold client-only/wire-mapped behavior
-- no productivity history
-
-Report them later.
-
-==================================================
-ANALYZE / TEST
-==================================================
-
-Run:
-
-dart format
-
-dart analyze staff_app
-
-focused Technician Profile tests
-
-technician_today_test.dart
-
-technician_jobs_test.dart
-
-technician_job_detail_test.dart
-
-technician_support_flows_test.dart
-
-technician_productivity_test.dart
-
-technician_experience_test.dart
-
-If shared StaffProfile changed:
-
-run relevant Advisor/Supervisor profile tests.
-
-Then:
-
-flutter test staff_app
-
-Known unrelated Advisor failures may remain:
-
-`vehicle_customer_intake_layout_test.dart`
-×6 HiveError/overflow
-
-`staff_experience_test.dart`
-×1 duplicate "Estimate"
-
-Do not fix them in this phase.
-
-==================================================
-FINAL REPORT
-==================================================
-
-Return:
-
-TECHNICIAN PHASE 6 RESULT
-
-MULTI-AGENT AUDIT
-
-PROFILE PRODUCT RESPONSIBILITY
-
-SHARED STAFF PROFILE DECISION
-
-PROFILE DATA CONTRACT
-
-IDENTITY
-
-WORK / CONTACT DETAILS
-
-ACCOUNT ACTIONS
-
-PASSWORD / SECURITY
-
-SIGN OUT
-
-UNSYNCED WORK / LOGOUT SAFETY
-
-CROSS-ACCOUNT SAFETY
-
-REMOVED / REJECTED ITEMS
-
-LOADING / ERROR / MISSING DATA
-
-MOBILE DESIGN
-
-TABLET DESIGN
-
-DESKTOP DESIGN
-
-ACCESSIBILITY
-
-DARK MODE
-
-SHARED STAFF IMPACT
-
-TESTS
-
-GOLDENS
-
-VISUAL QA
-
-ANALYZE RESULT
-
-TEST RESULT
-
-KNOWN FINAL-AUDIT ITEMS
-
-Finish exactly:
-
-TECHNICIAN PHASE 6: COMPLETE
-
-or:
-
-TECHNICIAN PHASE 6: NOT COMPLETE — <reason>
-
-==================================================
-STOP
-==================================================
-
-STOP after Profile.
-
-DO NOT run the final Technician freeze audit.
-
-DO NOT begin Advisor.
-
-DO NOT begin Supervisor.
-
-Wait for the next phase.
+**Analyze the actual application thoroughly. Treat this as a complete 2026 UI/UX product redesign, not an existing UI repair project. Produce professional, detailed, implementation-ready phase prompts covering every discovered application screen, responsive mobile/tablet/web layouts, English/Arabic localization, and proper RTL support. Save all deliverables in the project's `phases/` directory and stop before implementation.**

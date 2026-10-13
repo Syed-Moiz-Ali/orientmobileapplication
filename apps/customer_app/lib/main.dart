@@ -93,6 +93,10 @@ class CustomerApp extends ConsumerWidget {
             theme: AppTheme.light(brand),
             darkTheme: AppTheme.dark(brand),
             themeMode: ThemeMode.light,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(0.85)),
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         ),
       ),

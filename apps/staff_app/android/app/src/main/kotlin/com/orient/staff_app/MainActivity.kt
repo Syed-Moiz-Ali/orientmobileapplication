@@ -1,7 +1,9 @@
 package com.orient.staff_app
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.media.MediaRecorder
 import android.os.Build
 import androidx.core.app.ActivityCompat
@@ -12,6 +14,12 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 class MainActivity : FlutterActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        val config = Configuration(newBase.resources.configuration)
+        config.fontScale = 0.85f
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
+
     private val CHANNEL = "com.orient.staff_app/audio"
     private var mediaRecorder: MediaRecorder? = null
     private var currentFilePath: String? = null
