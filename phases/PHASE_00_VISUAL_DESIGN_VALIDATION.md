@@ -378,3 +378,138 @@ Constraints:
 Stop after the review sign-off. **Phase 01 must not begin until
 `00_VISUAL_DIRECTION.md` shows full approval.** No production UI code may be
 modified in this phase.
+
+---
+
+## N. Implementation status — executed 2026-10-13
+
+**Status: COMPLETE · VISUAL SIGN-OFF: ✅ APPROVED (product owner, 2026-10-13).**
+The frozen direction lives in `00_VISUAL_DIRECTION.md`; Phase 01 is unblocked
+(handoff summary and prerequisites in §N.7).
+
+### N.1 Deliverables
+
+| Deliverable | Location |
+|---|---|
+| Runnable prototype app (six screens + review shell) | `apps/design_prototype/` |
+| Provisional tokens / theme / strings / fixtures | `apps/design_prototype/lib/{design,l10n,fixtures}/` |
+| Real-asset damage map (SVG base illustration + 25 outline paths) | `apps/design_prototype/assets/vehicle_map/` |
+| Screenshot pack — 104 rendered PNGs, `screen_width_locale_state(_dark).png` | `phases/reports/PHASE_00/` (mirrors `apps/design_prototype/test/goldens/`) |
+| Capture pipeline (goldens → report pack) | `apps/design_prototype/tools/capture_visual_pack.ps1` |
+| Component checklist + findings for Phases 02/03A/03B | `apps/design_prototype/README.md` |
+
+### N.2 Validation actually executed
+
+| Check | Command | Result |
+|---|---|---|
+| Dependency resolution | `flutter pub get` (prototype + `packages/{shared_models,shared_core,shared_auth}`) | resolved; no lockfile changes |
+| Prototype static analysis | `dart analyze` in `apps/design_prototype` | **0 issues** |
+| Prototype tests (goldens, overflow, EN/AR, RTL, interactions, shell smoke, audit captures, text scale) | `flutter test` in `apps/design_prototype` | **299/299 pass** — 104 golden renders (+6 audit captures), 109 responsive/overflow cases (6 screens × 9 widths × EN/AR), 10 locale/RTL (incl. the damage-map non-mirroring exception + live language switch), 21 interaction flows, 48 text-scale cases (1.15×/1.3×) |
+| Golden verification rerun | `flutter test test/visual_pack_test.dart` | deterministic, passes |
+| Web compilation | `flutter build web --release` | **built** (`build/web/`) |
+| Workspace analysis | `dart analyze` per package app/package | clean for all 8 packages |
+| Isolation proof | `git status --porcelain` | **0 changes outside `apps/design_prototype/` and `phases/`** |
+
+Environment note: the workspace pins Melos 8 but only carries a legacy
+`melos.yaml` script block (Melos 7+ reads scripts from `pubspec.yaml`), so
+`melos run analyze|test` does not execute in this environment; the exact
+per-package equivalents above were run instead.
+
+### N.3 Regression baseline (untouched packages, run for isolation proof)
+
+| Suite | Result | Notes |
+|---|---|---|
+| `apps/owner_app` | 14/14 pass | |
+| `apps/crm_app` | 7/7 pass | |
+| `apps/staff_app` | 269 pass / 7 fail | pre-existing: 6 layout-overflow failures in the hand-rolled `VehicleCustomerView` intake tests + 1 advisor-workflow golden — the file this program redesigns in Phase 07A |
+| `apps/customer_app` | 502 pass / 8 fail | pre-existing golden baseline mismatches/missing baselines in `customer_book_service_test.dart` |
+| `packages/shared_core` | 94 pass / 9 fail | pre-existing: golden baselines not present in this checkout |
+| `packages/shared_auth` | 24 pass / 11 fail | pre-existing: golden baselines not present in this checkout |
+
+No failure is attributable to Phase 00: zero production files changed and no
+production package gained a dependency (the prototype is a leaf; nothing
+imports it). Golden-failure artifacts written by these runs were restored.
+
+### N.4 Reviewed renders (visual findings fixed during review)
+
+All 104 renders were reviewed (mobile 320/360/390/430, tablet 600/768,
+laptop 1024, desktop 1280/1440, EN-LTR + AR-RTL, light + dark, state
+variants). Issues found and fixed in-prototype before the final pack:
+
+1. KPI tile overflow at 320 px (AR line-height) → tile height raised to
+   156/158 px.
+2. Hero eyebrow overflow at 320 px → hidden on compact, ellipsized elsewhere.
+3. Job-card amount row overflow at 320–768 px → amount stacked above the
+   action row's action button.
+4. Status pill could overrun dense table columns with long Arabic labels →
+   pill text now ellipsizes.
+5. Tablet inspection duplicated the map in both panes when the Body Map
+   section was selected → medium/expanded left pane now shows body-map
+   *details* (selected part + findings), the map lives in the right pane.
+6. Vehicle-form field pairs truncated hints at 320 px → pairs stack below
+   600 px.
+7. Arabic exit-guard action label shortened so the dialog actions fit at
+   390 px.
+
+### N.5 Known limitations / open review points
+
+- Goldens are static; motion (nav selection, sheet rise, state morph) must be
+  reviewed by running the web app (`flutter run -d chrome`).
+- The dark palette is a **proposal** (spec §2.1 defers it to Phase 01);
+  light remains the default theme.
+- The inspection workflow indicator follows production (5 steps, current =
+  Inspect → "Step 2 of 5") rather than the literal "Step 1 of 4" in §D6.
+- §D4's required fields (plate + make + model) match the phase brief; the
+  production form requires make + plate only.
+- `flutter_localizations` (SDK-provided, not a pub.dev package) is the only
+  dependency addition, required for correct RTL + Material locale behavior.
+
+### N.6a Final visual quality audit (2026-10-13)
+
+A full senior-designer audit of the rendered output is recorded in
+`reports/PHASE_00/VISUAL_QUALITY_AUDIT.md`: 110 renders reviewed (104-pack +
+6 audit captures incl. full-page and extended-rail compositions), 13 review
+dimensions scored, **15 demonstrable issues fixed in-prototype** (KPI density
+at tablet, AR quick-action truncation at 390, technician completed-state data,
+VIN/label wrapping, inspection duplicates, compact footer ergonomics, AR
+fixture localization leaks, save-error representation, saving-spinner
+contrast, scale-aware KPI tiles), and a short list of open product decisions
+(§5 of the audit). No Rework-level defects remain in the reviewed renders.
+The audit's findings were classified during approval: **zero genuine
+blockers**; all eight remaining items are nonblocking refinements assigned to
+implementation phases (mapping in `00_VISUAL_DIRECTION.md` §5).
+
+### N.7 Visual approval & Phase 00 → Phase 01 handoff (2026-10-13)
+
+**Approval.** The product owner reviewed the prototype and the audit and
+approved the overall visual design direction. All V1–V14 statements and all six
+per-screen verdicts are recorded as approved in `00_VISUAL_DIRECTION.md`
+(§1, §2, §3 decision log, §7 sign-off). Phase 01's entry gate is satisfied.
+
+**Frozen artifacts (do not regenerate without a recorded amendment):**
+
+- `phases/reports/PHASE_00/` — 104-render pack + `audit/` (6 captures);
+- `apps/design_prototype/test/goldens/` — deterministic baselines (verified by
+  `flutter test test/visual_pack_test.dart`);
+- the full prototype suite (**299/299 green**, `dart analyze` 0 issues) is
+  preserved as the phase's visual reference; the prototype is read-only from
+  Phase 01 onward.
+
+**Remaining audit items — blockers vs refinements:** none of the eight audit
+§5 items blocks Phase 01 (live motion pass is a review recommendation; the rest
+are assigned to Phases 03A/03B/07B/10/12/16). Mapping is recorded in
+`00_VISUAL_DIRECTION.md` §5.
+
+**Prerequisites before Phase 01 starts** (full detail in
+`00_VISUAL_DIRECTION.md` §6):
+
+1. Fix the Melos 8 / legacy `melos.yaml` scripts mismatch (or record the
+   per-package command substitution) so Phase 01 can run its acceptance
+   commands.
+2. Triage the pre-existing, redesign-unrelated suite failures (staff intake
+   overflows; missing/stale golden baselines in customer/shared_core/shared_auth)
+   so the regression baseline is meaningful.
+3. No asset work needed before Phase 01 — Arabic font relocation is Phase 02
+   scope; fonts are already bundled in the prototype.
+- Arabic font files (IBM Plex Sans Arabic, SIL OFL) were obtained during
+  execution and bundled; the fallback stack is still declared for safety.

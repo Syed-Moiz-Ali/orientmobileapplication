@@ -173,11 +173,17 @@ A phase is complete only when **all** of these hold:
 ## 7. How to track progress
 
 ```
-Phase 00 [ ] | 01 [ ] | 02 [ ] | 03A [ ] | 03B [ ] | 04 [ ] | 05 [ ]
+Phase 00 [x] | 01 [ ] | 02 [ ] | 03A [ ] | 03B [ ] | 04 [ ] | 05 [ ]
 06 [ ] | 07A [ ] | 07B [ ] | 08 [ ] | 09 [ ] | 10 [ ] | 11 [ ]
 12 [ ] | 13A [ ] | 13B [ ] | 14 [ ] | 15A [ ] | 15B [ ] | 16 [ ] | 17 [ ] | 18 [ ]
 19A [ ] | 19B [ ] | 19C [ ] | 20 [ ]
 ```
+
+Phase 00 status: **done — VISUALLY APPROVED by the product owner (2026-10-13)**.
+Prototype app + 104-render pack + `audit/` captures delivered; audit found zero
+blockers; refinements assigned to implementation phases. Frozen values, sign-off
+and handoff prerequisites: `00_VISUAL_DIRECTION.md` (§1–§7);
+execution record: `PHASE_00_VISUAL_DESIGN_VALIDATION.md` §N.
 
 Statuses: `not started → in progress → in review → done`. A phase is done only
 after its Deliverable Report + evidence pack exist.

@@ -9,6 +9,24 @@
 - **Dependencies:** Phase 00 (visual direction approved — hard gate)
 - **Estimated scope:** Medium-Large
 
+**Approved Phase 00 inputs (binding — do not re-derive from the prototype):**
+
+- `phases/00_VISUAL_DIRECTION.md` — **APPROVED 2026-10-13**; V1–V14 frozen
+  values + §3 decision log (dark palette map, KPI tile sizing, pill ellipsis,
+  tablet density, workflow steps, required fields, field stacking, identifier
+  policy) + §5 refinement assignments + §6 handoff prerequisites.
+- `phases/reports/PHASE_00/VISUAL_QUALITY_AUDIT.md` — the rendered evidence the
+  approval is based on; its §5 items are assigned to phases (03A/03B/07B/10/12/16).
+- `apps/design_prototype/` — **read-only** rendered reference for this phase
+  (its tokens mirror what must now be codified in `shared_core`; its 299-test
+  suite and `test/goldens/` baselines are frozen). Do not edit the prototype.
+- Carried-into-this-phase specifics: dark parity map exactly as the approved
+  prototype palette (`ProtoPalette.dark` values); `AppKpiCard` sizing must be
+  scale-aware (≥156 px at 1.0×, grows with text scale); status pills must
+  ellipsize inside flex; `AppTypography.forLocale` must reproduce the
+  prototype's Arabic line-height ×1.05 / zero letter-spacing behavior; shared
+  primitives are verified to **1.6×** text scale in this phase per spec §3.3.
+
 ## B. Repository context
 
 - Tokens today:

@@ -1,0 +1,541 @@
+﻿00:00 +0: loading E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/advisor_intake_payload_test.dart
+00:00 +0: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/advisor_intake_payload_test.dart: buildVehicleCustomerIntakePayload maps the new client intake fields into the backend shape
+00:00 +1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/advisor_intake_payload_test.dart: buildVehicleCustomerIntakePayload never forwards the obsolete client fields
+00:00 +2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/advisor_intake_payload_test.dart: InspectionSummaryResponse parses a job-card inspection summary
+00:00 +3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/advisor_intake_payload_test.dart: InspectionSummaryResponse reports not found when a job card has no inspection
+00:00 +4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: ApiResponse parses success envelope with typed data
+00:00 +5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: ApiResponse parses failure envelope
+00:00 +6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: ApiResponse defaults when fields are missing
+00:00 +7: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: PageResponse parses content list
+00:00 +8: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: PageResponse empty content stays empty
+00:00 +9: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: Advisor models parsing AdvisorStatsResponse defaults to zeros
+00:00 +10: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: Advisor models parsing JobCardResponse parses values
+00:00 +11: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: Advisor models parsing ReportResponse parses weekly activity
+00:00 +12: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: Technician models parsing AssignedJobResponse handles numeric amounts
+00:00 +13: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/api_response_test.dart: Technician models parsing TechnicianProfileResponse defaults
+00:00 +14: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_adaptive_navigation_test.dart: AppAdaptiveNavigationFrame uses only body content on compact screens
+00:00 +15: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_adaptive_navigation_test.dart: AppAdaptiveNavigationFrame uses only body content on compact screens
+00:00 +16: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_adaptive_navigation_test.dart: AppAdaptiveNavigationFrame uses only body content on compact screens
+00:01 +17: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +18: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +19: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +20: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +21: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +22: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +23: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +24: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +25: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +26: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +27: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +28: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +29: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +30: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_responsive_test.dart: page padding follows mobile and large desktop tiers
+00:01 +31: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +32: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +33: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +34: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +35: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +36: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +37: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +38: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +39: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +40: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:01 +41: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +42: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +43: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +44: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +45: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +46: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +47: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +48: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +49: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +50: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +51: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +52: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +53: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+00:02 +54: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image
+"goldens/theme_foundation_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "Scaffold": [
+            Scaffold(dependencies: [Directionality, InheritedCupertinoTheme, MediaQuery,
+UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#de20d],
+_ScaffoldMessengerScope], state: ScaffoldState#53683(tickers: tracking 3 tickers)),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/theme_foundation_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart:31:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  theme foundation visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:02 +54 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_adaptive_navigation_test.dart: AppNavDrawer lists every destination and reports selection
+00:02 +54 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_theme_visual_test.dart: theme foundation visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: theme foundation visual reference
+  
+00:02 +54 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/app_adaptive_navigation_test.dart: AppNavDrawer lists every destination and reports selection
+00:02 +55 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/result_test.dart: Result Success carries data through when()
+00:02 +56 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/result_test.dart: Result Failure carries the error through when()
+00:02 +57 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/result_test.dart: Result unwrapOrThrow returns success data
+00:02 +58 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/result_test.dart: Result unwrapOrThrow throws failure error
+00:02 +59 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/result_test.dart: Result Exception subtypes keep their message
+00:03 +60 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_test.dart: PrimaryButton exposes a disabled loading state
+00:03 +61 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +62 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +62 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart: missing handler is treated as a retryable sync failure
+[38;5;196mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:04 +63 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +63 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart: missing handler is treated as a retryable sync failure
+[38;5;196mΓöé No SyncHandler registered for entity type: unsupported[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé #0   SyncEngine._executeOperation (package:shared_core/src/local/sync/sync_engine.dart:249:7)[0m
+[38;5;196mΓöé #1   SyncEngine.syncAll (package:shared_core/src/local/sync/sync_engine.dart:200:30)[0m
+[38;5;196mΓöé #2   main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart:52:18)[0m
+[38;5;196mΓöé #3   <asynchronous suspension>[0m
+[38;5;196mΓöé #4   Declarer.test.<anonymous closure>.<anonymous closure> (package:test_api/src/backend/declarer.dart:242:9)[0m
+[38;5;196mΓöé #5   <asynchronous suspension>[0m
+[38;5;196mΓöé #6   Declarer.test.<anonymous closure> (package:test_api/src/backend/declarer.dart:240:7)[0m
+[38;5;196mΓöé #7   <asynchronous suspension>[0m
+[38;5;196mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;196mΓöé Γ¢ö Sync failed for operation op-1 (unsupported)[0m
+[38;5;196mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;208mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;208mΓöé MissingPluginException(No implementation found for method check on channel dev.fluttercommunity.plus/connectivity)[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé #0   MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:365:7)[0m
+[38;5;208mΓöé #1   <asynchronous suspension>[0m
+[38;5;208mΓöé #2   MethodChannel.invokeListMethod (package:flutter/src/services/platform_channel.dart:553:35)[0m
+[38;5;208mΓöé #3   <asynchronous suspension>[0m
+[38;5;208mΓöé #4   MethodChannelConnectivity.checkConnectivity.<anonymous closure> (package:connectivity_plus_platform_interface/method_channel_connectivity.dart:41:15)[0m
+[38;5;208mΓöé #5   <asynchronous suspension>[0m
+[38;5;208mΓöé #6   SyncEngine._checkInitialConnectivity (package:shared_core/src/local/sync/sync_engine.dart:58:23)[0m
+[38;5;208mΓöé #7   <asynchronous suspension>[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé ΓÜá∩╕Å Initial connectivity check failed[0m
+[38;5;208mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:04 +64 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +64 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart: a later operation runs its rewritten payload, not the stale one
+[38;5;208mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;208mΓöé MissingPluginException(No implementation found for method check on channel dev.fluttercommunity.plus/connectivity)[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé #0   MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:365:7)[0m
+[38;5;208mΓöé #1   <asynchronous suspension>[0m
+[38;5;208mΓöé #2   MethodChannel.invokeListMethod (package:flutter/src/services/platform_channel.dart:553:35)[0m
+[38;5;208mΓöé #3   <asynchronous suspension>[0m
+[38;5;208mΓöé #4   MethodChannelConnectivity.checkConnectivity.<anonymous closure> (package:connectivity_plus_platform_interface/method_channel_connectivity.dart:41:15)[0m
+[38;5;208mΓöé #5   <asynchronous suspension>[0m
+[38;5;208mΓöé #6   SyncEngine._checkInitialConnectivity (package:shared_core/src/local/sync/sync_engine.dart:58:23)[0m
+[38;5;208mΓöé #7   <asynchronous suspension>[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé ΓÜá∩╕Å Initial connectivity check failed[0m
+[38;5;208mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:04 +65 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +65 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart: an operation removed mid-pass is skipped, not executed
+[38;5;208mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;208mΓöé MissingPluginException(No implementation found for method check on channel dev.fluttercommunity.plus/connectivity)[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé #0   MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:365:7)[0m
+[38;5;208mΓöé #1   <asynchronous suspension>[0m
+[38;5;208mΓöé #2   MethodChannel.invokeListMethod (package:flutter/src/services/platform_channel.dart:553:35)[0m
+[38;5;208mΓöé #3   <asynchronous suspension>[0m
+[38;5;208mΓöé #4   MethodChannelConnectivity.checkConnectivity.<anonymous closure> (package:connectivity_plus_platform_interface/method_channel_connectivity.dart:41:15)[0m
+[38;5;208mΓöé #5   <asynchronous suspension>[0m
+[38;5;208mΓöé #6   SyncEngine._checkInitialConnectivity (package:shared_core/src/local/sync/sync_engine.dart:58:23)[0m
+[38;5;208mΓöé #7   <asynchronous suspension>[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé ΓÜá∩╕Å Initial connectivity check failed[0m
+[38;5;208mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:04 +66 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +67 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +67 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart: re-reading keeps the queue order and retry count
+[38;5;208mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;208mΓöé MissingPluginException(No implementation found for method check on channel dev.fluttercommunity.plus/connectivity)[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé #0   MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:365:7)[0m
+[38;5;208mΓöé #1   <asynchronous suspension>[0m
+[38;5;208mΓöé #2   MethodChannel.invokeListMethod (package:flutter/src/services/platform_channel.dart:553:35)[0m
+[38;5;208mΓöé #3   <asynchronous suspension>[0m
+[38;5;208mΓöé #4   MethodChannelConnectivity.checkConnectivity.<anonymous closure> (package:connectivity_plus_platform_interface/method_channel_connectivity.dart:41:15)[0m
+[38;5;208mΓöé #5   <asynchronous suspension>[0m
+[38;5;208mΓöé #6   SyncEngine._checkInitialConnectivity (package:shared_core/src/local/sync/sync_engine.dart:58:23)[0m
+[38;5;208mΓöé #7   <asynchronous suspension>[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé ΓÜá∩╕Å Initial connectivity check failed[0m
+[38;5;208mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:04 +68 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +68 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart: retryFailedOperation retries only the selected operation and keeps its identity
+[38;5;208mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;208mΓöé MissingPluginException(No implementation found for method check on channel dev.fluttercommunity.plus/connectivity)[0m
+00:04 +69 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +69 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart: retryFailedOperation retries only the selected operation and keeps its identity
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé #0   MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:365:7)[0m
+[38;5;208mΓöé #1   <asynchronous suspension>[0m
+[38;5;208mΓöé #2   MethodChannel.invokeListMethod (package:flutter/src/services/platform_channel.dart:553:35)[0m
+[38;5;208mΓöé #3   <asynchronous suspension>[0m
+[38;5;208mΓöé #4   MethodChannelConnectivity.checkConnectivity.<anonymous closure> (package:connectivity_plus_platform_interface/method_channel_connectivity.dart:41:15)[0m
+[38;5;208mΓöé #5   <asynchronous suspension>[0m
+[38;5;208mΓöé #6   SyncEngine._checkInitialConnectivity (package:shared_core/src/local/sync/sync_engine.dart:58:23)[0m
+[38;5;208mΓöé #7   <asynchronous suspension>[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé ΓÜá∩╕Å Initial connectivity check failed[0m
+[38;5;208mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:04 +70 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +70 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart: retryFailedOperation a failed retry keeps the same failed operation
+[38;5;208mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;208mΓöé MissingPluginException(No implementation found for method check on channel dev.fluttercommunity.plus/connectivity)[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé #0   MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:365:7)[0m
+[38;5;208mΓöé #1   <asynchronous suspension>[0m
+[38;5;208mΓöé #2   MethodChannel.invokeListMethod (package:flutter/src/services/platform_channel.dart:553:35)[0m
+[38;5;208mΓöé #3   <asynchronous suspension>[0m
+[38;5;208mΓöé #4   MethodChannelConnectivity.checkConnectivity.<anonymous closure> (package:connectivity_plus_platform_interface/method_channel_connectivity.dart:41:15)[0m
+[38;5;208mΓöé #5   <asynchronous suspension>[0m
+[38;5;208mΓöé #6   SyncEngine._checkInitialConnectivity (package:shared_core/src/local/sync/sync_engine.dart:58:23)[0m
+[38;5;208mΓöé #7   <asynchronous suspension>[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé ΓÜá∩╕Å Initial connectivity check failed[0m
+[38;5;208mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:04 +71 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +71 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/sync_engine_test.dart: retryFailedOperation an unknown operation id is a safe no-op
+[38;5;208mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+[38;5;208mΓöé MissingPluginException(No implementation found for method check on channel dev.fluttercommunity.plus/connectivity)[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé #0   MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:365:7)[0m
+[38;5;208mΓöé #1   <asynchronous suspension>[0m
+[38;5;208mΓöé #2   MethodChannel.invokeListMethod (package:flutter/src/services/platform_channel.dart:553:35)[0m
+[38;5;208mΓöé #3   <asynchronous suspension>[0m
+[38;5;208mΓöé #4   MethodChannelConnectivity.checkConnectivity.<anonymous closure> (package:connectivity_plus_platform_interface/method_channel_connectivity.dart:41:15)[0m
+[38;5;208mΓöé #5   <asynchronous suspension>[0m
+[38;5;208mΓöé #6   SyncEngine._checkInitialConnectivity (package:shared_core/src/local/sync/sync_engine.dart:58:23)[0m
+[38;5;208mΓöé #7   <asynchronous suspension>[0m
+[38;5;208mΓö£ΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöäΓöä[0m
+[38;5;208mΓöé ΓÜá∩╕Å Initial connectivity check failed[0m
+[38;5;208mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+00:04 +72 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +73 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +74 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+00:04 +75 -1: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image
+"goldens/shared_components_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "Scaffold": [
+            Scaffold(dependencies: [Directionality, InheritedCupertinoTheme, MediaQuery,
+UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#01943],
+_ScaffoldMessengerScope], state: ScaffoldState#04204(tickers: tracking 3 tickers)),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/shared_components_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      _expectGolden (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart:62:3)
+<asynchronous suspension>
+#10     main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart:20:5)
+<asynchronous suspension>
+#11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  shared component mobile visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:04 +75 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:04 +75 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component mobile visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: shared component mobile visual reference
+  
+00:04 +76 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:04 +77 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:04 +78 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +79 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +80 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +81 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +81 -2: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component tablet visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image
+"goldens/shared_components_tablet.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "Scaffold": [
+            Scaffold(dependencies: [Directionality, InheritedCupertinoTheme, MediaQuery,
+UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#fd551],
+_ScaffoldMessengerScope], state: ScaffoldState#401e3(tickers: tracking 3 tickers)),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/shared_components_tablet.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      _expectGolden (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart:62:3)
+<asynchronous suspension>
+#10     main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart:28:5)
+<asynchronous suspension>
+#11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  shared component tablet visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:05 +81 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +81 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component tablet visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: shared component tablet visual reference
+  
+00:05 +82 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +83 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +84 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +85 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +86 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +87 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +87 -3: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component desktop visual reference
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image
+"goldens/shared_components_desktop.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "Scaffold": [
+            Scaffold(dependencies: [Directionality, InheritedCupertinoTheme, MediaQuery,
+UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#25456],
+_ScaffoldMessengerScope], state: ScaffoldState#08f46(tickers: tracking 3 tickers)),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/shared_components_desktop.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      _expectGolden (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart:62:3)
+<asynchronous suspension>
+#10     main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart:36:5)
+<asynchronous suspension>
+#11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  shared component desktop visual reference
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:05 +87 -4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +87 -4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shared_components_visual_test.dart: shared component desktop visual reference [E]
+  Test failed. See exception logs above.
+  The test description was: shared component desktop visual reference
+  
+00:05 +88 -4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +89 -4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +90 -4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+00:05 +91 -4: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/shell_family_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "_ShellFamilyShowcase": [
+            _ShellFamilyShowcase(dependencies: [InheritedCupertinoTheme, _InheritedTheme,
+_LocalizationsScope-[GlobalKey#ca206]]),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/shell_family_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      _expectShellFamilyGolden (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart:211:3)
+<asynchronous suspension>
+#10     main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart:35:5)
+<asynchronous suspension>
+#11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  role shells share one compact navigation language
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:05 +91 -5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_unification_test.dart: Phase 4: Unified ORIENT Shell Components AppAdaptiveNavigationFrame adapts across mobile, tablet, and desktop
+00:05 +91 -5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one compact navigation language [E]
+  Test failed. See exception logs above.
+  The test description was: role shells share one compact navigation language
+  
+00:05 +92 -5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_unification_test.dart: Phase 4: Unified ORIENT Shell Components AppAdaptiveNavigationFrame adapts across mobile, tablet, and desktop
+00:05 +93 -5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one rail navigation language
+00:05 +94 -5: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one rail navigation language
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/shell_family_desktop.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "_ShellFamilyShowcase": [
+            _ShellFamilyShowcase(dependencies: [InheritedCupertinoTheme, _InheritedTheme,
+_LocalizationsScope-[GlobalKey#5729b]]),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/shell_family_desktop.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      _expectShellFamilyGolden (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart:211:3)
+<asynchronous suspension>
+#10     main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart:44:5)
+<asynchronous suspension>
+#11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  role shells share one rail navigation language
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:06 +94 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: role shells share one rail navigation language [E]
+  Test failed. See exception logs above.
+  The test description was: role shells share one rail navigation language
+  
+00:06 +94 -6: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: crowded workspaces use a deliberate overflow slot
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/shell_overflow_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "_RoleShell": [
+            _RoleShell(dependencies: [InheritedCupertinoTheme, MediaQuery, _InheritedTheme,
+_LocalizationsScope-[GlobalKey#71366]]),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/shell_overflow_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      _expectSingleShellGolden (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart:189:3)
+<asynchronous suspension>
+#10     main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart:55:5)
+<asynchronous suspension>
+#11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  crowded workspaces use a deliberate overflow slot
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:06 +94 -7: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: crowded workspaces use a deliberate overflow slot [E]
+  Test failed. See exception logs above.
+  The test description was: crowded workspaces use a deliberate overflow slot
+  
+00:06 +94 -7: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: navigation surfaces adapt to the dark colour scheme
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image
+"goldens/shell_overflow_dark_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "_RoleShell": [
+            _RoleShell(dependencies: [InheritedCupertinoTheme, MediaQuery, _InheritedTheme,
+_LocalizationsScope-[GlobalKey#c3b53]]),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/shell_overflow_dark_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      _expectSingleShellGolden (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart:189:3)
+<asynchronous suspension>
+#10     main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart:75:5)
+<asynchronous suspension>
+#11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  navigation surfaces adapt to the dark colour scheme
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:06 +94 -8: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: navigation surfaces adapt to the dark colour scheme [E]
+  Test failed. See exception logs above.
+  The test description was: navigation surfaces adapt to the dark colour scheme
+  
+00:06 +94 -8: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: workspaces with many destinations use the shared drawer
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following TestFailure was thrown running a test:
+Expected: one widget whose rasterized image matches golden image "goldens/shell_drawer_mobile.png"
+  Actual: _TypeWidgetFinder:<Found 1 widget with type "Drawer": [
+            Drawer(dependencies: [Directionality, InheritedCupertinoTheme, _DrawerControllerScope,
+_InheritedTheme, _LocalizationsScope-[GlobalKey#ef054]]),
+          ]>
+   Which: Could not be compared against non-existent file: "goldens/shell_drawer_mobile.png"
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:125:9)
+<asynchronous suspension>
+<asynchronous suspension>
+#8      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#9      main.<anonymous closure> (file:///E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart:161:5)
+<asynchronous suspension>
+#10     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#11     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 7 frames from dart:async and package:stack_trace)
+
+The test description was:
+  workspaces with many destinations use the shared drawer
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:06 +94 -9: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: workspaces with many destinations use the shared drawer [E]
+  Test failed. See exception logs above.
+  The test description was: workspaces with many destinations use the shared drawer
+  
+00:06 +94 -9: E:/syed_moiz_ali/orientmobileapplication/packages/shared_core/test/shell_family_visual_test.dart: (tearDownAll)
+00:06 +94 -9: Some tests failed.
