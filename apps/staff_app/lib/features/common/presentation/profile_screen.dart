@@ -29,23 +29,38 @@ class StaffProfileScreen extends ConsumerWidget {
     final workFields = _workFields(profile);
     final contactFields = _contactFields(profile);
 
+    final header = AppPageHeader(
+      title: 'Profile',
+      leading: canPop
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              tooltip: 'Back',
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                context.pop();
+              },
+            )
+          : null,
+    );
+
+    final identity = _IdentityCard(profile: profile);
+    final work = workFields.isNotEmpty
+        ? _FieldGroupSection(title: 'Work Information', fields: workFields)
+        : null;
+    final contact = contactFields.isNotEmpty
+        ? _FieldGroupSection(title: 'Contact Details', fields: contactFields)
+        : null;
+    const account = _AccountPanel();
+    final signOut = _SignOutSection(ref: ref);
+
     return Scaffold(
       body: SafeArea(
         child: AppPageFrame(
-          title: 'Profile',
-          subtitle: profile.role.isNotEmpty ? '${profile.role} account' : null,
-          leading: canPop
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  tooltip: 'Back',
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    context.pop();
-                  },
-                )
-              : null,
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final headerGap = SizedBox(
+                height: context.adaptive.sectionSpacing * 0.75,
+              );
               final isWide = constraints.maxWidth >= 640;
 
               if (isWide) {
@@ -53,39 +68,45 @@ class StaffProfileScreen extends ConsumerWidget {
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1000),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(
-                          width: 300,
-                          child: _IdentityCard(profile: profile),
+                        header,
+                        headerGap,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 320,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  identity,
+                                  const SizedBox(height: AppDimensions.s24),
+                                  account,
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppDimensions.s24),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (work != null) ...[
+                                    work,
+                                    const SizedBox(height: AppDimensions.s24),
+                                  ],
+                                  if (contact != null) ...[
+                                    contact,
+                                    const SizedBox(height: AppDimensions.s32),
+                                  ],
+                                  signOut,
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: AppDimensions.s24),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              if (workFields.isNotEmpty) ...[
-                                _FieldGroupSection(
-                                  title: 'Work Information',
-                                  fields: workFields,
-                                ),
-                                const SizedBox(height: AppDimensions.s24),
-                              ],
-                              if (contactFields.isNotEmpty) ...[
-                                _FieldGroupSection(
-                                  title: 'Contact Details',
-                                  fields: contactFields,
-                                ),
-                                const SizedBox(height: AppDimensions.s24),
-                              ],
-                              const _AccountPanel(),
-                              const SizedBox(height: AppDimensions.s32),
-                              _SignOutSection(ref: ref),
-                              const SizedBox(height: AppDimensions.s24),
-                            ],
-                          ),
-                        ),
+                        const SizedBox(height: AppDimensions.s24),
                       ],
                     ),
                   ),
@@ -95,25 +116,21 @@ class StaffProfileScreen extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _IdentityCard(profile: profile),
-                  if (workFields.isNotEmpty) ...[
+                  header,
+                  headerGap,
+                  identity,
+                  if (work != null) ...[
                     const SizedBox(height: AppDimensions.s24),
-                    _FieldGroupSection(
-                      title: 'Work Information',
-                      fields: workFields,
-                    ),
+                    work,
                   ],
-                  if (contactFields.isNotEmpty) ...[
+                  if (contact != null) ...[
                     const SizedBox(height: AppDimensions.s24),
-                    _FieldGroupSection(
-                      title: 'Contact Details',
-                      fields: contactFields,
-                    ),
+                    contact,
                   ],
                   const SizedBox(height: AppDimensions.s28),
-                  const _AccountPanel(),
+                  account,
                   const SizedBox(height: AppDimensions.s32),
-                  _SignOutSection(ref: ref),
+                  signOut,
                   const SizedBox(height: AppDimensions.s24),
                 ],
               );
@@ -503,7 +520,7 @@ class _AccountPanel extends StatelessWidget {
             _AccountActionRow(
               icon: Icons.lock_reset_rounded,
               title: 'Reset password',
-              subtitle: 'Uses the secure password reset flow',
+              subtitle: 'Verify your identity, then choose a new password',
               onTap: () {
                 HapticFeedback.selectionClick();
                 context.push(AppRoutes.forgotPassword);

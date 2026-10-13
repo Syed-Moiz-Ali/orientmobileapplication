@@ -602,6 +602,7 @@ void main() {
       await _pump(
         tester,
         data: technician,
+        size: const Size(390, 1400),
         textScaler: const TextScaler.linear(1.6),
       );
       await golden(tester, 'technician_profile_large_text_mobile');
@@ -613,8 +614,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
+      // Capture the whole app so the modal scrim is part of the reference.
       await expectLater(
-        find.byType(AlertDialog),
+        find.byType(MaterialApp),
         matchesGoldenFile('goldens/technician_profile_signout_mobile.png'),
       );
     });
