@@ -1,0 +1,58 @@
+# PHASE 11 — Staff Application: Supervisor Operations & Floor Management
+
+**Document ID:** `phases/redesign_v2/implementation/PHASE_11_STAFF_SUPERVISOR_BAY.md`  
+**Prerequisites:** Phase 10 Completed (`REPORT_PHASE_10.md`)  
+**Target Package:** `apps/staff_app/lib/features/supervisor/`  
+**Status:** READY FOR IMPLEMENTATION (Gate 11)  
+
+---
+
+## 1. Primary User & Engineering Objective
+Complete redesign of the Workshop Supervisor workspace using **Archetype 4: Tactical Operations Radar** and **Archetype 6: Spatial Inspection HUD**. Deliver an interactive workshop floor management console covering bay scheduling, technician task queues, quality control approvals, and floor throughput reports.
+
+---
+
+## 2. Real Repository File Paths
+- `apps/staff_app/lib/features/supervisor/presentation/supervisor_login_view.dart` (V1)
+- `apps/staff_app/lib/features/supervisor/presentation/supervisor_dashboard_view.dart` (V2)
+- `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart` (V3)
+- `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_queue_tab.dart` (V4)
+- `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_review_tab.dart` (V5)
+- `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_staff_tab.dart` (V6)
+- `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_schedule_tab.dart` (V7)
+- `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_reports_tab.dart` (V8)
+- `apps/staff_app/lib/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart` (V9)
+- `apps/staff_app/lib/features/supervisor/presentation/widgets/qc_checklist_sheet.dart` (V10)
+- `apps/staff_app/test/features/supervisor/supervisor_views_test.dart`
+
+---
+
+## 3. Screen Redesign Requirements
+1. **`SupervisorDashboardView` (V2) & Bay Operations:**
+   - Workshop Floor Grid: Visual status map of all 16 workshop bays colored by state (Occupied, Idle, Parts Delay, QC Pending).
+   - Drag-and-drop or one-tap technician dispatch to clear floor bottlenecks.
+2. **`SupervisorQueueTab` (V4) & `SupervisorScheduleTab` (V7):**
+   - Active work queue with priority sorting (Urgent VIP, Promised Delivery Today, Insurance Wait).
+   - Daily schedule matrix mapping technicians to shifts and bay assignments.
+3. **`SupervisorReviewTab` (V5) & `QcChecklistSheet` (V10):**
+   - Formal quality control inspection sheet: Road test checklist, torque wrench audit, fluid level confirmation, and final wash sign-off.
+4. **`SupervisorReportsTab` (V8):**
+   - Daily workshop floor throughput, rework rates, and technician labor utilization percentages.
+
+---
+
+## 4. Visual Acceptance Criteria
+- Clean, tactical command center aesthetic with real-time floor status visibility.
+- Zero horizontal layout overflows on narrow mobile screens.
+- Golden tests generated with real fonts loaded across Mobile, Tablet, and Desktop.
+
+---
+
+## 5. Dual Gate Verification
+### Gate 1: Engineering Validation
+- `dart analyze apps/staff_app` returns 0 errors and 0 warnings.
+- `supervisor_views_test.dart` passes 100% verifying bay status mutations.
+
+### Gate 2: Visual Aesthetic Validation
+- Golden screenshots captured across Mobile (390px EN/AR) and Desktop (1280px) with real fonts.
+- Generates `phases/redesign_v2/reports/REPORT_PHASE_11.md`.
