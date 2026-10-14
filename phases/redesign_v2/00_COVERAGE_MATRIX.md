@@ -100,3 +100,25 @@
 | **R9** | CRM App | `CrmIntegrationsPage` | Tab 6 (`/crm_dashboard_view`) | Archetype 11: Settings | **Phase 20** | Mobile, Tablet, Desktop | Yes (LTR/RTL) |
 | **R10** | CRM App | `CrmSettingsPage` | Tab 7 (`/crm_dashboard_view`) | Archetype 11: Settings | **Phase 20** | Mobile, Tablet, Desktop | Yes (LTR/RTL) |
 | **R11** | CRM App | `ConnectIntegrationSheet`| Sheet | Archetype 11: Settings | **Phase 20** | Bottom Sheet | Yes (LTR/RTL) |
+
+---
+
+## 2. Phase 06 (Staff Advisor Hub) Delivery Status — 2026-10-14
+
+Evidence: `phases/redesign_v2/reports/REPORT_PHASE_06.md`.
+
+| Ref | Surface | Status | Evidence |
+| :-- | :-- | :-- | :-- |
+| **S1** | `AdvisorHomeView` | ✅ Redesigned — WorkspaceAppBar + OfflineStatusPill + attention radar | `advisor_experience_test`, `advisor_phase06_shell_test`, goldens |
+| **S2** | `AdvisorJobsView` | ✅ Redesigned — work-management list + desktop master–detail matrix | `advisor_experience_test`, `advisor_phase06_shell_test`, goldens |
+| **S3** | `AdvisorReportsView` | ✅ Refined — report header + range + KPI + charts + export | `advisor_experience_test`, goldens |
+| **S4** | `AdvisorJobDetailView` | ✅ Redesigned — WorkspaceAppBar + AppPageHeader(breadcrumbs) | `advisor_experience_test`, goldens |
+| **S5** | `AdvisorSearchSheet` | ✅ Wired to shell `WorkspaceSearchShortcuts` (⌘K/Ctrl+K) | `advisor_phase06_shell_test` |
+| **S6** | `AdvisorNotificationSheet` | ✅ Theme-migrated | theme guard |
+| **S7** | `AdvisorProfileSheet` | ✅ Theme-migrated | theme guard |
+| **S8** | `AdvisorContactSheet` | ✅ Theme-migrated | theme guard |
+| **S9** | `AdvisorApprovalSheet` | ✅ Theme-migrated | theme guard |
+| **S10** | `AdvisorJobCardSheet` | ✅ Rewired as jobs-list overflow preview (localized, theme-driven) | `advisor_jobs_view` |
+| **S11** | `AdvisorStatDialog` | ✅ Theme-migrated | `advisor_experience_test` |
+
+**Removed as obsolete (unreferenced legacy widgets superseded by the redesign):** `advisor_body.dart`, `advisor_header.dart`, `advisor_header_button.dart`, `advisor_avatar.dart`, `advisor_bottom_nav.dart`, `advisor_bottom_item.dart`, `advisor_fab.dart`, `advisor_stat_tile.dart`, `advisor_date_chip.dart`, `advisor_tab_panel.dart`, `advisor_job_cards_page.dart`, `advisor_approvals_page.dart`, `advisor_reminders_page.dart`, `advisor_reminder_row.dart`, `advisor_see_all_button.dart`, `advisor_tab_button.dart`, `advisor_status_badge.dart`.

@@ -2335,6 +2335,48 @@ abstract class StaffLocalizations {
   /// In en, this message translates to:
   /// **'Remove damage'**
   String get advisorCheckInRemoveDamage;
+
+  /// Jobs matrix column: customer
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get advisorJobsColumnCustomer;
+
+  /// Jobs matrix column: job card id
+  ///
+  /// In en, this message translates to:
+  /// **'Job Card'**
+  String get advisorJobsColumnJobCard;
+
+  /// Jobs matrix column: status
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get advisorJobsColumnStatus;
+
+  /// Jobs matrix column: timing
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get advisorJobsColumnTime;
+
+  /// Desktop master-detail empty detail prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Select a job card to preview the details'**
+  String get advisorJobsSelectPrompt;
+
+  /// Open the full job card workspace
+  ///
+  /// In en, this message translates to:
+  /// **'Open Job Card'**
+  String get advisorActionOpenJob;
+
+  /// Contextual row overflow action tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get advisorActionMore;
 }
 
 class _StaffLocalizationsDelegate

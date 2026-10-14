@@ -243,9 +243,12 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: AppTopBar(title: t.advisorJobDetailsTitle),
+      appBar: WorkspaceAppBar(
+        title: t.advisorJobDetailsTitle,
+        showBack: true,
+        onBack: () => Navigator.maybePop(context),
+        frosted: !context.isCompact,
+        showOfflineStatus: true,
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -292,6 +295,27 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                   ),
                   const SizedBox(height: AppDimensions.s16),
                 ],
+                AppPageHeader(
+                  breadcrumbs: [
+                    AppBreadcrumbItem(
+                      label: t.advisorNavJobs,
+                      onTap: () => Navigator.maybePop(context),
+                    ),
+                    AppBreadcrumbItem.current(_jc.id),
+                  ],
+                  title: _apiVal(
+                    _details?.customerName ?? '',
+                    hasData ? _getVal('customerName') : _jc.customerName,
+                  ),
+                  subtitle: _apiVal(
+                    _details?.vehicleInfo ?? '',
+                    hasData
+                        ? '${_getVal('make')} ${_getVal('model')}'.trim()
+                        : _jc.vehicleInfo,
+                  ),
+                  trailing: advisorStatusPill(t, _jc.status),
+                ),
+                const SizedBox(height: AppDimensions.s20),
                 content,
               ],
             );
@@ -628,6 +652,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     final inspection = _inspection;
     if (inspection == null || !inspection.found) return const SizedBox.shrink();
     final colors = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     return _section(
       t,
       t.advisorSectionInspectionSummary,
@@ -646,7 +671,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               child: _inspectionCount(
                 t.advisorInspectionGood,
                 inspection.good,
-                AppColors.success,
+                semantic.success.base,
                 Icons.check_circle_outline_rounded,
               ),
             ),
@@ -655,7 +680,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
               child: _inspectionCount(
                 t.advisorInspectionFair,
                 inspection.fair,
-                AppColors.warning,
+                semantic.warning.base,
                 Icons.error_outline_rounded,
               ),
             ),
@@ -687,6 +712,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   Widget _workItemsSection(StaffLocalizations t) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
     ref.watch(advisorWorkItemsRefreshProvider);
     final items =
         ref.watch(advisorWorkItemsProvider(_jobCardRef)).value ??
@@ -709,7 +735,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                       ? Icons.check_circle_rounded
                       : Icons.radio_button_unchecked_rounded,
                   color: item.status == 'completed'
-                      ? AppColors.success
+                      ? semantic.success.base
                       : colors.onSurfaceVariant,
                   size: AppDimensions.iconSm,
                 ),

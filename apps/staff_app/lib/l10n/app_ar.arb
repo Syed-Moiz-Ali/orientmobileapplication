@@ -377,5 +377,12 @@
   "advisorCheckInSectionDetails": "العداد والوقود والملاحظات",
   "advisorCheckInSectionDamage": "التلف الموجود",
   "advisorCheckInSectionDamageSub": "اضغط على منطقة لتسجيل أي تلف موجود",
-  "advisorCheckInRemoveDamage": "إزالة التلف"
+  "advisorCheckInRemoveDamage": "إزالة التلف",
+  "advisorJobsColumnCustomer": "العميل",
+  "advisorJobsColumnJobCard": "بطاقة العمل",
+  "advisorJobsColumnStatus": "الحالة",
+  "advisorJobsColumnTime": "الوقت",
+  "advisorJobsSelectPrompt": "اختر بطاقة عمل لمعاينة التفاصيل",
+  "advisorActionOpenJob": "فتح بطاقة العمل",
+  "advisorActionMore": "المزيد من الإجراءات"
 }

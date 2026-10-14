@@ -1186,4 +1186,25 @@ class StaffLocalizationsAr extends StaffLocalizations {
 
   @override
   String get advisorCheckInRemoveDamage => 'إزالة التلف';
+
+  @override
+  String get advisorJobsColumnCustomer => 'العميل';
+
+  @override
+  String get advisorJobsColumnJobCard => 'بطاقة العمل';
+
+  @override
+  String get advisorJobsColumnStatus => 'الحالة';
+
+  @override
+  String get advisorJobsColumnTime => 'الوقت';
+
+  @override
+  String get advisorJobsSelectPrompt => 'اختر بطاقة عمل لمعاينة التفاصيل';
+
+  @override
+  String get advisorActionOpenJob => 'فتح بطاقة العمل';
+
+  @override
+  String get advisorActionMore => 'المزيد من الإجراءات';
 }

@@ -94,7 +94,7 @@ class AdvisorApprovalSheet extends StatelessWidget {
                 child: AdvisorSolidAction(
                   label: t.advisorActionApprove,
                   icon: Icons.check_rounded,
-                  color: AppColors.success,
+                  color: context.semanticColors.success.base,
                   onTap: onApprove,
                 ),
               ),

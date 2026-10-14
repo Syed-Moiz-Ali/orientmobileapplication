@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
@@ -15,6 +17,46 @@ final advisorLocalDataSourceProvider = Provider<AdvisorLocalDataSource>((ref) {
 });
 
 final advisorRefreshProvider = StateProvider<int>((ref) => 0);
+
+/// Local changes queued for the next sync pass. Drives the shell's
+/// [OfflineStatusPill] queued state from the existing [SyncQueue] — no new
+/// connectivity state is created here.
+///
+/// The count is reactive: it is backed by the `sync_queue` Hive box change
+/// stream (the same box [SyncQueue] wraps), so enqueue/remove/clear update the
+/// pill without polling or a second source of truth. When the box is not
+/// available (e.g. widget tests without Hive) it degrades to a single `0`.
+final advisorPendingSyncCountProvider = StreamProvider<int>((ref) {
+  try {
+    final box = Hive.box<SyncOperation>('sync_queue');
+    return advisorPendingSyncCountStream(box).distinct();
+  } catch (_) {
+    return Stream<int>.value(0);
+  }
+});
+
+/// Emits the authoritative queued-operation count on every change of [box].
+///
+/// Kept as a named, testable unit so the reactivity can be verified without a
+/// full application shell. Seeds the current count immediately, then tracks the
+/// Hive box change stream; the subscription is released when the listener
+/// cancels (so provider disposal does not leak).
+Stream<int> advisorPendingSyncCountStream(Box<SyncOperation> box) {
+  late StreamController<int> controller;
+  StreamSubscription<BoxEvent>? subscription;
+
+  controller = StreamController<int>(
+    onListen: () {
+      controller.add(box.length);
+      subscription = box.watch().listen((_) => controller.add(box.length));
+    },
+    onCancel: () async {
+      await subscription?.cancel();
+      subscription = null;
+    },
+  );
+  return controller.stream.distinct();
+}
 
 const _emptyStats = AdvisorStatsEntity(
   newJobCardsToday: 0,

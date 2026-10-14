@@ -36,13 +36,7 @@ class AdvisorReportsView extends ConsumerWidget {
           100,
         ),
         children: [
-          Text(
-            t.advisorReportsTitle,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: colors.onSurface,
-            ),
-          ),
+          _ReportsHeader(title: t.advisorReportsTitle),
           const SizedBox(height: AppDimensions.s16),
           SegmentedButton<ReportRange>(
             showSelectedIcon: false,
@@ -316,5 +310,51 @@ class AdvisorReportsView extends ConsumerWidget {
       ..writeln('In Progress,${data.inProgressJobs}')
       ..writeln('Cancelled,${data.cancelledJobs}');
     await Share.share(buffer.toString(), subject: 'Advisor Report');
+  }
+}
+
+/// Report page identity: an icon anchor, the report title and the active
+/// period, so the analytics surface reads as a deliberate report rather than a
+/// generic dashboard header.
+class _ReportsHeader extends StatelessWidget {
+  final String title;
+  const _ReportsHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
+
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: semantic.primarySubtle,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          ),
+          child: Icon(
+            Icons.insights_rounded,
+            color: colors.primary,
+            size: AppDimensions.iconMd,
+          ),
+        ),
+        const SizedBox(width: AppDimensions.s12),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colors.onSurface,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -6,7 +6,6 @@ import 'package:hive/hive.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/local/sync_providers.dart';
-import 'package:staff_app/core/models/profile_data.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/followup_reminder_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
@@ -74,25 +73,19 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
 
   void _toast(String msg, {IconData? icon, Color? color}) {
     final colorScheme = Theme.of(context).colorScheme;
+    final ink = context.semanticColors.onPrimary;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             if (icon != null) ...[
-              Icon(
-                icon,
-                color: AppColors.textInverse,
-                size: AppDimensions.iconSm,
-              ),
+              Icon(icon, color: ink, size: AppDimensions.iconSm),
               const SizedBox(width: AppDimensions.s8),
             ],
             Expanded(
               child: Text(
                 msg,
-                style: const TextStyle(
-                  color: AppColors.textInverse,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(color: ink, fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -150,7 +143,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
           _toast(
             t.advisorToastApproved(pa.typeLabel, pa.estimateId),
             icon: Icons.check_circle_outline,
-            color: AppColors.success,
+            color: context.semanticColors.success.base,
           );
         },
         onReject: () {
@@ -213,7 +206,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
           _toast(
             t.advisorToastOpeningWhatsApp,
             icon: Icons.chat_outlined,
-            color: AppColors.success,
+            color: context.semanticColors.success.base,
           );
         },
         onSms: () {
@@ -225,7 +218,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
           _toast(
             t.advisorToastMarkedDone,
             icon: Icons.check_circle_outline_rounded,
-            color: AppColors.success,
+            color: context.semanticColors.success.base,
           );
         },
       ),
@@ -257,9 +250,47 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
   Widget build(BuildContext context) {
     final adaptive = context.adaptive;
     final t = StaffLocalizations.of(context)!;
+    final info = ref.watch(advisorInfoProvider);
     final items = _advisorNavItems(t);
+    final pendingSync =
+        ref.watch(advisorPendingSyncCountProvider).value ?? 0;
+    final contextLine = [info.branch, info.shift]
+        .where((s) => s.trim().isNotEmpty)
+        .join(' · ');
 
-    return DashboardShell(
+    final shell = DashboardShell(
+      // The header carries the integrated OfflineStatusPill; suppress the
+      // duplicate full-width banner (Phase 04.1 rule).
+      showOfflineBanner: false,
+      appBar: WorkspaceAppBar(
+        title: t.advisorDeskTitle,
+        subtitle: contextLine.isEmpty ? null : contextLine,
+        frosted: !context.isCompact,
+        showOfflineStatus: true,
+        offlinePendingCount: pendingSync,
+        onSearch: _showSearch,
+        actions: [
+          IconButton(
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              _showNotifications();
+            },
+            tooltip: t.advisorNotificationsTitle,
+            icon: const Icon(Icons.notifications_none_rounded),
+          ),
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: AppDimensions.s8),
+            child: InkWell(
+              onTap: _showProfile,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+              child: Tooltip(
+                message: t.advisorProfileLabel,
+                child: const _AdvisorAvatar(radius: 16),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: AppAdaptiveNavigationFrame(
         items: items,
         selectedIndex: _navIndex,
@@ -277,7 +308,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
             child: ext
                 ? Row(
                     children: [
-                      _AdvisorAvatar(radius: 16),
+                      const _AdvisorAvatar(radius: 16),
                       const SizedBox(width: AppDimensions.s10),
                       Expanded(
                         child: Text(
@@ -294,7 +325,7 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
                   )
                 : Tooltip(
                     message: t.advisorProfileLabel,
-                    child: _AdvisorAvatar(radius: 18),
+                    child: const _AdvisorAvatar(radius: 18),
                   ),
           ),
         ),
@@ -302,8 +333,6 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
           index: _navIndex,
           children: [
             _AdvisorDashboardContent(
-              onShowNotifications: _showNotifications,
-              onShowSearch: _showSearch,
               onOpenScan: _openScan,
               onNewJobCard: _openNewJobCard,
               onOpenInspection: _openInspectionDirect,
@@ -326,6 +355,9 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
               onSelected: (index) => setState(() => _navIndex = index),
             ),
     );
+
+    // ⌘K / Ctrl+K global search, plus the always-visible app-bar trigger above.
+    return WorkspaceSearchShortcuts(onSearch: _showSearch, child: shell);
   }
 }
 
@@ -353,8 +385,6 @@ class _AdvisorAvatar extends StatelessWidget {
 
 // ─── ADVISOR DASHBOARD TAB CONTENT ───────────────────────────────────────────
 class _AdvisorDashboardContent extends ConsumerWidget {
-  final VoidCallback onShowNotifications;
-  final VoidCallback onShowSearch;
   final VoidCallback onOpenScan;
   final VoidCallback onNewJobCard;
   final VoidCallback onOpenInspection;
@@ -365,8 +395,6 @@ class _AdvisorDashboardContent extends ConsumerWidget {
   final void Function(int) onNavigateTab;
 
   const _AdvisorDashboardContent({
-    required this.onShowNotifications,
-    required this.onShowSearch,
     required this.onOpenScan,
     required this.onNewJobCard,
     required this.onOpenInspection,
@@ -381,6 +409,7 @@ class _AdvisorDashboardContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = StaffLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     final info = ref.watch(advisorInfoProvider);
 
     final recentJobsState = ref.watch(advisorRecentJobCardsProvider);
@@ -420,22 +449,11 @@ class _AdvisorDashboardContent extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── 1. SHIFT HEADER ───────────────────────────────────────────
-            _AdvisorHeader(
+            // ── 1. COMMAND IDENTITY ──────────────────────────────────────
+            _AdvisorCommandIdentity(
               name: info.name,
               branch: info.branch,
               shift: info.shift,
-              onNotificationTap: onShowNotifications,
-              onProfileTap: () => context.push(
-                AppRoutes.profile,
-                extra: ProfileData(
-                  name: info.name,
-                  id: info.id,
-                  role: t.advisorWorkspaceName,
-                  branch: info.branch,
-                  shift: info.shift,
-                ),
-              ),
             ),
             const SizedBox(height: AppDimensions.s18),
 
@@ -462,57 +480,19 @@ class _AdvisorDashboardContent extends ConsumerWidget {
               const SizedBox(height: AppDimensions.s18),
             ],
 
-            // ── 2. SEARCH PILL ────────────────────────────────────────────
-            _AdvisorSearchPill(onTap: onShowSearch),
-            const SizedBox(height: AppDimensions.s18),
-
-            // ── 3. ATTENTION BLOCK ────────────────────────────────────────
+            // ── 2. ATTENTION RADAR (highest operational priority) ────────
             if (attentionCount > 0) ...[
-              SectionHeader(
-                title: t.advisorAttentionTitle,
-                count: attentionCount,
-                leadingIcon: Icons.notifications_active_outlined,
+              _AttentionPanel(
+                approvals: approvals,
+                reminders: reminders,
+                onApproval: onApproval,
+                onContact: onContact,
               ),
-              if (approvals.isNotEmpty)
-                ...approvals
-                    .take(3)
-                    .map((pa) => AdvisorApprovalRow(pa: pa, onTap: onApproval)),
-              if (reminders.isNotEmpty)
-                ...reminders
-                    .take(3)
-                    .map(
-                      (r) => Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: AppDimensions.s8,
-                        ),
-                        child: AppRecordRow(
-                          leading: Icon(
-                            Icons.alarm_rounded,
-                            color: colors.primary,
-                          ),
-                          title: r.customerName,
-                          subtitle: r.task,
-                          metadata: Text(
-                            r.dueDate,
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(color: colors.onSurfaceVariant),
-                          ),
-                          onTap: () => onContact(r),
-                        ),
-                      ),
-                    ),
-              const SizedBox(height: AppDimensions.s20),
+              const SizedBox(height: AppDimensions.s24),
             ],
 
-            // ── 4. QUICK ACTIONS ──────────────────────────────────────────
-            Text(
-              t.advisorQuickActionsEyebrow.toUpperCase(),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-                letterSpacing: AppTypography.tracking(context, 0.8),
-              ),
-            ),
+            // ── 3. QUICK ACTIONS ─────────────────────────────────────────
+            _SectionEyebrow(label: t.advisorQuickActionsEyebrow),
             const SizedBox(height: AppDimensions.s12),
             _AdvisorQuickActionsGrid(
               onScan: onOpenScan,
@@ -522,7 +502,7 @@ class _AdvisorDashboardContent extends ConsumerWidget {
             ),
             const SizedBox(height: AppDimensions.s28),
 
-            // ── 5. WORK SUMMARY METRICS ───────────────────────────────────
+            // ── 4. OPERATIONAL METRICS (compact, passive) ────────────────
             SectionHeader(
               title: t.advisorWorkSummary,
               action: t.advisorActionAnalytics,
@@ -544,7 +524,7 @@ class _AdvisorDashboardContent extends ConsumerWidget {
             ),
             const SizedBox(height: AppDimensions.s28),
 
-            // ── 6. RECENT WORK ORDERS ─────────────────────────────────────
+            // ── 5. RECENT WORK ───────────────────────────────────────────
             SectionHeader(
               title: t.advisorAssignedWorkOrders,
               action: t.advisorViewAll(recentJobs.length),
@@ -564,6 +544,8 @@ class _AdvisorDashboardContent extends ConsumerWidget {
               ...recentJobs
                   .take(3)
                   .map((jc) => AdvisorJobCardRow(jc: jc, onTap: onJobCard)),
+            const SizedBox(height: AppDimensions.s8),
+            _FreshnessFooter(semantic: semantic),
           ],
         ),
       ),
@@ -571,20 +553,34 @@ class _AdvisorDashboardContent extends ConsumerWidget {
   }
 }
 
-// ─── 1. SHIFT HEADER ─────────────────────────────────────────────────────────
-class _AdvisorHeader extends StatelessWidget {
+class _SectionEyebrow extends StatelessWidget {
+  final String label;
+  const _SectionEyebrow({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      label.toUpperCase(),
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w800,
+        letterSpacing: AppTypography.tracking(context, 0.8),
+      ),
+    );
+  }
+}
+
+// ─── 1. COMMAND IDENTITY ─────────────────────────────────────────────────────
+class _AdvisorCommandIdentity extends StatelessWidget {
   final String name;
   final String branch;
   final String shift;
-  final VoidCallback onNotificationTap;
-  final VoidCallback onProfileTap;
 
-  const _AdvisorHeader({
+  const _AdvisorCommandIdentity({
     required this.name,
     required this.branch,
     required this.shift,
-    required this.onNotificationTap,
-    required this.onProfileTap,
   });
 
   @override
@@ -597,173 +593,182 @@ class _AdvisorHeader extends StatelessWidget {
       shift,
     ].where((s) => s.trim().isNotEmpty).join(' · ');
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Text(
+          t.advisorRoleEyebrow.toUpperCase(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: colors.primary,
+            fontWeight: FontWeight.w800,
+            letterSpacing: AppTypography.tracking(context, 1.1),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: AppDimensions.s4),
+        Text(
+          t.advisorGreeting(name),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+            letterSpacing: -0.2,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (contextLine.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.s10),
+          Wrap(
+            spacing: AppDimensions.s8,
+            runSpacing: AppDimensions.s4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(
-                t.advisorRoleEyebrow.toUpperCase(),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: AppTypography.tracking(context, 1.1),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              AdvisorMetaPill(
+                icon: Icons.store_mall_directory_outlined,
+                label: contextLine,
               ),
-              const SizedBox(height: AppDimensions.s4),
-              Text(
-                t.advisorDeskTitle,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colors.onSurface,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              AdvisorMetaPill(
+                icon: Icons.cloud_done_outlined,
+                label: t.advisorFreshnessLive,
               ),
-              const SizedBox(height: AppDimensions.s4),
-              Text(
-                t.advisorGreeting(name),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-              if (contextLine.isNotEmpty) ...[
-                const SizedBox(height: AppDimensions.s6),
-                Wrap(
-                  spacing: AppDimensions.s8,
-                  runSpacing: AppDimensions.s4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    AdvisorMetaPill(
-                      icon: Icons.store_mall_directory_outlined,
-                      label: contextLine,
-                    ),
-                    AdvisorMetaPill(
-                      icon: Icons.cloud_done_outlined,
-                      label: t.advisorFreshnessLive,
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
+        ],
+      ],
+    );
+  }
+}
+
+class _FreshnessFooter extends StatelessWidget {
+  final AppSemanticColors semantic;
+  const _FreshnessFooter({required this.semantic});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(
+          Icons.bolt_rounded,
+          size: AppDimensions.iconXs,
+          color: semantic.success.base,
         ),
-        const SizedBox(width: AppDimensions.s12),
-        Row(
-          children: [
-            IconButton(
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                onNotificationTap();
-              },
-              tooltip: t.advisorNotificationsTitle,
-              icon: const Icon(Icons.notifications_none_rounded),
+        const SizedBox(width: AppDimensions.s6),
+        Flexible(
+          child: Text(
+            t.advisorFreshnessLive,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            IconButton(
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                onProfileTap();
-              },
-              tooltip: t.advisorProfileLabel,
-              icon: const Icon(Icons.person_outline_rounded),
-            ),
-          ],
+          ),
         ),
       ],
     );
   }
 }
 
-// ─── 2. QUICK INTAKE SEARCH PILL ─────────────────────────────────────────────
-class _AdvisorSearchPill extends StatelessWidget {
-  final VoidCallback onTap;
-  const _AdvisorSearchPill({required this.onTap});
+// ─── 2. ATTENTION RADAR ──────────────────────────────────────────────────────
+class _AttentionPanel extends StatelessWidget {
+  final List<PendingApprovalEntity> approvals;
+  final List<FollowupReminderEntity> reminders;
+  final void Function(PendingApprovalEntity) onApproval;
+  final void Function(FollowupReminderEntity) onContact;
+
+  const _AttentionPanel({
+    required this.approvals,
+    required this.reminders,
+    required this.onApproval,
+    required this.onContact,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
     final t = StaffLocalizations.of(context)!;
+    final count = approvals.length + reminders.length;
 
-    return Material(
-      color: colors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
-        side: BorderSide(color: colors.outlineVariant),
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        border: Border.all(color: semantic.warning.border),
       ),
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s16,
-            vertical: AppDimensions.s12,
-          ),
-          child: Row(
+      padding: const EdgeInsets.all(AppDimensions.s14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(AppDimensions.s8),
+                padding: const EdgeInsets.all(AppDimensions.s6),
                 decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.10),
+                  color: semantic.warning.subtle,
                   borderRadius: BorderRadius.circular(
                     AppDimensions.radiusControl,
                   ),
                 ),
                 child: Icon(
-                  Icons.search_rounded,
-                  color: colors.primary,
+                  Icons.notifications_active_outlined,
                   size: AppDimensions.iconMd,
+                  color: semantic.warning.ink,
                 ),
               ),
-              const SizedBox(width: AppDimensions.s14),
+              const SizedBox(width: AppDimensions.s10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      t.advisorSearchPillTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: colors.onSurface,
-                      ),
-                    ),
-                    Text(
-                      t.advisorSearchPillSubtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  t.advisorAttentionTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurface,
+                  ),
                 ),
               ),
-              const SizedBox(width: AppDimensions.s8),
-              Icon(
-                Icons.qr_code_scanner_rounded,
-                color: colors.onSurfaceVariant,
-                size: AppDimensions.iconMd,
-              ),
+              StatusPill.warning('$count'),
             ],
           ),
-        ),
+          const SizedBox(height: AppDimensions.s12),
+          if (approvals.isNotEmpty)
+            ...approvals
+                .take(3)
+                .map((pa) => AdvisorApprovalRow(pa: pa, onTap: onApproval)),
+          if (reminders.isNotEmpty)
+            ...reminders
+                .take(3)
+                .map(
+                  (r) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+                    child: AppRecordRow(
+                      leading: Icon(
+                        Icons.alarm_rounded,
+                        color: colors.primary,
+                      ),
+                      title: r.customerName,
+                      subtitle: r.task,
+                      metadata: Text(
+                        r.dueDate,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                      onTap: () => onContact(r),
+                    ),
+                  ),
+                ),
+        ],
       ),
     );
   }
 }
 
-// ─── 3. QUICK ACTIONS GRID ───────────────────────────────────────────────────
+// ─── QUICK ACTIONS GRID ──────────────────────────────────────────────────────
 class _AdvisorQuickActionsGrid extends StatelessWidget {
   final VoidCallback onScan;
   final VoidCallback onNewJob;
@@ -927,7 +932,7 @@ class _AdvisorActionTile extends StatelessWidget {
   }
 }
 
-// ─── 4. CONFIRMED ARRIVAL / ACTIVE INTAKE ────────────────────────────────────
+// ─── CONFIRMED ARRIVAL / ACTIVE INTAKE ───────────────────────────────────────
 class _ActiveIntakeCard extends StatelessWidget {
   final dynamic booking;
   final VoidCallback onTap;
@@ -1025,7 +1030,7 @@ class _ActiveIntakeCard extends StatelessWidget {
   }
 }
 
-// ─── 5. SHIFT METRICS ────────────────────────────────────────────────────────
+// ─── SHIFT METRICS ───────────────────────────────────────────────────────────
 class _AdvisorShiftMetrics extends StatelessWidget {
   final int totalCount;
   final int inProgressCount;
@@ -1041,32 +1046,41 @@ class _AdvisorShiftMetrics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final t = StaffLocalizations.of(context)!;
+    final semantic = context.semanticColors;
 
     final tiles = <Widget>[
       AppKpiCard.compact(
         label: t.advisorMetricTotalOrders,
         value: '$totalCount',
         icon: Icons.assignment_outlined,
-        onTap: () =>
-            onStat(t.advisorMetricTotalOrders, totalCount, colors.primary),
+        onTap: () => onStat(
+          t.advisorMetricTotalOrders,
+          totalCount,
+          semantic.primary,
+        ),
       ),
       AppKpiCard.compact(
         label: t.advisorMetricInProgress,
         value: '$inProgressCount',
         icon: Icons.build_circle_outlined,
         semanticState: KpiSemanticState.info,
-        onTap: () =>
-            onStat(t.advisorMetricInProgress, inProgressCount, AppColors.info),
+        onTap: () => onStat(
+          t.advisorMetricInProgress,
+          inProgressCount,
+          semantic.info.base,
+        ),
       ),
       AppKpiCard.compact(
         label: t.advisorMetricDelivered,
         value: '$completedCount',
         icon: Icons.verified_outlined,
         semanticState: KpiSemanticState.success,
-        onTap: () =>
-            onStat(t.advisorMetricDelivered, completedCount, AppColors.success),
+        onTap: () => onStat(
+          t.advisorMetricDelivered,
+          completedCount,
+          semantic.success.base,
+        ),
       ),
     ];
 

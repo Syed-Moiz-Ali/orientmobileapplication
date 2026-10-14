@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'advisor_sheet.dart';
-import 'advisor_handle.dart';
 import 'advisor_divider.dart';
 import 'advisor_detail_line.dart';
 import 'advisor_outline_action.dart';
 import 'advisor_solid_action.dart';
-import 'advisor_status_badge.dart';
 
-class _StatusStyle {
-  final String label;
-  final Color color;
-  final Color bg;
-  const _StatusStyle(this.label, this.color, this.bg);
-}
-
+/// Quick job-card preview sheet (S10). Opened from the jobs list overflow
+/// action so an advisor can scan the essentials without leaving the list. The
+/// full workspace remains a pushed route via [onOpen].
 class AdvisorJobCardSheet extends StatelessWidget {
   final JobCardEntity jc;
   final VoidCallback onOpen;
@@ -25,178 +21,101 @@ class AdvisorJobCardSheet extends StatelessWidget {
     required this.onOpen,
   });
 
-  _StatusStyle get _s => switch (jc.status) {
-    JobCardStatus.inProgress => _StatusStyle(
-      'In Progress',
-      AppColors.accent,
-      AppColors.accent.withValues(alpha: 0.12),
-    ),
-    JobCardStatus.pendingApproval => _StatusStyle(
-      'Pending',
-      AppColors.warning,
-      AppColors.warningBg,
-    ),
-    JobCardStatus.completed => _StatusStyle(
-      'Completed',
-      AppColors.success,
-      AppColors.successBg,
-    ),
-    JobCardStatus.waitingParts => _StatusStyle(
-      'Waiting Parts',
-      AppColors.danger,
-      AppColors.dangerBg,
-    ),
-    JobCardStatus.qualityCheck => _StatusStyle(
-      'QC Check',
-      AppColors.info,
-      AppColors.infoBg,
-    ),
-    JobCardStatus.cancelled => _StatusStyle(
-      'Cancelled',
-      AppColors.text3,
-      AppColors.surfaceAlt,
-    ),
-    JobCardStatus.pending => _StatusStyle(
-      'Pending',
-      AppColors.warning,
-      AppColors.warningBg,
-    ),
-    JobCardStatus.awaitingSupervisor => _StatusStyle(
-      'Awaiting Supervisor',
-      AppColors.warning,
-      AppColors.warningBg,
-    ),
-    JobCardStatus.vehicleReceived => _StatusStyle(
-      'Vehicle Received',
-      AppColors.info,
-      AppColors.infoBg,
-    ),
-    JobCardStatus.inspected => _StatusStyle(
-      'Inspected',
-      AppColors.info,
-      AppColors.infoBg,
-    ),
-    JobCardStatus.approved => _StatusStyle(
-      'Approved',
-      AppColors.success,
-      AppColors.successBg,
-    ),
-    JobCardStatus.workAssigned => _StatusStyle(
-      'Work Assigned',
-      AppColors.accent,
-      AppColors.accent.withValues(alpha: 0.12),
-    ),
-    JobCardStatus.waitingCustomerApproval => _StatusStyle(
-      'Waiting Customer Approval',
-      AppColors.warning,
-      AppColors.warningBg,
-    ),
-    JobCardStatus.delivered => _StatusStyle(
-      'Delivered',
-      AppColors.success,
-      AppColors.successBg,
-    ),
-    JobCardStatus.qualityCheckPassed => _StatusStyle(
-      'QC Passed',
-      AppColors.success,
-      AppColors.successBg,
-    ),
-  };
-
   @override
   Widget build(BuildContext context) {
-    final s = _s;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+
     return AdvisorSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AdvisorHandle(),
-          const SizedBox(height: 16),
           Row(
             children: [
               Container(
                 width: 4,
-                height: 40,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: s.color,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(AppDimensions.r2),
-                  ),
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       jc.id,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.textPrimary,
-                        letterSpacing: 0.3,
-                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.mono(color: colors.onSurface),
                     ),
+                    const SizedBox(height: AppDimensions.xxs),
                     Text(
                       jc.customerName,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.text2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              AdvisorStatusBadge(s.label, s.color, s.bg),
+              const SizedBox(width: AppDimensions.s8),
+              advisorStatusPill(t, jc.status),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppDimensions.s16),
           const AdvisorDivider(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.s12),
           AdvisorDetailLine(
             icon: Icons.directions_car_outlined,
-            label: 'Vehicle',
+            label: t.advisorFieldVehicle,
             value: jc.vehicleInfo,
           ),
+          if (jc.technician.isNotEmpty)
+            AdvisorDetailLine(
+              icon: Icons.engineering_outlined,
+              label: t.advisorFieldTechnician,
+              value: jc.technician,
+            ),
           AdvisorDetailLine(
             icon: Icons.schedule_outlined,
-            label: 'Created',
+            label: t.advisorFieldCreated,
             value: jc.time,
           ),
-          AdvisorDetailLine(
-            icon: Icons.person_outline_rounded,
-            label: 'Advisor',
-            value: '',
-          ),
-          AdvisorDetailLine(
-            icon: Icons.build_outlined,
-            label: 'Bay',
-            value: 'Bay 03',
-          ),
-          const SizedBox(height: 18),
+          if (jc.odometer != null)
+            AdvisorDetailLine(
+              icon: Icons.speed_rounded,
+              label: t.advisorFieldOdometer,
+              value: t.advisorOdometerValue('${jc.odometer}'),
+            ),
+          const SizedBox(height: AppDimensions.s6),
           Row(
             children: [
               Expanded(
                 child: AdvisorOutlineAction(
-                  label: 'Call Customer',
-                  icon: Icons.phone_outlined,
-                  color: AppColors.accent,
+                  label: t.advisorActionClose,
+                  icon: Icons.close_rounded,
+                  color: colors.onSurfaceVariant,
                   onTap: () => Navigator.pop(context),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppDimensions.s10),
               Expanded(
                 child: AdvisorSolidAction(
-                  label: 'Open Job Card',
+                  label: t.advisorActionOpenJob,
                   icon: Icons.open_in_new_rounded,
-                  color: AppColors.primary,
+                  color: colors.primary,
                   onTap: onOpen,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
         ],
       ),
     );

@@ -18,6 +18,8 @@ class AdvisorSolidAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ink on a saturated status fill resolves from the active theme.
+    final ink = context.semanticColors.onPrimary;
     return SizedBox(
       height: AppDimensions.touchTarget,
       child: Material(
@@ -31,7 +33,7 @@ class AdvisorSolidAction extends StatelessWidget {
             children: [
               DirectionalIcon(
                 icon,
-                color: AppColors.textInverse,
+                color: ink,
                 size: AppDimensions.iconSm,
                 mirrorInRtl: DirectionalIcon.isDirectional(icon),
               ),
@@ -42,7 +44,7 @@ class AdvisorSolidAction extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppColors.textInverse,
+                    color: ink,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

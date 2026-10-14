@@ -801,5 +801,19 @@
   "advisorCheckInSectionDamageSub": "Tap an area to record any existing damage",
   "@advisorCheckInSectionDamageSub": { "description": "Check-in damage section subtitle" },
   "advisorCheckInRemoveDamage": "Remove damage",
-  "@advisorCheckInRemoveDamage": { "description": "Remove a recorded damage" }
+  "@advisorCheckInRemoveDamage": { "description": "Remove a recorded damage" },
+  "advisorJobsColumnCustomer": "Customer",
+  "@advisorJobsColumnCustomer": { "description": "Jobs matrix column: customer" },
+  "advisorJobsColumnJobCard": "Job Card",
+  "@advisorJobsColumnJobCard": { "description": "Jobs matrix column: job card id" },
+  "advisorJobsColumnStatus": "Status",
+  "@advisorJobsColumnStatus": { "description": "Jobs matrix column: status" },
+  "advisorJobsColumnTime": "Time",
+  "@advisorJobsColumnTime": { "description": "Jobs matrix column: timing" },
+  "advisorJobsSelectPrompt": "Select a job card to preview the details",
+  "@advisorJobsSelectPrompt": { "description": "Desktop master-detail empty detail prompt" },
+  "advisorActionOpenJob": "Open Job Card",
+  "@advisorActionOpenJob": { "description": "Open the full job card workspace" },
+  "advisorActionMore": "More actions",
+  "@advisorActionMore": { "description": "Contextual row overflow action tooltip" }
 }

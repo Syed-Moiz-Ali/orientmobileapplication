@@ -1197,4 +1197,26 @@ class StaffLocalizationsEn extends StaffLocalizations {
 
   @override
   String get advisorCheckInRemoveDamage => 'Remove damage';
+
+  @override
+  String get advisorJobsColumnCustomer => 'Customer';
+
+  @override
+  String get advisorJobsColumnJobCard => 'Job Card';
+
+  @override
+  String get advisorJobsColumnStatus => 'Status';
+
+  @override
+  String get advisorJobsColumnTime => 'Time';
+
+  @override
+  String get advisorJobsSelectPrompt =>
+      'Select a job card to preview the details';
+
+  @override
+  String get advisorActionOpenJob => 'Open Job Card';
+
+  @override
+  String get advisorActionMore => 'More actions';
 }

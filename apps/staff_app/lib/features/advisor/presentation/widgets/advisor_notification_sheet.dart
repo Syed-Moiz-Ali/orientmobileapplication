@@ -13,7 +13,7 @@ import 'advisor_notification_row.dart';
 class AdvisorNotificationSheet extends ConsumerWidget {
   const AdvisorNotificationSheet({super.key});
 
-  List<AdvisorNotificationData> _loadNotifications() {
+  List<AdvisorNotificationData> _loadNotifications(Color infoColor) {
     try {
       final box = Hive.box<dynamic>('inspections');
       final items = box.values
@@ -25,7 +25,7 @@ class AdvisorNotificationSheet extends ConsumerWidget {
               m['title'] as String? ?? '',
               m['message'] as String? ?? '',
               Icons.notifications_outlined,
-              AppColors.info,
+              infoColor,
               m['timeAgo'] as String? ?? '',
             ),
           )
@@ -52,9 +52,10 @@ class AdvisorNotificationSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final infoColor = context.semanticColors.info.base;
     final t = StaffLocalizations.of(context)!;
 
-    final localItems = _loadNotifications();
+    final localItems = _loadNotifications(infoColor);
     final remoteAsync = ref.watch(advisorNotificationsProvider);
     final remoteItems =
         (remoteAsync.value ?? const <StaffNotificationResponse>[])
@@ -65,7 +66,7 @@ class AdvisorNotificationSheet extends ConsumerWidget {
                 n.isRead
                     ? Icons.notifications_outlined
                     : Icons.notifications_active_rounded,
-                n.isRead ? colors.onSurfaceVariant : AppColors.info,
+                n.isRead ? colors.onSurfaceVariant : infoColor,
                 n.time,
               ),
             )

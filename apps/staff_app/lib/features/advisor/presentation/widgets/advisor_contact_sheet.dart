@@ -83,13 +83,13 @@ class AdvisorContactSheet extends StatelessWidget {
               AdvisorContactOption(
                 icon: Icons.chat_rounded,
                 label: t.advisorContactWhatsApp,
-                color: AppColors.success,
+                color: context.semanticColors.success.base,
                 onTap: onWhatsApp,
               ),
               AdvisorContactOption(
                 icon: Icons.sms_outlined,
                 label: t.advisorContactSms,
-                color: AppColors.info,
+                color: context.semanticColors.info.base,
                 onTap: onSms,
               ),
             ],
@@ -98,7 +98,7 @@ class AdvisorContactSheet extends StatelessWidget {
           AdvisorSolidAction(
             label: t.advisorActionMarkReminderDone,
             icon: Icons.check_circle_outline_rounded,
-            color: AppColors.success,
+            color: context.semanticColors.success.base,
             onTap: onDone,
           ),
         ],

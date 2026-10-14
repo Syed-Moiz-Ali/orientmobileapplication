@@ -7,11 +7,14 @@ import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_job_card_row.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_job_card_sheet.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-/// Jobs tab: search first, status filter chips, then the working list of job
-/// cards rendered with the shared record-row grammar.
+/// Jobs tab: a work-management surface — search first, a status filter rail,
+/// then either a scrollable work list (compact) or a master–detail job matrix
+/// (tablet/desktop). Selection, routing and the back stack stay with the
+/// caller; the wide layout only previews the selected job card.
 class AdvisorJobsListView extends ConsumerStatefulWidget {
   final void Function(JobCardEntity) onJobCard;
   const AdvisorJobsListView({super.key, required this.onJobCard});
@@ -22,11 +25,28 @@ class AdvisorJobsListView extends ConsumerStatefulWidget {
 
 class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
   final _searchCtrl = TextEditingController();
+  JobCardEntity? _selected;
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _showQuickCard(JobCardEntity jc) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => AdvisorJobCardSheet(
+        jc: jc,
+        onOpen: () {
+          Navigator.pop(sheetContext);
+          widget.onJobCard(jc);
+        },
+      ),
+    );
   }
 
   List<(String, String)> _chips(StaffLocalizations t) => [
@@ -66,12 +86,23 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                t.advisorJobsTitle,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colors.onSurface,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      t.advisorJobsTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                  if (!isLoading && jobCards.isNotEmpty)
+                    StatusPill.neutral('${jobCards.length}'),
+                ],
               ),
               const SizedBox(height: AppDimensions.s12),
               if (hasError) ...[
@@ -123,20 +154,12 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
           ),
         ),
         const SizedBox(height: AppDimensions.s8),
-        Expanded(
-          child: RefreshIndicator(
-            color: colors.primary,
-            backgroundColor: colors.surface,
-            onRefresh: () async =>
-                ref.read(advisorRefreshProvider.notifier).state++,
-            child: _buildJobList(t, jobCards, selectedFilter, isLoading),
-          ),
-        ),
+        Expanded(child: _buildSurface(t, jobCards, selectedFilter, isLoading)),
       ],
     );
   }
 
-  Widget _buildJobList(
+  Widget _buildSurface(
     StaffLocalizations t,
     List<JobCardEntity> allCards,
     String filter,
@@ -192,25 +215,94 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
       );
     }
 
-    return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        context.pagePadding.left,
-        AppDimensions.s8,
-        context.pagePadding.right,
-        (AppDimensions.s64 + AppDimensions.s24),
+    final master = _buildMaster(t, filtered, bookings, showBookings);
+    if (context.isCompact) return master;
+
+    // Wide layouts: master–detail work matrix (selection is local; opening the
+    // full job card still routes through the caller's push navigation).
+    return AppMasterDetailScaffold(
+      detailOpen: _selected != null,
+      masterMinWidth: 360,
+      masterMaxWidth: 520,
+      placeholder: _JobPreviewPlaceholder(key: const ValueKey('jobs-preview')),
+      master: master,
+      detail: _selected == null
+          ? _JobPreviewPlaceholder()
+          : _JobPreviewPane(
+              jc: _selected!,
+              onOpen: () => widget.onJobCard(_selected!),
+            ),
+    );
+  }
+
+  Widget _buildMaster(
+    StaffLocalizations t,
+    List<JobCardEntity> filtered,
+    List<AdvisorBookingResponse> bookings,
+    bool showBookings,
+  ) {
+    final wide = !context.isCompact;
+    return RefreshIndicator(
+      color: Theme.of(context).colorScheme.primary,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      onRefresh: () async => ref.read(advisorRefreshProvider.notifier).state++,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          wide ? AppDimensions.s16 : context.pagePadding.left,
+          AppDimensions.s8,
+          wide ? AppDimensions.s16 : context.pagePadding.right,
+          (AppDimensions.s64 + AppDimensions.s24),
+        ),
+        children: [
+          if (showBookings) _buildAssignedBookingsSection(t, bookings),
+          if (wide)
+            AppTable<JobCardEntity>(
+              columns: [
+                AppTableColumn(label: t.advisorJobsColumnCustomer, flex: 3),
+                AppTableColumn(label: t.advisorJobsColumnJobCard, flex: 2),
+                AppTableColumn(label: t.advisorFieldVehicle, flex: 3),
+                AppTableColumn(label: t.advisorJobsColumnStatus, flex: 2),
+                AppTableColumn(label: t.advisorJobsColumnTime, flex: 2),
+              ],
+              items: filtered,
+              isSelected: (jc) => _selected?.id == jc.id,
+              onRowTap: (jc) {
+                HapticFeedback.selectionClick();
+                setState(() => _selected = jc);
+              },
+              leadingCell: (context, jc) => _JobAvatar(jc: jc),
+              cells: (context, jc) => [
+                AppTableCell.text(context, jc.customerName),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    jc.id,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.mono(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                AppTableCell.text(context, jc.vehicleInfo),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: advisorStatusPill(t, jc.status),
+                ),
+                AppTableCell.text(context, jc.time),
+              ],
+            )
+          else
+            ...filtered.map(
+              (jc) => AdvisorJobCardRow(
+                jc: jc,
+                onTap: widget.onJobCard,
+                onMore: () => _showQuickCard(jc),
+              ),
+            ),
+        ],
       ),
-      itemCount: filtered.length + (showBookings ? 1 : 0),
-      itemBuilder: (_, i) {
-        if (showBookings && i == 0) {
-          return _buildAssignedBookingsSection(t, bookings);
-        }
-        final index = showBookings ? i - 1 : i;
-        if (index < 0 || index >= filtered.length) {
-          return const SizedBox.shrink();
-        }
-        return AdvisorJobCardRow(jc: filtered[index], onTap: widget.onJobCard);
-      },
     );
   }
 
@@ -280,6 +372,211 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                 ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _JobAvatar extends StatelessWidget {
+  final JobCardEntity jc;
+  const _JobAvatar({required this.jc});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return CircleAvatar(
+      radius: 15,
+      backgroundColor: colors.primary.withValues(alpha: 0.12),
+      child: Text(
+        jc.customerName.isNotEmpty ? jc.customerName[0] : 'C',
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: colors.primary,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _JobPreviewPlaceholder extends StatelessWidget {
+  const _JobPreviewPlaceholder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.s24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.preview_outlined,
+                size: 32,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              Text(
+                t.advisorJobsSelectPrompt,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _JobPreviewPane extends StatelessWidget {
+  final JobCardEntity jc;
+  final VoidCallback onOpen;
+  const _JobPreviewPane({required this.jc, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+
+    return ColoredBox(
+      color: theme.scaffoldBackgroundColor,
+      child: ListView(
+        padding: const EdgeInsets.all(AppDimensions.s24),
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _JobAvatar(jc: jc),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      jc.customerName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                    Text(
+                      jc.id,
+                      style: AppTextStyles.mono(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              advisorStatusPill(t, jc.status),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s20),
+          AppCard.standard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _JobPreviewTile(
+                  icon: Icons.directions_car_outlined,
+                  label: t.advisorFieldVehicle,
+                  value: jc.vehicleInfo,
+                ),
+                _JobPreviewTile(
+                  icon: Icons.engineering_outlined,
+                  label: t.advisorFieldTechnician,
+                  value: jc.technician,
+                ),
+                _JobPreviewTile(
+                  icon: Icons.schedule_outlined,
+                  label: t.advisorFieldCreated,
+                  value: jc.time,
+                ),
+                if (jc.odometer != null)
+                  _JobPreviewTile(
+                    icon: Icons.speed_rounded,
+                    label: t.advisorFieldOdometer,
+                    value: t.advisorOdometerValue('${jc.odometer}'),
+                    mono: true,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s20),
+          PrimaryButton(
+            label: t.advisorActionOpenJob,
+            icon: Icons.open_in_new_rounded,
+            onPressed: onOpen,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact label/value line used in the master–detail preview pane.
+class _JobPreviewTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool mono;
+  const _JobPreviewTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.mono = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final shown = value.trim().isEmpty ? '--' : value;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimensions.s12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: AppDimensions.iconSm,
+            color: colors.onSurfaceVariant,
+          ),
+          const SizedBox(width: AppDimensions.s10),
+          SizedBox(
+            width: 96,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s10),
+          Expanded(
+            child: Text(
+              shown,
+              textAlign: TextAlign.end,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: mono
+                  ? AppTextStyles.mono(color: colors.onSurface)
+                  : theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }

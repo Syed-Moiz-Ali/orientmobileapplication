@@ -7,7 +7,7 @@ class AdvisorDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     height: 1,
-    color: AppColors.line,
-    margin: const EdgeInsets.symmetric(vertical: 4),
+    color: context.colors.outlineVariant,
+    margin: const EdgeInsets.symmetric(vertical: AppDimensions.xxs),
   );
 }

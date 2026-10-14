@@ -11,7 +11,15 @@ import 'package:staff_app/l10n/gen/staff_localizations.dart';
 class AdvisorJobCardRow extends StatelessWidget {
   final JobCardEntity jc;
   final void Function(JobCardEntity) onTap;
-  const AdvisorJobCardRow({super.key, required this.jc, required this.onTap});
+
+  /// Optional contextual overflow action (e.g. a quick job-card preview).
+  final VoidCallback? onMore;
+  const AdvisorJobCardRow({
+    super.key,
+    required this.jc,
+    required this.onTap,
+    this.onMore,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +69,14 @@ class AdvisorJobCardRow extends StatelessWidget {
             advisorStatusPill(t, jc.status),
           ],
         ),
+        trailing: onMore == null
+            ? null
+            : IconButton(
+                onPressed: onMore,
+                tooltip: t.advisorActionMore,
+                icon: const Icon(Icons.more_horiz_rounded),
+                color: colors.onSurfaceVariant,
+              ),
         onTap: () => onTap(jc),
       ),
     );
