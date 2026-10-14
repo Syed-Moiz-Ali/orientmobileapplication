@@ -13,10 +13,11 @@ class AuthLoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final t = SharedAuthL10n.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.navy,
+      backgroundColor: colors.inverseSurface,
       body: Semantics(
         liveRegion: true,
         label: t.authRestoringSessionSemantics,
@@ -33,9 +34,9 @@ class AuthLoadingView extends StatelessWidget {
                     AppDimensions.radiusPanel,
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.build_rounded,
-                  color: AppColors.textInverse,
+                  color: colors.onInverseSurface,
                   size: 30,
                 ),
               ),
@@ -43,7 +44,7 @@ class AuthLoadingView extends StatelessWidget {
               Text(
                 t.authBrandName,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: AppColors.textInverse,
+                  color: colors.onInverseSurface,
                   fontWeight: FontWeight.w900,
                   letterSpacing: AppTypography.tracking(context, 1.6),
                 ),
@@ -52,7 +53,7 @@ class AuthLoadingView extends StatelessWidget {
               Text(
                 t.authBrandSub,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.onNavySecondary,
+                  color: colors.onInverseSurface.withValues(alpha: 0.72),
                   fontWeight: FontWeight.w700,
                   letterSpacing: AppTypography.tracking(context, 1.1),
                 ),
@@ -63,14 +64,14 @@ class AuthLoadingView extends StatelessWidget {
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.textInverse,
+                  color: colors.onInverseSurface,
                 ),
               ),
               const SizedBox(height: AppDimensions.s16),
               Text(
                 t.authRestoringSession,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.onNavySecondary,
+                  color: colors.onInverseSurface.withValues(alpha: 0.72),
                 ),
               ),
             ],

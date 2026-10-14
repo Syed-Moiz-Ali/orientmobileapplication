@@ -12,8 +12,9 @@ import 'package:shared_core/shared_core.dart';
 /// - medium (600 - 899): the same column boxed on a surface card so the extra
 ///   width reads as deliberate instead of stretched.
 /// - expanded (>= 900): a split layout. The reading-start pane is the navy
-///   [AppColors.navy] identity panel (brand mark, app identity, trust points);
-///   the reading-end pane stays focused on the authentication task.
+///   [`ColorScheme.inverseSurface`] identity panel (brand mark, app identity,
+///   trust points); the reading-end pane stays focused on the authentication
+///   task.
 ///
 /// The shell is intentionally independent of Riverpod so it can be rendered in
 /// isolation (tests, previews) and reused by [LoginView], [ForgotPasswordView]
@@ -258,10 +259,11 @@ class _AuthIdentityPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final t = SharedAuthL10n.of(context);
 
     return ColoredBox(
-      color: AppColors.navy,
+      color: colors.inverseSurface,
       child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -279,7 +281,7 @@ class _AuthIdentityPanel extends StatelessWidget {
                 Text(
                   t.authIdentityHeadline,
                   style: theme.textTheme.headlineMedium?.copyWith(
-                    color: AppColors.textInverse,
+                    color: colors.onInverseSurface,
                     fontWeight: FontWeight.w800,
                     letterSpacing: AppTypography.tracking(context, -0.5),
                     height: 1.3,
@@ -289,7 +291,7 @@ class _AuthIdentityPanel extends StatelessWidget {
                 Text(
                   t.authIdentityBody,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.onNavySecondary,
+                    color: _inverseMuted(colors),
                     height: 1.6,
                   ),
                 ),
@@ -297,11 +299,11 @@ class _AuthIdentityPanel extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppDimensions.s16),
                   decoration: BoxDecoration(
-                    color: AppColors.navySurfaceRaised,
+                    color: _inverseRaised(colors),
                     borderRadius: BorderRadius.circular(
                       AppDimensions.radiusCard,
                     ),
-                    border: Border.all(color: AppColors.borderDark),
+                    border: Border.all(color: _inverseBorder(colors)),
                   ),
                   child: _AuthContextBlock(
                     appName: appName,
@@ -352,10 +354,10 @@ class _AuthContextBlock extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final roles = _roleTokens(intendedUsers);
-    final accent = onDark ? AppDarkColors.primary : colors.primary;
-    final titleColor = onDark ? AppColors.textInverse : colors.onSurface;
+    final accent = onDark ? colors.inversePrimary : colors.primary;
+    final titleColor = onDark ? colors.onInverseSurface : colors.onSurface;
     final bodyColor = onDark
-        ? AppColors.onNavySecondary
+        ? _inverseMuted(colors)
         : colors.onSurfaceVariant;
 
     return Column(
@@ -456,7 +458,7 @@ class _AuthBrandLockup extends StatelessWidget {
           ),
           child: Icon(
             Icons.build_rounded,
-            color: AppColors.textInverse,
+            color: colors.onPrimary,
             size: size * 0.5,
           ),
         ),
@@ -471,7 +473,7 @@ class _AuthBrandLockup extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  color: onDark ? AppColors.textInverse : colors.onSurface,
+                  color: onDark ? colors.onInverseSurface : colors.onSurface,
                   fontWeight: FontWeight.w900,
                   letterSpacing: AppTypography.tracking(context, 1.6),
                   height: 1,
@@ -484,7 +486,7 @@ class _AuthBrandLockup extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: onDark
-                      ? AppColors.onNavySecondary
+                      ? _inverseMuted(colors)
                       : colors.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
                   letterSpacing: AppTypography.tracking(context, 1.1),
@@ -508,6 +510,7 @@ class _AuthTrustPoint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Row(
       children: [
@@ -515,17 +518,17 @@ class _AuthTrustPoint extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: AppColors.navySurfaceRaised,
+            color: _inverseRaised(colors),
             borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
           ),
-          child: Icon(icon, size: 17, color: AppDarkColors.primary),
+          child: Icon(icon, size: 17, color: colors.inversePrimary),
         ),
         const SizedBox(width: AppDimensions.s12),
         Expanded(
           child: Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.onNavySecondary,
+              color: _inverseMuted(colors),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -549,3 +552,18 @@ List<String> _roleTokens(String intendedUsers) {
       .map((part) => part[0].toUpperCase() + part.substring(1))
       .toList();
 }
+
+// ---------------------------------------------------------------------------
+// Inverse-brand tonal steps.
+//
+// The identity panel sits on `ColorScheme.inverseSurface` (the signature navy
+// brand surface). Its passive raised fill, hairline and faded ink are derived
+// from the single semantic `onInverseSurface` ink at reduced emphasis rather
+// than introducing new palette tokens or dark/light branches.
+// ---------------------------------------------------------------------------
+Color _inverseRaised(ColorScheme c) =>
+    c.onInverseSurface.withValues(alpha: 0.08);
+Color _inverseBorder(ColorScheme c) =>
+    c.onInverseSurface.withValues(alpha: 0.14);
+Color _inverseMuted(ColorScheme c) =>
+    c.onInverseSurface.withValues(alpha: 0.72);

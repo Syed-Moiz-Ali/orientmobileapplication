@@ -517,9 +517,7 @@ class _PasswordRequirement extends StatelessWidget {
     final colors = theme.colorScheme;
     final t = SharedAuthL10n.of(context);
     final met = password.length >= 6;
-    final success = theme.brightness == Brightness.dark
-        ? AppDarkColors.success
-        : AppColors.success;
+    final success = context.semanticColors.success.base;
     final color = met ? success : colors.onSurfaceVariant;
 
     return Row(
@@ -552,11 +550,8 @@ class _RecoverySuccess extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final t = SharedAuthL10n.of(context);
-    final success = theme.brightness == Brightness.dark
-        ? AppDarkColors.success
-        : AppColors.success;
+    final success = context.semanticColors.success.base;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

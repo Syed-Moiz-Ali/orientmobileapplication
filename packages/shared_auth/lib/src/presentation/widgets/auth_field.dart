@@ -178,10 +178,10 @@ class _AuthTextFieldState extends State<AuthTextField> {
                     tooltip: _hidden ? t.authShowPassword : t.authHidePassword,
                   )
                 : null,
-            border: outline(AppColors.borderDefault),
-            enabledBorder: outline(AppColors.borderDefault),
+            border: outline(colors.outline),
+            enabledBorder: outline(colors.outline),
             disabledBorder: outline(
-              AppColors.borderDefault.withValues(alpha: 0.6),
+              colors.outline.withValues(alpha: 0.6),
             ),
             focusedBorder: outline(colors.primary, 1.5),
             errorBorder: outline(colors.error, 1.2),

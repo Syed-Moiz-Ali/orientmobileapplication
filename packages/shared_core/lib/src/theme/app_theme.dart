@@ -36,6 +36,10 @@ abstract final class AppTheme {
       onSurfaceVariant: AppColors.textMuted,
       inverseSurface: AppColors.surfaceInverse,
       onInverseSurface: AppColors.textInverse,
+      // Accent for content sitting on the inverse (navy) brand surface; the
+      // raw cobalt is too dark against navy, so the lighter dark-mode primary
+      // is the authorized inverse accent (Phase 05).
+      inversePrimary: AppDarkColors.primary,
       shadow: Colors.black,
     );
 
@@ -91,6 +95,7 @@ abstract final class AppTheme {
       onSurfaceVariant: AppDarkColors.textMuted,
       inverseSurface: AppDarkColors.surfaceStrong,
       onInverseSurface: AppDarkColors.textInverse,
+      inversePrimary: AppDarkColors.primary,
       shadow: Colors.black,
       scrim: AppDarkColors.overlayScrim,
     );
