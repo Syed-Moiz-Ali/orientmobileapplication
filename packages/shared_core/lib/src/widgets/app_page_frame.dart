@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/widgets/app_page_header.dart';
 
@@ -49,7 +48,7 @@ class AppPageFrame extends StatelessWidget {
   /// Custom padding overriding the responsive default.
   final EdgeInsetsGeometry? padding;
 
-  /// Background color. Defaults to [AppColors.canvas].
+  /// Background color. Defaults to the active theme's scaffold background.
   final Color? backgroundColor;
 
   /// Custom scroll physics.
@@ -152,7 +151,7 @@ class AppPageFrame extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
                   border: Border(
-                    top: BorderSide(color: AppColors.borderDefault),
+                    top: BorderSide(color: theme.colorScheme.outline),
                   ),
                 ),
                 padding: EdgeInsets.symmetric(

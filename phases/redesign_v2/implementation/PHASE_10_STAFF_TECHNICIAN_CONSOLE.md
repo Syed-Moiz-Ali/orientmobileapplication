@@ -44,6 +44,7 @@ Redesign the Technician execution experience using **Archetype 7: Task Execution
 - Grease-friendly UI with generous touch targets (minimum 48x48dp).
 - Distinct color accents for active timer states (Cobalt = Running, Amber = Paused, Emerald = Complete).
 - Golden tests generated with real fonts loaded across Mobile and Tablet.
+- **Shell Integration (Phase 04.1).** The technician shell header must be the shared `WorkspaceAppBar` (desktop uses `frosted: true` with the reduced-transparency fallback). Show `OfflineStatusPill` and set `DashboardShell(showOfflineBanner: false)` where the pill is shown. Use `AppPageHeader(breadcrumbs:)` on pushed job-detail pages; no global ⌘K search (job-scoped actions only). Acceptance: header/offline widget tests + refreshed mobile/tablet EN/AR goldens.
 
 ---
 
@@ -55,3 +56,15 @@ Redesign the Technician execution experience using **Archetype 7: Task Execution
 ### Gate 2: Visual Aesthetic Validation
 - Golden screenshots captured across Mobile (390px EN/AR) and Tablet (768px) with real fonts.
 - Generates `phases/redesign_v2/reports/REPORT_PHASE_10.md`.
+
+
+---
+
+## Styling Authority (Phase 01.1 � Mandatory)
+All styling in this phase MUST resolve through the single centralized theme system. Do not select light/dark colors by hand.
+
+- Standard Material roles -> `context.colors` (`ColorScheme`).
+- Custom automotive/workshop roles -> `context.semanticColors` (`AppSemanticColors` ThemeExtension).
+- **Forbidden:** `dark ? AppDarkColors.x : AppColors.x` ternaries; direct `AppColors.*` / `AppDarkColors.*` palette selection in feature widgets; hardcoded semantic hex; duplicate local theme systems or competing theme providers; hardcoded font styles, spacing, or radii where a theme or `AppDimensions` token exists.
+- **Justified exceptions** (brand assets, theme construction, color previews, brightness-dependent behavior) must carry a one-line documented reason.
+- Full rules: `00_CONCEPT_A_DESIGN_SYSTEM.md` Sec.6 and `reports/PHASE_01_1_THEME_ARCHITECTURE.md`.

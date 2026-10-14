@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_icon_container.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 import 'package:shared_core/src/widgets/app_card.dart';
 
 /// Semantic state for KPI metric cards.
@@ -80,7 +80,7 @@ class AppKpiCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final dark = theme.brightness == Brightness.dark;
+    final semantic = context.semanticColors;
 
     // Phase 00 frozen decision log (2026-10-13): compact KPI tiles are at
     // least 156 px tall at 1.0x so the Arabic line-height (x1.05) and the
@@ -91,12 +91,10 @@ class AppKpiCard extends StatelessWidget {
 
     final Color semanticColor = switch (semanticState) {
       KpiSemanticState.neutral => colors.onSurfaceVariant,
-      KpiSemanticState.success =>
-        dark ? AppDarkColors.success : AppColors.success,
-      KpiSemanticState.warning =>
-        dark ? AppDarkColors.warning : AppColors.warning,
-      KpiSemanticState.danger => dark ? AppDarkColors.danger : AppColors.danger,
-      KpiSemanticState.info => dark ? AppDarkColors.info : AppColors.info,
+      KpiSemanticState.success => semantic.success.base,
+      KpiSemanticState.warning => semantic.warning.base,
+      KpiSemanticState.danger => semantic.danger.base,
+      KpiSemanticState.info => semantic.info.base,
     };
 
     final Widget? iconBlock = icon == null
@@ -231,12 +229,10 @@ class AppKpiCard extends StatelessWidget {
   ) {
     final t = trend;
     if (t == null) return null;
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final semantic = context.semanticColors;
     final Color color = t.isFlat
         ? colors.onSurfaceVariant
-        : (t.isPositive
-              ? (dark ? AppDarkColors.success : AppColors.success)
-              : (dark ? AppDarkColors.danger : AppColors.danger));
+        : (t.isPositive ? semantic.success.base : semantic.danger.base);
     final IconData iconData = t.isFlat
         ? Icons.trending_flat_rounded
         : (t.isPositive

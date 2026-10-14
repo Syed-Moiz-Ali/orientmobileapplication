@@ -28,6 +28,13 @@ class DashboardShell extends ConsumerWidget {
   final Widget? floatingActionButton;
   final FloatingActionButtonLocation? floatingActionButtonLocation;
 
+  /// Shows the full-width [OfflineBanner] below the app bar.
+  ///
+  /// Set to false when the app bar carries the integrated [OfflineStatusPill]
+  /// (`WorkspaceAppBar.showOfflineStatus`), so offline state is announced once
+  /// and never duplicated. Defaults to true (unchanged behaviour).
+  final bool showOfflineBanner;
+
   const DashboardShell({
     super.key,
     this.appBar,
@@ -36,6 +43,7 @@ class DashboardShell extends ConsumerWidget {
     this.drawer,
     this.floatingActionButton,
     this.floatingActionButtonLocation,
+    this.showOfflineBanner = true,
   });
 
   @override
@@ -74,7 +82,7 @@ class DashboardShell extends ConsumerWidget {
               bottom: false,
               child: Column(
                 children: [
-                  const OfflineBanner(),
+                  if (showOfflineBanner) const OfflineBanner(),
                   Expanded(
                     child: FocusTraversalGroup(
                       child: MediaQuery.removePadding(

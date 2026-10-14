@@ -550,6 +550,96 @@ abstract class SharedCoreLocalizations {
   /// In en, this message translates to:
   /// **'{label}, new activity'**
   String navBadgeDot(String label);
+
+  /// Workshop journey stage 1: vehicle intake / check-in
+  ///
+  /// In en, this message translates to:
+  /// **'Intake'**
+  String get jobStageIntake;
+
+  /// Workshop journey stage 2: inspection
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection'**
+  String get jobStageInspection;
+
+  /// Workshop journey stage 3: parts / procurement
+  ///
+  /// In en, this message translates to:
+  /// **'Parts'**
+  String get jobStageParts;
+
+  /// Workshop journey stage 4: labour / repair work
+  ///
+  /// In en, this message translates to:
+  /// **'Labour'**
+  String get jobStageLabor;
+
+  /// Workshop journey stage 5: quality control
+  ///
+  /// In en, this message translates to:
+  /// **'Quality Check'**
+  String get jobStageQuality;
+
+  /// Workshop journey stage 6: ready for delivery
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get jobStageReady;
+
+  /// Job cancelled — the workshop journey was terminated
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get jobStageCancelled;
+
+  /// Badge label on a telemetry metric pod receiving live data
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get telemetryLive;
+
+  /// Vehicle damage severity legend: cosmetic scratch or scuff
+  ///
+  /// In en, this message translates to:
+  /// **'Scratch / Scuff'**
+  String get damageKindScratch;
+
+  /// Vehicle damage severity legend: dent or panel deformation
+  ///
+  /// In en, this message translates to:
+  /// **'Dent / Deformation'**
+  String get damageKindDent;
+
+  /// Vehicle damage severity legend: glass or lamp damage
+  ///
+  /// In en, this message translates to:
+  /// **'Glass / Lamp'**
+  String get damageKindGlass;
+
+  /// App-bar telemetry pill: device is online and the work queue is up to date
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get connectivityOnline;
+
+  /// App-bar telemetry pill: device has no connectivity
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get connectivityOffline;
+
+  /// App-bar telemetry pill: number of local changes waiting to sync
+  ///
+  /// In en, this message translates to:
+  /// **'{count} queued'**
+  String connectivityQueuedCount(int count);
+
+  /// Tooltip of the omnichannel search trigger in the workspace app bar
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get workspaceSearchTooltip;
 }
 
 class _SharedCoreLocalizationsDelegate

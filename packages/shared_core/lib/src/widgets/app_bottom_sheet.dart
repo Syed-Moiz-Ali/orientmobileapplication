@@ -40,17 +40,31 @@ Future<T?> showAppModalSheet<T>({
             children: [
               if (title != null) ...[
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: const EdgeInsetsDirectional.fromSTEB(
                     AppDimensions.s20,
                     AppDimensions.s4,
-                    AppDimensions.s20,
+                    AppDimensions.s8,
                     AppDimensions.s12,
                   ),
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () =>
+                            Navigator.of(bottomSheetContext).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                        iconSize: 20,
+                        tooltip: SharedCoreL10n.of(
+                          context,
+                        ).dialogCloseTooltip,
+                      ),
+                    ],
                   ),
                 ),
               ],

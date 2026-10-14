@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/l10n/gen/shared_core_localizations.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 /// The truthful sync state of a locally-created or locally-modified record.
 enum SyncChipState {
@@ -42,34 +42,38 @@ class PendingSyncChip extends StatelessWidget {
   ({Color fg, Color bg, Color border, IconData icon}) _resolve(
     BuildContext context,
   ) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final semantic = context.semanticColors;
     switch (state) {
       case SyncChipState.notSent:
+        final role = semantic.syncNotSent;
         return (
-          fg: dark ? AppDarkColors.warning : const Color(0xFFB45309),
-          bg: dark ? AppDarkColors.warningSubtle : AppColors.warningSubtle,
-          border: dark ? AppDarkColors.warningBorder : AppColors.warningBorder,
+          fg: role.ink,
+          bg: role.subtle,
+          border: role.border,
           icon: Icons.cloud_off_rounded,
         );
       case SyncChipState.queued:
+        final role = semantic.syncQueued;
         return (
-          fg: dark ? AppDarkColors.info : const Color(0xFF4338CA),
-          bg: dark ? AppDarkColors.infoSubtle : AppColors.infoSubtle,
-          border: dark ? AppDarkColors.infoBorder : AppColors.infoBorder,
+          fg: role.ink,
+          bg: role.subtle,
+          border: role.border,
           icon: Icons.schedule_send_rounded,
         );
       case SyncChipState.failed:
+        final role = semantic.syncFailed;
         return (
-          fg: dark ? AppDarkColors.danger : const Color(0xFFB91C1C),
-          bg: dark ? AppDarkColors.dangerSubtle : AppColors.dangerSubtle,
-          border: dark ? AppDarkColors.dangerBorder : AppColors.dangerBorder,
+          fg: role.ink,
+          bg: role.subtle,
+          border: role.border,
           icon: Icons.sync_problem_rounded,
         );
       case SyncChipState.synced:
+        final role = semantic.syncSynced;
         return (
-          fg: dark ? AppDarkColors.success : const Color(0xFF15803D),
-          bg: dark ? AppDarkColors.successSubtle : AppColors.successSubtle,
-          border: dark ? AppDarkColors.successBorder : AppColors.successBorder,
+          fg: role.ink,
+          bg: role.subtle,
+          border: role.border,
           icon: Icons.cloud_done_rounded,
         );
     }
@@ -101,7 +105,7 @@ class PendingSyncChip extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: resolved.bg,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
         border: Border.all(color: resolved.border),
       ),
       child: Row(

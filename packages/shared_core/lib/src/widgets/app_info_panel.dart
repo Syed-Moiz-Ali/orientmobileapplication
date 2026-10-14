@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_icon_container.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 /// Semantic variants for explanatory information panels.
 enum AppInfoPanelVariant { neutral, primary, success, warning, danger, navy }
@@ -85,41 +86,41 @@ class AppInfoPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final dark = theme.brightness == Brightness.dark;
+    final semantic = context.semanticColors;
 
     final (bgColor, borderColor, fgColor, iconColor) = switch (variant) {
       AppInfoPanelVariant.neutral => (
-        dark ? AppDarkColors.surfaceSunken : AppColors.surfaceSubtle,
-        dark ? AppDarkColors.borderDefault : AppColors.borderDefault,
+        semantic.surfaceSunken,
+        semantic.borderDefault,
         colors.onSurface,
         colors.onSurfaceVariant,
       ),
       AppInfoPanelVariant.primary => (
-        dark ? AppDarkColors.primarySubtle : AppColors.primarySubtle,
-        dark
-            ? AppDarkColors.primaryBorder
-            : AppColors.primary.withValues(alpha: 0.3),
+        semantic.primarySubtle,
+        semantic.primaryBorder,
         colors.onSurface,
-        dark ? AppDarkColors.primary : AppColors.primary,
+        semantic.primary,
       ),
       AppInfoPanelVariant.success => (
-        dark ? AppDarkColors.successSubtle : AppColors.successSubtle,
-        dark ? AppDarkColors.successBorder : AppColors.successBorder,
-        dark ? AppDarkColors.success : const Color(0xFF166534),
-        dark ? AppDarkColors.success : AppColors.success,
+        semantic.success.subtle,
+        semantic.success.border,
+        semantic.success.ink,
+        semantic.success.base,
       ),
       AppInfoPanelVariant.warning => (
-        dark ? AppDarkColors.warningSubtle : AppColors.warningSubtle,
-        dark ? AppDarkColors.warningBorder : AppColors.warningBorder,
-        dark ? AppDarkColors.warning : const Color(0xFF92400E),
-        dark ? AppDarkColors.warning : AppColors.warning,
+        semantic.warning.subtle,
+        semantic.warning.border,
+        semantic.warning.ink,
+        semantic.warning.base,
       ),
       AppInfoPanelVariant.danger => (
-        dark ? AppDarkColors.dangerSubtle : AppColors.dangerSubtle,
-        dark ? AppDarkColors.dangerBorder : AppColors.dangerBorder,
-        dark ? AppDarkColors.danger : const Color(0xFF991B1B),
-        dark ? AppDarkColors.danger : AppColors.danger,
+        semantic.danger.subtle,
+        semantic.danger.border,
+        semantic.danger.ink,
+        semantic.danger.base,
       ),
+      // The navy panel is a fixed brand asset (inverse high-emphasis surface);
+      // it intentionally does not follow the light/dark semantic palette.
       AppInfoPanelVariant.navy => (
         AppColors.navy,
         const Color(0xFF2A3A5E),
@@ -132,14 +133,13 @@ class AppInfoPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (icon != null) ...[
-          variant == AppInfoPanelVariant.navy
-              ? AppIconContainer(
-                  icon: icon!,
-                  size: AppIconSize.small,
-                  iconColor: iconColor,
-                  backgroundColor: iconColor.withValues(alpha: 0.15),
-                )
-              : Icon(icon, size: 20, color: iconColor),
+          AppIconContainer(
+            icon: icon!,
+            size: AppIconSize.small,
+            iconColor: iconColor,
+            backgroundColor: iconColor.withValues(alpha: 0.14),
+            borderColor: borderColor.withValues(alpha: 0.6),
+          ),
           const SizedBox(width: AppDimensions.s12),
         ],
         Expanded(

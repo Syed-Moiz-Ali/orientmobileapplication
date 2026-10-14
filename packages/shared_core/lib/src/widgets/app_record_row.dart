@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 import 'package:shared_core/src/widgets/directional_icon.dart';
 
 /// A compact, accessible record surface for operational lists, vehicles, jobs, bookings, and settings.
@@ -38,6 +38,7 @@ class AppRecordRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
     final textTheme = theme.textTheme;
     final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
 
@@ -46,13 +47,13 @@ class AppRecordRow extends StatelessWidget {
       enabled: onTap != null,
       container: true,
       child: Material(
-        color: emphasized ? AppColors.primarySubtle : colors.surface,
+        color: emphasized ? semantic.selectedSurface : colors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
           side: BorderSide(
             color: emphasized
-                ? AppColors.primary.withValues(alpha: 0.35)
-                : AppColors.borderDefault,
+                ? semantic.primary.withValues(alpha: 0.35)
+                : semantic.borderDefault,
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -87,7 +88,7 @@ class AppRecordRow extends StatelessWidget {
                           child: Text(
                             identifier!,
                             style: textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               color: colors.onSurfaceVariant,
                               letterSpacing: arabic ? 0 : 0.4,
                               fontSize: 10,
@@ -102,7 +103,7 @@ class AppRecordRow extends StatelessWidget {
                             child: Text(
                               title,
                               style: textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                                 color: colors.onSurface,
                               ),
                             ),

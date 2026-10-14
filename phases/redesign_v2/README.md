@@ -2,7 +2,7 @@
 
 **Root Location:** `phases/redesign_v2/`  
 **Target Visual Identity:** **Concept A — Premium Minimal Automotive** (Approved by Product Owner)  
-**Execution Status:** PHASE 01 COMPLETE (Engineering Passed; Visual Gate Pending Product Owner Review)  
+**Execution Status:** PHASE 01 COMPLETE (Engineering Passed; Visual Gate Pending Product Owner) + PHASE 01.1 COMPLETE (Centralized Theme Architecture Correction). PHASE 02 work-in-progress present in the tree; **not started/signed off by this pass**.
 **Strategy Document Version:** 2.1.0-PROD (Final Reconciled & Split Roadmap)  
 **Author:** Principal Product Designer, Systems Architect & Lead Flutter Engineer  
 
@@ -141,3 +141,23 @@ flowchart TD
 3. **No Phantom Approvals**: A phase is NOT complete just because `dart analyze` passes. Every phase mandates updated golden tests and real screenshot captures with rendered fonts (Plus Jakarta Sans and IBM Plex Sans Arabic) for human aesthetic validation.
 4. **Strict Scope Discipline**: Work strictly within the boundaries of the assigned phase. Do not refactor unrelated modules in advance.
 5. **Capability Enforcement**: Strictly adhere to `00_FEATURE_CAPABILITY_VERIFICATION.md`. Do not introduce fake backend dependencies (e.g. native biometrics or FTA tax exports) during UI phases.
+
+---
+
+## 5. Current Execution Ledger (Gates Tracked Independently)
+
+| Phase | Name | Engineering Gate | Visual Gate | Report |
+| :--- | :--- | :--- | :--- | :--- |
+| **01** | Concept A Tokens & Theme Foundation | ✅ PASSED (final verification) | ⏳ Pending Product Owner | `reports/PHASE_01_COMPLETION.md` |
+| **01.1** | Centralized Theme Architecture Correction | ✅ PASSED | ⏳ Pending Product Owner | `reports/PHASE_01_1_THEME_ARCHITECTURE.md` |
+| **02** | Shared UI Primitives & Input System | ✅ PASSED | ⏳ Pending Product Owner | `reports/REPORT_PHASE_02.md` |
+| **03** | Complex Data Components (Tables, Pods, HUD) | ✅ PASSED | ⏳ Pending Product Owner | `reports/REPORT_PHASE_03.md` |
+| **04** | Navigation Shells & Application Scaffolds | ✅ PASSED (shared layer) | ⏳ Pending Product Owner | `reports/REPORT_PHASE_04.md`, `reports/REPORT_PHASE_04_VISUAL_ACCEPTANCE.md` |
+| **04.1** | Application Integration Planning & Ownership | ✅ Planning complete — **no code changed** | — App integration deferred to owning phases 06/10/11/13/16/19 | `reports/REPORT_PHASE_04_1_INTEGRATION_PLAN.md` |
+
+**Phase 01 verification + 01.1 outcome:** Concept A tokens verified; the authorized Hyper Cobalt accessibility amendment (`#215FE6`) and a parallel Brembo Crimson amendment (`#DC2626`) are documented. Arabic typography reconciled to the single frozen `×1.05` line-height rule. A single `AppSemanticColors` `ThemeExtension` + `context.semanticColors` / `context.colors` accessors now own all custom roles; every `shared_core` foundation primitive reads from the active theme (source guard test enforces it). Monorepo: 0 analyzer issues in production code; no logic/API/localization/persistence regressions. Remaining failures are historical goldens owned by Phases 03/04/05/06–12/16–18 (theme migration), not regenerated here. **Phases 02, 03 and 04 (shared layer) are engineering-complete with reports; Phase 04 application-level adoption of the shared header composition is deferred to the owning feature/app phases (05–20), and Phase 05 has NOT begun.**
+
+## 6. Mandatory Styling Authority (Phase 01.1+)
+
+All future V2 phases MUST resolve styling through the one centralized theme system: `context.colors` (Material `ColorScheme`) for standard roles and `context.semanticColors` (`AppSemanticColors` `ThemeExtension`) for custom automotive/workshop roles. Hand-written light/dark ternaries, direct `AppColors.*`/`AppDarkColors.*` palette selection in feature widgets, hardcoded semantic hex, duplicate theme systems, and hardcoded fonts/spacing/radii are prohibited. Full rules and the per-file migration ownership matrix live in `00_CONCEPT_A_DESIGN_SYSTEM.md` §6 and `reports/PHASE_01_1_THEME_ARCHITECTURE.md`.
+

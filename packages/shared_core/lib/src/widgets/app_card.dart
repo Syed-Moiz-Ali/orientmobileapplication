@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../shared_core.dart';
 
@@ -31,7 +32,7 @@ class AppCard extends StatelessWidget {
     this.color,
     this.border,
     this.borderColor,
-    this.borderRadius = AppDimensions.r14,
+    this.borderRadius = AppDimensions.radiusCard,
     this.boxShadow,
     this.elevation,
     this.width,
@@ -47,7 +48,7 @@ class AppCard extends StatelessWidget {
     this.color,
     this.border,
     this.borderColor,
-    this.borderRadius = AppDimensions.r14,
+    this.borderRadius = AppDimensions.radiusCard,
     this.boxShadow,
     this.elevation,
     this.width,
@@ -205,11 +206,11 @@ class AppCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final adaptive = context.adaptive;
-    final dark = theme.brightness == Brightness.dark;
+    final semantic = context.semanticColors;
 
-    // Resolve the named variant against the active brightness. Light values
-    // are byte-identical to the pre-03A constants; dark values use the frozen
-    // dark parity tokens so text is never white-on-white.
+    // Resolve the named variant against the active theme. Light and dark both
+    // come from the centralized semantic palette so no widget branches on
+    // brightness.
     late final Color variantBg;
     late final Color variantBorder;
     late final double variantBorderWidth;
@@ -221,31 +222,23 @@ class AppCard extends StatelessWidget {
         variantBorderWidth = 1;
         variantShadow = null;
       case _AppCardStyle.standard:
-        variantBg = dark ? AppDarkColors.surface : AppColors.surface;
-        variantBorder = dark
-            ? AppDarkColors.borderDefault
-            : AppColors.borderDefault;
+        variantBg = semantic.surface;
+        variantBorder = semantic.borderDefault;
         variantBorderWidth = 1;
         variantShadow = AppDimensions.shadowCard;
       case _AppCardStyle.subtle:
-        variantBg = dark
-            ? AppDarkColors.surfaceSubtle
-            : AppColors.surfaceSubtle;
-        variantBorder = dark
-            ? AppDarkColors.borderDefault
-            : AppColors.borderDefault;
+        variantBg = semantic.surfaceSubtle;
+        variantBorder = semantic.borderDefault;
         variantBorderWidth = 1;
         variantShadow = null;
       case _AppCardStyle.outlined:
-        variantBg = dark ? AppDarkColors.surface : AppColors.surface;
-        variantBorder = dark
-            ? AppDarkColors.borderStrong
-            : AppColors.borderStrong;
+        variantBg = semantic.surface;
+        variantBorder = semantic.borderStrong;
         variantBorderWidth = 1;
         variantShadow = null;
       case _AppCardStyle.selected:
-        variantBg = dark ? AppDarkColors.selected : AppColors.primarySubtle;
-        variantBorder = dark ? AppDarkColors.primary : AppColors.primary;
+        variantBg = semantic.selectedSurface;
+        variantBorder = semantic.primary;
         variantBorderWidth = 1.5;
         variantShadow = null;
     }
@@ -293,7 +286,10 @@ class AppCard extends StatelessWidget {
         color: Colors.transparent,
         child: onTap != null
             ? InkWell(
-                onTap: onTap,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onTap!();
+                },
                 splashColor: colorScheme.primary.withValues(alpha: 0.08),
                 highlightColor: colorScheme.primary.withValues(alpha: 0.04),
                 child: Padding(padding: effectivePadding, child: child),

@@ -3,6 +3,7 @@ import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 import 'package:shared_core/src/widgets/app_skeleton.dart';
 
 /// Column definition shared by [AppTableHeader] and [AppTable].
@@ -163,6 +164,13 @@ class AppTableRow extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final Color? selectedColor;
 
+  /// Alternating-row tint flag (applied by [AppTable] for odd rows).
+  final bool zebra;
+
+  /// Override for the alternating-row tint; defaults to the semantic recessed
+  /// surface so it follows the active theme.
+  final Color? zebraColor;
+
   const AppTableRow({
     super.key,
     required this.cells,
@@ -176,6 +184,8 @@ class AppTableRow extends StatelessWidget {
     this.trailingWidth = 44,
     this.padding,
     this.selectedColor,
+    this.zebra = false,
+    this.zebraColor,
   });
 
   @override
@@ -186,13 +196,17 @@ class AppTableRow extends StatelessWidget {
         ? AppDimensions.tableRowCompact
         : AppDimensions.tableRowRegular;
 
+    final Color? background = selected
+        ? (selectedColor ?? colors.primary.withValues(alpha: 0.08))
+        : zebra
+        ? (zebraColor ?? context.semanticColors.surfaceSubtle)
+        : null;
+
     final row = Container(
       constraints: BoxConstraints(minHeight: minHeight),
       padding:
           padding ?? const EdgeInsets.symmetric(vertical: AppDimensions.s8),
-      color: selected
-          ? (selectedColor ?? colors.primary.withValues(alpha: 0.08))
-          : null,
+      color: background,
       child: Row(
         children: [
           if (leading != null)
@@ -219,11 +233,25 @@ class AppTableRow extends StatelessWidget {
       ),
     );
 
+    // A selected row carries a 3 px cobalt rail on the reading-start edge
+    // (start = right in RTL, so it always hugs the logical start).
     final decorated = DecoratedBox(
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: colors.outline)),
       ),
-      child: row,
+      child: selected
+          ? Stack(
+              children: [
+                row,
+                PositionedDirectional(
+                  start: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(width: 3, color: colors.primary),
+                ),
+              ],
+            )
+          : row,
     );
 
     if (onTap == null) return decorated;
@@ -389,6 +417,10 @@ class AppTable<T> extends StatelessWidget {
   /// Table title/overflow shown above the header (optional).
   final Widget? toolbar;
 
+  /// When set, the desktop/tablet body scrolls inside a fixed height with the
+  /// header row pinned (sticky). Null keeps the intrinsic-height table.
+  final double? maxHeight;
+
   const AppTable({
     super.key,
     required this.columns,
@@ -415,6 +447,7 @@ class AppTable<T> extends StatelessWidget {
     this.sortAscending = true,
     this.onSort,
     this.toolbar,
+    this.maxHeight,
   });
 
   @override
@@ -499,29 +532,55 @@ class AppTable<T> extends StatelessWidget {
       );
     }
 
+    final header = AppTableHeader(
+      columns: columns,
+      dense: dense,
+      sortIndex: sortIndex,
+      sortAscending: sortAscending,
+      onSort: onSort,
+      leading: leadingHeader,
+    );
+
+    Widget buildRow(int index) {
+      final item = items[index];
+      return AppTableRow(
+        key: itemKey?.call(item),
+        dense: dense,
+        selected: isSelected?.call(item) ?? false,
+        zebra: index.isOdd,
+        onTap: onRowTap == null ? null : () => onRowTap!(item),
+        leading: leadingCell?.call(context, item),
+        trailing: kebab?.call(context, item),
+        cells: cells(context, item),
+        flex: cellFlex,
+      );
+    }
+
+    if (maxHeight != null) {
+      return SizedBox(
+        height: maxHeight,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            header,
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: items.length,
+                itemBuilder: (context, index) => buildRow(index),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppTableHeader(
-          columns: columns,
-          dense: dense,
-          sortIndex: sortIndex,
-          sortAscending: sortAscending,
-          onSort: onSort,
-          leading: leadingHeader,
-        ),
-        for (final item in items)
-          AppTableRow(
-            key: itemKey?.call(item),
-            dense: dense,
-            selected: isSelected?.call(item) ?? false,
-            onTap: onRowTap == null ? null : () => onRowTap!(item),
-            leading: leadingCell?.call(context, item),
-            trailing: kebab?.call(context, item),
-            cells: cells(context, item),
-            flex: cellFlex,
-          ),
+        header,
+        for (var i = 0; i < items.length; i++) buildRow(i),
       ],
     );
   }

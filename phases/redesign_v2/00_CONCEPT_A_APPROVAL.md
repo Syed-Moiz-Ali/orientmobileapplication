@@ -37,12 +37,12 @@ Concept A represents an elite, telemetry-driven, vehicle-first aesthetic tailore
 
 ### 3.1 Visual Language
 - **Canvas & Surfaces**: Ultra-clean chalk/off-white light mode (`#FBFBFD`) with pure white elevated surfaces (`#FFFFFF`); deep obsidian/space-gray dark mode (`#090B10`) with slate cards (`#11141D`).
-- **Brand Accent**: Hyper Cobalt (`#2563EB`) as the singular high-conviction primary action and brand telemetry color.
+- **Brand Accent**: Hyper Cobalt. Prototype baseline `#2563EB`; **authorized accessible value `#215FE6`** (WCAG AA across rest/hover/pressed — see `00_CONCEPT_A_DESIGN_SYSTEM.md` §1.1) is the singular high-conviction primary action and brand telemetry color.
 - **Typography**: Deep navy-slate headings (`#0F172A`) paired with muted technical slate subtitles (`#64748B`), leveraging **Plus Jakarta Sans** for Latin and **IBM Plex Sans Arabic** for Arabic RTL.
 - **Status Telemetry**: Purposeful, high-legibility semantic accents:
   - Precision Emerald (`#10B981`): Verified, passed, active, profitable.
   - Electric Amber (`#F59E0B`): Caution, pending estimate, follow-up required.
-  - Brembo Crimson (`#EF4444`): Critical failure, urgent safety hazard, overdue.
+  - Brembo Crimson. Prototype baseline `#EF4444`; **authorized accessible value `#DC2626`** (WCAG AA with white ink): Critical failure, urgent safety hazard, overdue.
   - Ice Blue (`#0284C7`): Informational, scheduled, stage indicator.
 - **Geometry**: Precision-milled chamfers (`8.0px` small, `12.0px` standard cards, `16.0px` hero sheets). No exaggerated pill shapes for cards.
 - **Borders & Dividers**: Crisp, hairline 1.0px borders (`#E2E8F0` light, `#262C3D` dark) replacing heavy drop shadows.

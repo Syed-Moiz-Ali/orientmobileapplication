@@ -10,7 +10,6 @@ class Phase03bGallery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final chart = AppChartTheme.of(context);
 
     Widget section(String title, List<Widget> children, {double gap = 12}) {
       return Column(
@@ -107,70 +106,63 @@ class Phase03bGallery extends StatelessWidget {
           ]),
           section('Data table', [const _JobTable()]),
           section('Charts', [
-            const AppChartPlaceholder(height: 160),
-            _chartSample(context, chart),
+            const AppChartPlaceholder(height: 140),
+            _sparkline(context),
+          ]),
+          section('Telemetry pods', [
+            const TelemetryMetricPod(
+              label: 'Revenue velocity',
+              value: 'AED 48,250.00',
+              unit: '/ day',
+              deltaLabel: '+18.4% vs Target',
+              trend: TelemetryTrend.up,
+              isLive: true,
+              supportingText: 'Rolling 30-day workshop revenue',
+            ),
+            const SizedBox(height: 12),
+            const TelemetryMetricPod(
+              label: 'Bay occupancy',
+              value: '82',
+              unit: '%',
+              deltaLabel: '-3.1% vs last week',
+              trend: TelemetryTrend.down,
+              supportingText: '6 of 8 bays active',
+            ),
+          ]),
+          section('Service ribbon', [
+            const LiveServiceTelemetryRibbon(status: JobCardStatus.inProgress),
+            const SizedBox(height: 12),
+            const LiveServiceTelemetryRibbon(
+              status: JobCardStatus.waitingParts,
+            ),
+            const SizedBox(height: 12),
+            const LiveServiceTelemetryRibbon(
+              status: JobCardStatus.cancelled,
+            ),
           ]),
         ],
       ),
     );
   }
 
-  Widget _chartSample(BuildContext context, AppChartTheme chart) {
-    const values = <double>[0.5, 0.8, 0.62, 0.95, 0.7, 0.82];
+  Widget _sparkline(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: 140,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              for (final v in values)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: FractionallySizedBox(
-                      heightFactor: v,
-                      alignment: Alignment.bottomCenter,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: chart.seriesColor(0),
-                          borderRadius: BorderRadius.circular(chart.barRadius),
-                        ),
-                        child: const SizedBox(width: double.infinity),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+        Text(
+          'Revenue velocity (last 12 weeks)',
+          style: Theme.of(context).textTheme.bodySmall,
         ),
-        const SizedBox(height: AppDimensions.s8),
-        Row(
-          children: [
-            _legend(context, chart.seriesColor(0), 'Labour'),
-            const SizedBox(width: 16),
-            _legend(context, chart.seriesColor(1), 'Parts'),
+        const SizedBox(height: 8),
+        const SparklineChart(
+          height: 90,
+          series: [
+            SparklineSeries(<double>[
+              0.42, 0.48, 0.46, 0.55, 0.61, 0.58, 0.66, 0.72, 0.69, 0.78,
+              0.83, 0.91,
+            ]),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _legend(BuildContext context, Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
@@ -233,6 +225,7 @@ class _JobTable extends StatelessWidget {
       ],
       items: _jobs,
       onRowTap: (_) {},
+      isSelected: (job) => job.status == 'In progress',
       kebab: (context, job) => AppButton.quietIcon(
         icon: Icons.more_vert_rounded,
         onPressed: () {},

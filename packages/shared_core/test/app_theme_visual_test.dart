@@ -227,7 +227,7 @@ class _ConceptAShowcase extends StatelessWidget {
             children: [
               _TokenSwatch(
                 label: 'Hyper Cobalt',
-                hex: '#2563EB',
+                hex: '#215FE6',
                 color: colors.primary,
                 textColor: Colors.white,
               ),
@@ -245,7 +245,7 @@ class _ConceptAShowcase extends StatelessWidget {
               ),
               _TokenSwatch(
                 label: 'Brembo Crimson',
-                hex: '#EF4444',
+                hex: '#DC2626',
                 color: isDark ? AppDarkColors.danger : AppColors.danger,
                 textColor: Colors.white,
               ),

@@ -54,3 +54,15 @@ Complete redesign of the CRM application's omnichannel conversations console, sa
 ### Gate 2: Visual Aesthetic Validation
 - Golden screenshots captured across Mobile (390px EN/AR), Tablet (834px), and Desktop (1280px) with real fonts.
 - Generates `phases/redesign_v2/reports/REPORT_PHASE_20.md`.
+
+
+---
+
+## Styling Authority (Phase 01.1 — Mandatory)
+All styling in this phase MUST resolve through the single centralized theme system. Do not select light/dark colors by hand.
+
+- Standard Material roles -> `context.colors` (`ColorScheme`).
+- Custom automotive/workshop roles -> `context.semanticColors` (`AppSemanticColors` ThemeExtension).
+- **Forbidden:** `dark ? AppDarkColors.x : AppColors.x` ternaries; direct `AppColors.*` / `AppDarkColors.*` palette selection in feature widgets; hardcoded semantic hex; duplicate local theme systems or competing theme providers; hardcoded font styles, spacing, or radii where a theme or `AppDimensions` token exists.
+- **Justified exceptions** (brand assets, theme construction, color previews, brightness-dependent behavior) must carry a one-line documented reason.
+- Full rules: `00_CONCEPT_A_DESIGN_SYSTEM.md` Sec.6 and `reports/PHASE_01_1_THEME_ARCHITECTURE.md`.

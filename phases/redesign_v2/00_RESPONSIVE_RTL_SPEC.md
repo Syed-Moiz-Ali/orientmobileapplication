@@ -59,7 +59,7 @@ The application must support complete visual parity between English and Arabic f
 - **Directional Chevrons:** Navigation chevrons (`chevron_right` in English) must mirror (`chevron_left` in Arabic) using `DirectionalIcon`.
 - **Typography Switching:**
   - English active: Apply **Plus Jakarta Sans** font family.
-  - Arabic active: Apply **IBM Plex Sans Arabic** font family with adjusted line-height (`1.3`–`1.5`) to accommodate Arabic diacritics and ascenders/descenders.
+  - Arabic active: Apply **IBM Plex Sans Arabic** font family. Arabic line-heights use a single frozen **`×1.05` multiplier** (`AppTypography.arabicLineHeightScale`) applied to each Latin role height — e.g. Heading 1 `1.25 → 1.3125`, Body `1.4 → 1.47`. This is the authoritative rule; the earlier `1.3`–`1.5` figures were pre-multiplier absolute role heights, not a second multiplier.
 
 ### 2.2 Critical Non-Mirroring Exceptions (Strict Requirements)
 The following elements **MUST NOT BE MIRRORED** in Arabic RTL mode:

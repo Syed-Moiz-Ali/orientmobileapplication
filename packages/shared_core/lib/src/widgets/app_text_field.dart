@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -120,6 +121,9 @@ class AppTextField extends StatelessWidget {
       style: textTheme.bodyLarge?.copyWith(
         color: colorScheme.onSurface,
         fontWeight: FontWeight.w500,
+        fontFeatures: isIdentifier
+            ? const [FontFeature.tabularFigures()]
+            : null,
       ),
       decoration: InputDecoration(
         labelText: label,
@@ -136,7 +140,7 @@ class AppTextField extends StatelessWidget {
         prefix: prefix,
         suffixIcon: effectiveSuffix,
         filled: true,
-        fillColor: fillColor ?? colorScheme.surfaceContainerLow,
+        fillColor: fillColor ?? context.semanticColors.surfaceSunken,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.s16,
           vertical: AppDimensions.s14,

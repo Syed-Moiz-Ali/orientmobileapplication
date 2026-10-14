@@ -55,7 +55,11 @@ static const electricAmber     = Color(0xFFF59E0B); // Caution checkpoints, awai
 static const amberMuted        = Color(0xFFFEF3C7); // Amber badge background
 
 // Brembo Crimson (Critical Failure, Urgent Hazard, Overdue)
-static const bremboCrimson     = Color(0xFFEF4444); // Inspection failed, safety hazard, overdue lead
+// WCAG AA Design Amendment: raw token #EF4444 produced ≈3.76:1 with white ink and
+// ≈4.42:1 on its pale container; tuned to #DC2626 (4.83:1 with white, 5.30:1 ink
+// on the pale container) so every enabled state clears 4.5:1.
+static const bremboCrimson     = Color(0xFFDC2626); // Inspection failed, safety hazard, overdue (authorized accessible value)
+static const bremboCrimsonRaw  = Color(0xFFEF4444); // Prototype baseline (historical reference)
 static const crimsonMuted      = Color(0xFFFEE2E2); // Crimson badge background
 
 // Ice Blue / Cyan (Telemetry, Stage, Informational)
@@ -82,11 +86,15 @@ Plus Jakarta Sans is the primary typeface for English LTR, delivering a modern g
 ### 2.2 Arabic Typography: IBM Plex Sans Arabic
 IBM Plex Sans Arabic is the primary typeface for Arabic RTL, harmonizing perfectly with Latin geometric proportions without exaggerated calligraphic loops.
 
-- **Heading 1:** `24sp` / Weight: `w800` / Height: `1.3`
-- **Heading 2:** `18sp` / Weight: `w700` / Height: `1.3`
-- **Heading 3:** `14sp` / Weight: `w700` / Height: `1.3`
-- **Body Regular:** `13sp` / Weight: `w400` / Height: `1.5`
-- **Technical Telemetry:** `11sp` / Weight: `w800` / Height: `1.2`
+**Authoritative Arabic metrics (single source of truth):** a frozen **`×1.05` line-height multiplier** (`AppTypography.arabicLineHeightScale = 1.05`) applied to every Latin role height, plus **zero letter-spacing** (cursive ligature preservation). The effective (post-multiplier) role heights are:
+
+- **Heading 1:** `24sp` / Weight: `w800` / Height: `1.25 × 1.05 = 1.31`
+- **Heading 2:** `18sp` / Weight: `w700` / Height: `1.3 × 1.05 = 1.37`
+- **Heading 3:** `14sp` / Weight: `w700` / Height: `1.35 × 1.05 = 1.42`
+- **Body Regular:** `13sp` / Weight: `w400` / Height: `1.4 × 1.05 = 1.47`
+- **Technical Telemetry:** `11sp` / Weight: `w800` / Height: `1.2 × 1.05 = 1.26`
+
+> **Documentation reconciliation (Phase 01.1):** earlier drafts quoted `1.3`–`1.5` (and, in one discovery draft, `1.10–1.15`) as the Arabic line-height. These were pre-multiplier absolute role heights; the **only** Arabic line-height rule is the `×1.05` multiplier above. It is asserted in `app_typography_locale_test.dart`.
 
 ---
 
@@ -129,3 +137,32 @@ Based on an 8-point spatial grid with 4-point micro-adjustments:
 3. **No Heavy Skeuomorphism or Uncontrolled Glassmorphism:** Subtle translucent frosted glass (`BackdropFilter(sigma: 10)`) is permitted only on sticky navigation headers and floating action docks.
 4. **No Untranslated Strings in Arabic Views:** Every label must use genuine, approved automotive terms from the localization dictionaries.
 5. **No Text Overflow or Truncation on 390px Mobile:** Every horizontal row containing dynamic text must be wrapped in `Expanded` or `Flexible` with explicit ellipsis handling.
+
+---
+
+## 6. Centralized Theme Architecture (Phase 01.1 — Mandatory)
+
+There is exactly **one** styling authority: the active Flutter `ThemeData`. Widgets read resolved semantic colors from the theme; they never select between a static light palette and a static dark palette.
+
+### 6.1 Authorities
+- **Standard Material roles** → `ColorScheme` (surface/onSurface, primary/onPrimary, error/onError, outline/outlineVariant, container roles, inverses, scrim).
+- **Custom automotive / workshop roles** → the `AppSemanticColors` `ThemeExtension` registered by `AppTheme.light` / `AppTheme.dark`. It carries recessed/raised neutrals, brand tint containers, deep status inks, skeleton shimmers, the chart series, and the domain roles below.
+- **Ergonomic access** → `context.colors` (the `ColorScheme`) and `context.semanticColors` (the `AppSemanticColors` extension), both null-safe (`app_theme_context.dart`).
+
+### 6.2 Domain roles carried by `AppSemanticColors`
+`syncNotSent` · `syncQueued` · `syncFailed` · `syncSynced` · `inspectionPass` · `inspectionAdvisory` · `inspectionFail` · `damageMinor` · `damageModerate` · `damageSevere` · `operationalActive` · `operationalIdle` · `operationalBlocked`. Each resolves to one of the five `AppStatusColors` families (`neutral`, `success`, `warning`, `danger`, `info`) — no duplicate color values.
+
+### 6.3 Mandatory rules for every future V2 phase
+1. No repeated light/dark palette ternaries (`dark ? AppDarkColors.x : AppColors.x`) inside ordinary widgets.
+2. No direct static light/dark palette selection in feature UI — resolve through `context.semanticColors` / `context.colors`.
+3. No hardcoded semantic colors in feature widgets.
+4. No duplicate local theme systems or competing theme providers/global singletons.
+5. No widget-specific color decisions that belong in a component theme.
+6. No unnecessary `ThemeExtension` duplication, and no re-declaring roles that `ColorScheme` already provides.
+7. No hardcoded font styles where a theme typography role exists.
+8. No arbitrary spacing or radii when an approved `AppDimensions` token applies.
+
+**Justified exceptions** (must carry a one-line comment): brand assets (fixed navy panels), theme construction (`AppTheme`, `AppSemanticColors`, `AppDarkPanel`), color previews/swatches, and behaviour that genuinely depends on brightness (system status-bar icon brightness). A source guard test (`app_semantic_theme_test.dart`) fails the build if any `shared_core/src/widgets/*.dart` references `AppDarkColors`.
+
+### 6.4 Migration ownership
+The `shared_core` foundation and the shared primitives required by Phase 02 are migrated now. Legacy feature styling in each app stays owned by its existing redesign phase and must be migrated before final V2 sign-off. See `reports/PHASE_01_1_THEME_ARCHITECTURE.md` for the per-file ownership matrix.

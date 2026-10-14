@@ -27,7 +27,7 @@ Establish the production-grade **Concept A Design System** within `packages/shar
    - Dark: Canvas `#090B10`, Surface `#11141D`, Secondary Surface / Fill `#181C28`, Border `#262C3D`, Subtle Divider `#1A202E`.
 2. **Typography Hierarchy:**
    - English LTR: **Plus Jakarta Sans** (Display 32sp w900, H1 24sp w800, H2 18sp w700, H3 14sp w700, Body 13sp w400, Overline Telemetry 11sp w800 uppercase).
-   - Arabic RTL: **IBM Plex Sans Arabic** (H1 24sp w800, H2 18sp w700, H3 14sp w700, Body 13sp w400, Overline 11sp w800) with line-heights 1.3–1.5 to accommodate diacritics.
+   - Arabic RTL: **IBM Plex Sans Arabic** (H1 24sp w800, H2 18sp w700, H3 14sp w700, Body 13sp w400, Overline 11sp w800) with a single frozen **`×1.05` line-height multiplier** (`AppTypography.arabicLineHeightScale`) applied to every Latin role height to accommodate diacritics (effective role heights ≈ `1.3`–`1.5`).
 3. **Geometry & Dimensions:**
    - Chamfered corner radiuses: `radiusXs: 4.0`, `radiusSm: 8.0`, `radiusMd: 12.0`, `radiusLg: 16.0`, `radiusXl: 24.0`.
    - 8-point spatial grid: `xxs: 4`, `xs: 8`, `sm: 12`, `md: 16`, `lg: 20`, `xl: 24`, `xxl: 32`.

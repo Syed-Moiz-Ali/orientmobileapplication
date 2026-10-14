@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_semantic_colors.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 /// Shared chart language for every analytics surface in the suite.
 ///
@@ -85,17 +86,16 @@ class AppChartTheme {
   /// Frozen maximum number of series rendered on one chart (V8).
   static const int maxSeries = 2;
 
-  /// Series palette for a brightness (const source lists).
+  /// Series palette for a brightness (frozen semantic source lists).
   static List<Color> paletteFor(Brightness brightness) =>
-      brightness == Brightness.dark
-      ? AppColors.chartSeriesDark
-      : AppColors.chartSeries;
+      AppSemanticColors.forBrightness(brightness).chartSeries;
 
   /// Resolves the chart language for the active theme + locale + direction.
   static AppChartTheme of(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final dark = theme.brightness == Brightness.dark;
+    final semantic = context.semanticColors;
     final locale = Localizations.maybeLocaleOf(context);
     final arabic = AppTypography.isArabic(locale);
     final rtl = Directionality.of(context) == TextDirection.rtl;
@@ -104,7 +104,7 @@ class AppChartTheme {
       isDark: dark,
       isRtl: rtl,
       isArabic: arabic,
-      palette: paletteFor(theme.brightness),
+      palette: semantic.chartSeries,
       axisLabelStyle: AppTextStyles.metadata(
         color: colors.onSurfaceVariant,
         arabic: arabic,
@@ -171,6 +171,36 @@ class AppChartPlaceholder extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final t = SharedCoreL10n.of(context);
+
+    // Compact slots (e.g. a sparkline) cannot fit the stacked icon + title +
+    // message; fall back to a single dense row so the state never overflows.
+    if (height < 140) {
+      return SizedBox(
+        height: height,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s16),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: colors.onSurfaceVariant),
+                const SizedBox(width: AppDimensions.s8),
+                Flexible(
+                  child: Text(
+                    message ?? t.chartEmptyMessage,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return SizedBox(
       height: height,

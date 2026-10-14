@@ -254,4 +254,51 @@ class SharedCoreLocalizationsEn extends SharedCoreLocalizations {
   String navBadgeDot(String label) {
     return '$label, new activity';
   }
+
+  @override
+  String get jobStageIntake => 'Intake';
+
+  @override
+  String get jobStageInspection => 'Inspection';
+
+  @override
+  String get jobStageParts => 'Parts';
+
+  @override
+  String get jobStageLabor => 'Labour';
+
+  @override
+  String get jobStageQuality => 'Quality Check';
+
+  @override
+  String get jobStageReady => 'Ready';
+
+  @override
+  String get jobStageCancelled => 'Cancelled';
+
+  @override
+  String get telemetryLive => 'Live';
+
+  @override
+  String get damageKindScratch => 'Scratch / Scuff';
+
+  @override
+  String get damageKindDent => 'Dent / Deformation';
+
+  @override
+  String get damageKindGlass => 'Glass / Lamp';
+
+  @override
+  String get connectivityOnline => 'Synced';
+
+  @override
+  String get connectivityOffline => 'Offline';
+
+  @override
+  String connectivityQueuedCount(int count) {
+    return '$count queued';
+  }
+
+  @override
+  String get workspaceSearchTooltip => 'Search';
 }

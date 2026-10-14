@@ -34,7 +34,7 @@ For every screen redesigned in a phase:
 1. **Concept A Identity Fidelity:**
    - Backgrounds adhere to `#FBFBFD` (light) / `#090B10` (dark).
    - Surfaces adhere to `#FFFFFF` (light) / `#11141D` (dark) with crisp 1px borders (`#E2E8F0` / `#262C3D`).
-   - Primary action buttons use Hyper Cobalt (`#2563EB`) with 8px chamfered corners.
+   - Primary action buttons use Hyper Cobalt (`#215FE6`, the authorized accessible amendment to the `#2563EB` prototype baseline) with 8px chamfered corners.
    - Deep navy slate typography (`#0F172A`) for English headings; crisp white (`#F8FAFC`) in dark mode.
 2. **Dedicated Archetype Adherence:**
    - Screen composition reflects its designated archetype (e.g. Tactical Radar, Inspection HUD, Digital Garage).

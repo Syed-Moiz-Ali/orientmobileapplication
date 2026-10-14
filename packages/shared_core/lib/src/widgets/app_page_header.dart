@@ -70,8 +70,9 @@ class AppPageHeader extends StatelessWidget {
                   arabic ? eyebrow! : eyebrow!.toUpperCase(),
                   style: textTheme.labelSmall?.copyWith(
                     color: colors.primary,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     letterSpacing: arabic ? 0 : 0.8,
+                    fontSize: 11,
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s4),

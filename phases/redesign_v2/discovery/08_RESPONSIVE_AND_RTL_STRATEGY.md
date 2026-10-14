@@ -80,7 +80,7 @@ Localization in Orient Redesign v2 is **treated as a first-class architectural r
   - **English (LTR)**: **Plus Jakarta Sans** / **Inter** — modern, geometric, crisp legibility.
   - **Arabic (RTL)**: **IBM Plex Sans Arabic** — renowned for authentic calligraphic proportion, high legibility on digital screens, and clean technical balance.
 - **Arabic Line-Height Adjustment**:
-  - Arabic glyphs possess taller ascenders and deeper descenders than Latin characters. A strict `1.10x – 1.15x` line-height multiplier is applied to all text styles in Arabic to prevent vertical clipping of diacritics and dots.
+  - Arabic glyphs possess taller ascenders and deeper descenders than Latin characters. A single frozen multiplier of **`×1.05`** (`AppTypography.arabicLineHeightScale`) is applied to every Arabic text role so diacritics and dots never clip.
   - Letter-spacing (`letterSpacing`) is strictly set to `0.0` for Arabic text (letter-spacing breaks cursive character ligation in Arabic script).
 
 ### 2.2 Directional Layout & Interaction Mirroring

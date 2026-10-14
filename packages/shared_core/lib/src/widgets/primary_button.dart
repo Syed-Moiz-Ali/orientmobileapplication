@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_interaction_states.dart';
 import 'package:shared_core/src/theme/app_motion.dart';
+import 'package:shared_core/src/theme/app_text_styles.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 import 'package:shared_core/src/widgets/directional_icon.dart';
+
+/// Concept A action-system metrics. Every interactive control in the catalog
+/// shares the same 8 px chamfer, 48 px minimum touch target and 52 px default
+/// control height so buttons never drift out of vertical rhythm.
+abstract final class AppButtonMetrics {
+  AppButtonMetrics._();
+
+  static const double height = 52.0;
+  static const double compactHeight = 40.0;
+  static const double inlineHeight = 36.0;
+  static const double horizontalPadding = AppDimensions.s20;
+
+  /// Optical size of the leading/trailing glyph (Phase 02).
+  static const double iconSize = 18.0;
+}
 
 /// Resolves the border side of a control, applying the 2 px focus ring when the
 /// control is focused and the resting border otherwise (spec §8.4).
@@ -24,6 +41,15 @@ WidgetStateProperty<BorderSide?> _focusableBorder(
   });
 }
 
+/// Concept A primary action anchor.
+///
+/// - Crisp 8 px chamfered corners, Hyper Cobalt fill, white `w700` label.
+/// - Micro-haptic feedback on tap (`HapticFeedback.lightImpact()`).
+/// - A busy button keeps its active-strength fill and ink so the loading
+///   spinner (and any label) stays WCAG-compliant, and the embedded spinner
+///   swaps in place with an [AnimatedSwitcher] so its exact dimensions never
+///   jump.
+/// - [isError] renders the destructive Brembo Crimson treatment.
 class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -39,6 +65,9 @@ class PrimaryButton extends StatelessWidget {
   final double height;
   final bool isExpanded;
 
+  /// Renders the destructive crimson treatment (delete / cancel booking).
+  final bool isError;
+
   const PrimaryButton({
     super.key,
     required this.label,
@@ -48,8 +77,9 @@ class PrimaryButton extends StatelessWidget {
     this.foregroundColor,
     this.icon,
     this.mirrorIcon = false,
-    this.height = 52.0,
+    this.height = AppButtonMetrics.height,
     this.isExpanded = true,
+    this.isError = false,
   });
 
   @override
@@ -58,19 +88,26 @@ class PrimaryButton extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final adaptive = context.adaptive;
+    final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
 
-    final effectiveBackgroundColor = backgroundColor ?? colorScheme.primary;
-    final effectiveForegroundColor = foregroundColor ?? colorScheme.onPrimary;
-    final effectiveHeight = height == 52.0 ? adaptive.controlHeight : height;
+    final effectiveBackgroundColor = isError
+        ? colorScheme.error
+        : (backgroundColor ?? colorScheme.primary);
+    final effectiveForegroundColor = isError
+        ? colorScheme.onError
+        : (foregroundColor ?? colorScheme.onPrimary);
+    final effectiveHeight = height == AppButtonMetrics.height
+        ? adaptive.controlHeight
+        : height;
 
     final style =
         ElevatedButton.styleFrom(
           backgroundColor: effectiveBackgroundColor,
           foregroundColor: effectiveForegroundColor,
-          // Phase 01.1 accessibility amendment: a busy button keeps its
-          // active-strength fill and ink so the loading spinner and any label
-          // remain WCAG-compliant (previously the 50 % fill reduced them).
-          // Genuinely disabled buttons keep the established dimmed treatment.
+          // A busy button keeps its active-strength fill and ink so the loading
+          // spinner and any label remain WCAG-compliant. Genuinely disabled
+          // buttons keep the established dimmed treatment (alpha < 1) asserted
+          // by `app_button_accessibility_test.dart`.
           disabledBackgroundColor: isLoading
               ? effectiveBackgroundColor
               : effectiveBackgroundColor.withValues(alpha: 0.5),
@@ -79,27 +116,34 @@ class PrimaryButton extends StatelessWidget {
               : effectiveForegroundColor.withValues(alpha: 0.7),
           elevation: 0,
           shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s20),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppButtonMetrics.horizontalPadding,
+          ),
           minimumSize: Size(isExpanded ? double.infinity : 0, effectiveHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
           ),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: arabic ? 0 : 0.2,
+          ),
         ).copyWith(
-          // Phase 03A accessibility correction: contrast-increasing interaction
-          // overlays + a visible 2 px focus ring, resolved centrally.
           overlayColor: AppInteractionStates.overlays(
             effectiveBackgroundColor,
             effectiveForegroundColor,
           ),
           side: AppInteractionStates.focusRing(
-            colorScheme.brightness == Brightness.dark
-                ? AppDarkColors.focusRing
-                : colorScheme.primary,
+            context.semanticColors.focusRing,
           ),
         );
 
     final button = ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
+      onPressed: isLoading || onPressed == null
+          ? null
+          : () {
+              HapticFeedback.lightImpact();
+              onPressed!();
+            },
       style: style,
       child: AnimatedSwitcher(
         duration: AppMotion.resolve(context, AppMotion.standard),
@@ -108,8 +152,8 @@ class PrimaryButton extends StatelessWidget {
         child: isLoading
             ? SizedBox(
                 key: const ValueKey('loading'),
-                width: 20,
-                height: 20,
+                width: AppButtonMetrics.iconSize,
+                height: AppButtonMetrics.iconSize,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.2,
                   valueColor: AlwaysStoppedAnimation<Color>(
@@ -125,7 +169,7 @@ class PrimaryButton extends StatelessWidget {
                   if (icon != null) ...[
                     DirectionalIcon(
                       icon!,
-                      size: AppDimensions.iconSm,
+                      size: AppButtonMetrics.iconSize,
                       color: effectiveForegroundColor,
                       mirrorInRtl: mirrorIcon,
                     ),
@@ -135,12 +179,12 @@ class PrimaryButton extends StatelessWidget {
                     child: Text(
                       label,
                       textAlign: TextAlign.center,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.labelLarge?.copyWith(
                         color: effectiveForegroundColor,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
+                        letterSpacing: arabic ? 0 : 0.2,
                       ),
                     ),
                   ),
@@ -159,6 +203,9 @@ class PrimaryButton extends StatelessWidget {
   }
 }
 
+/// Concept A secondary action: a neutral surface fill with a 1 px hairline
+/// border and a `w600` label. Keeps the same height geometry as
+/// [PrimaryButton] so paired buttons align pixel-for-pixel.
 class SecondaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -181,7 +228,7 @@ class SecondaryButton extends StatelessWidget {
     this.mirrorTrailingIcon = false,
     this.foregroundColor,
     this.borderColor,
-    this.height = 52.0,
+    this.height = AppButtonMetrics.height,
     this.isExpanded = true,
   });
 
@@ -191,20 +238,32 @@ class SecondaryButton extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final adaptive = context.adaptive;
+    final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
 
     final effectiveForegroundColor = foregroundColor ?? colorScheme.onSurface;
-    final effectiveBorderColor = borderColor ?? AppColors.borderStrong;
-    final effectiveHeight = height == 52.0 ? adaptive.controlHeight : height;
+    final effectiveBorderColor =
+        borderColor ?? context.semanticColors.borderStrong;
+    final effectiveHeight = height == AppButtonMetrics.height
+        ? adaptive.controlHeight
+        : height;
 
     final button = OutlinedButton(
-      onPressed: onPressed,
+      onPressed: onPressed == null
+          ? null
+          : () {
+              HapticFeedback.lightImpact();
+              onPressed!();
+            },
       style:
           OutlinedButton.styleFrom(
             foregroundColor: effectiveForegroundColor,
+            backgroundColor: context.semanticColors.surfaceRaised,
             disabledForegroundColor: effectiveForegroundColor.withValues(
               alpha: 0.38,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s20),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppButtonMetrics.horizontalPadding,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
             ),
@@ -212,11 +271,13 @@ class SecondaryButton extends StatelessWidget {
               isExpanded ? double.infinity : 0,
               effectiveHeight,
             ),
+            textStyle: textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              letterSpacing: arabic ? 0 : 0.1,
+            ),
           ).copyWith(
             side: _focusableBorder(
-              colorScheme.brightness == Brightness.dark
-                  ? AppDarkColors.focusRing
-                  : colorScheme.primary,
+              context.semanticColors.focusRing,
               effectiveBorderColor,
             ),
             overlayColor: AppInteractionStates.overlays(
@@ -231,7 +292,7 @@ class SecondaryButton extends StatelessWidget {
           if (leadingIcon != null) ...[
             DirectionalIcon(
               leadingIcon!,
-              size: AppDimensions.iconSm,
+              size: AppButtonMetrics.iconSize,
               color: effectiveForegroundColor,
               mirrorInRtl: mirrorLeadingIcon,
             ),
@@ -241,11 +302,12 @@ class SecondaryButton extends StatelessWidget {
             child: Text(
               label,
               textAlign: TextAlign.center,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: textTheme.labelLarge?.copyWith(
                 color: effectiveForegroundColor,
                 fontWeight: FontWeight.w600,
+                letterSpacing: arabic ? 0 : 0.1,
               ),
             ),
           ),
@@ -253,7 +315,7 @@ class SecondaryButton extends StatelessWidget {
             const SizedBox(width: AppDimensions.s8),
             DirectionalIcon(
               trailingIcon!,
-              size: AppDimensions.iconSm,
+              size: AppButtonMetrics.iconSize,
               color: effectiveForegroundColor,
               mirrorInRtl: mirrorTrailingIcon,
             ),
@@ -277,21 +339,23 @@ class SecondaryButton extends StatelessWidget {
 class AppButton {
   AppButton._();
 
-  /// Primary prominent button
+  /// Primary prominent button.
   static Widget primary({
     Key? key,
     required String label,
     VoidCallback? onPressed,
     bool isLoading = false,
+    bool isError = false,
     IconData? icon,
     bool isExpanded = true,
-    double height = 52.0,
+    double height = AppButtonMetrics.height,
   }) {
     return PrimaryButton(
       key: key,
       label: label,
       onPressed: onPressed,
       isLoading: isLoading,
+      isError: isError,
       icon: icon,
       mirrorIcon: icon != null && DirectionalIcon.isDirectional(icon),
       isExpanded: isExpanded,
@@ -299,7 +363,7 @@ class AppButton {
     );
   }
 
-  /// Secondary outlined button
+  /// Secondary outlined button.
   static Widget secondary({
     Key? key,
     required String label,
@@ -307,7 +371,7 @@ class AppButton {
     IconData? leadingIcon,
     IconData? trailingIcon,
     bool isExpanded = true,
-    double height = 52.0,
+    double height = AppButtonMetrics.height,
   }) {
     return SecondaryButton(
       key: key,
@@ -324,7 +388,7 @@ class AppButton {
     );
   }
 
-  /// Tertiary / ghost text button with guaranteed 48 px touch target
+  /// Tertiary / ghost text button with guaranteed 48 px touch target.
   static Widget tertiary({
     Key? key,
     required String label,
@@ -334,8 +398,8 @@ class AppButton {
   }) {
     return Builder(
       builder: (context) {
-        final fg = color ?? Theme.of(context).colorScheme.primary;
         final theme = Theme.of(context);
+        final fg = color ?? theme.colorScheme.primary;
         return TextButton(
           key: key,
           onPressed: onPressed,
@@ -345,6 +409,9 @@ class AppButton {
                 minimumSize: const Size(48, AppDimensions.touchTarget),
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppDimensions.s12,
+                ),
+                textStyle: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
               ).copyWith(
                 overlayColor: AppInteractionStates.overlays(
@@ -358,20 +425,13 @@ class AppButton {
               if (icon != null) ...[
                 DirectionalIcon(
                   icon,
-                  size: AppDimensions.iconSm,
+                  size: AppButtonMetrics.iconSize,
                   color: fg,
                   mirrorInRtl: DirectionalIcon.isDirectional(icon),
                 ),
                 const SizedBox(width: AppDimensions.s6),
               ],
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: fg,
-                ),
-              ),
+              Text(label),
             ],
           ),
         );
@@ -382,12 +442,7 @@ class AppButton {
   /// Danger / destructive action button.
   ///
   /// Uses the brightness-aware semantic error pair so the label keeps WCAG AA
-  /// contrast in both themes (Phase 01.1 accessibility amendment: the light
-  /// danger ink was hard-coded; dark now pairs `#F1707F` with the dark ink).
-  ///
-  /// Phase 03A: [PrimaryButton] now derives contrast-increasing overlays
-  /// centrally, so the light danger button no longer dips below 4.5:1 in its
-  /// pressed/hovered states (previously ≈4.21:1 pressed).
+  /// contrast in both themes.
   static Widget danger({
     Key? key,
     required String label,
@@ -395,7 +450,7 @@ class AppButton {
     bool isLoading = false,
     IconData? icon,
     bool isExpanded = true,
-    double height = 52.0,
+    double height = AppButtonMetrics.height,
   }) {
     return Builder(
       builder: (context) {
@@ -416,7 +471,8 @@ class AppButton {
     );
   }
 
-  /// Quiet icon button with guaranteed 48 px hit area and soft hover/pressed feedback
+  /// Quiet icon button with guaranteed 48 px hit area and soft hover/pressed
+  /// feedback.
   static Widget quietIcon({
     Key? key,
     required IconData icon,
@@ -431,7 +487,12 @@ class AppButton {
         final iconColor = color ?? colors.onSurfaceVariant;
         return IconButton(
           key: key,
-          onPressed: onPressed,
+          onPressed: onPressed == null
+              ? null
+              : () {
+                  HapticFeedback.lightImpact();
+                  onPressed();
+                },
           tooltip: tooltip,
           iconSize: size,
           style: IconButton.styleFrom(
@@ -466,10 +527,15 @@ class AppButton {
           ),
           child: Center(
             child: SizedBox(
-              height: 36,
+              height: AppButtonMetrics.inlineHeight,
               child: ElevatedButton(
                 key: key,
-                onPressed: onPressed,
+                onPressed: onPressed == null
+                    ? null
+                    : () {
+                        HapticFeedback.lightImpact();
+                        onPressed();
+                      },
                 style:
                     ElevatedButton.styleFrom(
                       backgroundColor: isPrimary
@@ -480,7 +546,9 @@ class AppButton {
                       shadowColor: Colors.transparent,
                       side: isPrimary
                           ? null
-                          : BorderSide(color: AppColors.borderDefault),
+                          : BorderSide(
+                              color: context.semanticColors.borderDefault,
+                            ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppDimensions.s12,
                       ),
@@ -488,6 +556,10 @@ class AppButton {
                         borderRadius: BorderRadius.circular(
                           AppDimensions.radiusControl,
                         ),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
                     ).copyWith(
                       overlayColor: AppInteractionStates.overlays(
@@ -507,13 +579,7 @@ class AppButton {
                       ),
                       const SizedBox(width: AppDimensions.s4),
                     ],
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    Text(label),
                   ],
                 ),
               ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 class NotificationBell extends StatelessWidget {
   final bool showBadge;
@@ -21,9 +21,11 @@ class NotificationBell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveForeground = foregroundColor ?? theme.colorScheme.onSurface;
+    final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
+    final effectiveForeground = foregroundColor ?? colors.onSurface;
     final badgeStyle = theme.textTheme.labelSmall?.copyWith(
-      color: Colors.white,
+      color: colors.onError,
       fontWeight: FontWeight.w800,
     );
 
@@ -54,8 +56,8 @@ class NotificationBell extends StatelessWidget {
                       minHeight: 16,
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: const BoxDecoration(
-                      color: AppColors.danger,
+                    decoration: BoxDecoration(
+                      color: colors.error,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -69,9 +71,9 @@ class NotificationBell extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: AppColors.warningBorder,
+                      color: semantic.warning.base,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.navy, width: 1.5),
+                      border: Border.all(color: colors.surface, width: 1.5),
                     ),
                   ),
           ),

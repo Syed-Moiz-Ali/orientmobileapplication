@@ -191,9 +191,15 @@ class _SelectionRow<T> extends StatelessWidget {
             horizontal: AppDimensions.s20,
             vertical: AppDimensions.s12,
           ),
-          color: selected ? colors.primary.withValues(alpha: 0.08) : null,
+          color: selected
+              ? colors.primary.withValues(alpha: 0.08)
+              : null,
           child: Row(
             children: [
+              // Concept A radio indicator replaces the trailing tick so the
+              // selection state reads from the leading edge of every row.
+              _RadioMark(selected: selected, enabled: enabled),
+              const SizedBox(width: AppDimensions.s12),
               if (option.icon != null) ...[
                 Icon(
                   option.icon,
@@ -232,18 +238,43 @@ class _SelectionRow<T> extends StatelessWidget {
                   ],
                 ),
               ),
-              if (selected) ...[
-                const SizedBox(width: AppDimensions.s8),
-                Icon(
-                  Icons.check_rounded,
-                  size: AppDimensions.iconMd,
-                  color: colors.primary,
-                ),
-              ],
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RadioMark extends StatelessWidget {
+  final bool selected;
+  final bool enabled;
+
+  const _RadioMark({required this.selected, required this.enabled});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: selected ? colors.primary : Colors.transparent,
+        border: Border.all(
+          color: selected
+              ? colors.primary
+              : colors.onSurfaceVariant.withValues(alpha: enabled ? 0.5 : 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: selected
+          ? Icon(
+              Icons.check_rounded,
+              size: 13,
+              color: colors.onPrimary,
+            )
+          : null,
     );
   }
 }

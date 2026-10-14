@@ -46,6 +46,7 @@ Complete redesign of the CRM application's primary executive dashboard, Kanban d
 - Clean, financial/SaaS data density with sharp typography and minimal decorative fluff.
 - Responsive adaptation: Single column list on Mobile (<600px), multi-column responsive Kanban on Tablet (600-1023px) and Desktop (≥1024px).
 - Golden tests generated with real fonts loaded across Mobile (390px EN/AR), Tablet (834px), and Desktop (1280px).
+- **Shell Integration (Phase 04.1).** Replace the bespoke `CrmAppBar` with the shared `WorkspaceAppBar` (desktop uses `frosted: true` with the reduced-transparency fallback). Provide `onSearch` + `WorkspaceSearchShortcuts` (⌘K / Ctrl+K) for leads/conversation search and `OfflineStatusPill` with `DashboardShell(showOfflineBanner: false)` where the pill is shown. Use `AppMasterDetailScaffold` for the leads list/detail. Acceptance: header/search/offline/master-detail widget tests + new mobile/tablet/desktop EN/AR goldens.
 
 ---
 
@@ -57,3 +58,15 @@ Complete redesign of the CRM application's primary executive dashboard, Kanban d
 ### Gate 2: Visual Aesthetic Validation
 - Golden screenshots captured across Mobile (390px EN/AR), Tablet (834px), and Desktop (1280px) with real fonts.
 - Generates `phases/redesign_v2/reports/REPORT_PHASE_19.md`.
+
+
+---
+
+## Styling Authority (Phase 01.1 � Mandatory)
+All styling in this phase MUST resolve through the single centralized theme system. Do not select light/dark colors by hand.
+
+- Standard Material roles -> `context.colors` (`ColorScheme`).
+- Custom automotive/workshop roles -> `context.semanticColors` (`AppSemanticColors` ThemeExtension).
+- **Forbidden:** `dark ? AppDarkColors.x : AppColors.x` ternaries; direct `AppColors.*` / `AppDarkColors.*` palette selection in feature widgets; hardcoded semantic hex; duplicate local theme systems or competing theme providers; hardcoded font styles, spacing, or radii where a theme or `AppDimensions` token exists.
+- **Justified exceptions** (brand assets, theme construction, color previews, brightness-dependent behavior) must carry a one-line documented reason.
+- Full rules: `00_CONCEPT_A_DESIGN_SYSTEM.md` Sec.6 and `reports/PHASE_01_1_THEME_ARCHITECTURE.md`.

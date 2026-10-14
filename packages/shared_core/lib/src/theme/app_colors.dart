@@ -111,7 +111,9 @@ class AppColors {
   static const Color warningBorder = Color(0xFFFDE68A);
 
   /// Brembo Crimson: critical inspection failures, urgent safety hazards, overdue leads.
-  static const Color danger = Color(0xFFEF4444);
+  /// Tuned for WCAG AA ≥ 4.5:1 across rest, hover (8%), and pressed (10%) states
+  /// (Phase 01.1 accessibility amendment: raw `#EF4444` was ≈3.76:1 with white ink).
+  static const Color danger = Color(0xFFDC2626);
   static const Color dangerSubtle = Color(0xFFFEE2E2);
   static const Color dangerBorder = Color(0xFFFECACA);
 

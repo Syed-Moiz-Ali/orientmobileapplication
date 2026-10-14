@@ -36,7 +36,7 @@ void main() {
   testWidgets('data display compact (English)', (tester) async {
     await _capture(
       tester,
-      size: const Size(390, 2600),
+      size: const Size(390, 3600),
       locale: const Locale('en'),
       fileName: 'goldens/data_display_compact_en.png',
     );
@@ -45,7 +45,7 @@ void main() {
   testWidgets('data display compact (Arabic)', (tester) async {
     await _capture(
       tester,
-      size: const Size(390, 2600),
+      size: const Size(390, 3600),
       locale: const Locale('ar'),
       fileName: 'goldens/data_display_compact_ar.png',
     );
@@ -54,7 +54,7 @@ void main() {
   testWidgets('data display expanded (English)', (tester) async {
     await _capture(
       tester,
-      size: const Size(1280, 2200),
+      size: const Size(1280, 3000),
       locale: const Locale('en'),
       fileName: 'goldens/data_display_expanded_en.png',
     );
@@ -63,7 +63,7 @@ void main() {
   testWidgets('data display expanded (Arabic)', (tester) async {
     await _capture(
       tester,
-      size: const Size(1280, 2200),
+      size: const Size(1280, 3000),
       locale: const Locale('ar'),
       fileName: 'goldens/data_display_expanded_ar.png',
     );
@@ -72,7 +72,7 @@ void main() {
   testWidgets('data display compact dark (English)', (tester) async {
     await _capture(
       tester,
-      size: const Size(390, 2600),
+      size: const Size(390, 3600),
       locale: const Locale('en'),
       dark: true,
       fileName: 'goldens/data_display_compact_en_dark.png',
@@ -82,7 +82,7 @@ void main() {
   testWidgets('data display compact dark (Arabic)', (tester) async {
     await _capture(
       tester,
-      size: const Size(390, 2600),
+      size: const Size(390, 3600),
       locale: const Locale('ar'),
       dark: true,
       fileName: 'goldens/data_display_compact_ar_dark.png',

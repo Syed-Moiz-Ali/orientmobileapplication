@@ -20,18 +20,30 @@ Future<bool> showAppConfirmationDialog(
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      icon: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+      iconPadding: const EdgeInsets.only(top: AppDimensions.s24),
+      icon: Center(
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusDialog),
+            border: Border.all(color: accent.withValues(alpha: 0.20)),
+          ),
+          child: Icon(icon, color: accent, size: 26),
         ),
-        child: Icon(icon, color: accent, size: 26),
       ),
-      title: Text(title, textAlign: TextAlign.center),
+      title: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w800,
+          color: colors.onSurface,
+        ),
+      ),
       content: Text(message, textAlign: TextAlign.center),
       actionsAlignment: MainAxisAlignment.end,
+      actionsOverflowButtonSpacing: AppDimensions.s8,
       actions: [
         TextButton(
           // Destructive confirmations put the safe choice (cancel) under the

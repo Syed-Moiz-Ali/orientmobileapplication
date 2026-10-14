@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 /// Outcome tone for an [showAppSnackBar] message.
 enum AppSnackBarTone { neutral, success, danger }
@@ -20,6 +20,7 @@ void showAppSnackBar(
   Duration duration = const Duration(seconds: 4),
 }) {
   final colors = Theme.of(context).colorScheme;
+  final semantic = context.semanticColors;
   final messenger = ScaffoldMessenger.of(context);
   messenger.hideCurrentSnackBar();
 
@@ -28,19 +29,37 @@ void showAppSnackBar(
     AppSnackBarTone.success => Icons.check_circle_rounded,
     AppSnackBarTone.danger => Icons.error_outline_rounded,
   };
-  final iconColor = switch (tone) {
-    AppSnackBarTone.neutral => colors.onInverseSurface,
-    AppSnackBarTone.success => AppColors.success,
-    AppSnackBarTone.danger => AppColors.danger,
+  final accent = switch (tone) {
+    AppSnackBarTone.neutral => colors.inversePrimary,
+    AppSnackBarTone.success => semantic.success.base,
+    AppSnackBarTone.danger => semantic.danger.base,
   };
 
   messenger.showSnackBar(
     SnackBar(
       duration: duration,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.all(AppDimensions.s16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+      ),
       content: Row(
         children: [
+          // Concept A: a 3 px semantic accent rail anchors the outcome tone.
+          Container(
+            width: 3,
+            height: 20,
+            decoration: BoxDecoration(
+              color: tone == AppSnackBarTone.neutral
+                  ? semantic.borderStrong
+                  : accent,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s12),
           if (icon != null) ...[
-            Icon(icon, size: AppDimensions.iconMd, color: iconColor),
+            Icon(icon, size: AppDimensions.iconMd, color: accent),
             const SizedBox(width: AppDimensions.s10),
           ],
           Expanded(child: Text(message)),

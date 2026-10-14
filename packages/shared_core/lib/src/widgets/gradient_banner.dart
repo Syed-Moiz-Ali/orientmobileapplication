@@ -4,6 +4,11 @@ import 'package:shared_core/src/widgets/status_pill.dart';
 
 /// A legacy-named contextual header retained for API compatibility. Its default
 /// treatment is now a calm operational surface; gradients are opt-in only.
+///
+/// **Concept A V2 (Phase 02):** the fabricated gradient default is removed in
+/// favour of a clean surface + status pills. Still consumed by `crm_app`; the
+/// full retirement (replaced by a telemetry header) happens in the owning CRM
+/// phase, so no deprecation annotation is added yet.
 class GradientBanner extends StatelessWidget {
   final String title;
   final String greeting;

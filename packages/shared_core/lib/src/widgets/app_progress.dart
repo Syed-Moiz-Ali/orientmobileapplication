@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_motion.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 /// Clean linear progress bar with optional label and percentage.
 ///
 /// Pass `value: null` for an indeterminate (unknown-duration) progress. The
 /// determinate indicator mirrors the start edge in RTL; the indeterminate
 /// animation stays direction-neutral (spec §5 RTL rule 5).
+///
+/// Concept A: a 6 px pill track with an animated fill and a monospace-style
+/// percentage readout so numeric telemetry never jitters as the value moves.
 class AppLinearProgress extends StatelessWidget {
   final double? value; // 0.0 to 1.0, or null for indeterminate
   final String? label;
@@ -31,6 +35,7 @@ class AppLinearProgress extends StatelessWidget {
     final textTheme = theme.textTheme;
     final progressColor = color ?? theme.colorScheme.primary;
     final clampedValue = value?.clamp(0.0, 1.0);
+    final track = trackColor ?? context.semanticColors.surfaceSunken;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,7 +52,7 @@ class AppLinearProgress extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: theme.colorScheme.onSurface,
                     ),
                   ),
@@ -56,8 +61,9 @@ class AppLinearProgress extends StatelessWidget {
                 Text(
                   '${(clampedValue * 100).round()}%',
                   style: textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     color: progressColor,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
             ],
@@ -66,12 +72,19 @@ class AppLinearProgress extends StatelessWidget {
         ],
         ClipRRect(
           borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-          child: LinearProgressIndicator(
-            value: clampedValue,
-            minHeight: height,
-            backgroundColor:
-                trackColor ?? theme.colorScheme.surfaceContainerHighest,
-            valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+          child: TweenAnimationBuilder<double>(
+            duration: AppMotion.resolve(context, AppMotion.standard),
+            curve: AppMotion.standardCurve,
+            tween: Tween<double>(
+              begin: clampedValue ?? 0,
+              end: clampedValue ?? 0,
+            ),
+            builder: (context, animated, _) => LinearProgressIndicator(
+              value: clampedValue == null ? null : animated,
+              minHeight: height,
+              backgroundColor: track,
+              valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+            ),
           ),
         ),
       ],
@@ -133,16 +146,16 @@ class AppStepProgress extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: i < currentStep
-                            ? AppColors.success
+                            ? context.semanticColors.success.base
                             : (i == currentStep
                                   ? colors.primary
                                   : colors.surface),
                         border: Border.all(
                           color: i < currentStep
-                              ? AppColors.success
+                              ? context.semanticColors.success.base
                               : (i == currentStep
                                     ? colors.primary
-                                    : AppColors.borderStrong),
+                                    : context.semanticColors.borderStrong),
                           width: 1.5,
                         ),
                       ),
@@ -151,9 +164,7 @@ class AppStepProgress extends StatelessWidget {
                             ? Icon(
                                 Icons.check_rounded,
                                 size: 16,
-                                color: theme.brightness == Brightness.dark
-                                    ? AppDarkColors.onPrimary
-                                    : Colors.white,
+                                color: context.semanticColors.onPrimary,
                               )
                             : Text(
                                 '${i + 1}',

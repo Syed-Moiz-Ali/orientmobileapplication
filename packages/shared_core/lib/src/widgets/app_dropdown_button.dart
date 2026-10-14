@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_interaction_states.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 import 'package:shared_core/src/widgets/app_selection_sheet.dart';
 
 /// Compact inline dropdown (menu-based) for short option sets (≤8 options).
@@ -47,7 +48,8 @@ class AppDropdownButton extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    final effectiveBg = backgroundColor ?? colorScheme.surfaceContainerLow;
+    final effectiveBg =
+        backgroundColor ?? context.semanticColors.surfaceSunken;
     final effectiveFg = enabled
         ? (foregroundColor ?? colorScheme.onSurface)
         : colorScheme.onSurfaceVariant.withValues(alpha: 0.5);
@@ -199,10 +201,14 @@ class AppSelectField<T> extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: enabled
-              ? colors.surface
+              ? context.semanticColors.surfaceSunken
               : colors.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
-          border: Border.all(color: colors.outline),
+          border: Border.all(
+            color: enabled
+                ? context.semanticColors.borderDefault
+                : colors.outline,
+          ),
         ),
         child: Row(
           children: [

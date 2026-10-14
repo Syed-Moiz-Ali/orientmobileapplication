@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_motion.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
+import 'package:shared_core/src/widgets/primary_button.dart';
 
 class EmptyState extends StatelessWidget {
   final String message;
@@ -43,8 +45,8 @@ class EmptyState extends StatelessWidget {
   }) : onAction = onRetry,
        _isErrorVariant = true,
        _isNoMatchVariant = false,
-       iconColor = const Color(0xFFDC2626),
-       iconBackgroundColor = const Color(0xFFFEF2F2);
+       iconColor = null,
+       iconBackgroundColor = null;
 
   /// No-match state constructor: a search/filter returned nothing. Distinct
   /// from *empty* (no data yet) and *error* (spec §7: distinguish empty vs
@@ -66,7 +68,14 @@ class EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final semantic = context.semanticColors;
     final t = SharedCoreL10n.of(context);
+    // The unified error variant resolves its crimson plate from the active
+    // theme's danger status family (no hard-coded hex).
+    final resolvedIconColor =
+        iconColor ?? (_isErrorVariant ? semantic.danger.base : null);
+    final resolvedIconBackground = iconBackgroundColor ??
+        (_isErrorVariant ? semantic.danger.subtle : null);
     final resolvedTitle =
         title ??
         (_isErrorVariant
@@ -97,20 +106,31 @@ class EmptyState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Ambient Minimalist Icon Container
+              // Concept A precision icon plate (rounded chamfer, semantic tint,
+              // hairline ring) replacing the generic circle.
               Container(
-                width: 64,
-                height: 64,
+                width: 72,
+                height: 72,
                 decoration: BoxDecoration(
-                  color: iconBackgroundColor ?? colorScheme.surfaceContainerLow,
-                  shape: BoxShape.circle,
+                  color:
+                      resolvedIconBackground ??
+                      (resolvedIconColor ?? colorScheme.primary).withValues(
+                        alpha: 0.10,
+                      ),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                  border: Border.all(
+                    color:
+                        (resolvedIconColor ?? colorScheme.primary).withValues(
+                          alpha: 0.18,
+                        ),
+                  ),
                 ),
                 child: Center(
                   child: Icon(
                     icon,
-                    size: 28,
+                    size: 30,
                     color:
-                        iconColor ??
+                        resolvedIconColor ??
                         colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
                 ),
@@ -123,7 +143,7 @@ class EmptyState extends StatelessWidget {
                   resolvedTitle,
                   textAlign: TextAlign.center,
                   style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     color: colorScheme.onSurface,
                   ),
                 ),
@@ -140,25 +160,13 @@ class EmptyState extends StatelessWidget {
                 ),
               ),
 
-              // Optional Action Button
+              // Single prominent Concept A CTA.
               if (resolvedAction != null && onAction != null) ...[
                 const SizedBox(height: AppDimensions.s24),
-                TextButton(
+                PrimaryButton(
+                  label: resolvedAction,
+                  isExpanded: false,
                   onPressed: onAction,
-                  style: TextButton.styleFrom(
-                    foregroundColor: colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.s20,
-                      vertical: AppDimensions.s12,
-                    ),
-                  ),
-                  child: Text(
-                    resolvedAction,
-                    style: textTheme.labelLarge?.copyWith(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
                 ),
               ],
             ],

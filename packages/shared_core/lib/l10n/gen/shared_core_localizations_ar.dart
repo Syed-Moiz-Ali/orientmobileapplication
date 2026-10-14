@@ -252,4 +252,51 @@ class SharedCoreLocalizationsAr extends SharedCoreLocalizations {
   String navBadgeDot(String label) {
     return '$label، نشاط جديد';
   }
+
+  @override
+  String get jobStageIntake => 'الاستلام';
+
+  @override
+  String get jobStageInspection => 'الفحص';
+
+  @override
+  String get jobStageParts => 'قطع الغيار';
+
+  @override
+  String get jobStageLabor => 'العمل';
+
+  @override
+  String get jobStageQuality => 'فحص الجودة';
+
+  @override
+  String get jobStageReady => 'جاهز';
+
+  @override
+  String get jobStageCancelled => 'ملغي';
+
+  @override
+  String get telemetryLive => 'مباشر';
+
+  @override
+  String get damageKindScratch => 'خدش / تآكل';
+
+  @override
+  String get damageKindDent => 'انبعاج / تشوه';
+
+  @override
+  String get damageKindGlass => 'زجاج / مصباح';
+
+  @override
+  String get connectivityOnline => 'متزامن';
+
+  @override
+  String get connectivityOffline => 'غير متصل';
+
+  @override
+  String connectivityQueuedCount(int count) {
+    return '$count قيد الانتظار';
+  }
+
+  @override
+  String get workspaceSearchTooltip => 'بحث';
 }

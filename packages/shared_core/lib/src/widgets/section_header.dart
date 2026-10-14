@@ -67,14 +67,20 @@ class SectionHeader extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                          color: colorScheme.primary.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusXs,
+                          ),
+                          border: Border.all(
+                            color: colorScheme.primary.withValues(alpha: 0.18),
+                          ),
                         ),
                         child: Text(
                           '$count',
                           style: textTheme.labelSmall?.copyWith(
                             color: colorScheme.primary,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 10,
                           ),
                         ),
                       ),

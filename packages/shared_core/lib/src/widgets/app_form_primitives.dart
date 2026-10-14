@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 import 'package:shared_core/src/widgets/app_card.dart';
 
 /// Form Field wrapper with standard label, required indicator, helper, error, and child.
@@ -60,7 +60,7 @@ class AppFormField extends StatelessWidget {
                         Text(
                           '*',
                           style: TextStyle(
-                            color: AppColors.danger,
+                            color: context.semanticColors.danger.base,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                           ),
@@ -88,7 +88,7 @@ class AppFormField extends StatelessWidget {
           Text(
             errorText!,
             style: textTheme.bodySmall?.copyWith(
-              color: AppColors.danger,
+              color: context.semanticColors.danger.base,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -132,12 +132,27 @@ class AppFormSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            title,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 3,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 2),
@@ -148,7 +163,12 @@ class AppFormSection extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: AppDimensions.s14),
+          const SizedBox(height: AppDimensions.s12),
+          Divider(
+            height: 1,
+            color: context.semanticColors.borderSubtle,
+          ),
+          const SizedBox(height: AppDimensions.s16),
           child,
         ],
       ),
@@ -199,7 +219,7 @@ class AppFormPanel extends StatelessWidget {
               ),
             ],
             const SizedBox(height: AppDimensions.s16),
-            Divider(height: 1, color: AppColors.borderDefault),
+            Divider(height: 1, color: context.semanticColors.borderDefault),
             const SizedBox(height: AppDimensions.s16),
           ],
           child,
@@ -254,7 +274,7 @@ class AppDateSelectorShell extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
-            border: Border.all(color: AppColors.borderDefault),
+            border: Border.all(color: context.semanticColors.borderDefault),
           ),
           child: Row(
             children: [
@@ -327,7 +347,9 @@ class AppMediaUploadShell extends StatelessWidget {
     final t = SharedCoreL10n.of(context);
     final resolvedLabel = label ?? t.mediaUploadLabel;
     final resolvedHelper = helperText ?? t.mediaUploadHelper;
-    final borderColor = hasError ? colors.error : AppColors.borderStrong;
+    final borderColor = hasError
+        ? colors.error
+        : context.semanticColors.borderStrong;
 
     return Material(
       color: Colors.transparent,

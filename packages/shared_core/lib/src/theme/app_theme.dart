@@ -3,6 +3,7 @@ import 'package:shared_core/src/branding/brand_config.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_interaction_states.dart';
+import 'package:shared_core/src/theme/app_semantic_colors.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
 
 abstract final class AppTheme {
@@ -40,6 +41,7 @@ abstract final class AppTheme {
 
     return _buildTheme(
       colorScheme: colorScheme,
+      semanticColors: AppSemanticColors.light,
       scaffoldBackgroundColor: AppColors.canvas,
       inputFillColor: AppColors.surface,
       appBarBackgroundColor: AppColors.canvas,
@@ -95,6 +97,7 @@ abstract final class AppTheme {
 
     return _buildTheme(
       colorScheme: colorScheme,
+      semanticColors: AppSemanticColors.dark,
       scaffoldBackgroundColor: AppDarkColors.canvas,
       inputFillColor: AppDarkColors.surfaceSubtle,
       appBarBackgroundColor: AppDarkColors.canvas,
@@ -105,6 +108,7 @@ abstract final class AppTheme {
 
   static ThemeData _buildTheme({
     required ColorScheme colorScheme,
+    required AppSemanticColors semanticColors,
     required Color scaffoldBackgroundColor,
     required Color inputFillColor,
     required Color appBarBackgroundColor,
@@ -118,6 +122,7 @@ abstract final class AppTheme {
       useMaterial3: true,
       brightness: colorScheme.brightness,
       colorScheme: colorScheme,
+      extensions: <ThemeExtension<dynamic>>[semanticColors],
       // Set the family at ThemeData level so every Material component,
       // overlay, route, dialog and unstyled Text inherits the same typeface.
       fontFamily: arabic ? AppFontFamilies.arabic : AppFontFamilies.app,

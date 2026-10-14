@@ -2,8 +2,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 final connectivityStatusProvider = StreamProvider<ConnectivityResult>((
   ref,
@@ -35,10 +35,7 @@ class OfflineBanner extends ConsumerWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final t = SharedCoreL10n.of(context);
-    final background = Color.alphaBlend(
-      AppColors.warning.withValues(alpha: 0.12),
-      colors.surface,
-    );
+    final warning = context.semanticColors.warning;
 
     return Semantics(
       liveRegion: true,
@@ -46,8 +43,8 @@ class OfflineBanner extends ConsumerWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: background,
-          border: const Border(bottom: BorderSide(color: AppColors.warning)),
+          color: warning.subtle,
+          border: Border(bottom: BorderSide(color: warning.base)),
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.s16,
@@ -56,10 +53,10 @@ class OfflineBanner extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_rounded,
               size: 16,
-              color: AppColors.warning,
+              color: warning.base,
             ),
             const SizedBox(width: AppDimensions.s8),
             Flexible(

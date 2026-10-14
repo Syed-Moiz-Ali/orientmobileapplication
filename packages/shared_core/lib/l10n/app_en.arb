@@ -187,5 +187,40 @@
   "@navBadgeDot": {
     "description": "Screen-reader label for a navigation destination with an unread dot badge",
     "placeholders": { "label": { "type": "String" } }
-  }
+  },
+
+  "jobStageIntake": "Intake",
+  "@jobStageIntake": { "description": "Workshop journey stage 1: vehicle intake / check-in" },
+  "jobStageInspection": "Inspection",
+  "@jobStageInspection": { "description": "Workshop journey stage 2: inspection" },
+  "jobStageParts": "Parts",
+  "@jobStageParts": { "description": "Workshop journey stage 3: parts / procurement" },
+  "jobStageLabor": "Labour",
+  "@jobStageLabor": { "description": "Workshop journey stage 4: labour / repair work" },
+  "jobStageQuality": "Quality Check",
+  "@jobStageQuality": { "description": "Workshop journey stage 5: quality control" },
+  "jobStageReady": "Ready",
+  "@jobStageReady": { "description": "Workshop journey stage 6: ready for delivery" },
+  "jobStageCancelled": "Cancelled",
+  "@jobStageCancelled": { "description": "Job cancelled — the workshop journey was terminated" },
+  "telemetryLive": "Live",
+  "@telemetryLive": { "description": "Badge label on a telemetry metric pod receiving live data" },
+  "damageKindScratch": "Scratch / Scuff",
+  "@damageKindScratch": { "description": "Vehicle damage severity legend: cosmetic scratch or scuff" },
+  "damageKindDent": "Dent / Deformation",
+  "@damageKindDent": { "description": "Vehicle damage severity legend: dent or panel deformation" },
+  "damageKindGlass": "Glass / Lamp",
+  "@damageKindGlass": { "description": "Vehicle damage severity legend: glass or lamp damage" },
+
+  "connectivityOnline": "Synced",
+  "@connectivityOnline": { "description": "App-bar telemetry pill: device is online and the work queue is up to date" },
+  "connectivityOffline": "Offline",
+  "@connectivityOffline": { "description": "App-bar telemetry pill: device has no connectivity" },
+  "connectivityQueuedCount": "{count} queued",
+  "@connectivityQueuedCount": {
+    "description": "App-bar telemetry pill: number of local changes waiting to sync",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "workspaceSearchTooltip": "Search",
+  "@workspaceSearchTooltip": { "description": "Tooltip of the omnichannel search trigger in the workspace app bar" }
 }

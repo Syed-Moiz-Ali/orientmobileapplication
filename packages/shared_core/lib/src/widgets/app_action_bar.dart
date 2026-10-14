@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 /// Sticky bottom action region for forms, wizards and detail pages.
 ///
@@ -96,22 +99,29 @@ class AppActionBar extends StatelessWidget {
       return Padding(padding: padding ?? EdgeInsets.zero, child: content);
     }
 
-    return Material(
-      color: theme.colorScheme.surface,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: theme.colorScheme.outline)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding:
-                padding ??
-                const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.s16,
-                  vertical: AppDimensions.s12,
-                ),
-            child: content,
+    final semantic = context.semanticColors;
+    final surfaceColor = semantic.surface.withValues(alpha: 0.90);
+    final borderColor = semantic.borderDefault;
+
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            border: Border(top: BorderSide(color: borderColor)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding:
+                  padding ??
+                  const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s16,
+                    vertical: AppDimensions.s12,
+                  ),
+              child: content,
+            ),
           ),
         ),
       ),

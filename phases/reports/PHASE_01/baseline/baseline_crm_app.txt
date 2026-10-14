@@ -1,9 +1,0 @@
-﻿00:00 +0: loading E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/test/logic_test.dart
-00:00 +0: E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/test/logic_test.dart: CrmTrendPoint value equality and hashCode
-00:00 +1: E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/test/logic_test.dart: CrmKpiEntity equality includes all fields
-00:00 +2: E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/test/logic_test.dart: SalespersonPerf equality by fields
-00:00 +3: E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/test/responsive_dashboard_widgets_test.dart: CRM channel grid is overflow-free at 320.0px
-00:00 +4: E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/test/responsive_dashboard_widgets_test.dart: CRM channel grid is overflow-free at 390.0px
-00:00 +5: E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/test/responsive_dashboard_widgets_test.dart: CRM channel grid is overflow-free at 800.0px
-00:00 +6: E:/syed_moiz_ali/orientmobileapplication/apps/crm_app/test/responsive_dashboard_widgets_test.dart: CRM channel grid is overflow-free at 1440.0px
-00:00 +7: All tests passed!

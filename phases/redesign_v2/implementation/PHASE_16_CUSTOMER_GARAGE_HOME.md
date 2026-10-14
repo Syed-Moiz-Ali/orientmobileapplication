@@ -47,6 +47,7 @@ Complete redesign of the Customer application's primary home landing experience,
 - Clean, premium consumer automotive styling: deep navy typography (`#0A192F`), subtle borders (`#E2E8F0`), and electric cobalt accents (`#1E40AF`).
 - License plate badges render cleanly in authentic Dubai/Abu Dhabi plate styles without text clipping.
 - Golden tests generated with real fonts loaded across Mobile (390px EN/AR) and Tablet (834px EN).
+- **Shell Integration (Phase 04.1).** The consumer shell adopts the shared `WorkspaceAppBar` in its **consumer composition only** — brand/title, notifications and profile (and optionally `OfflineStatusPill` with `DashboardShell(showOfflineBanner: false)`). **No** navigation rail, breadcrumbs, or global ⌘K search (justified: Archetype 2 Digital Garage consumer surface — do not force enterprise workspace chrome). Acceptance: header/offline widget tests + refreshed mobile/tablet EN/AR goldens.
 
 ---
 
@@ -58,3 +59,15 @@ Complete redesign of the Customer application's primary home landing experience,
 ### Gate 2: Visual Aesthetic Validation
 - Golden screenshots captured across Mobile (390px EN/AR) and Tablet (834px) with real fonts.
 - Generates `phases/redesign_v2/reports/REPORT_PHASE_16.md`.
+
+
+---
+
+## Styling Authority (Phase 01.1 � Mandatory)
+All styling in this phase MUST resolve through the single centralized theme system. Do not select light/dark colors by hand.
+
+- Standard Material roles -> `context.colors` (`ColorScheme`).
+- Custom automotive/workshop roles -> `context.semanticColors` (`AppSemanticColors` ThemeExtension).
+- **Forbidden:** `dark ? AppDarkColors.x : AppColors.x` ternaries; direct `AppColors.*` / `AppDarkColors.*` palette selection in feature widgets; hardcoded semantic hex; duplicate local theme systems or competing theme providers; hardcoded font styles, spacing, or radii where a theme or `AppDimensions` token exists.
+- **Justified exceptions** (brand assets, theme construction, color previews, brightness-dependent behavior) must carry a one-line documented reason.
+- Full rules: `00_CONCEPT_A_DESIGN_SYSTEM.md` Sec.6 and `reports/PHASE_01_1_THEME_ARCHITECTURE.md`.

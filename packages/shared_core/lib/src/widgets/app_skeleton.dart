@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/theme/app_colors.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
+import 'package:shared_core/src/theme/app_theme_context.dart';
 
 /// Shape family for [AppSkeleton].
 ///
@@ -264,11 +264,9 @@ class _AppSkeletonState extends State<AppSkeleton>
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final base = dark ? AppDarkColors.skeletonBase : AppColors.skeletonBase;
-    final highlight = dark
-        ? AppDarkColors.skeletonHighlight
-        : AppColors.skeletonHighlight;
+    final semantic = context.semanticColors;
+    final base = semantic.skeletonBase;
+    final highlight = semantic.skeletonHighlight;
 
     if (MediaQuery.disableAnimationsOf(context)) {
       // Static, mid-tone placeholder (reduced motion).

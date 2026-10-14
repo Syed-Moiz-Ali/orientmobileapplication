@@ -179,6 +179,95 @@ class Phase04MasterDetail extends StatelessWidget {
   }
 }
 
+/// Phase 04 refinement showcase: the frosted-glass workspace header with the
+/// integrated offline telemetry pill and the omnichannel ⌘K search trigger,
+/// rendered over scrolling content so the frosted readability is visible.
+class Phase04RefinedShell extends StatelessWidget {
+  const Phase04RefinedShell({super.key, this.pendingSyncCount = 0});
+
+  final int pendingSyncCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final topInset = MediaQuery.paddingOf(context).top;
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: WorkspaceAppBar(
+        title: 'Today',
+        subtitle: 'Workshop Advisor',
+        frosted: true,
+        showOfflineStatus: true,
+        offlinePendingCount: pendingSyncCount,
+        onSearch: _noop,
+        actions: const [
+          NotificationBell(showBadge: true, badgeCount: 3),
+          SizedBox(width: AppDimensions.s8),
+        ],
+      ),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          Container(
+            height: 220,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  theme.colorScheme.primaryContainer,
+                  theme.colorScheme.surface,
+                ],
+              ),
+            ),
+            padding: EdgeInsets.only(
+              top: topInset + 96,
+              left: AppDimensions.s20,
+              right: AppDimensions.s20,
+            ),
+            child: Text(
+              'Workshop floor · Live',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppDimensions.s16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: const [
+                AppRecordRow(
+                  identifier: 'JOB-4091',
+                  title: 'Mercedes-Benz E300',
+                  subtitle: 'Major 60,000 km service',
+                  status: StatusPill.inProgress('In progress'),
+                ),
+                SizedBox(height: AppDimensions.s12),
+                AppRecordRow(
+                  identifier: 'JOB-4092',
+                  title: 'Toyota Camry 2022',
+                  subtitle: 'Brake pad replacement',
+                  status: StatusPill.warning('Waiting parts'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: AppBottomNavigation(
+        items: kStaffNav,
+        selectedIndex: 0,
+        onSelected: _noopSelect,
+      ),
+    );
+  }
+}
+
+void _noopSelect(int _) {}
+
 const kCustomerNav = <AppNavItem>[
   AppNavItem(
     selectedIcon: Icons.home_rounded,

@@ -27,7 +27,7 @@ Redesign all foundational shared components in `packages/shared_core` to embody 
 
 ## 3. New Screen & Component Composition
 1. **`PrimaryButton`:**
-   - 8px chamfered corners, Hyper Cobalt (`#2563EB`) background, white w700 typography.
+   - 8px chamfered corners, Hyper Cobalt (`#215FE6` â€” the authorized accessible amendment to the `#2563EB` prototype baseline) background, white w700 typography.
    - Micro-haptic tactile feedback on tap (`HapticFeedback.lightImpact()`).
    - Integrated progress spinner on loading state that maintains exact button dimensions without layout jump.
 2. **`AppTextField`:**
@@ -59,3 +59,15 @@ Redesign all foundational shared components in `packages/shared_core` to embody 
 ### Gate 2: Visual Aesthetic Validation
 - Rendered component catalog golden PNG approved for Concept A fidelity.
 - Generates `phases/redesign_v2/reports/REPORT_PHASE_02.md`.
+
+
+---
+
+## Styling Authority (Phase 01.1 — Mandatory)
+All styling in this phase MUST resolve through the single centralized theme system. Do not select light/dark colors by hand.
+
+- Standard Material roles -> `context.colors` (`ColorScheme`).
+- Custom automotive/workshop roles -> `context.semanticColors` (`AppSemanticColors` ThemeExtension).
+- **Forbidden:** `dark ? AppDarkColors.x : AppColors.x` ternaries; direct `AppColors.*` / `AppDarkColors.*` palette selection in feature widgets; hardcoded semantic hex; duplicate local theme systems or competing theme providers; hardcoded font styles, spacing, or radii where a theme or `AppDimensions` token exists.
+- **Justified exceptions** (brand assets, theme construction, color previews, brightness-dependent behavior) must carry a one-line documented reason.
+- Full rules: `00_CONCEPT_A_DESIGN_SYSTEM.md` Sec.6 and `reports/PHASE_01_1_THEME_ARCHITECTURE.md`.

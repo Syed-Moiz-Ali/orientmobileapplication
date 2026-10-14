@@ -51,6 +51,7 @@ Complete redesign of the Service Advisor operational workspace using **Archetype
 - Advisor screens look like a luxury automotive command center, not a generic admin panel.
 - Clear visual distinction between intake, inspection, and delivery stages.
 - Golden tests generated with real fonts loaded across Mobile, Tablet, and Desktop.
+- **Shell Integration (Phase 04.1).** The advisor shell header must be the shared `WorkspaceAppBar` (replacing any bespoke app bar; desktop uses `frosted: true` with the documented reduced-transparency fallback). Wire `onSearch` to the `AdvisorSearchSheet` spotlight and wrap the shell in `WorkspaceSearchShortcuts` (⌘K / Ctrl+K, `00_RESPONSIVE_RTL_SPEC.md` §1.3). Show `OfflineStatusPill` and set `DashboardShell(showOfflineBanner: false)` where the pill is shown (no duplicate offline announcements). Use `AppPageHeader(breadcrumbs:)` on pushed job-detail/intake pages and `AppMasterDetailScaffold` for the desktop jobs matrix. Acceptance: header/search/offline widget tests + refreshed mobile/tablet/desktop EN/AR goldens.
 
 ---
 
@@ -62,3 +63,15 @@ Complete redesign of the Service Advisor operational workspace using **Archetype
 ### Gate 2: Visual Aesthetic Validation
 - Golden screenshots captured across Mobile (390px EN/AR), Tablet (768px), and Desktop (1280px) with real fonts.
 - Generates `phases/redesign_v2/reports/REPORT_PHASE_06.md`.
+
+
+---
+
+## Styling Authority (Phase 01.1 � Mandatory)
+All styling in this phase MUST resolve through the single centralized theme system. Do not select light/dark colors by hand.
+
+- Standard Material roles -> `context.colors` (`ColorScheme`).
+- Custom automotive/workshop roles -> `context.semanticColors` (`AppSemanticColors` ThemeExtension).
+- **Forbidden:** `dark ? AppDarkColors.x : AppColors.x` ternaries; direct `AppColors.*` / `AppDarkColors.*` palette selection in feature widgets; hardcoded semantic hex; duplicate local theme systems or competing theme providers; hardcoded font styles, spacing, or radii where a theme or `AppDimensions` token exists.
+- **Justified exceptions** (brand assets, theme construction, color previews, brightness-dependent behavior) must carry a one-line documented reason.
+- Full rules: `00_CONCEPT_A_DESIGN_SYSTEM.md` Sec.6 and `reports/PHASE_01_1_THEME_ARCHITECTURE.md`.
