@@ -174,7 +174,7 @@ A phase is complete only when **all** of these hold:
 
 ```
 Phase 00 [x] | 01 [x] | 02 [x] | 03A [x] | 03B [x] | 04 [x] | 05 [x]
-06 [x] | 07A [ ] | 07B [ ] | 08 [ ] | 09 [ ] | 10 [ ] | 11 [ ]
+06 [x] | 07A [x] | 07B [ ] | 08 [ ] | 09 [ ] | 10 [ ] | 11 [ ]
 12 [ ] | 13A [ ] | 13B [ ] | 14 [ ] | 15A [ ] | 15B [ ] | 16 [ ] | 17 [ ] | 18 [ ]
 19A [ ] | 19B [ ] | 19C [ ] | 20 [ ]
 ```
@@ -290,9 +290,36 @@ widget is tokenized, localized and RTL-correct. 155 new `advisor*` ARB keys
 `phases/reports/PHASE_06/PHASE_06_COMPLETION.md` (14 renders in
 `PHASE_06/screens/`). **Zero new test failures** (staff **312/7** — the 7 are the
 identical pre-existing intake/advisor-workflow set; `shared_auth` 73/0;
-`shared_core` 245/1; owner 21/0; crm 14/0; customer 509/8 with 2 additional
-sub-pixel dark-mode golden diffs in an untouched app, recorded as environmental);
-`dart analyze` 0 issues on all six units; prototype untouched. **Phase 07A is ready
+`shared_core` 245/1; owner 21/0; crm 14/0; customer 509/8 with the extra
+`customer_book_service_dark_mobile` golden failing for the **same pre-existing
+date-relative reason** as the schedule/review/tablet goldens — the flow renders
+"tomorrow" from the real clock and the golden embeds a fixed date; verified not
+Phase 06-caused, not regenerated); `dart analyze` 0 issues on all six units;
+prototype untouched. **Phase 07A is ready to start — not started; awaiting explicit
+authorization.**
+
+Phase 07A status: **IMPLEMENTATION COMPLETE — in review (awaiting product-owner
+acceptance, 2026-10-14)**. The advisor intake/check-in/scan capture flow is
+redesigned on the approved 2026 system — a sectioned, collapsible intake
+(`VehicleCustomerView`) with `AppStepProgress` intake rail, `AppTopBar` +
+discard guard, shared `AppTextField` (identifier + new visible `prefix` slot),
+`AppDropdownButton`, `AppMediaUploadShell`, `AppDateSelectorShell`,
+`AppFormSection`/`AppFormField`/`AppFormPanel`, `AppActionBar`, `AppInfoPanel`,
+`PendingSyncChip` (honest saving/queued/sent) and a live two-column summary at
+≥600 px; a two-step `AppStepProgress` check-in wizard; and a restyled scan
+surface with permission-denied + result-confirmation states. The legacy local
+kit `vehicle_customer_shared_widgets.dart` is deleted (zero references). 205 new
+`advisorIntake*`/`advisorScan*`/`advisorCheckIn*` ARB keys (EN+AR parity green;
+373 total). Deliverable Report + evidence pack:
+`phases/reports/PHASE_07A/PHASE_07A_COMPLETION.md` (13 renders in
+`PHASE_07A/screens/`). **The six pre-existing `VehicleCustomerView` intake
+overflow failures are resolved** (the rewritten `vehicle_customer_intake_layout_test.dart`
+now proves 320/360/390/430/768/1280 px clean in EN+AR + 1.3×), plus the
+pre-existing advisor-workflow finder is corrected. Staff **343/0** (baseline
+312/7 → zero failures); `shared_core` 245/1 (the 1 is the pre-existing
+`app_theme_visual_test`, owned by 01; the additive `AppTextField.prefix` slot
+changed nothing); `shared_auth` 73/0; owner 21/0; crm 14/0; `dart analyze` 0
+issues on `shared_core` + `staff_app`; prototype untouched. **Phase 07B is ready
 to start — not started; awaiting explicit authorization.**
 
 Statuses: `not started → in progress → in review → done`. A phase is done only

@@ -18,14 +18,17 @@ import 'package:staff_app/core/services/audio_recorder_service.dart';
 import 'inspection_provider.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/vehicle_customer_provider.dart';
-import 'package:staff_app/features/advisor/presentation/widgets/vehicle_customer_shared_widgets.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/select_brand_sheet.dart';
-import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_signature_pad.dart';
 import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.dart';
 import 'scan_vehicle_view.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
+/// Advisor vehicle/customer intake — a guided, sectioned, autosave-safe flow.
+///
+/// Route/extra contract (`/vehicle-customer`, extra `{bookingId}`) and the
+/// Hive/sync payload are unchanged from the pre-redesign implementation.
 class VehicleCustomerView extends ConsumerWidget {
   final String? bookingId;
   const VehicleCustomerView({super.key, this.bookingId});
@@ -63,6 +66,19 @@ class _BodyState extends ConsumerState<_Body> {
   String _customerSignaturePath = '';
   String _advisorSignaturePath = '';
 
+  /// Section expansion state (Customer + Vehicle open by default; optional
+  /// sections collapsed to keep the flow calm and fast).
+  final Map<String, bool> _expanded = {
+    'search': true,
+    'customer': true,
+    'vehicle': true,
+    'body': false,
+    'media': false,
+    'job': false,
+    'signature': false,
+    'review': false,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -80,464 +96,992 @@ class _BodyState extends ConsumerState<_Body> {
     super.dispose();
   }
 
+  bool get _hasUnsavedChanges {
+    final s = ref.read(vehicleCustomerFormProvider);
+    return s.customerName.trim().isNotEmpty ||
+        s.phoneNumber.trim().isNotEmpty ||
+        s.plateNumber.trim().isNotEmpty ||
+        s.make.isNotEmpty ||
+        s.model.isNotEmpty ||
+        s.vin.trim().isNotEmpty ||
+        _registrationDocument != null ||
+        _insuranceDocument != null ||
+        _jobPhotoPaths.isNotEmpty ||
+        _jobVideoPaths.isNotEmpty ||
+        _customerSignaturePath.isNotEmpty ||
+        _advisorSignaturePath.isNotEmpty ||
+        s.jobDescriptions.any((r) => r.description.trim().isNotEmpty);
+  }
+
+  int _completedSections(VehicleCustomerFormState s) {
+    var done = 0;
+    if (s.customerName.trim().isNotEmpty && s.phoneNumber.trim().length >= 8) {
+      done++;
+    }
+    if (s.plateNumber.trim().isNotEmpty &&
+        s.make.isNotEmpty &&
+        s.model.isNotEmpty) {
+      done++;
+    }
+    if (_registrationDocument != null ||
+        _insuranceDocument != null ||
+        _jobPhotoPaths.isNotEmpty ||
+        _jobVideoPaths.isNotEmpty) {
+      done++;
+    }
+    if (s.jobDescriptions.any((r) => r.description.trim().isNotEmpty)) done++;
+    if (_customerSignaturePath.isNotEmpty ||
+        _advisorSignaturePath.isNotEmpty) {
+      done++;
+    }
+    return done;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
     final state = ref.watch(vehicleCustomerFormProvider);
-    // The keyboard is open when the view insets are non-zero. While typing we
-    // hide the bottom action bar so it never covers fields or fights the IME.
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final wide = !context.adaptive.isCompact;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: colorScheme.surfaceContainerLowest,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Create Job Card',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        centerTitle: false,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AdvisorWorkflowIndicator(currentStep: 0),
-                  const SizedBox(height: 14),
-                  _JobCardIntro(isFromBooking: widget.bookingId != null),
-                  if (widget.bookingId != null) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(AppDimensions.r12),
-                        border: Border.all(
-                          color: colorScheme.primary.withValues(alpha: 0.3),
-                        ),
+    return PopScope(
+      canPop: !_hasUnsavedChanges,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmDiscard(t);
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Column(
+          children: [
+            SafeArea(
+              bottom: false,
+              child: AppTopBar(
+                title: t.advisorIntakeTitle,
+                onBack: () => _handleBack(t),
+              ),
+            ),
+            Expanded(
+              child: AppPageFrame(
+                scrollable: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _intro(theme, colors, t),
+                    if (widget.bookingId != null) ...[
+                      const SizedBox(height: AppDimensions.s12),
+                      AppInfoPanel.primary(
+                        icon: Icons.event_available_rounded,
+                        message: t.advisorIntakeLinkedBooking,
                       ),
-                      child: Row(
+                    ],
+                    const SizedBox(height: AppDimensions.s20),
+                    _sectionProgress(t, state),
+                    const SizedBox(height: AppDimensions.s24),
+                    if (wide)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.event_available_rounded,
-                            color: colorScheme.primary,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Linked to the assigned booking',
-                              style: textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+                          Expanded(flex: 3, child: _formColumn(t, state)),
+                          const SizedBox(width: AppDimensions.s24),
+                          Expanded(flex: 2, child: _summary(t, state)),
                         ],
+                      )
+                    else ...[
+                      _formColumn(t, state),
+                      const SizedBox(height: AppDimensions.s24),
+                      _summary(t, state),
+                    ],
+                    const SizedBox(height: AppDimensions.s24),
+                  ],
+                ),
+              ),
+            ),
+            if (!keyboardOpen) _actionBar(t),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _intro(ThemeData theme, ColorScheme colors, StaffLocalizations t) {
+    final isFromBooking = widget.bookingId != null;
+    return AppCard.semantic(
+      baseColor: colors.primary,
+      padding: const EdgeInsets.all(AppDimensions.s16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colors.primary,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            ),
+            child: const Icon(
+              Icons.assignment_add,
+              color: Colors.white,
+              size: 23,
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isFromBooking
+                      ? t.advisorIntakeIntroTitleBooking
+                      : t.advisorIntakeIntroTitleNew,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s4),
+                Text(
+                  t.advisorIntakeIntroBody,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 15,
+                      color: colors.primary,
+                    ),
+                    const SizedBox(width: AppDimensions.s6),
+                    Expanded(
+                      child: Text(
+                        t.advisorIntakeRequiredHint,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
-
-                  _SearchModeSection(
-                    state: state,
-                    ref: ref,
-                    onScanVin: () => _scanAndSetVin(context, ref),
-                    onScanQr: () => _scanVehicleQr(context, ref),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ── Customer Details (Images 3-5) ────────────────────────
-                  _CustomerDetailsSection(
-                    state: state,
-                    ref: ref,
-                    errors: _fieldErrors,
-                    fieldKeys: _fieldKeys,
-                    onFieldChanged: _clearFieldError,
-                  ),
-
-                  // ── Vehicle Details (Images 6-14) ────────────────────────
-                  _VehicleDetailsSection(
-                    state: state,
-                    ref: ref,
-                    onScanVin: () => _scanAndSetVin(context, ref),
-                    registrationDocumentName: _registrationDocument?.name,
-                    insuranceDocumentName: _insuranceDocument?.name,
-                    onRegistrationUpload: () => _pickDocument(true),
-                    onInsuranceUpload: () => _pickDocument(false),
-                    errors: _fieldErrors,
-                    fieldKeys: _fieldKeys,
-                    onFieldChanged: _clearFieldError,
-                  ),
-
-                  // ── Additional Information (Image 15) ────────────────────
-                  SectionCard(
-                    title: 'Vehicle Body Condition',
-                    subtitle: 'Mark any existing damage before handover',
-                    icon: Icons.directions_car_outlined,
-                    child: const VehicleBodyConditionPanel(
-                      embedded: true,
-                      showTitle: false,
-                    ),
-                  ),
-
-                  _AdditionalInfoSection(
-                    state: state,
-                    ref: ref,
-                    photoPaths: List<String>.from(_jobPhotoPaths),
-                    videoPaths: List<String>.from(_jobVideoPaths),
-                    hasCustomerSignature: _customerSignaturePath.isNotEmpty,
-                    hasAdvisorSignature: _advisorSignaturePath.isNotEmpty,
-                    onAddPhotos: _pickJobPhotos,
-                    onAddVideo: _pickJobVideo,
-                    onRemovePhoto: (i) =>
-                        setState(() => _jobPhotoPaths.removeAt(i)),
-                    onRemoveVideo: (i) =>
-                        setState(() => _jobVideoPaths.removeAt(i)),
-                    onCustomerSignature: () => _captureSignature(true),
-                    onAdvisorSignature: () => _captureSignature(false),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-
-          // ── NEXT button (a real bar, not an overlay, so it never collides
-          // with the keyboard or the last fields) ────────────────────────────
-          if (!keyboardOpen)
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(color: colorScheme.outlineVariant),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, -3),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-              child: SafeArea(
-                top: false,
-                child: ElevatedButton(
-                  onPressed: _isCreatingJobCard
-                      ? null
-                      : () async {
-                          final formState = ref.read(
-                            vehicleCustomerFormProvider,
-                          );
-                          final bodyCondition = ref
-                              .read(inspectionProvider)
-                              .vehicleBodyConditionPayload;
-                          final errors = _validateForm(formState);
-                          if (errors.isNotEmpty) {
-                            FocusManager.instance.primaryFocus?.unfocus();
-                            setState(
-                              () => _fieldErrors = Map.fromEntries(errors),
-                            );
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (!mounted) return;
-                              final firstContext =
-                                  _fieldKeys[errors.first.key]?.currentContext;
-                              if (firstContext != null) {
-                                Scrollable.ensureVisible(
-                                  firstContext,
-                                  duration: const Duration(milliseconds: 450),
-                                  curve: Curves.easeOutCubic,
-                                  alignment: 0.18,
-                                );
-                              }
-                            });
-                            return;
-                          }
-                          if (_fieldErrors.isNotEmpty) {
-                            setState(() => _fieldErrors = const {});
-                          }
-                          setState(() => _isCreatingJobCard = true);
-                          try {
-                            final local = GenericLocalDataSource(
-                              Hive.box<dynamic>('inspections'),
-                            );
-                            final id = await IdGenerator.nextId('JC');
-                            _savedJobId = id;
-                            final now = DateTime.now();
-                            final createdDate =
-                                '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                            final payload = {
-                              'id': id,
-                              'type': 'vehicle_customer',
-                              'bookingId': widget.bookingId ?? '',
-                              'customerName': formState.customerName,
-                              'phoneNumber': formState.phoneNumber,
-                              'email': formState.email,
-                              'isB2B': formState.isB2B,
-                              'customerGroup': formState.customerGroup,
-                              'gender': formState.gender,
-                              'address': formState.address,
-                              'taxNumber': formState.taxNumber,
-                              'source': formState.source,
-                              'emirate': formState.emirate,
-                              'plateCode': formState.plateCode,
-                              'plateNumber': formState.plateNumber,
-                              'vin': formState.vin,
-                              'make': formState.make,
-                              'model': formState.model,
-                              'modelYear': formState.modelYear,
-                              'registrationNumber':
-                                  formState.registrationNumber,
-                              'cylinders': formState.cylinders,
-                              'engineCapacity': formState.engineCapacity,
-                              'vehicleColor': formState.vehicleColor,
-                              'fuelType': formState.fuelType,
-                              'engineNumber': formState.engineNumber,
-                              'jobCategory': formState.jobCategory,
-                              'markupType': formState.markupType,
-                              'orderType': formState.orderType,
-                              'jobDescription': formState.jobDescription,
-                              'jobDescriptions': [
-                                for (
-                                  var i = 0;
-                                  i < formState.jobDescriptions.length;
-                                  i++
-                                )
-                                  {
-                                    ...formState.jobDescriptions[i].toJson(),
-                                    'mediaItemId': 'job-description-${i + 1}',
-                                  },
-                              ],
-                              'jobDescriptionMedia': [
-                                for (
-                                  var i = 0;
-                                  i < formState.jobDescriptions.length;
-                                  i++
-                                ) ...[
-                                  for (final path
-                                      in formState
-                                          .jobDescriptions[i]
-                                          .photoPaths)
-                                    {
-                                      'path': path,
-                                      'itemId': 'job-description-${i + 1}',
-                                      'type': 'photo',
-                                    },
-                                  for (final path
-                                      in formState
-                                          .jobDescriptions[i]
-                                          .videoPaths)
-                                    {
-                                      'path': path,
-                                      'itemId': 'job-description-${i + 1}',
-                                      'type': 'video',
-                                    },
-                                  if (formState
-                                      .jobDescriptions[i]
-                                      .audioPath
-                                      .isNotEmpty)
-                                    {
-                                      'path': formState
-                                          .jobDescriptions[i]
-                                          .audioPath,
-                                      'itemId': 'job-description-${i + 1}',
-                                      'type': 'audio',
-                                    },
-                                ],
-                              ],
-                              'insuranceProvider': formState.insuranceProvider,
-                              'insuranceTaxNumber':
-                                  formState.insuranceTaxNumber,
-                              'insuranceAddress': formState.insuranceAddress,
-                              'policyNumber': formState.policyNumber,
-                              'lpoNumber': formState.lpoNumber,
-                              'accidentNumber': formState.accidentNumber,
-                              'insuranceExpiryDate':
-                                  formState.insuranceExpiryDate,
-                              'vehicleBodyCondition': bodyCondition,
-                              'jobPhotoPaths': List<String>.from(
-                                _jobPhotoPaths,
-                              ),
-                              'jobVideoPaths': List<String>.from(
-                                _jobVideoPaths,
-                              ),
-                              'customerSignaturePath': _customerSignaturePath,
-                              'advisorSignaturePath': _advisorSignaturePath,
-                              'odometerReading': formState.odometerReading,
-                              'fuelLevel': formState.fuelLevel,
-                              'customerConsent': formState.customerConsent,
-                              'registrationDocumentPath':
-                                  _registrationDocument?.path ?? '',
-                              'insuranceDocumentPath':
-                                  _insuranceDocument?.path ?? '',
-                              'status': 'inProgress',
-                              'createdDate': createdDate,
-                              'lastUpdated': createdDate,
-                            };
-                            await local.save(id, payload);
-                            final queue = ref.read(syncQueueProvider);
-                            await queue.enqueue(
-                              SyncOperation(
-                                id: id,
-                                entityType: 'vehicle_customer',
-                                entityId: id,
-                                changeType: ChangeType.create,
-                                payload: payload,
-                                timestamp:
-                                    DateTime.now().millisecondsSinceEpoch,
-                              ),
-                            );
-                            await ref.read(syncEngineProvider).syncAll();
-                            // Prefer the server-assigned job card reference once the
-                            // intake has synced so the follow-up inspection links to the
-                            // exact job card the backend created.
-                            var resolvedJobId = id;
-                            var savedToServer = false;
-                            try {
-                              final record = Hive.box<dynamic>(
-                                'inspections',
-                              ).get(id);
-                              if (record is Map) {
-                                final serverRef =
-                                    (record['jobCardRef'] ??
-                                            record['serverJobCardId'] ??
-                                            '')
-                                        .toString();
-                                if (serverRef.isNotEmpty) {
-                                  resolvedJobId = serverRef;
-                                  savedToServer = true;
-                                }
-                              }
-                            } catch (_) {}
-                            _savedJobId = resolvedJobId;
-                            _savedToServer = savedToServer;
-                            ref.read(advisorRefreshProvider.notifier).state++;
-                            if (!context.mounted) return;
-                            _showInspectionPrompt(context);
-                          } catch (_) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text(
-                                  'We could not create the job card. Please check your connection and try again.',
-                                ),
-                                backgroundColor: colorScheme.error,
-                              ),
-                            );
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isCreatingJobCard = false);
-                            }
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.primary.withValues(
-                      alpha: 0.72,
-                    ),
-                    disabledForegroundColor: Colors.white,
-                    elevation: 0,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r10),
-                      ),
-                    ),
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child: _isCreatingJobCard
-                        ? const Row(
-                            key: ValueKey('creating-job-card'),
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 19,
-                                height: 19,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.4,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Creating Job Card…',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          )
-                        : const Row(
-                            key: ValueKey('create-job-card'),
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add_task_rounded, size: 20),
-                              SizedBox(width: 9),
-                              Text(
-                                'Create Job Card',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  List<MapEntry<String, String>> _validateForm(VehicleCustomerFormState s) {
+  Widget _sectionProgress(StaffLocalizations t, VehicleCustomerFormState s) {
+    final done = _completedSections(s);
+    return AppStepProgress(
+      currentStep: done.clamp(0, 5),
+      steps: [
+        AppProgressStep(
+          label: t.advisorIntakeStepCustomer,
+          icon: Icons.person_outline_rounded,
+        ),
+        AppProgressStep(
+          label: t.advisorIntakeStepVehicle,
+          icon: Icons.directions_car_outlined,
+        ),
+        AppProgressStep(
+          label: t.advisorIntakeStepMedia,
+          icon: Icons.perm_media_outlined,
+        ),
+        AppProgressStep(
+          label: t.advisorIntakeStepJob,
+          icon: Icons.description_outlined,
+        ),
+        AppProgressStep(
+          label: t.advisorIntakeStepSignature,
+          icon: Icons.draw_outlined,
+        ),
+        AppProgressStep(
+          label: t.advisorIntakeStepReview,
+          icon: Icons.save_outlined,
+        ),
+      ],
+    );
+  }
+
+  Widget _formColumn(StaffLocalizations t, VehicleCustomerFormState s) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _searchSection(t, s),
+        const SizedBox(height: AppDimensions.s16),
+        _customerSection(t, s),
+        const SizedBox(height: AppDimensions.s16),
+        _vehicleSection(t, s),
+        const SizedBox(height: AppDimensions.s16),
+        _bodySection(t),
+        const SizedBox(height: AppDimensions.s16),
+        _mediaSection(t, s),
+        const SizedBox(height: AppDimensions.s16),
+        _jobSection(t, s),
+        const SizedBox(height: AppDimensions.s16),
+        _signatureSection(t),
+      ],
+    );
+  }
+
+  // ── Sections ───────────────────────────────────────────────────────────────
+
+  Widget _searchSection(StaffLocalizations t, VehicleCustomerFormState s) {
+    return _IntakeSection(
+      sectionKey: 'search',
+      title: t.advisorIntakeFindTitle,
+      subtitle: t.advisorIntakeFindSub,
+      icon: Icons.manage_search_rounded,
+      expanded: _expanded['search']!,
+      onToggle: () => _toggle('search'),
+      child: _FindExistingRecord(
+        state: s,
+        ref: ref,
+        onScanVin: () => _scanAndSetVin(context, ref),
+        onScanQr: () => _scanVehicleQr(context, ref),
+      ),
+    );
+  }
+
+  Widget _customerSection(StaffLocalizations t, VehicleCustomerFormState s) {
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    return _IntakeSection(
+      sectionKey: 'customer',
+      title: t.advisorIntakeSectionCustomer,
+      subtitle: t.advisorIntakeSectionCustomerSub,
+      icon: Icons.person_outline_rounded,
+      expanded: _expanded['customer']!,
+      onToggle: () => _toggle('customer'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ToggleRow(
+            label: t.advisorIntakeB2B,
+            value: s.isB2B,
+            onChanged: notifier.setB2B,
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeCustomerName,
+            isRequired: true,
+            errorText: _fieldErrors['Customer Name'],
+            child: _IntakeField(
+              key: _fieldKeys['Customer Name'],
+              initialValue: s.customerName,
+              hint: t.advisorIntakeCustomerNameHint,
+              textCapitalization: TextCapitalization.words,
+              onChanged: (v) {
+                notifier.setCustomerName(v);
+                if (v.trim().isNotEmpty) _clearFieldError('Customer Name');
+              },
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakePhone,
+            isRequired: true,
+            errorText: _fieldErrors['Phone Number'],
+            child: _IntakeField(
+              key: _fieldKeys['Phone Number'],
+              initialValue: s.phoneNumber,
+              hint: t.advisorIntakePhoneHint,
+              keyboardType: TextInputType.phone,
+              isIdentifier: true,
+              prefix: _AffixPrefix(phoneCountries.first.code),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onChanged: (v) {
+                notifier.setPhone(v);
+                if (v.trim().length >= 8) _clearFieldError('Phone Number');
+              },
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeEmail,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.email,
+              hint: t.advisorIntakeEmailHint,
+              keyboardType: TextInputType.emailAddress,
+              isIdentifier: true,
+              onChanged: notifier.setEmail,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeCustomerGroup,
+            child: AppDropdownButton(
+              value: s.customerGroup,
+              hint: t.advisorIntakeCustomerGroupHint,
+              items: kCustomerGroups,
+              onChanged: (v) => notifier.setCustomerGroup(v),
+            ),
+          ),
+          if (s.showMoreCustomer) ...[
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeGender,
+              child: AppDropdownButton(
+                value: s.gender,
+                hint: t.advisorIntakeGenderHint,
+                items: kGenders,
+                onChanged: (v) => notifier.setGender(v),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeAddress,
+              child: AppDropdownButton(
+                value: s.address,
+                hint: t.advisorIntakeAddressHint,
+                items: kAddresses,
+                onChanged: (v) => notifier.setAddress(v),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeTaxNumber,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.taxNumber,
+                hint: t.advisorIntakeTaxNumber,
+                onChanged: notifier.setTaxNumber,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeSource,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.source,
+                hint: t.advisorIntakeSourceHint,
+                onChanged: notifier.setSource,
+              ),
+            ),
+          ],
+          _MoreLessLink(
+            showMore: s.showMoreCustomer,
+            moreLabel: t.advisorIntakeShowMore,
+            lessLabel: t.advisorIntakeShowLess,
+            onTap: notifier.toggleCustomerMore,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _vehicleSection(StaffLocalizations t, VehicleCustomerFormState s) {
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    return _IntakeSection(
+      sectionKey: 'vehicle',
+      title: t.advisorIntakeSectionVehicle,
+      subtitle: t.advisorIntakeSectionVehicleSub,
+      icon: Icons.directions_car_outlined,
+      expanded: _expanded['vehicle']!,
+      onToggle: () => _toggle('vehicle'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ResponsiveFieldGroup(
+            minChildWidth: 150,
+            children: [
+              AppFormField(
+                label: t.advisorIntakeEmirate,
+                child: AppDropdownButton(
+                  value: s.emirate,
+                  hint: t.advisorIntakeEmirateHint,
+                  items: kEmirates,
+                  onChanged: (v) => notifier.setEmirate(v),
+                ),
+              ),
+              AppFormField(
+                label: t.advisorIntakePlateCode,
+                child: _IntakeField(
+                  initialValue: s.plateCode,
+                  hint: t.advisorIntakePlateCodeHint,
+                  textCapitalization: TextCapitalization.characters,
+                  isIdentifier: true,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp('[a-zA-Z0-9]')),
+                    LengthLimitingTextInputFormatter(4),
+                  ],
+                  onChanged: notifier.setPlateCode,
+                ),
+              ),
+              AppFormField(
+                label: t.advisorIntakePlateNumber,
+                isRequired: true,
+                errorText: _fieldErrors['Plate Number'],
+                child: _IntakeField(
+                  key: _fieldKeys['Plate Number'],
+                  initialValue: s.plateNumber,
+                  hint: t.advisorIntakePlateNumberHint,
+                  keyboardType: TextInputType.number,
+                  isIdentifier: true,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  prefix: (s.emirate.isEmpty && s.plateCode.isEmpty)
+                      ? null
+                      : _AffixPrefix('${s.emirate}-${s.plateCode}'),
+                  onChanged: (v) {
+                    notifier.setPlateNumber(v);
+                    if (v.trim().isNotEmpty) _clearFieldError('Plate Number');
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeVin,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.vin,
+              hint: t.advisorIntakeVinHint,
+              isIdentifier: true,
+              textCapitalization: TextCapitalization.characters,
+              suffixIcon: IconButton(
+                tooltip: t.advisorIntakeScanVin,
+                onPressed: () => _scanAndSetVin(context, ref),
+                icon: const Icon(Icons.qr_code_scanner, size: 18),
+              ),
+              onChanged: notifier.setVin,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          _ResponsiveFieldGroup(
+            minChildWidth: 190,
+            children: [
+              AppFormField(
+                label: t.advisorIntakeMake,
+                isRequired: true,
+                errorText: _fieldErrors['Make'],
+                child: _SelectorField(
+                  key: _fieldKeys['Make'],
+                  value: s.make,
+                  hint: t.advisorIntakeMakeHint,
+                  errorText: _fieldErrors['Make'],
+                  onTap: () => _pickBrand(t, s),
+                ),
+              ),
+              AppFormField(
+                label: t.advisorIntakeModel,
+                isRequired: true,
+                errorText: _fieldErrors['Model'],
+                child: _SelectorField(
+                  key: _fieldKeys['Model'],
+                  value: s.model,
+                  hint: t.advisorIntakeModelHint,
+                  errorText: _fieldErrors['Model'],
+                  onTap: () => _pickModel(t, s),
+                ),
+              ),
+              AppFormField(
+                label: t.advisorIntakeModelYear,
+                isOptional: true,
+                child: _SelectorField(
+                  value: s.modelYear,
+                  hint: t.advisorIntakeModelYearHint,
+                  icon: Icons.keyboard_arrow_down_rounded,
+                  onTap: () => _pickModelYear(s),
+                ),
+              ),
+            ],
+          ),
+          _MoreLessLink(
+            showMore: s.showMoreVehicle,
+            moreLabel: t.advisorIntakeShowMore,
+            lessLabel: t.advisorIntakeShowLess,
+            onTap: notifier.toggleVehicleMore,
+          ),
+          if (s.showMoreVehicle) ...[
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeCylinders,
+              child: AppDropdownButton(
+                value: s.cylinders,
+                hint: t.advisorIntakeCylindersHint,
+                items: kCylinders,
+                onChanged: (v) => notifier.setCylinders(v),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeEngineCapacity,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.engineCapacity,
+                hint: t.advisorIntakeEngineCapacity,
+                onChanged: notifier.setEngineCapacity,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeVehicleColor,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.vehicleColor,
+                hint: t.advisorIntakeVehicleColor,
+                onChanged: notifier.setVehicleColor,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeFuelType,
+              child: AppDropdownButton(
+                value: s.fuelType,
+                hint: t.advisorIntakeFuelTypeHint,
+                items: kFuelTypes,
+                onChanged: (v) => notifier.setFuelType(v),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeEngineNumber,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.engineNumber,
+                hint: t.advisorIntakeEngineNumber,
+                isIdentifier: true,
+                onChanged: notifier.setEngineNumber,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeRegistrationCertificate,
+              isOptional: true,
+              child: AppMediaUploadShell(
+                label: _registrationDocument?.name ?? t.advisorIntakeAddDocument,
+                helperText: '',
+                icon: Icons.badge_outlined,
+                onTap: () => _pickDocument(true),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _bodySection(StaffLocalizations t) {
+    return _IntakeSection(
+      sectionKey: 'body',
+      title: t.advisorIntakeSectionBody,
+      subtitle: t.advisorIntakeSectionBodySub,
+      icon: Icons.directions_car_outlined,
+      expanded: _expanded['body']!,
+      onToggle: () => _toggle('body'),
+      child: const VehicleBodyConditionPanel(embedded: true, showTitle: false),
+    );
+  }
+
+  Widget _mediaSection(StaffLocalizations t, VehicleCustomerFormState s) {
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    return _IntakeSection(
+      sectionKey: 'media',
+      title: t.advisorIntakeSectionMedia,
+      subtitle: t.advisorIntakeSectionMediaSub,
+      icon: Icons.perm_media_outlined,
+      expanded: _expanded['media']!,
+      onToggle: () => _toggle('media'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (s.jobCategory == 'Insurance') ...[
+            AppFormField(
+              label: t.advisorIntakeInsuranceDocument,
+              isOptional: true,
+              child: AppMediaUploadShell(
+                label: _insuranceDocument?.name ?? t.advisorIntakeAddDocument,
+                helperText: '',
+                icon: Icons.shield_outlined,
+                onTap: () => _pickDocument(false),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+          ],
+          AppFormField(
+            label: t.advisorIntakeOdometer,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.odometerReading,
+              hint: t.advisorIntakeOdometerHint,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onChanged: notifier.setOdometer,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeFuelLevel,
+            child: _FuelLevelSlider(
+              value: s.fuelLevel,
+              onChanged: notifier.setFuelLevel,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          _ToggleRow(
+            label: t.advisorIntakeCustomerConsent,
+            value: s.customerConsent,
+            onChanged: notifier.setConsent,
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeJobMedia,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _MediaAddTile(
+                    icon: Icons.photo_library_outlined,
+                    label: t.advisorIntakePhotos,
+                    addLabel: t.advisorIntakeAddLabel(t.advisorIntakePhotos),
+                    count: _jobPhotoPaths.length,
+                    onTap: _pickJobPhotos,
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s10),
+                Expanded(
+                  child: _MediaAddTile(
+                    icon: Icons.videocam_outlined,
+                    label: t.advisorIntakeVideo,
+                    addLabel: t.advisorIntakeAddLabel(t.advisorIntakeVideo),
+                    count: _jobVideoPaths.length,
+                    onTap: _pickJobVideo,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_jobPhotoPaths.isNotEmpty || _jobVideoPaths.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s12),
+            _MediaThumbnailGrid(
+              photoPaths: _jobPhotoPaths,
+              videoPaths: _jobVideoPaths,
+              onRemovePhoto: (i) => setState(() => _jobPhotoPaths.removeAt(i)),
+              onRemoveVideo: (i) => setState(() => _jobVideoPaths.removeAt(i)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _jobSection(StaffLocalizations t, VehicleCustomerFormState s) {
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    return _IntakeSection(
+      sectionKey: 'job',
+      title: t.advisorIntakeSectionJob,
+      subtitle: t.advisorIntakeSectionJobSub,
+      icon: Icons.description_outlined,
+      expanded: _expanded['job']!,
+      onToggle: () => _toggle('job'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppFormField(
+            label: t.advisorIntakeJobCategory,
+            child: AppDropdownButton(
+              value: s.jobCategory,
+              hint: t.advisorIntakeJobCategoryHint,
+              items: kJobCategories,
+              onChanged: (v) => notifier.setJobCategory(v),
+            ),
+          ),
+          if (s.jobCategory == 'Insurance') ...[
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeInsuranceName,
+              child: AppDropdownButton(
+                value: s.insuranceProvider,
+                hint: t.advisorIntakeInsuranceNameHint,
+                items: kInsuranceProviders,
+                onChanged: (v) => notifier.setInsuranceProvider(v),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeLpoNumber,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.lpoNumber,
+                hint: t.advisorIntakeLpoNumber,
+                onChanged: notifier.setLpoNumber,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakePolicyNumber,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.policyNumber,
+                hint: t.advisorIntakePolicyNumber,
+                onChanged: notifier.setPolicyNumber,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeAccidentNumber,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.accidentNumber,
+                hint: t.advisorIntakeAccidentNumber,
+                onChanged: notifier.setAccidentNumber,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeInsuranceTaxNumber,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.insuranceTaxNumber,
+                hint: t.advisorIntakeInsuranceTaxHint,
+                onChanged: notifier.setInsuranceTaxNumber,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeInsuranceAddress,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.insuranceAddress,
+                hint: t.advisorIntakeInsuranceAddress,
+                onChanged: notifier.setInsuranceAddress,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFormField(
+              label: t.advisorIntakeInsuranceExpiry,
+              isOptional: true,
+              child: AppDateSelectorShell(
+                value: s.insuranceExpiryDate,
+                onTap: () async {
+                  final initial =
+                      DateTime.tryParse(s.insuranceExpiryDate) ?? DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: initial,
+                    firstDate: DateTime(1980),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    final month = picked.month.toString().padLeft(2, '0');
+                    final day = picked.day.toString().padLeft(2, '0');
+                    notifier.setInsuranceExpiry(
+                      '${picked.year}-$month-$day',
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+          const SizedBox(height: AppDimensions.s16),
+          _ResponsiveFieldGroup(
+            minChildWidth: 200,
+            children: [
+              AppFormField(
+                label: t.advisorIntakeMarkupType,
+                isOptional: true,
+                child: _IntakeField(
+                  initialValue: s.markupType,
+                  hint: t.advisorIntakeMarkupType,
+                  onChanged: notifier.setMarkupType,
+                ),
+              ),
+              AppFormField(
+                label: t.advisorIntakeOrderType,
+                isOptional: true,
+                child: _IntakeField(
+                  initialValue: s.orderType,
+                  hint: t.advisorIntakeOrderType,
+                  onChanged: notifier.setOrderType,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeJobDescription,
+            child: _JobDescriptionTable(state: s, ref: ref),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _signatureSection(StaffLocalizations t) {
+    final hasCustomer = _customerSignaturePath.isNotEmpty;
+    final hasAdvisor = _advisorSignaturePath.isNotEmpty;
+    return _IntakeSection(
+      sectionKey: 'signature',
+      title: t.advisorIntakeSectionSignature,
+      subtitle: t.advisorIntakeSectionSignatureSub,
+      icon: Icons.draw_outlined,
+      expanded: _expanded['signature']!,
+      onToggle: () => _toggle('signature'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SignatureRow(
+            label: t.advisorIntakeSignatureCustomer,
+            captured: hasCustomer,
+            capturedLabel: t.advisorIntakeSignatureCaptured,
+            redoLabel: t.advisorIntakeSignatureRedo,
+            onCapture: () => _captureSignature(true),
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          _SignatureRow(
+            label: t.advisorIntakeSignatureAdvisor,
+            captured: hasAdvisor,
+            capturedLabel: t.advisorIntakeSignatureCaptured,
+            redoLabel: t.advisorIntakeSignatureRedo,
+            onCapture: () => _captureSignature(false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summary(StaffLocalizations t, VehicleCustomerFormState s) {
+    final done = _completedSections(s);
+    return AppFormPanel(
+      title: t.advisorIntakeSummaryTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppLinearProgress(
+            value: done / 5,
+            label: t.advisorIntakeSummaryProgress(done, 5),
+            showPercentage: false,
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          _SummaryRow(
+            icon: Icons.person_outline_rounded,
+            title: t.advisorIntakeSummaryCustomer,
+            value: s.customerName.trim().isEmpty
+                ? t.advisorIntakeSummaryNoName
+                : s.customerName,
+            secondary: s.phoneNumber.isEmpty
+                ? null
+                : '${phoneCountries.first.code} ${s.phoneNumber}',
+            empty: s.customerName.trim().isEmpty,
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          _SummaryRow(
+            icon: Icons.directions_car_outlined,
+            title: t.advisorIntakeSummaryVehicle,
+            value: [s.make, s.model].where((e) => e.isNotEmpty).join(' '),
+            secondary: s.registrationNumber.isEmpty
+                ? null
+                : s.registrationNumber,
+            empty: s.make.isEmpty && s.model.isEmpty,
+          ),
+          if (done == 0) ...[
+            const SizedBox(height: AppDimensions.s16),
+            Text(
+              t.advisorIntakeSummaryEmpty,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _actionBar(StaffLocalizations t) {
+    return AppActionBar(
+      sticky: true,
+      primary: AppButton.primary(
+        label: _isCreatingJobCard
+            ? t.advisorIntakeActionCreating
+            : t.advisorIntakeActionCreate,
+        icon: Icons.add_task_rounded,
+        isLoading: _isCreatingJobCard,
+        isExpanded: context.adaptive.isCompact,
+        onPressed: _isCreatingJobCard ? null : () => _create(t),
+      ),
+    );
+  }
+
+  void _toggle(String key) => setState(() => _expanded[key] = !_expanded[key]!);
+
+  // ── Pickers ─────────────────────────────────────────────────────────────────
+
+  Future<void> _pickBrand(StaffLocalizations t, VehicleCustomerFormState s) async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.85,
+        child: SelectBrandSheet(selected: s.make),
+      ),
+    );
+    if (result != null) {
+      ref.read(vehicleCustomerFormProvider.notifier).setMake(result);
+      _clearFieldError('Make');
+      _clearFieldError('Model');
+    }
+  }
+
+  Future<void> _pickModel(StaffLocalizations t, VehicleCustomerFormState s) async {
+    if (s.make.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.advisorIntakeSelectBrandFirst)),
+      );
+      return;
+    }
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.85,
+        child: SelectModelSheet(brand: s.make, selected: s.model),
+      ),
+    );
+    if (result != null) {
+      ref.read(vehicleCustomerFormProvider.notifier).setModel(result);
+      _clearFieldError('Model');
+    }
+  }
+
+  Future<void> _pickModelYear(VehicleCustomerFormState s) async {
+    final result = await showModelYearDialog(context, s.modelYear);
+    if (result != null) {
+      ref.read(vehicleCustomerFormProvider.notifier).setModelYear(result);
+    }
+  }
+
+  // ── Validation ──────────────────────────────────────────────────────────────
+
+  List<MapEntry<String, String>> _validateForm(
+    VehicleCustomerFormState s,
+    StaffLocalizations t,
+  ) {
     final errors = <MapEntry<String, String>>[];
     if (s.customerName.trim().isEmpty) {
-      errors.add(
-        const MapEntry('Customer Name', 'Please enter the customer name'),
-      );
+      errors.add(MapEntry('Customer Name', t.advisorIntakeErrCustomerName));
     }
     if (s.phoneNumber.trim().isEmpty) {
-      errors.add(
-        const MapEntry('Phone Number', 'Please enter a mobile number'),
-      );
+      errors.add(MapEntry('Phone Number', t.advisorIntakeErrPhone));
     } else if (s.phoneNumber.trim().length < 8) {
-      errors.add(
-        const MapEntry('Phone Number', 'Please enter a valid mobile number'),
-      );
+      errors.add(MapEntry('Phone Number', t.advisorIntakeErrPhoneValid));
     }
     if (s.plateNumber.trim().isEmpty) {
-      errors.add(
-        const MapEntry('Plate Number', 'Please enter the plate number'),
-      );
+      errors.add(MapEntry('Plate Number', t.advisorIntakeErrPlate));
     }
     if (s.make.trim().isEmpty) {
-      errors.add(const MapEntry('Make', 'Please select the vehicle brand'));
+      errors.add(MapEntry('Make', t.advisorIntakeErrMake));
     }
     if (s.model.trim().isEmpty) {
-      errors.add(const MapEntry('Model', 'Please select the vehicle model'));
+      errors.add(MapEntry('Model', t.advisorIntakeErrModel));
     }
     return errors;
   }
@@ -549,6 +1093,314 @@ class _BodyState extends ConsumerState<_Body> {
       _fieldErrors = updated;
     });
   }
+
+  Future<void> _handleBack(StaffLocalizations t) async {
+    if (_hasUnsavedChanges) {
+      await _confirmDiscard(t);
+    } else if (mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _confirmDiscard(StaffLocalizations t) async {
+    final leave = await showAppConfirmationDialog(
+      context,
+      title: t.advisorIntakeDiscardTitle,
+      message: t.advisorIntakeDiscardBody,
+      confirmLabel: t.advisorIntakeDiscardConfirm,
+      cancelLabel: t.advisorIntakeDiscardCancel,
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
+    );
+    if (leave && mounted) Navigator.of(context).pop();
+  }
+
+  // ── Save ────────────────────────────────────────────────────────────────────
+
+  Future<void> _create(StaffLocalizations t) async {
+    final formState = ref.read(vehicleCustomerFormProvider);
+    final bodyCondition = ref
+        .read(inspectionProvider)
+        .vehicleBodyConditionPayload;
+    final errors = _validateForm(formState, t);
+    if (errors.isNotEmpty) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      setState(() {
+        _fieldErrors = Map.fromEntries(errors);
+        _expanded['customer'] = true;
+        _expanded['vehicle'] = true;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final firstContext = _fieldKeys[errors.first.key]?.currentContext;
+        if (firstContext != null) {
+          Scrollable.ensureVisible(
+            firstContext,
+            duration: const Duration(milliseconds: 450),
+            curve: Curves.easeOutCubic,
+            alignment: 0.18,
+          );
+        }
+      });
+      return;
+    }
+    if (_fieldErrors.isNotEmpty) {
+      setState(() => _fieldErrors = const {});
+    }
+    setState(() => _isCreatingJobCard = true);
+    try {
+      final local = GenericLocalDataSource(Hive.box<dynamic>('inspections'));
+      final id = await IdGenerator.nextId('JC');
+      _savedJobId = id;
+      final now = DateTime.now();
+      final createdDate =
+          '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      final payload = {
+        'id': id,
+        'type': 'vehicle_customer',
+        'bookingId': widget.bookingId ?? '',
+        'customerName': formState.customerName,
+        'phoneNumber': formState.phoneNumber,
+        'email': formState.email,
+        'isB2B': formState.isB2B,
+        'customerGroup': formState.customerGroup,
+        'gender': formState.gender,
+        'address': formState.address,
+        'taxNumber': formState.taxNumber,
+        'source': formState.source,
+        'emirate': formState.emirate,
+        'plateCode': formState.plateCode,
+        'plateNumber': formState.plateNumber,
+        'vin': formState.vin,
+        'make': formState.make,
+        'model': formState.model,
+        'modelYear': formState.modelYear,
+        'registrationNumber': formState.registrationNumber,
+        'cylinders': formState.cylinders,
+        'engineCapacity': formState.engineCapacity,
+        'vehicleColor': formState.vehicleColor,
+        'fuelType': formState.fuelType,
+        'engineNumber': formState.engineNumber,
+        'jobCategory': formState.jobCategory,
+        'markupType': formState.markupType,
+        'orderType': formState.orderType,
+        'jobDescription': formState.jobDescription,
+        'jobDescriptions': [
+          for (var i = 0; i < formState.jobDescriptions.length; i++)
+            {
+              ...formState.jobDescriptions[i].toJson(),
+              'mediaItemId': 'job-description-${i + 1}',
+            },
+        ],
+        'jobDescriptionMedia': [
+          for (var i = 0; i < formState.jobDescriptions.length; i++) ...[
+            for (final path in formState.jobDescriptions[i].photoPaths)
+              {
+                'path': path,
+                'itemId': 'job-description-${i + 1}',
+                'type': 'photo',
+              },
+            for (final path in formState.jobDescriptions[i].videoPaths)
+              {
+                'path': path,
+                'itemId': 'job-description-${i + 1}',
+                'type': 'video',
+              },
+            if (formState.jobDescriptions[i].audioPath.isNotEmpty)
+              {
+                'path': formState.jobDescriptions[i].audioPath,
+                'itemId': 'job-description-${i + 1}',
+                'type': 'audio',
+              },
+          ],
+        ],
+        'insuranceProvider': formState.insuranceProvider,
+        'insuranceTaxNumber': formState.insuranceTaxNumber,
+        'insuranceAddress': formState.insuranceAddress,
+        'policyNumber': formState.policyNumber,
+        'lpoNumber': formState.lpoNumber,
+        'accidentNumber': formState.accidentNumber,
+        'insuranceExpiryDate': formState.insuranceExpiryDate,
+        'vehicleBodyCondition': bodyCondition,
+        'jobPhotoPaths': List<String>.from(_jobPhotoPaths),
+        'jobVideoPaths': List<String>.from(_jobVideoPaths),
+        'customerSignaturePath': _customerSignaturePath,
+        'advisorSignaturePath': _advisorSignaturePath,
+        'odometerReading': formState.odometerReading,
+        'fuelLevel': formState.fuelLevel,
+        'customerConsent': formState.customerConsent,
+        'registrationDocumentPath': _registrationDocument?.path ?? '',
+        'insuranceDocumentPath': _insuranceDocument?.path ?? '',
+        'status': 'inProgress',
+        'createdDate': createdDate,
+        'lastUpdated': createdDate,
+      };
+      await local.save(id, payload);
+      final queue = ref.read(syncQueueProvider);
+      await queue.enqueue(
+        SyncOperation(
+          id: id,
+          entityType: 'vehicle_customer',
+          entityId: id,
+          changeType: ChangeType.create,
+          payload: payload,
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+      await ref.read(syncEngineProvider).syncAll();
+      var resolvedJobId = id;
+      var savedToServer = false;
+      try {
+        final record = Hive.box<dynamic>('inspections').get(id);
+        if (record is Map) {
+          final serverRef =
+              (record['jobCardRef'] ?? record['serverJobCardId'] ?? '')
+                  .toString();
+          if (serverRef.isNotEmpty) {
+            resolvedJobId = serverRef;
+            savedToServer = true;
+          }
+        }
+      } catch (_) {}
+      _savedJobId = resolvedJobId;
+      _savedToServer = savedToServer;
+      ref.read(advisorRefreshProvider.notifier).state++;
+      if (!mounted) return;
+      _showInspectionPrompt(t);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t.advisorIntakeSaveFailed),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isCreatingJobCard = false);
+    }
+  }
+
+  void _showInspectionPrompt(StaffLocalizations t) {
+    final colors = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radiusSheet),
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s24,
+          AppDimensions.s16,
+          AppDimensions.s24,
+          AppDimensions.s32,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.outline,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s20),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: (_savedToServer ? AppColors.success : AppColors.info)
+                    .withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
+              ),
+              child: Icon(
+                _savedToServer
+                    ? Icons.cloud_done_outlined
+                    : Icons.cloud_upload_outlined,
+                color: _savedToServer ? AppColors.success : AppColors.info,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s12),
+            PendingSyncChip(
+              state: _savedToServer
+                  ? SyncChipState.synced
+                  : SyncChipState.queued,
+              label: _savedToServer
+                  ? t.advisorIntakeStatusSent
+                  : t.advisorIntakeStatusQueued,
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            Text(
+              _savedToServer
+                  ? t.advisorIntakeSyncedTitle
+                  : t.advisorIntakeLocalTitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: colors.onSurface,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s8),
+            Text(
+              _savedToServer
+                  ? t.advisorIntakeSyncedBody
+                  : t.advisorIntakeLocalBody,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s24),
+            AppButton.primary(
+              label: t.advisorIntakeAddInspection,
+              icon: Icons.search_outlined,
+              onPressed: () {
+                Navigator.pop(ctx);
+                ref.read(inspectionProvider.notifier).reset();
+                final jobId = _savedJobId ?? '';
+                ref.read(inspectionProvider.notifier).setJobCardId(jobId);
+                final callbacks = InspectionCallbacks(
+                  onBack: () {
+                    ref.read(advisorRefreshProvider.notifier).state++;
+                    context.pop();
+                  },
+                  onSaveDraft: () {
+                    ref.read(advisorRefreshProvider.notifier).state++;
+                    context.pop();
+                    context.pop();
+                  },
+                  onPreview: () {
+                    context.push(
+                      AppRoutes.inspectionPreview,
+                      extra: {'onBack': () => context.pop(), 'jobId': jobId},
+                    );
+                  },
+                );
+                context.push(AppRoutes.inspectionSheet, extra: callbacks);
+              },
+            ),
+            const SizedBox(height: AppDimensions.s10),
+            AppButton.secondary(
+              label: t.advisorIntakeSkip,
+              onPressed: () {
+                Navigator.pop(ctx);
+                if (context.mounted) context.pop();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Media / signatures ──────────────────────────────────────────────────────
 
   Future<void> _scanAndSetVin(BuildContext context, WidgetRef ref) async {
     final result = await Navigator.of(context).push<String>(
@@ -571,35 +1423,41 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Future<void> _pickDocument(bool registration) async {
+    final t = StaffLocalizations.of(context)!;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       showDragHandle: true,
       builder: (context) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.s16,
+            AppDimensions.s4,
+            AppDimensions.s16,
+            AppDimensions.s20,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 registration
-                    ? 'Add registration certificate'
-                    : 'Add insurance document',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                    ? t.advisorIntakeAddRegistration
+                    : t.advisorIntakeAddInsurance,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppDimensions.s14),
               FilledButton.tonalIcon(
                 onPressed: () => Navigator.pop(context, ImageSource.camera),
                 icon: const Icon(Icons.photo_camera_outlined),
-                label: const Text('Take a photo'),
+                label: Text(t.advisorIntakeTakePhoto),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.s8),
               OutlinedButton.icon(
                 onPressed: () => Navigator.pop(context, ImageSource.gallery),
                 icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Choose from gallery'),
+                label: Text(t.advisorIntakeChooseGallery),
               ),
             ],
           ),
@@ -643,6 +1501,7 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Future<void> _pickJobVideo() async {
+    final t = StaffLocalizations.of(context)!;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (context) => SafeArea(
@@ -650,12 +1509,12 @@ class _BodyState extends ConsumerState<_Body> {
           children: [
             ListTile(
               leading: const Icon(Icons.videocam_outlined),
-              title: const Text('Record video'),
+              title: Text(t.advisorIntakeRecordVideo),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.video_library_outlined),
-              title: const Text('Choose video'),
+              title: Text(t.advisorIntakeChooseVideo),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -673,13 +1532,18 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Future<void> _captureSignature(bool customer) async {
-    final title = customer ? 'Customer Signature' : 'Advisor Signature';
+    final t = StaffLocalizations.of(context)!;
+    final title = customer
+        ? t.advisorIntakeSignatureCustomerTitle
+        : t.advisorIntakeSignatureAdvisorTitle;
     final bytes = await showModalBottomSheet<Uint8List>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppDimensions.radiusSheet),
+        ),
       ),
       builder: (_) => AdvisorSignaturePad(title: title),
     );
@@ -697,495 +1561,246 @@ class _BodyState extends ConsumerState<_Body> {
       }
     });
   }
-
-  void _showInspectionPrompt(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.r28),
-          ),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.line,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppDimensions.r16),
-              ),
-              child: Icon(
-                _savedToServer
-                    ? Icons.cloud_done_outlined
-                    : Icons.cloud_upload_outlined,
-                color: AppColors.accent,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _savedToServer
-                  ? 'Job Card Created & Synced'
-                  : 'Job Card Saved Locally',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _savedToServer
-                  ? 'Saved to this device and the server.\nWould you like to start the inspection?'
-                  : 'The API could not be reached. The job card is safely stored and queued for automatic sync.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.text2,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  ref.read(inspectionProvider.notifier).reset();
-                  final jobId = _savedJobId ?? '';
-                  ref.read(inspectionProvider.notifier).setJobCardId(jobId);
-                  final callbacks = InspectionCallbacks(
-                    onBack: () {
-                      ref.read(advisorRefreshProvider.notifier).state++;
-                      context.pop();
-                    },
-                    onSaveDraft: () {
-                      ref.read(advisorRefreshProvider.notifier).state++;
-                      context.pop();
-                      context.pop();
-                    },
-                    onPreview: () {
-                      context.push(
-                        AppRoutes.inspectionPreview,
-                        extra: {'onBack': () => context.pop(), 'jobId': jobId},
-                      );
-                    },
-                  );
-                  context.push(AppRoutes.inspectionSheet, extra: callbacks);
-                },
-                icon: const Icon(Icons.search_outlined, size: 20),
-                label: const Text(
-                  'Add Inspection',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.r14),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  if (context.mounted) context.pop();
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.text3,
-                  side: const BorderSide(color: AppColors.line),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.r14),
-                  ),
-                ),
-                child: const Text(
-                  'Skip',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SEARCH MODE SECTION (Image 1)
+//  Shared intake building blocks
 // ─────────────────────────────────────────────────────────────────────────────
-class _JobCardIntro extends StatelessWidget {
-  final bool isFromBooking;
-  const _JobCardIntro({required this.isFromBooking});
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withValues(alpha: 0.12),
-            theme.colorScheme.primary.withValues(alpha: 0.035),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.16),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(AppDimensions.r12),
-            ),
-            child: const Icon(
-              Icons.assignment_add,
-              color: Colors.white,
-              size: 23,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isFromBooking
-                      ? 'Complete the vehicle intake'
-                      : 'New vehicle intake',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Find an existing record or enter the customer and vehicle details below.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      size: 15,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Only fields marked * are required',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+/// Collapsible intake section card on the shared surface grammar.
+class _IntakeSection extends StatelessWidget {
+  final String sectionKey;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final Widget child;
 
-class _SearchModeSection extends StatelessWidget {
-  final VehicleCustomerFormState state;
-  final WidgetRef ref;
-  final VoidCallback onScanVin;
-  final VoidCallback onScanQr;
-  const _SearchModeSection({
-    required this.state,
-    required this.ref,
-    required this.onScanVin,
-    required this.onScanQr,
+  const _IntakeSection({
+    required this.sectionKey,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.expanded,
+    required this.onToggle,
+    required this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    final localMatches = ref.watch(advisorVehicleMatchesProvider);
-    final remoteMatches = ref.watch(advisorRemoteVehicleMatchesProvider);
-    final matches = remoteMatches.value ?? localMatches;
-    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-    void applyMatch(VehicleMatch m) {
-      notifier
-        ..setCustomerName(m.customerName)
-        ..setPhone(m.phoneNumber)
-        ..setEmail(m.email)
-        ..setRegistrationNumber(m.registrationNumber)
-        ..setVin(m.vin)
-        ..setMake(m.make)
-        ..setModel(m.model);
-      if (m.emirate.isNotEmpty ||
-          m.plateCode.isNotEmpty ||
-          m.plateNumber.isNotEmpty) {
-        notifier
-          ..setEmirate(m.emirate)
-          ..setPlateCode(m.plateCode)
-          ..setPlateNumber(m.plateNumber);
-      }
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r16)),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard.standard(
+      padding: EdgeInsets.zero,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.09),
-                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+          Semantics(
+            button: true,
+            expanded: expanded,
+            label: title,
+            child: InkWell(
+              onTap: onToggle,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.s16,
+                  AppDimensions.s14,
+                  AppDimensions.s12,
+                  AppDimensions.s14,
                 ),
-                child: const Icon(
-                  Icons.manage_search_rounded,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 11),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      'Find Existing Record',
-                      style: TextStyle(
-                        color: kTextColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Avoid duplicate customer and vehicle records',
-                      style: TextStyle(color: AppColors.text3, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            onChanged: (v) => ref
-                .read(vehicleCustomerFormProvider.notifier)
-                .setCustomerSearch(v),
-            textInputAction: TextInputAction.search,
-            textCapitalization: TextCapitalization.words,
-            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-            decoration: InputDecoration(
-              hintText: 'Mobile, customer name, plate number, or VIN',
-              hintStyle: const TextStyle(color: kHintColor, fontSize: 13),
-              prefixIcon: const Icon(Icons.search, color: kHintColor, size: 18),
-              filled: true,
-              fillColor: kFieldBg,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(AppDimensions.r10),
-                ),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-            ),
-          ),
-          if (matches.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ...matches.map(
-              (m) => InkWell(
-                onTap: () => applyMatch(m),
-                borderRadius: BorderRadius.circular(AppDimensions.r8),
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 6),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: kTealLight,
-                    borderRadius: BorderRadius.circular(AppDimensions.r8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.person_search_outlined,
-                        size: 16,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              m.customerName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: kTextColor,
-                              ),
-                            ),
-                            Text(
-                              [
-                                m.registrationNumber,
-                                m.phoneNumber,
-                              ].where((value) => value.isNotEmpty).join(' · '),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.text3,
-                              ),
-                            ),
-                          ],
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.09),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusInput,
                         ),
                       ),
-                      const Icon(
-                        Icons.add_circle_outline,
-                        size: 16,
-                        color: AppColors.primary,
+                      child: Icon(icon, size: 19, color: colors.primary),
+                    ),
+                    const SizedBox(width: AppDimensions.s12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: colors.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: AppDimensions.s8),
+                    AnimatedRotation(
+                      turns: expanded ? 0.5 : 0,
+                      duration: AppMotion.resolve(context, AppMotion.fast),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-          const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final buttons = [
-                _OutlineButton(
-                  icon: Icons.document_scanner_outlined,
-                  label: 'Scan VIN',
-                  onTap: onScanVin,
-                ),
-                _OutlineButton(
-                  icon: Icons.qr_code_scanner,
-                  label: 'Scan Vehicle QR',
-                  onTap: onScanQr,
-                ),
-              ];
-              if (constraints.maxWidth < 390) {
-                return Column(
-                  children: [
-                    buttons.first,
-                    const SizedBox(height: 10),
-                    buttons.last,
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(child: buttons.first),
-                  const SizedBox(width: 10),
-                  Expanded(child: buttons.last),
-                ],
-              );
-            },
           ),
+          if (expanded) ...[
+            Divider(height: 1, color: colors.outlineVariant),
+            Padding(
+              padding: const EdgeInsets.all(AppDimensions.s16),
+              child: child,
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _OutlineButton extends StatelessWidget {
+/// Text field that adapts the shared [AppTextField] to the intake's
+/// `initialValue`-driven form state by owning a controller internally.
+class _IntakeField extends StatefulWidget {
+  final String? initialValue;
+  final String hint;
+  final ValueChanged<String>? onChanged;
+  final TextInputType keyboardType;
+  final Widget? prefix;
+  final Widget? suffixIcon;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextCapitalization textCapitalization;
+  final bool isIdentifier;
+
+  const _IntakeField({
+    super.key,
+    this.initialValue,
+    required this.hint,
+    this.onChanged,
+    this.keyboardType = TextInputType.text,
+    this.prefix,
+    this.suffixIcon,
+    this.inputFormatters,
+    this.textCapitalization = TextCapitalization.none,
+    this.isIdentifier = false,
+  });
+
+  @override
+  State<_IntakeField> createState() => _IntakeFieldState();
+}
+
+class _IntakeFieldState extends State<_IntakeField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _IntakeField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final incoming = widget.initialValue ?? '';
+    if (incoming != _controller.text) {
+      _controller.text = incoming;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppTextField(
+      controller: _controller,
+      hint: widget.hint,
+      onChanged: widget.onChanged,
+      keyboardType: widget.keyboardType,
+      prefix: widget.prefix,
+      suffixIcon: widget.suffixIcon,
+      inputFormatters: widget.inputFormatters,
+      textCapitalization: widget.textCapitalization,
+      isIdentifier: widget.isIdentifier,
+    );
+  }
+}
+
+/// Tap-to-select field trigger (brand/model/year) styled like an input.
+class _SelectorField extends StatelessWidget {
+  final String value;
+  final String hint;
+  final String? errorText;
   final IconData icon;
-  final String label;
   final VoidCallback onTap;
 
-  const _OutlineButton({
-    required this.icon,
-    required this.label,
+  const _SelectorField({
+    super.key,
+    required this.value,
+    required this.hint,
+    this.errorText,
+    this.icon = Icons.chevron_right_rounded,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final hasValue = value.isNotEmpty;
+
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 13),
+        constraints: const BoxConstraints(minHeight: 52),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.s16,
+          vertical: AppDimensions.s12,
+        ),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary),
-          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+          border: Border.all(
+            color: errorText != null ? colors.error : colors.outline,
+          ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: AppColors.primary, size: 18),
-            const SizedBox(width: 8),
-            Flexible(
+            Expanded(
               child: Text(
-                label,
+                hasValue ? value : hint,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  letterSpacing: 0.5,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: hasValue
+                      ? colors.onSurface
+                      : colors.onSurfaceVariant.withValues(alpha: 0.7),
+                  fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ),
+            Icon(icon, size: 20, color: colors.onSurfaceVariant),
           ],
         ),
       ),
@@ -1193,41 +1808,248 @@ class _OutlineButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-class _LabeledControl extends StatelessWidget {
-  final String label;
-  final bool required;
-  final Widget child;
-  final String? errorText;
+/// Always-visible inline prefix (country dial code / plate prefix).
+class _AffixPrefix extends StatelessWidget {
+  final String text;
+  const _AffixPrefix(this.text);
 
-  const _LabeledControl({
-    required this.label,
-    required this.child,
-    this.required = false,
-    this.errorText,
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(start: 14, end: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textDirection: TextDirection.ltr,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: colors.onSurface,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(height: 20, width: 1, color: colors.outline),
+        ],
+      ),
+    );
+  }
+}
+
+class _MoreLessLink extends StatelessWidget {
+  final bool showMore;
+  final String moreLabel;
+  final String lessLabel;
+  final VoidCallback onTap;
+
+  const _MoreLessLink({
+    required this.showMore,
+    required this.moreLabel,
+    required this.lessLabel,
+    required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      FieldLabel(label, required: required),
-      child,
-      if (errorText != null) ...[
-        const SizedBox(height: 6),
-        Text(
-          errorText!,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.error,
-            fontWeight: FontWeight.w600,
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: TextButton(
+        onPressed: onTap,
+        child: Text(showMore ? lessLabel : moreLabel),
+      ),
+    );
+  }
+}
+
+class _ToggleRow extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  const _ToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final enabled = onChanged != null;
+    return Semantics(
+      toggled: value,
+      enabled: enabled,
+      child: InkWell(
+        onTap: enabled ? () => onChanged!(!value) : null,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s14,
+            vertical: AppDimensions.s6,
+          ),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s12),
+              IgnorePointer(
+                child: Switch.adaptive(
+                  value: value,
+                  onChanged: enabled ? onChanged : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SignatureRow extends StatelessWidget {
+  final String label;
+  final bool captured;
+  final String capturedLabel;
+  final String redoLabel;
+  final VoidCallback onCapture;
+
+  const _SignatureRow({
+    required this.label,
+    required this.captured,
+    required this.capturedLabel,
+    required this.redoLabel,
+    required this.onCapture,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return AppCard.subtle(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s14,
+        vertical: AppDimensions.s12,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            captured ? Icons.check_circle_rounded : Icons.draw_outlined,
+            color: captured ? AppColors.success : colors.onSurfaceVariant,
+            size: 20,
+          ),
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (captured)
+                  Text(
+                    capturedLabel,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          AppButton.secondary(
+            label: captured ? redoLabel : label,
+            isExpanded: false,
+            height: 40,
+            leadingIcon: captured ? Icons.refresh_rounded : Icons.draw_outlined,
+            onPressed: onCapture,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final String? secondary;
+  final bool empty;
+
+  const _SummaryRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    this.secondary,
+    this.empty = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: colors.onSurfaceVariant),
+        const SizedBox(width: AppDimensions.s10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value.isEmpty ? '—' : value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: empty ? colors.onSurfaceVariant : colors.onSurface,
+                ),
+              ),
+              if (secondary != null && secondary!.isNotEmpty)
+                Text(
+                  secondary!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textDirection: TextDirection.ltr,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+            ],
           ),
         ),
       ],
-    ],
-  );
+    );
+  }
 }
 
-/// Uses available width without squeezing controls. Fields share a row only
+/// Uses available width without squeezing controls: fields share a row only
 /// when every child can retain a practical input width; otherwise they stack.
 class _ResponsiveFieldGroup extends StatelessWidget {
   static const double _spacing = 10;
@@ -1271,943 +2093,155 @@ class _ResponsiveFieldGroup extends StatelessWidget {
   );
 }
 
-//  CUSTOMER DETAILS (Images 3-5)
 // ─────────────────────────────────────────────────────────────────────────────
-class _CustomerDetailsSection extends StatelessWidget {
-  final VehicleCustomerFormState state;
-  final WidgetRef ref;
-  final Map<String, String> errors;
-  final Map<String, GlobalKey> fieldKeys;
-  final ValueChanged<String> onFieldChanged;
-  const _CustomerDetailsSection({
-    required this.state,
-    required this.ref,
-    required this.errors,
-    required this.fieldKeys,
-    required this.onFieldChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SectionCard(
-      title: 'Customer Details',
-      subtitle: 'Who is bringing in the vehicle?',
-      icon: Icons.person_outline_rounded,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AdvisorToggleTile(
-            label: 'B2B Customer',
-            value: state.isB2B,
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setB2B(v),
-          ),
-          kGap12,
-
-          FieldLabel('Customer Name', required: true),
-          AdvisorTextField(
-            key: fieldKeys['Customer Name'],
-            hint: 'Customer Name',
-            errorText: errors['Customer Name'],
-            textCapitalization: TextCapitalization.words,
-            onChanged: (v) {
-              ref.read(vehicleCustomerFormProvider.notifier).setCustomerName(v);
-              if (v.trim().isNotEmpty) onFieldChanged('Customer Name');
-            },
-          ),
-          kGap12,
-
-          FieldLabel('Phone Number', required: true),
-          AdvisorTextField(
-            key: fieldKeys['Phone Number'],
-            hint: 'Phone number',
-            errorText: errors['Phone Number'],
-            keyboardType: TextInputType.phone,
-            // prefixIcon (not prefix) so the country code is ALWAYS visible,
-            // not only while the field is focused.
-            prefix: _CountryCodePrefix(code: phoneCountries.first.code),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (v) {
-              ref.read(vehicleCustomerFormProvider.notifier).setPhone(v);
-              if (v.trim().length >= 8) onFieldChanged('Phone Number');
-            },
-          ),
-          kGap12,
-
-          const FieldLabel('Email Address'),
-          AdvisorTextField(
-            hint: 'Email',
-            keyboardType: TextInputType.emailAddress,
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setEmail(v),
-          ),
-          kGap12,
-
-          const FieldLabel('Customer Group'),
-          AdvisorDropdown(
-            hint: 'Select Customer Group',
-            value: state.customerGroup,
-            items: kCustomerGroups,
-            onChanged: (v) => ref
-                .read(vehicleCustomerFormProvider.notifier)
-                .setCustomerGroup(v),
-          ),
-          kGap12,
-
-          if (state.showMoreCustomer) ...[
-            kGap12,
-            const FieldLabel('Gender'),
-            AdvisorDropdown(
-              hint: 'Select Gender',
-              value: state.gender,
-              items: kGenders,
-              onChanged: (v) =>
-                  ref.read(vehicleCustomerFormProvider.notifier).setGender(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Address'),
-            AdvisorDropdown(
-              hint: 'Address',
-              value: state.address,
-              items: kAddresses,
-              onChanged: (v) =>
-                  ref.read(vehicleCustomerFormProvider.notifier).setAddress(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Tax Number'),
-            AdvisorTextField(
-              hint: 'Tax Number',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setTaxNumber(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Source'),
-            AdvisorTextField(
-              hint: 'How did you come to know abo...',
-              onChanged: (v) =>
-                  ref.read(vehicleCustomerFormProvider.notifier).setSource(v),
-            ),
-          ],
-
-          const SizedBox(height: 8),
-          MoreLessLink(
-            showMore: state.showMoreCustomer,
-            onTap: () => ref
-                .read(vehicleCustomerFormProvider.notifier)
-                .toggleCustomerMore(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Always-visible inline prefix for a text field. Rendered through
-/// `prefixIcon` (not `prefix`/`prefixText`, which Flutter hides until the
-/// field is focused or has text) so it never disappears while typing.
-class _AffixPrefix extends StatelessWidget {
-  final String text;
-  const _AffixPrefix(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 14, right: 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: kTextColor,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(height: 20, width: 1, color: kBorderColor),
-        ],
-      ),
-    );
-  }
-}
-
-class _CountryCodePrefix extends StatelessWidget {
-  final String code;
-  const _CountryCodePrefix({required this.code});
-
-  @override
-  Widget build(BuildContext context) => _AffixPrefix(code);
-}
-
-class _PlatePrefix extends StatelessWidget {
-  final String emirate;
-  final String plateCode;
-  const _PlatePrefix({required this.emirate, required this.plateCode});
-
-  @override
-  Widget build(BuildContext context) => _AffixPrefix('$emirate-$plateCode');
-}
-
+//  Find existing record
 // ─────────────────────────────────────────────────────────────────────────────
-//  CUSTOMER DETAILS (Images 3-5)
-// ─────────────────────────────────────────────────────────────────────────────
-class _VehicleDetailsSection extends StatelessWidget {
+
+class _FindExistingRecord extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
   final VoidCallback onScanVin;
-  final String? registrationDocumentName;
-  final String? insuranceDocumentName;
-  final VoidCallback onRegistrationUpload;
-  final VoidCallback onInsuranceUpload;
-  final Map<String, String> errors;
-  final Map<String, GlobalKey> fieldKeys;
-  final ValueChanged<String> onFieldChanged;
-  const _VehicleDetailsSection({
+  final VoidCallback onScanQr;
+  const _FindExistingRecord({
     required this.state,
     required this.ref,
     required this.onScanVin,
-    required this.registrationDocumentName,
-    required this.insuranceDocumentName,
-    required this.onRegistrationUpload,
-    required this.onInsuranceUpload,
-    required this.errors,
-    required this.fieldKeys,
-    required this.onFieldChanged,
+    required this.onScanQr,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      title: 'Vehicle Details',
-      subtitle: 'Registration and service information',
-      icon: Icons.directions_car_outlined,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ResponsiveFieldGroup(
-            minChildWidth: 150,
-            children: [
-              _LabeledControl(
-                label: 'Emirate',
-                child: AdvisorDropdown(
-                  hint: 'Select Emirate',
-                  value: state.emirate,
-                  items: kEmirates,
-                  onChanged: (v) => ref
-                      .read(vehicleCustomerFormProvider.notifier)
-                      .setEmirate(v),
+    final t = StaffLocalizations.of(context)!;
+    final localMatches = ref.watch(advisorVehicleMatchesProvider);
+    final remoteMatches = ref.watch(advisorRemoteVehicleMatchesProvider);
+    final matches = remoteMatches.value ?? localMatches;
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+
+    void applyMatch(VehicleMatch m) {
+      notifier
+        ..setCustomerName(m.customerName)
+        ..setPhone(m.phoneNumber)
+        ..setEmail(m.email)
+        ..setRegistrationNumber(m.registrationNumber)
+        ..setVin(m.vin)
+        ..setMake(m.make)
+        ..setModel(m.model);
+      if (m.emirate.isNotEmpty ||
+          m.plateCode.isNotEmpty ||
+          m.plateNumber.isNotEmpty) {
+        notifier
+          ..setEmirate(m.emirate)
+          ..setPlateCode(m.plateCode)
+          ..setPlateNumber(m.plateNumber);
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppSearchField(
+          hintText: t.advisorIntakeFindHint,
+          onChanged: notifier.setCustomerSearch,
+        ),
+        if (matches.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.s12),
+          for (final m in matches)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppDimensions.s6),
+              child: AppCard.interactive(
+                onTap: () => applyMatch(m),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.s12,
+                  vertical: AppDimensions.s10,
                 ),
-              ),
-              _LabeledControl(
-                label: 'Plate Code',
-                child: AdvisorTextField(
-                  hint: 'A',
-                  initialValue: state.plateCode,
-                  textCapitalization: TextCapitalization.characters,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp('[a-zA-Z0-9]')),
-                    LengthLimitingTextInputFormatter(4),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.person_search_outlined,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: AppDimensions.s10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            m.customerName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            [m.registrationNumber, m.phoneNumber]
+                                .where((v) => v.isNotEmpty)
+                                .join(' · '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.add_circle_outline,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                   ],
-                  onChanged: (v) => ref
-                      .read(vehicleCustomerFormProvider.notifier)
-                      .setPlateCode(v),
                 ),
               ),
-              _LabeledControl(
-                label: 'Plate Number',
-                required: true,
-                child: AdvisorTextField(
-                  key: fieldKeys['Plate Number'],
-                  hint: '2500',
-                  errorText: errors['Plate Number'],
-                  initialValue: state.plateNumber,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  // Always-visible Emirate-PlateCode prefix, e.g. "Dubai-A".
-                  prefix: (state.emirate.isEmpty && state.plateCode.isEmpty)
-                      ? null
-                      : _PlatePrefix(
-                          emirate: state.emirate,
-                          plateCode: state.plateCode,
-                        ),
-                  onChanged: (v) {
-                    ref
-                        .read(vehicleCustomerFormProvider.notifier)
-                        .setPlateNumber(v);
-                    if (v.trim().isNotEmpty) onFieldChanged('Plate Number');
-                  },
-                ),
-              ),
-            ],
-          ),
-          kGap12,
-
-          const FieldLabel('VIN (Chasis number)'),
-          AdvisorTextField(
-            hint: 'VIN(Chasis number)',
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setVin(v),
-            suffix: GestureDetector(
-              onTap: onScanVin,
-              child: const Padding(
-                padding: EdgeInsets.only(right: 10),
-                child: Icon(Icons.qr_code_scanner, color: kHintColor, size: 18),
-              ),
             ),
-          ),
-          kGap12,
-
-          _ResponsiveFieldGroup(
-            minChildWidth: 190,
-            children: [
-              _LabeledControl(
-                label: 'Make',
-                required: true,
-                errorText: errors['Make'],
-                child: _BrandSelector(
-                  key: fieldKeys['Make'],
-                  state: state,
-                  ref: ref,
-                  errorText: errors['Make'],
-                  onSelected: () => onFieldChanged('Make'),
-                ),
-              ),
-              _LabeledControl(
-                label: 'Model',
-                required: true,
-                errorText: errors['Model'],
-                child: _ModelSelector(
-                  key: fieldKeys['Model'],
-                  state: state,
-                  ref: ref,
-                  errorText: errors['Model'],
-                  onSelected: () => onFieldChanged('Model'),
-                ),
-              ),
-              _LabeledControl(
-                label: 'Model Year',
-                child: _ModelYearSelector(state: state, ref: ref),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-          MoreLessLink(
-            showMore: state.showMoreVehicle,
-            onTap: () => ref
-                .read(vehicleCustomerFormProvider.notifier)
-                .toggleVehicleMore(),
-          ),
-
-          if (state.showMoreVehicle) ...[
-            kGap12,
-            const FieldLabel('Number of Cylinders'),
-            AdvisorDropdown(
-              hint: 'Number of Cylinders',
-              value: state.cylinders,
-              items: kCylinders,
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setCylinders(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Engine Capacity'),
-            AdvisorTextField(
-              hint: 'Engine Capacity',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setEngineCapacity(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Vehicle Color'),
-            AdvisorTextField(
-              hint: 'Vehicle Color',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setVehicleColor(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Fuel Type'),
-            AdvisorDropdown(
-              hint: 'Select Fuel Type',
-              value: state.fuelType,
-              items: kFuelTypes,
-              onChanged: (v) =>
-                  ref.read(vehicleCustomerFormProvider.notifier).setFuelType(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Engine number'),
-            AdvisorTextField(
-              hint: 'Engine number',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setEngineNumber(v),
-            ),
-            kGap12,
-
-            const FieldLabel('Registration Certificate'),
-            _ImageUploadButton(
-              label: registrationDocumentName ?? 'Add document',
-              selected: registrationDocumentName != null,
-              onTap: onRegistrationUpload,
-            ),
-            kGap12,
-          ],
-
-          kGap12,
-          const FieldLabel('Job Category'),
-          AdvisorDropdown(
-            hint: 'Select Job Category',
-            value: state.jobCategory,
-            items: kJobCategories,
-            onChanged: (v) => ref
-                .read(vehicleCustomerFormProvider.notifier)
-                .setJobCategory(v),
-          ),
-          // Insurance fields appear directly under Job Category when needed.
-          if (state.jobCategory == 'Insurance') ...[
-            kGap12,
-            const FieldLabel('Insurance Name'),
-            AdvisorDropdown(
-              hint: 'Insurance Name',
-              value: state.insuranceProvider,
-              items: kInsuranceProviders,
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setInsuranceProvider(v),
-            ),
-            kGap12,
-            const FieldLabel('LPO Number'),
-            AdvisorTextField(
-              hint: 'LPO Number',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setLpoNumber(v),
-            ),
-            kGap12,
-            const FieldLabel('Policy Number'),
-            AdvisorTextField(
-              hint: 'Policy Number',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setPolicyNumber(v),
-            ),
-            kGap12,
-            const FieldLabel('Accident Number'),
-            AdvisorTextField(
-              hint: 'Accident Number',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setAccidentNumber(v),
-            ),
-            kGap12,
-            const FieldLabel('Insurance Tax Number'),
-            AdvisorTextField(
-              hint: 'Enter Insurance Tax number',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setInsuranceTaxNumber(v),
-            ),
-            kGap12,
-            const FieldLabel('Insurance Address'),
-            AdvisorTextField(
-              hint: 'Insurance Address',
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setInsuranceAddress(v),
-            ),
-            kGap12,
-            const FieldLabel('Insurance Expiry Date'),
-            _DateField(
-              value: state.insuranceExpiryDate,
-              onChanged: (v) => ref
-                  .read(vehicleCustomerFormProvider.notifier)
-                  .setInsuranceExpiry(v),
-            ),
-            kGap12,
-            const FieldLabel('Insurance Document'),
-            _ImageUploadButton(
-              label: insuranceDocumentName ?? 'Add document',
-              selected: insuranceDocumentName != null,
-              onTap: onInsuranceUpload,
-            ),
-          ],
-          kGap12,
-          _ResponsiveFieldGroup(
-            minChildWidth: 200,
-            children: [
-              _LabeledControl(
-                label: 'Markup Type',
-                child: AdvisorTextField(
-                  hint: 'Markup Type',
-                  onChanged: (v) => ref
-                      .read(vehicleCustomerFormProvider.notifier)
-                      .setMarkupType(v),
-                ),
-              ),
-              _LabeledControl(
-                label: 'Order Type',
-                child: AdvisorTextField(
-                  hint: 'Order Type',
-                  onChanged: (v) => ref
-                      .read(vehicleCustomerFormProvider.notifier)
-                      .setOrderType(v),
-                ),
-              ),
-            ],
-          ),
-          // Job Description sits last, right before Additional Information.
-          kGap12,
-          const FieldLabel('Job Description'),
-          _JobDescriptionTable(state: state, ref: ref),
         ],
-      ),
-    );
-  }
-}
-
-class _BrandSelector extends StatelessWidget {
-  final VehicleCustomerFormState state;
-  final WidgetRef ref;
-  final String? errorText;
-  final VoidCallback onSelected;
-  const _BrandSelector({
-    super.key,
-    required this.state,
-    required this.ref,
-    required this.errorText,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        final result = await showModalBottomSheet<String>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => SizedBox(
-            height: MediaQuery.of(context).size.height * 0.85,
-            child: SelectBrandSheet(selected: state.make),
-          ),
-        );
-        if (result != null) {
-          ref.read(vehicleCustomerFormProvider.notifier).setMake(result);
-          onSelected();
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        decoration: BoxDecoration(
-          color: state.make.isEmpty ? kFieldBg : kTealLight,
-          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
-          border: errorText == null
-              ? null
-              : Border.all(color: Theme.of(context).colorScheme.error),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                state.make.isEmpty ? 'Select Brand' : state.make,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: state.make.isEmpty ? kHintColor : kTextColor,
-                  fontWeight: state.make.isEmpty
-                      ? FontWeight.normal
-                      : FontWeight.w600,
-                ),
+        const SizedBox(height: AppDimensions.s12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final buttons = [
+              AppButton.secondary(
+                label: t.advisorIntakeScanVin,
+                leadingIcon: Icons.document_scanner_outlined,
+                onPressed: onScanVin,
               ),
-            ),
-            const Icon(Icons.chevron_right, color: kHintColor, size: 18),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ModelSelector extends StatelessWidget {
-  final VehicleCustomerFormState state;
-  final WidgetRef ref;
-  final String? errorText;
-  final VoidCallback onSelected;
-  const _ModelSelector({
-    super.key,
-    required this.state,
-    required this.ref,
-    required this.errorText,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        if (state.make.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select a brand first')),
-          );
-          return;
-        }
-        final result = await showModalBottomSheet<String>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => SizedBox(
-            height: MediaQuery.of(context).size.height * 0.85,
-            child: SelectModelSheet(brand: state.make, selected: state.model),
-          ),
-        );
-        if (result != null) {
-          ref.read(vehicleCustomerFormProvider.notifier).setModel(result);
-          onSelected();
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        decoration: BoxDecoration(
-          color: state.model.isEmpty ? kFieldBg : kTealLight,
-          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
-          border: errorText == null
-              ? null
-              : Border.all(color: Theme.of(context).colorScheme.error),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                state.model.isEmpty ? 'Select Model' : state.model,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: state.model.isEmpty ? kHintColor : kTextColor,
-                  fontWeight: state.model.isEmpty
-                      ? FontWeight.normal
-                      : FontWeight.w600,
-                ),
+              AppButton.secondary(
+                label: t.advisorIntakeScanQr,
+                leadingIcon: Icons.qr_code_scanner,
+                onPressed: onScanQr,
               ),
-            ),
-            const Icon(Icons.chevron_right, color: kHintColor, size: 18),
-          ],
+            ];
+            if (constraints.maxWidth < 380) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  buttons.first,
+                  const SizedBox(height: AppDimensions.s10),
+                  buttons.last,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: buttons.first),
+                const SizedBox(width: AppDimensions.s10),
+                Expanded(child: buttons.last),
+              ],
+            );
+          },
         ),
-      ),
-    );
-  }
-}
-
-class _ModelYearSelector extends StatelessWidget {
-  final VehicleCustomerFormState state;
-  final WidgetRef ref;
-  const _ModelYearSelector({required this.state, required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        final result = await showModelYearDialog(context, state.modelYear);
-        if (result != null) {
-          ref.read(vehicleCustomerFormProvider.notifier).setModelYear(result);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        decoration: BoxDecoration(
-          color: state.modelYear.isEmpty ? kFieldBg : kTealLight,
-          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                state.modelYear.isEmpty ? 'Select Model Year' : state.modelYear,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: state.modelYear.isEmpty ? kHintColor : kTextColor,
-                  fontWeight: state.modelYear.isEmpty
-                      ? FontWeight.normal
-                      : FontWeight.w600,
-                ),
-              ),
-            ),
-            const Icon(Icons.keyboard_arrow_down, color: kHintColor, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ImageUploadButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _ImageUploadButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(50),
-        alignment: Alignment.centerLeft,
-      ),
-      icon: Icon(
-        selected ? Icons.check_circle_rounded : Icons.add_a_photo_outlined,
-        color: selected ? AppColors.success : AppColors.primary,
-      ),
-      label: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: selected ? AppColors.textPrimary : AppColors.primary,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+      ],
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  ADDITIONAL INFORMATION (Image 15)
+//  Job description table
 // ─────────────────────────────────────────────────────────────────────────────
-class _AdditionalInfoSection extends StatelessWidget {
-  final VehicleCustomerFormState state;
-  final WidgetRef ref;
-  final List<String> photoPaths;
-  final List<String> videoPaths;
-  final bool hasCustomerSignature;
-  final bool hasAdvisorSignature;
-  final VoidCallback onAddPhotos;
-  final VoidCallback onAddVideo;
-  final ValueChanged<int> onRemovePhoto;
-  final ValueChanged<int> onRemoveVideo;
-  final VoidCallback onCustomerSignature;
-  final VoidCallback onAdvisorSignature;
 
-  const _AdditionalInfoSection({
-    required this.state,
-    required this.ref,
-    required this.photoPaths,
-    required this.videoPaths,
-    required this.hasCustomerSignature,
-    required this.hasAdvisorSignature,
-    required this.onAddPhotos,
-    required this.onAddVideo,
-    required this.onRemovePhoto,
-    required this.onRemoveVideo,
-    required this.onCustomerSignature,
-    required this.onAdvisorSignature,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SectionCard(
-      title: 'Additional Information',
-      subtitle: 'Mileage, fuel, media and consent',
-      icon: Icons.fact_check_outlined,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const FieldLabel('Odometer Reading(in Kms)'),
-          AdvisorTextField(
-            hint: 'Odometer (in Kms)',
-            keyboardType: TextInputType.number,
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setOdometer(v),
-          ),
-          kGap16,
-
-          // Fuel level slider
-          const Text(
-            'Fuel level',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: kLabelColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _FuelLevelSlider(
-            value: state.fuelLevel,
-            onChanged: (v) =>
-                ref.read(vehicleCustomerFormProvider.notifier).setFuelLevel(v),
-          ),
-          kGap16,
-
-          // Customer Consent toggle
-          Container(
-            decoration: BoxDecoration(
-              color: kFieldBg,
-              borderRadius: BorderRadius.all(
-                Radius.circular(AppDimensions.r10),
-              ),
-            ),
-            child: AdvisorToggleTile(
-              label: 'Customer Consent',
-              value: state.customerConsent,
-              onChanged: (v) =>
-                  ref.read(vehicleCustomerFormProvider.notifier).setConsent(v),
-            ),
-          ),
-          kGap16,
-
-          const FieldLabel('Job Card Photos and Videos'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _MediaAddTile(
-                  icon: Icons.photo_library_outlined,
-                  label: 'Photos',
-                  count: photoPaths.length,
-                  onTap: onAddPhotos,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MediaAddTile(
-                  icon: Icons.videocam_outlined,
-                  label: 'Video',
-                  count: videoPaths.length,
-                  onTap: onAddVideo,
-                ),
-              ),
-            ],
-          ),
-          if (photoPaths.isNotEmpty || videoPaths.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _MediaThumbnailGrid(
-              photoPaths: photoPaths,
-              videoPaths: videoPaths,
-              onRemovePhoto: onRemovePhoto,
-              onRemoveVideo: onRemoveVideo,
-            ),
-          ],
-          kGap16,
-
-          const FieldLabel('Digital Signatures'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onCustomerSignature,
-                  icon: Icon(
-                    hasCustomerSignature
-                        ? Icons.check_circle_outline
-                        : Icons.draw_outlined,
-                    size: 18,
-                    color: hasCustomerSignature ? AppColors.success : null,
-                  ),
-                  label: const Text(
-                    'Customer',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onAdvisorSignature,
-                  icon: Icon(
-                    hasAdvisorSignature
-                        ? Icons.check_circle_outline
-                        : Icons.draw_outlined,
-                    size: 18,
-                    color: hasAdvisorSignature ? AppColors.success : null,
-                  ),
-                  label: const Text(
-                    'Advisor',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DateField extends StatelessWidget {
-  final String value;
-  final ValueChanged<String> onChanged;
-  const _DateField({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        final initial = DateTime.tryParse(value) ?? DateTime.now();
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: initial,
-          firstDate: DateTime(1980),
-          lastDate: DateTime(2100),
-        );
-        if (picked != null) {
-          final month = picked.month.toString().padLeft(2, '0');
-          final day = picked.day.toString().padLeft(2, '0');
-          onChanged('${picked.year}-$month-$day');
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-        decoration: BoxDecoration(
-          color: value.isEmpty ? kFieldBg : kTealLight,
-          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_today_outlined,
-              color: kHintColor,
-              size: 16,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                value.isEmpty ? 'Click to select a date' : value,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: value.isEmpty ? kHintColor : kTextColor,
-                  fontWeight: value.isEmpty
-                      ? FontWeight.normal
-                      : FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Numbered job-description rows (1, 2, 3, …), each with a rich text editor,
-/// a priority selector and an "Add Row" action — matching the client's
-/// reference table while staying usable on phones.
 class _JobDescriptionTable extends StatelessWidget {
   final VehicleCustomerFormState state;
   final WidgetRef ref;
@@ -2215,19 +2249,20 @@ class _JobDescriptionTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     final notifier = ref.read(vehicleCustomerFormProvider.notifier);
     final rows = state.jobDescriptions;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var index = 0; index < rows.length; index++)
-          _row(context, notifier, index, rows[index]),
+          _row(context, t, notifier, index, rows[index]),
         Align(
-          alignment: Alignment.centerLeft,
+          alignment: AlignmentDirectional.centerStart,
           child: TextButton.icon(
             onPressed: notifier.addJobDescriptionRow,
             icon: const Icon(Icons.add_circle_outline, size: 18),
-            label: const Text('Add another description'),
+            label: Text(t.advisorIntakeAddDescription),
           ),
         ),
       ],
@@ -2236,130 +2271,144 @@ class _JobDescriptionTable extends StatelessWidget {
 
   Widget _row(
     BuildContext context,
+    StaffLocalizations t,
     VehicleCustomerFormNotifier notifier,
     int index,
     JobDescriptionEntry row,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: kFieldBg,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 22,
-                height: 22,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '${index + 1}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+    final colors = Theme.of(context).colorScheme;
+    return AppCard.subtle(
+      padding: const EdgeInsets.all(AppDimensions.s12),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppDimensions.s4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${index + 1}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: colors.primary,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Job Description',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: kTextColor,
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
+                  child: Text(
+                    t.advisorIntakeJobDescription,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
-              if (state.jobDescriptions.length > 1)
-                IconButton(
-                  tooltip: 'Remove row',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => notifier.removeJobDescriptionRow(index),
-                  icon: const Icon(Icons.close, size: 18, color: kHintColor),
+                if (state.jobDescriptions.length > 1)
+                  IconButton(
+                    tooltip: t.advisorIntakeRemoveRow,
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => notifier.removeJobDescriptionRow(index),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s6),
+            _RichDescriptionEditor(
+              key: ValueKey('job-desc-$index'),
+              hint: t.advisorIntakeDescriptionHint,
+              boldTooltip: t.advisorIntakeBold,
+              italicTooltip: t.advisorIntakeItalic,
+              bulletTooltip: t.advisorIntakeBullet,
+              value: row.description,
+              onChanged: (v) =>
+                  notifier.updateJobDescriptionRow(index, description: v),
+            ),
+            const SizedBox(height: AppDimensions.s8),
+            _PrioritySelector(
+              label: t.advisorIntakePriority,
+              tooltip: t.advisorIntakeSelectPriority,
+              value: row.priority,
+              onChanged: (v) =>
+                  notifier.updateJobDescriptionRow(index, priority: v),
+            ),
+            const SizedBox(height: AppDimensions.s10),
+            Text(
+              t.advisorIntakeAttachments,
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+            const SizedBox(height: AppDimensions.s6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _attachmentButton(
+                  t,
+                  Icons.add_photo_alternate_outlined,
+                  t.advisorIntakePhotos,
+                  row.photoPaths.length,
+                  () => _pickPhotos(context, notifier, index),
                 ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          _RichDescriptionEditor(
-            key: ValueKey('job-desc-$index'),
-            value: row.description,
-            onChanged: (v) =>
-                notifier.updateJobDescriptionRow(index, description: v),
-          ),
-          const SizedBox(height: 8),
-          _PrioritySelector(
-            value: row.priority,
-            onChanged: (v) =>
-                notifier.updateJobDescriptionRow(index, priority: v),
-          ),
-          const SizedBox(height: 10),
-          Text('Attachments', style: Theme.of(context).textTheme.labelMedium),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _attachmentButton(
-                Icons.add_photo_alternate_outlined,
-                'Photos',
-                row.photoPaths.length,
-                () => _pickPhotos(context, notifier, index),
-              ),
-              _attachmentButton(
-                Icons.video_call_outlined,
-                'Video',
-                row.videoPaths.length,
-                () => _pickVideo(context, notifier, index),
-              ),
-              _attachmentButton(
-                Icons.mic_none_rounded,
-                'Audio',
-                row.audioPath.isEmpty ? 0 : 1,
-                () => _recordAudio(context, notifier, index, row),
+                _attachmentButton(
+                  t,
+                  Icons.video_call_outlined,
+                  t.advisorIntakeVideo,
+                  row.videoPaths.length,
+                  () => _pickVideo(context, notifier, index),
+                ),
+                _attachmentButton(
+                  t,
+                  Icons.mic_none_rounded,
+                  t.advisorIntakeAudio,
+                  row.audioPath.isEmpty ? 0 : 1,
+                  () => _recordAudio(context, t, notifier, index, row),
+                ),
+              ],
+            ),
+            if (row.photoPaths.isNotEmpty || row.videoPaths.isNotEmpty) ...[
+              const SizedBox(height: AppDimensions.s10),
+              _MediaThumbnailGrid(
+                photoPaths: row.photoPaths,
+                videoPaths: row.videoPaths,
+                onRemovePhoto: (i) =>
+                    notifier.removeJobDescriptionMedia(index, 'photo', i),
+                onRemoveVideo: (i) =>
+                    notifier.removeJobDescriptionMedia(index, 'video', i),
               ),
             ],
-          ),
-          if (row.photoPaths.isNotEmpty || row.videoPaths.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            _MediaThumbnailGrid(
-              photoPaths: row.photoPaths,
-              videoPaths: row.videoPaths,
-              onRemovePhoto: (i) =>
-                  notifier.removeJobDescriptionMedia(index, 'photo', i),
-              onRemoveVideo: (i) =>
-                  notifier.removeJobDescriptionMedia(index, 'video', i),
-            ),
-          ],
-          if (row.audioPath.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            InputChip(
-              avatar: const Icon(Icons.audiotrack_rounded, size: 18),
-              label: Text(
-                row.audioPath.split(RegExp(r'[/\\]')).last,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            if (row.audioPath.isNotEmpty) ...[
+              const SizedBox(height: AppDimensions.s8),
+              InputChip(
+                avatar: const Icon(Icons.audiotrack_rounded, size: 18),
+                label: Text(
+                  row.audioPath.split(RegExp(r'[/\\]')).last,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onDeleted: () =>
+                    notifier.removeJobDescriptionMedia(index, 'audio', 0),
               ),
-              onDeleted: () =>
-                  notifier.removeJobDescriptionMedia(index, 'audio', 0),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 
   Widget _attachmentButton(
+    StaffLocalizations t,
     IconData icon,
     String label,
     int count,
@@ -2367,7 +2416,11 @@ class _JobDescriptionTable extends StatelessWidget {
   ) => OutlinedButton.icon(
     onPressed: onPressed,
     icon: Icon(icon, size: 18),
-    label: Text(count == 0 ? label : '$label ($count)'),
+    label: Text(
+      count == 0 ? label : t.advisorIntakeCount(label, count),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    ),
   );
 
   Future<String> _persistAttachment(XFile file, String prefix) async {
@@ -2416,6 +2469,7 @@ class _JobDescriptionTable extends StatelessWidget {
 
   void _recordAudio(
     BuildContext context,
+    StaffLocalizations t,
     VehicleCustomerFormNotifier notifier,
     int index,
     JobDescriptionEntry row,
@@ -2423,6 +2477,7 @@ class _JobDescriptionTable extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (_) => _JobDescriptionAudioDialog(
+        title: t.advisorIntakeAudioTitle,
         itemId: 'job-description-${index + 1}',
         hasExisting: row.audioPath.isNotEmpty,
         onSaved: (path) => notifier.setJobDescriptionAudio(index, path),
@@ -2438,11 +2493,13 @@ class _JobDescriptionTable extends StatelessWidget {
 }
 
 class _JobDescriptionAudioDialog extends StatefulWidget {
+  final String title;
   final String itemId;
   final bool hasExisting;
   final ValueChanged<String> onSaved;
 
   const _JobDescriptionAudioDialog({
+    required this.title,
     required this.itemId,
     required this.hasExisting,
     required this.onSaved,
@@ -2499,21 +2556,22 @@ class _JobDescriptionAudioDialogState
 
   @override
   Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return AlertDialog(
-      title: const Text('Job description audio'),
+      title: Text(widget.title),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             _recording
-                ? 'Recording… $_seconds seconds'
+                ? t.advisorIntakeAudioRecording(_seconds)
                 : widget.hasExisting
-                ? 'Record again to replace the current audio.'
-                : 'Record a voice note up to 60 seconds.',
+                ? t.advisorIntakeAudioReplace
+                : t.advisorIntakeAudioPrompt,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppDimensions.s18),
           IconButton.filled(
             onPressed: _recording ? _stop : _start,
             icon: Icon(_recording ? Icons.stop_rounded : Icons.mic_rounded),
@@ -2527,7 +2585,7 @@ class _JobDescriptionAudioDialogState
       actions: [
         TextButton(
           onPressed: _recording ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(SharedCoreL10n.of(context).commonCancel),
         ),
       ],
     );
@@ -2535,18 +2593,23 @@ class _JobDescriptionAudioDialogState
 }
 
 class _PrioritySelector extends StatelessWidget {
+  final String label;
+  final String tooltip;
   final String value;
   final ValueChanged<String> onChanged;
 
-  const _PrioritySelector({required this.value, required this.onChanged});
+  const _PrioritySelector({
+    required this.label,
+    required this.tooltip,
+    required this.value,
+    required this.onChanged,
+  });
 
   Color _colorFor(String priority) {
     if (priority.startsWith('Red:')) return AppColors.danger;
     if (priority.startsWith('Yellow:')) return AppColors.warning;
     return AppColors.success;
   }
-
-  String _titleFor(String priority) => priority.split(':').first;
 
   String _detailFor(String priority) {
     final separator = priority.indexOf(':');
@@ -2558,7 +2621,7 @@ class _PrioritySelector extends StatelessWidget {
     final theme = Theme.of(context);
     return PopupMenuButton<String>(
       initialValue: value,
-      tooltip: 'Select priority',
+      tooltip: tooltip,
       constraints: const BoxConstraints(minWidth: 260, maxWidth: 340),
       onOpened: () => FocusManager.instance.primaryFocus?.unfocus(),
       onSelected: onChanged,
@@ -2576,14 +2639,14 @@ class _PrioritySelector extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppDimensions.s12),
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _titleFor(priority),
+                          priority.split(':').first,
                           style: theme.textTheme.labelLarge,
                         ),
                         Text(
@@ -2607,9 +2670,9 @@ class _PrioritySelector extends StatelessWidget {
           )
           .toList(),
       child: InputDecorator(
-        decoration: const InputDecoration(
-          labelText: 'Priority',
-          suffixIcon: Icon(Icons.keyboard_arrow_down_rounded),
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
         ),
         child: Row(
           children: [
@@ -2621,7 +2684,7 @@ class _PrioritySelector extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppDimensions.s10),
             Expanded(
               child: Text(
                 _detailFor(value),
@@ -2638,13 +2701,20 @@ class _PrioritySelector extends StatelessWidget {
 }
 
 /// A small rich-text editor for the job description with a formatting toolbar
-/// (bold, italic, bullet list). Formatting is stored as lightweight markdown
-/// so it survives the round-trip to the backend and can be rendered later.
+/// (bold, italic, bullet list). Formatting is stored as lightweight markdown.
 class _RichDescriptionEditor extends StatefulWidget {
+  final String hint;
+  final String boldTooltip;
+  final String italicTooltip;
+  final String bulletTooltip;
   final String value;
   final ValueChanged<String> onChanged;
   const _RichDescriptionEditor({
     super.key,
+    required this.hint,
+    required this.boldTooltip,
+    required this.italicTooltip,
+    required this.bulletTooltip,
     required this.value,
     required this.onChanged,
   });
@@ -2781,30 +2851,49 @@ class _RichDescriptionEditorState extends State<_RichDescriptionEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: kFieldBg,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
-        border: Border.all(color: AppColors.border),
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+        border: Border.all(color: colors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.border)),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s4,
+              vertical: 2,
+            ),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: colors.outline)),
             ),
             child: Row(
               children: [
-                _tool(Icons.format_bold, 'Bold', () => _wrapSelection('**')),
-                _tool(Icons.format_italic, 'Italic', () => _wrapSelection('*')),
-                _tool(Icons.format_list_bulleted, 'Bullet', _toggleBullet),
+                _tool(
+                  Icons.format_bold,
+                  widget.boldTooltip,
+                  () => _wrapSelection('**'),
+                ),
+                _tool(
+                  Icons.format_italic,
+                  widget.italicTooltip,
+                  () => _wrapSelection('*'),
+                ),
+                _tool(
+                  Icons.format_list_bulleted,
+                  widget.bulletTooltip,
+                  _toggleBullet,
+                ),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s12,
+              vertical: AppDimensions.s6,
+            ),
             child: TextField(
               controller: _controller,
               maxLines: null,
@@ -2816,15 +2905,17 @@ class _RichDescriptionEditorState extends State<_RichDescriptionEditor> {
               onTapOutside: (_) =>
                   FocusManager.instance.primaryFocus?.unfocus(),
               onChanged: (_) => _emit(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: kTextColor,
+                color: colors.onSurface,
                 height: 1.5,
               ),
-              decoration: const InputDecoration(
-                hintText:
-                    'Describe the requested work… use the toolbar to bold or add bullet points',
-                hintStyle: TextStyle(color: kHintColor, fontSize: 13),
+              decoration: InputDecoration(
+                hintText: widget.hint,
+                hintStyle: TextStyle(
+                  color: colors.onSurfaceVariant,
+                  fontSize: 13,
+                ),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -2840,7 +2931,11 @@ class _RichDescriptionEditorState extends State<_RichDescriptionEditor> {
       tooltip: tooltip,
       visualDensity: VisualDensity.compact,
       onPressed: onTap,
-      icon: Icon(icon, size: 18, color: kTextColor),
+      icon: Icon(
+        icon,
+        size: 18,
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
     );
   }
 }
@@ -2848,28 +2943,32 @@ class _RichDescriptionEditorState extends State<_RichDescriptionEditor> {
 class _MediaAddTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String addLabel;
   final int count;
   final VoidCallback onTap;
   const _MediaAddTile({
     required this.icon,
     required this.label,
+    required this.addLabel,
     required this.count,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final active = count > 0;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        constraints: const BoxConstraints(minHeight: AppDimensions.touchTarget),
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.s14),
         decoration: BoxDecoration(
-          color: kFieldBg,
-          borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+          color: colors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
           border: Border.all(
-            color: active ? AppColors.primary : AppColors.border,
+            color: active ? colors.primary : colors.outline,
             width: active ? 1.5 : 1,
           ),
         ),
@@ -2878,15 +2977,17 @@ class _MediaAddTile extends StatelessWidget {
             Icon(
               icon,
               size: 22,
-              color: active ? AppColors.primary : kHintColor,
+              color: active ? colors.primary : colors.onSurfaceVariant,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppDimensions.s6),
             Text(
-              count == 0 ? 'Add $label' : '$label ($count)',
+              count == 0 ? addLabel : '$label ($count)',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: active ? AppColors.primary : kTextColor,
+                color: active ? colors.primary : colors.onSurface,
               ),
             ),
           ],
@@ -2916,12 +3017,14 @@ class _MediaThumbnailGrid extends StatelessWidget {
       children: [
         for (var i = 0; i < photoPaths.length; i++)
           _thumb(
+            context,
             photoPaths[i],
             isVideo: false,
             onRemove: () => onRemovePhoto(i),
           ),
         for (var i = 0; i < videoPaths.length; i++)
           _thumb(
+            context,
             videoPaths[i],
             isVideo: true,
             onRemove: () => onRemoveVideo(i),
@@ -2931,10 +3034,12 @@ class _MediaThumbnailGrid extends StatelessWidget {
   }
 
   Widget _thumb(
+    BuildContext context,
     String path, {
     required bool isVideo,
     required VoidCallback onRemove,
   }) {
+    final colors = Theme.of(context);
     return SizedBox(
       width: 84,
       height: 84,
@@ -2942,18 +3047,16 @@ class _MediaThumbnailGrid extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
             child: isVideo
                 ? Container(
                     width: 84,
                     height: 84,
-                    color: AppColors.surfaceAlt,
-                    child: const Center(
-                      child: Icon(
-                        Icons.play_circle_outline,
-                        size: 30,
-                        color: kTextColor,
-                      ),
+                    color: colors.colorScheme.surfaceContainerLow,
+                    child: Icon(
+                      Icons.play_circle_outline,
+                      size: 30,
+                      color: colors.colorScheme.onSurface,
                     ),
                   )
                 : (File(path).existsSync()
@@ -2966,10 +3069,10 @@ class _MediaThumbnailGrid extends StatelessWidget {
                       : Container(
                           width: 84,
                           height: 84,
-                          color: AppColors.surfaceAlt,
-                          child: const Icon(
+                          color: colors.colorScheme.surfaceContainerLow,
+                          child: Icon(
                             Icons.broken_image_outlined,
-                            color: kHintColor,
+                            color: colors.colorScheme.onSurfaceVariant,
                           ),
                         )),
           ),
@@ -3012,6 +3115,7 @@ class _FuelLevelSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Row(
       children: [
         Expanded(
@@ -3025,10 +3129,8 @@ class _FuelLevelSlider extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(horizontal: 1),
                     height: 28,
                     decoration: BoxDecoration(
-                      color: isFilled ? AppColors.primary : AppColors.border,
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r2),
-                      ),
+                      color: isFilled ? colors.primary : colors.outline,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                     ),
                   ),
                 ),
@@ -3036,18 +3138,14 @@ class _FuelLevelSlider extends StatelessWidget {
             }),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.s8),
         GestureDetector(
           onTap: () => onChanged(value.clamp(1, 10)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                value >= 8
-                    ? Icons.local_gas_station
-                    : value >= 4
-                    ? Icons.local_gas_station
-                    : Icons.local_gas_station_outlined,
+                Icons.local_gas_station,
                 color: value >= 4 ? AppColors.warning : AppColors.danger,
                 size: 22,
               ),

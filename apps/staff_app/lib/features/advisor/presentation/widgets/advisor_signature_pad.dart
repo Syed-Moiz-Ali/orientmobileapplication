@@ -3,7 +3,14 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
+/// Focused signature capture surface used by the intake flow.
+///
+/// Returns the rendered PNG bytes via `Navigator.pop(context, bytes)` exactly as
+/// before (the caller persists them through `saveSignatureFile`). The surface is
+/// rebuilt on the shared modal grammar: instruction, full-width signing area,
+/// clear + confirm actions.
 class AdvisorSignaturePad extends StatefulWidget {
   final String title;
 
@@ -16,84 +23,134 @@ class AdvisorSignaturePad extends StatefulWidget {
 class _AdvisorSignaturePadState extends State<AdvisorSignaturePad> {
   final List<List<Offset>> _strokes = [];
   List<Offset> _current = [];
+  bool _drawing = false;
+
+  bool get _hasInk => _strokes.isNotEmpty || _current.isNotEmpty;
+
+  void _clear() => setState(() {
+    _strokes.clear();
+    _current = [];
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+
     return SafeArea(
+      top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s8,
+          AppDimensions.s20,
+          AppDimensions.s20,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
             Text(
               widget.title,
-              style: const TextStyle(
-                fontSize: 16,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: colors.onSurface,
               ),
             ),
-            const SizedBox(height: 14),
-            GestureDetector(
-              onPanStart: (details) => _current = [details.localPosition],
-              onPanUpdate: (details) =>
-                  setState(() => _current.add(details.localPosition)),
-              onPanEnd: (_) => setState(() {
-                _strokes.add(List<Offset>.from(_current));
-                _current = [];
-              }),
-              child: Container(
-                width: double.infinity,
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CustomPaint(
-                    painter: _AdvisorSignaturePainter(
-                      strokes: _strokes,
-                      current: _current,
+            const SizedBox(height: AppDimensions.s4),
+            Text(
+              t.advisorIntakeSignatureInstruction,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            Semantics(
+              label: widget.title,
+              child: GestureDetector(
+                onPanStart: (details) {
+                  setState(() {
+                    _drawing = true;
+                    _current = [details.localPosition];
+                  });
+                },
+                onPanUpdate: (details) =>
+                    setState(() => _current.add(details.localPosition)),
+                onPanEnd: (_) => setState(() {
+                  _strokes.add(List<Offset>.from(_current));
+                  _current = [];
+                  _drawing = false;
+                }),
+                child: Container(
+                  width: double.infinity,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusCard,
                     ),
+                    border: Border.all(
+                      color: _drawing ? colors.primary : colors.outline,
+                      width: _drawing ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      if (!_hasInk)
+                        Center(
+                          child: Text(
+                            t.advisorIntakeSignatureInstruction,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusCard,
+                        ),
+                        child: CustomPaint(
+                          size: Size.infinite,
+                          painter: _AdvisorSignaturePainter(
+                            strokes: _strokes,
+                            current: _current,
+                            color: colors.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppDimensions.s16),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => setState(() {
-                      _strokes.clear();
-                      _current = [];
-                    }),
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('Clear'),
+                  child: AppButton.secondary(
+                    label: t.advisorIntakeSignatureClear,
+                    leadingIcon: Icons.refresh_rounded,
+                    onPressed: _hasInk ? _clear : null,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.s12),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: AppButton.primary(
+                    label: t.advisorIntakeSignatureUse,
+                    icon: Icons.check_rounded,
                     onPressed: _strokes.isEmpty
                         ? null
                         : () async {
                             final bytes = await _renderPng();
-                            if (context.mounted) Navigator.pop(context, bytes);
+                            if (context.mounted) {
+                              Navigator.pop(context, bytes);
+                            }
                           },
-                    icon: const Icon(Icons.check_rounded, size: 18),
-                    label: const Text('Use Signature'),
                   ),
                 ),
               ],
@@ -112,6 +169,7 @@ class _AdvisorSignaturePadState extends State<AdvisorSignaturePad> {
     _AdvisorSignaturePainter(
       strokes: _strokes,
       current: const [],
+      color: Colors.black,
     ).paint(canvas, size);
     final image = await recorder.endRecording().toImage(800, 320);
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -122,16 +180,18 @@ class _AdvisorSignaturePadState extends State<AdvisorSignaturePad> {
 class _AdvisorSignaturePainter extends CustomPainter {
   final List<List<Offset>> strokes;
   final List<Offset> current;
+  final Color color;
 
   const _AdvisorSignaturePainter({
     required this.strokes,
     required this.current,
+    required this.color,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black
+      ..color = color
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round

@@ -296,13 +296,13 @@ Future<void> _loadFonts() async {
   final sep = Platform.pathSeparator;
   await load(
     AppFontFamilies.app,
-    '..${sep}..${sep}packages${sep}shared_core${sep}assets${sep}fonts'
+    '..$sep..${sep}packages${sep}shared_core${sep}assets${sep}fonts'
     '${sep}plus_jakarta_sans${sep}PlusJakartaSans-Variable.ttf',
   );
   for (final weight in <String>['Regular', 'Medium', 'SemiBold', 'Bold']) {
     await load(
       AppFontFamilies.arabic,
-      '..${sep}..${sep}packages${sep}shared_core${sep}assets${sep}fonts'
+      '..$sep..${sep}packages${sep}shared_core${sep}assets${sep}fonts'
       '${sep}ibm_plex_sans_arabic${sep}IBMPlexSansArabic-$weight.ttf',
     );
   }

@@ -174,7 +174,7 @@ Goldens: `apps/staff_app/test/goldens/advisor_*.png` (14). All reviewed.
 | `shared_auth` | 73 / 0 | 73 / 0 | 0 | untouched |
 | `shared_core` | 245 / 1 | 245 / 1 | 0 | untouched; 1 = `app_theme_visual_test` (01) |
 | `owner_app` | 21 / 0 | 21 / 0 | 0 | untouched |
-| `customer_app` | 511 / 6 | 509 / 8 | 2 (env.) | 2 extra **dark-mode golden pixel diffs (0.49%, sub-pixel)** in `customer_book_service_test.dart` — `customer_app` was not touched by Phase 06 and shares no code with the advisor workspace; recorded as environmental rendering nondeterminism, **not regenerated** (not Phase 06-owned) |
+| `customer_app` | 511 / 6 | 509 / 8 | 2 (pre-existing, date-dependent) | The "2 additional" are **one golden** — `customer_book_service_dark_mobile.png` — failing in the file's **two duplicate** `Booking flow visual references` groups. Root cause: the flow renders **"tomorrow"** from `DateTime.now()`; the golden embeds `Wed, 14 Oct 2026` (captured 2026-10-13) and today renders `Thu, 15 Oct 2026`. Diff = 0.49 % / 1621 px, **isolated to the date string**. Same class as the pre-existing schedule/review/tablet failures. **Not Phase 06-caused** (customer_app and shared_core/shared_auth untouched; fonts/viewport/DPR/theme unchanged). See §13. |
 | `crm_app` | 14 / 0 | 14 / 0 | 0 | untouched |
 
 **Static analysis:** `dart analyze` → **0 issues** on all six production units.
@@ -188,7 +188,7 @@ visually reviewed before re-baselining.
 | Item | Owner |
 |---|---|
 | `AdvisorStatDialog` "View all" opens the Jobs tab (no per-metric provider filter exists) — display-only drill-down documented, not faked | 06 (accepted) |
-| Customer dark-mode golden pixel diffs (0.49%, sub-pixel) — environmental; customer app untouched | customer phases / 20 |
+| `customer_book_service_test.dart` booking-flow goldens are **date-relative** (`_pickFirstDate` selects "tomorrow" from the real clock) → they fail as the wall clock advances. 4 unique goldens (schedule/review/tablet/dark) ×2 duplicate groups = 8 failures. Fix by injecting a fixed clock / deterministic date into the flow, or capturing a date-independent golden | customer booking phase (16) / 20 |
 | Pre-existing staff intake overflow failures (6) + advisor-workflow finder (1) | 07A / 06 |
 | `AdvisorJobCardSheet` (dead UI) still present | 08 (planned removal) |
 | Technician reuse of `AdvisorNotificationSheet` (restyle its usage) | 10 |
@@ -212,3 +212,94 @@ behavior-preserving.
 - [x] `analyze:staff` + `test:staff` green (no new failures); goldens intentional
 - [x] J2 evidence pack attached (`phases/reports/PHASE_06/`, 14 renders)
 - [ ] Phase 07A — awaiting explicit authorization (not started)
+
+---
+
+## 13. Final regression verification — customer_app golden failures
+
+Investigated after the Phase 06 implementation, per the final verification brief.
+
+### 13.1 Exact failing cases
+
+`apps/customer_app/test/customer_book_service_test.dart` defines the group
+`Booking flow visual references` **twice** (lines 494 and 697), so every test in
+it runs twice. The reported "two additional failures" are therefore **one golden**
+compared in two groups:
+
+| Golden | Group occurrence | Phase 05 baseline | Phase 06 final |
+|---|---|---|---|
+| `customer_book_service_schedule_mobile.png` | ×2 | FAIL | FAIL |
+| `customer_book_service_review_mobile.png` | ×2 | FAIL | FAIL |
+| `customer_book_service_tablet.png` | ×2 | FAIL | FAIL |
+| **`customer_book_service_dark_mobile.png`** | ×2 | **PASS** | **FAIL** |
+
+Baseline (Phase 05 final): 6 failures (3 goldens ×2). Final: 8 failures
+(4 goldens ×2). The delta is exactly `customer_book_service_dark_mobile.png`.
+
+### 13.2 Root cause (reproducible evidence)
+
+The booking flow renders the appointment date as **"tomorrow" relative to the real
+clock** — `_pickFirstDate` taps the second date entry (comment: *"Tomorrow, not
+today"*; `customer_book_service_test.dart:1014`), and the app formats it via
+`DateTime.now()`.
+
+- The golden `customer_book_service_dark_mobile.png` embeds **`Wed, 14 Oct 2026`**
+  (its `LastWriteTime` is 2026-10-13 17:25, i.e. captured when "tomorrow" = 14 Oct).
+- The current render (run on **2026-10-14**) shows **`Thu, 15 Oct 2026`**.
+- The `isolatedDiff` is **only the date string**; every other pixel is identical.
+- Pixel diff: **0.49 % / 1621 px**, reproduced identically across two clean
+  isolated runs (`--plain-name "dark mode mobile"`): `+0 -2`, same 0.49 % both times.
+- The same date-only diff pattern appears in the pre-existing schedule / review /
+  tablet failures (their `isolatedDiff`s show the date row and the
+  `Wed 14 Oct → Thu 15 Oct` text only).
+
+This is a **deterministic, date-relative golden** (test-design), **not**
+nondeterministic rendering: it fails for every wall-clock day after the golden's
+capture date.
+
+### 13.3 Environment comparison (ruled out)
+
+| Factor | Value | Changed by Phase 06? |
+|---|---|---|
+| Viewport | `Size(390, 844)`, `devicePixelRatio = 1` | No |
+| Golden dimensions | 390×844 | No |
+| Theme | `AppTheme.dark(BrandConfig.orient)` | No |
+| Fonts | `setUpAll(_loadFonts)` loads Plus Jakarta from `shared_core` assets | No (assets unchanged) |
+| Dependencies | `customer_app/pubspec.lock` untouched | No |
+| Flutter/Dart | 3.35.7 / 3.9.2 (unchanged) | No |
+
+Phase 06 changed only `apps/staff_app/**` (advisor presentation + staff ARB/tests);
+`customer_app` does not import `staff_app`, and neither `shared_core` nor
+`shared_auth` was modified in Phase 06. Fonts render identically (the diff is a
+single date substring), so this is **not** a shared-component, font, or
+environment regression.
+
+### 13.4 Disposition
+
+- **Not a Phase 06 regression** — no Phase 06 code change required or made.
+- **Golden not regenerated** (per the "do not regenerate to make tests pass" rule);
+  the correct fix is a deterministic clock in the test flow, owned by the customer
+  booking phase (16) / Phase 20.
+- Reproducible evidence captured at
+  `phases/reports/PHASE_06/customer_darkmode_isolated.txt` and the failure
+  diff images under `apps/customer_app/test/failures/`.
+
+### 13.5 Final status after verification
+
+| Unit | Result |
+|---|---|
+| `staff_app` | **312 / 7** (7 = identical pre-existing set) |
+| `shared_auth` | 73 / 0 |
+| `shared_core` | 245 / 1 (1 = `app_theme_visual_test`, 01) |
+| `owner_app` | 21 / 0 |
+| `crm_app` | 14 / 0 |
+| `customer_app` | 509 / 8 — 8 = 4 **date-relative** booking-flow goldens ×2 duplicate groups (3 pre-existing + `dark_mobile`); not Phase 06-caused |
+| `dart analyze` | 0 issues on all six units |
+| Phase 00 prototype | 0 changes |
+
+**Phase 06 acceptance criteria are satisfied** (all section-D screens redesigned on
+the shared system, EN/AR + RTL + 320 px clean, actions/routes unchanged, analyze +
+`test:staff` green with no new failures, J2 evidence attached). The residual
+`customer_app` failures are pre-existing date-relative goldens outside Phase 06
+scope and are **recorded, not suppressed or regenerated**. Phase 06 is marked
+**complete**.

@@ -192,7 +192,13 @@ Phase 05 which owns the auth screens (mounted by every app):
 
 ## Phase status notes
 
-- **Phase 05 (Auth)** and **Phase 06 (Staff: Advisor Home & Jobs)** are
-  implemented (reports at `phases/reports/PHASE_05|06/`). The advisor rows above
-  are delivered; the staff-intake rows (07A) and inspection rows (07B) remain
-  pending. No row reassignments were required by Phase 06.
+- **Phase 05 (Auth)**, **Phase 06 (Staff: Advisor Home & Jobs)** and
+  **Phase 07A (Staff: Advisor Intake & Check-in)** are implemented (reports at
+  `phases/reports/PHASE_05|06|07A/`). The advisor home/jobs rows and the
+  staff-intake rows (Vehicle/customer intake, VIN/QR scan, vehicle check-in,
+  brand/model/year pickers, signature pad) are delivered; the inspection rows
+  (07B) remain pending. No row reassignments were required by Phase 07A.
+- Phase 07A deleted the local `vehicle_customer_shared_widgets.dart` kit
+  (superseded by shared primitives) and added an additive `prefix` slot to the
+  shared `AppTextField` for always-visible identifier prefixes (country code /
+  plate).

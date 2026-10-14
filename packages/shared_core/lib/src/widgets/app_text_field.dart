@@ -7,6 +7,12 @@ class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final IconData? prefixIcon;
+
+  /// Always-visible inline prefix rendered on the input baseline (e.g. a
+  /// country dial code `+971` or a fixed plate prefix). Unlike the platform
+  /// `prefixText`, this stays visible when the field is empty and unfocused.
+  /// Phase 07A additive gap (README §8).
+  final Widget? prefix;
   final Widget? suffixIcon;
   final void Function(String)? onChanged;
   final bool obscureText;
@@ -41,6 +47,7 @@ class AppTextField extends StatelessWidget {
     required this.controller,
     required this.hint,
     this.prefixIcon,
+    this.prefix,
     this.suffixIcon,
     this.onChanged,
     this.obscureText = false,
@@ -126,6 +133,7 @@ class AppTextField extends StatelessWidget {
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: colorScheme.onSurfaceVariant, size: 20)
             : null,
+        prefix: prefix,
         suffixIcon: effectiveSuffix,
         filled: true,
         fillColor: fillColor ?? colorScheme.surfaceContainerLow,

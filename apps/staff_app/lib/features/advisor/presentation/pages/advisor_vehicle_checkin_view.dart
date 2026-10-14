@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
+/// Advisor vehicle check-in: a focused two-step wizard that records the
+/// odometer, fuel level, notes and any existing damage before the job card is
+/// handed to inspection.
+///
+/// Submit contract is unchanged (`checkInVehicleResult` + pushReplacement to
+/// the advisor job detail with the same `JobCardEntity`).
 class AdvisorVehicleCheckinView extends ConsumerStatefulWidget {
   final String bookingId;
   final String customerName;
@@ -40,41 +48,31 @@ class _AdvisorVehicleCheckinViewState
   }
 
   void _addDamage(String area) {
+    final t = StaffLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) {
         final ctrl = TextEditingController();
-        final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
-          backgroundColor: colorScheme.surface,
-          title: Text(
-            'Damage on $area',
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
+          title: Text(t.advisorCheckInDamageTitle(area)),
           content: TextField(
             controller: ctrl,
-            decoration: InputDecoration(
-              hintText: 'Describe damage (e.g. scratch, dent)',
-              filled: true,
-              fillColor: colorScheme.surfaceContainerLow,
-            ),
+            autofocus: true,
+            decoration: InputDecoration(hintText: t.advisorCheckInDamageHint),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(SharedCoreL10n.of(context).commonCancel),
             ),
-            ElevatedButton(
+            FilledButton(
               onPressed: () {
                 if (ctrl.text.trim().isNotEmpty) {
                   setState(() => _damages.add('$area: ${ctrl.text.trim()}'));
                 }
                 Navigator.pop(context);
               },
-              child: const Text('Add Damage'),
+              child: Text(t.advisorCheckInAdd),
             ),
           ],
         );
@@ -83,6 +81,7 @@ class _AdvisorVehicleCheckinViewState
   }
 
   Future<void> _submit() async {
+    final t = StaffLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
       final remote = ref.read(advisorRemoteDataSourceProvider);
@@ -93,186 +92,263 @@ class _AdvisorVehicleCheckinViewState
         'existingDamages': _damages.join(', '),
         'notes': _notesCtrl.text.trim(),
       });
-      if (mounted) {
-        if (result != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Vehicle checked in successfully')),
-          );
-          context.pushReplacement(
-            AppRoutes.advisorJobDetail,
-            extra: JobCardEntity(
-              id: '${result.jobCardId}',
-              dbId: result.jobCardId,
-              customerName: widget.customerName,
-              vehicleInfo: widget.vehicleInfo,
-              time: '',
-              createdDate: '',
-              lastUpdated: '',
-              status: JobCardStatus.vehicleReceived,
-              odometer: odo,
-              fuelLevel: _fuelLevel,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Failed to check in')));
-          setState(() => _isLoading = false);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (!mounted) return;
+      if (result != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t.advisorCheckInSuccess)),
+        );
+        context.pushReplacement(
+          AppRoutes.advisorJobDetail,
+          extra: JobCardEntity(
+            id: '${result.jobCardId}',
+            dbId: result.jobCardId,
+            customerName: widget.customerName,
+            vehicleInfo: widget.vehicleInfo,
+            time: '',
+            createdDate: '',
+            lastUpdated: '',
+            status: JobCardStatus.vehicleReceived,
+            odometer: odo,
+            fuelLevel: _fuelLevel,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t.advisorCheckInFailed)),
+        );
         setState(() => _isLoading = false);
       }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.advisorCheckInError('$e'))),
+      );
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
+    final t = StaffLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: () =>
-              _step == 0 ? Navigator.pop(context) : setState(() => _step = 0),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        top: false,
+        child: Column(
           children: [
-            Text(
-              'Vehicle Intake',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: colorScheme.onSurface,
-              ),
+            AppTopBar(
+              title: t.advisorCheckInTitle,
+              onBack: _step == 0
+                  ? null
+                  : () => setState(() => _step = 0),
             ),
-            Text(
-              '${widget.vehicleInfo} · ${widget.customerName}',
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: _step == 0 ? _buildStep0() : _buildStep1(),
-    );
-  }
-
-  Widget _buildStep0() {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        TextField(
-          controller: _odometerCtrl,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: 'Odometer Reading (km)',
-            filled: true,
-            fillColor: colorScheme.surface,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-        ),
-        const SizedBox(height: 16),
-        SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(value: '1/4', label: Text('1/4')),
-            ButtonSegment(value: '1/2', label: Text('1/2')),
-            ButtonSegment(value: '3/4', label: Text('3/4')),
-            ButtonSegment(value: 'Full', label: Text('Full')),
-          ],
-          selected: {_fuelLevel},
-          onSelectionChanged: (set) => setState(() => _fuelLevel = set.first),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _notesCtrl,
-          maxLines: 3,
-          decoration: InputDecoration(
-            labelText: 'Customer Notes',
-            filled: true,
-            fillColor: colorScheme.surface,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-        ),
-        const SizedBox(height: 40),
-        SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            onPressed: () => setState(() => _step = 1),
-            child: const Text('Next: Document Condition'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep1() {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        GridView.count(
-          shrinkWrap: true,
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 2.4,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            _damageBtn('Front'),
-            _damageBtn('Rear'),
-            _damageBtn('Left Side'),
-            _damageBtn('Right Side'),
-            _damageBtn('Roof'),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Wrap(
-          spacing: 8,
-          children: _damages
-              .map(
-                (d) => Chip(
-                  label: Text(d),
-                  onDeleted: () => setState(() => _damages.remove(d)),
-                  backgroundColor: colorScheme.error.withValues(alpha: 0.12),
+            Expanded(
+              child: AppPageFrame(
+                scrollable: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppInfoPanel.primary(
+                      icon: Icons.directions_car_outlined,
+                      title: widget.customerName.isEmpty
+                          ? widget.vehicleInfo
+                          : widget.customerName,
+                      message: widget.vehicleInfo,
+                    ),
+                    const SizedBox(height: AppDimensions.s20),
+                    AppStepProgress(
+                      currentStep: _step,
+                      steps: [
+                        AppProgressStep(
+                          label: t.advisorCheckInStepDetails,
+                          icon: Icons.speed_rounded,
+                        ),
+                        AppProgressStep(
+                          label: t.advisorCheckInStepCondition,
+                          icon: Icons.fact_check_outlined,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppDimensions.s24),
+                    if (_step == 0) _buildDetailsStep(t) else _buildDamageStep(t),
+                  ],
                 ),
-              )
-              .toList(),
+              ),
+            ),
+            AppActionBar(
+              sticky: true,
+              isLoading: _isLoading,
+              secondary: [
+                if (_step == 1)
+                  AppButton.secondary(
+                    label: t.advisorCheckInBack,
+                    leadingIcon: Icons.arrow_back_rounded,
+                    isExpanded: context.adaptive.isCompact,
+                    onPressed: () => setState(() => _step = 0),
+                  ),
+              ],
+              primary: AppButton.primary(
+                label: _step == 0
+                    ? t.advisorCheckInNext
+                    : t.advisorCheckInComplete,
+                icon: _step == 0
+                    ? Icons.arrow_forward_rounded
+                    : Icons.check_rounded,
+                isLoading: _isLoading,
+                isExpanded: context.adaptive.isCompact,
+                onPressed: _step == 0
+                    ? () {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        setState(() => _step = 1);
+                      }
+                    : _submit,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 40),
-        SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _submit,
-            child: const Text('Complete Intake'),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _damageBtn(String label) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return OutlinedButton(
-      onPressed: () => _addDamage(label),
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: colorScheme.outlineVariant),
+  Widget _buildDetailsStep(StaffLocalizations t) {
+    return AppFormPanel(
+      title: t.advisorCheckInSectionDetails,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppFormField(
+            label: t.advisorCheckInOdometer,
+            isRequired: true,
+            child: AppTextField(
+              controller: _odometerCtrl,
+              hint: t.advisorCheckInOdometerHint,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              prefixIcon: Icons.speed_rounded,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorCheckInFuel,
+            child: SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: '1/4', label: Text('1/4')),
+                  ButtonSegment(value: '1/2', label: Text('1/2')),
+                  ButtonSegment(value: '3/4', label: Text('3/4')),
+                  ButtonSegment(value: 'Full', label: Text('Full')),
+                ],
+                selected: {_fuelLevel},
+                showSelectedIcon: false,
+                onSelectionChanged: (set) =>
+                    setState(() => _fuelLevel = set.first),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorCheckInNotes,
+            isOptional: true,
+            child: AppTextField(
+              controller: _notesCtrl,
+              hint: t.advisorCheckInNotesHint,
+              maxLines: 3,
+              minLines: 3,
+              textInputAction: TextInputAction.newline,
+            ),
+          ),
+        ],
       ),
-      child: Text(label),
+    );
+  }
+
+  Widget _buildDamageStep(StaffLocalizations t) {
+    final areas = <String>[
+      t.advisorCheckInFront,
+      t.advisorCheckInRear,
+      t.advisorCheckInLeft,
+      t.advisorCheckInRight,
+      t.advisorCheckInRoof,
+    ];
+    return AppFormPanel(
+      title: t.advisorCheckInSectionDamage,
+      subtitle: t.advisorCheckInSectionDamageSub,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 520 ? 3 : 2;
+              return GridView.count(
+                shrinkWrap: true,
+                crossAxisCount: columns,
+                mainAxisSpacing: AppDimensions.s10,
+                crossAxisSpacing: AppDimensions.s10,
+                childAspectRatio: 2.6,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  for (final area in areas)
+                    OutlinedButton(
+                      onPressed: () => _addDamage(area),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, AppDimensions.touchTarget),
+                      ),
+                      child: Text(
+                        area,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: AppDimensions.s20),
+          if (_damages.isEmpty)
+            EmptyState(
+              icon: Icons.verified_outlined,
+              message: t.advisorCheckInEmptyDamages,
+            )
+          else ...[
+            for (var i = 0; i < _damages.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+                child: AppCard.subtle(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s14,
+                    vertical: AppDimensions.s8,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.report_problem_outlined,
+                        size: 18,
+                        color: AppColors.warning,
+                      ),
+                      const SizedBox(width: AppDimensions.s10),
+                      Expanded(
+                        child: Text(
+                          _damages[i],
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: t.advisorCheckInRemoveDamage,
+                        onPressed: () => setState(() => _damages.removeAt(i)),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
     );
   }
 }

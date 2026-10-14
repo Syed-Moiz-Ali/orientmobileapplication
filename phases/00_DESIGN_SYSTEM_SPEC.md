@@ -199,7 +199,7 @@ behavior, accessibility semantics, and responsive behavior.
 | Component | Variants/spec | Usage rules |
 |---|---|---|
 | `AppButton` (primary/secondary/tertiary/danger/quietIcon/compactInline) + `PrimaryButton`/`SecondaryButton` | min 48 px height; loading spinner replaces label; icons 20 px; RTL icon flip | One primary action per view region; destructive uses danger + confirmation |
-| `AppTextField` / `AuthTextField` | label above; helper/error below; icon slots; 52 px control (48 compact) | Labels above inputs, never floating-only |
+| `AppTextField` / `AuthTextField` | label above; helper/error below; icon slots; 52 px control (48 compact); optional always-visible `prefix` slot for identifier prefixes (country code / plate — added Phase 07A) | Labels above inputs, never floating-only |
 | `AppSearchField` | leading search icon, clear button, debounce hook | One per list; replaces all ad-hoc search fields |
 | `AppDropdownButton` + selection sheets | 52 px control; searchable list sheet on mobile; menu on desktop | Selection sheets get title + search when >8 options |
 | Segmented control (`SegmentedButton` styled via theme) | 2–5 options | Use for period/mode switches, not navigation |

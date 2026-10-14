@@ -114,7 +114,9 @@ void main() {
       'Repair',
       'Deliver',
     ]) {
-      expect(find.text(label), findsOneWidget);
+      // The active step's name also appears in the header title, so the label
+      // is legitimately rendered more than once.
+      expect(find.text(label), findsWidgets);
     }
     expect(tester.takeException(), isNull);
   });

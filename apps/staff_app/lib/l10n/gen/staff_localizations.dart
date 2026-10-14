@@ -1105,6 +1105,1236 @@ abstract class StaffLocalizations {
   /// In en, this message translates to:
   /// **'Pending Approval'**
   String get advisorStatusPendingApproval;
+
+  /// Intake page title / top bar
+  ///
+  /// In en, this message translates to:
+  /// **'Create Job Card'**
+  String get advisorIntakeTitle;
+
+  /// Intake intro heading (new record)
+  ///
+  /// In en, this message translates to:
+  /// **'New vehicle intake'**
+  String get advisorIntakeIntroTitleNew;
+
+  /// Intake intro heading (from booking)
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the vehicle intake'**
+  String get advisorIntakeIntroTitleBooking;
+
+  /// Intake intro supporting text
+  ///
+  /// In en, this message translates to:
+  /// **'Find an existing record or enter the customer and vehicle details below.'**
+  String get advisorIntakeIntroBody;
+
+  /// Intake required-fields hint
+  ///
+  /// In en, this message translates to:
+  /// **'Only fields marked * are required'**
+  String get advisorIntakeRequiredHint;
+
+  /// Badge when intake is opened from a booking
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to the assigned booking'**
+  String get advisorIntakeLinkedBooking;
+
+  /// Intake progress step 1
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get advisorIntakeStepCustomer;
+
+  /// Intake progress step 2
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get advisorIntakeStepVehicle;
+
+  /// Intake progress step 3
+  ///
+  /// In en, this message translates to:
+  /// **'Media & docs'**
+  String get advisorIntakeStepMedia;
+
+  /// Intake progress step 4
+  ///
+  /// In en, this message translates to:
+  /// **'Job'**
+  String get advisorIntakeStepJob;
+
+  /// Intake progress step 5
+  ///
+  /// In en, this message translates to:
+  /// **'Signature'**
+  String get advisorIntakeStepSignature;
+
+  /// Intake progress step 6
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get advisorIntakeStepReview;
+
+  /// Customer section title
+  ///
+  /// In en, this message translates to:
+  /// **'Customer details'**
+  String get advisorIntakeSectionCustomer;
+
+  /// Customer section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Who is bringing in the vehicle?'**
+  String get advisorIntakeSectionCustomerSub;
+
+  /// Vehicle section title
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle details'**
+  String get advisorIntakeSectionVehicle;
+
+  /// Vehicle section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Registration and service information'**
+  String get advisorIntakeSectionVehicleSub;
+
+  /// Body-condition section title
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle body condition'**
+  String get advisorIntakeSectionBody;
+
+  /// Body-condition section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Mark any existing damage before handover'**
+  String get advisorIntakeSectionBodySub;
+
+  /// Documents/media section title
+  ///
+  /// In en, this message translates to:
+  /// **'Documents & media'**
+  String get advisorIntakeSectionMedia;
+
+  /// Documents/media section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Attach documents, photos and videos'**
+  String get advisorIntakeSectionMediaSub;
+
+  /// Job description section title
+  ///
+  /// In en, this message translates to:
+  /// **'Job description'**
+  String get advisorIntakeSectionJob;
+
+  /// Job description section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the requested work'**
+  String get advisorIntakeSectionJobSub;
+
+  /// Signature section title
+  ///
+  /// In en, this message translates to:
+  /// **'Signatures'**
+  String get advisorIntakeSectionSignature;
+
+  /// Signature section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Capture customer and advisor consent'**
+  String get advisorIntakeSectionSignatureSub;
+
+  /// Review section title
+  ///
+  /// In en, this message translates to:
+  /// **'Review & save'**
+  String get advisorIntakeSectionReview;
+
+  /// Review section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the details before creating the job card'**
+  String get advisorIntakeSectionReviewSub;
+
+  /// Record search section title
+  ///
+  /// In en, this message translates to:
+  /// **'Find existing record'**
+  String get advisorIntakeFindTitle;
+
+  /// Record search supporting text
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid duplicate customer and vehicle records'**
+  String get advisorIntakeFindSub;
+
+  /// Record search field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile, customer name, plate number, or VIN'**
+  String get advisorIntakeFindHint;
+
+  /// Scan VIN button
+  ///
+  /// In en, this message translates to:
+  /// **'Scan VIN'**
+  String get advisorIntakeScanVin;
+
+  /// Scan QR button
+  ///
+  /// In en, this message translates to:
+  /// **'Scan vehicle QR'**
+  String get advisorIntakeScanQr;
+
+  /// B2B toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'B2B customer'**
+  String get advisorIntakeB2B;
+
+  /// Customer name label
+  ///
+  /// In en, this message translates to:
+  /// **'Customer name'**
+  String get advisorIntakeCustomerName;
+
+  /// Customer name hint
+  ///
+  /// In en, this message translates to:
+  /// **'Customer name'**
+  String get advisorIntakeCustomerNameHint;
+
+  /// Phone label
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get advisorIntakePhone;
+
+  /// Phone hint
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get advisorIntakePhoneHint;
+
+  /// Email label
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get advisorIntakeEmail;
+
+  /// Email hint
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get advisorIntakeEmailHint;
+
+  /// Customer group label
+  ///
+  /// In en, this message translates to:
+  /// **'Customer group'**
+  String get advisorIntakeCustomerGroup;
+
+  /// Customer group hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select customer group'**
+  String get advisorIntakeCustomerGroupHint;
+
+  /// Gender label
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get advisorIntakeGender;
+
+  /// Gender hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select gender'**
+  String get advisorIntakeGenderHint;
+
+  /// Address label
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get advisorIntakeAddress;
+
+  /// Address hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select address'**
+  String get advisorIntakeAddressHint;
+
+  /// Tax number label
+  ///
+  /// In en, this message translates to:
+  /// **'Tax number'**
+  String get advisorIntakeTaxNumber;
+
+  /// Source label
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get advisorIntakeSource;
+
+  /// Source hint
+  ///
+  /// In en, this message translates to:
+  /// **'How did you hear about us?'**
+  String get advisorIntakeSourceHint;
+
+  /// Show more link
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get advisorIntakeShowMore;
+
+  /// Show less link
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get advisorIntakeShowLess;
+
+  /// Emirate label
+  ///
+  /// In en, this message translates to:
+  /// **'Emirate'**
+  String get advisorIntakeEmirate;
+
+  /// Emirate hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select emirate'**
+  String get advisorIntakeEmirateHint;
+
+  /// Plate code label
+  ///
+  /// In en, this message translates to:
+  /// **'Plate code'**
+  String get advisorIntakePlateCode;
+
+  /// Plate code hint
+  ///
+  /// In en, this message translates to:
+  /// **'A'**
+  String get advisorIntakePlateCodeHint;
+
+  /// Plate number label
+  ///
+  /// In en, this message translates to:
+  /// **'Plate number'**
+  String get advisorIntakePlateNumber;
+
+  /// Plate number hint
+  ///
+  /// In en, this message translates to:
+  /// **'2500'**
+  String get advisorIntakePlateNumberHint;
+
+  /// VIN label
+  ///
+  /// In en, this message translates to:
+  /// **'VIN (chassis number)'**
+  String get advisorIntakeVin;
+
+  /// VIN hint
+  ///
+  /// In en, this message translates to:
+  /// **'VIN (chassis number)'**
+  String get advisorIntakeVinHint;
+
+  /// Make label
+  ///
+  /// In en, this message translates to:
+  /// **'Make'**
+  String get advisorIntakeMake;
+
+  /// Make hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select brand'**
+  String get advisorIntakeMakeHint;
+
+  /// Model label
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get advisorIntakeModel;
+
+  /// Model hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select model'**
+  String get advisorIntakeModelHint;
+
+  /// Model year label
+  ///
+  /// In en, this message translates to:
+  /// **'Model year'**
+  String get advisorIntakeModelYear;
+
+  /// Model year hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select model year'**
+  String get advisorIntakeModelYearHint;
+
+  /// Message when picking a model before a brand
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a brand first'**
+  String get advisorIntakeSelectBrandFirst;
+
+  /// Cylinders label
+  ///
+  /// In en, this message translates to:
+  /// **'Number of cylinders'**
+  String get advisorIntakeCylinders;
+
+  /// Cylinders hint
+  ///
+  /// In en, this message translates to:
+  /// **'Number of cylinders'**
+  String get advisorIntakeCylindersHint;
+
+  /// Engine capacity label
+  ///
+  /// In en, this message translates to:
+  /// **'Engine capacity'**
+  String get advisorIntakeEngineCapacity;
+
+  /// Vehicle colour label
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle colour'**
+  String get advisorIntakeVehicleColor;
+
+  /// Fuel type label
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel type'**
+  String get advisorIntakeFuelType;
+
+  /// Fuel type hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select fuel type'**
+  String get advisorIntakeFuelTypeHint;
+
+  /// Engine number label
+  ///
+  /// In en, this message translates to:
+  /// **'Engine number'**
+  String get advisorIntakeEngineNumber;
+
+  /// Registration document label
+  ///
+  /// In en, this message translates to:
+  /// **'Registration certificate'**
+  String get advisorIntakeRegistrationCertificate;
+
+  /// Add document button
+  ///
+  /// In en, this message translates to:
+  /// **'Add document'**
+  String get advisorIntakeAddDocument;
+
+  /// Job category label
+  ///
+  /// In en, this message translates to:
+  /// **'Job category'**
+  String get advisorIntakeJobCategory;
+
+  /// Job category hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select job category'**
+  String get advisorIntakeJobCategoryHint;
+
+  /// Insurance provider label
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance name'**
+  String get advisorIntakeInsuranceName;
+
+  /// Insurance provider hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select insurance provider'**
+  String get advisorIntakeInsuranceNameHint;
+
+  /// LPO number label
+  ///
+  /// In en, this message translates to:
+  /// **'LPO number'**
+  String get advisorIntakeLpoNumber;
+
+  /// Policy number label
+  ///
+  /// In en, this message translates to:
+  /// **'Policy number'**
+  String get advisorIntakePolicyNumber;
+
+  /// Accident number label
+  ///
+  /// In en, this message translates to:
+  /// **'Accident number'**
+  String get advisorIntakeAccidentNumber;
+
+  /// Insurance tax number label
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance tax number'**
+  String get advisorIntakeInsuranceTaxNumber;
+
+  /// Insurance tax number hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enter insurance tax number'**
+  String get advisorIntakeInsuranceTaxHint;
+
+  /// Insurance address label
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance address'**
+  String get advisorIntakeInsuranceAddress;
+
+  /// Insurance expiry label
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance expiry date'**
+  String get advisorIntakeInsuranceExpiry;
+
+  /// Insurance document label
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance document'**
+  String get advisorIntakeInsuranceDocument;
+
+  /// Markup type label
+  ///
+  /// In en, this message translates to:
+  /// **'Markup type'**
+  String get advisorIntakeMarkupType;
+
+  /// Order type label
+  ///
+  /// In en, this message translates to:
+  /// **'Order type'**
+  String get advisorIntakeOrderType;
+
+  /// Job description label
+  ///
+  /// In en, this message translates to:
+  /// **'Job description'**
+  String get advisorIntakeJobDescription;
+
+  /// Add job description row button
+  ///
+  /// In en, this message translates to:
+  /// **'Add another description'**
+  String get advisorIntakeAddDescription;
+
+  /// Remove job description row
+  ///
+  /// In en, this message translates to:
+  /// **'Remove row'**
+  String get advisorIntakeRemoveRow;
+
+  /// Job description field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the requested work. Use the toolbar to bold or add bullet points.'**
+  String get advisorIntakeDescriptionHint;
+
+  /// Priority field label
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get advisorIntakePriority;
+
+  /// Priority tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Select priority'**
+  String get advisorIntakeSelectPriority;
+
+  /// Attachments label on a job description row
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get advisorIntakeAttachments;
+
+  /// Photos attachment label
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get advisorIntakePhotos;
+
+  /// Video attachment label
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get advisorIntakeVideo;
+
+  /// Audio attachment label
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get advisorIntakeAudio;
+
+  /// Rich text bold tool
+  ///
+  /// In en, this message translates to:
+  /// **'Bold'**
+  String get advisorIntakeBold;
+
+  /// Rich text italic tool
+  ///
+  /// In en, this message translates to:
+  /// **'Italic'**
+  String get advisorIntakeItalic;
+
+  /// Rich text bullet tool
+  ///
+  /// In en, this message translates to:
+  /// **'Bullet list'**
+  String get advisorIntakeBullet;
+
+  /// Attachment button label with count
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({count})'**
+  String advisorIntakeCount(String label, int count);
+
+  /// Add-media tile label
+  ///
+  /// In en, this message translates to:
+  /// **'Add {label}'**
+  String advisorIntakeAddLabel(String label);
+
+  /// Odometer label
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer reading (km)'**
+  String get advisorIntakeOdometer;
+
+  /// Odometer hint
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer (in km)'**
+  String get advisorIntakeOdometerHint;
+
+  /// Fuel level label
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel level'**
+  String get advisorIntakeFuelLevel;
+
+  /// Consent toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'Customer consent'**
+  String get advisorIntakeCustomerConsent;
+
+  /// Job media label
+  ///
+  /// In en, this message translates to:
+  /// **'Job card photos and videos'**
+  String get advisorIntakeJobMedia;
+
+  /// Signatures label
+  ///
+  /// In en, this message translates to:
+  /// **'Digital signatures'**
+  String get advisorIntakeDigitalSignatures;
+
+  /// Customer signature button
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get advisorIntakeSignatureCustomer;
+
+  /// Advisor signature button
+  ///
+  /// In en, this message translates to:
+  /// **'Advisor'**
+  String get advisorIntakeSignatureAdvisor;
+
+  /// Customer signature sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Customer signature'**
+  String get advisorIntakeSignatureCustomerTitle;
+
+  /// Advisor signature sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Advisor signature'**
+  String get advisorIntakeSignatureAdvisorTitle;
+
+  /// Signature sheet instruction
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in the box below'**
+  String get advisorIntakeSignatureInstruction;
+
+  /// Signature clear button
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get advisorIntakeSignatureClear;
+
+  /// Signature confirm button
+  ///
+  /// In en, this message translates to:
+  /// **'Use signature'**
+  String get advisorIntakeSignatureUse;
+
+  /// Shown when a signature is captured
+  ///
+  /// In en, this message translates to:
+  /// **'Signed'**
+  String get advisorIntakeSignatureCaptured;
+
+  /// Re-capture signature
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get advisorIntakeSignatureRedo;
+
+  /// Document source sheet title (registration)
+  ///
+  /// In en, this message translates to:
+  /// **'Add registration certificate'**
+  String get advisorIntakeAddRegistration;
+
+  /// Document source sheet title (insurance)
+  ///
+  /// In en, this message translates to:
+  /// **'Add insurance document'**
+  String get advisorIntakeAddInsurance;
+
+  /// Camera source action
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo'**
+  String get advisorIntakeTakePhoto;
+
+  /// Gallery source action
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get advisorIntakeChooseGallery;
+
+  /// Record video action
+  ///
+  /// In en, this message translates to:
+  /// **'Record video'**
+  String get advisorIntakeRecordVideo;
+
+  /// Choose video action
+  ///
+  /// In en, this message translates to:
+  /// **'Choose video'**
+  String get advisorIntakeChooseVideo;
+
+  /// Audio dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Job description audio'**
+  String get advisorIntakeAudioTitle;
+
+  /// Audio dialog recording status
+  ///
+  /// In en, this message translates to:
+  /// **'Recording… {seconds} seconds'**
+  String advisorIntakeAudioRecording(int seconds);
+
+  /// Audio dialog replace hint
+  ///
+  /// In en, this message translates to:
+  /// **'Record again to replace the current audio.'**
+  String get advisorIntakeAudioReplace;
+
+  /// Audio dialog prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Record a voice note up to 60 seconds.'**
+  String get advisorIntakeAudioPrompt;
+
+  /// Validation: customer name
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the customer name'**
+  String get advisorIntakeErrCustomerName;
+
+  /// Validation: phone empty
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a mobile number'**
+  String get advisorIntakeErrPhone;
+
+  /// Validation: phone invalid
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid mobile number'**
+  String get advisorIntakeErrPhoneValid;
+
+  /// Validation: plate
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the plate number'**
+  String get advisorIntakeErrPlate;
+
+  /// Validation: make
+  ///
+  /// In en, this message translates to:
+  /// **'Please select the vehicle brand'**
+  String get advisorIntakeErrMake;
+
+  /// Validation: model
+  ///
+  /// In en, this message translates to:
+  /// **'Please select the vehicle model'**
+  String get advisorIntakeErrModel;
+
+  /// Inspection prompt title (synced)
+  ///
+  /// In en, this message translates to:
+  /// **'Job card created & synced'**
+  String get advisorIntakeSyncedTitle;
+
+  /// Inspection prompt title (local only)
+  ///
+  /// In en, this message translates to:
+  /// **'Job card saved locally'**
+  String get advisorIntakeLocalTitle;
+
+  /// Inspection prompt body (synced)
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to this device and the server. Would you like to start the inspection?'**
+  String get advisorIntakeSyncedBody;
+
+  /// Inspection prompt body (local only)
+  ///
+  /// In en, this message translates to:
+  /// **'The API could not be reached. The job card is safely stored and queued for automatic sync.'**
+  String get advisorIntakeLocalBody;
+
+  /// Inspection prompt primary action
+  ///
+  /// In en, this message translates to:
+  /// **'Add inspection'**
+  String get advisorIntakeAddInspection;
+
+  /// Inspection prompt secondary action
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get advisorIntakeSkip;
+
+  /// Save failure snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'We could not create the job card. Please check your connection and try again.'**
+  String get advisorIntakeSaveFailed;
+
+  /// Offline notice panel
+  ///
+  /// In en, this message translates to:
+  /// **'You are offline. The job card will be stored on this device and synced automatically.'**
+  String get advisorIntakeOfflineNotice;
+
+  /// Summary panel title
+  ///
+  /// In en, this message translates to:
+  /// **'Live summary'**
+  String get advisorIntakeSummaryTitle;
+
+  /// Summary empty text
+  ///
+  /// In en, this message translates to:
+  /// **'Start filling in the details to see a live summary.'**
+  String get advisorIntakeSummaryEmpty;
+
+  /// Summary customer placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'No customer yet'**
+  String get advisorIntakeSummaryNoName;
+
+  /// Summary customer heading
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get advisorIntakeSummaryCustomer;
+
+  /// Summary vehicle heading
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get advisorIntakeSummaryVehicle;
+
+  /// Summary progress line
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} sections complete'**
+  String advisorIntakeSummaryProgress(int done, int total);
+
+  /// Discard guard title
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this intake?'**
+  String get advisorIntakeDiscardTitle;
+
+  /// Discard guard body
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Leaving now will lose the information you entered.'**
+  String get advisorIntakeDiscardBody;
+
+  /// Discard guard confirm
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get advisorIntakeDiscardConfirm;
+
+  /// Discard guard cancel
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get advisorIntakeDiscardCancel;
+
+  /// Primary save action
+  ///
+  /// In en, this message translates to:
+  /// **'Create job card'**
+  String get advisorIntakeActionCreate;
+
+  /// Primary save busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Creating job card…'**
+  String get advisorIntakeActionCreating;
+
+  /// Save status: saving locally
+  ///
+  /// In en, this message translates to:
+  /// **'Saving locally…'**
+  String get advisorIntakeStatusSaving;
+
+  /// Save status: queued
+  ///
+  /// In en, this message translates to:
+  /// **'Queued (offline)'**
+  String get advisorIntakeStatusQueued;
+
+  /// Save status: sent
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get advisorIntakeStatusSent;
+
+  /// Section position
+  ///
+  /// In en, this message translates to:
+  /// **'Section {index} of {total}'**
+  String advisorIntakeSectionOf(int index, int total);
+
+  /// Scan screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Scan vehicle'**
+  String get advisorScanTitle;
+
+  /// Scan mode: plate
+  ///
+  /// In en, this message translates to:
+  /// **'Plate'**
+  String get advisorScanModePlate;
+
+  /// Scan mode: VIN
+  ///
+  /// In en, this message translates to:
+  /// **'VIN'**
+  String get advisorScanModeVin;
+
+  /// Scan mode: QR
+  ///
+  /// In en, this message translates to:
+  /// **'QR'**
+  String get advisorScanModeQr;
+
+  /// Scan hint: plate
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the license plate'**
+  String get advisorScanHintPlate;
+
+  /// Scan hint: VIN
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the VIN barcode on the dashboard'**
+  String get advisorScanHintVin;
+
+  /// Scan hint: QR
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the vehicle QR code'**
+  String get advisorScanHintQr;
+
+  /// Manual entry divider
+  ///
+  /// In en, this message translates to:
+  /// **'Or enter manually'**
+  String get advisorScanManual;
+
+  /// Manual entry hint
+  ///
+  /// In en, this message translates to:
+  /// **'Plate / VIN / Customer name…'**
+  String get advisorScanManualHint;
+
+  /// Permission denied title
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission required'**
+  String get advisorScanPermissionTitle;
+
+  /// Permission denied body
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is needed to scan. Enable it in settings to continue.'**
+  String get advisorScanPermissionBody;
+
+  /// Open settings action
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get advisorScanOpenSettings;
+
+  /// Grant permission action
+  ///
+  /// In en, this message translates to:
+  /// **'Grant permission'**
+  String get advisorScanGrant;
+
+  /// Camera starting status
+  ///
+  /// In en, this message translates to:
+  /// **'Starting camera…'**
+  String get advisorScanStarting;
+
+  /// Scanning status
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning…'**
+  String get advisorScanScanning;
+
+  /// Camera unavailable status
+  ///
+  /// In en, this message translates to:
+  /// **'Camera not available'**
+  String get advisorScanCameraUnavailable;
+
+  /// Torch toggle tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle torch'**
+  String get advisorScanTorch;
+
+  /// Scan result confirmation title
+  ///
+  /// In en, this message translates to:
+  /// **'Scan result'**
+  String get advisorScanResultTitle;
+
+  /// Confirm scanned value
+  ///
+  /// In en, this message translates to:
+  /// **'Use this value'**
+  String get advisorScanResultUse;
+
+  /// Validation when manual entry is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value to continue'**
+  String get advisorScanEnterValue;
+
+  /// Check-in page title
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle check-in'**
+  String get advisorCheckInTitle;
+
+  /// Check-in step 1 label
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer & fuel'**
+  String get advisorCheckInStepDetails;
+
+  /// Check-in step 2 label
+  ///
+  /// In en, this message translates to:
+  /// **'Document condition'**
+  String get advisorCheckInStepCondition;
+
+  /// Check-in odometer label
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer reading (km)'**
+  String get advisorCheckInOdometer;
+
+  /// Check-in odometer hint
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 14200'**
+  String get advisorCheckInOdometerHint;
+
+  /// Check-in fuel label
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel level'**
+  String get advisorCheckInFuel;
+
+  /// Check-in notes label
+  ///
+  /// In en, this message translates to:
+  /// **'Customer notes'**
+  String get advisorCheckInNotes;
+
+  /// Check-in notes hint
+  ///
+  /// In en, this message translates to:
+  /// **'Add any notes from the customer'**
+  String get advisorCheckInNotesHint;
+
+  /// Check-in next action
+  ///
+  /// In en, this message translates to:
+  /// **'Next: document condition'**
+  String get advisorCheckInNext;
+
+  /// Check-in back action
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get advisorCheckInBack;
+
+  /// Damage area: front
+  ///
+  /// In en, this message translates to:
+  /// **'Front'**
+  String get advisorCheckInFront;
+
+  /// Damage area: rear
+  ///
+  /// In en, this message translates to:
+  /// **'Rear'**
+  String get advisorCheckInRear;
+
+  /// Damage area: left side
+  ///
+  /// In en, this message translates to:
+  /// **'Left side'**
+  String get advisorCheckInLeft;
+
+  /// Damage area: right side
+  ///
+  /// In en, this message translates to:
+  /// **'Right side'**
+  String get advisorCheckInRight;
+
+  /// Damage area: roof
+  ///
+  /// In en, this message translates to:
+  /// **'Roof'**
+  String get advisorCheckInRoof;
+
+  /// Add damage action
+  ///
+  /// In en, this message translates to:
+  /// **'Add damage'**
+  String get advisorCheckInAddDamage;
+
+  /// Damage dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Damage on {area}'**
+  String advisorCheckInDamageTitle(String area);
+
+  /// Damage dialog field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Describe damage (e.g. scratch, dent)'**
+  String get advisorCheckInDamageHint;
+
+  /// Damage dialog add action
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get advisorCheckInAdd;
+
+  /// Check-in submit action
+  ///
+  /// In en, this message translates to:
+  /// **'Complete check-in'**
+  String get advisorCheckInComplete;
+
+  /// Check-in success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle checked in successfully'**
+  String get advisorCheckInSuccess;
+
+  /// Check-in failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to check in. Please try again.'**
+  String get advisorCheckInFailed;
+
+  /// Check-in error toast
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String advisorCheckInError(String message);
+
+  /// Empty damage list text
+  ///
+  /// In en, this message translates to:
+  /// **'No damage recorded yet'**
+  String get advisorCheckInEmptyDamages;
+
+  /// Check-in details section title
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer, fuel & notes'**
+  String get advisorCheckInSectionDetails;
+
+  /// Check-in damage section title
+  ///
+  /// In en, this message translates to:
+  /// **'Existing damage'**
+  String get advisorCheckInSectionDamage;
+
+  /// Check-in damage section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Tap an area to record any existing damage'**
+  String get advisorCheckInSectionDamageSub;
+
+  /// Remove a recorded damage
+  ///
+  /// In en, this message translates to:
+  /// **'Remove damage'**
+  String get advisorCheckInRemoveDamage;
 }
 
 class _StaffLocalizationsDelegate
