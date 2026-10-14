@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/theme/app_density.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
 import 'package:shared_core/src/theme/app_theme_context.dart';
@@ -39,8 +40,21 @@ class AppRecordRow extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final semantic = context.semanticColors;
+    final density = context.density;
     final textTheme = theme.textTheme;
     final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
+    // Phase 01.2 density: default padding follows the active density mode;
+    // an explicit [padding] override is honoured as-is.
+    const defaultPadding = EdgeInsets.symmetric(
+      horizontal: AppDimensions.s16,
+      vertical: AppDimensions.s12,
+    );
+    final resolvedPadding = padding == defaultPadding
+        ? EdgeInsets.symmetric(
+            horizontal: density.rowPaddingHorizontal,
+            vertical: density.rowPaddingVertical,
+          )
+        : padding;
 
     return Semantics(
       button: onTap != null,
@@ -62,7 +76,7 @@ class AppRecordRow extends StatelessWidget {
           splashColor: colors.primary.withValues(alpha: 0.08),
           highlightColor: colors.primary.withValues(alpha: 0.04),
           child: Padding(
-            padding: padding,
+            padding: resolvedPadding,
             child: Row(
               children: [
                 if (leading != null) ...[

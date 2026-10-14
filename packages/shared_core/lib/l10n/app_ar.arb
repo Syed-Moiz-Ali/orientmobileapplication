@@ -102,5 +102,19 @@
   "connectivityOnline": "متزامن",
   "connectivityOffline": "غير متصل",
   "connectivityQueuedCount": "{count} قيد الانتظار",
-  "workspaceSearchTooltip": "بحث"
+  "workspaceSearchTooltip": "بحث",
+
+  "filterBarClear": "مسح",
+  "filterBarAll": "الكل",
+  "dateRangeSelect": "اختر نطاق التاريخ",
+  "dateRangeClear": "مسح التواريخ",
+  "paginationPrevious": "السابق",
+  "paginationNext": "التالي",
+  "paginationPageOf": "الصفحة {page} من {total}",
+  "paginationResults": "{count} نتيجة",
+  "commandPaletteHint": "اكتب أمراً أو ابحث…",
+  "commandPaletteEmpty": "لا توجد أوامر مطابقة",
+  "stepperStepOf": "الخطوة {current} من {total}",
+  "trendUpLabel": "صاعد",
+  "trendDownLabel": "هابط"
 }

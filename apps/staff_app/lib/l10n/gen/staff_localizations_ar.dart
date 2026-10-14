@@ -1207,4 +1207,197 @@ class StaffLocalizationsAr extends StaffLocalizations {
 
   @override
   String get advisorActionMore => 'المزيد من الإجراءات';
+
+  @override
+  String get advisorIntakeWizardNext => 'متابعة';
+
+  @override
+  String get advisorIntakeWizardBack => 'رجوع';
+
+  @override
+  String advisorIntakeWizardStepOf(int current, int total) {
+    return 'الخطوة $current من $total';
+  }
+
+  @override
+  String get advisorIntakeWizardContactTitle => 'بيانات العميل';
+
+  @override
+  String get advisorIntakeWizardContactSub =>
+      'ابحث عن عميل موجود أو أضف عميلاً جديداً';
+
+  @override
+  String get advisorIntakeWizardVehicleTitle => 'المركبة واللوحة';
+
+  @override
+  String get advisorIntakeWizardVehicleSub =>
+      'اللوحة ورقم الهيكل والعلامة التجارية والطراز';
+
+  @override
+  String get advisorIntakeWizardCaptureTitle => 'توثيق الصور';
+
+  @override
+  String get advisorIntakeWizardCaptureSub => 'المستندات والصور والقراءات';
+
+  @override
+  String get advisorIntakeWizardSignoffTitle => 'نطاق العمل والاعتماد';
+
+  @override
+  String get advisorIntakeWizardSignoffSub => 'نطاق العمل والتوقيعات والمراجعة';
+
+  @override
+  String get advisorIntakeWizardDraftRestored => 'تمت استعادة المسودة السابقة';
+
+  @override
+  String get advisorIntakeWizardBlocked => 'أكمل هذه الخطوة للمتابعة';
+
+  @override
+  String get advisorScanDecodeIdle => 'ضع الرمز داخل الإطار';
+
+  @override
+  String get advisorScanTipsTitle => 'نصائح المسح الضوئي';
+
+  @override
+  String get advisorScanTipAlign => 'ثبّت الجهاز على بعد 15–20 سم من الرمز';
+
+  @override
+  String get advisorScanTipLight => 'استخدم المصباح في الإضاءة الضعيفة';
+
+  @override
+  String get advisorScanTipManual =>
+      'تعذّر المسح؟ أدخل القيمة يدوياً دون فقدان أي بيانات';
+
+  @override
+  String get advisorScanViewfinderLabel => 'منظار الكاميرا';
+
+  @override
+  String get advisorCheckInFuelEmpty => 'فارغ';
+
+  @override
+  String get advisorCheckInFuelQuarter => '1/4';
+
+  @override
+  String get advisorCheckInFuelHalf => '1/2';
+
+  @override
+  String get advisorCheckInFuelThreeQuarter => '3/4';
+
+  @override
+  String get advisorCheckInFuelFull => 'ممتلئ';
+
+  @override
+  String get advisorCheckInOdoTitle => 'خانات عدّاد المسافة';
+
+  @override
+  String get advisorCheckInOdoUnit => 'كم';
+
+  @override
+  String get advisorCheckInOdoPlus1k => '+1k';
+
+  @override
+  String get advisorCheckInOdoPlus10k => '+10k';
+
+  @override
+  String get advisorCheckInOdoClear => 'تصفير';
+
+  @override
+  String get advisorCheckInConfirmTitle => 'تأكيد استلام المركبة';
+
+  @override
+  String get advisorCheckInConfirmBody =>
+      'راجع القراءات قبل تسليم المركبة إلى الفحص.';
+
+  @override
+  String get advisorCheckInClusterSub => 'قراءات الاستلام الحية';
+
+  @override
+  String get advisorDeliveryTitle => 'تسليم المركبة';
+
+  @override
+  String get advisorDeliverySubtitle => 'بروتوكول التسليم الرسمي';
+
+  @override
+  String get advisorDeliveryChecklistTitle => 'قائمة التسليم';
+
+  @override
+  String advisorDeliveryProgress(int done, int total) {
+    return 'تم التحقق من $done من $total';
+  }
+
+  @override
+  String get advisorDeliveryCheckInvoice => 'تسليم نسخة من الفاتورة للعميل';
+
+  @override
+  String get advisorDeliveryCheckKeys => 'تسليم مفاتيح المركبة';
+
+  @override
+  String get advisorDeliveryCheckDocs => 'إعادة وثائق المركبة';
+
+  @override
+  String get advisorDeliveryCheckService => 'تذكير العميل بموعد الصيانة القادم';
+
+  @override
+  String get advisorDeliveryCheckWarranty => 'شرح معلومات الضمان';
+
+  @override
+  String get advisorDeliveryMileage => 'قراءة العدّاد النهائية (كم)';
+
+  @override
+  String get advisorDeliveryMileageHint => 'مثال: 48250';
+
+  @override
+  String get advisorDeliveryMileageError =>
+      'أدخل قراءة العدّاد النهائية لإتمام التسليم';
+
+  @override
+  String get advisorDeliveryRating => 'رضا العميل';
+
+  @override
+  String advisorDeliveryRatingValue(int value) {
+    return 'التقييم $value من 5';
+  }
+
+  @override
+  String get advisorDeliveryNotes => 'ملاحظات التسليم';
+
+  @override
+  String get advisorDeliveryNotesHint =>
+      'ملاحظات العميل وطلبات الإرجاع وملاحظات الضمان…';
+
+  @override
+  String get advisorDeliverySignature => 'توقيع العميل';
+
+  @override
+  String get advisorDeliverySignatureHint =>
+      'التقط توقيع العميل لإغلاق بروتوكول التسليم';
+
+  @override
+  String get advisorDeliverySignAction => 'التقاط التوقيع';
+
+  @override
+  String get advisorDeliverySigned => 'تم التوقيع';
+
+  @override
+  String get advisorDeliveryComplete => 'إتمام التسليم';
+
+  @override
+  String advisorDeliveryRemaining(int count) {
+    return 'متبقٍ $count من البنود';
+  }
+
+  @override
+  String get advisorDeliverySuccess => 'تم تسليم المركبة بنجاح';
+
+  @override
+  String get advisorDeliveryFailed => 'تعذّر إتمام التسليم';
+
+  @override
+  String advisorDeliveryError(String message) {
+    return 'خطأ: $message';
+  }
+
+  @override
+  String advisorIntakeAttachmentError(String message) {
+    return 'تعذّر إضافة المرفق: $message';
+  }
 }

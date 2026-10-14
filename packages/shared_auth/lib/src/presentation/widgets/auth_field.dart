@@ -25,6 +25,11 @@ class AuthTextField extends StatefulWidget {
   final String? errorText;
   final Widget? labelTrailing;
 
+  /// Optional slot rendered below the control (Phase 01.2) — e.g. an
+  /// [AuthPasswordStrength] meter on create-password fields. Presentation
+  /// only; validation copy stays in [errorText].
+  final Widget? belowField;
+
   /// Forces a fixed text direction for the control content. Identifier fields
   /// (email, mobile, username) set this to [TextDirection.ltr] so mixed
   /// Arabic/Latin entry stays legible inside RTL layouts (spec §6).
@@ -46,6 +51,7 @@ class AuthTextField extends StatefulWidget {
     this.enabled = true,
     this.errorText,
     this.labelTrailing,
+    this.belowField,
     this.textDirection,
     this.onChanged,
     this.onSubmitted,
@@ -198,6 +204,10 @@ class _AuthTextFieldState extends State<AuthTextField> {
           onChanged: widget.onChanged,
           onSubmitted: widget.onSubmitted,
         ),
+        if (widget.belowField != null) ...[
+          const SizedBox(height: AppDimensions.s8),
+          widget.belowField!,
+        ],
       ],
     );
   }

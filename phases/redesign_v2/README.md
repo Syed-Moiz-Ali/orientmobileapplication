@@ -69,6 +69,7 @@ phases/redesign_v2/
 │   ├── PHASE_05_AUTHENTICATION_FLOWS.md
 │   ├── PHASE_06_STAFF_ADVISOR_HUB.md
 │   ├── PHASE_07_STAFF_VEHICLE_INTAKE.md
+│   ├── PHASE_07_1_CENTRALIZED_SAAS_HARDENING.md
 │   ├── PHASE_08_STAFF_INSPECTION_HUD.md
 │   ├── PHASE_09_STAFF_REPAIR_ESTIMATES.md
 │   ├── PHASE_10_STAFF_TECHNICIAN_CONSOLE.md
@@ -91,7 +92,7 @@ phases/redesign_v2/
 
 ## 3. High-Level Phase Overview & Dependency Pipeline
 
-The implementation is structured into **21 tightly scoped, sequentially gated phases**. Oversized phases from the initial draft (Staff Tech/Supervisor, Owner Financials, Customer Booking/Tracking, CRM Pipeline) have been split into independent, verified execution packages.
+The implementation is structured into **22 tightly scoped, sequentially gated phases**. Oversized phases from the initial draft (Staff Tech/Supervisor, Owner Financials, Customer Booking/Tracking, CRM Pipeline) have been split into independent, verified execution packages.
 
 ```mermaid
 flowchart TD
@@ -103,7 +104,8 @@ flowchart TD
     P03 --> P06["Phase 06: Staff Advisor Hub"]
     P04 --> P06
     P06 --> P07["Phase 07: Staff Intake & Camera OCR"]
-    P07 --> P08["Phase 08: Staff Inspection HUD"]
+    P07 --> P071["Phase 07.1: Centralized SaaS Hardening"]
+    P071 --> P08["Phase 08: Staff Inspection HUD"]
     P08 --> P09["Phase 09: Staff Repair Estimates"]
     P09 --> P10["Phase 10: Staff Technician Console"]
     P09 --> P11["Phase 11: Staff Supervisor Bay"]
@@ -150,12 +152,14 @@ flowchart TD
 | :--- | :--- | :--- | :--- | :--- |
 | **01** | Concept A Tokens & Theme Foundation | ✅ PASSED (final verification) | ⏳ Pending Product Owner | `reports/PHASE_01_COMPLETION.md` |
 | **01.1** | Centralized Theme Architecture Correction | ✅ PASSED | ⏳ Pending Product Owner | `reports/PHASE_01_1_THEME_ARCHITECTURE.md` |
+| **01.2** | SaaS Foundation Hardening (density, primary lock, charts, focus, 7 primitives, AuthGuard, value objects) | ✅ PASSED (core 405/405, auth 86/86, models 17/17) | ⏳ Pending Product Owner | `reports/PHASE_01_2_FOUNDATION_HARDENING.md` |
 | **02** | Shared UI Primitives & Input System | ✅ PASSED | ⏳ Pending Product Owner | `reports/REPORT_PHASE_02.md` |
 | **03** | Complex Data Components (Tables, Pods, HUD) | ✅ PASSED | ⏳ Pending Product Owner | `reports/REPORT_PHASE_03.md` |
 | **04** | Navigation Shells & Application Scaffolds | ✅ PASSED (shared layer) | ⏳ Pending Product Owner | `reports/REPORT_PHASE_04.md`, `reports/REPORT_PHASE_04_VISUAL_ACCEPTANCE.md` |
 | **04.1** | Application Integration Planning & Ownership | ✅ Planning complete — **no code changed** | — App integration deferred to owning phases 06/10/11/13/16/19 | `reports/REPORT_PHASE_04_1_INTEGRATION_PLAN.md` |
 | **05** | Authentication & Access Flow Redesign | ✅ PASSED | ⏳ Pending Product Owner | `reports/REPORT_PHASE_05.md` |
 | **06** | Staff Advisor Hub (Tactical Operations Radar) | ✅ PASSED (with 04.1 shell integration) | ⏳ Pending Product Owner | `reports/REPORT_PHASE_06.md` |
+| **07.1** | Centralized SaaS Hardening & Retrofit (01–07) | ⬜ NOT STARTED (runs after 07, before 08; consumes 01.2) | ⬜ — | `reports/REPORT_PHASE_07_1.md` |
 
 **Phase 01 verification + 01.1 outcome:** Concept A tokens verified; the authorized Hyper Cobalt accessibility amendment (`#215FE6`) and a parallel Brembo Crimson amendment (`#DC2626`) are documented. Arabic typography reconciled to the single frozen `×1.05` line-height rule. A single `AppSemanticColors` `ThemeExtension` + `context.semanticColors` / `context.colors` accessors now own all custom roles; every `shared_core` foundation primitive reads from the active theme (source guard test enforces it). Monorepo: 0 analyzer issues in production code; no logic/API/localization/persistence regressions. Remaining failures are historical goldens owned by Phases 03/04/05/06–12/16–18 (theme migration), not regenerated here. **Phases 02, 03 and 04 (shared layer) are engineering-complete with reports; Phase 04 application-level adoption of the shared header composition is deferred to the owning feature/app phases (05–20), and Phase 05 has NOT begun.**
 

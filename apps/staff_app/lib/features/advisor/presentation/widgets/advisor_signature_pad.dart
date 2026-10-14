@@ -165,10 +165,12 @@ class _AdvisorSignaturePadState extends State<AdvisorSignaturePad> {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     const size = Size(800, 320);
+    // FIXED-INK: exported PNG document bytes (non-rendered), not UI.
     canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white);
     _AdvisorSignaturePainter(
       strokes: _strokes,
       current: const [],
+      // FIXED-INK: exported PNG document bytes (non-rendered), not UI.
       color: Colors.black,
     ).paint(canvas, size);
     final image = await recorder.endRecording().toImage(800, 320);

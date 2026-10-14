@@ -2377,6 +2377,354 @@ abstract class StaffLocalizations {
   /// In en, this message translates to:
   /// **'More actions'**
   String get advisorActionMore;
+
+  /// Wizard advance action
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get advisorIntakeWizardNext;
+
+  /// Wizard return action
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get advisorIntakeWizardBack;
+
+  /// Wizard position label
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String advisorIntakeWizardStepOf(int current, int total);
+
+  /// Wizard step 1 title
+  ///
+  /// In en, this message translates to:
+  /// **'Customer contact'**
+  String get advisorIntakeWizardContactTitle;
+
+  /// Wizard step 1 subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Find an existing customer or add a new one'**
+  String get advisorIntakeWizardContactSub;
+
+  /// Wizard step 2 title
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle & plate'**
+  String get advisorIntakeWizardVehicleTitle;
+
+  /// Wizard step 2 subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Plate, VIN, brand, model and year'**
+  String get advisorIntakeWizardVehicleSub;
+
+  /// Wizard step 3 title
+  ///
+  /// In en, this message translates to:
+  /// **'Photo capture'**
+  String get advisorIntakeWizardCaptureTitle;
+
+  /// Wizard step 3 subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Documents, photos and readings'**
+  String get advisorIntakeWizardCaptureSub;
+
+  /// Wizard step 4 title
+  ///
+  /// In en, this message translates to:
+  /// **'Scope & sign-off'**
+  String get advisorIntakeWizardSignoffTitle;
+
+  /// Wizard step 4 subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Job scope, signatures and review'**
+  String get advisorIntakeWizardSignoffSub;
+
+  /// Draft restore notice
+  ///
+  /// In en, this message translates to:
+  /// **'Previous draft restored'**
+  String get advisorIntakeWizardDraftRestored;
+
+  /// Blocked wizard advance hint
+  ///
+  /// In en, this message translates to:
+  /// **'Complete this step to continue'**
+  String get advisorIntakeWizardBlocked;
+
+  /// Scanner idle readout
+  ///
+  /// In en, this message translates to:
+  /// **'Align the code inside the frame'**
+  String get advisorScanDecodeIdle;
+
+  /// Scanner guidance title
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning tips'**
+  String get advisorScanTipsTitle;
+
+  /// Scanner tip: distance
+  ///
+  /// In en, this message translates to:
+  /// **'Hold steady 15–20 cm from the code'**
+  String get advisorScanTipAlign;
+
+  /// Scanner tip: torch
+  ///
+  /// In en, this message translates to:
+  /// **'Use the torch in low light'**
+  String get advisorScanTipLight;
+
+  /// Scanner tip: manual fallback
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t scan? Enter the value manually — nothing is lost'**
+  String get advisorScanTipManual;
+
+  /// Viewfinder semantics label
+  ///
+  /// In en, this message translates to:
+  /// **'Camera viewfinder'**
+  String get advisorScanViewfinderLabel;
+
+  /// Fuel dial: empty
+  ///
+  /// In en, this message translates to:
+  /// **'Empty'**
+  String get advisorCheckInFuelEmpty;
+
+  /// Fuel dial: quarter
+  ///
+  /// In en, this message translates to:
+  /// **'1/4'**
+  String get advisorCheckInFuelQuarter;
+
+  /// Fuel dial: half
+  ///
+  /// In en, this message translates to:
+  /// **'1/2'**
+  String get advisorCheckInFuelHalf;
+
+  /// Fuel dial: three quarters
+  ///
+  /// In en, this message translates to:
+  /// **'3/4'**
+  String get advisorCheckInFuelThreeQuarter;
+
+  /// Fuel dial: full
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get advisorCheckInFuelFull;
+
+  /// Odometer drum picker title
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer drums'**
+  String get advisorCheckInOdoTitle;
+
+  /// Odometer unit
+  ///
+  /// In en, this message translates to:
+  /// **'km'**
+  String get advisorCheckInOdoUnit;
+
+  /// Odometer quick add one thousand
+  ///
+  /// In en, this message translates to:
+  /// **'+1k'**
+  String get advisorCheckInOdoPlus1k;
+
+  /// Odometer quick add ten thousand
+  ///
+  /// In en, this message translates to:
+  /// **'+10k'**
+  String get advisorCheckInOdoPlus10k;
+
+  /// Odometer reset action
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get advisorCheckInOdoClear;
+
+  /// Check-in confirmation title
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm check-in'**
+  String get advisorCheckInConfirmTitle;
+
+  /// Check-in confirmation body
+  ///
+  /// In en, this message translates to:
+  /// **'Review the readings before handing the vehicle to inspection.'**
+  String get advisorCheckInConfirmBody;
+
+  /// Telemetry cluster subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Live telemetry for this reception'**
+  String get advisorCheckInClusterSub;
+
+  /// Delivery page title
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle handover'**
+  String get advisorDeliveryTitle;
+
+  /// Delivery page subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Formal delivery protocol'**
+  String get advisorDeliverySubtitle;
+
+  /// Delivery checklist title
+  ///
+  /// In en, this message translates to:
+  /// **'Handover checklist'**
+  String get advisorDeliveryChecklistTitle;
+
+  /// Delivery checklist progress
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} verified'**
+  String advisorDeliveryProgress(int done, int total);
+
+  /// Delivery check: invoice
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice copy provided to customer'**
+  String get advisorDeliveryCheckInvoice;
+
+  /// Delivery check: keys
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle keys handed over'**
+  String get advisorDeliveryCheckKeys;
+
+  /// Delivery check: documents
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle documents returned'**
+  String get advisorDeliveryCheckDocs;
+
+  /// Delivery check: service reminder
+  ///
+  /// In en, this message translates to:
+  /// **'Next service reminder given'**
+  String get advisorDeliveryCheckService;
+
+  /// Delivery check: warranty
+  ///
+  /// In en, this message translates to:
+  /// **'Warranty information explained'**
+  String get advisorDeliveryCheckWarranty;
+
+  /// Delivery mileage label
+  ///
+  /// In en, this message translates to:
+  /// **'Final mileage (km)'**
+  String get advisorDeliveryMileage;
+
+  /// Delivery mileage hint
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 48250'**
+  String get advisorDeliveryMileageHint;
+
+  /// Delivery mileage validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the final mileage to complete handover'**
+  String get advisorDeliveryMileageError;
+
+  /// Delivery rating label
+  ///
+  /// In en, this message translates to:
+  /// **'Customer satisfaction'**
+  String get advisorDeliveryRating;
+
+  /// Delivery rating value
+  ///
+  /// In en, this message translates to:
+  /// **'Rated {value} of 5'**
+  String advisorDeliveryRatingValue(int value);
+
+  /// Delivery notes label
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery notes'**
+  String get advisorDeliveryNotes;
+
+  /// Delivery notes hint
+  ///
+  /// In en, this message translates to:
+  /// **'Customer feedback, return requests, warranty notes…'**
+  String get advisorDeliveryNotesHint;
+
+  /// Delivery signature label
+  ///
+  /// In en, this message translates to:
+  /// **'Customer sign-off'**
+  String get advisorDeliverySignature;
+
+  /// Delivery signature hint
+  ///
+  /// In en, this message translates to:
+  /// **'Capture the customer signature to close the protocol'**
+  String get advisorDeliverySignatureHint;
+
+  /// Delivery signature action
+  ///
+  /// In en, this message translates to:
+  /// **'Capture signature'**
+  String get advisorDeliverySignAction;
+
+  /// Delivery signed state
+  ///
+  /// In en, this message translates to:
+  /// **'Signed'**
+  String get advisorDeliverySigned;
+
+  /// Delivery submit action
+  ///
+  /// In en, this message translates to:
+  /// **'Complete handover'**
+  String get advisorDeliveryComplete;
+
+  /// Delivery remaining checks
+  ///
+  /// In en, this message translates to:
+  /// **'{count} checks remaining'**
+  String advisorDeliveryRemaining(int count);
+
+  /// Delivery success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle delivered successfully'**
+  String get advisorDeliverySuccess;
+
+  /// Delivery failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to complete delivery'**
+  String get advisorDeliveryFailed;
+
+  /// Delivery error toast
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String advisorDeliveryError(String message);
+
+  /// Attachment failure snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add attachment: {message}'**
+  String advisorIntakeAttachmentError(String message);
 }
 
 class _StaffLocalizationsDelegate

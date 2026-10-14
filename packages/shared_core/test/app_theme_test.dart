@@ -25,8 +25,8 @@ void main() {
     );
     expect(
       light.floatingActionButtonTheme.backgroundColor,
-      brand.buttonColor,
-      reason: 'light floatingActionButtonTheme must stay brand-driven',
+      AppColors.primary,
+      reason: 'light floatingActionButtonTheme must stay on #215FE6',
     );
     expect(
       dark.bottomNavigationBarTheme.showUnselectedLabels,

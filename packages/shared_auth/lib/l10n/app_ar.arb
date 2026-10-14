@@ -78,5 +78,14 @@
 
   "errorUnreachable": "تعذّر الوصول إلى أورينت. تحقق من اتصالك وحاول مجدداً.",
   "errorServerGeneric": "حدث خطأ من جهتنا. حاول مرة أخرى.",
-  "errorGeneric": "حدث خطأ ما. حاول مرة أخرى."
+  "errorGeneric": "حدث خطأ ما. حاول مرة أخرى.",
+
+  "authSessionExpiredTitle": "انتهت الجلسة",
+  "authSessionExpiredMessage": "انتهت جلستك. سجّل الدخول مجدداً للمتابعة.",
+  "authSessionExpiredAction": "تسجيل الدخول مجدداً",
+  "authPasswordStrengthLabel": "قوة كلمة المرور",
+  "authPasswordStrengthWeak": "ضعيفة",
+  "authPasswordStrengthFair": "مقبولة",
+  "authPasswordStrengthGood": "جيدة",
+  "authPasswordStrengthStrong": "قوية"
 }

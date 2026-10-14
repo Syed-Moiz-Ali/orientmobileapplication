@@ -6,6 +6,7 @@ import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_core/src/errors/result.dart';
 import 'package:shared_core/src/localization/locale_provider.dart';
+import 'package:shared_models/shared_models.dart';
 
 enum AuthMethod { sms, email, password }
 
@@ -124,11 +125,9 @@ class LoginNotifier extends Notifier<LoginState> {
       state = state.copyWith(isRegistering: !state.isRegistering);
 
   String _fullPhone(String p) {
-    final c = p.replaceAll(RegExp(r'[^\d]'), '');
-    final cc = state.countryCode.replaceAll(RegExp(r'[^\d]'), '');
-    if (c.startsWith(cc)) return c;
-    final z = c.startsWith('0') ? c.substring(1) : c;
-    return '$cc$z';
+    // Phase 01.2: canonical phone normalization lives in the shared
+    // [PhoneNumber] value object — no duplicated regex munging here.
+    return PhoneNumber.normalizeLoose(p, countryCode: state.countryCode);
   }
 
   Future<void> _completeAuth() async {

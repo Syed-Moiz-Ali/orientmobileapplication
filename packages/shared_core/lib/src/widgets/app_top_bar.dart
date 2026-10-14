@@ -4,6 +4,14 @@ import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/widgets/directional_icon.dart';
 import 'package:shared_core/src/widgets/notification_bell.dart';
 
+/// Legacy compact top bar (Phase 01.2: **deprecated**).
+///
+/// New screens must use [WorkspaceAppBar] (workspace chrome) or
+/// [AppPageHeader] (in-page headings). This widget is retained for API
+/// compatibility with existing customer/staff screens owned by Phases 06–18;
+/// the deprecation guard (`deprecation_guard_test.dart`) fails on any new
+/// usage outside the documented allowlist.
+@Deprecated('Use WorkspaceAppBar (chrome) or AppPageHeader (headings)')
 class AppTopBar extends StatelessWidget {
   final String title;
   final Widget? trailing;
@@ -68,6 +76,7 @@ class AppTopBar extends StatelessWidget {
   }
 }
 
+@Deprecated('Use WorkspaceAppBar (chrome) or AppPageHeader (headings)')
 class CustomerTopBar extends StatelessWidget {
   final String avatarInitials;
   final String name;

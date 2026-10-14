@@ -417,10 +417,11 @@ class _AdvisorDashboardContent extends ConsumerWidget {
     final approvalsState = ref.watch(advisorPendingApprovalsProvider);
     final reminders = ref.watch(advisorFollowupRemindersProvider);
 
-    final recentJobs = recentJobsState.value ?? const <JobCardEntity>[];
+    final recentJobs = recentJobsState.valueOrNull ?? const <JobCardEntity>[];
     final assignedBookings =
-        bookingsState.value ?? const <AdvisorBookingResponse>[];
-    final approvals = approvalsState.value ?? const <PendingApprovalEntity>[];
+        bookingsState.valueOrNull ?? const <AdvisorBookingResponse>[];
+    final approvals =
+        approvalsState.valueOrNull ?? const <PendingApprovalEntity>[];
     final activeBooking = assignedBookings.firstOrNull;
 
     final hasDataError =

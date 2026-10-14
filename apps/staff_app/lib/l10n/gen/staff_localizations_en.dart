@@ -1219,4 +1219,198 @@ class StaffLocalizationsEn extends StaffLocalizations {
 
   @override
   String get advisorActionMore => 'More actions';
+
+  @override
+  String get advisorIntakeWizardNext => 'Continue';
+
+  @override
+  String get advisorIntakeWizardBack => 'Back';
+
+  @override
+  String advisorIntakeWizardStepOf(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get advisorIntakeWizardContactTitle => 'Customer contact';
+
+  @override
+  String get advisorIntakeWizardContactSub =>
+      'Find an existing customer or add a new one';
+
+  @override
+  String get advisorIntakeWizardVehicleTitle => 'Vehicle & plate';
+
+  @override
+  String get advisorIntakeWizardVehicleSub =>
+      'Plate, VIN, brand, model and year';
+
+  @override
+  String get advisorIntakeWizardCaptureTitle => 'Photo capture';
+
+  @override
+  String get advisorIntakeWizardCaptureSub => 'Documents, photos and readings';
+
+  @override
+  String get advisorIntakeWizardSignoffTitle => 'Scope & sign-off';
+
+  @override
+  String get advisorIntakeWizardSignoffSub =>
+      'Job scope, signatures and review';
+
+  @override
+  String get advisorIntakeWizardDraftRestored => 'Previous draft restored';
+
+  @override
+  String get advisorIntakeWizardBlocked => 'Complete this step to continue';
+
+  @override
+  String get advisorScanDecodeIdle => 'Align the code inside the frame';
+
+  @override
+  String get advisorScanTipsTitle => 'Scanning tips';
+
+  @override
+  String get advisorScanTipAlign => 'Hold steady 15–20 cm from the code';
+
+  @override
+  String get advisorScanTipLight => 'Use the torch in low light';
+
+  @override
+  String get advisorScanTipManual =>
+      'Can\'t scan? Enter the value manually — nothing is lost';
+
+  @override
+  String get advisorScanViewfinderLabel => 'Camera viewfinder';
+
+  @override
+  String get advisorCheckInFuelEmpty => 'Empty';
+
+  @override
+  String get advisorCheckInFuelQuarter => '1/4';
+
+  @override
+  String get advisorCheckInFuelHalf => '1/2';
+
+  @override
+  String get advisorCheckInFuelThreeQuarter => '3/4';
+
+  @override
+  String get advisorCheckInFuelFull => 'Full';
+
+  @override
+  String get advisorCheckInOdoTitle => 'Odometer drums';
+
+  @override
+  String get advisorCheckInOdoUnit => 'km';
+
+  @override
+  String get advisorCheckInOdoPlus1k => '+1k';
+
+  @override
+  String get advisorCheckInOdoPlus10k => '+10k';
+
+  @override
+  String get advisorCheckInOdoClear => 'Reset';
+
+  @override
+  String get advisorCheckInConfirmTitle => 'Confirm check-in';
+
+  @override
+  String get advisorCheckInConfirmBody =>
+      'Review the readings before handing the vehicle to inspection.';
+
+  @override
+  String get advisorCheckInClusterSub => 'Live telemetry for this reception';
+
+  @override
+  String get advisorDeliveryTitle => 'Vehicle handover';
+
+  @override
+  String get advisorDeliverySubtitle => 'Formal delivery protocol';
+
+  @override
+  String get advisorDeliveryChecklistTitle => 'Handover checklist';
+
+  @override
+  String advisorDeliveryProgress(int done, int total) {
+    return '$done of $total verified';
+  }
+
+  @override
+  String get advisorDeliveryCheckInvoice => 'Invoice copy provided to customer';
+
+  @override
+  String get advisorDeliveryCheckKeys => 'Vehicle keys handed over';
+
+  @override
+  String get advisorDeliveryCheckDocs => 'Vehicle documents returned';
+
+  @override
+  String get advisorDeliveryCheckService => 'Next service reminder given';
+
+  @override
+  String get advisorDeliveryCheckWarranty => 'Warranty information explained';
+
+  @override
+  String get advisorDeliveryMileage => 'Final mileage (km)';
+
+  @override
+  String get advisorDeliveryMileageHint => 'e.g. 48250';
+
+  @override
+  String get advisorDeliveryMileageError =>
+      'Enter the final mileage to complete handover';
+
+  @override
+  String get advisorDeliveryRating => 'Customer satisfaction';
+
+  @override
+  String advisorDeliveryRatingValue(int value) {
+    return 'Rated $value of 5';
+  }
+
+  @override
+  String get advisorDeliveryNotes => 'Delivery notes';
+
+  @override
+  String get advisorDeliveryNotesHint =>
+      'Customer feedback, return requests, warranty notes…';
+
+  @override
+  String get advisorDeliverySignature => 'Customer sign-off';
+
+  @override
+  String get advisorDeliverySignatureHint =>
+      'Capture the customer signature to close the protocol';
+
+  @override
+  String get advisorDeliverySignAction => 'Capture signature';
+
+  @override
+  String get advisorDeliverySigned => 'Signed';
+
+  @override
+  String get advisorDeliveryComplete => 'Complete handover';
+
+  @override
+  String advisorDeliveryRemaining(int count) {
+    return '$count checks remaining';
+  }
+
+  @override
+  String get advisorDeliverySuccess => 'Vehicle delivered successfully';
+
+  @override
+  String get advisorDeliveryFailed => 'Failed to complete delivery';
+
+  @override
+  String advisorDeliveryError(String message) {
+    return 'Error: $message';
+  }
+
+  @override
+  String advisorIntakeAttachmentError(String message) {
+    return 'Could not add attachment: $message';
+  }
 }

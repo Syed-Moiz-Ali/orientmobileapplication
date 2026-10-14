@@ -7,6 +7,7 @@ export 'src/localization/locale_provider.dart';
 export 'src/localization/shared_core_l10n.dart';
 
 export 'src/theme/app_colors.dart';
+export 'src/theme/app_density.dart';
 export 'src/theme/app_dimensions.dart';
 export 'src/theme/app_interaction_states.dart';
 export 'src/theme/app_semantic_colors.dart';
@@ -23,6 +24,13 @@ export 'src/layout/app_adaptive_navigation.dart';
 export 'src/layout/app_responsive.dart';
 
 export 'src/widgets/app_card.dart';
+export 'src/widgets/app_command_palette.dart';
+export 'src/widgets/app_date_range_field.dart';
+export 'src/widgets/app_filter_bar.dart';
+export 'src/widgets/app_pagination_footer.dart';
+export 'src/widgets/app_stepper.dart';
+export 'src/widgets/app_timeline.dart';
+export 'src/widgets/app_trend_stat.dart';
 export 'src/widgets/directional_icon.dart';
 export 'src/widgets/app_action_bar.dart';
 export 'src/widgets/app_bottom_sheet.dart';

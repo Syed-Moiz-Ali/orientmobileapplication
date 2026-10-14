@@ -9,6 +9,11 @@ import 'package:shared_core/src/widgets/status_pill.dart';
 /// favour of a clean surface + status pills. Still consumed by `crm_app`; the
 /// full retirement (replaced by a telemetry header) happens in the owning CRM
 /// phase, so no deprecation annotation is added yet.
+///
+/// **Phase 01.2:** deprecated — new screens must use [AppPageHeader] with
+/// status pills. The deprecation guard fails on any new usage outside the
+/// documented allowlist.
+@Deprecated('Use AppPageHeader with StatusPill instead')
 class GradientBanner extends StatelessWidget {
   final String title;
   final String greeting;
@@ -112,6 +117,7 @@ class GradientBanner extends StatelessWidget {
   }
 }
 
+@Deprecated('Use AppPageHeader with StatusPill instead')
 class GradientBannerPill {
   final IconData icon;
   final String label;

@@ -299,4 +299,49 @@ class SharedCoreLocalizationsAr extends SharedCoreLocalizations {
 
   @override
   String get workspaceSearchTooltip => 'بحث';
+
+  @override
+  String get filterBarClear => 'مسح';
+
+  @override
+  String get filterBarAll => 'الكل';
+
+  @override
+  String get dateRangeSelect => 'اختر نطاق التاريخ';
+
+  @override
+  String get dateRangeClear => 'مسح التواريخ';
+
+  @override
+  String get paginationPrevious => 'السابق';
+
+  @override
+  String get paginationNext => 'التالي';
+
+  @override
+  String paginationPageOf(int page, int total) {
+    return 'الصفحة $page من $total';
+  }
+
+  @override
+  String paginationResults(int count) {
+    return '$count نتيجة';
+  }
+
+  @override
+  String get commandPaletteHint => 'اكتب أمراً أو ابحث…';
+
+  @override
+  String get commandPaletteEmpty => 'لا توجد أوامر مطابقة';
+
+  @override
+  String stepperStepOf(int current, int total) {
+    return 'الخطوة $current من $total';
+  }
+
+  @override
+  String get trendUpLabel => 'صاعد';
+
+  @override
+  String get trendDownLabel => 'هابط';
 }

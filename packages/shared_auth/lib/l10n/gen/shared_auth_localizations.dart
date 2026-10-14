@@ -544,6 +544,54 @@ abstract class SharedAuthLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong. Please try again.'**
   String get errorGeneric;
+
+  /// Title of the session-expired notice
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired'**
+  String get authSessionExpiredTitle;
+
+  /// Body of the session-expired notice
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Sign in again to continue.'**
+  String get authSessionExpiredMessage;
+
+  /// Re-authenticate action on the session-expired notice
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get authSessionExpiredAction;
+
+  /// Screen-reader label of the password-strength meter
+  ///
+  /// In en, this message translates to:
+  /// **'Password strength'**
+  String get authPasswordStrengthLabel;
+
+  /// Password strength level: weak
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get authPasswordStrengthWeak;
+
+  /// Password strength level: fair
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get authPasswordStrengthFair;
+
+  /// Password strength level: good
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get authPasswordStrengthGood;
+
+  /// Password strength level: strong
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get authPasswordStrengthStrong;
 }
 
 class _SharedAuthLocalizationsDelegate

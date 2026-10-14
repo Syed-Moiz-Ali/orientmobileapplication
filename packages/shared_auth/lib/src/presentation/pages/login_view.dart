@@ -6,6 +6,7 @@ import 'package:shared_auth/src/presentation/providers/login_provider.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_notice.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_password_strength.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -449,6 +450,7 @@ class _RegisterForm extends StatelessWidget {
           textInputAction: TextInputAction.done,
           autofillHints: const [AutofillHints.newPassword],
           enabled: !busy,
+          belowField: AuthPasswordStrength(password: state.password),
           labelTrailing: Text(
             t.loginMinCharacters,
             style: theme.textTheme.labelSmall?.copyWith(

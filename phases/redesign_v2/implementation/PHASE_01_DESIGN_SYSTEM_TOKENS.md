@@ -1,4 +1,4 @@
-# PHASE 01 — Concept A Design Tokens & Theme Foundation
+﻿# PHASE 01 — Concept A Design Tokens & Theme Foundation
 
 **Document ID:** `phases/redesign_v2/implementation/PHASE_01_DESIGN_SYSTEM_TOKENS.md`  
 **Prerequisites:** Product Owner Concept A Approval (`00_CONCEPT_A_APPROVAL.md`)  
@@ -49,3 +49,14 @@ Establish the production-grade **Concept A Design System** within `packages/shar
 ### Gate 2: Visual Aesthetic Validation
 - Rendered token swatch golden PNG approved for Concept A fidelity.
 - Generates `phases/redesign_v2/reports/REPORT_PHASE_01.md`.
+
+---
+
+## Centralized Widgets (Phase 01.2 — Mandatory)
+All UI in this phase MUST reuse `packages/shared_core` centralized widgets. Never build a per-app duplicate when a shared widget exists.
+
+- Use existing: `WorkspaceAppBar`, `DashboardShell`, `OfflineStatusPill`, `AppBreadcrumbs`, `AppPageHeader`, `AppMasterDetailScaffold`, `AppTable`, `AppCard`, `AppKpiCard`, `AppListSurface`, `AppRecordRow`, `AppSearchField`, `AppTextField`, `AppDropdownButton`, `AppFilterBar` / `AppDateRangeField` / `AppPaginationFooter` (01.2), `AppCommandPalette` + `WorkspaceSearchShortcuts` (01.2), `AppStepper` / `AppTimeline` / `AppTrendStat` (01.2), `AppBottomSheet`, `AppConfirmationDialog`, `AppSelectionSheet`, `EmptyState`, `ErrorView`, `AppSkeleton`, `LoadingIndicator`, `StatusPill`, `SectionHeader`, `AppActionBar`, `PrimaryButton`.
+- If a needed widget does NOT exist in `shared_core`: create it in `packages/shared_core/lib/src/widgets/` (theme-driven via `context.colors` / `context.semanticColors`, EN/AR, responsive, a11y), export from `shared_core.dart`, add widget tests + goldens, THEN use it in this phase. Do not create `apps/*/lib/.../widgets/` copies.
+- Forbidden: app-local copies of shared primitives, hardcoded spacing/radii/fonts, hardcoded colors, bespoke app bars/shells.
+- Acceptance: grep shows zero new app-local duplicates; new shared widgets have tests + docs.
+

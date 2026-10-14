@@ -12,11 +12,13 @@ import 'package:staff_app/features/advisor/data/datasources/advisor_remote_datas
 import 'package:staff_app/features/advisor/presentation/pages/advisor_vehicle_checkin_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/scan_vehicle_view.dart';
 import 'package:staff_app/features/advisor/presentation/pages/vehicle_customer_view.dart';
+import 'package:staff_app/features/advisor/presentation/pages/vehicle_delivery_view.dart';
+import 'package:staff_app/features/advisor/presentation/providers/vehicle_customer_provider.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-/// Phase 07A — advisor intake / check-in / scan visual references (EN/AR,
-/// mobile/tablet/desktop). Regenerated only for the screens intentionally
-/// redesigned in Phase 07A and visually reviewed before re-baselining (J2 gate).
+/// Phase 07 — intake studio visual references (EN/AR, mobile/tablet/desktop).
+/// Regenerated only for the screens intentionally redesigned in Phase 07 and
+/// visually reviewed before re-baselining.
 const _delegates = <LocalizationsDelegate<dynamic>>[
   StaffLocalizations.delegate,
   SharedCoreLocalizations.delegate,
@@ -107,12 +109,23 @@ void main() {
       );
     });
 
+    testWidgets('delivery 390 $label', (tester) async {
+      await _pump(
+        tester,
+        const VehicleDeliveryView(jobCardRef: 'JC-2026-1042'),
+        const Size(390, 844),
+        locale,
+      );
+      await expectLater(
+        find.byType(VehicleDeliveryView),
+        matchesGoldenFile('goldens/delivery_390_$label.png'),
+      );
+    });
+
     testWidgets('intake 390 $label invalid', (tester) async {
       await _pump(tester, const VehicleCustomerView(), const Size(390, 844), locale);
       final t = await StaffLocalizations.delegate.load(locale);
-      // In Arabic the page title and the button label are identical; target the
-      // action-bar button (the last match).
-      await tester.tap(find.text(t.advisorIntakeActionCreate).last);
+      await tester.tap(find.text(t.advisorIntakeWizardNext));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(VehicleCustomerView),
@@ -121,7 +134,36 @@ void main() {
     });
   }
 
-  testWidgets('checkin 390 en damage step', (tester) async {
+  testWidgets('intake 390 en signoff deck', (tester) async {
+    await _pump(
+      tester,
+      const VehicleCustomerView(),
+      const Size(390, 844),
+      const Locale('en'),
+    );
+    final t = await StaffLocalizations.delegate.load(const Locale('en'));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(VehicleCustomerView)),
+    );
+    final notifier = container.read(vehicleCustomerFormProvider.notifier);
+    notifier
+      ..setCustomerName('Rashid Al Nuaimi')
+      ..setPhone('501234567')
+      ..setPlateNumber('84920')
+      ..setMake('Toyota')
+      ..setModel('Land Cruiser');
+    await tester.pump();
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.text(t.advisorIntakeWizardNext));
+      await tester.pumpAndSettle();
+    }
+    await expectLater(
+      find.byType(VehicleCustomerView),
+      matchesGoldenFile('goldens/intake_390_en_signoff.png'),
+    );
+  });
+
+  testWidgets('checkin 390 en confirm state', (tester) async {
     await _pump(
       tester,
       const AdvisorVehicleCheckinView(
@@ -133,19 +175,13 @@ void main() {
       const Locale('en'),
     );
     final t = await StaffLocalizations.delegate.load(const Locale('en'));
-    await tester.tap(find.text(t.advisorCheckInNext));
+    await tester.tap(find.text(t.advisorCheckInFuelFull));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(t.advisorCheckInFront));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byType(TextField).last,
-      'Deep scratch on the bumper',
-    );
-    await tester.tap(find.text(t.advisorCheckInAdd));
+    await tester.tap(find.text(t.advisorCheckInComplete));
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(AdvisorVehicleCheckinView),
-      matchesGoldenFile('goldens/checkin_390_en_damage.png'),
+      matchesGoldenFile('goldens/checkin_390_en_confirm.png'),
     );
   });
 }

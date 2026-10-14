@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/branding/brand_config.dart';
 import 'package:shared_core/src/theme/app_colors.dart';
+import 'package:shared_core/src/theme/app_density.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_interaction_states.dart';
 import 'package:shared_core/src/theme/app_semantic_colors.dart';
@@ -9,11 +10,26 @@ import 'package:shared_core/src/theme/app_text_styles.dart';
 abstract final class AppTheme {
   AppTheme._();
 
+  /// The single authorized primary authority (Concept A §1.1).
+  ///
+  /// Light primary is always `#215FE6`; [BrandConfig] is logo-only and never
+  /// supplies a color. A guard test fails the build if this ever diverges.
+  static const Color authorizedPrimaryLight = Color(0xFF215FE6);
+
   /// Light theme. Pass [locale] so the typography follows the active language
   /// (Arabic → IBM Plex Sans Arabic with ×1.05 line-height, V11). Latin output
   /// is byte-identical whether [locale] is null or English.
-  static ThemeData light(BrandConfig brand, {Locale? locale}) {
-    final primary = brand.buttonColor;
+  ///
+  /// [brand] supplies logo identity only; its legacy color fields are ignored.
+  static ThemeData light(
+    BrandConfig brand, {
+    Locale? locale,
+    AppDensityMode density = AppDensityMode.comfortable,
+  }) {
+    // Phase 01.2: [BrandConfig] is logo-only — the primary is the single
+    // `#215FE6` authority below. The legacy color fields on [brand] are
+    // intentionally unread (guarded by `theme_primary_guard_test.dart`).
+    const primary = authorizedPrimaryLight;
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primary,
       primary: primary,
@@ -46,10 +62,11 @@ abstract final class AppTheme {
     return _buildTheme(
       colorScheme: colorScheme,
       semanticColors: AppSemanticColors.light,
+      density: AppDensity.forMode(density),
       scaffoldBackgroundColor: AppColors.canvas,
       inputFillColor: AppColors.surface,
       appBarBackgroundColor: AppColors.canvas,
-      primary: brand.buttonColor,
+      primary: primary,
       locale: locale,
     );
   }
@@ -60,7 +77,13 @@ abstract final class AppTheme {
   /// Dark stays opt-in (`ThemeMode.light` is the shipped default); it must
   /// compile, render and pass tests. Component themes are produced by the same
   /// builder as [light] so both brightnesses always cover the same surface.
-  static ThemeData dark(BrandConfig brand, {Locale? locale}) {
+  ///
+  /// [brand] supplies logo identity only; its legacy color fields are ignored.
+  static ThemeData dark(
+    BrandConfig brand, {
+    Locale? locale,
+    AppDensityMode density = AppDensityMode.comfortable,
+  }) {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: AppDarkColors.primary,
       brightness: Brightness.dark,
@@ -103,6 +126,7 @@ abstract final class AppTheme {
     return _buildTheme(
       colorScheme: colorScheme,
       semanticColors: AppSemanticColors.dark,
+      density: AppDensity.forMode(density),
       scaffoldBackgroundColor: AppDarkColors.canvas,
       inputFillColor: AppDarkColors.surfaceSubtle,
       appBarBackgroundColor: AppDarkColors.canvas,
@@ -114,6 +138,7 @@ abstract final class AppTheme {
   static ThemeData _buildTheme({
     required ColorScheme colorScheme,
     required AppSemanticColors semanticColors,
+    required AppDensity density,
     required Color scaffoldBackgroundColor,
     required Color inputFillColor,
     required Color appBarBackgroundColor,
@@ -122,12 +147,17 @@ abstract final class AppTheme {
   }) {
     final onPrimary = colorScheme.onPrimary;
     final arabic = AppTypography.isArabic(locale);
+    // Phase 01.2: global focus + disabled grammar. Every interactive surface
+    // resolves from the semantic tokens — no widget invents its own greys.
+    final focusRing = semanticColors.focusRing;
+    final disabledFill = semanticColors.disabledFill;
+    final disabledInk = semanticColors.disabledInk;
 
     return ThemeData(
       useMaterial3: true,
       brightness: colorScheme.brightness,
       colorScheme: colorScheme,
-      extensions: <ThemeExtension<dynamic>>[semanticColors],
+      extensions: <ThemeExtension<dynamic>>[semanticColors, density],
       // Set the family at ThemeData level so every Material component,
       // overlay, route, dialog and unstyled Text inherits the same typeface.
       fontFamily: arabic ? AppFontFamilies.arabic : AppFontFamilies.app,
@@ -140,9 +170,10 @@ abstract final class AppTheme {
       splashFactory: InkSparkle.splashFactory,
       visualDensity: VisualDensity.standard,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      focusColor: primary.withValues(alpha: 0.16),
+      focusColor: focusRing.withValues(alpha: 0.16),
       hoverColor: primary.withValues(alpha: 0.06),
       highlightColor: primary.withValues(alpha: 0.08),
+      disabledColor: disabledFill,
 
       appBarTheme: AppBarTheme(
         backgroundColor: appBarBackgroundColor,
@@ -161,6 +192,8 @@ abstract final class AppTheme {
             ElevatedButton.styleFrom(
               backgroundColor: primary,
               foregroundColor: onPrimary,
+              disabledBackgroundColor: disabledFill,
+              disabledForegroundColor: disabledInk,
               elevation: 0,
               shadowColor: Colors.transparent,
               minimumSize: const Size(0, AppDimensions.touchTarget),
@@ -171,6 +204,7 @@ abstract final class AppTheme {
               textStyle: AppTextStyles.button(color: onPrimary, arabic: arabic),
             ).copyWith(
               overlayColor: AppInteractionStates.overlays(primary, onPrimary),
+              side: AppInteractionStates.focusRing(focusRing),
             ),
       ),
 
@@ -179,6 +213,8 @@ abstract final class AppTheme {
             FilledButton.styleFrom(
               backgroundColor: primary,
               foregroundColor: onPrimary,
+              disabledBackgroundColor: disabledFill,
+              disabledForegroundColor: disabledInk,
               elevation: 0,
               shadowColor: Colors.transparent,
               minimumSize: const Size(0, AppDimensions.touchTarget),
@@ -189,6 +225,7 @@ abstract final class AppTheme {
               textStyle: AppTextStyles.button(color: onPrimary, arabic: arabic),
             ).copyWith(
               overlayColor: AppInteractionStates.overlays(primary, onPrimary),
+              side: AppInteractionStates.focusRing(focusRing),
             ),
       ),
 
@@ -196,6 +233,7 @@ abstract final class AppTheme {
         style:
             OutlinedButton.styleFrom(
               foregroundColor: colorScheme.onSurface,
+              disabledForegroundColor: disabledInk,
               minimumSize: const Size(0, AppDimensions.touchTarget),
               side: BorderSide(color: colorScheme.outlineVariant),
               shape: RoundedRectangleBorder(
@@ -211,6 +249,18 @@ abstract final class AppTheme {
                 colorScheme.surface,
                 colorScheme.onSurface,
               ),
+              side: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.disabled)) {
+                  return BorderSide(color: semanticColors.disabledBorder);
+                }
+                if (states.contains(WidgetState.focused)) {
+                  return BorderSide(
+                    color: focusRing,
+                    width: AppInteractionStates.focusRingWidth,
+                  );
+                }
+                return BorderSide(color: colorScheme.outlineVariant);
+              }),
             ),
       ),
 
@@ -218,6 +268,7 @@ abstract final class AppTheme {
         style:
             TextButton.styleFrom(
               foregroundColor: primary,
+              disabledForegroundColor: disabledInk,
               minimumSize: const Size(0, AppDimensions.touchTarget),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               textStyle: AppTextStyles.button(color: primary, arabic: arabic),
@@ -226,16 +277,20 @@ abstract final class AppTheme {
                 colorScheme.surface,
                 primary,
               ),
+              side: AppInteractionStates.focusRing(focusRing),
             ),
       ),
 
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: colorScheme.onSurface,
+          disabledForegroundColor: disabledInk,
           minimumSize: const Size.square(AppDimensions.touchTarget),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
           ),
+        ).copyWith(
+          side: AppInteractionStates.focusRing(focusRing),
         ),
       ),
 
@@ -256,7 +311,11 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
-          borderSide: BorderSide(color: primary, width: 1.5),
+          borderSide: BorderSide(color: focusRing, width: 1.5),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+          borderSide: BorderSide(color: semanticColors.disabledBorder),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
@@ -412,7 +471,7 @@ abstract final class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: primary.withValues(alpha: 0.08),
         selectedColor: primary,
-        disabledColor: colorScheme.surfaceContainerHighest,
+        disabledColor: disabledFill,
         side: BorderSide.none,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
@@ -443,9 +502,16 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
         ),
+        // Flutter 3.35 CheckboxThemeData.side is a plain BorderSide (no
+        // state resolution); disabled/focus ink still resolves via the
+        // checkColor/fillColor state properties below.
         side: BorderSide(color: colorScheme.outlineVariant, width: 1.5),
-        checkColor: WidgetStateProperty.all(onPrimary),
+        checkColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) return disabledInk;
+          return onPrimary;
+        }),
         fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) return disabledFill;
           if (states.contains(WidgetState.selected)) return primary;
           return Colors.transparent;
         }),
@@ -453,14 +519,21 @@ abstract final class AppTheme {
 
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) return disabledInk;
           if (states.contains(WidgetState.selected)) return onPrimary;
           return colorScheme.outlineVariant;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) return disabledFill;
           if (states.contains(WidgetState.selected)) return primary;
           return colorScheme.surfaceContainerHighest;
         }),
-        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return focusRing;
+          }
+          return Colors.transparent;
+        }),
       ),
 
       tooltipTheme: TooltipThemeData(

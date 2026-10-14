@@ -25,7 +25,17 @@ import 'scan_vehicle_view.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-/// Advisor vehicle/customer intake — a guided, sectioned, autosave-safe flow.
+/// Local draft key inside the existing `inspections` Hive box. Drafts are
+/// device-local snapshots of the unfinished wizard: they never enter the
+/// sync queue — only the final submit enqueues a `SyncOperation`.
+const _intakeDraftKey = 'intake_draft_v1';
+
+/// Advisor vehicle/customer intake — an express 4-step wizard studio.
+///
+/// Deck: 1. Customer contact → 2. Vehicle & plate → 3. Photo capture →
+/// 4. Scope & sign-off. Each step validates independently; the wizard
+/// autosaves a local draft so an offline drop or interruption never loses
+/// progress.
 ///
 /// Route/extra contract (`/vehicle-customer`, extra `{bookingId}`) and the
 /// Hive/sync payload are unchanged from the pre-redesign implementation.
@@ -47,7 +57,7 @@ class _Body extends ConsumerStatefulWidget {
 }
 
 class _BodyState extends ConsumerState<_Body> {
-  final ScrollController _scrollController = ScrollController();
+  int _step = 0;
   final Map<String, GlobalKey> _fieldKeys = {
     'Customer Name': GlobalKey(),
     'Phone Number': GlobalKey(),
@@ -65,35 +75,22 @@ class _BodyState extends ConsumerState<_Body> {
   final List<String> _jobVideoPaths = [];
   String _customerSignaturePath = '';
   String _advisorSignaturePath = '';
+  bool _draftRestored = false;
 
-  /// Section expansion state (Customer + Vehicle open by default; optional
-  /// sections collapsed to keep the flow calm and fast).
-  final Map<String, bool> _expanded = {
-    'search': true,
-    'customer': true,
-    'vehicle': true,
-    'body': false,
-    'media': false,
-    'job': false,
-    'signature': false,
-    'review': false,
-  };
+  static const _totalSteps = 4;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(inspectionProvider.notifier).reset());
     if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
-      Hive.box<dynamic>(
-        'inspections',
-      ).put('intake_booking_id', widget.bookingId);
+      try {
+        Hive.box<dynamic>(
+          'inspections',
+        ).put('intake_booking_id', widget.bookingId);
+      } catch (_) {}
     }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreDraft());
   }
 
   bool get _hasUnsavedChanges {
@@ -137,14 +134,96 @@ class _BodyState extends ConsumerState<_Body> {
     return done;
   }
 
+  // ── Draft save / resume (local Hive only, never synced) ───────────────────
+
+  void _saveDraft() {
+    try {
+      final s = ref.read(vehicleCustomerFormProvider);
+      Hive.box<dynamic>('inspections').put(
+        _intakeDraftKey,
+        buildIntakeDraft(
+          s,
+          _step,
+          jobPhotoPaths: _jobPhotoPaths,
+          jobVideoPaths: _jobVideoPaths,
+          customerSignaturePath: _customerSignaturePath,
+          advisorSignaturePath: _advisorSignaturePath,
+          registrationDocumentPath: _registrationDocument?.path ?? '',
+          insuranceDocumentPath: _insuranceDocument?.path ?? '',
+        ),
+      );
+    } catch (_) {}
+  }
+
+  void _clearDraft() {
+    try {
+      Hive.box<dynamic>('inspections').delete(_intakeDraftKey);
+    } catch (_) {}
+  }
+
+  void _restoreDraft() {
+    if (!mounted || _draftRestored) return;
+    _draftRestored = true;
+    Map<String, dynamic>? draft;
+    try {
+      final raw = Hive.box<dynamic>('inspections').get(_intakeDraftKey);
+      if (raw is Map) draft = Map<String, dynamic>.from(raw);
+    } catch (_) {}
+    if (draft == null || draft.isEmpty) return;
+    // Never clobber a caller-provided booking link with a stale draft step
+    // that already produced a job card; a draft is only a starting point.
+    if (_hasUnsavedChanges) return;
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    applyIntakeDraftToForm(notifier, draft);
+    final photos = (draft['jobPhotoPaths'] as List? ?? const [])
+        .map((e) => e.toString())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final videos = (draft['jobVideoPaths'] as List? ?? const [])
+        .map((e) => e.toString())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    setState(() {
+      _step = (draft!['step'] as num?)?.toInt().clamp(0, _totalSteps - 1) ?? 0;
+      _jobPhotoPaths
+        ..clear()
+        ..addAll(photos.where((p) => File(p).existsSync()));
+      _jobVideoPaths
+        ..clear()
+        ..addAll(videos.where((p) => File(p).existsSync()));
+      final customerSig = (draft['customerSignaturePath'] ?? '').toString();
+      final advisorSig = (draft['advisorSignaturePath'] ?? '').toString();
+      if (customerSig.isNotEmpty && File(customerSig).existsSync()) {
+        _customerSignaturePath = customerSig;
+      }
+      if (advisorSig.isNotEmpty && File(advisorSig).existsSync()) {
+        _advisorSignaturePath = advisorSig;
+      }
+    });
+    final t = StaffLocalizations.of(context);
+    if (t != null && _hasUnsavedChanges && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.advisorIntakeWizardDraftRestored)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final t = StaffLocalizations.of(context)!;
     final state = ref.watch(vehicleCustomerFormProvider);
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-    final wide = !context.adaptive.isCompact;
+    final pendingSync =
+        ref.watch(advisorPendingSyncCountProvider).value ?? 0;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+    final stepLabels = [
+      t.advisorIntakeStepCustomer,
+      t.advisorIntakeStepVehicle,
+      t.advisorIntakeStepMedia,
+      t.advisorIntakeStepSignature,
+    ];
 
     return PopScope(
       canPop: !_hasUnsavedChanges,
@@ -154,795 +233,779 @@ class _BodyState extends ConsumerState<_Body> {
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: theme.scaffoldBackgroundColor,
-        body: Column(
-          children: [
-            SafeArea(
-              bottom: false,
-              child: AppTopBar(
-                title: t.advisorIntakeTitle,
-                onBack: () => _handleBack(t),
-              ),
-            ),
-            Expanded(
-              child: AppPageFrame(
-                scrollable: true,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _intro(theme, colors, t),
-                    if (widget.bookingId != null) ...[
-                      const SizedBox(height: AppDimensions.s12),
-                      AppInfoPanel.primary(
-                        icon: Icons.event_available_rounded,
-                        message: t.advisorIntakeLinkedBooking,
-                      ),
-                    ],
-                    const SizedBox(height: AppDimensions.s20),
-                    _sectionProgress(t, state),
-                    const SizedBox(height: AppDimensions.s24),
-                    if (wide)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 3, child: _formColumn(t, state)),
-                          const SizedBox(width: AppDimensions.s24),
-                          Expanded(flex: 2, child: _summary(t, state)),
-                        ],
-                      )
-                    else ...[
-                      _formColumn(t, state),
-                      const SizedBox(height: AppDimensions.s24),
-                      _summary(t, state),
-                    ],
-                    const SizedBox(height: AppDimensions.s24),
-                  ],
-                ),
-              ),
-            ),
-            if (!keyboardOpen) _actionBar(t),
-          ],
+        appBar: WorkspaceAppBar(
+          title: t.advisorIntakeTitle,
+          subtitle: t.advisorIntakeWizardStepOf(_step + 1, _totalSteps),
+          showBack: true,
+          onBack: () => _handleBack(t),
+          frosted: !context.isCompact,
+          showOfflineStatus: true,
+          offlinePendingCount: pendingSync,
         ),
-      ),
-    );
-  }
-
-  Widget _intro(ThemeData theme, ColorScheme colors, StaffLocalizations t) {
-    final isFromBooking = widget.bookingId != null;
-    return AppCard.semantic(
-      baseColor: colors.primary,
-      padding: const EdgeInsets.all(AppDimensions.s16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: colors.primary,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-            ),
-            child: const Icon(
-              Icons.assignment_add,
-              color: Colors.white,
-              size: 23,
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isFromBooking
-                      ? t.advisorIntakeIntroTitleBooking
-                      : t.advisorIntakeIntroTitleNew,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              if (widget.bookingId != null) ...[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    context.pagePadding.left,
+                    AppDimensions.s12,
+                    context.pagePadding.right,
+                    0,
                   ),
-                ),
-                const SizedBox(height: AppDimensions.s4),
-                Text(
-                  t.advisorIntakeIntroBody,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    height: 1.4,
+                  child: AppInfoPanel.primary(
+                    icon: Icons.event_available_rounded,
+                    message: t.advisorIntakeLinkedBooking,
                   ),
-                ),
-                const SizedBox(height: AppDimensions.s8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      size: 15,
-                      color: colors.primary,
-                    ),
-                    const SizedBox(width: AppDimensions.s6),
-                    Expanded(
-                      child: Text(
-                        t.advisorIntakeRequiredHint,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionProgress(StaffLocalizations t, VehicleCustomerFormState s) {
-    final done = _completedSections(s);
-    return AppStepProgress(
-      currentStep: done.clamp(0, 5),
-      steps: [
-        AppProgressStep(
-          label: t.advisorIntakeStepCustomer,
-          icon: Icons.person_outline_rounded,
-        ),
-        AppProgressStep(
-          label: t.advisorIntakeStepVehicle,
-          icon: Icons.directions_car_outlined,
-        ),
-        AppProgressStep(
-          label: t.advisorIntakeStepMedia,
-          icon: Icons.perm_media_outlined,
-        ),
-        AppProgressStep(
-          label: t.advisorIntakeStepJob,
-          icon: Icons.description_outlined,
-        ),
-        AppProgressStep(
-          label: t.advisorIntakeStepSignature,
-          icon: Icons.draw_outlined,
-        ),
-        AppProgressStep(
-          label: t.advisorIntakeStepReview,
-          icon: Icons.save_outlined,
-        ),
-      ],
-    );
-  }
-
-  Widget _formColumn(StaffLocalizations t, VehicleCustomerFormState s) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _searchSection(t, s),
-        const SizedBox(height: AppDimensions.s16),
-        _customerSection(t, s),
-        const SizedBox(height: AppDimensions.s16),
-        _vehicleSection(t, s),
-        const SizedBox(height: AppDimensions.s16),
-        _bodySection(t),
-        const SizedBox(height: AppDimensions.s16),
-        _mediaSection(t, s),
-        const SizedBox(height: AppDimensions.s16),
-        _jobSection(t, s),
-        const SizedBox(height: AppDimensions.s16),
-        _signatureSection(t),
-      ],
-    );
-  }
-
-  // ── Sections ───────────────────────────────────────────────────────────────
-
-  Widget _searchSection(StaffLocalizations t, VehicleCustomerFormState s) {
-    return _IntakeSection(
-      sectionKey: 'search',
-      title: t.advisorIntakeFindTitle,
-      subtitle: t.advisorIntakeFindSub,
-      icon: Icons.manage_search_rounded,
-      expanded: _expanded['search']!,
-      onToggle: () => _toggle('search'),
-      child: _FindExistingRecord(
-        state: s,
-        ref: ref,
-        onScanVin: () => _scanAndSetVin(context, ref),
-        onScanQr: () => _scanVehicleQr(context, ref),
-      ),
-    );
-  }
-
-  Widget _customerSection(StaffLocalizations t, VehicleCustomerFormState s) {
-    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
-    return _IntakeSection(
-      sectionKey: 'customer',
-      title: t.advisorIntakeSectionCustomer,
-      subtitle: t.advisorIntakeSectionCustomerSub,
-      icon: Icons.person_outline_rounded,
-      expanded: _expanded['customer']!,
-      onToggle: () => _toggle('customer'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _ToggleRow(
-            label: t.advisorIntakeB2B,
-            value: s.isB2B,
-            onChanged: notifier.setB2B,
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          AppFormField(
-            label: t.advisorIntakeCustomerName,
-            isRequired: true,
-            errorText: _fieldErrors['Customer Name'],
-            child: _IntakeField(
-              key: _fieldKeys['Customer Name'],
-              initialValue: s.customerName,
-              hint: t.advisorIntakeCustomerNameHint,
-              textCapitalization: TextCapitalization.words,
-              onChanged: (v) {
-                notifier.setCustomerName(v);
-                if (v.trim().isNotEmpty) _clearFieldError('Customer Name');
-              },
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          AppFormField(
-            label: t.advisorIntakePhone,
-            isRequired: true,
-            errorText: _fieldErrors['Phone Number'],
-            child: _IntakeField(
-              key: _fieldKeys['Phone Number'],
-              initialValue: s.phoneNumber,
-              hint: t.advisorIntakePhoneHint,
-              keyboardType: TextInputType.phone,
-              isIdentifier: true,
-              prefix: _AffixPrefix(phoneCountries.first.code),
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onChanged: (v) {
-                notifier.setPhone(v);
-                if (v.trim().length >= 8) _clearFieldError('Phone Number');
-              },
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          AppFormField(
-            label: t.advisorIntakeEmail,
-            isOptional: true,
-            child: _IntakeField(
-              initialValue: s.email,
-              hint: t.advisorIntakeEmailHint,
-              keyboardType: TextInputType.emailAddress,
-              isIdentifier: true,
-              onChanged: notifier.setEmail,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          AppFormField(
-            label: t.advisorIntakeCustomerGroup,
-            child: AppDropdownButton(
-              value: s.customerGroup,
-              hint: t.advisorIntakeCustomerGroupHint,
-              items: kCustomerGroups,
-              onChanged: (v) => notifier.setCustomerGroup(v),
-            ),
-          ),
-          if (s.showMoreCustomer) ...[
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeGender,
-              child: AppDropdownButton(
-                value: s.gender,
-                hint: t.advisorIntakeGenderHint,
-                items: kGenders,
-                onChanged: (v) => notifier.setGender(v),
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeAddress,
-              child: AppDropdownButton(
-                value: s.address,
-                hint: t.advisorIntakeAddressHint,
-                items: kAddresses,
-                onChanged: (v) => notifier.setAddress(v),
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeTaxNumber,
-              isOptional: true,
-              child: _IntakeField(
-                initialValue: s.taxNumber,
-                hint: t.advisorIntakeTaxNumber,
-                onChanged: notifier.setTaxNumber,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeSource,
-              isOptional: true,
-              child: _IntakeField(
-                initialValue: s.source,
-                hint: t.advisorIntakeSourceHint,
-                onChanged: notifier.setSource,
-              ),
-            ),
-          ],
-          _MoreLessLink(
-            showMore: s.showMoreCustomer,
-            moreLabel: t.advisorIntakeShowMore,
-            lessLabel: t.advisorIntakeShowLess,
-            onTap: notifier.toggleCustomerMore,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _vehicleSection(StaffLocalizations t, VehicleCustomerFormState s) {
-    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
-    return _IntakeSection(
-      sectionKey: 'vehicle',
-      title: t.advisorIntakeSectionVehicle,
-      subtitle: t.advisorIntakeSectionVehicleSub,
-      icon: Icons.directions_car_outlined,
-      expanded: _expanded['vehicle']!,
-      onToggle: () => _toggle('vehicle'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _ResponsiveFieldGroup(
-            minChildWidth: 150,
-            children: [
-              AppFormField(
-                label: t.advisorIntakeEmirate,
-                child: AppDropdownButton(
-                  value: s.emirate,
-                  hint: t.advisorIntakeEmirateHint,
-                  items: kEmirates,
-                  onChanged: (v) => notifier.setEmirate(v),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  context.pagePadding.left,
+                  AppDimensions.s12,
+                  context.pagePadding.right,
+                  AppDimensions.s4,
                 ),
+                child: _progressZone(t, stepLabels),
               ),
-              AppFormField(
-                label: t.advisorIntakePlateCode,
-                child: _IntakeField(
-                  initialValue: s.plateCode,
-                  hint: t.advisorIntakePlateCodeHint,
-                  textCapitalization: TextCapitalization.characters,
-                  isIdentifier: true,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp('[a-zA-Z0-9]')),
-                    LengthLimitingTextInputFormatter(4),
-                  ],
-                  onChanged: notifier.setPlateCode,
-                ),
-              ),
-              AppFormField(
-                label: t.advisorIntakePlateNumber,
-                isRequired: true,
-                errorText: _fieldErrors['Plate Number'],
-                child: _IntakeField(
-                  key: _fieldKeys['Plate Number'],
-                  initialValue: s.plateNumber,
-                  hint: t.advisorIntakePlateNumberHint,
-                  keyboardType: TextInputType.number,
-                  isIdentifier: true,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  prefix: (s.emirate.isEmpty && s.plateCode.isEmpty)
-                      ? null
-                      : _AffixPrefix('${s.emirate}-${s.plateCode}'),
-                  onChanged: (v) {
-                    notifier.setPlateNumber(v);
-                    if (v.trim().isNotEmpty) _clearFieldError('Plate Number');
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth >= 1024;
+                    final deck = AnimatedSwitcher(
+                      duration: reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 250),
+                      child: KeyedSubtree(
+                        key: ValueKey(_step),
+                        child: _deckScroll(t, state),
+                      ),
+                    );
+                    if (!wide) return deck;
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 3, child: deck),
+                        const SizedBox(width: AppDimensions.s24),
+                        SizedBox(
+                          width: 340,
+                          child: SingleChildScrollView(
+                            padding: EdgeInsetsDirectional.only(
+                              end: context.pagePadding.right,
+                              bottom: AppDimensions.s24,
+                            ),
+                            child: _summary(t, state),
+                          ),
+                        ),
+                      ],
+                    );
                   },
                 ),
               ),
+              if (!keyboardOpen) _actionBar(t),
             ],
           ),
-          const SizedBox(height: AppDimensions.s16),
-          AppFormField(
-            label: t.advisorIntakeVin,
-            isOptional: true,
-            child: _IntakeField(
-              initialValue: s.vin,
-              hint: t.advisorIntakeVinHint,
-              isIdentifier: true,
-              textCapitalization: TextCapitalization.characters,
-              suffixIcon: IconButton(
-                tooltip: t.advisorIntakeScanVin,
-                onPressed: () => _scanAndSetVin(context, ref),
-                icon: const Icon(Icons.qr_code_scanner, size: 18),
+        ),
+      ),
+    );
+  }
+
+  /// Journey progress: the full tappable stepper where it fits (≥600 px),
+  /// a slim linear progress on compact widths where four labeled nodes would
+  /// squeeze past their minimum (verified overflow at 390 px under fallback
+  /// fonts and 1.3× text scaling). The app-bar subtitle always names the
+  /// exact `Step X of 4` position, so nothing is lost on compact.
+  Widget _progressZone(StaffLocalizations t, List<String> stepLabels) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 600) {
+          return AppStepper(
+            steps: stepLabels,
+            currentIndex: _step,
+            onStepTap: _onStepTap,
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              t.advisorIntakeWizardStepOf(_step + 1, _totalSteps),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w800,
               ),
-              onChanged: notifier.setVin,
             ),
-          ),
+            const SizedBox(height: AppDimensions.s6),
+            AppLinearProgress(
+              value: (_step + 1) / _totalSteps,
+              label: stepLabels[_step],
+              showPercentage: false,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _deckScroll(StaffLocalizations t, VehicleCustomerFormState s) {
+    return SingleChildScrollView(
+      key: const PageStorageKey('intake-deck'),
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        context.pagePadding.left,
+        AppDimensions.s12,
+        context.pagePadding.right,
+        AppDimensions.s24,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _deckHeader(t),
           const SizedBox(height: AppDimensions.s16),
-          _ResponsiveFieldGroup(
-            minChildWidth: 190,
+          ..._stepCards(t, s),
+        ],
+      ),
+    );
+  }
+
+  Widget _deckHeader(StaffLocalizations t) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final titles = [
+      t.advisorIntakeWizardContactTitle,
+      t.advisorIntakeWizardVehicleTitle,
+      t.advisorIntakeWizardCaptureTitle,
+      t.advisorIntakeWizardSignoffTitle,
+    ];
+    final subs = [
+      t.advisorIntakeWizardContactSub,
+      t.advisorIntakeWizardVehicleSub,
+      t.advisorIntakeWizardCaptureSub,
+      t.advisorIntakeWizardSignoffSub,
+    ];
+    final icons = [
+      Icons.person_search_rounded,
+      Icons.directions_car_outlined,
+      Icons.photo_camera_outlined,
+      Icons.draw_outlined,
+    ];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: colors.primary,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          ),
+          child: Icon(icons[_step], color: colors.onPrimary, size: 24),
+        ),
+        const SizedBox(width: AppDimensions.s12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppFormField(
-                label: t.advisorIntakeMake,
-                isRequired: true,
-                errorText: _fieldErrors['Make'],
-                child: _SelectorField(
-                  key: _fieldKeys['Make'],
-                  value: s.make,
-                  hint: t.advisorIntakeMakeHint,
-                  errorText: _fieldErrors['Make'],
-                  onTap: () => _pickBrand(t, s),
+              Text(
+                t.advisorIntakeWizardStepOf(_step + 1, _totalSteps),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-              AppFormField(
-                label: t.advisorIntakeModel,
-                isRequired: true,
-                errorText: _fieldErrors['Model'],
-                child: _SelectorField(
-                  key: _fieldKeys['Model'],
-                  value: s.model,
-                  hint: t.advisorIntakeModelHint,
-                  errorText: _fieldErrors['Model'],
-                  onTap: () => _pickModel(t, s),
+              const SizedBox(height: 2),
+              Text(
+                titles[_step],
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colors.onSurface,
                 ),
               ),
-              AppFormField(
-                label: t.advisorIntakeModelYear,
-                isOptional: true,
-                child: _SelectorField(
-                  value: s.modelYear,
-                  hint: t.advisorIntakeModelYearHint,
-                  icon: Icons.keyboard_arrow_down_rounded,
-                  onTap: () => _pickModelYear(s),
+              const SizedBox(height: 2),
+              Text(
+                subs[_step],
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  height: 1.4,
                 ),
               ),
             ],
           ),
-          _MoreLessLink(
-            showMore: s.showMoreVehicle,
-            moreLabel: t.advisorIntakeShowMore,
-            lessLabel: t.advisorIntakeShowLess,
-            onTap: notifier.toggleVehicleMore,
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _stepCards(StaffLocalizations t, VehicleCustomerFormState s) {
+    switch (_step) {
+      case 0:
+        return [
+          _DeckCard(
+            title: t.advisorIntakeFindTitle,
+            subtitle: t.advisorIntakeFindSub,
+            child: _FindExistingRecord(
+              state: s,
+              ref: ref,
+              onScanVin: () => _scanAndSetVin(context, ref),
+              onScanQr: () => _scanVehicleQr(context, ref),
+            ),
           ),
-          if (s.showMoreVehicle) ...[
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeCylinders,
-              child: AppDropdownButton(
-                value: s.cylinders,
-                hint: t.advisorIntakeCylindersHint,
-                items: kCylinders,
-                onChanged: (v) => notifier.setCylinders(v),
-              ),
+          const SizedBox(height: AppDimensions.s16),
+          _DeckCard(
+            title: t.advisorIntakeSectionCustomer,
+            subtitle: t.advisorIntakeSectionCustomerSub,
+            child: _customerFields(t, s),
+          ),
+        ];
+      case 1:
+        return [
+          _DeckCard(
+            title: t.advisorIntakeSectionVehicle,
+            subtitle: t.advisorIntakeSectionVehicleSub,
+            child: _vehicleFields(t, s),
+          ),
+        ];
+      case 2:
+        return [
+          _DeckCard(
+            title: t.advisorIntakeSectionMedia,
+            subtitle: t.advisorIntakeSectionMediaSub,
+            child: _mediaFields(t, s),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          _DeckCard(
+            title: t.advisorIntakeSectionBody,
+            subtitle: t.advisorIntakeSectionBodySub,
+            child: const VehicleBodyConditionPanel(
+              embedded: true,
+              showTitle: false,
             ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeEngineCapacity,
-              isOptional: true,
-              child: _IntakeField(
-                initialValue: s.engineCapacity,
-                hint: t.advisorIntakeEngineCapacity,
-                onChanged: notifier.setEngineCapacity,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeVehicleColor,
-              isOptional: true,
-              child: _IntakeField(
-                initialValue: s.vehicleColor,
-                hint: t.advisorIntakeVehicleColor,
-                onChanged: notifier.setVehicleColor,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeFuelType,
-              child: AppDropdownButton(
-                value: s.fuelType,
-                hint: t.advisorIntakeFuelTypeHint,
-                items: kFuelTypes,
-                onChanged: (v) => notifier.setFuelType(v),
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeEngineNumber,
-              isOptional: true,
-              child: _IntakeField(
-                initialValue: s.engineNumber,
-                hint: t.advisorIntakeEngineNumber,
-                isIdentifier: true,
-                onChanged: notifier.setEngineNumber,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeRegistrationCertificate,
-              isOptional: true,
-              child: AppMediaUploadShell(
-                label: _registrationDocument?.name ?? t.advisorIntakeAddDocument,
-                helperText: '',
-                icon: Icons.badge_outlined,
-                onTap: () => _pickDocument(true),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
+          ),
+        ];
+      default:
+        return [
+          _DeckCard(
+            title: t.advisorIntakeSectionJob,
+            subtitle: t.advisorIntakeSectionJobSub,
+            child: _jobFields(t, s),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          _DeckCard(
+            title: t.advisorIntakeSectionSignature,
+            subtitle: t.advisorIntakeSectionSignatureSub,
+            child: _signatureFields(t),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          if (context.adaptive.isCompact) _summary(t, s),
+        ];
+    }
   }
 
-  Widget _bodySection(StaffLocalizations t) {
-    return _IntakeSection(
-      sectionKey: 'body',
-      title: t.advisorIntakeSectionBody,
-      subtitle: t.advisorIntakeSectionBodySub,
-      icon: Icons.directions_car_outlined,
-      expanded: _expanded['body']!,
-      onToggle: () => _toggle('body'),
-      child: const VehicleBodyConditionPanel(embedded: true, showTitle: false),
-    );
-  }
+  // ── Step field groups ─────────────────────────────────────────────────────
 
-  Widget _mediaSection(StaffLocalizations t, VehicleCustomerFormState s) {
+  Widget _customerFields(StaffLocalizations t, VehicleCustomerFormState s) {
     final notifier = ref.read(vehicleCustomerFormProvider.notifier);
-    return _IntakeSection(
-      sectionKey: 'media',
-      title: t.advisorIntakeSectionMedia,
-      subtitle: t.advisorIntakeSectionMediaSub,
-      icon: Icons.perm_media_outlined,
-      expanded: _expanded['media']!,
-      onToggle: () => _toggle('media'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (s.jobCategory == 'Insurance') ...[
-            AppFormField(
-              label: t.advisorIntakeInsuranceDocument,
-              isOptional: true,
-              child: AppMediaUploadShell(
-                label: _insuranceDocument?.name ?? t.advisorIntakeAddDocument,
-                helperText: '',
-                icon: Icons.shield_outlined,
-                onTap: () => _pickDocument(false),
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-          ],
-          AppFormField(
-            label: t.advisorIntakeOdometer,
-            isOptional: true,
-            child: _IntakeField(
-              initialValue: s.odometerReading,
-              hint: t.advisorIntakeOdometerHint,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onChanged: notifier.setOdometer,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ToggleRow(
+          label: t.advisorIntakeB2B,
+          value: s.isB2B,
+          onChanged: notifier.setB2B,
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AppFormField(
+          label: t.advisorIntakeCustomerName,
+          isRequired: true,
+          errorText: _fieldErrors['Customer Name'],
+          child: _IntakeField(
+            key: _fieldKeys['Customer Name'],
+            initialValue: s.customerName,
+            hint: t.advisorIntakeCustomerNameHint,
+            textCapitalization: TextCapitalization.words,
+            onChanged: (v) {
+              notifier.setCustomerName(v);
+              if (v.trim().isNotEmpty) _clearFieldError('Customer Name');
+            },
           ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AppFormField(
+          label: t.advisorIntakePhone,
+          isRequired: true,
+          errorText: _fieldErrors['Phone Number'],
+          child: _IntakeField(
+            key: _fieldKeys['Phone Number'],
+            initialValue: s.phoneNumber,
+            hint: t.advisorIntakePhoneHint,
+            keyboardType: TextInputType.phone,
+            isIdentifier: true,
+            prefix: _AffixPrefix(phoneCountries.first.code),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (v) {
+              notifier.setPhone(v);
+              if (v.trim().length >= 8) _clearFieldError('Phone Number');
+            },
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AppFormField(
+          label: t.advisorIntakeEmail,
+          isOptional: true,
+          child: _IntakeField(
+            initialValue: s.email,
+            hint: t.advisorIntakeEmailHint,
+            keyboardType: TextInputType.emailAddress,
+            isIdentifier: true,
+            onChanged: notifier.setEmail,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AppFormField(
+          label: t.advisorIntakeCustomerGroup,
+          child: AppDropdownButton(
+            value: s.customerGroup,
+            hint: t.advisorIntakeCustomerGroupHint,
+            items: kCustomerGroups,
+            onChanged: (v) => notifier.setCustomerGroup(v),
+          ),
+        ),
+        if (s.showMoreCustomer) ...[
           const SizedBox(height: AppDimensions.s16),
           AppFormField(
-            label: t.advisorIntakeFuelLevel,
-            child: _FuelLevelSlider(
-              value: s.fuelLevel,
-              onChanged: notifier.setFuelLevel,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          _ToggleRow(
-            label: t.advisorIntakeCustomerConsent,
-            value: s.customerConsent,
-            onChanged: notifier.setConsent,
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          AppFormField(
-            label: t.advisorIntakeJobMedia,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _MediaAddTile(
-                    icon: Icons.photo_library_outlined,
-                    label: t.advisorIntakePhotos,
-                    addLabel: t.advisorIntakeAddLabel(t.advisorIntakePhotos),
-                    count: _jobPhotoPaths.length,
-                    onTap: _pickJobPhotos,
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.s10),
-                Expanded(
-                  child: _MediaAddTile(
-                    icon: Icons.videocam_outlined,
-                    label: t.advisorIntakeVideo,
-                    addLabel: t.advisorIntakeAddLabel(t.advisorIntakeVideo),
-                    count: _jobVideoPaths.length,
-                    onTap: _pickJobVideo,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_jobPhotoPaths.isNotEmpty || _jobVideoPaths.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.s12),
-            _MediaThumbnailGrid(
-              photoPaths: _jobPhotoPaths,
-              videoPaths: _jobVideoPaths,
-              onRemovePhoto: (i) => setState(() => _jobPhotoPaths.removeAt(i)),
-              onRemoveVideo: (i) => setState(() => _jobVideoPaths.removeAt(i)),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _jobSection(StaffLocalizations t, VehicleCustomerFormState s) {
-    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
-    return _IntakeSection(
-      sectionKey: 'job',
-      title: t.advisorIntakeSectionJob,
-      subtitle: t.advisorIntakeSectionJobSub,
-      icon: Icons.description_outlined,
-      expanded: _expanded['job']!,
-      onToggle: () => _toggle('job'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AppFormField(
-            label: t.advisorIntakeJobCategory,
+            label: t.advisorIntakeGender,
             child: AppDropdownButton(
-              value: s.jobCategory,
-              hint: t.advisorIntakeJobCategoryHint,
-              items: kJobCategories,
-              onChanged: (v) => notifier.setJobCategory(v),
+              value: s.gender,
+              hint: t.advisorIntakeGenderHint,
+              items: kGenders,
+              onChanged: (v) => notifier.setGender(v),
             ),
           ),
-          if (s.jobCategory == 'Insurance') ...[
-            const SizedBox(height: AppDimensions.s16),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeAddress,
+            child: AppDropdownButton(
+              value: s.address,
+              hint: t.advisorIntakeAddressHint,
+              items: kAddresses,
+              onChanged: (v) => notifier.setAddress(v),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeTaxNumber,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.taxNumber,
+              hint: t.advisorIntakeTaxNumber,
+              onChanged: notifier.setTaxNumber,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeSource,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.source,
+              hint: t.advisorIntakeSourceHint,
+              onChanged: notifier.setSource,
+            ),
+          ),
+        ],
+        _MoreLessLink(
+          showMore: s.showMoreCustomer,
+          moreLabel: t.advisorIntakeShowMore,
+          lessLabel: t.advisorIntakeShowLess,
+          onTap: notifier.toggleCustomerMore,
+        ),
+      ],
+    );
+  }
+
+  Widget _vehicleFields(StaffLocalizations t, VehicleCustomerFormState s) {
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _UaePlateField(
+          state: s,
+          notifier: notifier,
+          plateError: _fieldErrors['Plate Number'],
+          plateKey: _fieldKeys['Plate Number']!,
+          onPlateChanged: () => _clearFieldError('Plate Number'),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AppFormField(
+          label: t.advisorIntakeVin,
+          isOptional: true,
+          child: _IntakeField(
+            initialValue: s.vin,
+            hint: t.advisorIntakeVinHint,
+            isIdentifier: true,
+            textCapitalization: TextCapitalization.characters,
+            suffixIcon: IconButton(
+              tooltip: t.advisorIntakeScanVin,
+              onPressed: () => _scanAndSetVin(context, ref),
+              icon: const Icon(Icons.qr_code_scanner, size: 18),
+            ),
+            onChanged: notifier.setVin,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        _ResponsiveFieldGroup(
+          minChildWidth: 190,
+          children: [
             AppFormField(
-              label: t.advisorIntakeInsuranceName,
-              child: AppDropdownButton(
-                value: s.insuranceProvider,
-                hint: t.advisorIntakeInsuranceNameHint,
-                items: kInsuranceProviders,
-                onChanged: (v) => notifier.setInsuranceProvider(v),
+              label: t.advisorIntakeMake,
+              isRequired: true,
+              errorText: _fieldErrors['Make'],
+              child: _SelectorField(
+                key: _fieldKeys['Make'],
+                value: s.make,
+                hint: t.advisorIntakeMakeHint,
+                errorText: _fieldErrors['Make'],
+                onTap: () => _pickBrand(s),
               ),
             ),
-            const SizedBox(height: AppDimensions.s16),
             AppFormField(
-              label: t.advisorIntakeLpoNumber,
-              isOptional: true,
-              child: _IntakeField(
-                initialValue: s.lpoNumber,
-                hint: t.advisorIntakeLpoNumber,
-                onChanged: notifier.setLpoNumber,
+              label: t.advisorIntakeModel,
+              isRequired: true,
+              errorText: _fieldErrors['Model'],
+              child: _SelectorField(
+                key: _fieldKeys['Model'],
+                value: s.model,
+                hint: t.advisorIntakeModelHint,
+                errorText: _fieldErrors['Model'],
+                onTap: () => _pickModel(t, s),
               ),
             ),
-            const SizedBox(height: AppDimensions.s16),
             AppFormField(
-              label: t.advisorIntakePolicyNumber,
+              label: t.advisorIntakeModelYear,
               isOptional: true,
-              child: _IntakeField(
-                initialValue: s.policyNumber,
-                hint: t.advisorIntakePolicyNumber,
-                onChanged: notifier.setPolicyNumber,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeAccidentNumber,
-              isOptional: true,
-              child: _IntakeField(
-                initialValue: s.accidentNumber,
-                hint: t.advisorIntakeAccidentNumber,
-                onChanged: notifier.setAccidentNumber,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeInsuranceTaxNumber,
-              isOptional: true,
-              child: _IntakeField(
-                initialValue: s.insuranceTaxNumber,
-                hint: t.advisorIntakeInsuranceTaxHint,
-                onChanged: notifier.setInsuranceTaxNumber,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeInsuranceAddress,
-              isOptional: true,
-              child: _IntakeField(
-                initialValue: s.insuranceAddress,
-                hint: t.advisorIntakeInsuranceAddress,
-                onChanged: notifier.setInsuranceAddress,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            AppFormField(
-              label: t.advisorIntakeInsuranceExpiry,
-              isOptional: true,
-              child: AppDateSelectorShell(
-                value: s.insuranceExpiryDate,
-                onTap: () async {
-                  final initial =
-                      DateTime.tryParse(s.insuranceExpiryDate) ?? DateTime.now();
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: initial,
-                    firstDate: DateTime(1980),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null) {
-                    final month = picked.month.toString().padLeft(2, '0');
-                    final day = picked.day.toString().padLeft(2, '0');
-                    notifier.setInsuranceExpiry(
-                      '${picked.year}-$month-$day',
-                    );
-                  }
-                },
+              child: _SelectorField(
+                value: s.modelYear,
+                hint: t.advisorIntakeModelYearHint,
+                icon: Icons.keyboard_arrow_down_rounded,
+                onTap: () => _pickModelYear(s),
               ),
             ),
           ],
+        ),
+        _MoreLessLink(
+          showMore: s.showMoreVehicle,
+          moreLabel: t.advisorIntakeShowMore,
+          lessLabel: t.advisorIntakeShowLess,
+          onTap: notifier.toggleVehicleMore,
+        ),
+        if (s.showMoreVehicle) ...[
           const SizedBox(height: AppDimensions.s16),
-          _ResponsiveFieldGroup(
-            minChildWidth: 200,
+          AppFormField(
+            label: t.advisorIntakeCylinders,
+            child: AppDropdownButton(
+              value: s.cylinders,
+              hint: t.advisorIntakeCylindersHint,
+              items: kCylinders,
+              onChanged: (v) => notifier.setCylinders(v),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeEngineCapacity,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.engineCapacity,
+              hint: t.advisorIntakeEngineCapacity,
+              onChanged: notifier.setEngineCapacity,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeVehicleColor,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.vehicleColor,
+              hint: t.advisorIntakeVehicleColor,
+              onChanged: notifier.setVehicleColor,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeFuelType,
+            child: AppDropdownButton(
+              value: s.fuelType,
+              hint: t.advisorIntakeFuelTypeHint,
+              items: kFuelTypes,
+              onChanged: (v) => notifier.setFuelType(v),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeEngineNumber,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.engineNumber,
+              hint: t.advisorIntakeEngineNumber,
+              isIdentifier: true,
+              onChanged: notifier.setEngineNumber,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeRegistrationCertificate,
+            isOptional: true,
+            child: AppMediaUploadShell(
+              label: _registrationDocument?.name ?? t.advisorIntakeAddDocument,
+              helperText: '',
+              icon: Icons.badge_outlined,
+              onTap: () => _pickDocument(true),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _mediaFields(StaffLocalizations t, VehicleCustomerFormState s) {
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (s.jobCategory == 'Insurance') ...[
+          AppFormField(
+            label: t.advisorIntakeInsuranceDocument,
+            isOptional: true,
+            child: AppMediaUploadShell(
+              label: _insuranceDocument?.name ?? t.advisorIntakeAddDocument,
+              helperText: '',
+              icon: Icons.shield_outlined,
+              onTap: () => _pickDocument(false),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+        ],
+        AppFormField(
+          label: t.advisorIntakeOdometer,
+          isOptional: true,
+          child: _IntakeField(
+            initialValue: s.odometerReading,
+            hint: t.advisorIntakeOdometerHint,
+            keyboardType: TextInputType.number,
+            isIdentifier: true,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: notifier.setOdometer,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AppFormField(
+          label: t.advisorIntakeFuelLevel,
+          child: _FuelLevelSlider(
+            value: s.fuelLevel,
+            onChanged: notifier.setFuelLevel,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        _ToggleRow(
+          label: t.advisorIntakeCustomerConsent,
+          value: s.customerConsent,
+          onChanged: notifier.setConsent,
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AppFormField(
+          label: t.advisorIntakeJobMedia,
+          child: Row(
             children: [
-              AppFormField(
-                label: t.advisorIntakeMarkupType,
-                isOptional: true,
-                child: _IntakeField(
-                  initialValue: s.markupType,
-                  hint: t.advisorIntakeMarkupType,
-                  onChanged: notifier.setMarkupType,
+              Expanded(
+                child: _MediaAddTile(
+                  icon: Icons.photo_library_outlined,
+                  label: t.advisorIntakePhotos,
+                  addLabel: t.advisorIntakeAddLabel(t.advisorIntakePhotos),
+                  count: _jobPhotoPaths.length,
+                  onTap: _pickJobPhotos,
                 ),
               ),
-              AppFormField(
-                label: t.advisorIntakeOrderType,
-                isOptional: true,
-                child: _IntakeField(
-                  initialValue: s.orderType,
-                  hint: t.advisorIntakeOrderType,
-                  onChanged: notifier.setOrderType,
+              const SizedBox(width: AppDimensions.s10),
+              Expanded(
+                child: _MediaAddTile(
+                  icon: Icons.videocam_outlined,
+                  label: t.advisorIntakeVideo,
+                  addLabel: t.advisorIntakeAddLabel(t.advisorIntakeVideo),
+                  count: _jobVideoPaths.length,
+                  onTap: _pickJobVideo,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.s16),
-          AppFormField(
-            label: t.advisorIntakeJobDescription,
-            child: _JobDescriptionTable(state: s, ref: ref),
+        ),
+        if (_jobPhotoPaths.isNotEmpty || _jobVideoPaths.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.s12),
+          _MediaThumbnailGrid(
+            photoPaths: _jobPhotoPaths,
+            videoPaths: _jobVideoPaths,
+            onRemovePhoto: (i) => setState(() => _jobPhotoPaths.removeAt(i)),
+            onRemoveVideo: (i) => setState(() => _jobVideoPaths.removeAt(i)),
           ),
         ],
-      ),
+      ],
     );
   }
 
-  Widget _signatureSection(StaffLocalizations t) {
+  Widget _jobFields(StaffLocalizations t, VehicleCustomerFormState s) {
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppFormField(
+          label: t.advisorIntakeJobCategory,
+          child: AppDropdownButton(
+            value: s.jobCategory,
+            hint: t.advisorIntakeJobCategoryHint,
+            items: kJobCategories,
+            onChanged: (v) => notifier.setJobCategory(v),
+          ),
+        ),
+        if (s.jobCategory == 'Insurance') ...[
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeInsuranceName,
+            child: AppDropdownButton(
+              value: s.insuranceProvider,
+              hint: t.advisorIntakeInsuranceNameHint,
+              items: kInsuranceProviders,
+              onChanged: (v) => notifier.setInsuranceProvider(v),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeLpoNumber,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.lpoNumber,
+              hint: t.advisorIntakeLpoNumber,
+              onChanged: notifier.setLpoNumber,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakePolicyNumber,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.policyNumber,
+              hint: t.advisorIntakePolicyNumber,
+              onChanged: notifier.setPolicyNumber,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeAccidentNumber,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.accidentNumber,
+              hint: t.advisorIntakeAccidentNumber,
+              onChanged: notifier.setAccidentNumber,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeInsuranceTaxNumber,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.insuranceTaxNumber,
+              hint: t.advisorIntakeInsuranceTaxHint,
+              onChanged: notifier.setInsuranceTaxNumber,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeInsuranceAddress,
+            isOptional: true,
+            child: _IntakeField(
+              initialValue: s.insuranceAddress,
+              hint: t.advisorIntakeInsuranceAddress,
+              onChanged: notifier.setInsuranceAddress,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
+            label: t.advisorIntakeInsuranceExpiry,
+            isOptional: true,
+            child: AppDateSelectorShell(
+              value: s.insuranceExpiryDate,
+              onTap: () async {
+                final initial =
+                    DateTime.tryParse(s.insuranceExpiryDate) ?? DateTime.now();
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: initial,
+                  firstDate: DateTime(1980),
+                  lastDate: DateTime(2100),
+                );
+                if (picked != null) {
+                  final month = picked.month.toString().padLeft(2, '0');
+                  final day = picked.day.toString().padLeft(2, '0');
+                  notifier.setInsuranceExpiry(
+                    '${picked.year}-$month-$day',
+                  );
+                }
+              },
+            ),
+          ),
+        ],
+        const SizedBox(height: AppDimensions.s16),
+        _ResponsiveFieldGroup(
+          minChildWidth: 200,
+          children: [
+            AppFormField(
+              label: t.advisorIntakeMarkupType,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.markupType,
+                hint: t.advisorIntakeMarkupType,
+                onChanged: notifier.setMarkupType,
+              ),
+            ),
+            AppFormField(
+              label: t.advisorIntakeOrderType,
+              isOptional: true,
+              child: _IntakeField(
+                initialValue: s.orderType,
+                hint: t.advisorIntakeOrderType,
+                onChanged: notifier.setOrderType,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AppFormField(
+          label: t.advisorIntakeJobDescription,
+          child: _JobDescriptionTable(state: s, ref: ref),
+        ),
+      ],
+    );
+  }
+
+  Widget _signatureFields(StaffLocalizations t) {
     final hasCustomer = _customerSignaturePath.isNotEmpty;
     final hasAdvisor = _advisorSignaturePath.isNotEmpty;
-    return _IntakeSection(
-      sectionKey: 'signature',
-      title: t.advisorIntakeSectionSignature,
-      subtitle: t.advisorIntakeSectionSignatureSub,
-      icon: Icons.draw_outlined,
-      expanded: _expanded['signature']!,
-      onToggle: () => _toggle('signature'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _SignatureRow(
-            label: t.advisorIntakeSignatureCustomer,
-            captured: hasCustomer,
-            capturedLabel: t.advisorIntakeSignatureCaptured,
-            redoLabel: t.advisorIntakeSignatureRedo,
-            onCapture: () => _captureSignature(true),
-          ),
-          const SizedBox(height: AppDimensions.s12),
-          _SignatureRow(
-            label: t.advisorIntakeSignatureAdvisor,
-            captured: hasAdvisor,
-            capturedLabel: t.advisorIntakeSignatureCaptured,
-            redoLabel: t.advisorIntakeSignatureRedo,
-            onCapture: () => _captureSignature(false),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SignatureRow(
+          label: t.advisorIntakeSignatureCustomer,
+          captured: hasCustomer,
+          capturedLabel: t.advisorIntakeSignatureCaptured,
+          redoLabel: t.advisorIntakeSignatureRedo,
+          onCapture: () => _captureSignature(true),
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        _SignatureRow(
+          label: t.advisorIntakeSignatureAdvisor,
+          captured: hasAdvisor,
+          capturedLabel: t.advisorIntakeSignatureCaptured,
+          redoLabel: t.advisorIntakeSignatureRedo,
+          onCapture: () => _captureSignature(false),
+        ),
+      ],
     );
   }
 
@@ -995,33 +1058,140 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Widget _actionBar(StaffLocalizations t) {
+    final last = _step == _totalSteps - 1;
     return AppActionBar(
       sticky: true,
-      primary: AppButton.primary(
-        label: _isCreatingJobCard
-            ? t.advisorIntakeActionCreating
-            : t.advisorIntakeActionCreate,
-        icon: Icons.add_task_rounded,
-        isLoading: _isCreatingJobCard,
-        isExpanded: context.adaptive.isCompact,
-        onPressed: _isCreatingJobCard ? null : () => _create(t),
-      ),
+      secondary: [
+        if (_step > 0)
+          AppButton.secondary(
+            label: t.advisorIntakeWizardBack,
+            leadingIcon: Icons.arrow_back_rounded,
+            isExpanded: context.adaptive.isCompact,
+            onPressed: _isCreatingJobCard ? null : () => _goTo(_step - 1),
+          ),
+      ],
+      primary: last
+          ? AppButton.primary(
+              label: _isCreatingJobCard
+                  ? t.advisorIntakeActionCreating
+                  : t.advisorIntakeActionCreate,
+              icon: Icons.add_task_rounded,
+              isLoading: _isCreatingJobCard,
+              isExpanded: context.adaptive.isCompact,
+              onPressed: _isCreatingJobCard ? null : () => _create(t),
+            )
+          : AppButton.primary(
+              label: t.advisorIntakeWizardNext,
+              icon: Icons.arrow_forward_rounded,
+              isExpanded: context.adaptive.isCompact,
+              onPressed: () => _advance(t),
+            ),
     );
   }
 
-  void _toggle(String key) => setState(() => _expanded[key] = !_expanded[key]!);
+  // ── Wizard navigation ─────────────────────────────────────────────────────
+
+  void _onStepTap(int index) {
+    if (index == _step) return;
+    final t = StaffLocalizations.of(context)!;
+    if (index < _step) {
+      _goTo(index);
+      return;
+    }
+    // Forward jumps must clear every intermediate gate in order.
+    for (var s = _step; s < index; s++) {
+      if (!_validateStep(s, ref.read(vehicleCustomerFormProvider), t)) {
+        setState(() => _step = s);
+        _saveDraft();
+        _scrollToFirstError();
+        return;
+      }
+    }
+    _goTo(index);
+  }
+
+  void _advance(StaffLocalizations t) {
+    final s = ref.read(vehicleCustomerFormProvider);
+    if (!_validateStep(_step, s, t)) {
+      _scrollToFirstError();
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
+    _goTo(_step + 1);
+  }
+
+  void _goTo(int index) {
+    setState(() {
+      _step = index.clamp(0, _totalSteps - 1);
+      if (_fieldErrors.isNotEmpty) _fieldErrors = const {};
+    });
+    _saveDraft();
+  }
+
+  /// Validates a single deck step. Steps without required fields always pass;
+  /// the final submit still runs the full form validation.
+  bool _validateStep(
+    int step,
+    VehicleCustomerFormState s,
+    StaffLocalizations t,
+  ) {
+    final errors = <MapEntry<String, String>>[];
+    if (step == 0) {
+      if (s.customerName.trim().isEmpty) {
+        errors.add(MapEntry('Customer Name', t.advisorIntakeErrCustomerName));
+      }
+      if (s.phoneNumber.trim().isEmpty) {
+        errors.add(MapEntry('Phone Number', t.advisorIntakeErrPhone));
+      } else if (s.phoneNumber.trim().length < 8) {
+        errors.add(MapEntry('Phone Number', t.advisorIntakeErrPhoneValid));
+      }
+    } else if (step == 1) {
+      if (s.plateNumber.trim().isEmpty) {
+        errors.add(MapEntry('Plate Number', t.advisorIntakeErrPlate));
+      }
+      if (s.make.trim().isEmpty) {
+        errors.add(MapEntry('Make', t.advisorIntakeErrMake));
+      }
+      if (s.model.trim().isEmpty) {
+        errors.add(MapEntry('Model', t.advisorIntakeErrModel));
+      }
+    }
+    if (errors.isNotEmpty) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      setState(() => _fieldErrors = Map.fromEntries(errors));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.advisorIntakeWizardBlocked)),
+      );
+      return false;
+    }
+    if (_fieldErrors.isNotEmpty) {
+      setState(() => _fieldErrors = const {});
+    }
+    return true;
+  }
+
+  void _scrollToFirstError() {
+    if (_fieldErrors.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final firstContext = _fieldKeys[_fieldErrors.keys.first]?.currentContext;
+      if (firstContext != null) {
+        Scrollable.ensureVisible(
+          firstContext,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeOutCubic,
+          alignment: 0.18,
+        );
+      }
+    });
+  }
 
   // ── Pickers ─────────────────────────────────────────────────────────────────
 
-  Future<void> _pickBrand(StaffLocalizations t, VehicleCustomerFormState s) async {
-    final result = await showModalBottomSheet<String>(
+  Future<void> _pickBrand(VehicleCustomerFormState s) async {
+    final result = await showSelectBrandSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.85,
-        child: SelectBrandSheet(selected: s.make),
-      ),
+      selected: s.make.isEmpty ? null : s.make,
     );
     if (result != null) {
       ref.read(vehicleCustomerFormProvider.notifier).setMake(result);
@@ -1030,21 +1200,20 @@ class _BodyState extends ConsumerState<_Body> {
     }
   }
 
-  Future<void> _pickModel(StaffLocalizations t, VehicleCustomerFormState s) async {
+  Future<void> _pickModel(
+    StaffLocalizations t,
+    VehicleCustomerFormState s,
+  ) async {
     if (s.make.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(t.advisorIntakeSelectBrandFirst)),
       );
       return;
     }
-    final result = await showModalBottomSheet<String>(
+    final result = await showSelectModelSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.85,
-        child: SelectModelSheet(brand: s.make, selected: s.model),
-      ),
+      brand: s.make,
+      selected: s.model.isEmpty ? null : s.model,
     );
     if (result != null) {
       ref.read(vehicleCustomerFormProvider.notifier).setModel(result);
@@ -1095,6 +1264,10 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Future<void> _handleBack(StaffLocalizations t) async {
+    if (_step > 0) {
+      _goTo(_step - 1);
+      return;
+    }
     if (_hasUnsavedChanges) {
       await _confirmDiscard(t);
     } else if (mounted) {
@@ -1112,7 +1285,10 @@ class _BodyState extends ConsumerState<_Body> {
       icon: Icons.delete_outline_rounded,
       destructive: true,
     );
-    if (leave && mounted) Navigator.of(context).pop();
+    if (leave && mounted) {
+      _clearDraft();
+      Navigator.of(context).pop();
+    }
   }
 
   // ── Save ────────────────────────────────────────────────────────────────────
@@ -1125,23 +1301,17 @@ class _BodyState extends ConsumerState<_Body> {
     final errors = _validateForm(formState, t);
     if (errors.isNotEmpty) {
       FocusManager.instance.primaryFocus?.unfocus();
+      // Jump back to the deck holding the first invalid field so the error
+      // is visible instead of stranded on another step.
+      final first = errors.first.key;
+      final targetStep = (first == 'Customer Name' || first == 'Phone Number')
+          ? 0
+          : 1;
       setState(() {
         _fieldErrors = Map.fromEntries(errors);
-        _expanded['customer'] = true;
-        _expanded['vehicle'] = true;
+        _step = targetStep;
       });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final firstContext = _fieldKeys[errors.first.key]?.currentContext;
-        if (firstContext != null) {
-          Scrollable.ensureVisible(
-            firstContext,
-            duration: const Duration(milliseconds: 450),
-            curve: Curves.easeOutCubic,
-            alignment: 0.18,
-          );
-        }
-      });
+      _scrollToFirstError();
       return;
     }
     if (_fieldErrors.isNotEmpty) {
@@ -1236,6 +1406,8 @@ class _BodyState extends ConsumerState<_Body> {
         'lastUpdated': createdDate,
       };
       await local.save(id, payload);
+      // The job card is safe locally; the draft has served its purpose.
+      _clearDraft();
       final queue = ref.read(syncQueueProvider);
       await queue.enqueue(
         SyncOperation(
@@ -1282,6 +1454,7 @@ class _BodyState extends ConsumerState<_Body> {
 
   void _showInspectionPrompt(StaffLocalizations t) {
     final colors = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1314,7 +1487,9 @@ class _BodyState extends ConsumerState<_Body> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: (_savedToServer ? AppColors.success : AppColors.info)
+                color: (_savedToServer
+                        ? semantic.success.base
+                        : semantic.info.base)
                     .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
               ),
@@ -1322,7 +1497,9 @@ class _BodyState extends ConsumerState<_Body> {
                 _savedToServer
                     ? Icons.cloud_done_outlined
                     : Icons.cloud_upload_outlined,
-                color: _savedToServer ? AppColors.success : AppColors.info,
+                color: _savedToServer
+                    ? semantic.success.base
+                    : semantic.info.base,
                 size: 28,
               ),
             ),
@@ -1564,114 +1741,279 @@ class _BodyState extends ConsumerState<_Body> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  Intake draft snapshot (pure, unit-testable; Hive IO stays in [_BodyState])
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Serializes the unfinished wizard into a plain map for the local draft.
+Map<String, dynamic> buildIntakeDraft(
+  VehicleCustomerFormState s,
+  int step, {
+  List<String> jobPhotoPaths = const [],
+  List<String> jobVideoPaths = const [],
+  String customerSignaturePath = '',
+  String advisorSignaturePath = '',
+  String registrationDocumentPath = '',
+  String insuranceDocumentPath = '',
+}) => {
+  'version': 1,
+  'step': step,
+  'customerSearch': s.customerSearch,
+  'isB2B': s.isB2B,
+  'customerName': s.customerName,
+  'phoneNumber': s.phoneNumber,
+  'email': s.email,
+  'customerGroup': s.customerGroup,
+  'gender': s.gender,
+  'address': s.address,
+  'taxNumber': s.taxNumber,
+  'source': s.source,
+  'emirate': s.emirate,
+  'plateCode': s.plateCode,
+  'plateNumber': s.plateNumber,
+  'registrationNumber': s.registrationNumber,
+  'vin': s.vin,
+  'make': s.make,
+  'model': s.model,
+  'modelYear': s.modelYear,
+  'cylinders': s.cylinders,
+  'engineCapacity': s.engineCapacity,
+  'vehicleColor': s.vehicleColor,
+  'fuelType': s.fuelType,
+  'engineNumber': s.engineNumber,
+  'jobCategory': s.jobCategory,
+  'markupType': s.markupType,
+  'orderType': s.orderType,
+  'insuranceProvider': s.insuranceProvider,
+  'insuranceTaxNumber': s.insuranceTaxNumber,
+  'insuranceAddress': s.insuranceAddress,
+  'policyNumber': s.policyNumber,
+  'lpoNumber': s.lpoNumber,
+  'accidentNumber': s.accidentNumber,
+  'insuranceExpiryDate': s.insuranceExpiryDate,
+  'odometerReading': s.odometerReading,
+  'fuelLevel': s.fuelLevel,
+  'customerConsent': s.customerConsent,
+  'jobPhotoPaths': List<String>.from(jobPhotoPaths),
+  'jobVideoPaths': List<String>.from(jobVideoPaths),
+  'customerSignaturePath': customerSignaturePath,
+  'advisorSignaturePath': advisorSignaturePath,
+  'registrationDocumentPath': registrationDocumentPath,
+  'insuranceDocumentPath': insuranceDocumentPath,
+};
+
+/// Restores provider-owned draft fields. Media paths are returned to the
+/// caller through the same map keys (the state owns those lists).
+void applyIntakeDraftToForm(
+  VehicleCustomerFormNotifier notifier,
+  Map<String, dynamic> draft,
+) {
+  String str(String key) => (draft[key] ?? '').toString();
+  notifier
+    ..setCustomerSearch(str('customerSearch'))
+    ..setB2B(draft['isB2B'] == true)
+    ..setCustomerName(str('customerName'))
+    ..setPhone(str('phoneNumber'))
+    ..setEmail(str('email'))
+    ..setCustomerGroup(str('customerGroup'))
+    ..setGender(str('gender'))
+    ..setAddress(str('address'))
+    ..setTaxNumber(str('taxNumber'))
+    ..setSource(str('source'))
+    ..setEmirate(str('emirate'))
+    ..setPlateCode(str('plateCode'))
+    ..setPlateNumber(str('plateNumber'))
+    ..setRegistrationNumber(str('registrationNumber'))
+    ..setVin(str('vin'))
+    ..setMake(str('make'))
+    ..setModel(str('model'))
+    ..setModelYear(str('modelYear'))
+    ..setCylinders(str('cylinders'))
+    ..setEngineCapacity(str('engineCapacity'))
+    ..setVehicleColor(str('vehicleColor'))
+    ..setFuelType(str('fuelType'))
+    ..setEngineNumber(str('engineNumber'))
+    ..setJobCategory(
+      str('jobCategory').isEmpty ? 'Regular' : str('jobCategory'),
+    )
+    ..setMarkupType(str('markupType'))
+    ..setOrderType(str('orderType'))
+    ..setInsuranceProvider(str('insuranceProvider'))
+    ..setInsuranceTaxNumber(str('insuranceTaxNumber'))
+    ..setInsuranceAddress(str('insuranceAddress'))
+    ..setPolicyNumber(str('policyNumber'))
+    ..setLpoNumber(str('lpoNumber'))
+    ..setAccidentNumber(str('accidentNumber'))
+    ..setInsuranceExpiry(str('insuranceExpiryDate'))
+    ..setOdometer(str('odometerReading'))
+    ..setConsent(draft['customerConsent'] == true);
+  final fuel = (draft['fuelLevel'] as num?)?.toInt();
+  if (fuel != null) notifier.setFuelLevel(fuel);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  Shared intake building blocks
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Collapsible intake section card on the shared surface grammar.
-class _IntakeSection extends StatelessWidget {
-  final String sectionKey;
+/// Deck card: the wizard's unit of composition. Unlike the old collapsible
+/// sections, decks are always open and carry a flat title row — the stepper
+/// owns progress, the card owns its fields.
+class _DeckCard extends StatelessWidget {
   final String title;
-  final String subtitle;
-  final IconData icon;
-  final bool expanded;
-  final VoidCallback onToggle;
+  final String? subtitle;
   final Widget child;
 
-  const _IntakeSection({
-    required this.sectionKey,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.expanded,
-    required this.onToggle,
-    required this.child,
-  });
+  const _DeckCard({required this.title, this.subtitle, required this.child});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-
     return AppCard.standard(
-      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Semantics(
-            button: true,
-            expanded: expanded,
-            label: title,
-            child: InkWell(
-              onTap: onToggle,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.s16,
-                  AppDimensions.s14,
-                  AppDimensions.s12,
-                  AppDimensions.s14,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.09),
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radiusInput,
-                        ),
-                      ),
-                      child: Icon(icon, size: 19, color: colors.primary),
-                    ),
-                    const SizedBox(width: AppDimensions.s12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colors.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colors.onSurfaceVariant,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.s8),
-                    AnimatedRotation(
-                      turns: expanded ? 0.5 : 0,
-                      duration: AppMotion.resolve(context, AppMotion.fast),
-                      child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colors.onSurface,
             ),
           ),
-          if (expanded) ...[
-            Divider(height: 1, color: colors.outlineVariant),
-            Padding(
-              padding: const EdgeInsets.all(AppDimensions.s16),
-              child: child,
+          if (subtitle != null && subtitle!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                height: 1.35,
+              ),
             ),
           ],
+          const SizedBox(height: AppDimensions.s16),
+          child,
         ],
       ),
+    );
+  }
+}
+
+/// UAE plate capture: emirate selector + code letter + number rendered as one
+/// LTR plate identity. The composed `registrationNumber` stays mirrored-safe
+/// because every identifier renders with an explicit LTR direction.
+class _UaePlateField extends StatelessWidget {
+  final VehicleCustomerFormState state;
+  final VehicleCustomerFormNotifier notifier;
+  final String? plateError;
+  final GlobalKey plateKey;
+  final VoidCallback onPlateChanged;
+
+  const _UaePlateField({
+    required this.state,
+    required this.notifier,
+    required this.plateError,
+    required this.plateKey,
+    required this.onPlateChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final s = state;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Plate preview strip: the composed identity, always LTR.
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s14,
+            vertical: AppDimensions.s10,
+          ),
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+            border: Border.all(
+              color: colors.primary.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.credit_card_rounded,
+                size: 18,
+                color: colors.primary,
+              ),
+              const SizedBox(width: AppDimensions.s10),
+              Expanded(
+                child: Text(
+                  s.registrationNumber.isEmpty
+                      ? t.advisorIntakePlateNumberHint
+                      : s.registrationNumber,
+                  textDirection: TextDirection.ltr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.mono(color: colors.primary).copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        _ResponsiveFieldGroup(
+          minChildWidth: 150,
+          children: [
+            AppFormField(
+              label: t.advisorIntakeEmirate,
+              child: AppDropdownButton(
+                value: s.emirate,
+                hint: t.advisorIntakeEmirateHint,
+                items: kEmirates,
+                onChanged: (v) => notifier.setEmirate(v),
+              ),
+            ),
+            AppFormField(
+              label: t.advisorIntakePlateCode,
+              child: _IntakeField(
+                initialValue: s.plateCode,
+                hint: t.advisorIntakePlateCodeHint,
+                textCapitalization: TextCapitalization.characters,
+                isIdentifier: true,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp('[a-zA-Z0-9]')),
+                  LengthLimitingTextInputFormatter(4),
+                ],
+                onChanged: notifier.setPlateCode,
+              ),
+            ),
+            AppFormField(
+              label: t.advisorIntakePlateNumber,
+              isRequired: true,
+              errorText: plateError,
+              child: _IntakeField(
+                key: plateKey,
+                initialValue: s.plateNumber,
+                hint: t.advisorIntakePlateNumberHint,
+                keyboardType: TextInputType.number,
+                isIdentifier: true,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                prefix: (s.emirate.isEmpty && s.plateCode.isEmpty)
+                    ? null
+                    : _AffixPrefix('${s.emirate}-${s.plateCode}'),
+                onChanged: (v) {
+                  notifier.setPlateNumber(v);
+                  if (v.trim().isNotEmpty) onPlateChanged();
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -1939,6 +2281,7 @@ class _SignatureRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
     return AppCard.subtle(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.s14,
@@ -1948,7 +2291,7 @@ class _SignatureRow extends StatelessWidget {
         children: [
           Icon(
             captured ? Icons.check_circle_rounded : Icons.draw_outlined,
-            color: captured ? AppColors.success : colors.onSurfaceVariant,
+            color: captured ? semantic.success.base : colors.onSurfaceVariant,
             size: 20,
           ),
           const SizedBox(width: AppDimensions.s12),
@@ -1966,7 +2309,7 @@ class _SignatureRow extends StatelessWidget {
                   Text(
                     capturedLabel,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.success,
+                      color: semantic.success.base,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -2112,6 +2455,7 @@ class _FindExistingRecord extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
     final localMatches = ref.watch(advisorVehicleMatchesProvider);
     final remoteMatches = ref.watch(advisorRemoteVehicleMatchesProvider);
     final matches = remoteMatches.value ?? localMatches;
@@ -2122,7 +2466,6 @@ class _FindExistingRecord extends StatelessWidget {
         ..setCustomerName(m.customerName)
         ..setPhone(m.phoneNumber)
         ..setEmail(m.email)
-        ..setRegistrationNumber(m.registrationNumber)
         ..setVin(m.vin)
         ..setMake(m.make)
         ..setModel(m.model);
@@ -2133,6 +2476,9 @@ class _FindExistingRecord extends StatelessWidget {
           ..setEmirate(m.emirate)
           ..setPlateCode(m.plateCode)
           ..setPlateNumber(m.plateNumber);
+      }
+      if (m.registrationNumber.isNotEmpty) {
+        notifier.setRegistrationNumber(m.registrationNumber);
       }
     }
 
@@ -2156,10 +2502,10 @@ class _FindExistingRecord extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.person_search_outlined,
                       size: 18,
-                      color: AppColors.primary,
+                      color: colors.primary,
                     ),
                     const SizedBox(width: AppDimensions.s10),
                     Expanded(
@@ -2179,6 +2525,7 @@ class _FindExistingRecord extends StatelessWidget {
                                 .join(' · '),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            textDirection: TextDirection.ltr,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: Theme.of(
@@ -2189,10 +2536,10 @@ class _FindExistingRecord extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.add_circle_outline,
                       size: 18,
-                      color: AppColors.primary,
+                      color: colors.primary,
                     ),
                   ],
                 ),
@@ -2486,9 +2833,15 @@ class _JobDescriptionTable extends StatelessWidget {
   }
 
   void _showAttachmentError(BuildContext context, Object error) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Could not add attachment: $error')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          StaffLocalizations.of(
+            context,
+          )!.advisorIntakeAttachmentError('$error'),
+        ),
+      ),
+    );
   }
 }
 
@@ -2577,7 +2930,9 @@ class _JobDescriptionAudioDialogState
             icon: Icon(_recording ? Icons.stop_rounded : Icons.mic_rounded),
             style: IconButton.styleFrom(
               backgroundColor: _recording ? colors.error : colors.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: _recording
+                  ? colors.onError
+                  : colors.onPrimary,
             ),
           ),
         ],
@@ -2605,10 +2960,10 @@ class _PrioritySelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  Color _colorFor(String priority) {
-    if (priority.startsWith('Red:')) return AppColors.danger;
-    if (priority.startsWith('Yellow:')) return AppColors.warning;
-    return AppColors.success;
+  Color _colorFor(String priority, AppSemanticColors semantic) {
+    if (priority.startsWith('Red:')) return semantic.danger.base;
+    if (priority.startsWith('Yellow:')) return semantic.warning.base;
+    return semantic.success.base;
   }
 
   String _detailFor(String priority) {
@@ -2619,6 +2974,7 @@ class _PrioritySelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final semantic = context.semanticColors;
     return PopupMenuButton<String>(
       initialValue: value,
       tooltip: tooltip,
@@ -2635,7 +2991,7 @@ class _PrioritySelector extends StatelessWidget {
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
-                      color: _colorFor(priority),
+                      color: _colorFor(priority, semantic),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -2680,7 +3036,7 @@ class _PrioritySelector extends StatelessWidget {
               width: 10,
               height: 10,
               decoration: BoxDecoration(
-                color: _colorFor(value),
+                color: _colorFor(value, semantic),
                 shape: BoxShape.circle,
               ),
             ),
@@ -2738,6 +3094,11 @@ class _MarkdownEditingController extends TextEditingController {
   }) {
     final raw = text;
     final base = style ?? const TextStyle();
+    final dimmed = base.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      fontWeight: FontWeight.normal,
+      fontStyle: FontStyle.normal,
+    );
     final children = <TextSpan>[];
     var cursor = 0;
     for (final match in _pattern.allMatches(raw)) {
@@ -2747,12 +3108,7 @@ class _MarkdownEditingController extends TextEditingController {
       final bold = match.group(1) != null;
       final inner = (bold ? match.group(1) : match.group(2)) ?? '';
       final marker = bold ? '**' : '*';
-      final markerStyle = base.copyWith(
-        color: (base.color ?? Colors.black).withValues(alpha: 0.30),
-        fontWeight: FontWeight.normal,
-        fontStyle: FontStyle.normal,
-      );
-      children.add(TextSpan(text: marker, style: markerStyle));
+      children.add(TextSpan(text: marker, style: dimmed));
       children.add(
         TextSpan(
           text: inner,
@@ -2762,7 +3118,7 @@ class _MarkdownEditingController extends TextEditingController {
           ),
         ),
       );
-      children.add(TextSpan(text: marker, style: markerStyle));
+      children.add(TextSpan(text: marker, style: dimmed));
       cursor = match.end;
     }
     if (cursor < raw.length) {
@@ -3039,7 +3395,7 @@ class _MediaThumbnailGrid extends StatelessWidget {
     required bool isVideo,
     required VoidCallback onRemove,
   }) {
-    final colors = Theme.of(context);
+    final colors = Theme.of(context).colorScheme;
     return SizedBox(
       width: 84,
       height: 84,
@@ -3052,11 +3408,11 @@ class _MediaThumbnailGrid extends StatelessWidget {
                 ? Container(
                     width: 84,
                     height: 84,
-                    color: colors.colorScheme.surfaceContainerLow,
+                    color: colors.surfaceContainerLow,
                     child: Icon(
                       Icons.play_circle_outline,
                       size: 30,
-                      color: colors.colorScheme.onSurface,
+                      color: colors.onSurface,
                     ),
                   )
                 : (File(path).existsSync()
@@ -3069,10 +3425,10 @@ class _MediaThumbnailGrid extends StatelessWidget {
                       : Container(
                           width: 84,
                           height: 84,
-                          color: colors.colorScheme.surfaceContainerLow,
+                          color: colors.surfaceContainerLow,
                           child: Icon(
                             Icons.broken_image_outlined,
-                            color: colors.colorScheme.onSurfaceVariant,
+                            color: colors.onSurfaceVariant,
                           ),
                         )),
           ),
@@ -3080,6 +3436,7 @@ class _MediaThumbnailGrid extends StatelessWidget {
             const Positioned(
               bottom: 4,
               left: 4,
+              // FIXED-INK: legibility glyph over user video thumbnails.
               child: Icon(
                 Icons.videocam,
                 size: 14,
@@ -3094,11 +3451,11 @@ class _MediaThumbnailGrid extends StatelessWidget {
               onTap: onRemove,
               child: Container(
                 padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
-                  color: AppColors.danger,
+                decoration: BoxDecoration(
+                  color: colors.error,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close, size: 12, color: Colors.white),
+                child: Icon(Icons.close, size: 12, color: colors.onError),
               ),
             ),
           ),
@@ -3116,6 +3473,9 @@ class _FuelLevelSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final low = value < 4;
+    final ink = low ? semantic.danger.base : semantic.warning.base;
     return Row(
       children: [
         Expanded(
@@ -3144,17 +3504,14 @@ class _FuelLevelSlider extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.local_gas_station,
-                color: value >= 4 ? AppColors.warning : AppColors.danger,
-                size: 22,
-              ),
+              Icon(Icons.local_gas_station, color: ink, size: 22),
               Text(
                 '$value/10',
+                textDirection: TextDirection.ltr,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: value >= 4 ? AppColors.warning : AppColors.danger,
+                  color: ink,
                 ),
               ),
             ],

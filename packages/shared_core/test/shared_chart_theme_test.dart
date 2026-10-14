@@ -33,7 +33,7 @@ void main() {
         AppColors.chartSeriesDark,
       );
       expect(AppChartTheme.paletteFor(Brightness.light).length, 6);
-      expect(AppChartTheme.maxSeries, 2);
+      expect(AppChartTheme.maxSeries, 4);
     });
 
     testWidgets('of() resolves brightness, locale and direction', (
@@ -88,8 +88,14 @@ void main() {
         AppColors.chartSeries[0],
         AppColors.chartSeries[1],
       ]);
-      // More than max is capped to 2.
-      expect(theme.seriesColors(5).length, 2);
+      expect(theme.seriesColors(4), [
+        AppColors.chartSeries[0],
+        AppColors.chartSeries[1],
+        AppColors.chartSeries[2],
+        AppColors.chartSeries[3],
+      ]);
+      // More than max is capped to 4.
+      expect(theme.seriesColors(6).length, 4);
       // Index wraps the palette.
       expect(theme.seriesColor(6), AppColors.chartSeries[0]);
     });
@@ -155,6 +161,72 @@ void main() {
         _host(locale: const Locale('ar'), child: const AppChartPlaceholder()),
       );
       expect(find.text('لا توجد بيانات بعد'), findsOneWidget);
+    });
+  });
+
+  group('Currency formatting via AppFormatters', () {
+    testWidgets('formatCurrency keeps locale placement (EN/AR)', (
+      tester,
+    ) async {
+      late AppChartTheme theme;
+      await tester.pumpWidget(
+        _host(
+          child: Builder(
+            builder: (context) {
+              theme = AppChartTheme.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      final en = AppFormatters(const Locale('en'));
+      final ar = AppFormatters(const Locale('ar'));
+      expect(theme.formatCurrency(12450, en), 'AED 12,450');
+      expect(theme.formatCurrency(12450, ar), '12,450 د.إ');
+      // Latin digits in both locales.
+      expect(
+        AppFormatters.containsNonLatinDigits(theme.formatCurrency(12450, ar)),
+        isFalse,
+      );
+    });
+
+    testWidgets('formatValue groups quantities, currencies money', (
+      tester,
+    ) async {
+      late AppChartTheme theme;
+      await tester.pumpWidget(
+        _host(
+          child: Builder(
+            builder: (context) {
+              theme = AppChartTheme.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      final en = AppFormatters(const Locale('en'));
+      expect(theme.formatValue(12450, en), '12,450');
+      expect(theme.formatValue(12450, en, currency: true), 'AED 12,450');
+    });
+
+    testWidgets('fourth series resolves and RTL order mirrors four', (
+      tester,
+    ) async {
+      late AppChartTheme rtl;
+      await tester.pumpWidget(
+        _host(
+          locale: const Locale('ar'),
+          child: Builder(
+            builder: (context) {
+              rtl = AppChartTheme.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      expect(rtl.seriesColors(4).length, 4);
+      expect(rtl.orderSeries([1, 2, 3, 4]), [4, 3, 2, 1]);
+      expect(rtl.orderedPalette(4).length, 4);
     });
   });
 }

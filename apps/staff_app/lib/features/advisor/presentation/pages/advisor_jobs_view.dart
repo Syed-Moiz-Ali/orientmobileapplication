@@ -66,7 +66,7 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
 
     final jobsAsync = ref.watch(advisorRecentJobCardsProvider);
     final bookingsAsync = ref.watch(advisorAssignedBookingsProvider);
-    final jobCards = jobsAsync.value ?? const <JobCardEntity>[];
+    final jobCards = jobsAsync.valueOrNull ?? const <JobCardEntity>[];
     final selectedFilter = ref.watch(_jobsFilterProvider);
     final isLoading = jobsAsync.isLoading || bookingsAsync.isLoading;
     final hasError = jobsAsync.hasError || bookingsAsync.hasError;
@@ -167,7 +167,7 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
   ) {
     final query = ref.watch(_jobsSearchProvider).toLowerCase();
     final bookings =
-        ref.watch(advisorAssignedBookingsProvider).value ??
+        ref.watch(advisorAssignedBookingsProvider).valueOrNull ??
         const <AdvisorBookingResponse>[];
     final showBookings =
         query.isEmpty && filter == 'all' && bookings.isNotEmpty;

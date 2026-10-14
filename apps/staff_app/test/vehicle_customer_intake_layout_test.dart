@@ -7,9 +7,10 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_remote_datasource.dart';
 import 'package:staff_app/features/advisor/presentation/pages/vehicle_customer_view.dart';
+import 'package:staff_app/features/advisor/presentation/providers/vehicle_customer_provider.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-/// The redesigned intake screen must lay out cleanly across device widths in
+/// The express intake wizard must lay out cleanly across device widths in
 /// both locales with no RenderFlex overflow or clipped controls.
 void main() {
   const widths = <String, Size>{
@@ -37,8 +38,10 @@ void main() {
 
           expect(tester.takeException(), isNull);
           expect(find.text(t.advisorIntakeTitle), findsWidgets);
-          expect(find.text(t.advisorIntakeSectionCustomer), findsOneWidget);
-          expect(find.text(t.advisorIntakeSectionVehicle), findsOneWidget);
+          expect(find.text(t.advisorIntakeWizardContactTitle), findsWidgets);
+          // In Arabic the deck header and the card title share one
+          // translation, so the count differs by locale.
+          expect(find.text(t.advisorIntakeSectionCustomer), findsWidgets);
           // Required-field country prefix is visible without focusing.
           expect(find.textContaining('971'), findsWidgets);
         },
@@ -61,9 +64,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('optional sections expand to reveal their content', (
-    tester,
-  ) async {
+  testWidgets('wizard gates each deck with localized errors', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -72,28 +73,35 @@ void main() {
     await tester.pumpWidget(_harness());
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text(t.advisorIntakeSectionMedia),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text(t.advisorIntakeSectionMedia));
+    // Empty contact deck: advancing is blocked with field errors.
+    await tester.tap(find.text(t.advisorIntakeWizardNext));
     await tester.pumpAndSettle();
-    expect(find.text(t.advisorIntakeAddLabel(t.advisorIntakePhotos)), findsOneWidget);
+    expect(find.text(t.advisorIntakeErrCustomerName), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.scrollUntilVisible(
-      find.text(t.advisorIntakeSectionJob),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text(t.advisorIntakeSectionJob));
+    // Let the blocked snackbar dismiss (and flush its exit animation) so
+    // it never covers the action bar.
+    await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(find.text(t.advisorIntakeAddDescription), findsOneWidget);
+
+    // Valid contact advances to the vehicle deck.
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(1), 'Layla Haddad');
+    await tester.enterText(fields.at(2), '501234567');
+    await tester.pump();
+    await tester.tap(find.text(t.advisorIntakeWizardNext));
+    await tester.pumpAndSettle();
+    expect(find.text(t.advisorIntakeSectionVehicle), findsWidgets);
+
+    // Empty vehicle deck: plate/brand/model errors surface inline.
+    await tester.tap(find.text(t.advisorIntakeWizardNext));
+    await tester.pumpAndSettle();
+    expect(find.text(t.advisorIntakeErrPlate), findsOneWidget);
+    expect(find.text(t.advisorIntakeErrMake), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('missing required fields surface localized errors', (
+  testWidgets('completed decks reach capture, sign-off and create', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -104,11 +112,37 @@ void main() {
     await tester.pumpWidget(_harness());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(t.advisorIntakeActionCreate));
-    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(VehicleCustomerView)),
+    );
+    container
+        .read(vehicleCustomerFormProvider.notifier)
+        .setCustomerName('Layla Haddad');
+    container.read(vehicleCustomerFormProvider.notifier).setPhone('501234567');
+    container
+        .read(vehicleCustomerFormProvider.notifier)
+        .setPlateNumber('12345');
+    container.read(vehicleCustomerFormProvider.notifier).setMake('Nissan');
+    container.read(vehicleCustomerFormProvider.notifier).setModel('Patrol');
+    await tester.pump();
 
-    expect(find.text(t.advisorIntakeErrCustomerName), findsOneWidget);
-    expect(find.text(t.advisorIntakeErrPlate), findsOneWidget);
+    await tester.tap(find.text(t.advisorIntakeWizardNext));
+    await tester.pumpAndSettle();
+    expect(find.text(t.advisorIntakeSectionVehicle), findsWidgets);
+
+    await tester.tap(find.text(t.advisorIntakeWizardNext));
+    await tester.pumpAndSettle();
+    expect(find.text(t.advisorIntakeSectionMedia), findsOneWidget);
+    expect(
+      find.text(t.advisorIntakeAddLabel(t.advisorIntakePhotos)),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text(t.advisorIntakeWizardNext));
+    await tester.pumpAndSettle();
+    expect(find.text(t.advisorIntakeSectionJob), findsWidgets);
+    expect(find.text(t.advisorIntakeAddDescription), findsOneWidget);
+    expect(find.text(t.advisorIntakeActionCreate), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

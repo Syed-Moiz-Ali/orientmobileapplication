@@ -301,4 +301,49 @@ class SharedCoreLocalizationsEn extends SharedCoreLocalizations {
 
   @override
   String get workspaceSearchTooltip => 'Search';
+
+  @override
+  String get filterBarClear => 'Clear';
+
+  @override
+  String get filterBarAll => 'All';
+
+  @override
+  String get dateRangeSelect => 'Select date range';
+
+  @override
+  String get dateRangeClear => 'Clear dates';
+
+  @override
+  String get paginationPrevious => 'Previous';
+
+  @override
+  String get paginationNext => 'Next';
+
+  @override
+  String paginationPageOf(int page, int total) {
+    return 'Page $page of $total';
+  }
+
+  @override
+  String paginationResults(int count) {
+    return '$count results';
+  }
+
+  @override
+  String get commandPaletteHint => 'Type a command or search…';
+
+  @override
+  String get commandPaletteEmpty => 'No matching commands';
+
+  @override
+  String stepperStepOf(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get trendUpLabel => 'Up';
+
+  @override
+  String get trendDownLabel => 'Down';
 }

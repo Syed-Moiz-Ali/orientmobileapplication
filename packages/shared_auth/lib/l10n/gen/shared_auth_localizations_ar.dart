@@ -252,4 +252,29 @@ class SharedAuthLocalizationsAr extends SharedAuthLocalizations {
 
   @override
   String get errorGeneric => 'حدث خطأ ما. حاول مرة أخرى.';
+
+  @override
+  String get authSessionExpiredTitle => 'انتهت الجلسة';
+
+  @override
+  String get authSessionExpiredMessage =>
+      'انتهت جلستك. سجّل الدخول مجدداً للمتابعة.';
+
+  @override
+  String get authSessionExpiredAction => 'تسجيل الدخول مجدداً';
+
+  @override
+  String get authPasswordStrengthLabel => 'قوة كلمة المرور';
+
+  @override
+  String get authPasswordStrengthWeak => 'ضعيفة';
+
+  @override
+  String get authPasswordStrengthFair => 'مقبولة';
+
+  @override
+  String get authPasswordStrengthGood => 'جيدة';
+
+  @override
+  String get authPasswordStrengthStrong => 'قوية';
 }

@@ -222,5 +222,47 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "workspaceSearchTooltip": "Search",
-  "@workspaceSearchTooltip": { "description": "Tooltip of the omnichannel search trigger in the workspace app bar" }
+  "@workspaceSearchTooltip": { "description": "Tooltip of the omnichannel search trigger in the workspace app bar" },
+
+  "filterBarClear": "Clear",
+  "@filterBarClear": { "description": "Clears all active filters in the shared filter bar" },
+  "filterBarAll": "All",
+  "@filterBarAll": { "description": "Default 'no filter' chip in the shared filter bar" },
+  "dateRangeSelect": "Select date range",
+  "@dateRangeSelect": { "description": "Label of the shared date-range field trigger" },
+  "dateRangeClear": "Clear dates",
+  "@dateRangeClear": { "description": "Tooltip that clears the shared date-range field" },
+  "paginationPrevious": "Previous",
+  "@paginationPrevious": { "description": "Previous-page action in the shared pagination footer" },
+  "paginationNext": "Next",
+  "@paginationNext": { "description": "Next-page action in the shared pagination footer" },
+  "paginationPageOf": "Page {page} of {total}",
+  "@paginationPageOf": {
+    "description": "Current page indicator in the shared pagination footer",
+    "placeholders": {
+      "page": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "paginationResults": "{count} results",
+  "@paginationResults": {
+    "description": "Total result count in the shared pagination footer",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "commandPaletteHint": "Type a command or search…",
+  "@commandPaletteHint": { "description": "Hint of the shared command-palette search field" },
+  "commandPaletteEmpty": "No matching commands",
+  "@commandPaletteEmpty": { "description": "Empty state of the shared command palette" },
+  "stepperStepOf": "Step {current} of {total}",
+  "@stepperStepOf": {
+    "description": "Screen-reader progress of the shared stepper",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "trendUpLabel": "Up",
+  "@trendUpLabel": { "description": "Rising-trend indicator in the shared trend stat" },
+  "trendDownLabel": "Down",
+  "@trendDownLabel": { "description": "Falling-trend indicator in the shared trend stat" }
 }

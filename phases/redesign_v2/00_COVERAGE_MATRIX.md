@@ -122,3 +122,24 @@ Evidence: `phases/redesign_v2/reports/REPORT_PHASE_06.md`.
 | **S11** | `AdvisorStatDialog` | ✅ Theme-migrated | `advisor_experience_test` |
 
 **Removed as obsolete (unreferenced legacy widgets superseded by the redesign):** `advisor_body.dart`, `advisor_header.dart`, `advisor_header_button.dart`, `advisor_avatar.dart`, `advisor_bottom_nav.dart`, `advisor_bottom_item.dart`, `advisor_fab.dart`, `advisor_stat_tile.dart`, `advisor_date_chip.dart`, `advisor_tab_panel.dart`, `advisor_job_cards_page.dart`, `advisor_approvals_page.dart`, `advisor_reminders_page.dart`, `advisor_reminder_row.dart`, `advisor_see_all_button.dart`, `advisor_tab_button.dart`, `advisor_status_badge.dart`.
+
+---
+
+## 3. Phase 06 Gate 2 Closure Status — 2026-10-14
+
+Evidence: `reports/REPORT_PHASE_06_GATE_2_CLOSURE.md` (and `reports/REPORT_PHASE_06_GATE_2_AUDIT.md`).
+
+| Item | Status | Evidence |
+| :-- | :-- | :-- |
+| Pending-sync count reactivity | ✅ Fixed + tested | `advisor_sync_reactivity_test` (3/0) |
+| Dark-theme visual states | ✅ Captured + inspected | `advisor_states_dark_home_{390_en,390_ar}`, `advisor_states_dark_detail_1280_en` |
+| Offline / pending-sync states | ✅ Captured + inspected | `advisor_states_offline_390_en`, `advisor_states_queued_390_en` |
+| Loading / error / empty / no-match | ✅ Captured + inspected | `advisor_states_{loading,error,jobs_empty,jobs_nomatch}_390_en` |
+| Search + results | ✅ Captured + inspected | `advisor_states_search_390_en` |
+| Four modal sheets | ✅ Captured + inspected | `advisor_states_sheet_{notification,profile,contact,approval}_390_en` |
+| Desktop jobs master-detail matrix | ✅ Captured + inspected | `advisor_states_jobs_matrix_1280_en` |
+| Home `AsyncError` crash (`.value` throw) | ✅ Fixed (`.valueOrNull`) | `advisor_states_error_390_en`; 14 prior goldens unchanged |
+| Live device/browser acceptance | ⚠️ **NOT PERFORMED** — auth-gated + non-interactive; not run at operator's direction | `REPORT_PHASE_06_GATE_2_CLOSURE.md` §4 |
+
+**Gate 2 recommendation:** `CONDITIONAL — ACTIONS REQUIRED` (sole open item: live acceptance). **Product Owner approval: NOT claimed.**
+

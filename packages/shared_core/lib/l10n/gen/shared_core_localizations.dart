@@ -640,6 +640,84 @@ abstract class SharedCoreLocalizations {
   /// In en, this message translates to:
   /// **'Search'**
   String get workspaceSearchTooltip;
+
+  /// Clears all active filters in the shared filter bar
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get filterBarClear;
+
+  /// Default 'no filter' chip in the shared filter bar
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterBarAll;
+
+  /// Label of the shared date-range field trigger
+  ///
+  /// In en, this message translates to:
+  /// **'Select date range'**
+  String get dateRangeSelect;
+
+  /// Tooltip that clears the shared date-range field
+  ///
+  /// In en, this message translates to:
+  /// **'Clear dates'**
+  String get dateRangeClear;
+
+  /// Previous-page action in the shared pagination footer
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get paginationPrevious;
+
+  /// Next-page action in the shared pagination footer
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get paginationNext;
+
+  /// Current page indicator in the shared pagination footer
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {total}'**
+  String paginationPageOf(int page, int total);
+
+  /// Total result count in the shared pagination footer
+  ///
+  /// In en, this message translates to:
+  /// **'{count} results'**
+  String paginationResults(int count);
+
+  /// Hint of the shared command-palette search field
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command or search…'**
+  String get commandPaletteHint;
+
+  /// Empty state of the shared command palette
+  ///
+  /// In en, this message translates to:
+  /// **'No matching commands'**
+  String get commandPaletteEmpty;
+
+  /// Screen-reader progress of the shared stepper
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String stepperStepOf(int current, int total);
+
+  /// Rising-trend indicator in the shared trend stat
+  ///
+  /// In en, this message translates to:
+  /// **'Up'**
+  String get trendUpLabel;
+
+  /// Falling-trend indicator in the shared trend stat
+  ///
+  /// In en, this message translates to:
+  /// **'Down'**
+  String get trendDownLabel;
 }
 
 class _SharedCoreLocalizationsDelegate

@@ -53,6 +53,7 @@ void main() {
     });
 
     testWidgets('AppTopBar back tooltip localizes and mirrors', (tester) async {
+      // ignore: deprecated_member_use_from_same_package
       await tester.pumpWidget(_host(child: const AppTopBar(title: 'الطلبات')));
       expect(find.byTooltip('رجوع'), findsOneWidget);
       // IconWidgets inside DirectionalIcon must be mirrored by Transform.flip.

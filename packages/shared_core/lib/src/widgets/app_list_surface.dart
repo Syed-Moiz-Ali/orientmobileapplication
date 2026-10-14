@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
+import 'package:shared_core/src/theme/app_density.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/widgets/app_skeleton.dart';
 import 'package:shared_core/src/widgets/empty_state.dart';
@@ -72,6 +73,11 @@ class AppListSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = SharedCoreL10n.of(context);
+    // Phase 01.2 density: first-load skeleton padding follows the active mode.
+    final density = context.density;
+    final skeletonPadding = EdgeInsets.all(
+      density.isCompact ? AppDimensions.s8 : AppDimensions.s12,
+    );
 
     final Widget state;
     final bool contentIsScrollable;
@@ -79,7 +85,7 @@ class AppListSurface extends StatelessWidget {
       state = skeletonBuilder != null
           ? skeletonBuilder!(context)
           : Padding(
-              padding: const EdgeInsets.all(AppDimensions.s12),
+              padding: skeletonPadding,
               child: AppSkeleton.listRows(rows: skeletonRows),
             );
       contentIsScrollable = false;

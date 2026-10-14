@@ -82,6 +82,19 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
   final Color onError;
 
   // ---------------------------------------------------------------------------
+  // Global focus + disabled grammar (Phase 01.2 — single authority).
+  //
+  // [disabledFill] is the fill of a disabled control; [disabledInk] is the
+  // label/icon ink rendered on it; [disabledBorder] is the hairline of a
+  // disabled outlined control. All three are consumed by `AppTheme._buildTheme`
+  // (buttons, inputs, chips, switches, checkboxes) so no widget invents its
+  // own disabled greys.
+  // ---------------------------------------------------------------------------
+  final Color disabledFill;
+  final Color disabledInk;
+  final Color disabledBorder;
+
+  // ---------------------------------------------------------------------------
   // Status families
   // ---------------------------------------------------------------------------
   final AppStatusColors neutral;
@@ -98,7 +111,7 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
   final Color overlayScrim;
 
   // ---------------------------------------------------------------------------
-  // Chart series (ordered telemetry palette, max 2 series per chart)
+  // Chart series (ordered telemetry palette, max 4 series per chart)
   // ---------------------------------------------------------------------------
   final List<Color> chartSeries;
 
@@ -118,6 +131,9 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     required this.focusRing,
     required this.onPrimary,
     required this.onError,
+    required this.disabledFill,
+    required this.disabledInk,
+    required this.disabledBorder,
     required this.neutral,
     required this.success,
     required this.warning,
@@ -191,6 +207,9 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     focusRing: AppColors.primary,
     onPrimary: AppColors.textInverse,
     onError: AppColors.textInverse,
+    disabledFill: AppColors.disabled,
+    disabledInk: AppColors.textDisabled,
+    disabledBorder: AppColors.borderDefault,
     neutral: AppStatusColors(
       base: AppColors.textSecondary,
       subtle: AppColors.gray100,
@@ -243,6 +262,9 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     focusRing: AppDarkColors.focusRing,
     onPrimary: AppDarkColors.onPrimary,
     onError: AppDarkColors.onError,
+    disabledFill: AppDarkColors.surfaceSunken,
+    disabledInk: AppDarkColors.textDisabled,
+    disabledBorder: AppDarkColors.borderDefault,
     neutral: AppStatusColors(
       base: AppDarkColors.textSecondary,
       subtle: AppDarkColors.surfaceSubtle,
@@ -311,6 +333,9 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     Color? focusRing,
     Color? onPrimary,
     Color? onError,
+    Color? disabledFill,
+    Color? disabledInk,
+    Color? disabledBorder,
     AppStatusColors? neutral,
     AppStatusColors? success,
     AppStatusColors? warning,
@@ -337,6 +362,9 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
       focusRing: focusRing ?? this.focusRing,
       onPrimary: onPrimary ?? this.onPrimary,
       onError: onError ?? this.onError,
+      disabledFill: disabledFill ?? this.disabledFill,
+      disabledInk: disabledInk ?? this.disabledInk,
+      disabledBorder: disabledBorder ?? this.disabledBorder,
       neutral: neutral ?? this.neutral,
       success: success ?? this.success,
       warning: warning ?? this.warning,
@@ -371,6 +399,9 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
       focusRing: Color.lerp(focusRing, other.focusRing, t)!,
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
       onError: Color.lerp(onError, other.onError, t)!,
+      disabledFill: Color.lerp(disabledFill, other.disabledFill, t)!,
+      disabledInk: Color.lerp(disabledInk, other.disabledInk, t)!,
+      disabledBorder: Color.lerp(disabledBorder, other.disabledBorder, t)!,
       neutral: AppStatusColors.lerp(neutral, other.neutral, t),
       success: AppStatusColors.lerp(success, other.success, t),
       warning: AppStatusColors.lerp(warning, other.warning, t),

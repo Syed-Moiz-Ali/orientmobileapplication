@@ -251,4 +251,29 @@ class SharedAuthLocalizationsEn extends SharedAuthLocalizations {
 
   @override
   String get errorGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get authSessionExpiredTitle => 'Session expired';
+
+  @override
+  String get authSessionExpiredMessage =>
+      'Your session has expired. Sign in again to continue.';
+
+  @override
+  String get authSessionExpiredAction => 'Sign in again';
+
+  @override
+  String get authPasswordStrengthLabel => 'Password strength';
+
+  @override
+  String get authPasswordStrengthWeak => 'Weak';
+
+  @override
+  String get authPasswordStrengthFair => 'Fair';
+
+  @override
+  String get authPasswordStrengthGood => 'Good';
+
+  @override
+  String get authPasswordStrengthStrong => 'Strong';
 }

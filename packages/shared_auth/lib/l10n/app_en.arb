@@ -161,5 +161,22 @@
   "errorServerGeneric": "Something went wrong on our side. Please try again.",
   "@errorServerGeneric": { "description": "Unknown server failure copy" },
   "errorGeneric": "Something went wrong. Please try again.",
-  "@errorGeneric": { "description": "Empty/unknown failure copy" }
+  "@errorGeneric": { "description": "Empty/unknown failure copy" },
+
+  "authSessionExpiredTitle": "Session expired",
+  "@authSessionExpiredTitle": { "description": "Title of the session-expired notice" },
+  "authSessionExpiredMessage": "Your session has expired. Sign in again to continue.",
+  "@authSessionExpiredMessage": { "description": "Body of the session-expired notice" },
+  "authSessionExpiredAction": "Sign in again",
+  "@authSessionExpiredAction": { "description": "Re-authenticate action on the session-expired notice" },
+  "authPasswordStrengthLabel": "Password strength",
+  "@authPasswordStrengthLabel": { "description": "Screen-reader label of the password-strength meter" },
+  "authPasswordStrengthWeak": "Weak",
+  "@authPasswordStrengthWeak": { "description": "Password strength level: weak" },
+  "authPasswordStrengthFair": "Fair",
+  "@authPasswordStrengthFair": { "description": "Password strength level: fair" },
+  "authPasswordStrengthGood": "Good",
+  "@authPasswordStrengthGood": { "description": "Password strength level: good" },
+  "authPasswordStrengthStrong": "Strong",
+  "@authPasswordStrengthStrong": { "description": "Password strength level: strong" }
 }

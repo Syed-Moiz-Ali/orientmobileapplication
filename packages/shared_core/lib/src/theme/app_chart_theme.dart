@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/localization/app_formatters.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_semantic_colors.dart';
@@ -11,11 +12,11 @@ import 'package:shared_core/src/theme/app_theme_context.dart';
 /// does **not** depend on `fl_chart` (owner painters, the staff `fl_chart`
 /// usage and CRM `CustomPaint` all read from this one source, spec §7 / V8).
 ///
-/// Frozen rules carried from Phase 00 / Phase 01:
-/// - max **2 series** per chart ([maxSeries]);
+/// Frozen rules carried from Phase 00 / Phase 01, hardened in Phase 01.2:
+/// - max **4 series** per chart ([maxSeries]);
 /// - series colours come from [AppColors.chartSeries] / [AppColors.chartSeriesDark];
 /// - axis labels use [AppTextStyles.metadata] and localize; numeric values keep
-///   tabular figures;
+///   tabular figures; currency values format through [AppFormatters.moneyAED];
 /// - gridlines are subtle (`colors.outline`);
 /// - **RTL mirrors series/legend order** via [orderSeries];
 /// - empty data renders as [AppChartPlaceholder], never a blank plot.
@@ -83,8 +84,8 @@ class AppChartTheme {
     this.dotRadius = 4,
   });
 
-  /// Frozen maximum number of series rendered on one chart (V8).
-  static const int maxSeries = 2;
+  /// Frozen maximum number of series rendered on one chart (Phase 01.2: 4).
+  static const int maxSeries = 4;
 
   /// Series palette for a brightness (frozen semantic source lists).
   static List<Color> paletteFor(Brightness brightness) =>
@@ -139,6 +140,20 @@ class AppChartTheme {
     final capped = count.clamp(0, maxSeries);
     return [for (var i = 0; i < capped; i++) seriesColor(i)];
   }
+
+  /// Formats a currency axis/tooltip value through the locale-aware
+  /// [AppFormatters.moneyAED] (Latin digits in both locales, `AED` prefix in
+  /// EN / `د.إ` suffix in AR). Keeps number formatting in one authority.
+  String formatCurrency(num value, AppFormatters formatters) =>
+      formatters.moneyAED(value);
+
+  /// Formats a generic axis value: currency when [currency] is true, otherwise
+  /// a grouped quantity. Both keep Latin digits per the frozen V5 policy.
+  String formatValue(
+    num value,
+    AppFormatters formatters, {
+    bool currency = false,
+  }) => currency ? formatters.moneyAED(value) : formatters.group(value);
 
   /// Mirrors series/legend order in RTL so the first series sits at the
   /// reading-start edge in both languages (spec §5 RTL rule 7).

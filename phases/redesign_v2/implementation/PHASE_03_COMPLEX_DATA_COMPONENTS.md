@@ -1,4 +1,4 @@
-# PHASE 03 — Complex Data Presentation & Telemetry Components
+﻿# PHASE 03 — Complex Data Presentation & Telemetry Components
 
 **Document ID:** `phases/redesign_v2/implementation/PHASE_03_COMPLEX_DATA_COMPONENTS.md`  
 **Prerequisites:** Phase 02 Completed (`REPORT_PHASE_02.md`)  
@@ -63,7 +63,7 @@ Build high-density operational data components required across Staff, Owner, Cus
 
 ---
 
-## Styling Authority (Phase 01.1 � Mandatory)
+## Styling Authority (Phase 01.1 � Mandatory)
 All styling in this phase MUST resolve through the single centralized theme system. Do not select light/dark colors by hand.
 
 - Standard Material roles -> `context.colors` (`ColorScheme`).
@@ -71,3 +71,14 @@ All styling in this phase MUST resolve through the single centralized theme syst
 - **Forbidden:** `dark ? AppDarkColors.x : AppColors.x` ternaries; direct `AppColors.*` / `AppDarkColors.*` palette selection in feature widgets; hardcoded semantic hex; duplicate local theme systems or competing theme providers; hardcoded font styles, spacing, or radii where a theme or `AppDimensions` token exists.
 - **Justified exceptions** (brand assets, theme construction, color previews, brightness-dependent behavior) must carry a one-line documented reason.
 - Full rules: `00_CONCEPT_A_DESIGN_SYSTEM.md` Sec.6 and `reports/PHASE_01_1_THEME_ARCHITECTURE.md`.
+
+---
+
+## Centralized Widgets (Phase 01.2 — Mandatory)
+All UI in this phase MUST reuse `packages/shared_core` centralized widgets. Never build a per-app duplicate when a shared widget exists.
+
+- Use existing: `WorkspaceAppBar`, `DashboardShell`, `OfflineStatusPill`, `AppBreadcrumbs`, `AppPageHeader`, `AppMasterDetailScaffold`, `AppTable`, `AppCard`, `AppKpiCard`, `AppListSurface`, `AppRecordRow`, `AppSearchField`, `AppTextField`, `AppDropdownButton`, `AppFilterBar` / `AppDateRangeField` / `AppPaginationFooter` (01.2), `AppCommandPalette` + `WorkspaceSearchShortcuts` (01.2), `AppStepper` / `AppTimeline` / `AppTrendStat` (01.2), `AppBottomSheet`, `AppConfirmationDialog`, `AppSelectionSheet`, `EmptyState`, `ErrorView`, `AppSkeleton`, `LoadingIndicator`, `StatusPill`, `SectionHeader`, `AppActionBar`, `PrimaryButton`.
+- If a needed widget does NOT exist in `shared_core`: create it in `packages/shared_core/lib/src/widgets/` (theme-driven via `context.colors` / `context.semanticColors`, EN/AR, responsive, a11y), export from `shared_core.dart`, add widget tests + goldens, THEN use it in this phase. Do not create `apps/*/lib/.../widgets/` copies.
+- Forbidden: app-local copies of shared primitives, hardcoded spacing/radii/fonts, hardcoded colors, bespoke app bars/shells.
+- Acceptance: grep shows zero new app-local duplicates; new shared widgets have tests + docs.
+

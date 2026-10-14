@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/localization/shared_core_l10n.dart';
 import 'package:shared_core/src/layout/app_responsive.dart';
+import 'package:shared_core/src/theme/app_density.dart';
 import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
 import 'package:shared_core/src/theme/app_theme_context.dart';
@@ -453,7 +454,9 @@ class AppTable<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final adaptive = context.adaptive;
-    final dense = adaptive.isMedium;
+    // Phase 01.2 density: compact mode forces dense rows on every breakpoint;
+    // medium screens stay dense even in comfortable mode.
+    final dense = adaptive.isMedium || context.density.isCompact;
     final theme = Theme.of(context);
 
     return Theme(
