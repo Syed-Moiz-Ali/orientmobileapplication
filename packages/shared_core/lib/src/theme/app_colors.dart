@@ -1,61 +1,61 @@
 import 'package:flutter/material.dart';
 
-/// Semantic color tokens for the ORIENT design system (2026 Workshop ERP).
+/// Semantic color tokens for the ORIENT design system (Concept A — Premium Minimal Automotive).
 ///
 /// Organized into distinct functional roles:
-/// - Canvas and surfaces (clean white, subtle cool slate, high-emphasis navy)
-/// - Typography and inks (deep charcoal navy, cool slate, muted text)
-/// - Borders and dividers (subtle, default hairline, strong)
-/// - Brand primary (electric cobalt blue, interaction states, pale tinted container)
-/// - Restrained semantics (success, warning, danger, info)
+/// - Canvas and surfaces (clean off-white, crisp surface, high-emphasis deep navy)
+/// - Typography and inks (deep slate navy, cool slate, muted text)
+/// - Borders and dividers (subtle divider, hairline structural border, strong border)
+/// - Brand primary (hyper cobalt blue, interaction states, pale tinted container)
+/// - Restrained semantics (precision emerald, electric amber, brembo crimson, ice blue)
 /// - Backward-compatible legacy aliases
 class AppColors {
   AppColors._();
 
   // ---------------------------------------------------------------------------
-  // Canvas & Surfaces
+  // Canvas & Surfaces (Concept A Light Theme)
   // ---------------------------------------------------------------------------
-  /// Main application viewport canvas (very light cool grey / blue-white).
-  static const Color canvas = Color(0xFFF5F7FB);
+  /// Main application viewport canvas (ultra-clean off-white background).
+  static const Color canvas = Color(0xFFFBFBFD);
 
-  /// Primary neutral surface for cards, dialogs, sheets, and menus.
+  /// Primary neutral surface for elevated cards, dialogs, sheets, and menus.
   static const Color surface = Color(0xFFFFFFFF);
 
-  /// Subtle secondary surface for nested cards, alternating rows, sunken areas.
-  static const Color surfaceSubtle = Color(0xFFF8FAFC);
+  /// Subtle secondary surface for nested cards, alternating rows, input fill.
+  static const Color surfaceSubtle = Color(0xFFF4F6F9);
 
   /// Elevated surface variant (raised cards, popovers).
   static const Color surfaceRaised = Color(0xFFFFFFFF);
 
   /// Sunken or recessed background for inputs and inactive slots.
-  static const Color surfaceSunken = Color(0xFFF0F3F8);
+  static const Color surfaceSunken = Color(0xFFF4F6F9);
 
   /// Secondary surface alias.
-  static const Color surfaceAlt = Color(0xFFEEF3F8);
+  static const Color surfaceAlt = Color(0xFFF4F6F9);
 
-  /// High-emphasis dark navy surface for telemetry, hero metrics, command panels.
-  static const Color surfaceStrong = Color(0xFF14213D);
+  /// High-emphasis dark slate navy surface for telemetry, hero metrics, command panels.
+  static const Color surfaceStrong = Color(0xFF0F172A);
 
   /// Inverse surface alias (maps to high-emphasis navy).
-  static const Color surfaceInverse = Color(0xFF14213D);
+  static const Color surfaceInverse = Color(0xFF0F172A);
 
   /// High-emphasis navy surface raised (cards sitting inside dark panels).
-  static const Color navySurfaceRaised = Color(0xFF1C2C50);
+  static const Color navySurfaceRaised = Color(0xFF1E293B);
 
   // ---------------------------------------------------------------------------
   // Inks & Typography
   // ---------------------------------------------------------------------------
-  /// Primary text ink: deep charcoal navy / nearly black for high-contrast titles.
-  static const Color textPrimary = Color(0xFF111827);
+  /// Primary text ink: deep slate navy for high-contrast titles.
+  static const Color textPrimary = Color(0xFF0F172A);
 
-  /// Secondary text ink: cool slate for readable body text and secondary labels.
-  static const Color textSecondary = Color(0xFF394150);
+  /// Secondary text ink: cool slate for readable body text and technical metadata.
+  static const Color textSecondary = Color(0xFF475569);
 
-  /// Muted text ink: light slate grey for timestamps, metadata, captions.
-  static const Color textMuted = Color(0xFF677182);
+  /// Muted text ink: slate grey for timestamps, metadata, captions, disabled hints (WCAG AA ≥ 4.5:1).
+  static const Color textMuted = Color(0xFF64748B);
 
   /// Disabled text and placeholder ink.
-  static const Color textDisabled = Color(0xFF9AA4B2);
+  static const Color textDisabled = Color(0xFF94A3B8);
 
   /// Inverse text ink: pure crisp white for dark panels and buttons.
   static const Color textInverse = Color(0xFFFFFFFF);
@@ -64,124 +64,136 @@ class AppColors {
   // Borders & Dividers
   // ---------------------------------------------------------------------------
   /// Subtle 1px divider for internal card sections and quiet dividers.
-  static const Color borderSubtle = Color(0xFFF0F3F8);
+  static const Color borderSubtle = Color(0xFFEDF2F7);
 
   /// Default 1px structural hairline border for cards, inputs, and top bars.
-  static const Color borderDefault = Color(0xFFE5EAF1);
+  static const Color borderDefault = Color(0xFFE2E8F0);
 
   /// Medium / strong border for focused inputs, active chips, and emphasis cards.
-  static const Color borderStrong = Color(0xFFCCD6E2);
+  static const Color borderStrong = Color(0xFFCBD5E1);
 
   /// Hairline divider stroke.
-  static const Color stroke = Color(0xFFD8E0EA);
+  static const Color stroke = Color(0xFFE2E8F0);
 
   /// Subtle dark border for navy panels.
-  static const Color borderDark = Color(0xFF2A3A5E);
+  static const Color borderDark = Color(0xFF262C3D);
 
   // ---------------------------------------------------------------------------
-  // Brand Primary (Electric Cobalt Blue)
+  // Brand Primary: Hyper Cobalt Blue
   // ---------------------------------------------------------------------------
   /// Primary interactive brand color for buttons, active tabs, and primary accents.
-  static const Color primary = Color(0xFF3157D5);
+  /// Tuned for WCAG AA ≥ 4.5:1 across rest, hover (8%), and pressed (10%) states.
+  static const Color primary = Color(0xFF215FE6);
 
   /// Hover interaction state for primary elements on desktop / web.
-  static const Color primaryHover = Color(0xFF2848B8);
+  static const Color primaryHover = Color(0xFF1D4ED8);
 
   /// Pressed / active interaction state for primary elements.
-  static const Color primaryPressed = Color(0xFF203B9E);
+  static const Color primaryPressed = Color(0xFF1E40AF);
 
   /// Very pale blue background for tinted primary containers and chips.
-  static const Color primarySubtle = Color(0xFFEEF3FF);
+  static const Color primarySubtle = Color(0xFFDBEAFE);
 
   /// Subtle blue border for primary tinted cards and selected chips.
-  static const Color primaryBorder = Color(0xFFC8D6FF);
+  static const Color primaryBorder = Color(0xFFBFDBFE);
 
   // ---------------------------------------------------------------------------
-  // Semantic States (Restrained)
+  // Semantic States (Concept A Exact Tokens)
   // ---------------------------------------------------------------------------
-  /// Semantic success for completed work, verified inspections, and paid invoices.
-  static const Color success = Color(0xFF0F8B5F);
-  static const Color successSubtle = Color(0xFFE9F7F1);
-  static const Color successBorder = Color(0xFFB9E5D0);
+  /// Precision Emerald: verified inspections, completed milestones, profitable metrics.
+  static const Color success = Color(0xFF10B981);
+  static const Color successSubtle = Color(0xFFD1FAE5);
+  static const Color successBorder = Color(0xFFA7F3D0);
 
-  /// Semantic warning for pending approvals, attention queues, and advisories.
-  static const Color warning = Color(0xFFE09A1F);
-  static const Color warningSubtle = Color(0xFFFFF8E8);
-  static const Color warningBorder = Color(0xFFF3D18B);
+  /// Electric Amber: caution checkpoints, pending estimates, follow-up queues.
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color warningSubtle = Color(0xFFFEF3C7);
+  static const Color warningBorder = Color(0xFFFDE68A);
 
-  /// Semantic danger for rejections, emergency breakdowns, and destructive actions.
-  static const Color danger = Color(0xFFD92D43);
-  static const Color dangerSubtle = Color(0xFFFFF1F3);
-  static const Color dangerBorder = Color(0xFFF8C7CE);
+  /// Brembo Crimson: critical inspection failures, urgent safety hazards, overdue leads.
+  static const Color danger = Color(0xFFEF4444);
+  static const Color dangerSubtle = Color(0xFFFEE2E2);
+  static const Color dangerBorder = Color(0xFFFECACA);
 
-  /// Semantic info for notices, scheduled events, and operational telemetry.
-  static const Color info = Color(0xFF6D5DF6);
-  static const Color infoSubtle = Color(0xFFF1F0FF);
-  static const Color infoBorder = Color(0xFFD9D5FF);
+  /// Ice Blue / Cyan: telemetry chips, stage indicators, scheduled operations.
+  static const Color info = Color(0xFF0284C7);
+  static const Color infoSubtle = Color(0xFFE0F2FE);
+  static const Color infoBorder = Color(0xFFBAE6FD);
 
   // ---------------------------------------------------------------------------
   // Dark Navy High-Emphasis Tokens
   // ---------------------------------------------------------------------------
-  /// Signature Orient dark navy tone for high-emphasis surfaces.
-  static const Color navy = Color(0xFF14213D);
-  static const Color darkNavy = Color(0xFF14213D);
-  static const Color navySurface = Color(0xFF14213D);
-  static const Color navyBorder = Color(0xFF2A3A5E);
+  /// Signature Orient deep slate navy tone for high-emphasis surfaces.
+  static const Color navy = Color(0xFF0F172A);
+  static const Color darkNavy = Color(0xFF0F172A);
+  static const Color navySurface = Color(0xFF0F172A);
+  static const Color navyBorder = Color(0xFF262C3D);
 
   // ---------------------------------------------------------------------------
-  // Phase 01 — Extended semantic roles (frozen Phase 00 values)
+  // Extended Semantic Roles
   // ---------------------------------------------------------------------------
-  /// Modal / bottom-sheet / drawer scrim over page content
-  /// (`#0B1526` at 42 %). Never used as a decorative overlay.
+  /// Modal / bottom-sheet / drawer scrim over page content (`#0B1526` at 42%).
   static const Color overlayScrim = Color(0x6B0B1526);
 
-  /// Secondary ink for supporting copy on navy high-emphasis surfaces
-  /// (labels, metadata, sub-lines on `surfaceStrong`). Pairs with
-  /// `textInverse` for primary copy on navy.
-  static const Color onNavySecondary = Color(0xFFAAB5C8);
+  /// Secondary ink for supporting copy on navy high-emphasis surfaces.
+  static const Color onNavySecondary = Color(0xFF94A3B8);
 
-  /// 2 px focus indicator ring (spec §2.1: focus ring = primary), rendered
-  /// with an offset so it is visible on both canvas and cards.
+  /// 2px focus indicator ring.
   static const Color focusRing = primary;
 
   /// Feedback / rating star ink (service reviews, satisfaction ratings).
-  /// Warm gold that stays legible on light and dark surfaces; always paired
-  /// with a numeric value or label (never color alone).
-  static const Color ratingStar = Color(0xFFE9AD3A);
+  static const Color ratingStar = Color(0xFFF59E0B);
 
   // ---------------------------------------------------------------------------
-  // Skeleton loaders (Phase 03B)
+  // Skeleton Loaders
   // ---------------------------------------------------------------------------
-  /// Base ink for skeleton placeholder shapes. Pairs with [skeletonHighlight];
-  /// `AppSkeleton` interpolates between the two so shimmer stays honest per
-  /// brightness (Phase 01 §11.1 token gap closed here).
-  static const Color skeletonBase = Color(0xFFE7ECF3);
+  static const Color skeletonBase = Color(0xFFF1F5F9);
+  static const Color skeletonHighlight = Color(0xFFF8FAFC);
 
-  /// Highlight ink for the skeleton shimmer pulse.
-  static const Color skeletonHighlight = Color(0xFFF4F7FB);
-
-  /// Chart series encoding (light) shared by every chart in the suite so
-  /// owner / advisor / CRM charts read identically. Max two series per chart
-  /// (spec §V8); series are assigned in order.
+  // ---------------------------------------------------------------------------
+  // Chart Series Palette (Concept A Ordered Telemetry)
+  // ---------------------------------------------------------------------------
   static const List<Color> chartSeries = [
-    Color(0xFF3157D5), // primary cobalt
-    Color(0xFF0FA97C), // accent teal
-    Color(0xFF6D5DF6), // info indigo
-    Color(0xFFE09A1F), // warning amber
-    Color(0xFF0F8B5F), // success green
-    Color(0xFF14213D), // navy
+    Color(0xFF215FE6), // hyper cobalt
+    Color(0xFF10B981), // precision emerald
+    Color(0xFF0284C7), // ice blue
+    Color(0xFFF59E0B), // electric amber
+    Color(0xFFEF4444), // brembo crimson
+    Color(0xFF64748B), // technical slate
   ];
 
-  /// Chart series encoding (dark) — the approved dark parity of
-  /// [chartSeries] (brighter inks for dark surfaces).
   static const List<Color> chartSeriesDark = [
-    Color(0xFF6E8BFF),
-    Color(0xFF35C79A),
-    Color(0xFF9B8DFF),
-    Color(0xFFF0B34C),
-    Color(0xFF3DC795),
-    Color(0xFF93A7D8),
+    Color(0xFF3B82F6),
+    Color(0xFF34D399),
+    Color(0xFF38BDF8),
+    Color(0xFFFBBF24),
+    Color(0xFFF87171),
+    Color(0xFF94A3B8),
   ];
+
+  // ---------------------------------------------------------------------------
+  // Concept A Direct Token References
+  // ---------------------------------------------------------------------------
+  static const Color canvasLight = canvas;
+  static const Color surfaceLight = surface;
+  static const Color cardBgLight = surfaceSubtle;
+  static const Color borderLight = borderDefault;
+  static const Color borderSubtleLight = borderSubtle;
+  static const Color textPrimaryLight = textPrimary;
+  static const Color textSecondaryLight = textSecondary;
+  static const Color textMutedLight = textMuted;
+
+  static const Color hyperCobalt = primary;
+  static const Color hyperCobaltHover = primaryHover;
+  static const Color hyperCobaltMuted = primarySubtle;
+  static const Color precisionEmerald = success;
+  static const Color emeraldMuted = successSubtle;
+  static const Color electricAmber = warning;
+  static const Color amberMuted = warningSubtle;
+  static const Color bremboCrimson = danger;
+  static const Color crimsonMuted = dangerSubtle;
+  static const Color iceBlue = info;
+  static const Color iceBlueMuted = infoSubtle;
 
   // ---------------------------------------------------------------------------
   // Backward-Compatible Legacy Aliases
@@ -194,125 +206,118 @@ class AppColors {
   static const Color text3 = textMuted;
   static const Color text4 = textDisabled;
   static const Color primaryBg = primarySubtle;
-  static const Color selected = Color(0xFFE8EEFF);
-  static const Color hover = Color(0xFFF0F4FF);
-  static const Color pressed = Color(0xFFDCE5FF);
+  static const Color selected = Color(0xFFDBEAFE);
+  static const Color hover = Color(0xFFEFF6FF);
+  static const Color pressed = Color(0xFFBFDBFE);
   static const Color focus = primary;
-  static const Color disabled = Color(0xFFE4E7EC);
+  static const Color disabled = Color(0xFFE2E8F0);
 
   static const Color successBg = successSubtle;
   static const Color dangerBg = dangerSubtle;
   static const Color warningBg = warningSubtle;
   static const Color infoBg = infoSubtle;
 
-  static const Color accent = Color(0xFF00B894);
-  static const Color cyan = Color(0xFF00B894);
-  static const Color cyanLight = Color(0xFFE6F7F3);
-  static const Color cyanBright = Color(0xFF3DE0BF);
+  static const Color accent = Color(0xFF10B981);
+  static const Color cyan = Color(0xFF0284C7);
+  static const Color cyanLight = Color(0xFFE0F2FE);
+  static const Color cyanBright = Color(0xFF38BDF8);
   static const Color greenAccent = success;
   static const Color greenBg = successSubtle;
-  static const Color purpleAccent = info;
-  static const Color purpleLight = infoSubtle;
-  static const Color purpleSoft = Color(0xFFF6F7FF);
+  static const Color purpleAccent = Color(0xFF6366F1);
+  static const Color purpleLight = Color(0xFFEEF2FF);
+  static const Color purpleSoft = Color(0xFFF5F3FF);
   static const Color blueBg = primarySubtle;
   static const Color red500 = danger;
   static const Color redBg = dangerSubtle;
   static const Color amberBg = warningSubtle;
-  static const Color amber400 = Color(0xFFE9AD3A);
+  static const Color amber400 = Color(0xFFFBBF24);
   static const Color amber500 = warning;
 
-  static const Color gray50 = Color(0xFFF9FAFB);
-  static const Color gray100 = Color(0xFFF3F4F6);
-  static const Color gray200 = Color(0xFFE5E7EB);
-  static const Color gray300 = Color(0xFFD1D5DB);
-  static const Color gray400 = Color(0xFF9CA3AF);
-  static const Color gray500 = Color(0xFF6B7280);
-  static const Color gray700 = Color(0xFF374151);
-  static const Color gray900 = Color(0xFF111827);
+  static const Color gray50 = Color(0xFFF8FAFC);
+  static const Color gray100 = Color(0xFFF1F5F9);
+  static const Color gray200 = Color(0xFFE2E8F0);
+  static const Color gray300 = Color(0xFFCBD5E1);
+  static const Color gray400 = Color(0xFF94A3B8);
+  static const Color gray500 = Color(0xFF64748B);
+  static const Color gray700 = Color(0xFF334155);
+  static const Color gray900 = Color(0xFF0F172A);
 }
 
-/// Dark-theme parity map for the ORIENT design system.
-///
-/// Approved as the Phase 01 dark parity map (`00_VISUAL_DIRECTION.md` §3,
-/// 2026-10-13) and codified here exactly from the approved Phase 00 prototype
-/// palette (`ProtoPalette.dark`). It is a true parity map — not an inverted
-/// lightness — so every role keeps its semantic meaning while meeting
-/// contrast on dark surfaces.
-///
-/// Phase 01.1 accessibility amendment (product-owner sign-off): the dark
-/// `onPrimary` / `onError` inks are dark (not white) so normal-sized button
-/// labels meet WCAG AA 4.5:1. See [onPrimary] and [onError].
-///
-/// Dark remains non-default in the shipped apps (`ThemeMode.light`); these
-/// tokens exist so `AppTheme.dark` is complete, testable and consistent.
+/// Dark-theme parity map for the ORIENT design system (Concept A Dark Parity).
 class AppDarkColors {
   AppDarkColors._();
 
   // Canvas & surfaces
-  static const Color canvas = Color(0xFF0C1120);
-  static const Color surface = Color(0xFF151C2E);
-  static const Color surfaceSubtle = Color(0xFF1A2236);
-  static const Color surfaceRaised = Color(0xFF1B2439);
-  static const Color surfaceSunken = Color(0xFF101627);
-  static const Color surfaceStrong = Color(0xFF14213D);
-  static const Color navySurfaceRaised = Color(0xFF1C2C50);
+  static const Color canvas = Color(0xFF090B10);
+  static const Color surface = Color(0xFF11141D);
+  static const Color surfaceSubtle = Color(0xFF181C28);
+  static const Color surfaceRaised = Color(0xFF181C28);
+  static const Color surfaceSunken = Color(0xFF0D1017);
+  static const Color surfaceStrong = Color(0xFF11141D);
+  static const Color navySurfaceRaised = Color(0xFF1E2536);
 
   // Inks
-  static const Color textPrimary = Color(0xFFF2F5FB);
-  static const Color textSecondary = Color(0xFFC6CEDF);
-  static const Color textMuted = Color(0xFF8F9AB0);
-  static const Color textDisabled = Color(0xFF5E6981);
+  static const Color textPrimary = Color(0xFFF8FAFC);
+  static const Color textSecondary = Color(0xFF94A3B8);
+  static const Color textMuted = Color(0xFF8899B0);
+  static const Color textDisabled = Color(0xFF475569);
   static const Color textInverse = Color(0xFFFFFFFF);
-  static const Color onNavySecondary = Color(0xFFAAB5C8);
+  static const Color onNavySecondary = Color(0xFF94A3B8);
 
   // Borders
-  static const Color borderSubtle = Color(0xFF202A40);
-  static const Color borderDefault = Color(0xFF2A354D);
-  static const Color borderStrong = Color(0xFF3E4B66);
+  static const Color borderSubtle = Color(0xFF1A202E);
+  static const Color borderDefault = Color(0xFF262C3D);
+  static const Color borderStrong = Color(0xFF384259);
 
   // Primary / selection
-  static const Color primary = Color(0xFF6E8BFF);
-  static const Color primaryHover = Color(0xFF84A0FF);
-  static const Color primaryPressed = Color(0xFF5C79F0);
-  static const Color primarySubtle = Color(0xFF1B2440);
-  static const Color primaryBorder = Color(0xFF32406E);
-  static const Color selected = Color(0xFF1D2A4D);
-  static const Color hover = Color(0xFF1A2440);
-  static const Color focus = Color(0xFF84A0FF);
+  static const Color primary = Color(0xFF3B82F6);
+  static const Color primaryHover = Color(0xFF60A5FA);
+  static const Color primaryPressed = Color(0xFF2563EB);
+  static const Color primarySubtle = Color(0xFF1E2A4A);
+  static const Color primaryBorder = Color(0xFF2D3F6E);
+  static const Color selected = Color(0xFF1E2A4A);
+  static const Color hover = Color(0xFF161F36);
+  static const Color focus = Color(0xFF60A5FA);
   static const Color focusRing = focus;
 
-  /// Ink for normal-sized labels/icons on bright primary fills
-  /// (`primary` background). Phase 01.1 accessibility amendment — replaces
-  /// white (≈3.1:1) with the dark canvas ink: ≈6.1:1 at rest and ≥5.1:1 under
-  /// the Material hover/pressed/focus overlays that derive from this ink.
-  static const Color onPrimary = Color(0xFF0C1120);
-
-  /// Ink for normal-sized labels/icons on bright danger fills (`danger`
-  /// background). Same ink and ratios as [onPrimary] (≈6.6:1 at rest,
-  /// ≥5.5:1 under interaction overlays).
-  static const Color onError = onPrimary;
+  /// High contrast dark ink on buttons in dark mode (WCAG AA 5.35:1)
+  static const Color onPrimary = Color(0xFF090B10);
+  static const Color onError = Color(0xFF090B10);
 
   // Semantics
-  static const Color success = Color(0xFF3DC795);
-  static const Color successSubtle = Color(0xFF11291F);
-  static const Color successBorder = Color(0xFF1E4A36);
-  static const Color warning = Color(0xFFF0B34C);
-  static const Color warningSubtle = Color(0xFF2C2311);
-  static const Color warningBorder = Color(0xFF4D3D18);
-  static const Color danger = Color(0xFFF1707F);
-  static const Color dangerSubtle = Color(0xFF31151B);
-  static const Color dangerBorder = Color(0xFF55222B);
-  static const Color info = Color(0xFF9B8DFF);
-  static const Color infoSubtle = Color(0xFF1D1A3C);
-  static const Color infoBorder = Color(0xFF37316E);
+  static const Color success = Color(0xFF34D399);
+  static const Color successSubtle = Color(0xFF064E3B);
+  static const Color successBorder = Color(0xFF065F46);
+  static const Color warning = Color(0xFFFBBF24);
+  static const Color warningSubtle = Color(0xFF451A03);
+  static const Color warningBorder = Color(0xFF78350F);
+  static const Color danger = Color(0xFFF87171);
+  static const Color dangerSubtle = Color(0xFF450A0A);
+  static const Color dangerBorder = Color(0xFF7F1D1D);
+  static const Color info = Color(0xFF38BDF8);
+  static const Color infoSubtle = Color(0xFF0C4A6E);
+  static const Color infoBorder = Color(0xFF075985);
 
-  /// Feedback / rating star — same warm gold as light (legible on both).
-  static const Color ratingStar = Color(0xFFE9AD3A);
+  /// Feedback / rating star.
+  static const Color ratingStar = Color(0xFFFBBF24);
 
-  // Skeleton loaders (Phase 03B) — dark parity.
-  static const Color skeletonBase = Color(0xFF232C42);
-  static const Color skeletonHighlight = Color(0xFF313D57);
+  // Skeleton loaders
+  static const Color skeletonBase = Color(0xFF181C28);
+  static const Color skeletonHighlight = Color(0xFF262C3D);
 
-  /// Modal scrim on dark surfaces (`#0B1526` at 80 %).
-  static const Color overlayScrim = Color(0xCC0B1526);
+  /// Modal scrim on dark surfaces (`#090B10` at 80%).
+  static const Color overlayScrim = Color(0xCC090B10);
+
+  // Concept A Direct Dark Tokens
+  static const Color canvasDark = canvas;
+  static const Color surfaceDark = surface;
+  static const Color cardBgDark = surfaceSubtle;
+  static const Color borderDark = borderDefault;
+  static const Color borderSubtleDark = borderSubtle;
+  static const Color textPrimaryDark = textPrimary;
+  static const Color textSecondaryDark = textSecondary;
+  static const Color textMutedDark = textMuted;
+
+  // Chart series (dark)
+  static const List<Color> chartSeriesDark = AppColors.chartSeriesDark;
 }

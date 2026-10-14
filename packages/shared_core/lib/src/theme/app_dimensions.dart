@@ -1,47 +1,71 @@
 import 'package:flutter/material.dart';
 
-/// Dimensional, layout, and elevation tokens for the ORIENT design system.
+/// Dimensional, layout, and elevation tokens for the ORIENT design system
+/// (Concept A — Premium Minimal Automotive).
 ///
-/// Follows a disciplined 4-pt grid rhythm with distinct radii for controls,
-/// inputs, cards, panels, dialogs, and sheets.
+/// Follows an 8-point spatial grid with 4-point micro-adjustments and crisp
+/// chamfered corner radiuses.
 class AppDimensions {
   AppDimensions._();
 
   // ---------------------------------------------------------------------------
-  // Semantic Radii
+  // Concept A Chamfered Corner Radiuses
   // ---------------------------------------------------------------------------
   /// Extra small controls, internal badges, micro-indicators (4px).
-  static const double radiusXs = 4;
+  static const double radiusXs = 4.0;
 
   /// Small tags, filter chips, compact record badges (6px).
-  static const double radiusSm = 6;
+  static const double radiusSm = 8.0;
 
-  /// Standard controls, small button toggles, segmented buttons (8px).
-  static const double radiusControl = 8;
+  /// Medium / standard cards, table containers, dialogs (12px).
+  static const double radiusMd = 12.0;
 
-  /// Text form fields and search inputs (10px).
-  static const double radiusInput = 10;
+  /// Large bottom sheets, hero vehicle cards, workspace panels (16px).
+  static const double radiusLg = 16.0;
 
-  /// Primary, secondary, and action buttons (10px).
-  static const double radiusButton = 10;
-
-  /// Standard content cards and list tiles (12px).
-  static const double radiusCard = 12;
-
-  /// High-emphasis panels, bento modules, command headers (16px).
-  static const double radiusPanel = 16;
-
-  /// Modal confirmation dialogs and alert boxes (18px).
-  static const double radiusDialog = 18;
-
-  /// Bottom sheets and persistent action drawers (22px).
-  static const double radiusSheet = 22;
-
-  /// Fully rounded pills, status badges, capsule indicators (999px).
-  static const double radiusPill = 999;
+  /// Extra large floating modal dialogs, large preview overlays (24px).
+  static const double radiusXl = 24.0;
 
   // ---------------------------------------------------------------------------
-  // Standardized Spacing Scale
+  // Semantic Radii Controls
+  // ---------------------------------------------------------------------------
+  /// Standard controls, small button toggles, segmented buttons (8px).
+  static const double radiusControl = 8.0;
+
+  /// Text form fields and search inputs (8px).
+  static const double radiusInput = 8.0;
+
+  /// Primary, secondary, and action buttons (8px).
+  static const double radiusButton = 8.0;
+
+  /// Standard content cards and list tiles (12px).
+  static const double radiusCard = 12.0;
+
+  /// High-emphasis panels, bento modules, command headers (16px).
+  static const double radiusPanel = 16.0;
+
+  /// Modal confirmation dialogs and alert boxes (18px).
+  static const double radiusDialog = 18.0;
+
+  /// Bottom sheets and persistent action drawers (22px).
+  static const double radiusSheet = 22.0;
+
+  /// Fully rounded pills, status badges, capsule indicators (999px).
+  static const double radiusPill = 999.0;
+
+  // ---------------------------------------------------------------------------
+  // 8-Point Spatial Grid with Micro-Adjustments (Concept A)
+  // ---------------------------------------------------------------------------
+  static const double xxs = 4.0;
+  static const double xs = 8.0;
+  static const double sm = 12.0;
+  static const double md = 16.0;
+  static const double lg = 20.0;
+  static const double xl = 24.0;
+  static const double xxl = 32.0;
+
+  // ---------------------------------------------------------------------------
+  // Standardized Spacing Scale (Compatibility Scale)
   // ---------------------------------------------------------------------------
   static const double s4 = 4;
   static const double s6 = 6;
@@ -87,17 +111,17 @@ class AppDimensions {
   // ---------------------------------------------------------------------------
   /// Subtle boundary shadow for surfaces and top/bottom bars.
   static const List<BoxShadow> shadowSurface = [
-    BoxShadow(color: Color(0x08111827), blurRadius: 6, offset: Offset(0, 2)),
+    BoxShadow(color: Color(0x060F172A), blurRadius: 6, offset: Offset(0, 2)),
   ];
 
   /// Soft elevation shadow for standard raised cards.
   static const List<BoxShadow> shadowCard = [
-    BoxShadow(color: Color(0x0C111827), blurRadius: 12, offset: Offset(0, 4)),
+    BoxShadow(color: Color(0x080F172A), blurRadius: 12, offset: Offset(0, 4)),
   ];
 
   /// Elevation shadow for modal dialogs and bottom sheets.
   static const List<BoxShadow> shadowModal = [
-    BoxShadow(color: Color(0x1F111827), blurRadius: 24, offset: Offset(0, 8)),
+    BoxShadow(color: Color(0x1A0F172A), blurRadius: 24, offset: Offset(0, 8)),
   ];
 
   /// Subtle dark elevation shadow for dark navy high-emphasis panels.
@@ -131,7 +155,7 @@ class AppDimensions {
   static const double kpiTileMinHeight = 156;
 
   // ---------------------------------------------------------------------------
-  // Table density (Phase 03B, spec §13)
+  // Table Density
   // ---------------------------------------------------------------------------
   /// Compact desktop table data-row height (dense registers).
   static const double tableRowCompact = 36;

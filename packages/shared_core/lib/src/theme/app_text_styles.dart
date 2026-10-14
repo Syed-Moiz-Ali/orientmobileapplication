@@ -70,6 +70,96 @@ class AppTextStyles {
   }
 
   // ---------------------------------------------------------------------------
+  // Concept A Typography Specifications
+  // ---------------------------------------------------------------------------
+  /// Display 1: Hero Numbers / Currencies (32sp, w900, -0.8px tracking).
+  static TextStyle displayHero({Color? color, bool arabic = false}) => _role(
+    color: color,
+    arabic: arabic,
+    family: AppFontFamilies.display,
+    fontSize: 32,
+    fontWeight: FontWeight.w900,
+    height: 1.15,
+    letterSpacing: -0.8,
+    tabular: true,
+  );
+
+  /// Heading 1: Primary Page Titles (24sp, w800, -0.5px tracking).
+  static TextStyle heading1({Color? color, bool arabic = false}) => _role(
+    color: color,
+    arabic: arabic,
+    family: AppFontFamilies.display,
+    fontSize: 24,
+    fontWeight: FontWeight.w800,
+    height: 1.25,
+    letterSpacing: -0.5,
+  );
+
+  /// Heading 2: Card & Modal Titles (18sp, w700, -0.3px tracking).
+  static TextStyle heading2({Color? color, bool arabic = false}) => _role(
+    color: color,
+    arabic: arabic,
+    family: AppFontFamilies.display,
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    height: 1.3,
+    letterSpacing: -0.3,
+  );
+
+  /// Heading 3: Section Labels & Subheaders (14sp, w700, -0.2px tracking).
+  static TextStyle heading3({Color? color, bool arabic = false}) => _role(
+    color: color,
+    arabic: arabic,
+    family: AppFontFamilies.display,
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    height: 1.35,
+    letterSpacing: -0.2,
+  );
+
+  /// Body Large: High-emphasis descriptive copy (15sp, w500, 1.4 line-height).
+  static TextStyle bodyLarge({Color? color, bool arabic = false}) => _role(
+    color: color,
+    arabic: arabic,
+    family: AppFontFamilies.body,
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+  );
+
+  /// Body Regular: Standard readable UI text (13sp, w400, 1.4 line-height).
+  static TextStyle bodyRegular({Color? color, bool arabic = false}) => _role(
+    color: color,
+    arabic: arabic,
+    family: AppFontFamilies.body,
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+  );
+
+  /// Technical Telemetry / Overline: Uppercase data badge (11sp, w800, +0.8px tracking).
+  static TextStyle telemetry({Color? color, bool arabic = false}) => _role(
+    color: color,
+    arabic: arabic,
+    family: AppFontFamilies.body,
+    fontSize: 11,
+    fontWeight: FontWeight.w800,
+    height: 1.2,
+    letterSpacing: 0.8,
+  );
+
+  /// Micro Caption: Metadata & Timestamps (10sp, w600, +0.4px tracking).
+  static TextStyle captionMicro({Color? color, bool arabic = false}) => _role(
+    color: color,
+    arabic: arabic,
+    family: AppFontFamilies.body,
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    height: 1.35,
+    letterSpacing: 0.4,
+  );
+
+  // ---------------------------------------------------------------------------
   // Display & Hero
   // ---------------------------------------------------------------------------
   static TextStyle displayLarge({Color? color, bool arabic = false}) => _role(

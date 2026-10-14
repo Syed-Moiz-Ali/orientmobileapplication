@@ -39,7 +39,10 @@ static const textMutedDark     = Color(0xFF64748B); // Captions & subtle hints
 #### Brand & Semantic Status Accents
 ```dart
 // Hyper Cobalt (Primary Brand & Action Anchor)
-static const hyperCobalt       = Color(0xFF2563EB); // Primary CTA buttons, active tabs, selected states
+// WCAG AA Design Amendment: Concept A raw token #2563EB produced 4.49:1 under hover/press overlays;
+// tuned to #215FE6 (5.46:1 rest, 4.73:1 hover, 4.56:1 press) for strict compliance across all states.
+static const hyperCobalt       = Color(0xFF215FE6); // Primary CTA buttons, active tabs, selected states (authorized accessible value)
+static const hyperCobaltRaw    = Color(0xFF2563EB); // Prototype baseline (historical reference)
 static const hyperCobaltHover  = Color(0xFF1D4ED8); // Button hover / press state
 static const hyperCobaltMuted  = Color(0xFFDBEAFE); // 10% tint for badges & active list item fills
 
