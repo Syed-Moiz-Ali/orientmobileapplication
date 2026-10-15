@@ -34,6 +34,10 @@ class AuthTextField extends StatefulWidget {
   /// (email, mobile, username) set this to [TextDirection.ltr] so mixed
   /// Arabic/Latin entry stays legible inside RTL layouts.
   final TextDirection? textDirection;
+  /// Optional externally owned focus node. When set, failed submits move
+  /// keyboard focus here (first error field) and the caller owns disposal;
+  /// otherwise the field manages its own node.
+  final FocusNode? focusNode;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
 
@@ -53,6 +57,7 @@ class AuthTextField extends StatefulWidget {
     this.labelTrailing,
     this.belowField,
     this.textDirection,
+    this.focusNode,
     this.onChanged,
     this.onSubmitted,
   });
@@ -64,13 +69,18 @@ class AuthTextField extends StatefulWidget {
 class _AuthTextFieldState extends State<AuthTextField> {
   late bool _hidden;
   late final FocusNode _focusNode;
+
+  /// True only when the node was created here (and must be disposed here).
+  late final bool _ownsFocusNode;
   bool _focused = false;
 
   @override
   void initState() {
     super.initState();
     _hidden = widget.obscureText;
-    _focusNode = FocusNode()..addListener(_handleFocusChange);
+    _ownsFocusNode = widget.focusNode == null;
+    _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode.addListener(_handleFocusChange);
   }
 
   @override
@@ -89,9 +99,8 @@ class _AuthTextFieldState extends State<AuthTextField> {
 
   @override
   void dispose() {
-    _focusNode
-      ..removeListener(_handleFocusChange)
-      ..dispose();
+    _focusNode.removeListener(_handleFocusChange);
+    if (_ownsFocusNode) _focusNode.dispose();
     super.dispose();
   }
 

@@ -24,6 +24,7 @@ export 'src/presentation/pages/forgot_password_view.dart';
 export 'src/presentation/widgets/auth_button.dart';
 export 'src/presentation/widgets/auth_field.dart';
 export 'src/presentation/widgets/auth_guard.dart';
+export 'src/presentation/widgets/auth_error_mapper.dart';
 export 'src/presentation/widgets/auth_notice.dart';
 export 'src/presentation/widgets/auth_password_strength.dart';
 export 'src/presentation/widgets/phone_country.dart';

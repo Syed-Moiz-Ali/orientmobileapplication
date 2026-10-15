@@ -89,5 +89,20 @@
   "authPasswordStrengthWeak": "ضعيفة",
   "authPasswordStrengthFair": "مقبولة",
   "authPasswordStrengthGood": "جيدة",
-  "authPasswordStrengthStrong": "قوية"
+  "authPasswordStrengthStrong": "قوية",
+
+  "authActionRetry": "إعادة المحاولة",
+  "authActionSending": "جارٍ الإرسال…",
+  "authActionVerifying": "جارٍ التحقق…",
+  "authActionSigningIn": "جارٍ تسجيل الدخول…",
+  "authActionUpdating": "جارٍ التحديث…",
+  "authActionCreating": "جارٍ إنشاء الحساب…",
+  "errorOfflineRetry": "أنت دون اتصال. تحقق من اتصالك وحاول مجدداً.",
+  "errorInvalidCredentials": "البيانات غير صحيحة. تحقق من البريد الإلكتروني أو رقم الجوال وكلمة المرور ثم حاول مجدداً.",
+  "errorAccountExists": "يوجد حساب بهذه البيانات بالفعل. جرّب تسجيل الدخول بدلاً من ذلك.",
+  "errorAccountNotFound": "لم يتم العثور على حساب بهذه البيانات. تحقق من البريد الإلكتروني أو رقم الجوال.",
+  "errorOtpExpired": "انتهت صلاحية هذا الرمز. اطلب رمزاً جديداً وحاول مجدداً.",
+  "errorOtpInvalid": "هذا الرمز غير صحيح. تحقق من الأرقام الستة وحاول مجدداً.",
+  "errorServerRetryRef": "حدث خطأ من جهتنا. حاول مجدداً — وإذا استمر، تواصل مع دعم الورشة (مرجع 500).",
+  "loginPhoneFormatHint": "أدخل {digits} أرقام لـ {code}"
 }

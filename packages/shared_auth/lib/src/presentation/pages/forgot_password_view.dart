@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_auth/l10n/gen/shared_auth_localizations.dart';
 import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_error_mapper.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_notice.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_password_strength.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
 import 'package:shared_core/shared_core.dart';
@@ -47,6 +46,8 @@ class ForgotPasswordView extends ConsumerStatefulWidget {
 class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _identifierFocus = FocusNode();
+  final _passwordFocus = FocusNode();
 
   ForgotMethod _method = ForgotMethod.phone;
   _RecoveryStage _stage = _RecoveryStage.identifier;
@@ -59,7 +60,6 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   String? _identifierError;
   String? _codeError;
   String? _passwordError;
-  String? _bannerError;
 
   bool _isLoading = false;
   int _resendCooldown = 0;
@@ -70,6 +70,8 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
     _cooldownGeneration++;
     _identifierCtrl.dispose();
     _passwordCtrl.dispose();
+    _identifierFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -91,17 +93,41 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
     _identifierError = null;
     _codeError = null;
     _passwordError = null;
-    _bannerError = null;
+  }
+
+  /// Hides any visible form-error snackbar so a stale backend failure never
+  /// lingers next to a corrected field.
+  void _dismissSnack() {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+  }
+
+  /// Form-level failures surface as a snackbar with a retry action when the
+  /// mapping marks them retryable (offline, 401, 500, 404). Field-mapped
+  /// failures never reach here — they render inline on their field.
+  void _showErrorSnack(AuthErrorDisplay display, VoidCallback onRetry) {
+    showAppSnackBar(
+      context,
+      message: display.message,
+      tone: AppSnackBarTone.danger,
+      actionLabel: display.retryable
+          ? SharedAuthL10n.of(context).authActionRetry
+          : null,
+      onAction: display.retryable ? onRetry : null,
+      duration: const Duration(seconds: 5),
+    );
   }
 
   void _onIdentifierChanged() {
+    _dismissSnack();
     setState(() {
       _identifierError = null;
-      _bannerError = null;
     });
   }
 
   Future<void> _sendOtp() async {
+    // Double-submit guard: the busy CTA is already disabled, this covers the
+    // race between the tap and the first frame.
+    if (_isLoading) return;
     final input = _identifierCtrl.text.trim();
     final email = _looksLikeEmail(input);
     final t = SharedAuthL10n.forLocale(ref.read(localeProvider));
@@ -118,8 +144,8 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
     if (fieldError != null) {
       setState(() {
         _identifierError = fieldError;
-        _bannerError = null;
       });
+      _identifierFocus.requestFocus();
       return;
     }
 
@@ -146,15 +172,35 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
           _stage = _RecoveryStage.reset;
         });
         _startCooldown();
+        // Code-sent confirmation: success snackbar, no banner. Values in the
+        // controllers are preserved for the reset step.
+        showAppSnackBar(
+          context,
+          message: t.forgotCodeSent(_maskedDestination),
+          tone: AppSnackBarTone.success,
+        );
       },
-      failure: (error) => setState(() {
-        _isLoading = false;
-        _bannerError = _friendlyError(error, t);
-      }),
+      failure: (error) {
+        final display = mapAuthError(error, t);
+        setState(() {
+          _isLoading = false;
+          // Field-mapped failures (404 unknown identifier, 409 conflict)
+          // render inline; everything else goes to the snackbar with retry.
+          _identifierError = display.field == AuthErrorField.identifier
+              ? display.message
+              : null;
+        });
+        if (display.field == AuthErrorField.identifier) {
+          _identifierFocus.requestFocus();
+        } else {
+          _showErrorSnack(display, _sendOtp);
+        }
+      },
     );
   }
 
   Future<void> _resetPassword() async {
+    if (_isLoading) return;
     final t = SharedAuthL10n.forLocale(ref.read(localeProvider));
     String? codeError;
     String? passwordError;
@@ -169,15 +215,18 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
       setState(() {
         _codeError = codeError;
         _passwordError = passwordError;
-        _bannerError = null;
       });
+      // Visual order is code first, then password; the OTP cells keep their
+      // own focus, so only a password-only failure moves focus.
+      if (codeError == null) _passwordFocus.requestFocus();
       return;
     }
 
     final email = _method == ForgotMethod.email;
     setState(() {
       _isLoading = true;
-      _bannerError = null;
+      _codeError = null;
+      _passwordError = null;
     });
 
     final result = await ref.read(resetPasswordProvider)(
@@ -198,10 +247,26 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
           _stage = _RecoveryStage.done;
         });
       },
-      failure: (error) => setState(() {
-        _isLoading = false;
-        _bannerError = _friendlyError(error, t);
-      }),
+      failure: (error) {
+        final display = mapAuthError(error, t);
+        setState(() {
+          _isLoading = false;
+          // Expired vs incorrect codes land on the OTP field with distinct
+          // copy; password policy details land on the password field;
+          // form-level failures go to the snackbar with retry.
+          _codeError = display.field == AuthErrorField.code
+              ? display.message
+              : null;
+          _passwordError = display.field == AuthErrorField.password
+              ? display.message
+              : null;
+        });
+        if (display.field == AuthErrorField.password) {
+          _passwordFocus.requestFocus();
+        } else if (display.field == AuthErrorField.none) {
+          _showErrorSnack(display, _resetPassword);
+        }
+      },
     );
   }
 
@@ -221,6 +286,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   }
 
   void _editIdentifier() {
+    _dismissSnack();
     setState(() {
       _stage = _RecoveryStage.identifier;
       _otp = '';
@@ -268,31 +334,34 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
             key: const ValueKey('identifier'),
             controller: _identifierCtrl,
             error: _identifierError,
-            bannerError: _bannerError,
             isLoading: _isLoading,
+            focusNode: _identifierFocus,
             onChanged: _onIdentifierChanged,
             onSubmit: _sendOtp,
           ),
           _RecoveryStage.reset => _ResetStep(
             key: const ValueKey('reset'),
-            maskedDestination: _maskedDestination,
             passwordCtrl: _passwordCtrl,
             password: _password,
             codeError: _codeError,
             passwordError: _passwordError,
-            bannerError: _bannerError,
             isLoading: _isLoading,
             resendCooldown: _resendCooldown,
-            onOtpChanged: (value) => setState(() {
-              _otp = value;
-              _codeError = null;
-              _bannerError = null;
-            }),
-            onPasswordChanged: (value) => setState(() {
-              _password = value;
-              _passwordError = null;
-              _bannerError = null;
-            }),
+            passwordFocus: _passwordFocus,
+            onOtpChanged: (value) {
+              _dismissSnack();
+              setState(() {
+                _otp = value;
+                _codeError = null;
+              });
+            },
+            onPasswordChanged: (value) {
+              _dismissSnack();
+              setState(() {
+                _password = value;
+                _passwordError = null;
+              });
+            },
             onSubmit: _resetPassword,
             onEditIdentifier: _editIdentifier,
             onResend: _sendOtp,
@@ -353,8 +422,8 @@ class _RecoveryProgress extends StatelessWidget {
 class _IdentifierStep extends StatelessWidget {
   final TextEditingController controller;
   final String? error;
-  final String? bannerError;
   final bool isLoading;
+  final FocusNode? focusNode;
   final VoidCallback onChanged;
   final VoidCallback onSubmit;
 
@@ -362,37 +431,66 @@ class _IdentifierStep extends StatelessWidget {
     super.key,
     required this.controller,
     required this.error,
-    required this.bannerError,
     required this.isLoading,
+    this.focusNode,
     required this.onChanged,
     required this.onSubmit,
   });
 
+  bool _looksLikeEmail(String value) {
+    return value.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = SharedAuthL10n.of(context);
+    final theme = Theme.of(context);
     return AutofillGroup(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AuthNoticeSlot(message: bannerError),
-          AuthTextField(
-            controller: controller,
-            label: t.loginFieldIdentifier,
-            hint: t.loginFieldIdentifierHint,
-            icon: Icons.alternate_email_rounded,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.done,
-            autofillHints: const [AutofillHints.username],
-            textDirection: TextDirection.ltr,
-            enabled: !isLoading,
-            errorText: error,
-            onChanged: (_) => onChanged(),
-            onSubmitted: (_) => onSubmit(),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (context, value, _) {
+              final phoneLike = !_looksLikeEmail(value.text.trim());
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AuthTextField(
+                    controller: controller,
+                    label: t.loginFieldIdentifier,
+                    hint: t.loginFieldIdentifierHint,
+                    icon: Icons.alternate_email_rounded,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.username],
+                    textDirection: TextDirection.ltr,
+                    enabled: !isLoading,
+                    errorText: error,
+                    focusNode: focusNode,
+                    onChanged: (_) => onChanged(),
+                    onSubmitted: (_) => onSubmit(),
+                  ),
+                  // Per-country format hint for phone-like entry, mirroring
+                  // the sign-in identifier row (UAE default, 9 digits).
+                  if (phoneLike) ...[
+                    const SizedBox(height: AppDimensions.s6),
+                    Text(
+                      t.loginPhoneFormatHint(9, '+971'),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppDimensions.s24),
           AuthPrimaryButton(
             label: t.forgotActionSendRecoveryCode,
+            busyLabel: t.authActionSending,
             icon: Icons.arrow_forward_rounded,
             isLoading: isLoading,
             onPressed: onSubmit,
@@ -413,14 +511,13 @@ class _IdentifierStep extends StatelessWidget {
 }
 
 class _ResetStep extends StatelessWidget {
-  final String maskedDestination;
   final TextEditingController passwordCtrl;
   final String password;
   final String? codeError;
   final String? passwordError;
-  final String? bannerError;
   final bool isLoading;
   final int resendCooldown;
+  final FocusNode? passwordFocus;
   final ValueChanged<String> onOtpChanged;
   final ValueChanged<String> onPasswordChanged;
   final VoidCallback onSubmit;
@@ -429,14 +526,13 @@ class _ResetStep extends StatelessWidget {
 
   const _ResetStep({
     super.key,
-    required this.maskedDestination,
     required this.passwordCtrl,
     required this.password,
     required this.codeError,
     required this.passwordError,
-    required this.bannerError,
     required this.isLoading,
     required this.resendCooldown,
+    this.passwordFocus,
     required this.onOtpChanged,
     required this.onPasswordChanged,
     required this.onSubmit,
@@ -452,12 +548,6 @@ class _ResetStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AuthNotice(
-            icon: Icons.lock_reset_rounded,
-            text: t.forgotCodeSent(maskedDestination),
-          ),
-          const SizedBox(height: AppDimensions.s20),
-          AuthNoticeSlot(message: bannerError),
           AuthOtpField(
             label: t.forgotFieldRecoveryCode,
             onChanged: onOtpChanged,
@@ -475,6 +565,7 @@ class _ResetStep extends StatelessWidget {
             autofillHints: const [AutofillHints.newPassword],
             enabled: !isLoading,
             errorText: passwordError,
+            focusNode: passwordFocus,
             belowField: AuthPasswordStrength(password: password),
             onChanged: onPasswordChanged,
             onSubmitted: (_) => onSubmit(),
@@ -482,6 +573,7 @@ class _ResetStep extends StatelessWidget {
           const SizedBox(height: AppDimensions.s24),
           AuthPrimaryButton(
             label: t.forgotActionUpdatePassword,
+            busyLabel: t.authActionUpdating,
             icon: Icons.check_rounded,
             isLoading: isLoading,
             onPressed: onSubmit,
@@ -543,26 +635,6 @@ class _RecoverySuccess extends StatelessWidget {
       ],
     );
   }
-}
-
-final _technicalMessage = RegExp(
-  r'dio|socket|connection (refused|reset|closed)|failed host lookup|timeout'
-  r'|xmlhttprequest|handshake|os error',
-  caseSensitive: false,
-);
-
-/// Keeps backend validation messages (they are user facing) while replacing
-/// transport-level noise with calm, actionable copy.
-String _friendlyError(AppException error, SharedAuthLocalizations t) {
-  final raw = error.message.trim();
-  if (error is NetworkException || _technicalMessage.hasMatch(raw)) {
-    return t.errorUnreachable;
-  }
-  if (error is UnknownException) {
-    return t.errorServerGeneric;
-  }
-  if (raw.isEmpty) return t.errorGeneric;
-  return raw;
 }
 
 /// Masks an email using only data the user already supplied on this screen.

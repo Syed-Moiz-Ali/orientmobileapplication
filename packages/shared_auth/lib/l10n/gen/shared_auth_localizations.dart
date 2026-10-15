@@ -604,6 +604,90 @@ abstract class SharedAuthLocalizations {
   /// In en, this message translates to:
   /// **'Strong'**
   String get authPasswordStrengthStrong;
+
+  /// Retry action on authentication error notices
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get authActionRetry;
+
+  /// Busy label while a one-time code is being sent
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get authActionSending;
+
+  /// Busy label while a one-time code is being verified
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying…'**
+  String get authActionVerifying;
+
+  /// Busy label while password sign-in is running
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in…'**
+  String get authActionSigningIn;
+
+  /// Busy label while the new password is being saved
+  ///
+  /// In en, this message translates to:
+  /// **'Updating…'**
+  String get authActionUpdating;
+
+  /// Busy label while registration is running
+  ///
+  /// In en, this message translates to:
+  /// **'Creating account…'**
+  String get authActionCreating;
+
+  /// Offline failure copy with a retry action
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Check your connection and try again.'**
+  String get errorOfflineRetry;
+
+  /// Authentication failure copy for invalid credentials (401 on sign-in)
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect details. Check your email or mobile number and password, then try again.'**
+  String get errorInvalidCredentials;
+
+  /// Registration conflict copy (409)
+  ///
+  /// In en, this message translates to:
+  /// **'An account already exists for these details. Try signing in instead.'**
+  String get errorAccountExists;
+
+  /// Lookup failure copy (404)
+  ///
+  /// In en, this message translates to:
+  /// **'No account was found for these details. Check the email or mobile number.'**
+  String get errorAccountNotFound;
+
+  /// One-time-code expired copy, distinct from an incorrect code
+  ///
+  /// In en, this message translates to:
+  /// **'This code has expired. Request a new code and try again.'**
+  String get errorOtpExpired;
+
+  /// One-time-code incorrect copy, distinct from an expired code
+  ///
+  /// In en, this message translates to:
+  /// **'This code is incorrect. Check the 6 digits and try again.'**
+  String get errorOtpInvalid;
+
+  /// Server failure copy with retry and a support reference
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong on our side. Try again — if it keeps happening, contact workshop support (ref 500).'**
+  String get errorServerRetryRef;
+
+  /// Per-country phone format hint under phone-like identifier fields
+  ///
+  /// In en, this message translates to:
+  /// **'Enter {digits} digits for {code}'**
+  String loginPhoneFormatHint(int digits, String code);
 }
 
 class _SharedAuthLocalizationsDelegate

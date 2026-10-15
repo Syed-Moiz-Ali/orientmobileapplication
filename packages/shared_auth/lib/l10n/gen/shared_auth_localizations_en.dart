@@ -282,4 +282,55 @@ class SharedAuthLocalizationsEn extends SharedAuthLocalizations {
 
   @override
   String get authPasswordStrengthStrong => 'Strong';
+
+  @override
+  String get authActionRetry => 'Try again';
+
+  @override
+  String get authActionSending => 'Sending…';
+
+  @override
+  String get authActionVerifying => 'Verifying…';
+
+  @override
+  String get authActionSigningIn => 'Signing in…';
+
+  @override
+  String get authActionUpdating => 'Updating…';
+
+  @override
+  String get authActionCreating => 'Creating account…';
+
+  @override
+  String get errorOfflineRetry =>
+      'You\'re offline. Check your connection and try again.';
+
+  @override
+  String get errorInvalidCredentials =>
+      'Incorrect details. Check your email or mobile number and password, then try again.';
+
+  @override
+  String get errorAccountExists =>
+      'An account already exists for these details. Try signing in instead.';
+
+  @override
+  String get errorAccountNotFound =>
+      'No account was found for these details. Check the email or mobile number.';
+
+  @override
+  String get errorOtpExpired =>
+      'This code has expired. Request a new code and try again.';
+
+  @override
+  String get errorOtpInvalid =>
+      'This code is incorrect. Check the 6 digits and try again.';
+
+  @override
+  String get errorServerRetryRef =>
+      'Something went wrong on our side. Try again — if it keeps happening, contact workshop support (ref 500).';
+
+  @override
+  String loginPhoneFormatHint(int digits, String code) {
+    return 'Enter $digits digits for $code';
+  }
 }

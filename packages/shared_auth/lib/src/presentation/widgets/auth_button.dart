@@ -10,6 +10,12 @@ import 'package:shared_core/shared_core.dart';
 /// Minimum 52px height keeps every auth CTA on a 48dp target.
 class AuthPrimaryButton extends StatefulWidget {
   final String label;
+
+  /// Label swap while [isLoading] is true (e.g. "Sending…"). Busy keeps the
+  /// active cobalt fill plus a spinner; genuinely disabled falls back to the
+  /// neutral pair — so busy, disabled, and rest are visually and
+  /// semantically distinct and the state change is announced.
+  final String? busyLabel;
   final VoidCallback? onPressed;
   final bool isLoading;
   final IconData? icon;
@@ -18,6 +24,7 @@ class AuthPrimaryButton extends StatefulWidget {
     super.key,
     required this.label,
     required this.onPressed,
+    this.busyLabel,
     this.isLoading = false,
     this.icon,
   });
@@ -40,6 +47,12 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
     final disabledTokens = context.semanticColors;
     final disabled = widget.onPressed == null || widget.isLoading;
 
+    // Busy swaps in its own label (announced by screen readers as the
+    // button name change) while keeping the cobalt fill + spinner; rest and
+    // genuinely-disabled keep their own treatments.
+    final displayLabel = widget.isLoading
+        ? (widget.busyLabel ?? widget.label)
+        : widget.label;
     // The label follows the button ink explicitly: on-primary while
     // enabled/busy (AA on cobalt in both themes), the semantic disabled ink
     // when genuinely disabled — never a faded primary. Inheriting the theme
@@ -101,7 +114,7 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
           ],
           Flexible(
             child: Text(
-              widget.label,
+              displayLabel,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: theme.textTheme.labelLarge?.copyWith(

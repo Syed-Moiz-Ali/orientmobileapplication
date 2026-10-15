@@ -283,4 +283,54 @@ class SharedAuthLocalizationsAr extends SharedAuthLocalizations {
 
   @override
   String get authPasswordStrengthStrong => 'قوية';
+
+  @override
+  String get authActionRetry => 'إعادة المحاولة';
+
+  @override
+  String get authActionSending => 'جارٍ الإرسال…';
+
+  @override
+  String get authActionVerifying => 'جارٍ التحقق…';
+
+  @override
+  String get authActionSigningIn => 'جارٍ تسجيل الدخول…';
+
+  @override
+  String get authActionUpdating => 'جارٍ التحديث…';
+
+  @override
+  String get authActionCreating => 'جارٍ إنشاء الحساب…';
+
+  @override
+  String get errorOfflineRetry => 'أنت دون اتصال. تحقق من اتصالك وحاول مجدداً.';
+
+  @override
+  String get errorInvalidCredentials =>
+      'البيانات غير صحيحة. تحقق من البريد الإلكتروني أو رقم الجوال وكلمة المرور ثم حاول مجدداً.';
+
+  @override
+  String get errorAccountExists =>
+      'يوجد حساب بهذه البيانات بالفعل. جرّب تسجيل الدخول بدلاً من ذلك.';
+
+  @override
+  String get errorAccountNotFound =>
+      'لم يتم العثور على حساب بهذه البيانات. تحقق من البريد الإلكتروني أو رقم الجوال.';
+
+  @override
+  String get errorOtpExpired =>
+      'انتهت صلاحية هذا الرمز. اطلب رمزاً جديداً وحاول مجدداً.';
+
+  @override
+  String get errorOtpInvalid =>
+      'هذا الرمز غير صحيح. تحقق من الأرقام الستة وحاول مجدداً.';
+
+  @override
+  String get errorServerRetryRef =>
+      'حدث خطأ من جهتنا. حاول مجدداً — وإذا استمر، تواصل مع دعم الورشة (مرجع 500).';
+
+  @override
+  String loginPhoneFormatHint(int digits, String code) {
+    return 'أدخل $digits أرقام لـ $code';
+  }
 }

@@ -31,20 +31,22 @@ void main() {
     expect(find.text('Send code'), findsOneWidget);
   });
 
-  testWidgets('login presents local validation errors as a live notice', (
+  testWidgets('login presents local validation errors inline with focus', (
     tester,
   ) async {
     await _pumpLogin(tester, const Size(390, 844));
 
+    expect(tester.testTextInput.isVisible, isFalse);
     await tester.tap(find.text('Continue'));
     await tester.pump();
+    // Every rule surfaces under its field with an error border; nothing
+    // goes to a banner or a snackbar for local validation.
+    expect(find.text('Enter your email or mobile number.'), findsOneWidget);
+    // The password error copy matches the field hint, so both render.
     expect(find.text('Enter your password'), findsWidgets);
-    expect(
-      find.byWidgetPredicate(
-        (widget) => widget is Semantics && widget.properties.liveRegion == true,
-      ),
-      findsOneWidget,
-    );
+    expect(find.byType(SnackBar), findsNothing);
+    // Focus moves to the first error field so screen readers announce it.
+    expect(tester.testTextInput.isVisible, isTrue);
   });
 
   testWidgets('login mobile visual reference', (tester) async {
@@ -294,7 +296,7 @@ void main() {
     expect(find.text('Verify account'), findsOneWidget);
   });
 
-  testWidgets('recovery surfaces a backend failure as a live notice', (
+  testWidgets('recovery surfaces a backend failure as a snackbar', (
     tester,
   ) async {
     await _pumpForgot(
@@ -311,19 +313,19 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
+    // The 404 maps to the specific not-found copy on the identifier field —
+    // never a generic fallback, never nowhere.
     expect(
-      find.text('No account was found for these details.'),
-      findsOneWidget,
-    );
-    expect(
-      find.byWidgetPredicate(
-        (widget) => widget is Semantics && widget.properties.liveRegion == true,
+      find.text(
+        'No account was found for these details. '
+        'Check the email or mobile number.',
       ),
       findsOneWidget,
     );
+    expect(find.byType(SnackBar), findsNothing);
   });
 
-  testWidgets('recovery replaces transport failures with friendly copy', (
+  testWidgets('recovery replaces transport failures with offline snackbar', (
     tester,
   ) async {
     await _pumpForgot(
@@ -340,8 +342,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.textContaining('reach Orient'), findsOneWidget);
+    expect(find.textContaining('offline'), findsOneWidget);
     expect(find.textContaining('SocketException'), findsNothing);
+    // Retryable failures carry a retry action on the snackbar.
+    expect(find.text('Try again'), findsOneWidget);
   });
 
   testWidgets('recovery surfaces the code-sent state with resend actions', (
@@ -505,7 +509,7 @@ void main() {
     );
 
     expect(find.text('Restoring your session'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
     expect(
       find.byWidgetPredicate(
         (widget) => widget is Semantics && widget.properties.liveRegion == true,

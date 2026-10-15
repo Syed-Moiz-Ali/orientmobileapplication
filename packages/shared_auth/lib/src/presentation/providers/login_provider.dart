@@ -4,6 +4,7 @@ import 'package:shared_auth/l10n/gen/shared_auth_localizations.dart';
 import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_error_mapper.dart';
 import 'package:shared_core/src/errors/result.dart';
 import 'package:shared_core/src/localization/locale_provider.dart';
 import 'package:shared_models/shared_models.dart';
@@ -15,6 +16,13 @@ enum PasswordIdentifier { email, phone }
 class LoginState {
   final bool isLoading;
   final String? error;
+
+  /// Display-only family of the last backend failure (401 vs offline vs 500
+  /// vs field validation). Validation thresholds and payloads are untouched —
+  /// this only preserves the distinction a bare message string would erase so
+  /// the view can pick the specific surface (inline field, snackbar + retry,
+  /// offline treatment). Cleared alongside [error] by plain `copyWith()`.
+  final AuthFailureKind? failureKind;
   final String phone;
   final String email;
   final String password;
@@ -30,6 +38,7 @@ class LoginState {
   const LoginState({
     this.isLoading = false,
     this.error,
+    this.failureKind,
     this.phone = '',
     this.email = '',
     this.password = '',
@@ -46,6 +55,7 @@ class LoginState {
   LoginState copyWith({
     bool? isLoading,
     String? error,
+    AuthFailureKind? failureKind,
     String? phone,
     String? email,
     String? password,
@@ -60,6 +70,7 @@ class LoginState {
   }) => LoginState(
     isLoading: isLoading ?? this.isLoading,
     error: error,
+    failureKind: failureKind,
     phone: phone ?? this.phone,
     email: email ?? this.email,
     password: password ?? this.password,
@@ -146,7 +157,11 @@ class LoginNotifier extends Notifier<LoginState> {
       state = state.copyWith(isLoading: false, otpSent: true);
       _startCooldown();
     } else if (r case Failure(:final error)) {
-      state = state.copyWith(isLoading: false, error: error.message);
+      state = state.copyWith(
+        isLoading: false,
+        error: error.message,
+        failureKind: authFailureKindOf(error),
+      );
     }
   }
 
@@ -167,7 +182,11 @@ class LoginNotifier extends Notifier<LoginState> {
           .authenticate(a.role, a.token, refreshToken: a.refreshToken);
       await _completeAuth();
     } else if (r case Failure(:final error)) {
-      state = state.copyWith(isLoading: false, error: error.message);
+      state = state.copyWith(
+        isLoading: false,
+        error: error.message,
+        failureKind: authFailureKindOf(error),
+      );
     }
   }
 
@@ -182,7 +201,11 @@ class LoginNotifier extends Notifier<LoginState> {
       state = state.copyWith(isLoading: false, otpSent: true);
       _startCooldown();
     } else if (r case Failure(:final error)) {
-      state = state.copyWith(isLoading: false, error: error.message);
+      state = state.copyWith(
+        isLoading: false,
+        error: error.message,
+        failureKind: authFailureKindOf(error),
+      );
     }
   }
 
@@ -203,7 +226,11 @@ class LoginNotifier extends Notifier<LoginState> {
           .authenticate(a.role, a.token, refreshToken: a.refreshToken);
       await _completeAuth();
     } else if (r case Failure(:final error)) {
-      state = state.copyWith(isLoading: false, error: error.message);
+      state = state.copyWith(
+        isLoading: false,
+        error: error.message,
+        failureKind: authFailureKindOf(error),
+      );
     }
   }
 
@@ -236,7 +263,11 @@ class LoginNotifier extends Notifier<LoginState> {
           .authenticate(a.role, a.token, refreshToken: a.refreshToken);
       await _completeAuth();
     } else if (r case Failure(:final error)) {
-      state = state.copyWith(isLoading: false, error: error.message);
+      state = state.copyWith(
+        isLoading: false,
+        error: error.message,
+        failureKind: authFailureKindOf(error),
+      );
     }
   }
 
@@ -275,7 +306,11 @@ class LoginNotifier extends Notifier<LoginState> {
           .authenticate(a.role, a.token, refreshToken: a.refreshToken);
       await _completeAuth();
     } else if (r case Failure(:final error)) {
-      state = state.copyWith(isLoading: false, error: error.message);
+      state = state.copyWith(
+        isLoading: false,
+        error: error.message,
+        failureKind: authFailureKindOf(error),
+      );
     }
   }
 
@@ -291,10 +326,20 @@ class LoginNotifier extends Notifier<LoginState> {
       if (!state.otpSent || state.resendCooldown <= 1) {
         timer.cancel();
         _cooldownTimer = null;
-        state = state.copyWith(resendCooldown: 0);
+        // Preserve any surfaced failure — the countdown must never wipe the
+        // visible error out from under the user.
+        state = state.copyWith(
+          resendCooldown: 0,
+          error: state.error,
+          failureKind: state.failureKind,
+        );
         return;
       }
-      state = state.copyWith(resendCooldown: state.resendCooldown - 1);
+      state = state.copyWith(
+        resendCooldown: state.resendCooldown - 1,
+        error: state.error,
+        failureKind: state.failureKind,
+      );
     });
   }
 }

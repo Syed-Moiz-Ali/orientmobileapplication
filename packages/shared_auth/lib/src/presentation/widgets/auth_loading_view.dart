@@ -67,9 +67,12 @@ class AuthLoadingView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s32),
+                // Linear progress reads as loading at a glance (the ring
+                // rendered as a static circle in stills and at small sizes).
+                // Fill is the authorized lighter-cobalt on-navy accent;
+                // reduced motion keeps the static hourglass mark.
                 SizedBox(
-                  width: 22,
-                  height: 22,
+                  width: 160,
                   child: reduceMotion
                       ? Icon(
                           Icons.hourglass_top_rounded,
@@ -77,10 +80,18 @@ class AuthLoadingView extends StatelessWidget {
                           color: colors.onInverseSurface,
                           semanticLabel: t.authRestoringSession,
                         )
-                      : CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colors.onInverseSurface,
-                          semanticsLabel: t.authRestoringSession,
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.rPill,
+                          ),
+                          child: LinearProgressIndicator(
+                            minHeight: 4,
+                            color: colors.inversePrimary,
+                            backgroundColor: colors.onInverseSurface.withValues(
+                              alpha: 0.16,
+                            ),
+                            semanticsLabel: t.authRestoringSession,
+                          ),
                         ),
                 ),
                 const SizedBox(height: AppDimensions.s16),

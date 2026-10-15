@@ -182,5 +182,37 @@
   "authPasswordStrengthGood": "Good",
   "@authPasswordStrengthGood": { "description": "Password strength level: good" },
   "authPasswordStrengthStrong": "Strong",
-  "@authPasswordStrengthStrong": { "description": "Password strength level: strong" }
+  "@authPasswordStrengthStrong": { "description": "Password strength level: strong" },
+
+  "authActionRetry": "Try again",
+  "@authActionRetry": { "description": "Retry action on authentication error notices" },
+  "authActionSending": "Sending…",
+  "@authActionSending": { "description": "Busy label while a one-time code is being sent" },
+  "authActionVerifying": "Verifying…",
+  "@authActionVerifying": { "description": "Busy label while a one-time code is being verified" },
+  "authActionSigningIn": "Signing in…",
+  "@authActionSigningIn": { "description": "Busy label while password sign-in is running" },
+  "authActionUpdating": "Updating…",
+  "@authActionUpdating": { "description": "Busy label while the new password is being saved" },
+  "authActionCreating": "Creating account…",
+  "@authActionCreating": { "description": "Busy label while registration is running" },
+  "errorOfflineRetry": "You're offline. Check your connection and try again.",
+  "@errorOfflineRetry": { "description": "Offline failure copy with a retry action" },
+  "errorInvalidCredentials": "Incorrect details. Check your email or mobile number and password, then try again.",
+  "@errorInvalidCredentials": { "description": "Authentication failure copy for invalid credentials (401 on sign-in)" },
+  "errorAccountExists": "An account already exists for these details. Try signing in instead.",
+  "@errorAccountExists": { "description": "Registration conflict copy (409)" },
+  "errorAccountNotFound": "No account was found for these details. Check the email or mobile number.",
+  "@errorAccountNotFound": { "description": "Lookup failure copy (404)" },
+  "errorOtpExpired": "This code has expired. Request a new code and try again.",
+  "@errorOtpExpired": { "description": "One-time-code expired copy, distinct from an incorrect code" },
+  "errorOtpInvalid": "This code is incorrect. Check the 6 digits and try again.",
+  "@errorOtpInvalid": { "description": "One-time-code incorrect copy, distinct from an expired code" },
+  "errorServerRetryRef": "Something went wrong on our side. Try again — if it keeps happening, contact workshop support (ref 500).",
+  "@errorServerRetryRef": { "description": "Server failure copy with retry and a support reference" },
+  "loginPhoneFormatHint": "Enter {digits} digits for {code}",
+  "@loginPhoneFormatHint": {
+    "description": "Per-country phone format hint under phone-like identifier fields",
+    "placeholders": { "digits": { "type": "int" }, "code": { "type": "String" } }
+  }
 }

@@ -4,8 +4,8 @@ import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_auth/src/presentation/providers/login_provider.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_error_mapper.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_notice.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_password_strength.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
 import 'package:shared_auth/src/presentation/widgets/phone_country.dart';
@@ -53,23 +53,29 @@ class _LoginViewState extends ConsumerState<LoginView> {
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+  final _identifierFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  final _nameFocus = FocusNode();
   _SignInMode _mode = _SignInMode.password;
 
   String? _identifierError;
   String? _passwordError;
   String? _nameError;
 
-  /// Local validation summary announced as a live region alongside the
-  /// field-level errors. Backend failures continue to arrive via
-  /// `LoginState.error`; this covers only the pre-network checks so an empty
-  /// submit is announced to screen readers the same moment the fields flag.
-  String? _formError;
+  /// Tracks whether the one-time-code confirmation was already announced, so
+  /// the success snackbar fires exactly once per send (and again after the
+  /// next send). Form-level API failures surface as snackbars with a retry
+  /// action; field-level failures surface inline — never both, never nowhere.
+  bool _otpAnnounced = false;
 
   @override
   void dispose() {
     _identifierCtrl.dispose();
     _passwordCtrl.dispose();
     _nameCtrl.dispose();
+    _identifierFocus.dispose();
+    _passwordFocus.dispose();
+    _nameFocus.dispose();
     super.dispose();
   }
 
@@ -110,7 +116,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
     }
     setState(() {
       _identifierError = error;
-      if (error != null) _formError ??= error;
     });
     return error != null;
   }
@@ -126,7 +131,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
     }
     setState(() {
       _passwordError = error;
-      if (error != null) _formError ??= error;
     });
     return error != null;
   }
@@ -137,14 +141,100 @@ class _LoginViewState extends ConsumerState<LoginView> {
     final error = value.isEmpty ? t.validationEnterName : null;
     setState(() {
       _nameError = error;
-      if (error != null) _formError ??= error;
     });
     return error != null;
   }
 
+  /// Hides any visible form-error snackbar. Called on every edit so a stale
+  /// backend failure never lingers next to a corrected field.
+  void _dismissSnack() {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+  }
+
+  /// Shows a form-level failure as a snackbar with a retry action when the
+  /// mapping marks it retryable (offline, 401, 500, 404). Field-mapped
+  /// failures never reach here — they render inline on their field.
+  void _showErrorSnack(AuthErrorDisplay display, VoidCallback onRetry) {
+    showAppSnackBar(
+      context,
+      message: display.message,
+      tone: AppSnackBarTone.danger,
+      actionLabel: display.retryable
+          ? SharedAuthL10n.of(context).authActionRetry
+          : null,
+      onAction: display.retryable ? onRetry : null,
+      duration: const Duration(seconds: 5),
+    );
+  }
+
+  /// Moves keyboard focus to the first relevant field after a failure, in
+  /// visual order. The OTP cells own their focus (autofocus keeps entry
+  /// there), so code failures rely on the OTP live region instead.
+  void _focusFor(AuthErrorField field, {required bool includeName}) {
+    final node = switch (field) {
+      AuthErrorField.identifier => _identifierFocus,
+      AuthErrorField.password => _passwordFocus,
+      AuthErrorField.name => includeName ? _nameFocus : _identifierFocus,
+      AuthErrorField.code || AuthErrorField.none => null,
+    };
+    if (node != null) node.requestFocus();
+  }
+
+  void _focusFirstLocalError({required bool includeName}) {
+    if (includeName && _nameError != null) {
+      _nameFocus.requestFocus();
+      return;
+    }
+    if (_identifierError != null) {
+      _identifierFocus.requestFocus();
+      return;
+    }
+    if (_passwordError != null) _passwordFocus.requestFocus();
+  }
+
+  /// Surfaces a backend failure from [LoginState]: field-mapped failures land
+  /// inline on their field, form-level failures land in a snackbar with
+  /// retry. Values in the controllers are preserved — nothing is cleared.
+  /// [otpInline] is true only for the verify step, where code-mapped copy
+  /// renders on the OTP field in build; anywhere else it falls back to the
+  /// snackbar so nothing reaches nowhere.
+  void _surfaceApiError(
+    LoginState s, {
+    required VoidCallback onRetry,
+    bool otpInline = false,
+  }) {
+    if (!mounted || s.error == null) return;
+    final display = mapAuthFailure(
+      kind: s.failureKind ?? AuthFailureKind.validation,
+      message: s.error!,
+      t: SharedAuthL10n.of(context),
+    );
+    switch (display.field) {
+      case AuthErrorField.identifier:
+        setState(() => _identifierError = display.message);
+      case AuthErrorField.password:
+        setState(() => _passwordError = display.message);
+      case AuthErrorField.name:
+        setState(() => _nameError = display.message);
+      case AuthErrorField.code:
+        if (!otpInline) _showErrorSnack(display, onRetry);
+        // The OTP step reads the mapped copy in build (same grammar, no
+        // duplicate text) — nothing to set here.
+        break;
+      case AuthErrorField.none:
+        _showErrorSnack(display, onRetry);
+    }
+    _focusFor(display.focusField, includeName: s.isRegistering);
+  }
+
   Future<void> _sendCode(LoginNotifier notifier) async {
-    if (_validateIdentifier()) return;
-    setState(() => _formError = null);
+    // Double-submit guard: the busy CTA is already disabled, this covers the
+    // race between the tap and the first frame.
+    if (ref.read(loginProvider).isLoading) return;
+    if (_validateIdentifier()) {
+      _focusFor(AuthErrorField.identifier, includeName: false);
+      return;
+    }
     final value = _identifierCtrl.text.trim();
     if (_isEmail(value)) {
       notifier.setMethod(AuthMethod.email);
@@ -155,20 +245,45 @@ class _LoginViewState extends ConsumerState<LoginView> {
       notifier.setPhone(value);
       await notifier.sendSmsOtp();
     }
+    _surfaceApiError(ref.read(loginProvider), onRetry: () => _sendCode(notifier));
+  }
+
+  /// Guarded OTP verification: blocks double-submits; code-mapped failures
+  /// (expired vs incorrect distinct copy) render on the OTP field in build,
+  /// everything else goes to the snackbar with retry.
+  Future<void> _verifyCode(LoginNotifier notifier, bool email) async {
+    if (ref.read(loginProvider).isLoading) return;
+    if (email) {
+      await notifier.verifyEmailOtp();
+    } else {
+      await notifier.verifySmsOtp();
+    }
+    _surfaceApiError(
+      ref.read(loginProvider),
+      onRetry: () => _verifyCode(notifier, email),
+      otpInline: true,
+    );
   }
 
   Future<void> _submitPassword(LoginState state, LoginNotifier notifier) async {
+    if (ref.read(loginProvider).isLoading) return;
     var invalid = _validateIdentifier();
     invalid = _validatePasswordField(isCreate: state.isRegistering) || invalid;
     if (state.isRegistering) invalid = _validateNameField() || invalid;
-    if (invalid) return;
-    setState(() => _formError = null);
+    if (invalid) {
+      _focusFirstLocalError(includeName: state.isRegistering);
+      return;
+    }
     _syncIdentifier(notifier);
     if (state.isRegistering) {
       await notifier.register();
     } else {
       await notifier.loginWithPassword();
     }
+    _surfaceApiError(
+      ref.read(loginProvider),
+      onRetry: () => _submitPassword(ref.read(loginProvider), notifier),
+    );
   }
 
   void _changeMode(_SignInMode mode, LoginNotifier notifier) {
@@ -178,8 +293,9 @@ class _LoginViewState extends ConsumerState<LoginView> {
       _identifierError = null;
       _passwordError = null;
       _nameError = null;
-      _formError = null;
+      _otpAnnounced = false;
     });
+    _dismissSnack();
     notifier.reset();
   }
 
@@ -206,6 +322,43 @@ class _LoginViewState extends ConsumerState<LoginView> {
       subtitle = t.loginWelcomeSubtitle;
     }
 
+    // One-time-code confirmation: announced once per send as a success
+    // snackbar (no banner). Post-frame because this runs inside build.
+    if (state.otpSent && !_otpAnnounced) {
+      _otpAnnounced = true;
+      final target = state.method == AuthMethod.email
+          ? state.email
+          : '${state.countryCode} ${state.phone}';
+      final sentCopy = t.loginCodeSent(target);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showAppSnackBar(
+          context,
+          message: sentCopy,
+          tone: AppSnackBarTone.success,
+        );
+      });
+    } else if (!state.otpSent && _otpAnnounced) {
+      _otpAnnounced = false;
+    }
+
+    // Mapped OTP copy: expired vs incorrect codes get distinct text on the
+    // OTP field itself (same grammar, no duplicate snackbar). Anything the
+    // mapper routes elsewhere is snackbar-surfaced at submit time.
+    final AuthErrorDisplay? otpDisplay = state.error == null
+        ? null
+        : mapAuthFailure(
+            kind: state.failureKind ?? AuthFailureKind.validation,
+            message: state.error!,
+            t: t,
+          );
+    final String? otpError = otpDisplay?.field == AuthErrorField.code
+        ? otpDisplay!.message
+        : null;
+
+    // Form-level leftovers from a backend failure that mapped to no field
+    // are snackbar-only now (shown at submit time); inline vars here only
+    // carry local validation or field-mapped API copy.
     return AuthShell(
       appName: widget.appName,
       appPurpose: widget.appPurpose,
@@ -244,26 +397,28 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     identifierError: _identifierError,
                     passwordError: _passwordError,
                     nameError: _nameError,
-                    banner: _formError ?? state.error,
+                    identifierFocus: _identifierFocus,
+                    passwordFocus: _passwordFocus,
+                    nameFocus: _nameFocus,
                     onIdentifierChanged: (v) {
+                      _dismissSnack();
                       setState(() {
                         _identifierError = null;
-                        _formError = null;
                       });
                       _syncIdentifier(notifier);
                     },
                     onPasswordChanged: (v) {
+                      _dismissSnack();
                       notifier.setPassword(v);
                       setState(() {
                         _passwordError = null;
-                        _formError = null;
                       });
                     },
                     onNameChanged: (v) {
+                      _dismissSnack();
                       notifier.setName(v);
                       setState(() {
                         _nameError = null;
-                        _formError = null;
                       });
                     },
                     onCountryChanged: notifier.setCountryCode,
@@ -276,13 +431,24 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     notifier: notifier,
                     identifierCtrl: _identifierCtrl,
                     identifierError: _identifierError,
-                    banner: _formError ?? state.error,
-                    onIdentifierChanged: (_) => setState(() {
-                      _identifierError = null;
-                      _formError = null;
-                    }),
+                    otpError: otpError,
+                    identifierFocus: _identifierFocus,
+                    onIdentifierChanged: (_) {
+                      _dismissSnack();
+                      setState(() {
+                        _identifierError = null;
+                      });
+                    },
+                    onOtpChanged: (v) {
+                      _dismissSnack();
+                      notifier.setOtp(v);
+                    },
                     onCountryChanged: notifier.setCountryCode,
                     onSendCode: () => _sendCode(notifier),
+                    onVerifyCode: () => _verifyCode(
+                      notifier,
+                      state.method == AuthMethod.email,
+                    ),
                   )
                 : _SignInPasswordForm(
                     key: const ValueKey('password'),
@@ -292,22 +458,23 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     passwordCtrl: _passwordCtrl,
                     identifierError: _identifierError,
                     passwordError: _passwordError,
-                    banner: _formError ?? state.error,
+                    identifierFocus: _identifierFocus,
+                    passwordFocus: _passwordFocus,
                     allowRegistration: widget.allowRegistration,
                     onForgotPassword: widget.onForgotPassword,
                     onSubmit: () => _submitPassword(state, notifier),
                     onIdentifierChanged: (v) {
+                      _dismissSnack();
                       setState(() {
                         _identifierError = null;
-                        _formError = null;
                       });
                       _syncIdentifier(notifier);
                     },
                     onPasswordChanged: (v) {
+                      _dismissSnack();
                       notifier.setPassword(v);
                       setState(() {
                         _passwordError = null;
-                        _formError = null;
                       });
                     },
                     onCountryChanged: notifier.setCountryCode,
@@ -458,11 +625,14 @@ class _MethodSwitcher extends StatelessWidget {
 /// The prefix shows only for phone-like entry (LTR-locked dial code with
 /// search); email entry hides it so `+971` never sits beside an inbox. The
 /// notifier country code stays in sync through [onCountryChanged].
+/// Phone-like entry additionally shows the per-country digit hint
+/// (`loginPhoneFormatHint`) so the expected format is visible before submit.
 class _IdentifierRow extends StatelessWidget {
   final TextEditingController controller;
   final LoginState state;
   final String? errorText;
   final bool enabled;
+  final FocusNode? focusNode;
   final ValueChanged<String> onChanged;
   final ValueChanged<String> onCountryChanged;
   final ValueChanged<String>? onSubmitted;
@@ -474,6 +644,7 @@ class _IdentifierRow extends StatelessWidget {
     required this.enabled,
     required this.onChanged,
     required this.onCountryChanged,
+    this.focusNode,
     this.onSubmitted,
   });
 
@@ -499,27 +670,34 @@ class _IdentifierRow extends StatelessWidget {
             textDirection: TextDirection.ltr,
             enabled: enabled,
             errorText: errorText,
+            focusNode: focusNode,
             onChanged: onChanged,
             onSubmitted: onSubmitted,
           );
         }
-        final labelStyle = Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700, height: 1.3);
-        return Row(
+        final theme = Theme.of(context);
+        final labelStyle = theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700, height: 1.3);
+        final country = phoneCountryFor(state.countryCode);
+        return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Mirrors the field's own label row (same style + gap) with a
-            // blank run so the 48px prefix stays aligned with the input at
-            // any text scale — no pixel guesses.
-            Column(
-              mainAxisSize: MainAxisSize.min,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('\u00A0', style: labelStyle),
-                const SizedBox(height: AppDimensions.s8),
-                AuthCountryCodeButton(value: state.countryCode, enabled: enabled, onChanged: onCountryChanged),
-              ],
-            ),
-            const SizedBox(width: AppDimensions.s8),
-            Expanded(
+                // Mirrors the field's own label row (same style + gap) with a
+                // blank run so the 48px prefix stays aligned with the input at
+                // any text scale — no pixel guesses.
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('\u00A0', style: labelStyle),
+                    const SizedBox(height: AppDimensions.s8),
+                    AuthCountryCodeButton(value: state.countryCode, enabled: enabled, onChanged: onCountryChanged),
+                  ],
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
               child: AuthTextField(
                 controller: controller,
                 label: t.loginFieldIdentifier,
@@ -531,8 +709,18 @@ class _IdentifierRow extends StatelessWidget {
                 textDirection: TextDirection.ltr,
                 enabled: enabled,
                 errorText: errorText,
+                focusNode: focusNode,
                 onChanged: onChanged,
                 onSubmitted: onSubmitted,
+              ),
+            ),
+          ],
+        ),
+            const SizedBox(height: AppDimensions.s6),
+            Text(
+              t.loginPhoneFormatHint(country.expectedLength, country.code),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -549,7 +737,8 @@ class _SignInPasswordForm extends StatelessWidget {
   final TextEditingController passwordCtrl;
   final String? identifierError;
   final String? passwordError;
-  final String? banner;
+  final FocusNode? identifierFocus;
+  final FocusNode? passwordFocus;
   final bool allowRegistration;
   final VoidCallback? onForgotPassword;
   final VoidCallback onSubmit;
@@ -565,7 +754,8 @@ class _SignInPasswordForm extends StatelessWidget {
     required this.passwordCtrl,
     required this.identifierError,
     required this.passwordError,
-    required this.banner,
+    this.identifierFocus,
+    this.passwordFocus,
     required this.allowRegistration,
     required this.onForgotPassword,
     required this.onSubmit,
@@ -588,6 +778,7 @@ class _SignInPasswordForm extends StatelessWidget {
             state: state,
             errorText: identifierError,
             enabled: !busy,
+            focusNode: identifierFocus,
             onChanged: onIdentifierChanged,
             onCountryChanged: onCountryChanged,
           ),
@@ -602,6 +793,7 @@ class _SignInPasswordForm extends StatelessWidget {
             autofillHints: const [AutofillHints.password],
             enabled: !busy,
             errorText: passwordError,
+            focusNode: passwordFocus,
             onChanged: onPasswordChanged,
             onSubmitted: (_) => onSubmit(),
           ),
@@ -615,6 +807,7 @@ class _SignInPasswordForm extends StatelessWidget {
           const SizedBox(height: AppDimensions.s24),
           AuthPrimaryButton(
             label: t.loginActionContinue,
+            busyLabel: t.authActionSigningIn,
             icon: Icons.arrow_forward_rounded,
             isLoading: state.isLoading,
             onPressed: onSubmit,
@@ -640,7 +833,9 @@ class _RegisterForm extends StatelessWidget {
   final String? identifierError;
   final String? passwordError;
   final String? nameError;
-  final String? banner;
+  final FocusNode? identifierFocus;
+  final FocusNode? passwordFocus;
+  final FocusNode? nameFocus;
   final VoidCallback onSubmit;
   final ValueChanged<String> onIdentifierChanged;
   final ValueChanged<String> onPasswordChanged;
@@ -657,7 +852,9 @@ class _RegisterForm extends StatelessWidget {
     required this.identifierError,
     required this.passwordError,
     required this.nameError,
-    required this.banner,
+    this.identifierFocus,
+    this.passwordFocus,
+    this.nameFocus,
     required this.onSubmit,
     required this.onIdentifierChanged,
     required this.onPasswordChanged,
@@ -686,6 +883,7 @@ class _RegisterForm extends StatelessWidget {
             autofillHints: const [AutofillHints.name],
             enabled: !busy,
             errorText: nameError,
+            focusNode: nameFocus,
             onChanged: onNameChanged,
           ),
           const SizedBox(height: AppDimensions.s16),
@@ -694,6 +892,7 @@ class _RegisterForm extends StatelessWidget {
             state: state,
             errorText: identifierError,
             enabled: !busy,
+            focusNode: identifierFocus,
             onChanged: onIdentifierChanged,
             onCountryChanged: onCountryChanged,
           ),
@@ -708,6 +907,7 @@ class _RegisterForm extends StatelessWidget {
             autofillHints: const [AutofillHints.newPassword],
             enabled: !busy,
             errorText: passwordError,
+            focusNode: passwordFocus,
             belowField: AuthPasswordStrength(password: state.password),
             labelTrailing: Text(
               t.loginMinCharacters,
@@ -722,6 +922,7 @@ class _RegisterForm extends StatelessWidget {
           const SizedBox(height: AppDimensions.s24),
           AuthPrimaryButton(
             label: t.loginActionCreateAccount,
+            busyLabel: t.authActionCreating,
             icon: Icons.arrow_forward_rounded,
             isLoading: state.isLoading,
             onPressed: onSubmit,
@@ -741,10 +942,13 @@ class _CodeForm extends StatelessWidget {
   final LoginNotifier notifier;
   final TextEditingController identifierCtrl;
   final String? identifierError;
-  final String? banner;
+  final String? otpError;
+  final FocusNode? identifierFocus;
   final ValueChanged<String> onIdentifierChanged;
+  final ValueChanged<String> onOtpChanged;
   final ValueChanged<String> onCountryChanged;
   final VoidCallback onSendCode;
+  final VoidCallback onVerifyCode;
 
   const _CodeForm({
     super.key,
@@ -752,15 +956,17 @@ class _CodeForm extends StatelessWidget {
     required this.notifier,
     required this.identifierCtrl,
     required this.identifierError,
-    required this.banner,
+    required this.otpError,
+    this.identifierFocus,
     required this.onIdentifierChanged,
+    required this.onOtpChanged,
     required this.onCountryChanged,
     required this.onSendCode,
+    required this.onVerifyCode,
   });
 
   @override
   Widget build(BuildContext context) {
-    final email = state.method == AuthMethod.email;
     final busy = state.isLoading;
     final t = SharedAuthL10n.of(context);
 
@@ -769,23 +975,19 @@ class _CodeForm extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AuthNotice(
-              icon: email ? Icons.mark_email_read_outlined : Icons.sms_outlined,
-              text: t.loginCodeSent(email ? state.email : state.phone),
-            ),
-            const SizedBox(height: AppDimensions.s20),
             AuthOtpField(
-              onChanged: notifier.setOtp,
-              errorText: state.error,
+              onChanged: onOtpChanged,
+              errorText: otpError,
               enabled: !busy,
-              onSubmitted: (_) => email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
+              onSubmitted: (_) => onVerifyCode(),
             ),
             const SizedBox(height: AppDimensions.s24),
             AuthPrimaryButton(
               label: t.loginActionVerifyCode,
+              busyLabel: t.authActionVerifying,
               icon: Icons.verified_rounded,
               isLoading: state.isLoading,
-              onPressed: () => email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
+              onPressed: onVerifyCode,
             ),
             const SizedBox(height: AppDimensions.s8),
             Wrap(
@@ -812,6 +1014,7 @@ class _CodeForm extends StatelessWidget {
             state: state,
             errorText: identifierError,
             enabled: !busy,
+            focusNode: identifierFocus,
             onChanged: onIdentifierChanged,
             onCountryChanged: onCountryChanged,
             onSubmitted: (_) => onSendCode(),
@@ -819,6 +1022,7 @@ class _CodeForm extends StatelessWidget {
           const SizedBox(height: AppDimensions.s24),
           AuthPrimaryButton(
             label: t.loginActionSendCode,
+            busyLabel: t.authActionSending,
             icon: Icons.arrow_forward_rounded,
             isLoading: state.isLoading,
             onPressed: onSendCode,
