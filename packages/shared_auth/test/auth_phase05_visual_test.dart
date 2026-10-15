@@ -24,6 +24,7 @@ Widget _host({
   required Widget home,
   Locale locale = const Locale('en'),
   List<Override> overrides = const [],
+  ThemeData? theme,
 }) {
   return ProviderScope(
     overrides: overrides,
@@ -32,7 +33,7 @@ Widget _host({
       locale: locale,
       supportedLocales: AppLocales.supported,
       localizationsDelegates: _delegates,
-      theme: AppTheme.light(BrandConfig.orient, locale: locale),
+      theme: theme ?? AppTheme.light(BrandConfig.orient, locale: locale),
       home: home,
     ),
   );
@@ -138,6 +139,43 @@ void main() {
         matchesGoldenFile('goldens/auth_phase05_splash_$label.png'),
       );
     });
+
+    testWidgets('login compact dark spot ($label)', (tester) async {
+      await _pump(
+        tester,
+        const Size(390, 844),
+        locale,
+        theme: AppTheme.dark(BrandConfig.orient, locale: locale),
+      );
+      await expectLater(
+        find.byType(LoginView),
+        matchesGoldenFile('goldens/auth_phase05_login_compact_dark_$label.png'),
+      );
+    });
+
+    testWidgets('session-expired spot ($label)', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        _host(
+          locale: locale,
+          home: Scaffold(
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimensions.s20),
+                child: AuthSessionExpiredView(onSignIn: () {}),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(AuthSessionExpiredView),
+        matchesGoldenFile('goldens/auth_phase05_session_expired_$label.png'),
+      );
+    });
   }
 }
 
@@ -146,6 +184,7 @@ Future<void> _pump(
   Size size,
   Locale locale, {
   List<Override> overrides = const [],
+  ThemeData? theme,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -154,6 +193,7 @@ Future<void> _pump(
     _host(
       locale: locale,
       overrides: overrides,
+      theme: theme,
       home: LoginView(
         onLoginSuccess: () {},
         onForgotPassword: () {},

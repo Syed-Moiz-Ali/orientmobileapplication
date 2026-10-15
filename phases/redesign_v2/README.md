@@ -157,7 +157,7 @@ flowchart TD
 | **03** | Complex Data Components (Tables, Pods, HUD) | ✅ PASSED | ⏳ Pending Product Owner | `reports/REPORT_PHASE_03.md` |
 | **04** | Navigation Shells & Application Scaffolds | ✅ PASSED (shared layer) | ⏳ Pending Product Owner | `reports/REPORT_PHASE_04.md`, `reports/REPORT_PHASE_04_VISUAL_ACCEPTANCE.md` |
 | **04.1** | Application Integration Planning & Ownership | ✅ Planning complete — **no code changed** | — App integration deferred to owning phases 06/10/11/13/16/19 | `reports/REPORT_PHASE_04_1_INTEGRATION_PLAN.md` |
-| **05** | Authentication & Access Flow Redesign | ✅ PASSED | ⏳ Pending Product Owner | `reports/REPORT_PHASE_05.md` |
+| **05** | Authentication & Access Flow Redesign | ✅ PASSED (from-scratch SaaS rework: shared_auth 90/90, analyzer 0, 26 goldens reviewed EN/AR + dark spots) | ⏳ Pending Product Owner (headless only, live NOT PERFORMED) | `reports/REPORT_PHASE_05.md` |
 | **06** | Staff Advisor Hub (Tactical Operations Radar) | ✅ PASSED (with 04.1 shell integration) | ⏳ Pending Product Owner | `reports/REPORT_PHASE_06.md` |
 | **07.1** | Centralized SaaS Hardening & Retrofit (01–07) | ✅ PASSED (shared 414/414, auth 86/86, models 17/17; staff 374/41 pre-existing-only, owner 31/31, crm 21/21, customer 443/80 pre-existing-only; all guards green) | ⏳ Pending Product Owner | `reports/REPORT_PHASE_07_1.md` |
 | **07** | Staff Vehicle Intake Studio (Express Intake) | ✅ PASSED (staff 354/49 pre-existing-only; 16 goldens reviewed) | ⏳ Pending Product Owner | `reports/REPORT_PHASE_07.md` |

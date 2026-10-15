@@ -4,21 +4,25 @@ import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/widgets/security_badge.dart';
 import 'package:shared_core/shared_core.dart';
 
-/// Shared authentication shell used by every Orient app (spec §14 T8).
+/// Shared authentication shell used by every Orient app.
 ///
-/// Layout strategy:
-/// - compact (< 600): a single focused column with a condensed identity block
-///   so the authentication task owns the whole screen.
-/// - medium (600 - 899): the same column boxed on a surface card so the extra
-///   width reads as deliberate instead of stretched.
-/// - expanded (>= 900): a split layout. The reading-start pane is the navy
-///   [`ColorScheme.inverseSurface`] identity panel (brand mark, app identity,
-///   trust points); the reading-end pane stays focused on the authentication
-///   task.
+/// Composition (from scratch, Archetype 1 — focused identity access):
+/// - compact: single focused column, max 480 wide, condensed brand lockup.
+/// - medium: same column boxed on a surface card so extra width reads as
+///   deliberate instead of stretched.
+/// - expanded/large: split — reading-start navy identity panel (brand mark,
+///   app identity, trust points, security badge) + reading-end focused form
+///   (max 480), whole canvas capped at 1440 and centered.
 ///
-/// The shell is intentionally independent of Riverpod so it can be rendered in
-/// isolation (tests, previews) and reused by [LoginView], [ForgotPasswordView]
-/// and role-specific screens such as the supervisor console.
+/// Breakpoints come from the single authority ([AppAdaptiveSpec] via
+/// [AppAdaptiveBuilder]); no width literals or `MediaQuery` reads live here.
+/// Styling resolves through `ColorScheme.inverseSurface` / `onInverseSurface` /
+/// `inversePrimary` only — tonal steps derive from `onInverseSurface`.
+///
+///
+/// The shell is independent of Riverpod so it renders in isolation (tests,
+/// previews) and is reused by [LoginView], [ForgotPasswordView] and
+/// role-specific screens such as the supervisor console.
 class AuthShell extends StatelessWidget {
   final Widget? top;
   final String title;
@@ -52,6 +56,8 @@ class AuthShell extends StatelessWidget {
     final theme = Theme.of(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
+      // Justified Brightness use (theme guard allowlist): OS system-chrome
+      // contrast only — never a widget palette decision.
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: theme.brightness == Brightness.dark
@@ -64,11 +70,10 @@ class AuthShell extends StatelessWidget {
         body: SafeArea(
           child: FocusTraversalGroup(
             policy: ReadingOrderTraversalPolicy(),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final width = constraints.maxWidth;
-                final split = width >= 900;
-                final compact = width < 600;
+            child: AppAdaptiveBuilder(
+              builder: (context, adaptive) {
+                final split = adaptive.isExpanded || adaptive.isLarge;
+                final boxed = adaptive.isMedium;
 
                 final form = _AuthFormPane(
                   title: title,
@@ -80,25 +85,31 @@ class AuthShell extends StatelessWidget {
                   footer: footer ?? SecurityBadge(text: securityNotice),
                   showBrand: !split,
                   showContext: !split,
-                  boxed: !split && !compact,
+                  boxed: boxed,
                   child: child,
                 );
 
                 if (!split) return form;
 
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 5,
-                      child: _AuthIdentityPanel(
-                        appName: appName,
-                        appPurpose: appPurpose,
-                        intendedUsers: intendedUsers,
-                      ),
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1440),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: _AuthIdentityPanel(
+                            appName: appName,
+                            appPurpose: appPurpose,
+                            intendedUsers: intendedUsers,
+                            securityNotice: securityNotice,
+                          ),
+                        ),
+                        Expanded(flex: 6, child: form),
+                      ],
                     ),
-                    Expanded(flex: 6, child: form),
-                  ],
+                  ),
                 );
               },
             ),
@@ -141,22 +152,17 @@ class _AuthFormPane extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return LayoutBuilder(
-      builder: (context, viewport) {
-        final adaptive = AppResponsive.specFor(context, constraints: viewport);
-        final width = viewport.maxWidth;
+    return AppAdaptiveBuilder(
+      builder: (context, adaptive) {
         final horizontal = boxed
             ? AppDimensions.s24
-            : width < 360
-            ? AppDimensions.s16
-            : width < 430
-            ? AppDimensions.s20
-            : AppDimensions.s24;
+            : adaptive.pick(
+                compact: AppDimensions.s20,
+                medium: AppDimensions.s24,
+                expanded: AppDimensions.s28,
+                large: AppDimensions.s32,
+              );
         final vertical = boxed ? AppDimensions.s32 : AppDimensions.s28;
-        final minHeight = (viewport.maxHeight - vertical * 2).clamp(
-          0.0,
-          double.infinity,
-        );
 
         final content = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -207,7 +213,7 @@ class _AuthFormPane extends StatelessWidget {
         );
 
         Widget panel = ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
+          constraints: const BoxConstraints(maxWidth: 480),
           child: content,
         );
 
@@ -230,14 +236,11 @@ class _AuthFormPane extends StatelessWidget {
             horizontal: horizontal,
             vertical: vertical,
           ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: minHeight),
-            child: Align(
-              alignment: adaptive.keyboardOpen
-                  ? adaptive.focusedFlowAlignment
-                  : Alignment.center,
-              child: panel,
-            ),
+          child: Align(
+            alignment: adaptive.keyboardOpen
+                ? adaptive.focusedFlowAlignment
+                : Alignment.center,
+            child: panel,
           ),
         );
       },
@@ -249,11 +252,13 @@ class _AuthIdentityPanel extends StatelessWidget {
   final String appName;
   final String appPurpose;
   final String intendedUsers;
+  final String? securityNotice;
 
   const _AuthIdentityPanel({
     required this.appName,
     required this.appPurpose,
     required this.intendedUsers,
+    required this.securityNotice,
   });
 
   @override
@@ -327,6 +332,8 @@ class _AuthIdentityPanel extends StatelessWidget {
                   icon: Icons.speed_rounded,
                   label: t.authTrustBays,
                 ),
+                const SizedBox(height: AppDimensions.s32),
+                _InverseSecurityNote(text: securityNotice),
               ],
             ),
           ),
@@ -410,7 +417,7 @@ class _AuthContextBlock extends StatelessWidget {
           const SizedBox(height: AppDimensions.s10),
           Text(
             appPurpose,
-            maxLines: MediaQuery.sizeOf(context).width < 600 ? 2 : 3,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
               color: bodyColor,
@@ -446,15 +453,6 @@ class _AuthBrandLockup extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.primary,
             borderRadius: BorderRadius.circular(size * 0.28),
-            boxShadow: onDark
-                ? null
-                : [
-                    BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.28),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
           ),
           child: Icon(
             Icons.build_rounded,
@@ -530,6 +528,45 @@ class _AuthTrustPoint extends StatelessWidget {
             style: theme.textTheme.bodySmall?.copyWith(
               color: _inverseMuted(colors),
               fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Trust footnote pinned to the identity panel so the desktop split carries
+/// the same legal line as the form column — one message, never duplicated.
+class _InverseSecurityNote extends StatelessWidget {
+  final String? text;
+
+  const _InverseSecurityNote({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = SharedAuthL10n.of(context);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: AppDimensions.r2),
+          child: Icon(
+            Icons.lock_outline_rounded,
+            size: AppDimensions.iconSm,
+            color: _inverseMuted(colors),
+          ),
+        ),
+        const SizedBox(width: AppDimensions.s8),
+        Expanded(
+          child: Text(
+            text ?? t.authSecurityBadge,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: _inverseMuted(colors),
+              height: 1.4,
             ),
           ),
         ),

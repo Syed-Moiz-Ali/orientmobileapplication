@@ -6,7 +6,7 @@
 **Specification:** `phases/redesign_v2/implementation/PHASE_05_AUTHENTICATION_FLOWS.md`
 **Prerequisites:** Phase 02 (`REPORT_PHASE_02.md`) + Phase 04 (`REPORT_PHASE_04.md`)
 **Status:** **ENGINEERING GATE PASSED** / **VISUAL GATE PENDING PRODUCT OWNER**
-**Timestamp:** 2026-10-14
+**Timestamp:** 2026-10-14 (from-scratch SaaS rework completed 2026-10-15, §16–§20)
 
 ---
 
@@ -126,3 +126,128 @@ flutter analyze lib test                (apps/staff_app|owner_app|customer_app|c
 - [ ] Approve Gate 2 and the Phase 05 report.
 
 **Phase 05 executed in isolation. Phase 06 not started; the Phase 04.1 app-shell amendment was not applied to application screens.**
+
+---
+
+## 16. From-scratch SaaS rework (2026-10-15) — scope & violations found
+
+Every `shared_auth` presentation surface was rewritten from zero (no patching):
+`auth_surface.dart`, `login_view.dart`, `forgot_password_view.dart`,
+`auth_loading_view.dart`, `auth_field.dart`, `auth_button.dart`,
+`auth_notice.dart`, `security_badge.dart`, `auth_password_strength.dart`,
+`auth_guard.dart`, `phone_country.dart` (+ new `AuthCountryCodeButton`;
+`auth_password_strength.dart` verified compliant and retained byte-identical).
+`git status` confirms presentation-only change: no provider, repository,
+datasource, OTP, validation, token, route or persistence file touched.
+
+Violations removed during the rewrite:
+
+1. **Raw breakpoint logic** — `auth_surface.dart` read `LayoutBuilder`
+   widths with `>= 900` / `< 600` literals and one
+   `MediaQuery.sizeOf(context).width < 600` ternary. All replaced by the
+   single authority: `AppAdaptiveBuilder` + `adaptive.pick()` /
+   `isMedium` / `isExpanded` / `isLarge`. Post-rework grep: zero
+   `MediaQuery` width reads, zero breakpoint literals, zero `Color(0x`,
+   zero `AppColors.` / `AppDarkColors` in `lib/src/presentation`; the only
+   `Brightness` use is the allowlisted system-chrome style in
+   `auth_surface.dart` (theme guard passes).
+2. **Breakpoint alignment** — the old `≥900` split contradicted the frozen
+   centralized taxonomy (`compact <600 / medium 600–1023 / expanded ≥1024`).
+   Split is now `expanded/large`, boxed is `medium`, focused column is
+   `compact`. The responsive law (breakpoints live in exactly one file) wins
+   over the draft `≥900` number; no inline exception was added.
+3. **Login had no field-level errors** — empty/invalid submits only raised the
+   banner. Every login/register/code-request form now sets `errorText` on the
+   offending field AND a live-region summary (`_formError ?? state.error`),
+   cleared on edit. Forgot already had field errors (kept).
+4. **No country prefix control** — `phoneCountries` was data-only. Login now
+   renders `AuthCountryCodeButton` (searchable `showAppSelectionSheet`:
+   bottom sheet on compact, dialog on wider classes; LTR-locked code; 48dp)
+   beside phone-like identifiers; email entry hides it. The button carries a
+   Material glyph (not flag emoji) so headless goldens and devices render
+   identically.
+5. **Forgot reset used a bespoke rule line** instead of the Phase 01.2 slot —
+   replaced with `AuthPasswordStrength` via `AuthTextField.belowField`.
+6. **Session-expired mark stretched full-width** inside stretch columns (found
+   via the new golden) — pinned with `Align(centerStart)`.
+7. **Splash icon ink** was `onInverseSurface` on a cobalt fill — now
+   `onPrimary` (correct AA pair); splash also respects
+   `MediaQuery.disableAnimationsOf` (static mark under reduced motion).
+
+## 17. Per-surface include / remove / enhance
+
+| Surface | Added | Removed | Recomposed |
+| :-- | :-- | :-- | :-- |
+| `AuthShell` | 1440 canvas cap + centering, form 480 cap, identity-panel legal note, adaptive-only breakpoints | raw width literals, `MediaQuery` ternary, brand-mark shadow | split = navy identity + focused form; boxed tablet card; focused mobile column |
+| `LoginView` | field errors + live summary, searchable country prefix, `AutofillGroup`, 48px segmented tabs | banner-only validation, no-prefix identifier | progressive register disclosure kept; phone/email conditional prefix row |
+| `ForgotPasswordView` | shared strength slot on reset, `AutofillGroup` | bespoke `_PasswordRequirement` | 2-step indicator → identify → code-sent + resend → success single CTA (unchanged order, rebuilt internals) |
+| `AuthLoadingView` | reduced-motion branch, correct icon ink, horizontal safe padding | — | navy splash, brand, progress, restore copy (rebuilt file) |
+| `AuthOtpField` | `Semantics(container, label, value)` grouping, explicit LTR `Directionality` | ungrouped label | 6-digit cells, live error (same grammar, rebuilt) |
+| `AuthTextField` | labeled visibility toggle kept + documented (tooltip = accessible name) | — | label-above control, focus/error ink once (rebuilt) |
+| `AuthPrimaryButton` | busy-vs-disabled ink grammar kept + documented | cobalt `DecoratedBox` glow shadow (calm surfaces) | 52px CTA, press scale (rebuilt) |
+| `AuthNotice/Slot` | 3-second-decidable single-message grammar kept | — | `AppInfoPanel` tones + animated slot (rebuilt) |
+| `SecurityBadge` | — | `liveRegion: false` wrapper (noise) | app-aware legal line (rebuilt) |
+| `AuthGuard` / `SessionExpired` | `AuthPrimaryButton` action, mark alignment fix, 2 new goldens | direct `FilledButton` | one message + one primary action (rebuilt) |
+| `LogoutDialog` | — (lives in `shared_core`, locked; already one-question `AppConfirmationDialog` + unsynced variant) | — | untouched |
+| Legacy | — | `AuthHeader` / `AuthBackground` / `OtpInputField` stay dead (zero references, test-guarded) | — |
+
+No new ARB keys: picker chrome reuses the shared sheet's localized
+title/search/empty; validation reuses frozen login/forgot keys.
+`l10n_untranslated.json` is `{}`; `arb_parity_test` + `localized_auth_test`
+green; identifiers/OTP/email/phone stay LTR-locked; warm customer tone
+unchanged (staff surfaces stay terse per the Airbnb addendum scope rule).
+
+## 18. Responsive / a11y matrix (verified)
+
+- **390 compact:** focused column ≤480, no overflow at 320/360/390/430
+  (existing small-phone tests), 1.3x + 1.8x text-scale tests green.
+- **768 medium:** boxed surface card (`auth_phase05_login_tablet_en/ar`).
+- **1280/1440 expanded:** navy split + 480 form under a centered 1440 canvas
+  (`auth_phase05_login_expanded_en/ar`, `auth_login_desktop`,
+  `auth_forgot_desktop`).
+- **Dark spots (new):** `auth_phase05_login_compact_dark_en/ar` — cobalt CTA,
+  inverse accents, no overflow.
+- **RTL spots:** full AR golden set; prefix code + email + OTP LTR-locked.
+- **Targets/focus/motion:** 48–56px controls, global focus-ring/disabled
+  tokens (Phase 01.2), `ReadingOrderTraversalPolicy` +
+  `AutofillGroup` + Enter-submit keyboard flow, `AppMotion.resolve` +
+  splash reduced-motion branch.
+
+## 19. Proof — goldens, inspection, test baseline
+
+**Regenerated (22, all re-rendered + natively inspected):**
+`auth_phase05_login_compact/tablet/expanded_{en,ar}`,
+`auth_phase05_otp_compact_{en,ar}`, `auth_phase05_recovery_compact_{en,ar}`,
+`auth_phase05_splash_{en,ar}` (ar byte-identical — render unchanged),
+`auth_login_mobile/desktop/code`, `auth_otp_sent_mobile`,
+`auth_forgot_mobile/desktop/sent/success`, `auth_register_mobile`,
+`auth_reset_mobile`. **New (4):** `auth_phase05_login_compact_dark_{en,ar}`,
+`auth_phase05_session_expired_{en,ar}`. Evidence: `reports/PHASE_05/screens/`
+(26 PNGs, real Plus Jakarta Sans + IBM Plex Sans Arabic + Material icons).
+
+**Native inspection (native size):** login compact/expanded, dark, OTP,
+recovery, splash, session-expired, AR compact — Concept A navy identity,
+cobalt CTA, hairline borders, hierarchy brand → context → title → switcher →
+fields → CTA → link → notice all verified; no clipping, overflow, tofu, or
+contrast defects. Two defects found *by* inspection and fixed before
+baselining: emoji-flag tofu in the prefix button; full-width expired mark.
+
+| Suite | Pre-rework | Post-rework | Δ |
+| :-- | ---: | ---: | :-- |
+| `packages/shared_auth` | 65 passed / 21 golden-failed (post-rebuild drift) | **90 passed / 0 failed** | rebuild + 4 new spot tests, all green |
+| `packages/shared_core` guards (`theme_primary`, `app_semantic_theme`, `arb_parity`) | — | **green** | untouched package, re-verified |
+| apps analyze (staff/owner/customer/crm) | 0 issues | **0 issues** | unchanged |
+| `flutter analyze lib test` (shared_auth) | 0 issues | **0 issues** | clean |
+
+## 20. Rework gates & remaining gaps
+
+- **Gate 1 — Engineering: PASS.** Presentation-only rewrite; contracts
+  byte-identical; 90/90; analyzer 0; theme guard + parity + untranslated
+  clean; zero raw widths/hex/branches; no new backend, no fake auth.
+- **Gate 2 — Visual / Product Owner: PENDING (headless only).** Renders
+  reviewed at native size in `reports/PHASE_05/screens/`; **live
+  device/browser acceptance NOT PERFORMED** and not claimed.
+- Known gaps: error-state goldens remain widget-test-only; `RoleConfig`
+  domain swatches stay with the domain owner (not rendered by any auth
+  widget); `supervisor_login_view.dart` stays Phase 11-owned; `LogoutDialog`
+  untouched (locked `shared_core`, already compliant).

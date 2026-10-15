@@ -6,9 +6,11 @@ enum AuthNoticeTone { error, info, success }
 
 /// Inline authentication feedback shared by every Orient auth screen.
 ///
-/// Restyled onto the shared [AppInfoPanel] grammar (spec §7): errors, information
-/// and success states share one silhouette and differ only by semantic tone.
-/// Every notice is announced as a live region for assistive technology.
+/// One silhouette for every tone ([AppInfoPanel] grammar): error, info and
+/// success differ only by semantic tone, so a failure never looks like a new
+/// component. Every notice is announced as a live region — a backend or
+/// validation failure must be decidable within seconds by sighted and
+/// screen-reader users alike.
 class AuthNotice extends StatelessWidget {
   final IconData icon;
   final String text;
@@ -37,7 +39,8 @@ class AuthNotice extends StatelessWidget {
 }
 
 /// Reserves no space when there is no message and animates the notice in, so a
-/// failure does not make the whole screen jump.
+/// failure does not make the whole screen jump. Null/empty renders an empty
+/// sliver — the slot owns the spacing, callers never conditionally pad.
 class AuthNoticeSlot extends StatelessWidget {
   final String? message;
   final IconData icon;

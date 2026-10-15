@@ -6,6 +6,7 @@ import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_notice.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_password_strength.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -15,6 +16,10 @@ enum ForgotMethod { phone, email }
 /// issues and consumes the recovery code in one `reset-password` call, so the
 /// code and the new password are collected together rather than inventing a
 /// local "verify" gate that the API cannot honour.
+///
+/// Composition (rebuilt): 2-step indicator (Verify account → New password) →
+/// identify → code-sent with resend timer → reset with the shared strength
+/// slot → warm success with a single CTA.
 enum _RecoveryStage { identifier, reset, done }
 
 class ForgotPasswordView extends ConsumerStatefulWidget {
@@ -35,7 +40,8 @@ class ForgotPasswordView extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ForgotPasswordView> createState() => _ForgotPasswordViewState();
+  ConsumerState<ForgotPasswordView> createState() =>
+      _ForgotPasswordViewState();
 }
 
 class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
@@ -365,41 +371,43 @@ class _IdentifierStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = SharedAuthL10n.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AuthNoticeSlot(message: bannerError),
-        AuthTextField(
-          controller: controller,
-          label: t.loginFieldIdentifier,
-          hint: t.loginFieldIdentifierHint,
-          icon: Icons.alternate_email_rounded,
-          keyboardType: TextInputType.emailAddress,
-          textInputAction: TextInputAction.done,
-          autofillHints: const [AutofillHints.username],
-          textDirection: TextDirection.ltr,
-          enabled: !isLoading,
-          errorText: error,
-          onChanged: (_) => onChanged(),
-          onSubmitted: (_) => onSubmit(),
-        ),
-        const SizedBox(height: AppDimensions.s24),
-        AuthPrimaryButton(
-          label: t.forgotActionSendRecoveryCode,
-          icon: Icons.arrow_forward_rounded,
-          isLoading: isLoading,
-          onPressed: onSubmit,
-        ),
-        const SizedBox(height: AppDimensions.s20),
-        Text(
-          t.forgotContactSupport,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            height: 1.45,
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AuthNoticeSlot(message: bannerError),
+          AuthTextField(
+            controller: controller,
+            label: t.loginFieldIdentifier,
+            hint: t.loginFieldIdentifierHint,
+            icon: Icons.alternate_email_rounded,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.username],
+            textDirection: TextDirection.ltr,
+            enabled: !isLoading,
+            errorText: error,
+            onChanged: (_) => onChanged(),
+            onSubmitted: (_) => onSubmit(),
           ),
-        ),
-      ],
+          const SizedBox(height: AppDimensions.s24),
+          AuthPrimaryButton(
+            label: t.forgotActionSendRecoveryCode,
+            icon: Icons.arrow_forward_rounded,
+            isLoading: isLoading,
+            onPressed: onSubmit,
+          ),
+          const SizedBox(height: AppDimensions.s20),
+          Text(
+            t.forgotContactSupport,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -441,104 +449,65 @@ class _ResetStep extends StatelessWidget {
     final resendAvailable = resendCooldown == 0 && !isLoading;
     final t = SharedAuthL10n.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AuthNotice(
-          icon: Icons.lock_reset_rounded,
-          text: t.forgotCodeSent(maskedDestination),
-        ),
-        const SizedBox(height: AppDimensions.s20),
-        AuthNoticeSlot(message: bannerError),
-        AuthOtpField(
-          label: t.forgotFieldRecoveryCode,
-          onChanged: onOtpChanged,
-          errorText: codeError,
-          enabled: !isLoading,
-        ),
-        const SizedBox(height: AppDimensions.s20),
-        AuthTextField(
-          controller: passwordCtrl,
-          label: t.forgotFieldNewPassword,
-          hint: t.forgotFieldNewPasswordHint,
-          icon: Icons.lock_outline_rounded,
-          obscureText: true,
-          textInputAction: TextInputAction.done,
-          autofillHints: const [AutofillHints.newPassword],
-          enabled: !isLoading,
-          errorText: passwordError,
-          onChanged: onPasswordChanged,
-          onSubmitted: (_) => onSubmit(),
-        ),
-        if (passwordError == null) ...[
-          const SizedBox(height: AppDimensions.s8),
-          _PasswordRequirement(password: password),
-        ],
-        const SizedBox(height: AppDimensions.s24),
-        AuthPrimaryButton(
-          label: t.forgotActionUpdatePassword,
-          icon: Icons.check_rounded,
-          isLoading: isLoading,
-          onPressed: onSubmit,
-        ),
-        const SizedBox(height: AppDimensions.s8),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: AppDimensions.s8,
-          runSpacing: AppDimensions.s4,
-          children: [
-            AuthLinkButton(
-              label: t.loginActionChangeIdentifier,
-              onPressed: isLoading ? null : onEditIdentifier,
-            ),
-            AuthLinkButton(
-              label: resendCooldown > 0
-                  ? t.loginActionResendIn(resendCooldown)
-                  : t.loginActionResendCode,
-              subtle: true,
-              onPressed: resendAvailable ? onResend : null,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Restrained live confirmation of the only enforced password rule.
-class _PasswordRequirement extends StatelessWidget {
-  final String password;
-
-  const _PasswordRequirement({required this.password});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final t = SharedAuthL10n.of(context);
-    final met = password.length >= 6;
-    final success = context.semanticColors.success.base;
-    final color = met ? success : colors.onSurfaceVariant;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          met ? Icons.check_circle_rounded : Icons.circle_outlined,
-          size: AppDimensions.iconSm,
-          color: color,
-        ),
-        const SizedBox(width: AppDimensions.s6),
-        Flexible(
-          child: Text(
-            t.forgotAtLeast6Characters,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AuthNotice(
+            icon: Icons.lock_reset_rounded,
+            text: t.forgotCodeSent(maskedDestination),
           ),
-        ),
-      ],
+          const SizedBox(height: AppDimensions.s20),
+          AuthNoticeSlot(message: bannerError),
+          AuthOtpField(
+            label: t.forgotFieldRecoveryCode,
+            onChanged: onOtpChanged,
+            errorText: codeError,
+            enabled: !isLoading,
+          ),
+          const SizedBox(height: AppDimensions.s20),
+          AuthTextField(
+            controller: passwordCtrl,
+            label: t.forgotFieldNewPassword,
+            hint: t.forgotFieldNewPasswordHint,
+            icon: Icons.lock_outline_rounded,
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.newPassword],
+            enabled: !isLoading,
+            errorText: passwordError,
+            belowField: AuthPasswordStrength(password: password),
+            onChanged: onPasswordChanged,
+            onSubmitted: (_) => onSubmit(),
+          ),
+          const SizedBox(height: AppDimensions.s24),
+          AuthPrimaryButton(
+            label: t.forgotActionUpdatePassword,
+            icon: Icons.check_rounded,
+            isLoading: isLoading,
+            onPressed: onSubmit,
+          ),
+          const SizedBox(height: AppDimensions.s8),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: AppDimensions.s8,
+            runSpacing: AppDimensions.s4,
+            children: [
+              AuthLinkButton(
+                label: t.loginActionChangeIdentifier,
+                onPressed: isLoading ? null : onEditIdentifier,
+              ),
+              AuthLinkButton(
+                label: resendCooldown > 0
+                    ? t.loginActionResendIn(resendCooldown)
+                    : t.loginActionResendCode,
+                subtle: true,
+                onPressed: resendAvailable ? onResend : null,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

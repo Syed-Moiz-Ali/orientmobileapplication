@@ -6,11 +6,11 @@ import 'package:shared_core/shared_core.dart';
 
 /// Auth-scoped text field used across the shared authentication surfaces.
 ///
-/// The label is rendered above the control instead of floating inside it so
-/// hierarchy stays readable at large text scales and focus / error states are
-/// communicated once, consistently. The control intentionally keeps a calm
-/// default border and only spends cobalt on the label and border while focused
-/// or invalid.
+/// The label renders above the control (never floating) so hierarchy stays
+/// readable at 1.3x text scale; focus and error spend cobalt/error ink once,
+/// on both the label and the border. Validation copy arrives via [errorText]
+/// and is associated with the control through the input decoration, so screen
+/// readers announce it with the field.
 class AuthTextField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
@@ -32,7 +32,7 @@ class AuthTextField extends StatefulWidget {
 
   /// Forces a fixed text direction for the control content. Identifier fields
   /// (email, mobile, username) set this to [TextDirection.ltr] so mixed
-  /// Arabic/Latin entry stays legible inside RTL layouts (spec §6).
+  /// Arabic/Latin entry stays legible inside RTL layouts.
   final TextDirection? textDirection;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -181,6 +181,8 @@ class _AuthTextFieldState extends State<AuthTextField> {
                       size: AppDimensions.iconMd,
                     ),
                     color: colors.onSurfaceVariant,
+                    // Labeled visibility toggle: tooltip doubles as the
+                    // accessible name, announced distinctly per state.
                     tooltip: _hidden ? t.authShowPassword : t.authHidePassword,
                   )
                 : null,
@@ -215,6 +217,11 @@ class _AuthTextFieldState extends State<AuthTextField> {
 
 /// Six-digit verification code input used by the one-time-code and password
 /// recovery flows.
+///
+/// Grouped and labelled: the whole block exposes one [Semantics] node carrying
+/// the field label plus the error (when present), while the error line itself
+/// is a live region. Digits stay LTR-locked and numeric-only so Arabic-layout
+/// entry cannot produce mirrored or non-digit codes.
 class AuthOtpField extends StatefulWidget {
   final ValueChanged<String> onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -280,79 +287,89 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          resolvedLabel,
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: hasError ? colorScheme.error : colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-            height: 1.3,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s10),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final fieldWidth = ((constraints.maxWidth - 40) / 6)
-                .clamp(42.0, 54.0)
-                .toDouble();
-            final defaultTheme = pinTheme(
-              width: fieldWidth,
-              borderColor: colorScheme.outlineVariant,
-              fillColor: colorScheme.surface,
-            );
-
-            return Pinput(
-              controller: _controller,
-              length: 6,
-              enabled: widget.enabled,
-              autofocus: widget.autofocus,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              textInputAction: TextInputAction.done,
-              defaultPinTheme: defaultTheme,
-              focusedPinTheme: pinTheme(
-                width: fieldWidth,
-                borderColor: colorScheme.primary,
-                fillColor: colorScheme.surface,
-                borderWidth: 1.8,
-              ),
-              submittedPinTheme: pinTheme(
-                width: fieldWidth,
-                borderColor: colorScheme.primary.withValues(alpha: 0.5),
-                fillColor: colorScheme.surfaceContainerLow,
-              ),
-              disabledPinTheme: pinTheme(
-                width: fieldWidth,
-                borderColor: colorScheme.outlineVariant.withValues(alpha: 0.6),
-                fillColor: colorScheme.surfaceContainerLow,
-              ),
-              errorPinTheme: pinTheme(
-                width: fieldWidth,
-                borderColor: colorScheme.error,
-                fillColor: colorScheme.errorContainer.withValues(alpha: 0.2),
-                borderWidth: 1.5,
-              ),
-              forceErrorState: hasError,
-              onChanged: widget.onChanged,
-              onCompleted: widget.onSubmitted,
-            );
-          },
-        ),
-        if (hasError) ...[
-          const SizedBox(height: AppDimensions.s8),
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              widget.errorText!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.error,
-                fontWeight: FontWeight.w600,
-              ),
+    return Semantics(
+      container: true,
+      label: resolvedLabel,
+      value: hasError ? widget.errorText : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            resolvedLabel,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: hasError ? colorScheme.error : colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
             ),
           ),
+          const SizedBox(height: AppDimensions.s10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final fieldWidth = ((constraints.maxWidth - 40) / 6)
+                  .clamp(42.0, 54.0)
+                  .toDouble();
+              final defaultTheme = pinTheme(
+                width: fieldWidth,
+                borderColor: colorScheme.outlineVariant,
+                fillColor: colorScheme.surface,
+              );
+
+              return Directionality(
+                textDirection: TextDirection.ltr,
+                child: Pinput(
+                  controller: _controller,
+                  length: 6,
+                  enabled: widget.enabled,
+                  autofocus: widget.autofocus,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  textInputAction: TextInputAction.done,
+                  defaultPinTheme: defaultTheme,
+                  focusedPinTheme: pinTheme(
+                    width: fieldWidth,
+                    borderColor: colorScheme.primary,
+                    fillColor: colorScheme.surface,
+                    borderWidth: 1.8,
+                  ),
+                  submittedPinTheme: pinTheme(
+                    width: fieldWidth,
+                    borderColor: colorScheme.primary.withValues(alpha: 0.5),
+                    fillColor: colorScheme.surfaceContainerLow,
+                  ),
+                  disabledPinTheme: pinTheme(
+                    width: fieldWidth,
+                    borderColor: colorScheme.outlineVariant.withValues(
+                      alpha: 0.6,
+                    ),
+                    fillColor: colorScheme.surfaceContainerLow,
+                  ),
+                  errorPinTheme: pinTheme(
+                    width: fieldWidth,
+                    borderColor: colorScheme.error,
+                    fillColor: colorScheme.errorContainer.withValues(alpha: 0.2),
+                    borderWidth: 1.5,
+                  ),
+                  forceErrorState: hasError,
+                  onChanged: widget.onChanged,
+                  onCompleted: widget.onSubmitted,
+                ),
+              );
+            },
+          ),
+          if (hasError) ...[
+            const SizedBox(height: AppDimensions.s8),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                widget.errorText!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

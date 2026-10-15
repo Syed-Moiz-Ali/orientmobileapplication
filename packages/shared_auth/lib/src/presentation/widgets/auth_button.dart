@@ -3,8 +3,10 @@ import 'package:shared_core/shared_core.dart';
 
 /// Primary call-to-action for authentication surfaces.
 ///
-/// Grows with the surrounding text scale, keeps a comfortable touch target,
-/// exposes a clear loading state, and gives a very subtle press response.
+/// Busy and disabled are visually and semantically distinct: busy keeps the
+/// active cobalt fill with a spinner (the action is running), genuinely
+/// disabled falls back to the neutral fill (the action is unavailable).
+/// Minimum 52px height keeps every auth CTA on a 48dp target.
 class AuthPrimaryButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -36,25 +38,22 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
     final colorScheme = theme.colorScheme;
     final disabled = widget.onPressed == null || widget.isLoading;
 
-    // Phase 01.1 accessibility amendment: the label previously inherited the
-    // theme text color (onSurface), which overrode the button ink and failed
-    // AA in both themes (dark #111827 on cobalt in light; light #F2F5FB on
-    // cobalt in dark). The label now explicitly follows the button ink:
-    // on-primary while enabled/busy, the neutral disabled ink when disabled.
+    // The label follows the button ink explicitly: on-primary while
+    // enabled/busy (AA on cobalt in both themes), neutral disabled ink when
+    // genuinely disabled. Inheriting the theme text color here previously
+    // failed contrast, so this mapping is load-bearing.
     final genuinelyDisabled = widget.onPressed == null && !widget.isLoading;
     final labelColor = genuinelyDisabled
         ? colorScheme.onSurfaceVariant
         : colorScheme.onPrimary;
 
-    Widget button = FilledButton(
+    final Widget button = FilledButton(
       onPressed: disabled ? null : widget.onPressed,
       style: FilledButton.styleFrom(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        // Phase 01.1 accessibility amendment: while busy, the button keeps its
-        // active-strength fill and ink so the spinner + label stay WCAG AA
-        // (the neutral disabled fill reduced them, e.g. white-on-grey in
-        // light). Genuinely disabled buttons keep the neutral treatment.
+        // Busy keeps active-strength fill + ink so spinner and label stay AA;
+        // genuinely disabled uses the neutral treatment.
         disabledBackgroundColor: widget.isLoading
             ? colorScheme.primary
             : colorScheme.surfaceContainerHighest,
@@ -113,22 +112,6 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
       ),
     );
 
-    if (!disabled) {
-      button = DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.primary.withValues(alpha: 0.22),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: button,
-      );
-    }
-
     return Listener(
       onPointerDown: disabled ? null : (_) => _setPressed(true),
       onPointerUp: disabled ? null : (_) => _setPressed(false),
@@ -144,7 +127,7 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
 }
 
 /// Secondary text action. [subtle] keeps the action visually quiet so it never
-/// competes with the primary call-to-action.
+/// competes with the primary call-to-action. 48px minimum keeps the target.
 class AuthLinkButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;

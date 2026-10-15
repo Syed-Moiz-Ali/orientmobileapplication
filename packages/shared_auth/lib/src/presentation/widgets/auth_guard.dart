@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_loading_view.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_models/src/user_role.dart';
@@ -62,8 +63,9 @@ class AuthGuard extends ConsumerWidget {
 /// Session-expired notice (Phase 01.2, no new backend).
 ///
 /// Shown after a 401-driven [AuthNotifier.invalidateSession] or whenever a
-/// guard denies access. [compact] renders the inline notice; expanded renders
-/// the full title + message + re-authenticate action.
+/// guard denies access. One message, one primary re-authenticate action plus
+/// implicit dismiss — decidable in seconds. [compact] renders the inline
+/// notice; expanded renders the full title + message + action.
 class AuthSessionExpiredView extends StatelessWidget {
   final VoidCallback? onSignIn;
   final bool compact;
@@ -81,7 +83,7 @@ class AuthSessionExpiredView extends StatelessWidget {
     final semantic = context.semanticColors;
     final t = SharedAuthL10n.of(context);
 
-    final icon = Container(
+    final mark = Container(
       width: 44,
       height: 44,
       decoration: BoxDecoration(
@@ -99,7 +101,7 @@ class AuthSessionExpiredView extends StatelessWidget {
     if (compact) {
       return Row(
         children: [
-          icon,
+          mark,
           const SizedBox(width: AppDimensions.s12),
           Expanded(
             child: Text(
@@ -120,7 +122,9 @@ class AuthSessionExpiredView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          icon,
+          // Pinned start: a stretch column would otherwise force the 44px
+          // mark to full width.
+          Align(alignment: AlignmentDirectional.centerStart, child: mark),
           const SizedBox(height: AppDimensions.s16),
           Text(
             t.authSessionExpiredTitle,
@@ -138,10 +142,10 @@ class AuthSessionExpiredView extends StatelessWidget {
           ),
           if (onSignIn != null) ...[
             const SizedBox(height: AppDimensions.s16),
-            FilledButton.icon(
+            AuthPrimaryButton(
+              label: t.authSessionExpiredAction,
+              icon: Icons.login_rounded,
               onPressed: onSignIn,
-              icon: const Icon(Icons.login_rounded, size: 18),
-              label: Text(t.authSessionExpiredAction),
             ),
           ],
         ],
