@@ -397,6 +397,363 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorInspectionPoor => 'ضعيف';
 
   @override
+  String get advisorPackageTitle => 'اختر باقة الفحص';
+
+  @override
+  String get advisorPackageSubtitle =>
+      'اختر مستوى الفحص المناسب لهذه المركبة. يمكنك تغيير الباقة قبل البدء.';
+
+  @override
+  String get advisorPackageQuick => 'فحص سريع من 20 نقطة';
+
+  @override
+  String get advisorPackageQuickDesc =>
+      'مسح سلامة سريع لمنطقة الاستلام والمسار السريع.';
+
+  @override
+  String get advisorPackageFull => 'فحص شامل من 60 نقطة';
+
+  @override
+  String get advisorPackageFullDesc =>
+      'فحص كامل لمنطقة المحرك والمكابح والتعليق والبطارية والإطارات والهيكل الخارجي.';
+
+  @override
+  String get advisorPackageSafety => 'تدقيق السلامة وصلاحية الطريق';
+
+  @override
+  String get advisorPackageSafetyDesc =>
+      'تدقيق المكابح والتوجيه وأحزمة الأمان والإنارة لاعتماد صلاحية الطريق.';
+
+  @override
+  String advisorPackageDuration(int minutes) {
+    return 'نحو $minutes دقيقة';
+  }
+
+  @override
+  String advisorPackageCheckpoints(int count) {
+    return '$count نقطة فحص';
+  }
+
+  @override
+  String advisorPackageSections(int count) {
+    return '$count أقسام';
+  }
+
+  @override
+  String get advisorPackageFocus => 'مجالات التركيز';
+
+  @override
+  String get advisorFocusBrakes => 'المكابح';
+
+  @override
+  String get advisorFocusEngine => 'المحرك';
+
+  @override
+  String get advisorFocusSuspension => 'نظام التعليق';
+
+  @override
+  String get advisorFocusLighting => 'الإنارة';
+
+  @override
+  String get advisorPackageRecommended => 'موصى به';
+
+  @override
+  String get advisorPackageSelected => 'محدد';
+
+  @override
+  String get advisorPackageStart => 'متابعة';
+
+  @override
+  String get advisorPackageSortRecommended => 'موصى به';
+
+  @override
+  String get advisorPackageSortQuickest => 'الأسرع';
+
+  @override
+  String get advisorPackageSortThorough => 'الأشمل';
+
+  @override
+  String get advisorPackageSkip => 'تخطي';
+
+  @override
+  String get advisorHudTitle => 'مساحة الفحص';
+
+  @override
+  String advisorHudProgress(int done, int total) {
+    return '$done من $total نقطة فحص';
+  }
+
+  @override
+  String get advisorHudTabDamage => 'خريطة الأضرار';
+
+  @override
+  String get advisorHudTabChecks => 'نقاط الفحص';
+
+  @override
+  String get advisorHudCanvasTitle => 'لوحة الأضرار';
+
+  @override
+  String get advisorHudCanvasHint =>
+      'انقر على منطقة لتثبيت علامة ضرر. تظهر العلامات أدناه ويمكن حذفها.';
+
+  @override
+  String get advisorHudKindTitle => 'ما نوع الضرر؟';
+
+  @override
+  String get advisorHudKindMinor => 'خدش بسيط';
+
+  @override
+  String get advisorHudKindMinorHint => 'خدش سطحي أو احتكاك';
+
+  @override
+  String get advisorHudKindStructural => 'انبعاج هيكلي';
+
+  @override
+  String get advisorHudKindStructuralHint => 'انبعاج عميق أو تشوه';
+
+  @override
+  String get advisorHudKindGlass => 'كسر زجاج أو مصباح';
+
+  @override
+  String get advisorHudKindGlassHint => 'زجاج متشقق أو مجموعة مصباح';
+
+  @override
+  String get advisorHudPinsTitle => 'علامات الأضرار';
+
+  @override
+  String get advisorHudNoPins => 'لا توجد علامات ضرر بعد';
+
+  @override
+  String get advisorHudNoPinsHint =>
+      'انقر على المخطط أعلاه لتحديد أول نقطة ضرر.';
+
+  @override
+  String get advisorHudDeletePin => 'حذف العلامة';
+
+  @override
+  String get advisorHudZoneFront => 'الأمام';
+
+  @override
+  String get advisorHudZoneFrontLeft => 'الأمام الأيسر';
+
+  @override
+  String get advisorHudZoneSideLeft => 'الجانب الأيسر';
+
+  @override
+  String get advisorHudZoneRearLeft => 'الخلف الأيسر';
+
+  @override
+  String get advisorHudZoneRear => 'الخلف';
+
+  @override
+  String get advisorHudZoneRearRight => 'الخلف الأيمن';
+
+  @override
+  String get advisorHudZoneSideRight => 'الجانب الأيمن';
+
+  @override
+  String get advisorHudZoneFrontRight => 'الأمام الأيمن';
+
+  @override
+  String get advisorHudRingPass => 'سليم';
+
+  @override
+  String get advisorHudRingCaution => 'يحتاج انتباه';
+
+  @override
+  String get advisorHudRingFail => 'راسب';
+
+  @override
+  String get advisorHudMarkAllPass => 'الكل سليم';
+
+  @override
+  String get advisorHudSearchHint => 'ابحث في نقاط الفحص…';
+
+  @override
+  String get advisorHudNoMatch => 'لا توجد نقاط مطابقة';
+
+  @override
+  String advisorHudSectionRemaining(int count) {
+    return '$count متبقٍ';
+  }
+
+  @override
+  String get advisorHudSectionDone => 'اكتملت جميع نقاط الفحص';
+
+  @override
+  String get advisorHudDockTitle => 'الأدلة الصوتية والصور';
+
+  @override
+  String get advisorHudVoiceIdle => 'انقر لتسجيل ملاحظة صوتية';
+
+  @override
+  String advisorHudVoiceRecording(int seconds) {
+    return 'جارٍ التسجيل… $seconds ث';
+  }
+
+  @override
+  String get advisorHudVoicePlay => 'تشغيل';
+
+  @override
+  String get advisorHudVoiceDelete => 'حذف التسجيل';
+
+  @override
+  String get advisorHudVoiceSaved => 'تم حفظ الملاحظة الصوتية';
+
+  @override
+  String get advisorHudMicDenied => 'تم رفض الوصول إلى الميكروفون';
+
+  @override
+  String get advisorHudMicDeniedHint =>
+      'فعّل الوصول إلى الميكروفون من إعدادات النظام لتسجيل الملاحظات الصوتية.';
+
+  @override
+  String get advisorHudCameraDenied => 'تم رفض الوصول إلى الكاميرا';
+
+  @override
+  String get advisorHudCameraDeniedHint =>
+      'فعّل الوصول إلى الكاميرا من إعدادات النظام لالتقاط الأدلة المصورة.';
+
+  @override
+  String get advisorHudGalleryDenied => 'تم رفض الوصول إلى المعرض';
+
+  @override
+  String get advisorHudGalleryDeniedHint =>
+      'فعّل الوصول إلى المعرض من إعدادات النظام لإرفاق الصور.';
+
+  @override
+  String get advisorHudOpenSettings => 'فتح الإعدادات';
+
+  @override
+  String get advisorHudPhotoRetry => 'انقر لإعادة المحاولة';
+
+  @override
+  String get advisorHudPhotoError =>
+      'تعذّر إرفاق الصورة. تحقق من التخزين وحاول مجدداً.';
+
+  @override
+  String get advisorHudReview => 'مراجعة الفحص';
+
+  @override
+  String get advisorHudNotifyOwner => 'إشعار المالك بعد الإرسال';
+
+  @override
+  String get advisorHudTemplateError =>
+      'تعذّر تحميل نموذج الفحص. تحقق من اتصالك وحاول مجدداً.';
+
+  @override
+  String get advisorHudRetry => 'إعادة المحاولة';
+
+  @override
+  String get advisorHudAddNote => 'إضافة ملاحظة';
+
+  @override
+  String get advisorHudClear => 'مسح';
+
+  @override
+  String get advisorHudResetGrade => 'إعادة تعيين التقييم';
+
+  @override
+  String get advisorHudDone => 'تم';
+
+  @override
+  String get advisorHudDoneMarking => 'إنهاء التحديد';
+
+  @override
+  String get advisorHudContinue => 'متابعة';
+
+  @override
+  String get advisorHudShowPins => 'عرض القائمة';
+
+  @override
+  String get advisorHudHidePins => 'إخفاء';
+
+  @override
+  String get advisorHealthTitle => 'تقرير صحة المركبة';
+
+  @override
+  String get advisorHealthSubtitle =>
+      'راجع جميع النتائج قبل التحويل أو الإرسال.';
+
+  @override
+  String advisorHealthScore(int score) {
+    return '$score٪ الصحة العامة';
+  }
+
+  @override
+  String advisorHealthScoredOf(int done, int total) {
+    return '$done من $total نقطة تم تقييمها';
+  }
+
+  @override
+  String get advisorHealthMandatory => 'بنود السلامة الإلزامية';
+
+  @override
+  String get advisorHealthRecommended => 'صيانة موصى بها';
+
+  @override
+  String get advisorHealthGoodGroup => 'حالة جيدة';
+
+  @override
+  String get advisorHealthConvert => 'تحويل إلى تقدير';
+
+  @override
+  String get advisorHealthSubmit => 'إرسال الفحص';
+
+  @override
+  String get advisorHealthSubmitting => 'جارٍ إرسال الفحص…';
+
+  @override
+  String get advisorHealthEmpty => 'لم يتم تقييم أي نقطة بعد';
+
+  @override
+  String get advisorHealthEmptyHint =>
+      'قيّم نقطة واحدة على الأقل لإنشاء تقرير الصحة.';
+
+  @override
+  String advisorHealthRemaining(int count) {
+    return '$count نقاط ما زالت بحاجة إلى تقييم';
+  }
+
+  @override
+  String get advisorHealthBackEdit => 'رجوع للتعديل';
+
+  @override
+  String advisorHealthReady(int count) {
+    return '$count نقاط جاهزة للإرسال';
+  }
+
+  @override
+  String get advisorHealthSubmitTitle => 'إرسال هذا الفحص؟';
+
+  @override
+  String get advisorHealthSubmitMessage =>
+      'تأكد من صحة تقييمات النقاط وعلامات الأضرار والمرفقات.';
+
+  @override
+  String get advisorHealthReviewAgain => 'مراجعة مجدداً';
+
+  @override
+  String advisorHealthAttachments(int count) {
+    return '$count مرفقات';
+  }
+
+  @override
+  String get advisorHealthShare => 'مشاركة';
+
+  @override
+  String get advisorHealthExport => 'تصدير';
+
+  @override
+  String get advisorHealthCopied => 'تم نسخ التقرير إلى الحافظة';
+
+  @override
+  String get advisorHealthExpand => 'عرض';
+
+  @override
+  String get advisorHealthCollapse => 'إخفاء';
+
+  @override
   String get advisorJobDetailLoadError =>
       'تعذّر تحميل بطاقة العمل هذه. تحقق من اتصالك وحاول مجدداً.';
 

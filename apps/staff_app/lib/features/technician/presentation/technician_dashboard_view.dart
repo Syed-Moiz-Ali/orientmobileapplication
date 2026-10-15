@@ -39,7 +39,14 @@ class TechnicianDashboardView extends ConsumerWidget {
     final effectiveIndex = state.selectedTab < _pages.length ? state.selectedTab : 0;
 
     return DashboardShell(
-      appBar: TechnicianAppBar(selectedIndex: effectiveIndex),
+      appBar: _TechnicianChrome(
+        selectedIndex: effectiveIndex,
+        branch: notifier.profile.branch.trim(),
+        avatarInitials: notifier.profile.avatarInitials.isNotEmpty
+            ? notifier.profile.avatarInitials
+            : 'T',
+        attendanceLabel: state.attendanceStatus.label,
+      ),
       body: AppAdaptiveNavigationFrame(
         items: _navItems,
         selectedIndex: effectiveIndex,
@@ -106,11 +113,26 @@ class TechnicianDashboardView extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TECHNICIAN APP BAR (MATCHING SUPERVISOR AND ADVISOR STANDARDS)
+// TECHNICIAN APP CHROME (PHASE 07.1 — CENTRALIZED)
+//
+// The bespoke `TechnicianAppBar` is deleted: title, subtitle, avatar leading
+// and the notification action now compose the shared [WorkspaceAppBar] with
+// identical copy and behavior (avatar → profile sheet, bell → notification
+// sheet).
 // ─────────────────────────────────────────────────────────────────────────────
-class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
+class _TechnicianChrome extends ConsumerWidget
+    implements PreferredSizeWidget {
   final int selectedIndex;
-  const TechnicianAppBar({super.key, required this.selectedIndex});
+  final String branch;
+  final String avatarInitials;
+  final String attendanceLabel;
+
+  const _TechnicianChrome({
+    required this.selectedIndex,
+    required this.branch,
+    required this.avatarInitials,
+    required this.attendanceLabel,
+  });
 
   static const _titles = ['Workshop Bay', 'Jobs', 'Productivity', 'Technician Profile'];
 
@@ -126,61 +148,25 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final notifier = ref.read(technicianDashboardProvider.notifier);
-    final branch = notifier.profile.branch.trim();
     final isToday = selectedIndex == 0;
-
-    return AppBar(
-      backgroundColor: colors.surface,
-      foregroundColor: colors.onSurface,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      systemOverlayStyle: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: theme.brightness == Brightness.dark ? Brightness.light : Brightness.dark,
-      ),
-      titleSpacing: 4,
-      leadingWidth: 58,
+    return WorkspaceAppBar(
+      title: isToday ? 'Today' : _titles[selectedIndex],
+      subtitle: isToday
+          ? '${branch.isEmpty ? 'Workshop bay' : branch} \u00b7 $attendanceLabel'
+          : _subtitles[selectedIndex],
+      toolbarHeight: 71,
       leading: Padding(
         padding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
         child: UserAvatar(
-          initials: notifier.profile.avatarInitials.isNotEmpty ? notifier.profile.avatarInitials : 'T',
+          initials: avatarInitials,
           onTap: () {
             showProfileSheet(
               context,
-              _profileSheetData(context, ref),
+              _technicianProfileSheetData(context, ref),
               onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
             );
           },
         ),
-      ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            isToday ? 'Today' : _titles[selectedIndex],
-            style: textTheme.titleMedium?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const SizedBox(height: 1),
-          Text(
-            isToday
-                ? '${branch.isEmpty ? 'Workshop bay' : branch} \u00b7 ${ref.watch(technicianDashboardProvider).attendanceStatus.label}'
-                : _subtitles[selectedIndex],
-            style: textTheme.labelSmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              fontSize: 10.5,
-            ),
-          ),
-        ],
       ),
       actions: [
         // Notification button
@@ -201,8 +187,12 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ],
     );
   }
+}
 
-  ProfileSheetData _profileSheetData(BuildContext context, WidgetRef ref) {
+ProfileSheetData _technicianProfileSheetData(
+  BuildContext context,
+  WidgetRef ref,
+) {
     final notifier = ref.read(technicianDashboardProvider.notifier);
     final profile = notifier.profile;
     final name = profile.name.isNotEmpty ? profile.name : 'Technician';
@@ -246,4 +236,5 @@ class TechnicianAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ],
     );
   }
-}
+
+

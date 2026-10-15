@@ -402,6 +402,363 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorInspectionPoor => 'Poor';
 
   @override
+  String get advisorPackageTitle => 'Choose inspection package';
+
+  @override
+  String get advisorPackageSubtitle =>
+      'Pick the inspection depth for this vehicle. You can switch packages before starting.';
+
+  @override
+  String get advisorPackageQuick => 'Quick 20-Point Check';
+
+  @override
+  String get advisorPackageQuickDesc =>
+      'Fast safety sweep for intake and express bays.';
+
+  @override
+  String get advisorPackageFull => 'Comprehensive 60-Point Check';
+
+  @override
+  String get advisorPackageFullDesc =>
+      'Full under-hood, brakes, suspension, battery, tires and exterior inspection.';
+
+  @override
+  String get advisorPackageSafety => 'Safety and Roadworthiness Audit';
+
+  @override
+  String get advisorPackageSafetyDesc =>
+      'Brake, steering, restraint and lighting audit for roadworthiness sign-off.';
+
+  @override
+  String advisorPackageDuration(int minutes) {
+    return '~$minutes min';
+  }
+
+  @override
+  String advisorPackageCheckpoints(int count) {
+    return '$count checkpoints';
+  }
+
+  @override
+  String advisorPackageSections(int count) {
+    return '$count sections';
+  }
+
+  @override
+  String get advisorPackageFocus => 'Focus areas';
+
+  @override
+  String get advisorFocusBrakes => 'Brakes';
+
+  @override
+  String get advisorFocusEngine => 'Engine';
+
+  @override
+  String get advisorFocusSuspension => 'Suspension';
+
+  @override
+  String get advisorFocusLighting => 'Lighting';
+
+  @override
+  String get advisorPackageRecommended => 'Recommended';
+
+  @override
+  String get advisorPackageSelected => 'Selected';
+
+  @override
+  String get advisorPackageStart => 'Continue';
+
+  @override
+  String get advisorPackageSortRecommended => 'Recommended';
+
+  @override
+  String get advisorPackageSortQuickest => 'Quickest';
+
+  @override
+  String get advisorPackageSortThorough => 'Most thorough';
+
+  @override
+  String get advisorPackageSkip => 'Skip';
+
+  @override
+  String get advisorHudTitle => 'Inspection workspace';
+
+  @override
+  String advisorHudProgress(int done, int total) {
+    return '$done of $total checkpoints';
+  }
+
+  @override
+  String get advisorHudTabDamage => 'Damage map';
+
+  @override
+  String get advisorHudTabChecks => 'Checkpoints';
+
+  @override
+  String get advisorHudCanvasTitle => 'Damage canvas';
+
+  @override
+  String get advisorHudCanvasHint =>
+      'Tap a zone to drop a damage pin. Pins are listed below and can be deleted.';
+
+  @override
+  String get advisorHudKindTitle => 'What kind of damage?';
+
+  @override
+  String get advisorHudKindMinor => 'Minor scratch';
+
+  @override
+  String get advisorHudKindMinorHint => 'Scuff or surface scratch';
+
+  @override
+  String get advisorHudKindStructural => 'Structural dent';
+
+  @override
+  String get advisorHudKindStructuralHint => 'Deep dent or deformation';
+
+  @override
+  String get advisorHudKindGlass => 'Glass or lamp crack';
+
+  @override
+  String get advisorHudKindGlassHint => 'Cracked glass or lamp assembly';
+
+  @override
+  String get advisorHudPinsTitle => 'Damage pins';
+
+  @override
+  String get advisorHudNoPins => 'No damage pinned yet';
+
+  @override
+  String get advisorHudNoPinsHint =>
+      'Tap the blueprint above to mark the first damage point.';
+
+  @override
+  String get advisorHudDeletePin => 'Delete pin';
+
+  @override
+  String get advisorHudZoneFront => 'Front';
+
+  @override
+  String get advisorHudZoneFrontLeft => 'Front left';
+
+  @override
+  String get advisorHudZoneSideLeft => 'Left side';
+
+  @override
+  String get advisorHudZoneRearLeft => 'Rear left';
+
+  @override
+  String get advisorHudZoneRear => 'Rear';
+
+  @override
+  String get advisorHudZoneRearRight => 'Rear right';
+
+  @override
+  String get advisorHudZoneSideRight => 'Right side';
+
+  @override
+  String get advisorHudZoneFrontRight => 'Front right';
+
+  @override
+  String get advisorHudRingPass => 'Pass';
+
+  @override
+  String get advisorHudRingCaution => 'Caution';
+
+  @override
+  String get advisorHudRingFail => 'Fail';
+
+  @override
+  String get advisorHudMarkAllPass => 'All pass';
+
+  @override
+  String get advisorHudSearchHint => 'Search checkpoints…';
+
+  @override
+  String get advisorHudNoMatch => 'No matching checkpoints';
+
+  @override
+  String advisorHudSectionRemaining(int count) {
+    return '$count remaining';
+  }
+
+  @override
+  String get advisorHudSectionDone => 'All checkpoints completed';
+
+  @override
+  String get advisorHudDockTitle => 'Voice and photo evidence';
+
+  @override
+  String get advisorHudVoiceIdle => 'Tap to record a voice note';
+
+  @override
+  String advisorHudVoiceRecording(int seconds) {
+    return 'Recording… ${seconds}s';
+  }
+
+  @override
+  String get advisorHudVoicePlay => 'Play';
+
+  @override
+  String get advisorHudVoiceDelete => 'Delete recording';
+
+  @override
+  String get advisorHudVoiceSaved => 'Voice note saved';
+
+  @override
+  String get advisorHudMicDenied => 'Microphone access denied';
+
+  @override
+  String get advisorHudMicDeniedHint =>
+      'Enable microphone access in system settings to record voice notes.';
+
+  @override
+  String get advisorHudCameraDenied => 'Camera access denied';
+
+  @override
+  String get advisorHudCameraDeniedHint =>
+      'Enable camera access in system settings to capture photo evidence.';
+
+  @override
+  String get advisorHudGalleryDenied => 'Gallery access denied';
+
+  @override
+  String get advisorHudGalleryDeniedHint =>
+      'Enable gallery access in system settings to attach photos.';
+
+  @override
+  String get advisorHudOpenSettings => 'Open settings';
+
+  @override
+  String get advisorHudPhotoRetry => 'Tap to retry';
+
+  @override
+  String get advisorHudPhotoError =>
+      'Photo failed to attach. Check storage and try again.';
+
+  @override
+  String get advisorHudReview => 'Review inspection';
+
+  @override
+  String get advisorHudNotifyOwner => 'Notify owner after submission';
+
+  @override
+  String get advisorHudTemplateError =>
+      'We couldn\'t load the inspection template. Check your connection and try again.';
+
+  @override
+  String get advisorHudRetry => 'Retry';
+
+  @override
+  String get advisorHudAddNote => 'Add note';
+
+  @override
+  String get advisorHudClear => 'Clear';
+
+  @override
+  String get advisorHudResetGrade => 'Reset grade';
+
+  @override
+  String get advisorHudDone => 'Done';
+
+  @override
+  String get advisorHudDoneMarking => 'Done marking';
+
+  @override
+  String get advisorHudContinue => 'Continue';
+
+  @override
+  String get advisorHudShowPins => 'Show list';
+
+  @override
+  String get advisorHudHidePins => 'Hide';
+
+  @override
+  String get advisorHealthTitle => 'Vehicle health report';
+
+  @override
+  String get advisorHealthSubtitle =>
+      'Review every finding before converting or submitting.';
+
+  @override
+  String advisorHealthScore(int score) {
+    return '$score% overall health';
+  }
+
+  @override
+  String advisorHealthScoredOf(int done, int total) {
+    return '$done of $total checkpoints graded';
+  }
+
+  @override
+  String get advisorHealthMandatory => 'Mandatory safety items';
+
+  @override
+  String get advisorHealthRecommended => 'Recommended maintenance';
+
+  @override
+  String get advisorHealthGoodGroup => 'Good condition';
+
+  @override
+  String get advisorHealthConvert => 'Convert to estimate';
+
+  @override
+  String get advisorHealthSubmit => 'Submit inspection';
+
+  @override
+  String get advisorHealthSubmitting => 'Submitting inspection…';
+
+  @override
+  String get advisorHealthEmpty => 'No checkpoints rated yet';
+
+  @override
+  String get advisorHealthEmptyHint =>
+      'Grade at least one checkpoint to build this health report.';
+
+  @override
+  String advisorHealthRemaining(int count) {
+    return '$count checkpoints still need a condition';
+  }
+
+  @override
+  String get advisorHealthBackEdit => 'Back to edit';
+
+  @override
+  String advisorHealthReady(int count) {
+    return '$count checkpoints ready to submit';
+  }
+
+  @override
+  String get advisorHealthSubmitTitle => 'Submit this inspection?';
+
+  @override
+  String get advisorHealthSubmitMessage =>
+      'Confirm that the checkpoint grades, damage pins and attachments are correct.';
+
+  @override
+  String get advisorHealthReviewAgain => 'Review again';
+
+  @override
+  String advisorHealthAttachments(int count) {
+    return '$count attachments';
+  }
+
+  @override
+  String get advisorHealthShare => 'Share';
+
+  @override
+  String get advisorHealthExport => 'Export';
+
+  @override
+  String get advisorHealthCopied => 'Report copied to clipboard';
+
+  @override
+  String get advisorHealthExpand => 'Show';
+
+  @override
+  String get advisorHealthCollapse => 'Hide';
+
+  @override
   String get advisorJobDetailLoadError =>
       'We couldn\'t load this job card. Check your connection and try again.';
 

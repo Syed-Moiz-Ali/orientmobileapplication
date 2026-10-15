@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/kpi_card.dart';
 import 'package:shared_core/shared_core.dart';
 
+/// Phase 07.1: the bespoke `KpiCard` is deleted — tiles compose the shared
+/// [AppKpiCard] (same label/value/icon; the old success sub-chip maps to the
+/// shared trend slot; tint resolves from the entity's semantic state).
 class KpiGrid extends StatelessWidget {
   final List<OwnerKpi> kpis;
   const KpiGrid({super.key, required this.kpis});
@@ -29,7 +31,18 @@ class KpiGrid extends StatelessWidget {
       spacing: adaptive.itemSpacing,
       runSpacing: adaptive.itemSpacing,
       childAspectRatio: baseAspectRatio / textScale,
-      children: [for (final kpi in kpis) KpiCard(kpi: kpi)],
+      children: [
+        for (final kpi in kpis)
+          AppKpiCard(
+            label: kpi.label,
+            value: kpi.value,
+            icon: kpi.icon,
+            semanticState: kpi.state,
+            trend: kpi.sub.isEmpty
+                ? null
+                : KpiTrend(label: kpi.sub, isPositive: true),
+          ),
+      ],
     );
   }
 }

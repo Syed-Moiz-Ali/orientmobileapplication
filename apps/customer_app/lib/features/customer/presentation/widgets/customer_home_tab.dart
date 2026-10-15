@@ -12,7 +12,6 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_hom
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_header.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_quick_actions.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_service_summary.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_home_skeleton.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 
 /// Customer Home — answers four questions in the first viewport:
@@ -46,7 +45,60 @@ class CustomerHomeTab extends ConsumerWidget {
 
     // First load only — a user-initiated refresh must never blank the screen.
     if (state.isLoading && !hasAnyData) {
-      return const CustomerHomeSkeleton();
+      // Phase 07.1: bespoke skeleton migrated to AppSkeleton primitives.
+      return AppResponsivePage(
+        maxContentWidth: 1080,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppSkeleton.text(width: 96, height: 12),
+                      SizedBox(height: AppDimensions.s8),
+                      AppSkeleton.text(width: 150, height: 26),
+                    ],
+                  ),
+                ),
+                AppSkeleton.circle(size: 42),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s20),
+            AppSplitView(
+              primaryFlex: context.adaptive.isMedium ? 1 : 3,
+              secondaryFlex: context.adaptive.isMedium ? 1 : 2,
+              spacing: AppDimensions.s24,
+              primary: const AppSkeleton.card(height: 190),
+              secondary: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (var i = 0; i < 3; i++) ...[
+                          if (i > 0)
+                            const SizedBox(width: AppDimensions.s10),
+                          const Expanded(
+                            child: AppSkeleton.card(height: 92),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.s24),
+                  const AppSkeleton.text(width: 120, height: 18),
+                  const SizedBox(height: AppDimensions.s12),
+                  const AppSkeleton.card(height: 128),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (state.loadError.isNotEmpty && !hasAnyData) {

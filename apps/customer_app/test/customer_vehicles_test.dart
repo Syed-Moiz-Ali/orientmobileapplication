@@ -12,7 +12,7 @@ import 'package:customer_app/features/customer/data/datasources/customer_remote_
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_vehicle_presentation.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
+// Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicle_record.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicles_tab.dart';
 
@@ -29,7 +29,7 @@ void main() {
       await _pumpTab(tester, vehicles: const [], loading: true, settle: false);
       await tester.pump();
 
-      expect(find.byType(CustomerSkeleton), findsOneWidget);
+      expect(find.byType(AppSkeleton), findsWidgets);
     });
 
     testWidgets('offers a recoverable state when nothing could load', (

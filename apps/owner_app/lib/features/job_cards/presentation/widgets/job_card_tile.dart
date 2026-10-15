@@ -113,27 +113,34 @@ class JobCardTile extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Estimate Total',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 10,
+              // Phase 07.1: flexed so the amount ellipsizes instead of
+              // overflowing the action row on 320 px phones. Discovered by
+              // the migration viewport sweep (first 320 px coverage).
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Estimate Total',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'AED ${jobCard.amount.toStringAsFixed(2)}',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.primary,
+                    Text(
+                      'AED ${jobCard.amount.toStringAsFixed(2)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.primary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: AppDimensions.s8),
               FilledButton.icon(
                 onPressed: onViewDetails,
                 style: FilledButton.styleFrom(

@@ -1900,8 +1900,9 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: SearchField(
-              hint: 'Search services',
+            // Phase 07.1: bespoke SearchField migrated to AppSearchField.
+            child: AppSearchField(
+              hintText: 'Search services',
               onChanged: (q) => setState(() => _q = q),
             ),
           ),
@@ -2062,8 +2063,9 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: SearchField(
-              hint: 'Search parts',
+            // Phase 07.1: bespoke SearchField migrated to AppSearchField.
+            child: AppSearchField(
+              hintText: 'Search parts',
               onChanged: (q) => setState(() => _q = q),
             ),
           ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:owner_app/features/common/presentation/owner_shimmer_skeletons.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/attendance_provider.dart';
 
 class AttendanceView extends ConsumerWidget {
@@ -225,7 +224,7 @@ class AttendanceView extends ConsumerWidget {
               const SizedBox(height: AppDimensions.s16),
 
               if (state.isLoading)
-                const OwnerDashboardSkeleton()
+                const AppSkeleton.page()
               else if (state.error.isNotEmpty)
                 ErrorView(message: state.error, onRetry: notifier.load)
               else if (records.isEmpty)

@@ -280,7 +280,6 @@ class _CustomerBookServiceViewState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final dashboard = ref.watch(customerDashboardProvider);
     final vehicles = dashboard.vehicles;
 
@@ -317,6 +316,8 @@ class _CustomerBookServiceViewState
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar.
+      appBar: const WorkspaceAppBar(title: 'Book service', showBack: true),
       bottomNavigationBar: _ActionBar(
         step: _currentStep,
         lastStep: lastStep,
@@ -335,8 +336,6 @@ class _CustomerBookServiceViewState
         bottom: false,
         child: Column(
           children: [
-            const AppTopBar(title: 'Book service'),
-            Divider(height: 1, color: colors.outlineVariant),
             Expanded(
               child: AppResponsivePage(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -345,9 +344,12 @@ class _CustomerBookServiceViewState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: AppDimensions.s16),
-                    CustomerBookingProgress(
-                      currentStep: _currentStep,
-                      labels: _stepLabels,
+                    // Phase 07.1: bespoke progress migrated to AppStepper
+                    // (same steps + position; localized Step X of Y built in).
+                    AppStepper(
+                      steps: _stepLabels,
+                      currentIndex: _currentStep,
+                      onStepTap: _goToStep,
                     ),
                     const SizedBox(height: AppDimensions.s20),
                     _stepBody(step: step, summary: summary, onReview: onReview),
@@ -371,7 +373,8 @@ class _CustomerBookServiceViewState
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _StepHeading(
+        // Phase 07.1: bespoke _StepHeading migrated to SectionHeader.
+        SectionHeader(
           title: _stepTitle(_currentStep),
           subtitle: _stepSubtitle(_currentStep),
         ),
@@ -561,44 +564,6 @@ class _ActionBar extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _StepHeading extends StatelessWidget {
-  final String title;
-  final String subtitle;
-
-  const _StepHeading({required this.title, required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Semantics(
-          header: true,
-          child: Text(
-            title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s4),
-        Text(
-          subtitle,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colors.onSurfaceVariant,
-            height: 1.45,
-          ),
-        ),
-      ],
     );
   }
 }

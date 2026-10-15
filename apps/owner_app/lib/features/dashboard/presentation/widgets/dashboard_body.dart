@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:owner_app/core/models/profile_data.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/messages_page.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/owner_activity_feed_tab.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/owner_app_bar.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/owner_dashboard_page.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/top_sales_page.dart';
+import 'package:owner_app/features/dashboard/presentation/widgets/period_dropdown.dart';
 
 class DashboardBody extends ConsumerWidget {
   const DashboardBody({super.key});
@@ -48,7 +50,7 @@ class DashboardBody extends ConsumerWidget {
     final state = ref.watch(dashboardUiProvider);
 
     return DashboardShell(
-      appBar: const OwnerAppBar(),
+      appBar: _OwnerChrome(selectedIndex: state.selectedIndex),
       body: AppAdaptiveNavigationFrame(
         items: _navItems,
         selectedIndex: state.selectedIndex,
@@ -121,5 +123,79 @@ class DashboardBody extends ConsumerWidget {
               onSelected: notifier.selectTab,
             ),
     );
+  }
+}
+
+/// Phase 07.1 centralized chrome: the bespoke `OwnerAppBar` is deleted —
+/// tab titles, branch subtitle, back-to-overview leading and the period /
+/// notification / profile actions now compose the shared [WorkspaceAppBar]
+/// with identical copy and behavior.
+class _OwnerChrome extends ConsumerWidget implements PreferredSizeWidget {
+  final int selectedIndex;
+
+  const _OwnerChrome({required this.selectedIndex});
+
+  static const _titles = [
+    'Owner Dashboard',
+    'Top Sales',
+    'Messages',
+    'Activity',
+  ];
+
+  @override
+  Size get preferredSize => const Size.fromHeight(57);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
+    final notifier = ref.read(dashboardUiProvider.notifier);
+    return WorkspaceAppBar(
+      title: _titles[selectedIndex],
+      subtitle: selectedIndex == 0
+          ? ownerProfileData.branch
+          : _subtitle(selectedIndex),
+      toolbarHeight: 56,
+      leading: selectedIndex == 0
+          ? Icon(Icons.directions_car_rounded, color: colors.primary, size: 24)
+          : IconButton(
+              tooltip: 'Back to overview',
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () => notifier.selectTab(0),
+            ),
+      actions: [
+        if (selectedIndex == 0)
+          const Padding(
+            padding: EdgeInsets.only(right: 6),
+            child: PeriodDropdown(),
+          ),
+        const NotificationBell(),
+        Padding(
+          padding: const EdgeInsets.only(right: 14),
+          child: UserAvatar(
+            initials: ownerProfileData.initials,
+            onTap: () => showProfileSheet(
+              context,
+              ownerProfileData,
+              onLogout: () {
+                ref.read(authNotifierProvider.notifier).logout();
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String _subtitle(int index) {
+    switch (index) {
+      case 1:
+        return 'Performance Breakdown by Category';
+      case 2:
+        return 'Internal Messaging';
+      case 3:
+        return 'Workshop Activity Feed';
+      default:
+        return '';
+    }
   }
 }

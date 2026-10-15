@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/job_cards/presentation/providers/job_card_providers.dart';
-import 'package:owner_app/features/job_cards/presentation/widgets/filter_chip_bar.dart';
 import 'package:owner_app/features/job_cards/presentation/widgets/job_card_tile.dart';
 
 class JobCardsListView extends ConsumerStatefulWidget {
@@ -75,9 +74,17 @@ class _JobCardsListViewState extends ConsumerState<JobCardsListView> {
               ),
             ),
           ),
-          FilterChipBar(
-            activeFilter: state.activeFilter,
-            onFilterChanged: notifier.setFilter,
+          // Phase 07.1: bespoke FilterChipBar migrated to AppFilterBar
+          // (same options + single-select contract; "All" now localizes).
+          AppFilterBar(
+            options: const [
+              'In Progress',
+              'Waiting Parts',
+              'Quality Check',
+              'Completed',
+            ],
+            selected: _labelFor(state.activeFilter),
+            onSelected: (label) => notifier.setFilter(_statusFor(label)),
           ),
           Expanded(
             child: state.isLoading
@@ -122,3 +129,22 @@ class _JobCardsListViewState extends ConsumerState<JobCardsListView> {
     );
   }
 }
+
+/// Phase 07.1: option ↔ status mapping for the centralized [AppFilterBar]
+/// (replaces the deleted bespoke `FilterChipBar`; labels unchanged).
+String? _labelFor(JobCardStatus? status) => switch (status) {
+      null => null,
+      JobCardStatus.inProgress => 'In Progress',
+      JobCardStatus.waitingParts => 'Waiting Parts',
+      JobCardStatus.qualityCheck => 'Quality Check',
+      JobCardStatus.completed => 'Completed',
+      _ => null,
+    };
+
+JobCardStatus? _statusFor(String? label) => switch (label) {
+      'In Progress' => JobCardStatus.inProgress,
+      'Waiting Parts' => JobCardStatus.waitingParts,
+      'Quality Check' => JobCardStatus.qualityCheck,
+      'Completed' => JobCardStatus.completed,
+      _ => null,
+    };

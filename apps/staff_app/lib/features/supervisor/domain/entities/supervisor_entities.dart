@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart';
 
 class SupervisorKpiEntity {
   final IconData icon;
-  final Color color;
+
+  /// Centralized tint role (Phase 07.1): the decorative per-index `Color`
+  /// rotation is deleted — the provider maps each KPI to a semantic state and
+  /// the shared [AppKpiCard] resolves the ink. No custom palette survives.
+  final KpiSemanticState state;
   final String value;
   final String label;
   final String sub;
 
   const SupervisorKpiEntity({
     required this.icon,
-    required this.color,
+    this.state = KpiSemanticState.neutral,
     required this.value,
     required this.label,
     required this.sub,

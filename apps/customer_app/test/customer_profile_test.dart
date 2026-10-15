@@ -14,7 +14,7 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_profile_tab.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
+// Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
 /// Profile is the account surface: a real identity, real account actions and a
@@ -375,7 +375,8 @@ void main() {
       await _pumpProfile(tester, loading: true, settle: false);
       await tester.pump();
 
-      expect(find.byType(CustomerSkeleton), findsOneWidget);
+      // Phase 07.1: bespoke skeleton migrated to AppSkeleton.
+      expect(find.byType(AppSkeleton), findsWidgets);
       expect(find.text('Profile'), findsNothing);
       expect(find.text('Your account'), findsNothing);
     });
@@ -685,11 +686,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byType(CustomerSkeleton), findsOneWidget);
-      final boxes = tester.widgetList<CustomerSkeletonBox>(
-        find.byType(CustomerSkeletonBox),
-      );
-      expect(boxes.length, greaterThanOrEqualTo(3));
+      // Phase 07.1: bespoke skeleton migrated to AppSkeleton.
+      expect(find.byType(AppSkeleton), findsWidgets);
       expect(find.text('Profile'), findsNothing);
     });
   });

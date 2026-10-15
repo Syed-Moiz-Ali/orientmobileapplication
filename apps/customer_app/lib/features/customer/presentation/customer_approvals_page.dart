@@ -8,7 +8,6 @@ import 'package:customer_app/features/customer/presentation/providers/customer_p
 import 'package:customer_app/features/customer/presentation/support/customer_approval_presentation.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_approval_detail_view.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
 /// Contextual Approvals page.
@@ -32,23 +31,16 @@ class CustomerApprovalsPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            AppTopBar(
-              title: id.isEmpty ? 'Approvals & billing' : 'Approval',
-              onBack: () => _back(context),
-            ),
-            Divider(height: 1, color: theme.colorScheme.outlineVariant),
-            Expanded(
-              child: id.isEmpty
-                  ? const _ApprovalsOverview()
-                  : CustomerApprovalDetailView(estimateId: id),
-            ),
-          ],
-        ),
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
+      // (same title + deep-link-safe back behavior).
+      appBar: WorkspaceAppBar(
+        title: id.isEmpty ? 'Approvals & billing' : 'Approval',
+        showBack: true,
+        onBack: () => _back(context),
       ),
+      body: id.isEmpty
+          ? const _ApprovalsOverview()
+          : CustomerApprovalDetailView(estimateId: id),
     );
   }
 
@@ -134,20 +126,10 @@ class _NeedsDecision extends StatelessWidget {
     final colors = theme.colorScheme;
 
     if (loading) {
-      return CustomerSkeleton(
-        builder: (context, block) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.s32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CustomerSkeletonBox(
-                height: 96,
-                color: block,
-                radius: AppDimensions.radiusCard,
-              ),
-            ],
-          ),
-        ),
+      // Phase 07.1: bespoke CustomerSkeleton engine migrated to AppSkeleton.
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppDimensions.s32),
+        child: AppSkeleton.card(height: 96),
       );
     }
 

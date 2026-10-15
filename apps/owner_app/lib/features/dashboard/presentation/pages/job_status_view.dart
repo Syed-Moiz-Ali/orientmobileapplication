@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:owner_app/features/common/presentation/owner_shimmer_skeletons.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_providers.dart';
 
@@ -40,7 +39,7 @@ class _JobStatusViewState extends ConsumerState<JobStatusView> {
         ),
       ),
       body: state.isLoading
-          ? const OwnerDashboardSkeleton()
+          ? const AppSkeleton.page()
           : Column(
               children: [
                 Padding(
@@ -67,9 +66,24 @@ class _JobStatusViewState extends ConsumerState<JobStatusView> {
                     ),
                   ),
                 ),
-                _FilterStrip(
-                  currentStage: state.filterStage,
-                  onFilter: (s) => ref.read(jobStatusProvider.notifier).setFilter(s),
+                // Phase 07.1: bespoke _FilterStrip/_FilterChip migrated to
+                // AppFilterBar (same options + single-select contract; the
+                // "All" chip now localizes via the shared bar).
+                AppFilterBar(
+                  options: const [
+                    'Inspection',
+                    'Pre-Request',
+                    'Estimation',
+                    'Approval',
+                    'Parts',
+                    'WIP',
+                    'Completed',
+                    'Cancelled',
+                  ],
+                  selected: _stageLabel(state.filterStage),
+                  onSelected: (label) => ref
+                      .read(jobStatusProvider.notifier)
+                      .setFilter(_stageFor(label)),
                 ),
                 const SizedBox(height: 8),
                 Expanded(
@@ -93,85 +107,33 @@ class _JobStatusViewState extends ConsumerState<JobStatusView> {
   }
 }
 
-class _FilterStrip extends StatelessWidget {
-  final JobStage? currentStage;
-  final void Function(JobStage?) onFilter;
+/// Phase 07.1: stage ↔ label mapping for the centralized [AppFilterBar]
+/// (replaces the deleted bespoke `_FilterStrip`/`_FilterChip`; labels
+/// unchanged).
+String? _stageLabel(JobStage? stage) => switch (stage) {
+      null => null,
+      JobStage.waitingInspection => 'Inspection',
+      JobStage.waitingPreRequest => 'Pre-Request',
+      JobStage.waitingEstimation => 'Estimation',
+      JobStage.waitingApproval => 'Approval',
+      JobStage.waitingParts => 'Parts',
+      JobStage.wip => 'WIP',
+      JobStage.completed => 'Completed',
+      JobStage.cancelled => 'Cancelled',
+      _ => null,
+    };
 
-  const _FilterStrip({required this.currentStage, required this.onFilter});
-
-  @override
-  Widget build(BuildContext context) {
-    final stages = <(String, JobStage?)>[
-      ('All Jobs', null),
-      ('Inspection', JobStage.waitingInspection),
-      ('Pre-Request', JobStage.waitingPreRequest),
-      ('Estimation', JobStage.waitingEstimation),
-      ('Approval', JobStage.waitingApproval),
-      ('Parts', JobStage.waitingParts),
-      ('WIP', JobStage.wip),
-      ('Completed', JobStage.completed),
-      ('Cancelled', JobStage.cancelled),
-    ];
-
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: stages.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final (label, stage) = stages[i];
-          return _FilterChip(
-            label: label,
-            selected: currentStage == stage,
-            onTap: () => onFilter(stage),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.rPill),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? colorScheme.primary : colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(AppDimensions.rPill),
-          border: Border.all(
-            color: selected ? colorScheme.primary : colorScheme.outlineVariant,
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+JobStage? _stageFor(String? label) => switch (label) {
+      'Inspection' => JobStage.waitingInspection,
+      'Pre-Request' => JobStage.waitingPreRequest,
+      'Estimation' => JobStage.waitingEstimation,
+      'Approval' => JobStage.waitingApproval,
+      'Parts' => JobStage.waitingParts,
+      'WIP' => JobStage.wip,
+      'Completed' => JobStage.completed,
+      'Cancelled' => JobStage.cancelled,
+      _ => null,
+    };
 
 class _JobStatusItem extends StatelessWidget {
   final JobStatus job;
@@ -222,14 +184,10 @@ class _JobStatusItem extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimensions.rPill),
-            child: LinearProgressIndicator(
-              value: _progress(job.stage),
-              minHeight: 6,
-              backgroundColor: colorScheme.surfaceContainerLow,
-              valueColor: AlwaysStoppedAnimation(_progressColor(job.stage)),
-            ),
+          AppLinearProgress(
+            value: _progress(job.stage),
+            color: _progressColor(context, job.stage),
+            trackColor: colorScheme.surfaceContainerLow,
           ),
         ],
       ),
@@ -249,13 +207,22 @@ class _JobStatusItem extends StatelessWidget {
         JobStage.cancelled => 0.0,
       };
 
-  Color _progressColor(JobStage s) => switch (s) {
-        JobStage.completed || JobStage.invoice || JobStage.gatePassOut => const Color(0xFF10B981),
-        JobStage.cancelled => const Color(0xFFEF4444),
-        _ => const Color(0xFF3B82F6),
-      };
+  // Phase 07.1: progress ink resolves through the theme (the three hardcoded
+  // hex literals are deleted) — same stage → tone contract as _StatusLabel.
+  Color _progressColor(BuildContext context, JobStage s) {
+    final semantic = context.semanticColors;
+    return switch (s) {
+      JobStage.completed || JobStage.invoice || JobStage.gatePassOut =>
+        semantic.success.base,
+      JobStage.cancelled => semantic.danger.base,
+      _ => Theme.of(context).colorScheme.primary,
+    };
+  }
 }
 
+/// Phase 07.1: bespoke pill migrated to the shared [StatusPill] tone
+/// constructors (the eight hardcoded hex literals are deleted) — same
+/// stage → tone contract as `_progressColor`.
 class _StatusLabel extends StatelessWidget {
   final JobStage stage;
 
@@ -263,31 +230,14 @@ class _StatusLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg) = switch (stage) {
-      JobStage.completed || JobStage.invoice || JobStage.gatePassOut => (
-          const Color(0xFF10B981).withValues(alpha: 0.12),
-          const Color(0xFF10B981),
-        ),
-      JobStage.cancelled => (
-          const Color(0xFFEF4444).withValues(alpha: 0.12),
-          const Color(0xFFEF4444),
-        ),
-      JobStage.wip => (
-          const Color(0xFF3B82F6).withValues(alpha: 0.12),
-          const Color(0xFF3B82F6),
-        ),
-      _ => (
-          const Color(0xFFD97706).withValues(alpha: 0.12),
-          const Color(0xFFD97706),
-        ),
+    final label = _label(stage).toUpperCase();
+    return switch (stage) {
+      JobStage.completed || JobStage.invoice || JobStage.gatePassOut =>
+        StatusPill.success(label, showDot: true),
+      JobStage.cancelled => StatusPill.danger(label, showDot: true),
+      JobStage.wip => StatusPill.inProgress(label),
+      _ => StatusPill.warning(label, showDot: true),
     };
-
-    return StatusPill(
-      label: _label(stage).toUpperCase(),
-      showDot: true,
-      bg: bg,
-      fg: fg,
-    );
   }
 
   String _label(JobStage s) => switch (s) {

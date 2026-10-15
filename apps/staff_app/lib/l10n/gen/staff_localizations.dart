@@ -830,6 +830,648 @@ abstract class StaffLocalizations {
   /// **'Poor'**
   String get advisorInspectionPoor;
 
+  /// Package picker screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Choose inspection package'**
+  String get advisorPackageTitle;
+
+  /// Package picker supporting text
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the inspection depth for this vehicle. You can switch packages before starting.'**
+  String get advisorPackageSubtitle;
+
+  /// Quick inspection package name
+  ///
+  /// In en, this message translates to:
+  /// **'Quick 20-Point Check'**
+  String get advisorPackageQuick;
+
+  /// Quick package description
+  ///
+  /// In en, this message translates to:
+  /// **'Fast safety sweep for intake and express bays.'**
+  String get advisorPackageQuickDesc;
+
+  /// Comprehensive inspection package name
+  ///
+  /// In en, this message translates to:
+  /// **'Comprehensive 60-Point Check'**
+  String get advisorPackageFull;
+
+  /// Comprehensive package description
+  ///
+  /// In en, this message translates to:
+  /// **'Full under-hood, brakes, suspension, battery, tires and exterior inspection.'**
+  String get advisorPackageFullDesc;
+
+  /// Safety audit package name
+  ///
+  /// In en, this message translates to:
+  /// **'Safety and Roadworthiness Audit'**
+  String get advisorPackageSafety;
+
+  /// Safety package description
+  ///
+  /// In en, this message translates to:
+  /// **'Brake, steering, restraint and lighting audit for roadworthiness sign-off.'**
+  String get advisorPackageSafetyDesc;
+
+  /// Estimated package duration chip
+  ///
+  /// In en, this message translates to:
+  /// **'~{minutes} min'**
+  String advisorPackageDuration(int minutes);
+
+  /// Package checkpoint count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} checkpoints'**
+  String advisorPackageCheckpoints(int count);
+
+  /// Package section count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sections'**
+  String advisorPackageSections(int count);
+
+  /// Package focus areas label
+  ///
+  /// In en, this message translates to:
+  /// **'Focus areas'**
+  String get advisorPackageFocus;
+
+  /// Focus area: brakes
+  ///
+  /// In en, this message translates to:
+  /// **'Brakes'**
+  String get advisorFocusBrakes;
+
+  /// Focus area: engine
+  ///
+  /// In en, this message translates to:
+  /// **'Engine'**
+  String get advisorFocusEngine;
+
+  /// Focus area: suspension
+  ///
+  /// In en, this message translates to:
+  /// **'Suspension'**
+  String get advisorFocusSuspension;
+
+  /// Focus area: lighting
+  ///
+  /// In en, this message translates to:
+  /// **'Lighting'**
+  String get advisorFocusLighting;
+
+  /// Recommended package badge
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get advisorPackageRecommended;
+
+  /// Selected package badge
+  ///
+  /// In en, this message translates to:
+  /// **'Selected'**
+  String get advisorPackageSelected;
+
+  /// Package picker primary CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get advisorPackageStart;
+
+  /// Package sort: recommended order
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get advisorPackageSortRecommended;
+
+  /// Package sort: fastest first
+  ///
+  /// In en, this message translates to:
+  /// **'Quickest'**
+  String get advisorPackageSortQuickest;
+
+  /// Package sort: most checkpoints first
+  ///
+  /// In en, this message translates to:
+  /// **'Most thorough'**
+  String get advisorPackageSortThorough;
+
+  /// Package picker skip action
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get advisorPackageSkip;
+
+  /// Inspection sheet screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection workspace'**
+  String get advisorHudTitle;
+
+  /// Inspection progress subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} checkpoints'**
+  String advisorHudProgress(int done, int total);
+
+  /// HUD tab: damage map
+  ///
+  /// In en, this message translates to:
+  /// **'Damage map'**
+  String get advisorHudTabDamage;
+
+  /// HUD tab: checkpoints
+  ///
+  /// In en, this message translates to:
+  /// **'Checkpoints'**
+  String get advisorHudTabChecks;
+
+  /// Damage canvas section title
+  ///
+  /// In en, this message translates to:
+  /// **'Damage canvas'**
+  String get advisorHudCanvasTitle;
+
+  /// Damage canvas hint
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a zone to drop a damage pin. Pins are listed below and can be deleted.'**
+  String get advisorHudCanvasHint;
+
+  /// Damage kind picker title
+  ///
+  /// In en, this message translates to:
+  /// **'What kind of damage?'**
+  String get advisorHudKindTitle;
+
+  /// Damage kind: minor scratch
+  ///
+  /// In en, this message translates to:
+  /// **'Minor scratch'**
+  String get advisorHudKindMinor;
+
+  /// Minor damage hint
+  ///
+  /// In en, this message translates to:
+  /// **'Scuff or surface scratch'**
+  String get advisorHudKindMinorHint;
+
+  /// Damage kind: structural dent
+  ///
+  /// In en, this message translates to:
+  /// **'Structural dent'**
+  String get advisorHudKindStructural;
+
+  /// Structural damage hint
+  ///
+  /// In en, this message translates to:
+  /// **'Deep dent or deformation'**
+  String get advisorHudKindStructuralHint;
+
+  /// Damage kind: glass or lamp
+  ///
+  /// In en, this message translates to:
+  /// **'Glass or lamp crack'**
+  String get advisorHudKindGlass;
+
+  /// Glass damage hint
+  ///
+  /// In en, this message translates to:
+  /// **'Cracked glass or lamp assembly'**
+  String get advisorHudKindGlassHint;
+
+  /// Damage pins list title
+  ///
+  /// In en, this message translates to:
+  /// **'Damage pins'**
+  String get advisorHudPinsTitle;
+
+  /// Empty pins state
+  ///
+  /// In en, this message translates to:
+  /// **'No damage pinned yet'**
+  String get advisorHudNoPins;
+
+  /// Empty pins hint
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the blueprint above to mark the first damage point.'**
+  String get advisorHudNoPinsHint;
+
+  /// Delete damage pin action
+  ///
+  /// In en, this message translates to:
+  /// **'Delete pin'**
+  String get advisorHudDeletePin;
+
+  /// Damage zone: front
+  ///
+  /// In en, this message translates to:
+  /// **'Front'**
+  String get advisorHudZoneFront;
+
+  /// Damage zone: front left
+  ///
+  /// In en, this message translates to:
+  /// **'Front left'**
+  String get advisorHudZoneFrontLeft;
+
+  /// Damage zone: left side
+  ///
+  /// In en, this message translates to:
+  /// **'Left side'**
+  String get advisorHudZoneSideLeft;
+
+  /// Damage zone: rear left
+  ///
+  /// In en, this message translates to:
+  /// **'Rear left'**
+  String get advisorHudZoneRearLeft;
+
+  /// Damage zone: rear
+  ///
+  /// In en, this message translates to:
+  /// **'Rear'**
+  String get advisorHudZoneRear;
+
+  /// Damage zone: rear right
+  ///
+  /// In en, this message translates to:
+  /// **'Rear right'**
+  String get advisorHudZoneRearRight;
+
+  /// Damage zone: right side
+  ///
+  /// In en, this message translates to:
+  /// **'Right side'**
+  String get advisorHudZoneSideRight;
+
+  /// Damage zone: front right
+  ///
+  /// In en, this message translates to:
+  /// **'Front right'**
+  String get advisorHudZoneFrontRight;
+
+  /// Checkpoint ring: pass
+  ///
+  /// In en, this message translates to:
+  /// **'Pass'**
+  String get advisorHudRingPass;
+
+  /// Checkpoint ring: caution
+  ///
+  /// In en, this message translates to:
+  /// **'Caution'**
+  String get advisorHudRingCaution;
+
+  /// Checkpoint ring: fail
+  ///
+  /// In en, this message translates to:
+  /// **'Fail'**
+  String get advisorHudRingFail;
+
+  /// Mark remaining checkpoints pass
+  ///
+  /// In en, this message translates to:
+  /// **'All pass'**
+  String get advisorHudMarkAllPass;
+
+  /// Checkpoint search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search checkpoints…'**
+  String get advisorHudSearchHint;
+
+  /// Checkpoint search empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No matching checkpoints'**
+  String get advisorHudNoMatch;
+
+  /// Remaining checkpoints in section
+  ///
+  /// In en, this message translates to:
+  /// **'{count} remaining'**
+  String advisorHudSectionRemaining(int count);
+
+  /// Section complete state
+  ///
+  /// In en, this message translates to:
+  /// **'All checkpoints completed'**
+  String get advisorHudSectionDone;
+
+  /// Evidence dock title
+  ///
+  /// In en, this message translates to:
+  /// **'Voice and photo evidence'**
+  String get advisorHudDockTitle;
+
+  /// Voice recorder idle state
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to record a voice note'**
+  String get advisorHudVoiceIdle;
+
+  /// Voice recorder recording state
+  ///
+  /// In en, this message translates to:
+  /// **'Recording… {seconds}s'**
+  String advisorHudVoiceRecording(int seconds);
+
+  /// Play voice note
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get advisorHudVoicePlay;
+
+  /// Delete voice note
+  ///
+  /// In en, this message translates to:
+  /// **'Delete recording'**
+  String get advisorHudVoiceDelete;
+
+  /// Voice note saved state
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note saved'**
+  String get advisorHudVoiceSaved;
+
+  /// Microphone permission denied title
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access denied'**
+  String get advisorHudMicDenied;
+
+  /// Microphone permission denied hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enable microphone access in system settings to record voice notes.'**
+  String get advisorHudMicDeniedHint;
+
+  /// Camera permission denied title
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access denied'**
+  String get advisorHudCameraDenied;
+
+  /// Camera permission denied hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enable camera access in system settings to capture photo evidence.'**
+  String get advisorHudCameraDeniedHint;
+
+  /// Gallery permission denied title
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery access denied'**
+  String get advisorHudGalleryDenied;
+
+  /// Gallery permission denied hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enable gallery access in system settings to attach photos.'**
+  String get advisorHudGalleryDeniedHint;
+
+  /// Open system settings action
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get advisorHudOpenSettings;
+
+  /// Photo retry action
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to retry'**
+  String get advisorHudPhotoRetry;
+
+  /// Photo attach error
+  ///
+  /// In en, this message translates to:
+  /// **'Photo failed to attach. Check storage and try again.'**
+  String get advisorHudPhotoError;
+
+  /// Sheet footer primary action
+  ///
+  /// In en, this message translates to:
+  /// **'Review inspection'**
+  String get advisorHudReview;
+
+  /// Notify owner toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'Notify owner after submission'**
+  String get advisorHudNotifyOwner;
+
+  /// Template load error
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the inspection template. Check your connection and try again.'**
+  String get advisorHudTemplateError;
+
+  /// Retry action
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get advisorHudRetry;
+
+  /// Add checkpoint note action
+  ///
+  /// In en, this message translates to:
+  /// **'Add note'**
+  String get advisorHudAddNote;
+
+  /// Clear search action
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get advisorHudClear;
+
+  /// Reset checkpoint grade action
+  ///
+  /// In en, this message translates to:
+  /// **'Reset grade'**
+  String get advisorHudResetGrade;
+
+  /// Dismiss sheet action
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get advisorHudDone;
+
+  /// Damage tab primary CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Done marking'**
+  String get advisorHudDoneMarking;
+
+  /// Review sheet primary CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get advisorHudContinue;
+
+  /// Expand collapsed pins strip
+  ///
+  /// In en, this message translates to:
+  /// **'Show list'**
+  String get advisorHudShowPins;
+
+  /// Collapse pins strip
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get advisorHudHidePins;
+
+  /// Preview screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle health report'**
+  String get advisorHealthTitle;
+
+  /// Preview subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Review every finding before converting or submitting.'**
+  String get advisorHealthSubtitle;
+
+  /// Overall health score
+  ///
+  /// In en, this message translates to:
+  /// **'{score}% overall health'**
+  String advisorHealthScore(int score);
+
+  /// Health score coverage
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} checkpoints graded'**
+  String advisorHealthScoredOf(int done, int total);
+
+  /// Fail group title
+  ///
+  /// In en, this message translates to:
+  /// **'Mandatory safety items'**
+  String get advisorHealthMandatory;
+
+  /// Caution group title
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended maintenance'**
+  String get advisorHealthRecommended;
+
+  /// Pass group title
+  ///
+  /// In en, this message translates to:
+  /// **'Good condition'**
+  String get advisorHealthGoodGroup;
+
+  /// Convert to estimate action
+  ///
+  /// In en, this message translates to:
+  /// **'Convert to estimate'**
+  String get advisorHealthConvert;
+
+  /// Submit inspection action
+  ///
+  /// In en, this message translates to:
+  /// **'Submit inspection'**
+  String get advisorHealthSubmit;
+
+  /// Submitting state
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting inspection…'**
+  String get advisorHealthSubmitting;
+
+  /// Preview empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No checkpoints rated yet'**
+  String get advisorHealthEmpty;
+
+  /// Preview empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'Grade at least one checkpoint to build this health report.'**
+  String get advisorHealthEmptyHint;
+
+  /// Remaining checkpoints notice
+  ///
+  /// In en, this message translates to:
+  /// **'{count} checkpoints still need a condition'**
+  String advisorHealthRemaining(int count);
+
+  /// Back to edit action
+  ///
+  /// In en, this message translates to:
+  /// **'Back to edit'**
+  String get advisorHealthBackEdit;
+
+  /// Ready to submit line
+  ///
+  /// In en, this message translates to:
+  /// **'{count} checkpoints ready to submit'**
+  String advisorHealthReady(int count);
+
+  /// Submit confirmation title
+  ///
+  /// In en, this message translates to:
+  /// **'Submit this inspection?'**
+  String get advisorHealthSubmitTitle;
+
+  /// Submit confirmation message
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm that the checkpoint grades, damage pins and attachments are correct.'**
+  String get advisorHealthSubmitMessage;
+
+  /// Submit confirmation cancel
+  ///
+  /// In en, this message translates to:
+  /// **'Review again'**
+  String get advisorHealthReviewAgain;
+
+  /// Attachment count per finding
+  ///
+  /// In en, this message translates to:
+  /// **'{count} attachments'**
+  String advisorHealthAttachments(int count);
+
+  /// Dossier share action
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get advisorHealthShare;
+
+  /// Dossier export action
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get advisorHealthExport;
+
+  /// Dossier copied confirmation
+  ///
+  /// In en, this message translates to:
+  /// **'Report copied to clipboard'**
+  String get advisorHealthCopied;
+
+  /// Expand finding group
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get advisorHealthExpand;
+
+  /// Collapse finding group
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get advisorHealthCollapse;
+
   /// Job detail load error message
   ///
   /// In en, this message translates to:

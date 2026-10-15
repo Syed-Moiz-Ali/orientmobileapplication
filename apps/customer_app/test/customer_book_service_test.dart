@@ -13,7 +13,7 @@ import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/data/datasources/customer_remote_datasource.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/customer_book_service_view.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
+// Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/vehicle_booking_decision.dart';
 
@@ -142,7 +142,7 @@ void main() {
       expect(find.text('Full Service'), findsNothing);
       expect(find.text('Retry services'), findsNothing);
       // A real placeholder is shown, not a blank section.
-      expect(find.byType(CustomerSkeleton), findsOneWidget);
+      expect(find.byType(AppSkeleton), findsWidgets);
     });
   });
 
@@ -214,7 +214,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byType(CustomerSkeleton), findsWidgets);
+      expect(find.byType(AppSkeleton), findsWidgets);
       expect(find.text('9:00 AM'), findsNothing);
     });
 

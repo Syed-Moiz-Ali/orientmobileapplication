@@ -2,6 +2,7 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/support/customer_booking_relations.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
+import 'package:shared_models/shared_models.dart' as models;
 
 /// What a vehicle record may honestly say.
 ///
@@ -54,7 +55,8 @@ abstract final class CustomerVehiclePresentation {
     'brand': vehicle.brand.trim(),
     'model': vehicle.model.trim(),
     'plateNumber': plateLabel(vehicle.plateNumber),
-    'vin': vehicle.vin.trim().toUpperCase(),
+    // Phase 07.1: canonical VIN normalization (byte-identical output).
+    'vin': models.Vin(vehicle.vin).format(),
     'color': vehicle.color.trim(),
     'year': vehicle.year,
     'mileage': mileageLabel(vehicle.mileage),

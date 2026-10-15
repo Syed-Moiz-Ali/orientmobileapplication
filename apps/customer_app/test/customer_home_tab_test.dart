@@ -13,7 +13,7 @@ import 'package:customer_app/features/customer/presentation/providers/customer_p
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_quick_actions.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_service_summary.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_home_skeleton.dart';
+// Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
 
 void main() {
@@ -26,7 +26,7 @@ void main() {
       await _pumpHome(tester, state: _state(isLoading: true), settle: false);
       await tester.pump();
 
-      expect(find.byType(CustomerHomeSkeleton), findsOneWidget);
+      expect(find.byType(AppSkeleton), findsWidgets);
       expect(find.text('Welcome back'), findsNothing);
     });
 

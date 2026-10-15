@@ -18,7 +18,6 @@ import '../widgets/advisor_approval_row.dart';
 import '../widgets/advisor_approval_sheet.dart';
 import '../widgets/advisor_contact_sheet.dart';
 import '../widgets/advisor_job_card_row.dart';
-import '../widgets/advisor_meta_pill.dart';
 import '../widgets/advisor_notification_sheet.dart';
 import '../widgets/advisor_profile_sheet.dart';
 import '../widgets/advisor_search_sheet.dart';
@@ -625,13 +624,14 @@ class _AdvisorCommandIdentity extends StatelessWidget {
             runSpacing: AppDimensions.s4,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              AdvisorMetaPill(
+              // Phase 07.1: bespoke AdvisorMetaPill migrated to StatusPill.
+              StatusPill.neutral(
+                contextLine,
                 icon: Icons.store_mall_directory_outlined,
-                label: contextLine,
               ),
-              AdvisorMetaPill(
+              StatusPill.neutral(
+                t.advisorFreshnessLive,
                 icon: Icons.cloud_done_outlined,
-                label: t.advisorFreshnessLive,
               ),
             ],
           ),

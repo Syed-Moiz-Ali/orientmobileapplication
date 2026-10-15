@@ -4,7 +4,6 @@ import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
@@ -252,7 +251,19 @@ class CustomerBookingServiceStep extends StatelessWidget {
     final colors = theme.colorScheme;
 
     if (loading) {
-      return const _StepSkeleton(rows: 4);
+      // Phase 07.1: bespoke _StepSkeleton migrated to AppSkeleton.
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppSkeleton.card(height: 56),
+          SizedBox(height: AppDimensions.s8),
+          AppSkeleton.card(height: 56),
+          SizedBox(height: AppDimensions.s8),
+          AppSkeleton.card(height: 56),
+          SizedBox(height: AppDimensions.s8),
+          AppSkeleton.card(height: 56),
+        ],
+      );
     }
 
     if (error.isNotEmpty) {
@@ -484,7 +495,15 @@ class CustomerBookingScheduleStep extends StatelessWidget {
               ),
             )
           else if (loadingSlots)
-            const _StepSkeleton(rows: 2)
+            // Phase 07.1: bespoke _StepSkeleton migrated to AppSkeleton.
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppSkeleton.card(height: 56),
+                SizedBox(height: AppDimensions.s8),
+                AppSkeleton.card(height: 56),
+              ],
+            )
           else if (slotsError.isNotEmpty)
             CustomerNoticePanel(
               message: slotsError,
@@ -857,32 +876,6 @@ class _ReviewSection extends StatelessWidget {
             ),
           ),
           TextButton(onPressed: onChange, child: const Text('Change')),
-        ],
-      ),
-    );
-  }
-}
-
-/// Small inline placeholder used while one section is still loading.
-class _StepSkeleton extends StatelessWidget {
-  final int rows;
-
-  const _StepSkeleton({required this.rows});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomerSkeleton(
-      builder: (context, block) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var row = 0; row < rows; row++) ...[
-            CustomerSkeletonBox(
-              height: 56,
-              color: block,
-              radius: AppDimensions.radiusControl,
-            ),
-            if (row < rows - 1) const SizedBox(height: AppDimensions.s8),
-          ],
         ],
       ),
     );

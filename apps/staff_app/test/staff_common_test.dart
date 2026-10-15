@@ -8,7 +8,6 @@ import 'package:staff_app/features/common/presentation/profile_screen.dart';
 import 'package:staff_app/features/common/presentation/providers/staff_attendance_provider.dart';
 import 'package:staff_app/features/common/presentation/simple_pages.dart';
 import 'package:staff_app/features/common/presentation/staff_attendance_screen.dart';
-import 'package:staff_app/features/common/presentation/staff_shimmer_skeletons.dart';
 
 class _FakeAuthNotifier extends AuthNotifier {
   final MeResponse? _profile;
@@ -391,7 +390,8 @@ void main() {
         settle: false,
       );
 
-      expect(find.byType(StaffAttendanceSkeleton), findsOneWidget);
+      // Phase 07.1: bespoke skeleton migrated to AppSkeleton compositions.
+      expect(find.byType(AppSkeleton), findsWidgets);
       expect(tester.takeException(), isNull);
     });
 

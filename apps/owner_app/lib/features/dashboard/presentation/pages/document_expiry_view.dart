@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:owner_app/features/common/presentation/owner_shimmer_skeletons.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_providers.dart';
 
@@ -87,7 +86,7 @@ class _DocumentExpiryViewState extends ConsumerState<DocumentExpiryView> {
         ],
       ),
       body: state.isLoading
-          ? const OwnerDashboardSkeleton()
+          ? const AppSkeleton.page()
           : SafeArea(
               child: Column(
                 children: [

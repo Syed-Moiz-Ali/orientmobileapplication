@@ -2,7 +2,6 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_notification_presentation.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,12 +64,13 @@ class _CustomerNotificationsViewState
         notifications.isEmpty && state.loadError.isNotEmpty && !state.isLoading;
 
     return Scaffold(
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
+      // (same title + back behavior; divider now drawn by the bar itself).
+      appBar: const WorkspaceAppBar(title: 'Notifications', showBack: true),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            const AppTopBar(title: 'Notifications'),
-            Divider(height: 1, color: theme.colorScheme.outlineVariant),
             Expanded(
               child: AppResponsivePage(
                 scrollable: false,
@@ -79,7 +79,26 @@ class _CustomerNotificationsViewState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (state.isLoading && notifications.isEmpty)
-                      const _NotificationsSkeleton()
+                      // Phase 07.1: bespoke skeleton migrated to AppSkeleton.
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(height: AppDimensions.s12),
+                          AppSkeleton.text(width: 96, height: 16),
+                          SizedBox(height: AppDimensions.s12),
+                          AppSkeleton.card(height: 74),
+                          SizedBox(height: AppDimensions.s12),
+                          AppSkeleton.card(height: 74),
+                          SizedBox(height: AppDimensions.s12),
+                          AppSkeleton.card(height: 74),
+                          SizedBox(height: AppDimensions.s12),
+                          AppSkeleton.card(height: 74),
+                          SizedBox(height: AppDimensions.s12),
+                          AppSkeleton.card(height: 74),
+                          SizedBox(height: AppDimensions.s12),
+                          AppSkeleton.card(height: 74),
+                        ],
+                      )
                     else if (firstLoadFailed)
                       Expanded(child: _LoadFailure(onRetry: _refresh))
                     else if (notifications.isEmpty)
@@ -426,28 +445,6 @@ class _LoadFailure extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _NotificationsSkeleton extends StatelessWidget {
-  const _NotificationsSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomerSkeleton(
-      builder: (context, block) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: AppDimensions.s12),
-          CustomerSkeletonBox(width: 96, height: 16, color: block),
-          const SizedBox(height: AppDimensions.s12),
-          for (var index = 0; index < 6; index++) ...[
-            if (index > 0) const SizedBox(height: AppDimensions.s12),
-            CustomerSkeletonBox(height: 74, color: block),
-          ],
-        ],
       ),
     );
   }

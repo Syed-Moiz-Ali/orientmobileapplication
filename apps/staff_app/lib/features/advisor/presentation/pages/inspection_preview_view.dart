@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
@@ -6,22 +7,42 @@ import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
+import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/hud_pin_bridge.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
+import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
 import 'inspection_provider.dart';
 
+/// Phase 08 — Concept A vehicle health report (Archetype 6 output).
+///
+/// A formal report document: big overall-health score, Mandatory Safety
+/// (red) / Recommended (amber) / Good (green) finding groups, damage-pin
+/// recap, and one-tap Convert-to-Estimate. Submission, offline queueing,
+/// routes and the estimate handoff are byte-identical to the previous
+/// composition.
 class InspectionPreviewView extends ConsumerStatefulWidget {
   final VoidCallback onBack;
   final String jobId;
 
-  const InspectionPreviewView({
-    super.key,
-    required this.onBack,
-    this.jobId = '',
-  });
+  const InspectionPreviewView({super.key, required this.onBack, this.jobId = ''});
 
   @override
   ConsumerState<InspectionPreviewView> createState() =>
       _InspectionPreviewViewState();
+}
+
+int _healthScore(InspectionState state) {
+  if (state.statuses.isEmpty) return 0;
+  var points = 0;
+  for (final status in state.statuses.values) {
+    points += switch (status) {
+      ItemStatus.good => 100,
+      ItemStatus.fair => 55,
+      ItemStatus.poor => 5,
+    };
+  }
+  return (points / state.statuses.length).round();
 }
 
 class _InspectionPreviewViewState extends ConsumerState<InspectionPreviewView> {
@@ -29,9 +50,8 @@ class _InspectionPreviewViewState extends ConsumerState<InspectionPreviewView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final t = StaffLocalizations.of(context)!;
+    final pendingSync = ref.watch(advisorPendingSyncCountProvider).valueOrNull;
 
     final state = ref.watch(inspectionProvider);
     final hasRatings = state.statuses.isNotEmpty;
@@ -39,406 +59,119 @@ class _InspectionPreviewViewState extends ConsumerState<InspectionPreviewView> {
       0,
       state.totalItems,
     );
+    final score = _healthScore(state);
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainerLowest,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: _isSubmitting ? null : widget.onBack,
-        ),
-        title: Text(
-          'Inspection Review',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-          ),
-        ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: WorkspaceAppBar(
+        title: t.advisorHealthTitle,
+        subtitle: hasRatings
+            ? t.advisorHealthScoredOf(state.completedCount, state.totalItems)
+            : t.advisorHealthEmpty,
+        showBack: true,
+        onBack: _isSubmitting ? null : widget.onBack,
+        frosted: !context.isCompact,
+        showOfflineStatus: true,
+        offlinePendingCount: pendingSync,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
-              children: [
-                _summaryCard(context, state),
-                if (remaining > 0 && hasRatings) ...[
-                  const SizedBox(height: 12),
-                  _IncompleteNotice(
-                    remaining: remaining,
-                    onEdit: widget.onBack,
-                  ),
-                ],
-                const SizedBox(height: 16),
-                if (state.vehiclePartInspections.isNotEmpty) ...[
-                  _ReviewSectionHeader(
-                    icon: Icons.directions_car_outlined,
-                    title: 'Vehicle Body Condition',
-                    subtitle: 'Recorded damage and marked vehicle areas',
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: colorScheme.outlineVariant),
-                    ),
-                    child: const VehicleBodyConditionPanel(
-                      readOnly: true,
-                      embedded: true,
-                      showTitle: false,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-                if (hasRatings) ...[
-                  const _ReviewSectionHeader(
-                    icon: Icons.fact_check_outlined,
-                    title: 'Checkpoint Results',
-                    subtitle:
-                        'Review every recorded condition before submission',
-                  ),
-                  const SizedBox(height: 8),
-                  ...state.sections.map(
-                    (section) => _sectionReview(context, section, state),
-                  ),
-                ] else ...[
-                  const Center(
-                    child: EmptyState(
-                      icon: Icons.checklist,
-                      message: 'No checkpoints rated',
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          _footer(context, state, hasRatings),
-        ],
-      ),
-    );
-  }
-
-  Widget _summaryCard(BuildContext context, InspectionState state) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    final good = state.statuses.values
-        .where((status) => status == ItemStatus.good)
-        .length;
-    final fair = state.statuses.values
-        .where((status) => status == ItemStatus.fair)
-        .length;
-    final poor = state.statuses.values
-        .where((status) => status == ItemStatus.poor)
-        .length;
-    final progress = state.totalItems == 0
-        ? 0.0
-        : state.completedCount / state.totalItems;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.assignment_turned_in_outlined,
-                color: colorScheme.primary,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Vehicle Inspection Summary',
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Text(
-                  '${(progress * 100).round()}%',
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 7,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${state.completedCount} of ${state.totalItems} checkpoints completed',
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _StatusSummary(
-                  label: 'Good',
-                  count: good,
-                  color: const Color(0xFF059669),
-                  icon: Icons.check_circle_outline_rounded,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatusSummary(
-                  label: 'Fair',
-                  count: fair,
-                  color: colorScheme.secondary,
-                  icon: Icons.error_outline_rounded,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatusSummary(
-                  label: 'Poor',
-                  count: poor,
-                  color: colorScheme.error,
-                  icon: Icons.cancel_outlined,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionReview(
-    BuildContext context,
-    InspectionSection section,
-    InspectionState state,
-  ) {
-    final rated = section.items
-        .asMap()
-        .entries
-        .where(
-          (entry) => state.statuses.containsKey('${section.id}_${entry.key}'),
-        )
-        .toList();
-    if (rated.isEmpty) return const SizedBox.shrink();
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            section.label,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 10),
-          ...rated.map(
-            (entry) => _ratedItemTile(context, entry, section, state),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _ratedItemTile(
-    BuildContext context,
-    MapEntry<int, String> e,
-    InspectionSection sec,
-    InspectionState state,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final itemId = '${sec.id}_${e.key}';
-    final status = state.statuses[itemId]!;
-    final media = state.media[itemId];
-    final attachmentCount =
-        (media?.photoPaths.length ?? 0) +
-        (media?.videoPaths.length ?? 0) +
-        ((media?.audioPath.isNotEmpty ?? false) ? 1 : 0) +
-        ((media?.note.isNotEmpty ?? false) ? 1 : 0);
-    final statusColor = status == ItemStatus.good
-        ? const Color(0xFF059669)
-        : status == ItemStatus.fair
-        ? colorScheme.secondary
-        : colorScheme.error;
-    final statusIcon = status == ItemStatus.good
-        ? Icons.check_circle_rounded
-        : status == ItemStatus.fair
-        ? Icons.error_rounded
-        : Icons.cancel_rounded;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-      decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.055),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(statusIcon, size: 19, color: statusColor),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  e.value,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                if (attachmentCount > 0) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    '$attachmentCount attachment${attachmentCount == 1 ? '' : 's'}',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(100),
-            ),
-            child: Text(
-              status.name[0].toUpperCase() + status.name.substring(1),
-              style: TextStyle(
-                color: statusColor,
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _footer(BuildContext context, InspectionState state, bool hasRatings) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
+      body: SafeArea(
+        top: false,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              hasRatings
-                  ? '${state.statuses.length} checkpoints ready to submit'
-                  : 'Rate at least one checkpoint before submitting',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 50,
-              child: FilledButton.icon(
-                onPressed: !hasRatings || _isSubmitting
-                    ? null
-                    : _confirmAndSave,
-                icon: _isSubmitting
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+            // Sticky wayfinding anchor: one-row score strip + ONE
+            // share/export control row. Findings scroll beneath it.
+            _ScoreStrip(score: score, state: state),
+            _ShareExportRow(state: state, score: score),
+            Expanded(
+              child: AppResponsivePage(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppPageHeader(
+                      title: t.advisorHealthTitle,
+                      subtitle: t.advisorHealthSubtitle,
+                      breadcrumbs: [
+                        AppBreadcrumbItem(
+                          label: StaffLocalizations.of(
+                            context,
+                          )!.advisorNavJobs,
+                          onTap: widget.onBack,
                         ),
+                        AppBreadcrumbItem.current(t.advisorHealthTitle),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (remaining > 0 && hasRatings) ...[
+                      _IncompleteNotice(
+                        remaining: remaining,
+                        onEdit: widget.onBack,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    if (!hasRatings)
+                      EmptyState(
+                        icon: Icons.health_and_safety_outlined,
+                        title: t.advisorHealthEmpty,
+                        message: t.advisorHealthEmptyHint,
                       )
-                    : const Icon(Icons.cloud_upload_outlined),
-                label: Text(
-                  _isSubmitting
-                      ? 'Submitting Inspection…'
-                      : 'Submit Inspection',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                    else ...[
+                      _DamageRecap(state: state),
+                      const SizedBox(height: 12),
+                      _FindingGroup(
+                        status: ItemStatus.poor,
+                        state: state,
+                        initiallyExpanded: true,
+                      ),
+                      const SizedBox(height: 10),
+                      _FindingGroup(
+                        status: ItemStatus.fair,
+                        state: state,
+                        initiallyExpanded: true,
+                      ),
+                      const SizedBox(height: 10),
+                      _FindingGroup(
+                        status: ItemStatus.good,
+                        state: state,
+                        initiallyExpanded: false,
+                      ),
+                      _LegacyBodySection(state: state),
+                    ],
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
             ),
-            TextButton.icon(
-              onPressed: _isSubmitting ? null : widget.onBack,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: const Text('Go back and edit'),
+            _ReportFooter(
+              state: state,
+              hasRatings: hasRatings,
+              isSubmitting: _isSubmitting,
+              onConvert: _convertToEstimate,
+              onSubmit: _confirmAndSave,
+              onBack: widget.onBack,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _convertToEstimate() {
+    HapticFeedback.mediumImpact();
+    context.push(
+      AppRoutes.repairOrder,
+      extra: {'onBack': () => context.pop(), 'fromInspection': true},
     );
   }
 
   Future<void> _confirmAndSave() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.assignment_turned_in_outlined),
-        title: const Text('Submit this inspection?'),
-        content: const Text(
-          'Please confirm that the checkpoint ratings, body condition and attachments are correct.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Review Again'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
+    final t = StaffLocalizations.of(context)!;
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: t.advisorHealthSubmitTitle,
+      message: t.advisorHealthSubmitMessage,
+      confirmLabel: t.advisorHealthSubmit,
+      cancelLabel: t.advisorHealthReviewAgain,
     );
     if (confirmed != true || !mounted) return;
     setState(() => _isSubmitting = true);
@@ -483,13 +216,6 @@ class _InspectionPreviewViewState extends ConsumerState<InspectionPreviewView> {
         if (target != null) {
           context.pushReplacement(AppRoutes.advisorJobDetail, extra: target);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Inspection saved offline. It will sync automatically.',
-              ),
-            ),
-          );
           widget.onBack();
         }
       },
@@ -502,53 +228,656 @@ class _InspectionPreviewViewState extends ConsumerState<InspectionPreviewView> {
   }
 }
 
-class _ReviewSectionHeader extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
+/// JUDGMENT screen anchor: the score is ONE sticky row (badge + health +
+/// coverage + 3 splits inline) so findings own the viewport. The 3-up
+/// dossier card was deliberately not cloned here.
+class _ScoreStrip extends StatelessWidget {
+  final int score;
+  final InspectionState state;
 
-  const _ReviewSectionHeader({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
+  const _ScoreStrip({required this.score, required this.state});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(11),
-          ),
-          child: Icon(icon, color: theme.colorScheme.primary, size: 20),
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+
+    final good = state.statuses.values
+        .where((s) => s == ItemStatus.good)
+        .length;
+    final fair = state.statuses.values
+        .where((s) => s == ItemStatus.fair)
+        .length;
+    final poor = state.statuses.values
+        .where((s) => s == ItemStatus.poor)
+        .length;
+
+    final scoreColor = poor > 0
+        ? colors.error
+        : fair > 0
+        ? context.semanticColors.inspectionAdvisory.base
+        : context.semanticColors.inspectionPass.base;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      child: Semantics(
+        label: t.advisorHealthScore(score),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: scoreColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: scoreColor.withValues(alpha: 0.45),
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                poor > 0
+                    ? Icons.priority_high_rounded
+                    : fair > 0
+                    ? Icons.remove_red_eye_outlined
+                    : Icons.verified_outlined,
+                color: scoreColor,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    t.advisorHealthScore(score),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: scoreColor,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    t.advisorHealthScoredOf(
+                      state.completedCount,
+                      state.totalItems,
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            _StripSplit(count: good, status: ItemStatus.good),
+            const SizedBox(width: 6),
+            _StripSplit(count: fair, status: ItemStatus.fair),
+            const SizedBox(width: 6),
+            _StripSplit(count: poor, status: ItemStatus.poor),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+      ),
+    );
+  }
+}
+
+class _StripSplit extends StatelessWidget {
+  final int count;
+  final ItemStatus status;
+
+  const _StripSplit({required this.count, required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final ink = status == ItemStatus.good
+        ? semantic.inspectionPass.base
+        : status == ItemStatus.fair
+        ? semantic.inspectionAdvisory.base
+        : semantic.inspectionFail.base;
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppDimensions.r12),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$count',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: ink,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          Container(
+            width: 20,
+            height: 4,
+            decoration: BoxDecoration(
+              color: ink,
+              borderRadius: BorderRadius.circular(AppDimensions.r4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dossier control row: Share copies a short summary, Export copies the
+/// full finding detail — both real clipboard payloads, no backend.
+class _ShareExportRow extends StatelessWidget {
+  final InspectionState state;
+  final int score;
+
+  const _ShareExportRow({required this.state, required this.score});
+
+  String _summary(StaffLocalizations t) {
+    final good = state.statuses.values
+        .where((s) => s == ItemStatus.good)
+        .length;
+    final fair = state.statuses.values
+        .where((s) => s == ItemStatus.fair)
+        .length;
+    final poor = state.statuses.values
+        .where((s) => s == ItemStatus.poor)
+        .length;
+    return '${t.advisorHealthScore(score)} — '
+        '${t.advisorHealthMandatory}: $poor, '
+        '${t.advisorHealthRecommended}: $fair, '
+        '${t.advisorHealthGoodGroup}: $good';
+  }
+
+  String _detail(StaffLocalizations t) {
+    final lines = <String>[_summary(t)];
+    for (final section in state.sections) {
+      for (var i = 0; i < section.items.length; i++) {
+        final status = state.statuses['${section.id}_$i'];
+        if (status == null) continue;
+        lines.add('${section.label} — ${section.items[i]}: ${status.name}');
+      }
+    }
+    return lines.join('\n');
+  }
+
+  Future<void> _copy(BuildContext context, String payload) async {
+    final t = StaffLocalizations.of(context)!;
+    HapticFeedback.selectionClick();
+    await Clipboard.setData(ClipboardData(text: payload));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(t.advisorHealthCopied)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      height: 44,
+      padding: const EdgeInsetsDirectional.only(start: 16, end: 8),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              t.advisorHealthScoredOf(state.completedCount, state.totalItems),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          SizedBox(
+            height: 44,
+            child: TextButton.icon(
+              onPressed: () => _copy(context, _summary(t)),
+              icon: const Icon(Icons.share_outlined, size: 18),
+              label: Text(t.advisorHealthShare),
+            ),
+          ),
+          SizedBox(
+            height: 44,
+            child: TextButton.icon(
+              onPressed: () => _copy(context, _detail(t)),
+              icon: const Icon(Icons.ios_share_outlined, size: 18),
+              label: Text(t.advisorHealthExport),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DamageRecap extends StatelessWidget {
+  final InspectionState state;
+
+  const _DamageRecap({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+
+    final hudZones = <VehicleZone>[];
+    var legacyCount = 0;
+    state.vehiclePartInspections.forEach((partId, inspection) {
+      if (inspection.findings.isEmpty) return;
+      final zone = hudZoneForPart(partId);
+      if (zone != null) {
+        if (!hudZones.contains(zone)) hudZones.add(zone);
+      } else {
+        legacyCount += inspection.findings.length;
+      }
+    });
+    final hudCount = hudZones.fold<int>(
+      0,
+      (sum, z) =>
+          sum +
+          (state.vehiclePartInspections[hudPartId(z)]?.findings.length ?? 0),
+    );
+    if (hudCount + legacyCount == 0) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.r16),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: '${t.advisorHudPinsTitle} · ${hudCount + legacyCount}',
+            leadingIcon: Icons.push_pin_outlined,
+          ),
+          const SizedBox(height: 8),
+          // The recap geometry is LTR-locked inside the shared widget and
+          // never mirrors in AR RTL (spec 2.2 exception 1).
+          SpatialDamageHud(
+            hotspots: [
+              for (final zone in hudZones)
+                DamageHotspot(
+                  zone: zone,
+                  kind: hudKindForFindings(
+                    state.vehiclePartInspections[hudPartId(zone)]?.findings ??
+                        const [],
+                  ),
+                  label: hudZoneLabel(t, zone),
                 ),
-              ),
             ],
+            height: 200,
+          ),
+          if (legacyCount > 0) ...[
+            const SizedBox(height: 8),
+            Text(
+              '${t.advisorBodyConditionHint} · ${t.advisorHealthAttachments(legacyCount)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LegacyBodySection extends StatefulWidget {
+  final InspectionState state;
+
+  const _LegacyBodySection({required this.state});
+
+  @override
+  State<_LegacyBodySection> createState() => _LegacyBodySectionState();
+}
+
+class _LegacyBodySectionState extends State<_LegacyBodySection> {
+  // Legacy intake detail stays collapsed — the dossier groups are the
+  // judgment surface; the body panel opens only on explicit intent.
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    var legacyCount = 0;
+    widget.state.vehiclePartInspections.forEach((partId, inspection) {
+      if (hudZoneForPart(partId) == null) {
+        legacyCount += inspection.findings.length;
+      }
+    });
+    if (legacyCount == 0) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _open = !_open);
+          },
+          child: Semantics(
+            button: true,
+            expanded: _open,
+            label: StaffLocalizations.of(
+              context,
+            )!.advisorBodyConditionHint,
+            child: Container(
+              height: 48,
+              padding: const EdgeInsetsDirectional.only(start: 16, end: 8),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(AppDimensions.r16),
+                border: Border.all(color: colors.outlineVariant),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.directions_car_outlined,
+                    size: 20,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '${StaffLocalizations.of(context)!.advisorBodyConditionHint} · $legacyCount',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(
+                    _open
+                        ? StaffLocalizations.of(
+                            context,
+                          )!.advisorHealthCollapse
+                        : StaffLocalizations.of(context)!.advisorHealthExpand,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Icon(
+                    _open
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: colors.onSurfaceVariant,
+                    size: 22,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
+        if (_open) ...[
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(AppDimensions.r16),
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            child: const VehicleBodyConditionPanel(
+              readOnly: true,
+              embedded: true,
+              showTitle: false,
+            ),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _FindingGroup extends StatefulWidget {
+  final ItemStatus status;
+  final InspectionState state;
+  final bool initiallyExpanded;
+
+  const _FindingGroup({
+    required this.status,
+    required this.state,
+    this.initiallyExpanded = true,
+  });
+
+  @override
+  State<_FindingGroup> createState() => _FindingGroupState();
+}
+
+class _FindingGroupState extends State<_FindingGroup> {
+  late bool _open;
+
+  @override
+  void initState() {
+    super.initState();
+    _open = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final status = widget.status;
+    final state = widget.state;
+
+    final entries = <({String section, String item, int attachments})>[];
+    for (final section in state.sections) {
+      for (var i = 0; i < section.items.length; i++) {
+        final itemId = '${section.id}_$i';
+        if (state.statuses[itemId] != status) continue;
+        final media = state.media[itemId];
+        entries.add(
+          (
+            section: section.label,
+            item: section.items[i],
+            attachments:
+                (media?.photoPaths.length ?? 0) +
+                (media?.videoPaths.length ?? 0) +
+                ((media?.audioPath.isNotEmpty ?? false) ? 1 : 0) +
+                ((media?.note.isNotEmpty ?? false) ? 1 : 0),
+          ),
+        );
+      }
+    }
+    if (entries.isEmpty) return const SizedBox.shrink();
+
+    final tone = status == ItemStatus.poor
+        ? semantic.danger
+        : status == ItemStatus.fair
+        ? semantic.warning
+        : semantic.success;
+    final title = status == ItemStatus.poor
+        ? t.advisorHealthMandatory
+        : status == ItemStatus.fair
+        ? t.advisorHealthRecommended
+        : t.advisorHealthGoodGroup;
+    final icon = status == ItemStatus.poor
+        ? Icons.priority_high_rounded
+        : status == ItemStatus.fair
+        ? Icons.build_outlined
+        : Icons.check_circle_outline_rounded;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.r16),
+        border: Border.all(color: tone.border.withValues(alpha: 0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Status header verdict (never rings): tap toggles the group.
+          // Mandatory + Recommended ship expanded; Good ships collapsed.
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _open = !_open);
+            },
+            child: Semantics(
+              button: true,
+              expanded: _open,
+              label: '$title ${entries.length}',
+              child: Container(
+                height: 48,
+                color: Colors.transparent,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: tone.base,
+                        borderRadius: BorderRadius.circular(AppDimensions.r8),
+                      ),
+                      child: Icon(
+                        icon,
+                        // FIXED-INK: white glyph on the saturated status fill.
+                        color: Colors.white,
+                        size: 19,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '$title · ${entries.length}',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: tone.ink,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      _open
+                          ? t.advisorHealthCollapse
+                          : t.advisorHealthExpand,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Icon(
+                      _open
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: colors.onSurfaceVariant,
+                      size: 22,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (_open) ...[
+            const SizedBox(height: 6),
+            for (final e in entries)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: tone.subtle.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          e.item,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          e.section,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.onSurfaceVariant),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (e.attachments > 0)
+                          Text(
+                            t.advisorHealthAttachments(e.attachments),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: tone.base.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Text(
+                      status == ItemStatus.poor
+                          ? t.advisorHudRingFail
+                          : status == ItemStatus.fair
+                          ? t.advisorHudRingCaution
+                          : t.advisorHudRingPass,
+                      style: TextStyle(
+                        color: tone.ink,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -561,12 +890,14 @@ class _IncompleteNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: colors.secondaryContainer.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppDimensions.r12),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         children: [
@@ -574,61 +905,113 @@ class _IncompleteNotice extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '$remaining checkpoint${remaining == 1 ? '' : 's'} still need a condition.',
+              t.advisorHealthRemaining(remaining),
               style: TextStyle(
                 color: colors.onSecondaryContainer,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          TextButton(onPressed: onEdit, child: const Text('Complete')),
+          TextButton(
+            onPressed: onEdit,
+            child: Text(t.advisorHealthBackEdit),
+          ),
         ],
       ),
     );
   }
 }
 
-class _StatusSummary extends StatelessWidget {
-  final String label;
-  final int count;
-  final Color color;
-  final IconData icon;
+class _ReportFooter extends StatelessWidget {
+  final InspectionState state;
+  final bool hasRatings;
+  final bool isSubmitting;
+  final VoidCallback onConvert;
+  final VoidCallback onSubmit;
+  final VoidCallback onBack;
 
-  const _StatusSummary({
-    required this.label,
-    required this.count,
-    required this.color,
-    required this.icon,
+  const _ReportFooter({
+    required this.state,
+    required this.hasRatings,
+    required this.isSubmitting,
+    required this.onConvert,
+    required this.onSubmit,
+    required this.onBack,
   });
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Column(
-      children: [
-        Icon(icon, color: color, size: 19),
-        const SizedBox(height: 4),
-        Text(
-          '$count',
-          style: TextStyle(
-            color: color,
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
-          ),
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.outlineVariant)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              hasRatings
+                  ? t.advisorHealthReady(state.statuses.length)
+                  : t.advisorHealthEmptyHint,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final wide = constraints.maxWidth >= 560;
+                final convert = SizedBox(
+                  width: wide ? null : double.infinity,
+                  child: PrimaryButton(
+                    label: t.advisorHealthConvert,
+                    icon: Icons.request_quote_outlined,
+                    onPressed: !hasRatings || isSubmitting ? null : onConvert,
+                  ),
+                );
+                final submit = SizedBox(
+                  width: wide ? null : double.infinity,
+                  child: PrimaryButton(
+                    label: isSubmitting
+                        ? t.advisorHealthSubmitting
+                        : t.advisorHealthSubmit,
+                    icon: Icons.cloud_upload_outlined,
+                    isLoading: isSubmitting,
+                    onPressed: !hasRatings || isSubmitting ? null : onSubmit,
+                  ),
+                );
+                if (wide) {
+                  return Row(
+                    children: [
+                      Expanded(child: convert),
+                      const SizedBox(width: 10),
+                      Expanded(child: submit),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [convert, const SizedBox(height: 8), submit],
+                );
+              },
+            ),
+            TextButton.icon(
+              onPressed: isSubmitting ? null : onBack,
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              label: Text(t.advisorHealthBackEdit),
+            ),
+          ],
         ),
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }

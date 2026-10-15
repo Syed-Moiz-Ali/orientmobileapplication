@@ -9,7 +9,6 @@ import 'package:customer_app/features/customer/presentation/providers/customer_p
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_vehicle_presentation.dart';
 import 'package:customer_app/features/customer/presentation/support/failed_vehicle_delete.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicle_record.dart';
 
@@ -84,7 +83,17 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (dash.isLoading && vehicles.isEmpty)
-              const _VehiclesSkeleton()
+              // Phase 07.1: bespoke _VehiclesSkeleton migrated to AppSkeleton.
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppSkeleton.text(width: 160, height: 26),
+                  SizedBox(height: AppDimensions.s10),
+                  AppSkeleton.text(width: 180, height: 12),
+                  SizedBox(height: AppDimensions.s20),
+                  AppSkeleton.card(height: 208),
+                ],
+              )
             else ...[
               _Header(
                 count: vehicles.length,
@@ -535,30 +544,6 @@ class _UnmatchedDeleteRecovery extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _VehiclesSkeleton extends StatelessWidget {
-  const _VehiclesSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomerSkeleton(
-      builder: (context, block) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          CustomerSkeletonBox(width: 160, height: 26, color: block),
-          const SizedBox(height: AppDimensions.s10),
-          CustomerSkeletonBox(width: 180, height: 12, color: block),
-          const SizedBox(height: AppDimensions.s20),
-          CustomerSkeletonBox(
-            height: 208,
-            color: block,
-            radius: AppDimensions.radiusCard,
-          ),
-        ],
       ),
     );
   }

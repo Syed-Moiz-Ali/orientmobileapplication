@@ -10,9 +10,7 @@ import 'package:crm_app/features/crm_dashboard/presentation/widgets/connect_inte
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_activity_feed_widget.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_followups_widget.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_pipeline_widget.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_header_banner.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_channel_widgets.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_kpi_card.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_recent_leads.dart';
 
 class CrmDashboardPage extends ConsumerWidget {
@@ -48,7 +46,7 @@ class CrmDashboardPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const CrmHeaderBanner(),
+            const _CrmPulseHeader(),
             if (!anyConnected)
               _connectBanner(context)
             else if (!hasData)
@@ -125,17 +123,32 @@ class CrmDashboardPage extends ConsumerWidget {
     // Phase 01 (scale-lock removal): tiles grow with the system text scale so
     // the value/label stack never clips at 1.3x+. At 1.0x the layout is
     // identical to the shipped dashboard.
+    //
+    // Phase 07.1: aspects refit for the shared AppKpiCard, which enforces
+    // the frozen 156 px minimum tile height (the bespoke tile was ~70 px).
+    // Every cell stays ≥160 px so the tile minimum is always feasible.
     final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
     final baseAspect = adaptive.isSmallMobile
-        ? 2.65
-        : adaptive.pick(compact: 1.35, medium: 1.75, expanded: 2.05, large: 2.15);
+        ? 1.5
+        : adaptive.pick(compact: 1.0, medium: 2.0, expanded: 1.7, large: 1.8);
     return AppAdaptiveGrid(
       columns: columns,
       minChildWidth: adaptive.isCompact ? 142 : 190,
       spacing: adaptive.itemSpacing,
       runSpacing: adaptive.itemSpacing,
       childAspectRatio: baseAspect / textScale,
-      children: [for (final kpi in kpis) CrmKpiCard(kpi: kpi)],
+      // Phase 07.1: bespoke CrmKpiCard migrated to AppKpiCard (same
+      // label/value/icon/trend; tint resolves from the semantic state).
+      children: [
+        for (final kpi in kpis)
+          AppKpiCard(
+            label: kpi.label,
+            value: kpi.value,
+            icon: kpi.icon,
+            semanticState: kpi.state,
+            trend: KpiTrend(label: kpi.trend, isPositive: kpi.trendUp),
+          ),
+      ],
     );
   }
 
@@ -328,4 +341,62 @@ class CrmDashboardPage extends ConsumerWidget {
       ),
     ],
   );
+}
+
+/// Phase 07.1 centralized pulse header: the bespoke `CrmHeaderBanner`
+/// (a `GradientBanner` wrapper) is deleted — the live/count pills and title
+/// now compose [AppPageHeader] + [StatusPill] with identical copy. The custom
+/// `CrmColors` accents resolve through the semantic warning/success families
+/// instead.
+class _CrmPulseHeader extends ConsumerWidget {
+  const _CrmPulseHeader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final leads = ref.watch(crmLeadProvider);
+    final wonLeads = leads.where((l) => l.status == 'WON').length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppPageHeader(
+          eyebrow: 'Live',
+          title: 'CRM Dashboard',
+          trailing: Container(
+            padding: const EdgeInsets.all(AppDimensions.s8),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            ),
+            child: Icon(
+              Icons.hub_rounded,
+              color: colors.primary,
+              size: AppDimensions.iconMd,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        Wrap(
+          spacing: AppDimensions.s8,
+          runSpacing: AppDimensions.s8,
+          children: [
+            StatusPill(
+              label: '${leads.length} Leads',
+              icon: Icons.person_search_rounded,
+              fg: semantic.warning.base,
+              bg: semantic.warning.subtle,
+            ),
+            StatusPill(
+              label: '$wonLeads Won',
+              icon: Icons.task_alt_rounded,
+              fg: semantic.success.base,
+              bg: semantic.success.subtle,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/router/app_router.dart';
-import 'package:staff_app/features/common/presentation/staff_shimmer_skeletons.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 
@@ -19,7 +18,13 @@ class SupervisorDashboardTab extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     if (state.isDashboardLoading) {
-      return const SupervisorQueueSkeleton();
+      // Phase 07.1: bespoke SupervisorQueueSkeleton migrated to AppSkeleton.
+      return ListView.separated(
+        padding: const EdgeInsets.all(AppDimensions.s16),
+        itemCount: 4,
+        separatorBuilder: (_, __) => const SizedBox(height: 14),
+        itemBuilder: (_, __) => const AppSkeleton.card(height: 130),
+      );
     }
 
     final bookings = notifier.bookings;
@@ -236,8 +241,6 @@ class _OperationalAttentionArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -247,111 +250,35 @@ class _OperationalAttentionArea extends StatelessWidget {
           spacing: 10,
           runSpacing: 10,
           children: [
+            // Phase 07.1: bespoke _AttentionChip migrated to AppKpiCard
+            // (same icon/count/label/tap; the hardcoded amber hex resolves
+            // through the semantic warning family).
             if (unassignedBookings > 0)
-              _AttentionChip(
-                icon: Icons.calendar_today_rounded,
-                count: unassignedBookings,
+              AppKpiCard.compact(
                 label: 'Unassigned Bookings',
-                color: colors.primary,
+                value: '$unassignedBookings',
+                icon: Icons.calendar_today_rounded,
                 onTap: onOpenQueue,
               ),
             if (breakdownsWaiting > 0)
-              _AttentionChip(
-                icon: Icons.car_crash_outlined,
-                count: breakdownsWaiting,
+              AppKpiCard.compact(
                 label: 'Breakdowns Waiting',
-                color: colors.error,
+                value: '$breakdownsWaiting',
+                icon: Icons.car_crash_outlined,
+                semanticState: KpiSemanticState.danger,
                 onTap: onOpenQueue,
               ),
             if (awaitingQc > 0)
-              _AttentionChip(
-                icon: Icons.verified_outlined,
-                count: awaitingQc,
+              AppKpiCard.compact(
                 label: 'Awaiting Inspection',
-                color: const Color(0xFFD97706),
+                value: '$awaitingQc',
+                icon: Icons.verified_outlined,
+                semanticState: KpiSemanticState.warning,
                 onTap: onOpenReview,
               ),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _AttentionChip extends StatelessWidget {
-  final IconData icon;
-  final int count;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _AttentionChip({
-    required this.icon,
-    required this.count,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$count',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 11,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 16,
-              color: colors.onSurfaceVariant,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -969,7 +896,10 @@ class _ContextualNavigationMatrix extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
-              childAspectRatio: 1.6,
+              // Phase 07.1: 1.6 clipped the nav tiles at 320 px (and 1.3x
+              // text); 1.4 keeps icon + two lines clean on the narrowest
+              // phone. Discovered by the migration viewport sweep.
+              childAspectRatio: 1.4,
               children: destinations
                   .map((d) => _ContextNavTile(data: d))
                   .toList(),
@@ -1058,9 +988,6 @@ class _KpiOverviewGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth >= 768 ? 4 : 2;
@@ -1072,48 +999,18 @@ class _KpiOverviewGrid extends StatelessWidget {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
-            childAspectRatio: 1.8,
+            // Phase 07.1: the shared AppKpiCard enforces the frozen 156 px
+            // minimum tile height (Arabic-safe), so the aspect fits it.
+            childAspectRatio: 1.1,
           ),
           itemBuilder: (context, index) {
+            // Phase 07.1: inline tile migrated to AppKpiCard.compact (same
+            // label/value/icon; icon tint stays primary via neutral state).
             final kpi = kpis[index];
-            return Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: colors.surface,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: colors.outlineVariant),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Icon(kpi.icon, size: 16, color: colors.primary),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          kpi.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    kpi.value,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: colors.onSurface,
-                    ),
-                  ),
-                ],
-              ),
+            return AppKpiCard.compact(
+              label: kpi.label,
+              value: kpi.value,
+              icon: kpi.icon,
             );
           },
         );

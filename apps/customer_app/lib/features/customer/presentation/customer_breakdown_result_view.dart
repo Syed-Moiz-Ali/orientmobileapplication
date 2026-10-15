@@ -31,39 +31,33 @@ class CustomerBreakdownResultView extends StatelessWidget {
     final accent = sent ? colors.primary : colors.secondary;
 
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar.
+      appBar: WorkspaceAppBar(
+        title: sent ? 'Request sent' : 'Request saved',
+        showBack: true,
+      ),
+      body: AppResponsivePage(
+        maxContentWidth: 720,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AppTopBar(title: sent ? 'Request sent' : 'Request saved'),
-            Divider(height: 1, color: colors.outlineVariant),
-            Expanded(
-              child: AppResponsivePage(
-                maxContentWidth: 720,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppDimensions.s12),
-                    _Outcome(sent: sent, accent: accent, reference: _reference),
-                    const SizedBox(height: AppDimensions.s20),
-                    _Details(
-                      vehicleName: _vehicleName,
-                      vehiclePlate: _vehiclePlate,
-                      location: _location,
-                      issue: _issue,
-                    ),
-                    const SizedBox(height: AppDimensions.s20),
-                    _WhatHappensNext(sent: sent),
-                    const SizedBox(height: AppDimensions.s24),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      child: const Text('Done'),
-                    ),
-                    const SizedBox(height: AppDimensions.s32),
-                  ],
-                ),
-              ),
+            const SizedBox(height: AppDimensions.s12),
+            _Outcome(sent: sent, accent: accent, reference: _reference),
+            const SizedBox(height: AppDimensions.s20),
+            _Details(
+              vehicleName: _vehicleName,
+              vehiclePlate: _vehiclePlate,
+              location: _location,
+              issue: _issue,
             ),
+            const SizedBox(height: AppDimensions.s20),
+            _WhatHappensNext(sent: sent),
+            const SizedBox(height: AppDimensions.s24),
+            FilledButton(
+              onPressed: () => Navigator.of(context).maybePop(),
+              child: const Text('Done'),
+            ),
+            const SizedBox(height: AppDimensions.s32),
           ],
         ),
       ),

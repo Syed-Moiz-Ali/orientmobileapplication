@@ -268,12 +268,14 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
   }
 
   Future<void> _loadAll(SupervisorRemoteDataSource r) async {
-    final kpiColors = [
-      const Color(0xFF1F6FEB),
-      const Color(0xFF238636),
-      const Color(0xFF8957E5),
-      const Color(0xFFFF7B00),
-      const Color(0xFFDA3633),
+    // Phase 07.1: decorative per-index tint (raw hex rotation) now resolves
+    // to centralized semantic states (order-preserving 1:1 mapping).
+    final kpiStates = [
+      KpiSemanticState.info,
+      KpiSemanticState.success,
+      KpiSemanticState.info,
+      KpiSemanticState.warning,
+      KpiSemanticState.danger,
     ];
     final kpiIcons = [
       Icons.description_outlined,
@@ -324,7 +326,7 @@ class SupervisorDashboardNotifier extends Notifier<SupervisorDashboardState> {
         .map(
           (e) => SupervisorKpiEntity(
             icon: kpiIcons[e.key < kpiIcons.length ? e.key : 0],
-            color: kpiColors[e.key < kpiColors.length ? e.key : 0],
+            state: kpiStates[e.key < kpiStates.length ? e.key : 0],
             value: (e.value as KpiResponse).value,
             label: (e.value as KpiResponse).label,
             sub: (e.value as KpiResponse).sub,

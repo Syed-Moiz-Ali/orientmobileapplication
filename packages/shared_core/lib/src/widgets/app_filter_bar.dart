@@ -17,12 +17,23 @@ class AppFilterBar extends StatelessWidget {
   final ValueChanged<String?> onSelected;
   final bool showAllOption;
 
+  /// Optional live result counts keyed by option label (Phase 07.1: adopted
+  /// by the technician jobs toolbar). When `counts[option]` is present the
+  /// chip renders a count badge; null (default) keeps the plain chip — the
+  /// 01.2 golden rendering is unchanged.
+  final Map<String, int>? counts;
+
+  /// Semantics label override for the count badge (`$label, $count jobs`).
+  final String Function(String label, int count)? countSemantics;
+
   const AppFilterBar({
     super.key,
     required this.options,
     required this.selected,
     required this.onSelected,
     this.showAllOption = true,
+    this.counts,
+    this.countSemantics,
   });
 
   @override
@@ -34,19 +45,30 @@ class AppFilterBar extends StatelessWidget {
     final chips = <Widget>[];
     if (showAllOption) {
       final allActive = selected == null;
+      final allCount = counts?[t.filterBarAll];
       chips.add(
         _FilterChip(
           label: t.filterBarAll,
           active: allActive,
+          count: allCount,
+          semanticsLabel: allCount == null
+              ? null
+              : (countSemantics?.call(t.filterBarAll, allCount) ??
+                  '${t.filterBarAll}, $allCount'),
           onTap: () => onSelected(null),
         ),
       );
     }
     for (final option in options) {
+      final count = counts?[option];
       chips.add(
         _FilterChip(
           label: option,
           active: selected == option,
+          count: count,
+          semanticsLabel: count == null
+              ? null
+              : (countSemantics?.call(option, count) ?? '$option, $count'),
           onTap: () => onSelected(selected == option ? null : option),
         ),
       );
@@ -90,12 +112,16 @@ class AppFilterBar extends StatelessWidget {
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool active;
+  final int? count;
+  final String? semanticsLabel;
   final VoidCallback onTap;
 
   const _FilterChip({
     required this.label,
     required this.active,
     required this.onTap,
+    this.count,
+    this.semanticsLabel,
   });
 
   @override
@@ -107,17 +133,24 @@ class _FilterChip extends StatelessWidget {
     final bg = active ? colors.primary : semantic.surfaceRaised;
     final fg = active ? colors.onPrimary : colors.onSurface;
     final border = active ? colors.primary : semantic.borderDefault;
+    final countInk = active ? colors.onPrimary : colors.onSurfaceVariant;
 
     return Semantics(
       button: true,
       selected: active,
-      label: label,
+      label: semanticsLabel ?? label,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
           child: Container(
+            // Phase 07.1: minimum 48 dp touch target (the unwrapped chip
+            // measured 34 px and failed the tap-target audit).
+            constraints: const BoxConstraints(
+              minHeight: AppDimensions.touchTarget,
+            ),
+            alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(
               horizontal: AppDimensions.s14,
               vertical: AppDimensions.s8,
@@ -127,14 +160,34 @@ class _FilterChip extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
               border: Border.all(color: border),
             ),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: fg,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: fg,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (count != null) ...[
+                  const SizedBox(width: AppDimensions.s6),
+                  Text(
+                    '$count',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: countInk,
+                      fontWeight:
+                          active ? FontWeight.w800 : FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ),

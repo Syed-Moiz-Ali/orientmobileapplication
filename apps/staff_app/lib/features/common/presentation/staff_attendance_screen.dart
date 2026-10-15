@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/common/presentation/providers/staff_attendance_provider.dart';
-import 'package:staff_app/features/common/presentation/staff_shimmer_skeletons.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
 
 class StaffAttendanceScreen extends ConsumerWidget {
@@ -50,7 +49,24 @@ class StaffAttendanceScreen extends ConsumerWidget {
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: state.isLoading
-                  ? const StaffAttendanceSkeleton()
+                  // Phase 07.1: bespoke StaffAttendanceSkeleton migrated to
+                  // AppSkeleton (same card/text/grid/button shapes).
+                  ? const Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AppSkeleton.card(height: 124),
+                        SizedBox(height: AppDimensions.s20),
+                        AppSkeleton.text(width: 160),
+                        SizedBox(height: AppDimensions.s10),
+                        AppSkeleton.grid(
+                          columns: 2,
+                          rows: 2,
+                          itemHeight: 78,
+                        ),
+                        SizedBox(height: AppDimensions.s24),
+                        AppSkeleton.card(height: 50),
+                      ],
+                    )
                   : LayoutBuilder(
                       builder: (context, constraints) {
                         final isWide = constraints.maxWidth >= 640;

@@ -88,21 +88,15 @@ class CrmRemoteAdapter implements CrmDataSource {
       Icons.trending_down_rounded,
       Icons.notifications_off_outlined,
     ];
-    final kpiColors = [
-      AppColors.cyanBright,
-      AppColors.purpleAccent,
-      AppColors.warning,
-      AppColors.greenAccent,
-      AppColors.red500,
-      const Color(0xFF8B5CF6),
-    ];
-    final kpiBgs = [
-      const Color(0xFF001F2E),
-      const Color(0xFF1A0A2E),
-      const Color(0xFF2A1A00),
-      const Color(0xFF002A1E),
-      const Color(0xFF2A0A0A),
-      const Color(0xFF1A0A2E),
+    // Phase 07.1: decorative per-index tint (custom palette rotation) now
+    // resolves to centralized semantic states (order-preserving 1:1 mapping).
+    final kpiStates = [
+      KpiSemanticState.info,
+      KpiSemanticState.info,
+      KpiSemanticState.warning,
+      KpiSemanticState.success,
+      KpiSemanticState.danger,
+      KpiSemanticState.info,
     ];
     final sourceColors = [
       const Color(0xFF25D366),
@@ -128,7 +122,7 @@ class CrmRemoteAdapter implements CrmDataSource {
       _remote.getTasks(),
     ]);
 
-    _kpis = _mapKpis(results[0] as List, kpiIcons, kpiColors, kpiBgs);
+    _kpis = _mapKpis(results[0] as List, kpiIcons, kpiStates);
     _channels = _mapChannels(results[1] as List);
     _conversionTrend = (results[2] as List)
         .map(
@@ -244,7 +238,11 @@ class CrmRemoteAdapter implements CrmDataSource {
     return _toIntegrationEntity(r);
   }
 
-  List<CrmKpiEntity> _mapKpis(List l, List<IconData> icons, List<Color> colors, List<Color> bgs) {
+  List<CrmKpiEntity> _mapKpis(
+    List l,
+    List<IconData> icons,
+    List<KpiSemanticState> states,
+  ) {
     return l
         .asMap()
         .entries
@@ -253,8 +251,7 @@ class CrmRemoteAdapter implements CrmDataSource {
             label: (e.value as CrmKpiResponse).label,
             value: (e.value as CrmKpiResponse).value,
             icon: icons[e.key < icons.length ? e.key : 0],
-            color: colors[e.key < colors.length ? e.key : 0],
-            bgColor: bgs[e.key < bgs.length ? e.key : 0],
+            state: states[e.key < states.length ? e.key : 0],
             trend: (e.value as CrmKpiResponse).change,
             trendUp: true,
           ),

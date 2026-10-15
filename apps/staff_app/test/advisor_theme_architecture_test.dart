@@ -37,8 +37,9 @@ void main() {
     'lib/features/advisor/presentation/widgets/advisor_notification_row.dart',
     'lib/features/advisor/presentation/widgets/advisor_job_card_row.dart',
     'lib/features/advisor/presentation/widgets/advisor_status.dart',
-    'lib/features/advisor/presentation/widgets/advisor_meta_pill.dart',
     'lib/features/advisor/presentation/widgets/advisor_approval_row.dart',
+    // Phase 07.1: `advisor_meta_pill.dart` was deleted (migrated to shared
+    // StatusPill) — it no longer belongs on this list.
   ];
 
   test('advisor Phase 06 widgets never select a static palette', () {

@@ -21,28 +21,23 @@ class CustomerServiceStatusPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            AppTopBar(
-              title: 'Service status',
-              onBack: () {
-                // Reached from the workspace → return to it. Reached directly
-                // from a deep link (nothing to pop) → go to the workspace
-                // instead of stranding the user on a page with no way out.
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go(AppRoutes.customerDashboard);
-                }
-              },
-            ),
-            Divider(height: 1, color: theme.colorScheme.outlineVariant),
-            const Expanded(child: CustomerServiceStatusTab(showTitle: false)),
-          ],
-        ),
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
+      // (same title + deep-link-safe back behavior).
+      appBar: WorkspaceAppBar(
+        title: 'Service status',
+        showBack: true,
+        onBack: () {
+          // Reached from the workspace → return to it. Reached directly
+          // from a deep link (nothing to pop) → go to the workspace
+          // instead of stranding the user on a page with no way out.
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go(AppRoutes.customerDashboard);
+          }
+        },
       ),
+      body: const CustomerServiceStatusTab(showTitle: false),
     );
   }
 }

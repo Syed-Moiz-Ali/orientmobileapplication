@@ -392,6 +392,77 @@ void main() {
     });
   });
 
+  group('AppFilterBar counts (Phase 07.1)', () {
+    testWidgets('count badges render beside labels', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          child: AppFilterBar(
+            options: const ['A', 'B'],
+            selected: 'A',
+            counts: const {'A': 3, 'B': 0},
+            onSelected: (_) {},
+          ),
+        ),
+      );
+      expect(find.text('A'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      expect(find.text('0'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('null counts keeps the plain 01.2 chip', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          child: AppFilterBar(
+            options: const ['A'],
+            selected: null,
+            onSelected: (_) {},
+          ),
+        ),
+      );
+      expect(find.text('A'), findsOneWidget);
+      expect(find.text('0'), findsNothing);
+    });
+
+    testWidgets('count semantics override the label', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          child: AppFilterBar(
+            options: const ['A'],
+            selected: 'A',
+            counts: const {'A': 5},
+            countSemantics: (label, count) => 'Filter jobs: $label, $count jobs',
+            onSelected: (_) {},
+          ),
+        ),
+      );
+      // The merged node carries our label alongside the visible chip text.
+      final semantics = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            (widget.properties.label?.contains('Filter jobs: A, 5 jobs') ??
+                false),
+      );
+      expect(semantics, findsOneWidget);
+    });
+
+    testWidgets('localized All chip carries its count (AR)', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          locale: const Locale('ar'),
+          child: AppFilterBar(
+            options: const ['A'],
+            selected: null,
+            counts: const {'الكل': 7},
+            onSelected: (_) {},
+          ),
+        ),
+      );
+      expect(find.text('7'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
   group('Responsive (320 / 768 / 1280)', () {
     Future<void> pumpAll(
       WidgetTester tester, {

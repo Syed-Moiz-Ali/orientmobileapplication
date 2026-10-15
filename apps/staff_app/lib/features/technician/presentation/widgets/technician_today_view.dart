@@ -47,13 +47,14 @@ class TechnicianTodayView extends ConsumerWidget {
       children: [
         _ShiftControl(state: state, notifier: notifier),
         const SizedBox(height: AppDimensions.s20),
-        TechnicianSectionHeader(
-          eyebrow: 'CURRENT WORK',
+        // Phase 07.1: bespoke header/empty migrated to SectionHeader/EmptyState.
+        SectionHeader(
           title: activeJob == null ? 'Ready for assignment' : 'On the bay',
+          subtitle: 'CURRENT WORK',
         ),
         const SizedBox(height: AppDimensions.s12),
         if (activeJob == null)
-          TechnicianEmptyState(
+          EmptyState(
             icon: Icons.task_alt_rounded,
             title: 'No active repair right now',
             message:
@@ -81,15 +82,15 @@ class TechnicianTodayView extends ConsumerWidget {
     final workQueue = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TechnicianSectionHeader(
-          eyebrow: 'UP NEXT',
+        SectionHeader(
           title: 'Assigned queue',
-          actionLabel: upcoming.isEmpty ? null : 'View all',
+          subtitle: 'UP NEXT',
+          action: upcoming.isEmpty ? null : 'View all',
           onAction: () => notifier.selectTab(1),
         ),
         const SizedBox(height: AppDimensions.s12),
         if (upcoming.isEmpty)
-          const TechnicianEmptyState(
+          const EmptyState(
             icon: Icons.check_circle_outline_rounded,
             title: 'Queue clear',
             message:
@@ -122,7 +123,7 @@ class TechnicianTodayView extends ConsumerWidget {
             else if (showSkeleton)
               const _TodaySkeleton()
             else if (noJobs)
-              TechnicianEmptyState(
+              EmptyState(
                 icon: Icons.assignment_outlined,
                 title: 'No assigned jobs right now',
                 message:
@@ -379,7 +380,7 @@ class _ActiveJobCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppDimensions.s10),
-                TechnicianStatusPill(status: job.status),
+                technicianStatusPill(job.status),
               ],
             ),
             const SizedBox(height: AppDimensions.s16),
@@ -473,9 +474,11 @@ class _ActiveJobCard extends StatelessWidget {
             ),
             if (job.tasks.isNotEmpty) ...[
               const SizedBox(height: AppDimensions.s16),
-              TechnicianTaskProgress(
-                completed: job.completedTasks,
-                total: job.tasks.length,
+              // Phase 07.1: bespoke progress migrated to AppLinearProgress.
+              AppLinearProgress(
+                value: job.completedTasks / job.tasks.length,
+                label:
+                    '${job.completedTasks} of ${job.tasks.length} tasks completed',
               ),
             ],
             const SizedBox(height: AppDimensions.s18),
@@ -859,7 +862,7 @@ class _FirstLoadError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TechnicianEmptyState(
+    return EmptyState(
       icon: Icons.cloud_off_rounded,
       title: "We couldn't load today's work",
       message: 'Check your connection and try again.',

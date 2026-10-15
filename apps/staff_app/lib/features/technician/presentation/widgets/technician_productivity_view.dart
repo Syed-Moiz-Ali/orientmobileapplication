@@ -5,7 +5,6 @@ import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
-import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
 
 /// Technician Productivity — "what work have I completed / progressed through?".
 ///
@@ -56,9 +55,9 @@ class TechnicianProductivityView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const TechnicianSectionHeader(
-              eyebrow: 'TODAY',
+            const SectionHeader(
               title: "Today's productivity",
+              subtitle: 'TODAY',
             ),
             const SizedBox(height: AppDimensions.s16),
             if (showSkeleton)
@@ -66,7 +65,7 @@ class TechnicianProductivityView extends ConsumerWidget {
             else if (firstLoadError)
               Semantics(
                 liveRegion: true,
-                child: TechnicianEmptyState(
+                child: EmptyState(
                   icon: Icons.cloud_off_rounded,
                   title: "We couldn't load your productivity",
                   message: 'Check your connection and try again.',
@@ -75,7 +74,7 @@ class TechnicianProductivityView extends ConsumerWidget {
                 ),
               )
             else if (empty)
-              const TechnicianEmptyState(
+              const EmptyState(
                 icon: Icons.insights_outlined,
                 title: 'No productivity data yet',
                 message:
@@ -165,9 +164,9 @@ class _SummaryColumn extends StatelessWidget {
               ),
               if (tasksTotal > 0) ...[
                 const SizedBox(height: AppDimensions.s16),
-                TechnicianTaskProgress(
-                  completed: tasksCompleted,
-                  total: tasksTotal,
+                AppLinearProgress(
+                  value: tasksCompleted / tasksTotal,
+                  label: '$tasksCompleted of $tasksTotal tasks completed',
                 ),
               ] else ...[
                 const SizedBox(height: AppDimensions.s12),
@@ -182,9 +181,9 @@ class _SummaryColumn extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppDimensions.s20),
-        TechnicianSectionHeader(
-          eyebrow: 'YOUR QUEUE',
+        SectionHeader(
           title: '${jobs.length} assigned',
+          subtitle: 'YOUR QUEUE',
         ),
         const SizedBox(height: AppDimensions.s12),
         _BreakdownRow(
@@ -282,7 +281,7 @@ class _ShiftColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TechnicianSectionHeader(eyebrow: 'SHIFT', title: status.label),
+        SectionHeader(title: status.label, subtitle: 'SHIFT'),
         const SizedBox(height: AppDimensions.s12),
         Container(
           padding: const EdgeInsets.all(AppDimensions.s16),

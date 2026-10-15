@@ -268,6 +268,11 @@ class _CustomerBreakdownHelpViewState
         .failedBreakdowns();
 
     return Scaffold(
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar.
+      appBar: const WorkspaceAppBar(
+        title: 'Roadside assistance',
+        showBack: true,
+      ),
       bottomNavigationBar: _Dock(
         sending: _sending,
         onCall: _callWorkshop,
@@ -277,8 +282,6 @@ class _CustomerBreakdownHelpViewState
         bottom: false,
         child: Column(
           children: [
-            const AppTopBar(title: 'Roadside assistance'),
-            Divider(height: 1, color: colors.outlineVariant),
             Expanded(
               child: AppResponsivePage(
                 maxContentWidth: 720,

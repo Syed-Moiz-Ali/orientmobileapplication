@@ -98,31 +98,30 @@ class SupervisorReportsTab extends ConsumerWidget {
                 ],
 
                 // ── 2. STATS OVERVIEW ───────────────────────────────────────
+                // Phase 07.1: bespoke _ReportStatCard migrated to AppKpiCard.
                 Row(
                   children: [
                     Expanded(
-                      child: _ReportStatCard(
+                      child: AppKpiCard.compact(
                         label: 'Total Volume',
                         value: '$total',
-                        color: colorScheme.primary,
                         icon: Icons.inventory_2_outlined,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _ReportStatCard(
+                      child: AppKpiCard.compact(
                         label: 'In Progress',
                         value: '$inProgress',
-                        color: colorScheme.secondary,
                         icon: Icons.sync_rounded,
+                        semanticState: KpiSemanticState.info,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _ReportStatCard(
+                      child: AppKpiCard.compact(
                         label: 'Completed',
                         value: '$completed',
-                        color: colorScheme.primary,
                         icon: Icons.check_circle_outline_rounded,
                       ),
                     ),
@@ -273,69 +272,6 @@ class SupervisorReportsTab extends ConsumerWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _ReportStatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
-
-  const _ReportStatCard({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: colorScheme.onSurface,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

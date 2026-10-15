@@ -2,15 +2,21 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Phase 01.2 — bespoke-bar deprecation guard.
+/// Bespoke-bar deprecation guard (Phase 01.2, extended Phase 07.1).
 ///
 /// `AppTopBar`, `CustomerTopBar` and `GradientBanner` are deprecated in favour
-/// of `WorkspaceAppBar` / `AppPageHeader`. Existing callers owned by Phases
-/// 06–20 stay on the allowlist below; any *new* file referencing the legacy
-/// bars fails the build.
+/// of `WorkspaceAppBar` / `AppPageHeader`. Phase 07.1 migrated every
+/// allowlisted caller, so the allowlist now holds only the definitions
+/// themselves, intentional coverage, and frozen references — any other file
+/// *using* the legacy bars fails the build.
+///
+/// The scan strips `//` line comments and `/* */` blocks first so prose
+/// migration notes never trip it; only real code references count. A second
+/// test fails on any bespoke `*AppBar` / `*HeaderBanner` *definition* in
+/// `apps/` (the four product bars were deleted in Phase 07.1).
 void main() {
-  // Files that already consume the legacy bars (owned by their V2 phases).
-  // Additions here require the owning phase's sign-off.
+  // Files that may still name the legacy bars (definitions, intentional
+  // coverage, frozen references). Everything else must be clean.
   const allowed = {
     // The deprecated widgets themselves + their compatibility exports.
     'app_top_bar.dart',
@@ -22,25 +28,14 @@ void main() {
     'deprecation_guard_test.dart',
     // Phase 01.2 golden gallery (documents the deprecated surface once).
     'phase01_2_gallery.dart',
-    // Existing feature callers (migrate in Phases 06–20, never extend).
-    'customer_invoice_detail_view.dart',
-    'customer_feedback_view.dart',
-    'customer_breakdown_result_view.dart',
-    'customer_breakdown_help_view.dart',
-    'customer_book_service_view.dart',
-    'customer_booking_detail_view.dart',
-    'customer_approvals_page.dart',
-    'add_vehicle_view.dart',
-    'customer_service_status_page.dart',
-    'customer_notifications_view.dart',
-    'vehicle_customer_view.dart',
-    'advisor_vehicle_checkin_view.dart',
-    'crm_header_banner.dart',
     // Frozen design-prototype doc reference (comment only, not a widget use).
     'proto_primitives.dart',
+    // Phase 07.1 migration verification files: they name the legacy bars
+    // inside source-scan patterns (like this guard does), never render them.
+    'phase07_1_migration_test.dart',
   };
 
-  test('no new bespoke-bar usages beyond the allowlist', () {
+  test('no bespoke-bar usages beyond the allowlist', () {
     final roots = [
       Directory('../../apps'),
       Directory('../../packages'),
@@ -59,15 +54,36 @@ void main() {
         if (entity.path.contains('concept_showcase')) continue;
         // Design docs / phase reports are not code.
         if (entity.path.contains('phases/')) continue;
-        final source = entity.readAsStringSync();
+        final source = _stripComments(entity.readAsStringSync());
         if (pattern.hasMatch(source)) offenders.add(entity.path);
       }
     }
     expect(
       offenders,
       isEmpty,
-      reason: 'New bespoke-bar usage detected — use WorkspaceAppBar or '
+      reason: 'Bespoke-bar usage detected — use WorkspaceAppBar or '
           'AppPageHeader instead:\n${offenders.join('\n')}',
+    );
+  });
+
+  test('no bespoke app-bar / header-banner definitions in apps/', () {
+    final offenders = <String>[];
+    final definition = RegExp(
+      r'class\s+\w*(AppBar|HeaderBanner)\w*\s+extends',
+    );
+    for (final entity in Directory('../../apps').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      // Frozen references are never production code.
+      if (entity.path.contains('concept_showcase')) continue;
+      if (entity.path.contains('design_prototype')) continue;
+      final source = _stripComments(entity.readAsStringSync());
+      if (definition.hasMatch(source)) offenders.add(entity.path);
+    }
+    expect(
+      offenders,
+      isEmpty,
+      reason: 'Bespoke app-bar definition detected — compose WorkspaceAppBar '
+          'instead:\n${offenders.join('\n')}',
     );
   });
 
@@ -79,4 +95,20 @@ void main() {
     expect(topBar.contains("@Deprecated('Use WorkspaceAppBar"), isTrue);
     expect(banner.contains('@Deprecated('), isTrue);
   });
+}
+
+/// Strips `//` line comments and `/* */` blocks so doc/prose mentions of
+/// legacy names never count as usages.
+String _stripComments(String source) {
+  final withoutBlocks = source.replaceAll(
+    RegExp(r'/\*.*?\*/', dotAll: true),
+    '',
+  );
+  return withoutBlocks
+      .split('\n')
+      .map((line) {
+        final index = line.indexOf('//');
+        return index < 0 ? line : line.substring(0, index);
+      })
+      .join('\n');
 }

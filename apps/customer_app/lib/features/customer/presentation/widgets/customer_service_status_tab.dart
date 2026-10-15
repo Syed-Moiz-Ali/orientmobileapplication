@@ -14,7 +14,6 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_ser
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_details.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_service_panel.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_status_skeleton.dart';
 
 /// Customer Status â€” a focused operational tracking screen, not a second
 /// dashboard.
@@ -83,7 +82,34 @@ class _CustomerServiceStatusTabState
         bookings.isNotEmpty;
 
     if (dash.isLoading && !hasAnyData) {
-      return const CustomerStatusSkeleton();
+      // Phase 07.1: bespoke skeleton migrated to AppSkeleton primitives.
+      final wide = !context.adaptive.isCompact;
+      return AppResponsivePage(
+        maxContentWidth: 1080,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const AppSkeleton.text(width: 150, height: 24),
+            const SizedBox(height: AppDimensions.s10),
+            const AppSkeleton.text(width: 230, height: 12),
+            const SizedBox(height: AppDimensions.s20),
+            AppSplitView(
+              primaryFlex: context.adaptive.isMedium ? 1 : 3,
+              secondaryFlex: context.adaptive.isMedium ? 1 : 2,
+              spacing: AppDimensions.s24,
+              primary: const AppSkeleton.card(height: 210),
+              secondary: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const AppSkeleton.text(width: 130, height: 18),
+                  const SizedBox(height: AppDimensions.s12),
+                  AppSkeleton.card(height: wide ? 150 : 190),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (dash.loadError.isNotEmpty && !hasAnyData) {

@@ -6,7 +6,6 @@ import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_approval_presentation.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
 /// One estimate decision in full.
@@ -38,7 +37,18 @@ class _CustomerApprovalDetailViewState
     );
 
     return detailAsync.when(
-      loading: () => const _DetailSkeleton(),
+      loading: () => const AppResponsivePage(
+        maxContentWidth: 1040,
+        // Phase 07.1: bespoke _DetailSkeleton migrated to AppSkeleton.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppSkeleton.card(height: 148),
+            SizedBox(height: AppDimensions.s16),
+            AppSkeleton.card(height: 200),
+          ],
+        ),
+      ),
       error: (error, _) => _DetailError(
         estimateId: widget.estimateId,
         onRetry: () =>
@@ -733,35 +743,6 @@ class _IconLine extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _DetailSkeleton extends StatelessWidget {
-  const _DetailSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomerSkeleton(
-      builder: (context, block) => AppResponsivePage(
-        maxContentWidth: 1040,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            CustomerSkeletonBox(
-              height: 148,
-              color: block,
-              radius: AppDimensions.radiusCard,
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            CustomerSkeletonBox(
-              height: 200,
-              color: block,
-              radius: AppDimensions.radiusCard,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

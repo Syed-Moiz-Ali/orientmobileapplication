@@ -144,14 +144,18 @@ class OwnerKpi {
   final String label;
   final String value;
   final IconData icon;
-  final Color color;
+
+  /// Centralized tint role (Phase 07.1): the decorative per-index `Color`
+  /// rotation is deleted — the adapter maps each KPI to a semantic state and
+  /// the shared [AppKpiCard] resolves the ink. No custom palette survives.
+  final KpiSemanticState state;
   final String sub;
 
   const OwnerKpi({
     required this.label,
     required this.value,
     required this.icon,
-    required this.color,
+    this.state = KpiSemanticState.neutral,
     required this.sub,
   });
 }

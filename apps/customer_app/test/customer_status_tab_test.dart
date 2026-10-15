@@ -12,7 +12,7 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_service_journey.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_service_status_tab.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_status_skeleton.dart';
+// Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 
 void main() {
   setUpAll(_loadFonts);
@@ -237,7 +237,7 @@ void main() {
       await _pumpStatus(tester, state: _state(isLoading: true), settle: false);
       await tester.pump();
 
-      expect(find.byType(CustomerStatusSkeleton), findsOneWidget);
+      expect(find.byType(AppSkeleton), findsWidgets);
     });
 
     testWidgets('offers a retry when nothing could ever load', (tester) async {

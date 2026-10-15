@@ -6,8 +6,9 @@ import 'package:shared_core/src/theme/app_theme_context.dart';
 ///
 /// The simple shapes (`bar`, `card`, `circle`, `text`) mirror the original
 /// primitive; the composite shapes (`textBlock`, `listRows`, `grid`, `chart`,
-/// `table`) mirror the final layout so a first-load frame reads as the screen
-/// it is about to become (Phase 03B objective 1).
+/// `table`, `page`) mirror the final layout so a first-load frame reads as the
+/// screen it is about to become (Phase 03B objective 1; `page` added Phase
+/// 07.1 to centralize the dashboard first-load composition).
 enum AppSkeletonVariant {
   bar,
   card,
@@ -18,6 +19,7 @@ enum AppSkeletonVariant {
   grid,
   chart,
   table,
+  page,
 }
 
 /// Clean skeleton loader with an animated pulse that mirrors the final layout.
@@ -222,6 +224,25 @@ class AppSkeleton extends StatefulWidget {
        itemHeight = 120,
        borderRadius = AppDimensions.radiusXs;
 
+  /// Full dashboard-page placeholder (Phase 07.1): hero card, section label,
+  /// 2×2 KPI grid, tall chart card, label, register card. Centralizes the
+  /// dashboard first-load composition previously duplicated per app with
+  /// bespoke shimmer engines; one animation controller drives all bars.
+  const AppSkeleton.page({super.key, this.width})
+    : variant = AppSkeletonVariant.page,
+      height = 0,
+      lines = 3,
+      lineHeight = 12,
+      lineGap = 8,
+      lastLineFraction = 0.6,
+      rows = 4,
+      columns = 2,
+      leading = false,
+      itemHeight = 120,
+      spacing = AppDimensions.s12,
+      headerRow = false,
+      borderRadius = AppDimensions.radiusCard;
+
   @override
   State<AppSkeleton> createState() => _AppSkeletonState();
 }
@@ -318,6 +339,8 @@ class _AppSkeletonState extends State<AppSkeleton>
         return _chart(color);
       case AppSkeletonVariant.table:
         return _table(color);
+      case AppSkeletonVariant.page:
+        return _page(color);
     }
   }
 
@@ -501,6 +524,40 @@ class _AppSkeletonState extends State<AppSkeleton>
           row(widget.lineHeight, header: false),
           if (i != widget.rows - 1) Divider(height: 1, color: color),
         ],
+      ],
+    );
+  }
+
+  Widget _page(Color color) {
+    Widget duo(double height, double radius) {
+      return Row(
+        children: [
+          Expanded(child: _box(color, height: height, radius: radius)),
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(child: _box(color, height: height, radius: radius)),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _box(color, height: 150, radius: 24),
+        const SizedBox(height: 24),
+        _box(color, width: 140, height: 20, radius: AppDimensions.radiusXs),
+        const SizedBox(height: 12),
+        duo(90, 20),
+        const SizedBox(height: 12),
+        duo(90, 20),
+        const SizedBox(height: 24),
+        _box(color, width: 160, height: 20, radius: AppDimensions.radiusXs),
+        const SizedBox(height: 12),
+        _box(color, height: 180, radius: 24),
+        const SizedBox(height: 24),
+        _box(color, width: 130, height: 20, radius: AppDimensions.radiusXs),
+        const SizedBox(height: 12),
+        _box(color, height: 140, radius: 20),
       ],
     );
   }

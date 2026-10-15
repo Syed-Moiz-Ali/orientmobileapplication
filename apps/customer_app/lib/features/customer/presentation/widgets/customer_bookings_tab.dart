@@ -10,7 +10,6 @@ import 'package:customer_app/features/customer/presentation/support/customer_boo
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/support/failed_booking_sync.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_booking_item.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_bookings_skeleton.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_failed_booking_item.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
@@ -75,7 +74,41 @@ class CustomerBookingsTab extends ConsumerWidget {
     }
 
     if (bookingsAsync.isLoading && bookings.isEmpty) {
-      return const CustomerBookingsSkeleton();
+      // Phase 07.1: bespoke skeleton migrated to AppSkeleton primitives
+      // (same header/split shapes, centralized shimmer).
+      return AppResponsivePage(
+        maxContentWidth: 1080,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const AppSkeleton.text(width: 130, height: 26),
+            const SizedBox(height: AppDimensions.s10),
+            const AppSkeleton.text(width: 200, height: 12),
+            const SizedBox(height: AppDimensions.s20),
+            AppSplitView(
+              primaryFlex: context.adaptive.isMedium ? 1 : 3,
+              secondaryFlex: context.adaptive.isMedium ? 1 : 2,
+              spacing: AppDimensions.s24,
+              primary: const Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppSkeleton.text(width: 150, height: 18),
+                  SizedBox(height: AppDimensions.s10),
+                  AppSkeleton.card(height: 282),
+                ],
+              ),
+              secondary: const Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppSkeleton.text(width: 80, height: 18),
+                  SizedBox(height: AppDimensions.s10),
+                  AppSkeleton.card(height: 188),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     final active = <CustomerBookingEntity>[];
@@ -259,57 +292,6 @@ class _BookingsHeader extends StatelessWidget {
   }
 }
 
-/// Section title with its real record count.
-class _BookingsSectionHeader extends StatelessWidget {
-  final String title;
-  final int count;
-
-  const _BookingsSectionHeader({required this.title, required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimensions.s10),
-      child: Row(
-        children: [
-          Flexible(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s8),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.s8,
-              vertical: AppDimensions.r2,
-            ),
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(AppDimensions.rPill),
-            ),
-            child: Text(
-              '$count',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Upcoming/current or history group inside one grouped surface.
 class _BookingSection extends StatelessWidget {
   final String title;
@@ -339,7 +321,8 @@ class _BookingSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _BookingsSectionHeader(title: title, count: count),
+        // Phase 07.1: bespoke header migrated to SectionHeader.
+        SectionHeader(title: title, count: count),
         DecoratedBox(
           decoration: BoxDecoration(
             color: colors.surface,
@@ -538,7 +521,8 @@ class _FailedBookingsSectionState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _BookingsSectionHeader(
+        // Phase 07.1: bespoke header migrated to SectionHeader.
+        SectionHeader(
           title: 'Needs attention',
           count: widget.bookings.length,
         ),

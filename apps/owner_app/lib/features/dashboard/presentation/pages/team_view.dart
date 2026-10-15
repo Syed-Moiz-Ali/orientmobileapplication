@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:owner_app/features/common/presentation/owner_shimmer_skeletons.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/team_providers.dart';
 
 class TeamView extends ConsumerStatefulWidget {
@@ -91,7 +90,7 @@ class _TeamViewState extends ConsumerState<TeamView> {
         ),
       ),
       body: state.isLoading
-          ? const OwnerDashboardSkeleton()
+          ? const AppSkeleton.page()
           : state.error.isNotEmpty && state.staff.isEmpty
           ? Center(
               child: Column(
@@ -163,35 +162,38 @@ class _TeamViewState extends ConsumerState<TeamView> {
                                     ),
                                   ),
                                   const Spacer(),
-                                  StatusPill(
-                                    label: '$activeCount / ${state.staff.length} ACTIVE',
-                                    bg: const Color(0xFF10B981).withValues(alpha: 0.12),
-                                    fg: const Color(0xFF10B981),
+                                  // Phase 07.1: hardcoded success hex resolves
+                                  // through the semantic success family.
+                                  StatusPill.success(
+                                    '$activeCount / ${state.staff.length} ACTIVE',
+                                    showDot: true,
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 14),
                               Row(
                                 children: [
-                                  _SummaryPill(
-                                    label: 'Advisors',
-                                    count: advisorCount,
-                                    colorScheme: colorScheme,
-                                    textTheme: textTheme,
+                                  // Phase 07.1: bespoke _SummaryPill migrated
+                                  // to AppKpiCard.compact.
+                                  Expanded(
+                                    child: AppKpiCard.compact(
+                                      label: 'Advisors',
+                                      value: '$advisorCount',
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
-                                  _SummaryPill(
-                                    label: 'Supervisors',
-                                    count: supervisorCount,
-                                    colorScheme: colorScheme,
-                                    textTheme: textTheme,
+                                  Expanded(
+                                    child: AppKpiCard.compact(
+                                      label: 'Supervisors',
+                                      value: '$supervisorCount',
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
-                                  _SummaryPill(
-                                    label: 'Technicians',
-                                    count: techCount,
-                                    colorScheme: colorScheme,
-                                    textTheme: textTheme,
+                                  Expanded(
+                                    child: AppKpiCard.compact(
+                                      label: 'Technicians',
+                                      value: '$techCount',
+                                    ),
                                   ),
                                 ],
                               ),
@@ -685,58 +687,6 @@ class _TeamViewState extends ConsumerState<TeamView> {
             child: const Text('Done'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SummaryPill extends StatelessWidget {
-  final String label;
-  final int count;
-  final ColorScheme colorScheme;
-  final TextTheme textTheme;
-
-  const _SummaryPill({
-    required this.label,
-    required this.count,
-    required this.colorScheme,
-    required this.textTheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$count',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: colorScheme.primary,
-                height: 1.1,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-                fontSize: 10,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_models/shared_models.dart' as models;
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
@@ -988,10 +989,13 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   }
 
   void _callCustomer() {
-    final phone = _displayPhone.replaceAll(RegExp(r'[^\d+]'), '');
-    if (phone.isNotEmpty) {
+    // Phase 07.1: canonical phone normalization from the shared PhoneNumber
+    // value object (same digits as the old inline munging, plus a correct
+    // country-code prefix for local-format numbers — never rendered text).
+    final digits = models.PhoneNumber.normalizeLoose(_displayPhone);
+    if (digits.isNotEmpty) {
       HapticFeedback.lightImpact();
-      launchUrl(Uri.parse('tel:$phone'));
+      launchUrl(Uri.parse('tel:+$digits'));
     }
   }
 }

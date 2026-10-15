@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
-import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_app_bar.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_scaffold.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
@@ -19,12 +19,11 @@ void main() {
     testWidgets('Supervisor App Bar displays operational title and subtitle', (
       tester,
     ) async {
-      await _pumpSupervisorTestWidget(
-        tester,
-        const SupervisorAppBar(selectedIndex: 0),
-      );
+      // Phase 07.1: the bespoke SupervisorAppBar is deleted — the same
+      // chrome now composes WorkspaceAppBar inside SupervisorScaffold.
+      await _pumpSupervisorTestWidget(tester, const SupervisorScaffold());
 
-      expect(find.text('Workshop Overview'), findsOneWidget);
+      expect(find.text('Workshop Overview'), findsWidgets);
       expect(find.text('Shift operations & floor activity'), findsOneWidget);
       expect(find.byIcon(Icons.engineering_rounded), findsOneWidget);
 
@@ -45,9 +44,11 @@ void main() {
 
         // Operational Attention Area
         expect(find.text('Attention Required'), findsOneWidget);
-        expect(find.text('Unassigned Bookings'), findsOneWidget);
-        expect(find.text('Breakdowns Waiting'), findsOneWidget);
-        expect(find.text('Awaiting Inspection'), findsOneWidget);
+        // Phase 07.1: attention tiles migrated to AppKpiCard (labels render
+        // as overlines per the shared tile contract).
+        expect(find.text('UNASSIGNED BOOKINGS'), findsOneWidget);
+        expect(find.text('BREAKDOWNS WAITING'), findsOneWidget);
+        expect(find.text('AWAITING INSPECTION'), findsOneWidget);
 
         // Active jobs preview
         expect(find.text('Active Workshop Jobs'), findsOneWidget);
@@ -147,7 +148,8 @@ void main() {
       (tester) async {
         await _pumpSupervisorTestWidget(tester, const SupervisorJobsTab());
 
-        expect(find.text('Total Assigned'), findsOneWidget);
+        // Phase 07.1: metric tiles migrated to AppKpiCard (overline labels).
+        expect(find.text('TOTAL ASSIGNED'), findsOneWidget);
         expect(find.text('Active Workshop Jobs'), findsOneWidget);
         expect(find.byType(AppSearchField), findsOneWidget);
         expect(find.text('JC-2026-1042'), findsWidgets);
@@ -203,9 +205,10 @@ void main() {
         await _pumpSupervisorTestWidget(tester, const SupervisorReportsTab());
 
         expect(find.text('Workshop Operations Report'), findsOneWidget);
-        expect(find.text('Total Volume'), findsOneWidget);
-        expect(find.text('In Progress'), findsOneWidget);
-        expect(find.text('Completed'), findsOneWidget);
+        // Phase 07.1: report tiles migrated to AppKpiCard (overline labels).
+        expect(find.text('TOTAL VOLUME'), findsOneWidget);
+        expect(find.text('IN PROGRESS'), findsOneWidget);
+        expect(find.text('COMPLETED'), findsOneWidget);
         expect(find.text('Job Category Distribution'), findsOneWidget);
         expect(find.text('Operational Status'), findsOneWidget);
 

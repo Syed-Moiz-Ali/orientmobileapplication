@@ -34,12 +34,13 @@ class CustomerInvoiceDetailView extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
+      // (same title + back behavior; divider now drawn by the bar itself).
+      appBar: const WorkspaceAppBar(title: 'Invoice Detail', showBack: true),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            const AppTopBar(title: 'Invoice Detail'),
-            Divider(height: 1, color: colorScheme.outlineVariant),
             Expanded(
               child: AppResponsivePage(
                 child: Column(

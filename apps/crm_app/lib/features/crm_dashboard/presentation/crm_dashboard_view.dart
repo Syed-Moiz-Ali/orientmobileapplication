@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_lead_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_app_bar.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_drawer.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_dashboard_page.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_page.dart';
@@ -79,7 +78,7 @@ class CrmDashboardView extends ConsumerWidget {
     ];
 
     return DashboardShell(
-      appBar: CrmAppBar(notifier: notifier),
+      appBar: _CrmChrome(selectedIndex: state.selectedIndex),
       drawer: !adaptive.useNavigationRail
           ? CrmDrawer(notifier: notifier)
           : null,
@@ -151,3 +150,71 @@ class CrmDashboardView extends ConsumerWidget {
     );
   }
 }
+
+/// Phase 07.1 centralized chrome: the bespoke `CrmAppBar` is deleted — tab
+/// titles, workspace subtitle, rail/drawer leading and the refresh /
+/// notification / profile actions now compose the shared [WorkspaceAppBar]
+/// with identical copy and behavior.
+class _CrmChrome extends ConsumerWidget implements PreferredSizeWidget {
+  final int selectedIndex;
+
+  const _CrmChrome({required this.selectedIndex});
+
+  static const _titles = [
+    'Sales workspace',
+    'Leads',
+    'Conversations',
+    'Sales team',
+    'Tasks',
+    'Reports',
+    'Integrations',
+    'Settings',
+  ];
+
+  @override
+  Size get preferredSize => const Size.fromHeight(57);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
+    final notifier = ref.read(crmUiProvider.notifier);
+    final useRail = context.adaptive.useNavigationRail;
+    return WorkspaceAppBar(
+      title: _titles[selectedIndex],
+      subtitle: 'Orient CRM · Bircon, Hifri',
+      toolbarHeight: 56,
+      leading: useRail
+          ? Icon(Icons.hub_outlined, color: colors.primary)
+          : Builder(
+              builder: (scaffoldContext) => IconButton(
+                tooltip: 'Open navigation',
+                onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
+                icon: const Icon(Icons.menu_rounded),
+              ),
+            ),
+      actions: [
+        IconButton(
+          tooltip: 'Refresh workspace',
+          onPressed: notifier.refresh,
+          icon: const Icon(Icons.refresh_rounded),
+        ),
+        const NotificationBell(),
+        Padding(
+          padding: const EdgeInsets.only(right: AppDimensions.s12),
+          child: UserAvatar(
+            initials: 'A',
+            onTap: () => showProfileSheet(context, _profileData),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+const _profileData = ProfileSheetData(
+  name: 'Admin',
+  initials: 'A',
+  roleLabel: 'CRM administrator',
+  roleBadge: 'Admin',
+  branch: 'Bircon, Hifri',
+);

@@ -4,7 +4,6 @@ import 'package:customer_app/features/customer/presentation/providers/customer_p
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 import 'package:flutter/material.dart';
@@ -125,7 +124,44 @@ class CustomerProfileTab extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (dash.isLoading && profile == null)
-                _ProfileSkeleton(wide: wide, floor: floor)
+                // Phase 07.1: bespoke _ProfileSkeleton migrated to AppSkeleton.
+                wide
+                    ? SizedBox(
+                        height: floor,
+                        child: const Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: AppSkeleton.card(
+                                borderRadius: AppDimensions.radiusPanel,
+                              ),
+                            ),
+                            SizedBox(width: AppDimensions.s24),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.stretch,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  AppSkeleton.card(height: 330),
+                                  AppSkeleton.card(height: 80),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : const Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AppSkeleton.text(width: 110, height: 26),
+                          SizedBox(height: AppDimensions.s16),
+                          AppSkeleton.card(height: 88),
+                          SizedBox(height: AppDimensions.s20),
+                          AppSkeleton.card(height: 186),
+                        ],
+                      )
               else ...[
                 const _PageTitle(),
                 const SizedBox(height: AppDimensions.s16),
@@ -550,76 +586,6 @@ class _IdentityPanel extends StatelessWidget {
       accent: Theme.of(context).colorScheme.primary,
       padding: const EdgeInsets.all(AppDimensions.s16),
       child: child,
-    );
-  }
-}
-
-class _ProfileSkeleton extends StatelessWidget {
-  final bool wide;
-  final double floor;
-
-  const _ProfileSkeleton({required this.wide, required this.floor});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomerSkeleton(
-      builder: (context, block) {
-        if (!wide) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CustomerSkeletonBox(width: 110, height: 26, color: block),
-              const SizedBox(height: AppDimensions.s16),
-              CustomerSkeletonBox(
-                height: 88,
-                color: block,
-                radius: AppDimensions.radiusCard,
-              ),
-              const SizedBox(height: AppDimensions.s20),
-              CustomerSkeletonBox(
-                height: 186,
-                color: block,
-                radius: AppDimensions.radiusCard,
-              ),
-            ],
-          );
-        }
-
-        return SizedBox(
-          height: floor,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: CustomerSkeletonBox(
-                  height: floor,
-                  color: block,
-                  radius: AppDimensions.radiusPanel,
-                ),
-              ),
-              const SizedBox(width: AppDimensions.s24),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CustomerSkeletonBox(
-                      height: 330,
-                      color: block,
-                      radius: AppDimensions.radiusCard,
-                    ),
-                    CustomerSkeletonBox(
-                      height: 80,
-                      color: block,
-                      radius: AppDimensions.radiusCard,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

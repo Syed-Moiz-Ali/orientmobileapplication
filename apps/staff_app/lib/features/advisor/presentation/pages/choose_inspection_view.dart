@@ -4,10 +4,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/router/app_router.dart';
-import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
+import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
 import 'inspection_provider.dart';
 
-class ChooseInspectionView extends ConsumerWidget {
+/// Phase 08 — Concept A package picker (Archetype 6 entry).
+///
+/// DECISION screen: compare tiers fast, pick one, go. The packages own the
+/// viewport — chrome is a slim header + 4px progress + ONE 40px sort row.
+/// Unselected tiers stay collapsed (name + meta line only); the selected
+/// tier expands to its breakdown + focus areas. One primary CTA (Continue)
+/// starts the flow. Starting behaviour (provider reset, job-card link,
+/// sheet route with [InspectionCallbacks]) is byte-identical to the
+/// previous composition.
+class ChooseInspectionView extends ConsumerStatefulWidget {
   final VoidCallback onSelect;
   final VoidCallback onSkip;
   final VoidCallback onBack;
@@ -21,21 +32,133 @@ class ChooseInspectionView extends ConsumerWidget {
     this.jobId = '',
   });
 
-  void _startInspection(
-    BuildContext context,
-    WidgetRef ref, {
-    required String templateName,
-  }) {
+  @override
+  ConsumerState<ChooseInspectionView> createState() =>
+      _ChooseInspectionViewState();
+}
+
+class _InspectionPackage {
+  final String nameKey;
+  final String descKey;
+  final List<String> focusKeys;
+  final int sections;
+  final int checkpoints;
+  final int minutes;
+  final IconData icon;
+  final bool recommended;
+  final String templateName;
+
+  const _InspectionPackage({
+    required this.nameKey,
+    required this.descKey,
+    required this.focusKeys,
+    required this.sections,
+    required this.checkpoints,
+    required this.minutes,
+    required this.icon,
+    required this.recommended,
+    required this.templateName,
+  });
+}
+
+String _packageName(StaffLocalizations t, _InspectionPackage p) {
+  if (p.nameKey == 'quick') return t.advisorPackageQuick;
+  if (p.nameKey == 'full') return t.advisorPackageFull;
+  return t.advisorPackageSafety;
+}
+
+String _packageDesc(StaffLocalizations t, _InspectionPackage p) {
+  if (p.nameKey == 'quick') return t.advisorPackageQuickDesc;
+  if (p.nameKey == 'full') return t.advisorPackageFullDesc;
+  return t.advisorPackageSafetyDesc;
+}
+
+String _focusLabel(StaffLocalizations t, String key) {
+  switch (key) {
+    case 'brakes':
+      return t.advisorFocusBrakes;
+    case 'engine':
+      return t.advisorFocusEngine;
+    case 'suspension':
+      return t.advisorFocusSuspension;
+    default:
+      return t.advisorFocusLighting;
+  }
+}
+
+const _packages = <_InspectionPackage>[
+  _InspectionPackage(
+    nameKey: 'quick',
+    descKey: 'quick',
+    focusKeys: ['lighting', 'brakes'],
+    sections: 2,
+    checkpoints: 20,
+    minutes: 10,
+    icon: Icons.speed_rounded,
+    recommended: false,
+    templateName: 'Express Bay Safety Scan',
+  ),
+  _InspectionPackage(
+    nameKey: 'full',
+    descKey: 'full',
+    focusKeys: ['brakes', 'engine', 'suspension'],
+    sections: 5,
+    checkpoints: 60,
+    minutes: 30,
+    icon: Icons.fact_check_outlined,
+    recommended: true,
+    templateName: 'Comprehensive 24-Point',
+  ),
+  _InspectionPackage(
+    nameKey: 'safety',
+    descKey: 'safety',
+    focusKeys: ['brakes', 'suspension', 'lighting'],
+    sections: 3,
+    checkpoints: 35,
+    minutes: 20,
+    icon: Icons.shield_outlined,
+    recommended: false,
+    templateName: 'Brake & Suspension Audit',
+  ),
+];
+
+class _ChooseInspectionViewState extends ConsumerState<ChooseInspectionView> {
+  String _selectedTemplate = 'Comprehensive 24-Point';
+  int _sort = 0;
+
+  List<_InspectionPackage> get _ordered {
+    final list = _packages.toList();
+    switch (_sort) {
+      case 1:
+        list.sort((a, b) => a.minutes.compareTo(b.minutes));
+      case 2:
+        list.sort((a, b) => b.checkpoints.compareTo(a.checkpoints));
+      default:
+        list.sort((a, b) {
+          if (a.recommended == b.recommended) {
+            return _packages.indexOf(a).compareTo(_packages.indexOf(b));
+          }
+          return a.recommended ? -1 : 1;
+        });
+    }
+    return list;
+  }
+
+  _InspectionPackage get _selected =>
+      _packages.firstWhere((p) => p.templateName == _selectedTemplate);
+
+  void _startInspection() {
     HapticFeedback.mediumImpact();
+    final ref = this.ref;
     ref.read(inspectionProvider.notifier).reset();
-    if (jobId.isNotEmpty) {
-      ref.read(inspectionProvider.notifier).setJobCardId(jobId);
+    if (widget.jobId.isNotEmpty) {
+      ref.read(inspectionProvider.notifier).setJobCardId(widget.jobId);
     }
     final cb = InspectionCallbacks(
       onBack: () => context.pop(),
       onSaveDraft: () {
         context.pop();
-        onSelect();
+        widget.onSelect();
       },
       onPreview: () {
         context.push(
@@ -43,7 +166,7 @@ class ChooseInspectionView extends ConsumerWidget {
           extra: {
             'onBack': () {
               context.pop();
-              onSelect();
+              widget.onSelect();
             },
           },
         );
@@ -53,339 +176,430 @@ class ChooseInspectionView extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final pendingSync = ref.watch(advisorPendingSyncCountProvider).valueOrNull;
+    final ordered = _ordered;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: onBack,
-        ),
-        title: Text(
-          'Select Inspection Template',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-          ),
-        ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: WorkspaceAppBar(
+        title: t.advisorPackageTitle,
+        subtitle: t.advisorPackageCheckpoints(_selected.checkpoints),
+        showBack: true,
+        onBack: widget.onBack,
+        frosted: !context.isCompact,
+        showOfflineStatus: true,
+        offlinePendingCount: pendingSync,
         actions: [
           TextButton(
-            onPressed: () {
-              context.push(
-                AppRoutes.repairOrder,
-                extra: {'onBack': () => context.pop(), 'fromInspection': true},
-              );
-            },
-            child: Text(
-              'Skip Inspection',
-              style: TextStyle(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
+            onPressed: widget.onSkip,
+            child: Text(t.advisorPackageSkip),
           ),
-          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
-        child: AppResponsivePage(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
-              const AdvisorWorkflowIndicator(currentStep: 1),
-              const SizedBox(height: 16),
-              // ── HERO HEADER BANNER ─────────────────────────────────────────
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colorScheme.primaryContainer.withValues(alpha: 0.5),
-                      colorScheme.surfaceContainerLow,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(AppDimensions.r24),
-                  border: Border.all(color: colorScheme.outlineVariant),
+        top: false,
+        child: Column(
+          children: [
+            // Sticky wayfinding anchor: thin selection progress + ONE
+            // compare/sort control row. The tier list scrolls beneath it.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimensions.r4),
+              child: LinearProgressIndicator(
+                value: 1,
+                minHeight: 4,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).colorScheme.primary,
                 ),
-                child: Row(
+              ),
+            ),
+            SizedBox(
+              height: 44,
+              child: ListView(
+                padding: const EdgeInsetsDirectional.only(
+                  start: 16,
+                  end: 16,
+                  top: 6,
+                  bottom: 2,
+                ),
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _SortPill(
+                    label: t.advisorPackageSortRecommended,
+                    selected: _sort == 0,
+                    onTap: () => setState(() => _sort = 0),
+                  ),
+                  const SizedBox(width: 6),
+                  _SortPill(
+                    label: t.advisorPackageSortQuickest,
+                    selected: _sort == 1,
+                    onTap: () => setState(() => _sort = 1),
+                  ),
+                  const SizedBox(width: 6),
+                  _SortPill(
+                    label: t.advisorPackageSortThorough,
+                    selected: _sort == 2,
+                    onTap: () => setState(() => _sort = 2),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: AppResponsivePage(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(AppDimensions.r16),
-                      ),
-                      child: Icon(
-                        Icons.fact_check_outlined,
-                        color: colorScheme.primary,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Digital Vehicle Health Check',
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Perform multi-point checks with photo evidence, voice memos, and instant estimate generation.',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 4),
+                    // Minimal intro — one line; the tiers own the viewport.
+                    Text(
+                      t.advisorPackageSubtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurfaceVariant,
+                        height: 1.4,
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    // Tablet/desktop: three tiers side by side; compact
+                    // widths stack. Viewport (not the constrained content
+                    // box) drives the breakpoint.
+                    Builder(
+                      builder: (context) {
+                        final wide =
+                            MediaQuery.sizeOf(context).width >= 1000;
+                        if (wide) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (var i = 0; i < ordered.length; i++) ...[
+                                Expanded(
+                                  child: _PackageCard(
+                                    package: ordered[i],
+                                    selected:
+                                        ordered[i].templateName ==
+                                        _selectedTemplate,
+                                    onTap: () => setState(
+                                      () => _selectedTemplate =
+                                          ordered[i].templateName,
+                                    ),
+                                  ),
+                                ),
+                                if (i < ordered.length - 1)
+                                  const SizedBox(width: 12),
+                              ],
+                            ],
+                          );
+                        }
+                        return Column(
+                          children: [
+                            for (var i = 0; i < ordered.length; i++) ...[
+                              _PackageCard(
+                                package: ordered[i],
+                                selected:
+                                    ordered[i].templateName ==
+                                    _selectedTemplate,
+                                onTap: () => setState(
+                                  () => _selectedTemplate =
+                                      ordered[i].templateName,
+                                ),
+                              ),
+                              if (i < ordered.length - 1)
+                                const SizedBox(height: 10),
+                            ],
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
-
-              Text(
-                'Available Checkpoint Sheets',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              // ── TEMPLATE 1: MASTER 24-POINT DIGITAL CHECK ──────────────────
-              _InspectionTemplateCard(
-                title: 'Comprehensive 24-Point Health Check',
-                subtitle:
-                    'Full under-hood, brakes, suspension, battery, tires & exterior inspection',
-                sectionsCount: 4,
-                checkpointsCount: 24,
-                estimatedMinutes: 15,
-                isRecommended: true,
-                badge: 'STANDARD OEM',
-                icon: Icons.checklist_rtl_rounded,
-                colorScheme: colorScheme,
-                textTheme: textTheme,
-                onTap: () => _startInspection(
-                  context,
-                  ref,
-                  templateName: 'Comprehensive 24-Point',
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // ── TEMPLATE 2: EXPRESS BAY SCAN ───────────────────────────────
-              _InspectionTemplateCard(
-                title: 'Express Bay Safety Scan',
-                subtitle:
-                    'Rapid fluid levels, tire pressure, lighting, wiper blades & battery voltage check',
-                sectionsCount: 2,
-                checkpointsCount: 10,
-                estimatedMinutes: 5,
-                isRecommended: false,
-                badge: 'QUICK INTAKE',
-                icon: Icons.speed_rounded,
-                colorScheme: colorScheme,
-                textTheme: textTheme,
-                onTap: () => _startInspection(
-                  context,
-                  ref,
-                  templateName: 'Express Bay Safety Scan',
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // ── TEMPLATE 3: BRAKES & CHASSIS DIAGNOSTIC ─────────────────────
-              _InspectionTemplateCard(
-                title: 'Brake, Steering & Suspension Audit',
-                subtitle:
-                    'Pad/rotor depth measurements, shock absorber leak check, alignment & bushings',
-                sectionsCount: 3,
-                checkpointsCount: 14,
-                estimatedMinutes: 10,
-                isRecommended: false,
-                badge: 'MECHANICAL',
-                icon: Icons.car_repair_rounded,
-                colorScheme: colorScheme,
-                textTheme: textTheme,
-                onTap: () => _startInspection(
-                  context,
-                  ref,
-                  templateName: 'Brake & Suspension Audit',
-                ),
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
+            ),
+            _PickerFooter(
+              selected: _selected,
+              onStart: _startInspection,
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _InspectionTemplateCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final int sectionsCount;
-  final int checkpointsCount;
-  final int estimatedMinutes;
-  final bool isRecommended;
-  final String badge;
-  final IconData icon;
-  final ColorScheme colorScheme;
-  final TextTheme textTheme;
+class _SortPill extends StatelessWidget {
+  final String label;
+  final bool selected;
   final VoidCallback onTap;
 
-  const _InspectionTemplateCard({
-    required this.title,
-    required this.subtitle,
-    required this.sectionsCount,
-    required this.checkpointsCount,
-    required this.estimatedMinutes,
-    required this.isRecommended,
-    required this.badge,
-    required this.icon,
-    required this.colorScheme,
-    required this.textTheme,
+  const _SortPill({
+    required this.label,
+    required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      onTap: onTap,
-      borderRadius: AppDimensions.r24,
-      color: colorScheme.surface,
-      borderColor: isRecommended
-          ? colorScheme.primary.withValues(alpha: 0.5)
-          : colorScheme.outlineVariant,
-      padding: const EdgeInsets.all(20),
-      boxShadow: [
-        BoxShadow(
-          color: isRecommended
-              ? colorScheme.primary.withValues(alpha: 0.08)
-              : colorScheme.shadow.withValues(alpha: 0.04),
-          blurRadius: 18,
-          offset: const Offset(0, 6),
-        ),
-      ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isRecommended
-                      ? colorScheme.primary.withValues(alpha: 0.12)
-                      : colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(AppDimensions.r14),
-                ),
-                child: Icon(
-                  icon,
-                  color: isRecommended
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
-                  size: 22,
-                ),
+    final colors = Theme.of(context).colorScheme;
+    return Center(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: Semantics(
+          button: true,
+          selected: selected,
+          label: label,
+          child: Container(
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? colors.primary : colors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(100),
+              border: Border.all(
+                color: selected ? colors.primary : colors.outlineVariant,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+            ),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: selected ? colors.onPrimary : colors.onSurface,
+                fontWeight: FontWeight.w800,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PackageCard extends StatelessWidget {
+  final _InspectionPackage package;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PackageCard({
+    required this.package,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      expanded: selected,
+      label: _packageName(t, package),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.primaryContainer.withValues(alpha: 0.28)
+                : colors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.r16),
+            border: Border.all(
+              color: selected ? colors.primary : colors.outlineVariant,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? colors.primary.withValues(alpha: 0.14)
+                          : colors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(AppDimensions.r12),
+                    ),
+                    child: Icon(
+                      package.icon,
+                      color: selected
+                          ? colors.primary
+                          : colors.onSurfaceVariant,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        StatusPill(
-                          label: badge,
-                          bg: isRecommended
-                              ? colorScheme.primary.withValues(alpha: 0.12)
-                              : colorScheme.surfaceContainerHighest,
-                          fg: isRecommended
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
-                        ),
-                        if (isRecommended) ...[
-                          const SizedBox(width: 8),
-                          StatusPill(
-                            label: 'POPULAR',
-                            bg: const Color(0xFF10B981).withValues(alpha: 0.12),
-                            fg: const Color(0xFF10B981),
+                        Text(
+                          _packageName(t, package),
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            height: 1.25,
                           ),
-                        ],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        // Collapsed meta line — always visible for compare.
+                        Text(
+                          t.advisorPackageCheckpoints(package.checkpoints),
+                          style: textTheme.labelSmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w700,
+                            fontFeatures: const [
+                              FontFeature.tabularFigures(),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
+                    ),
+                  ),
+                  Icon(
+                    selected
+                        ? Icons.check_circle_rounded
+                        : Icons.circle_outlined,
+                    color: selected
+                        ? colors.primary
+                        : colors.onSurfaceVariant,
+                    size: 22,
+                  ),
+                  Icon(
+                    selected
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: colors.onSurfaceVariant,
+                    size: 20,
+                  ),
+                ],
+              ),
+              if (package.recommended || selected) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    if (package.recommended)
+                      StatusPill.info(t.advisorPackageRecommended),
+                    if (selected)
+                      StatusPill.success(t.advisorPackageSelected),
+                  ],
+                ),
+              ],
+              // Progressive disclosure: breakdown + focus stay hidden
+              // until the tier is selected.
+              if (selected) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _packageDesc(t, package),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _Chip(
+                      icon: Icons.schedule_rounded,
+                      label: t.advisorPackageDuration(package.minutes),
+                    ),
+                    _Chip(
+                      icon: Icons.layers_outlined,
+                      label: t.advisorPackageSections(package.sections),
                     ),
                   ],
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
+                const SizedBox(height: 10),
+                Text(
+                  t.advisorPackageFocus,
+                  style: textTheme.labelMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final key in package.focusKeys)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(AppDimensions.r8),
+                          border: Border.all(color: colors.outlineVariant),
+                        ),
+                        child: Text(
+                          _focusLabel(t, key),
+                          style: textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 16),
+        ),
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _Chip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppDimensions.r8),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: colors.onSurfaceVariant),
+          const SizedBox(width: 5),
           Text(
-            title,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: colorScheme.onSurface,
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Divider(height: 1, color: colorScheme.outlineVariant),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _MetaItem(
-                icon: Icons.layers_outlined,
-                label: '$sectionsCount Sections',
-                colorScheme: colorScheme,
-                textTheme: textTheme,
-              ),
-              const SizedBox(width: 16),
-              _MetaItem(
-                icon: Icons.check_circle_outline_rounded,
-                label: '$checkpointsCount Points',
-                colorScheme: colorScheme,
-                textTheme: textTheme,
-              ),
-              const Spacer(),
-              _MetaItem(
-                icon: Icons.schedule_rounded,
-                label: '~${estimatedMinutes}m',
-                colorScheme: colorScheme,
-                textTheme: textTheme,
-              ),
-            ],
           ),
         ],
       ),
@@ -393,34 +607,51 @@ class _InspectionTemplateCard extends StatelessWidget {
   }
 }
 
-class _MetaItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final ColorScheme colorScheme;
-  final TextTheme textTheme;
+class _PickerFooter extends StatelessWidget {
+  final _InspectionPackage selected;
+  final VoidCallback onStart;
 
-  const _MetaItem({
-    required this.icon,
-    required this.label,
-    required this.colorScheme,
-    required this.textTheme,
-  });
+  const _PickerFooter({required this.selected, required this.onStart});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurfaceVariant,
-          ),
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.outlineVariant)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              _packageName(t, selected),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: PrimaryButton(
+                label: t.advisorPackageStart,
+                icon: Icons.arrow_forward_rounded,
+                onPressed: onStart,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

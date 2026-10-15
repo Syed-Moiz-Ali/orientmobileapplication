@@ -68,6 +68,13 @@ const Map<VehicleZone, Alignment> _zoneAnchors = {
 class SpatialDamageHud extends StatelessWidget {
   final List<DamageHotspot> hotspots;
   final void Function(DamageHotspot hotspot)? onHotspotTap;
+
+  /// Fires when the caller taps an empty blueprint zone (no pin nearby), so
+  /// hosts can drop a new pin. Null keeps the previous pins-only behaviour.
+  ///
+  /// Phase 08 addition (additive, backward compatible): previously the canvas
+  /// was not tappable on empty zones, which made tap-to-pin impossible.
+  final void Function(VehicleZone zone)? onZoneTap;
   final double height;
   final bool showLegend;
 
@@ -75,6 +82,7 @@ class SpatialDamageHud extends StatelessWidget {
     super.key,
     this.hotspots = const [],
     this.onHotspotTap,
+    this.onZoneTap,
     this.height = 260,
     this.showLegend = true,
   });
@@ -108,6 +116,42 @@ class SpatialDamageHud extends StatelessWidget {
     );
   }
 
+  /// Resolves an empty-canvas tap to the nearest blueprint zone.
+  ///
+  /// Taps landing on an existing pin are ignored here — the pin's own
+  /// gesture handles them — so a pin tap never also drops a new pin.
+  void _handleZoneTap(
+    Offset local,
+    Size size,
+    Map<VehicleZone, List<DamageHotspot>> byZone,
+  ) {
+    if (size.width <= 0 || size.height <= 0) return;
+    VehicleZone? nearest;
+    var nearestDist = double.infinity;
+    for (final entry in _zoneAnchors.entries) {
+      final fx = (entry.value.x + 1) / 2;
+      final fy = (entry.value.y + 1) / 2;
+      final dx = (local.dx - fx * size.width) / size.width;
+      final dy = (local.dy - fy * size.height) / size.height;
+      final dist = dx * dx + dy * dy;
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearest = entry.key;
+      }
+    }
+    if (nearest == null || nearestDist > 0.05) return;
+    final anchor = _zoneAnchors[nearest]!;
+    final pinCenter = Offset(
+      ((anchor.x + 1) / 2) * size.width,
+      ((anchor.y + 1) / 2) * size.height,
+    );
+    if (byZone.containsKey(nearest) &&
+        (local - pinCenter).distance < 26) {
+      return;
+    }
+    onZoneTap?.call(nearest);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -128,21 +172,37 @@ class SpatialDamageHud extends StatelessWidget {
           return SizedBox(
             width: size.width,
             height: size.height,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _VehicleBlueprintPainter(
-                      bodyFill: colors.surfaceContainerLow,
-                      lineColor: colors.outline,
-                      accentColor: colors.onSurfaceVariant,
-                      windowColor: colors.surfaceContainerHighest,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapUp: onZoneTap == null
+                  ? null
+                  : (details) => _handleZoneTap(
+                      details.localPosition,
+                      size,
+                      byZone,
+                    ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _VehicleBlueprintPainter(
+                        bodyFill: colors.surfaceContainerLow,
+                        lineColor: colors.outline,
+                        accentColor: colors.onSurfaceVariant,
+                        windowColor: colors.surfaceContainerHighest,
+                      ),
                     ),
                   ),
-                ),
-                for (final entry in byZone.entries)
-                  _positionedPin(context, semantic, entry.key, entry.value, size),
-              ],
+                  for (final entry in byZone.entries)
+                    _positionedPin(
+                      context,
+                      semantic,
+                      entry.key,
+                      entry.value,
+                      size,
+                    ),
+                ],
+              ),
             ),
           );
         },
@@ -192,8 +252,7 @@ class SpatialDamageHud extends StatelessWidget {
     VehicleZone zone,
     List<DamageHotspot> items,
     Size size,
-  ) {
-    final anchor = _zoneAnchors[zone]!;
+  ) {    final anchor = _zoneAnchors[zone]!;
     final primary = items.first;
     final tone = _toneFor(semantic, primary.kind);
     final count = items.length;

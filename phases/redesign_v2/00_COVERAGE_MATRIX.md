@@ -143,3 +143,20 @@ Evidence: `reports/REPORT_PHASE_06_GATE_2_CLOSURE.md` (and `reports/REPORT_PHASE
 
 **Gate 2 recommendation:** `CONDITIONAL â€” ACTIONS REQUIRED` (sole open item: live acceptance). **Product Owner approval: NOT claimed.**
 
+
+
+---
+
+## 4. Phase 07 Vehicle Intake Studio — 2026-10-15
+
+Evidence: `reports/REPORT_PHASE_07.md` (+ `reports/PHASE_07/screens/`, 16 reviewed PNGs).
+
+| Ref | Surface | Status | Evidence |
+| :-- | :-- | :-- | :-- |
+| **S12** | `ScanVehicleView` (/scan-vehicle) | ? Redesigned (optical HUD + shell) + theme-guarded | `advisor_phase07a_visual_test` (scan goldens), `advisor_phase07_shell_test` |
+| **S13** | `VehicleCustomerView` (/vehicle-customer) | ? 4-step wizard + draft save/resume + shell | visual + shell + `vehicle_customer_intake_layout_test` |
+| **S14** | `AdvisorVehicleCheckinView` (/advisor/check-in) | ? Telemetry cluster + confirm + breadcrumbs | visual + shell |
+| **S15** | `VehicleDeliveryView` (handover sheet) | ? Handover protocol + breadcrumbs, fully localized | visual + shell |
+| **S16** | Brand/model/year pickers + signature pad | ? Shared selection surface; signature pad kept | visual (via wizard) + shell |
+
+**Gate 1:** PASS (analyzer clean; 354/49, zero new failures; theme/parity guards green; contracts preserved). **Gate 2:** PENDING PRODUCT OWNER (headless review only; live acceptance NOT PERFORMED; approval NOT claimed).

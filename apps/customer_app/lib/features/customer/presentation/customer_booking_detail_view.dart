@@ -65,7 +65,6 @@ class _CustomerBookingDetailViewState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     final bookings =
         ref.watch(customerBookingsProvider).valueOrNull ??
@@ -123,34 +122,26 @@ class _CustomerBookingDetailViewState
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            const AppTopBar(title: 'Booking Details'),
-            Divider(height: 1, color: colors.outlineVariant),
-            Expanded(
-              child: AppResponsivePage(
-                physics: const AlwaysScrollableScrollPhysics(),
-                // Records share the wider canvas as two coherent columns; a
-                // single narrow phone column would waste desktop space.
-                maxContentWidth: 1040,
-                child: AppSplitView(
-                  primaryFlex: 3,
-                  secondaryFlex: 2,
-                  spacing: AppDimensions.s24,
-                  primary: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: primary,
-                  ),
-                  secondary: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: secondary,
-                  ),
-                ),
-              ),
-            ),
-          ],
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
+      // (same title + back behavior; divider now drawn by the bar itself).
+      appBar: const WorkspaceAppBar(title: 'Booking Details', showBack: true),
+      body: AppResponsivePage(
+        physics: const AlwaysScrollableScrollPhysics(),
+        // Records share the wider canvas as two coherent columns; a
+        // single narrow phone column would waste desktop space.
+        maxContentWidth: 1040,
+        child: AppSplitView(
+          primaryFlex: 3,
+          secondaryFlex: 2,
+          spacing: AppDimensions.s24,
+          primary: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: primary,
+          ),
+          secondary: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: secondary,
+          ),
         ),
       ),
     );

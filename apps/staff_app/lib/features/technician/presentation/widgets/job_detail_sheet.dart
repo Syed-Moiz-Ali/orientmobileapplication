@@ -229,7 +229,7 @@ class _JobIdentity extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppDimensions.s8),
-                TechnicianStatusPill(status: job.status),
+                technicianStatusPill(job.status),
               ],
             ),
             const SizedBox(height: AppDimensions.s12),
@@ -259,9 +259,10 @@ class _JobIdentity extends StatelessWidget {
             ),
             if (job.tasks.isNotEmpty) ...[
               const SizedBox(height: AppDimensions.s16),
-              TechnicianTaskProgress(
-                completed: job.completedTasks,
-                total: job.tasks.length,
+              AppLinearProgress(
+                value: job.completedTasks / job.tasks.length,
+                label:
+                    '${job.completedTasks} of ${job.tasks.length} tasks completed',
               ),
             ],
           ],
@@ -345,8 +346,7 @@ class _ExecutionArea extends StatelessWidget {
           const _DelayedNotice(),
           const SizedBox(height: AppDimensions.s16),
         ],
-        TechnicianSectionHeader(
-          eyebrow: 'EXECUTION',
+        SectionHeader(
           title: job.tasks.isEmpty
               ? 'No tasks'
               : allDone
@@ -354,6 +354,7 @@ class _ExecutionArea extends StatelessWidget {
               : running != null
               ? 'Current task'
               : 'Next task',
+          subtitle: 'EXECUTION',
         ),
         const SizedBox(height: AppDimensions.s12),
         _FocusPanel(
@@ -564,9 +565,9 @@ class _TaskList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TechnicianSectionHeader(
-          eyebrow: 'ALL TASKS',
+        SectionHeader(
           title: '${job.tasks.length} assigned',
+          subtitle: 'ALL TASKS',
         ),
         const SizedBox(height: AppDimensions.s12),
         for (var i = 0; i < job.tasks.length; i++) ...[
@@ -883,7 +884,7 @@ class _ContextColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TechnicianSectionHeader(eyebrow: 'NEED HELP?', title: 'Support'),
+        SectionHeader(title: 'Support', subtitle: 'NEED HELP?'),
         const SizedBox(height: AppDimensions.s12),
         _HelpActions(job: job, empId: empId),
         if (canComplete) ...[

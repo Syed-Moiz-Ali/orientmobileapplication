@@ -74,33 +74,33 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            AppTopBar(
-              title: 'Feedback',
-              showBack: false,
-              trailing: IconButton(
-                onPressed: () {
-                  if (_page > 0) {
-                    setState(() => _page--);
-                  } else {
-                    Navigator.pop(context);
-                  }
-                },
-                icon: const Icon(Icons.close_rounded),
-              ),
-            ),
-            Divider(height: 1, color: colorScheme.outlineVariant),
-            LinearProgressIndicator(
-              value: (_page + 1) / 3,
-              minHeight: 4,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation(colorScheme.primary),
-            ),
-            Expanded(
-              child: AppResponsivePage(
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
+      // (same title, no back chevron, same close action).
+      appBar: WorkspaceAppBar(
+        title: 'Feedback',
+        actions: [
+          IconButton(
+            onPressed: () {
+              if (_page > 0) {
+                setState(() => _page--);
+              } else {
+                Navigator.pop(context);
+              }
+            },
+            icon: const Icon(Icons.close_rounded),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          LinearProgressIndicator(
+            value: (_page + 1) / 3,
+            minHeight: 4,
+            backgroundColor: colorScheme.surfaceContainerHighest,
+            valueColor: AlwaysStoppedAnimation(colorScheme.primary),
+          ),
+          Expanded(
+            child: AppResponsivePage(
                 child: switch (_page) {
                   0 => _OverallStep(
                     value: _overall,
@@ -143,7 +143,6 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
             ),
           ],
         ),
-      ),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_models/shared_models.dart' as models;
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
@@ -71,7 +72,7 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
     _plateCtrl.text = CustomerVehiclePresentation.plateLabel(
       vehicle.plateNumber,
     );
-    _vinCtrl.text = vehicle.vin.trim().toUpperCase();
+    _vinCtrl.text = models.Vin(vehicle.vin).format();
     // Unknown values stay unknown: no fabricated current year, no 0 km.
     _yearCtrl.text = vehicle.year > 0 ? '${vehicle.year}' : '';
     _colorCtrl.text = vehicle.color.trim();
@@ -119,7 +120,8 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
       brand: _makeCtrl.text.trim(),
       model: _modelCtrl.text.trim(),
       plateNumber: CustomerVehiclePresentation.plateLabel(_plateCtrl.text),
-      vin: _vinCtrl.text.trim().toUpperCase(),
+      // Phase 07.1: canonical VIN normalization (byte-identical output).
+      vin: models.Vin(_vinCtrl.text).format(),
       color: _colorCtrl.text.trim(),
       year: _yearValue,
       mileage: CustomerVehiclePresentation.mileageLabel(_mileageCtrl.text),
@@ -167,26 +169,24 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar.
+      appBar: WorkspaceAppBar(
+        title: _isEditing ? 'Edit vehicle' : 'Add vehicle',
+        showBack: true,
+      ),
       bottomNavigationBar: _SaveBar(
         label: _isEditing ? 'Save changes' : 'Add vehicle',
         icon: _isEditing ? Icons.check_rounded : Icons.add_rounded,
         saving: _saving,
         onSave: _save,
       ),
-      body: SafeArea(
-        bottom: false,
+      body: AppResponsivePage(
+        physics: const AlwaysScrollableScrollPhysics(),
+        maxContentWidth: 760,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AppTopBar(title: _isEditing ? 'Edit vehicle' : 'Add vehicle'),
-            Divider(height: 1, color: colors.outlineVariant),
-            Expanded(
-              child: AppResponsivePage(
-                physics: const AlwaysScrollableScrollPhysics(),
-                maxContentWidth: 760,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppDimensions.s16),
+            const SizedBox(height: AppDimensions.s16),
                     if (_saveError.isNotEmpty) ...[
                       CustomerNoticePanel(
                         message: _saveError,
@@ -358,10 +358,6 @@ class _AddVehicleViewState extends ConsumerState<AddVehicleView> {
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

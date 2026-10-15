@@ -14,7 +14,7 @@ import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/data/datasources/customer_remote_datasource.dart';
 import 'package:customer_app/features/customer/presentation/customer_approvals_page.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
+// Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 
 /// Approvals is contextual: this page is reached from Home, a Bookings row,
 /// Booking Details or a deep link, lists what needs a decision, and opens one
@@ -96,7 +96,7 @@ void main() {
       await _pumpApprovals(tester, approvalsPending: true, settle: false);
       await tester.pump();
 
-      expect(find.byType(CustomerSkeleton), findsOneWidget);
+      expect(find.byType(AppSkeleton), findsOneWidget);
     });
   });
 

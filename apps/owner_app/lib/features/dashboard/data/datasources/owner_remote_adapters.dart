@@ -180,13 +180,15 @@ class DashboardUIRemoteAdapter implements DashboardDataSource {
 
   Future<void> loadAll() async {
     final kpiIcons = [Icons.work_outline_rounded, Icons.add_circle_outline_rounded, Icons.cancel_outlined, Icons.receipt_long_rounded, Icons.trending_up_rounded, Icons.shopping_cart_outlined, Icons.account_balance_wallet_outlined, Icons.payments_outlined, Icons.bar_chart_rounded, Icons.attach_money_rounded, Icons.account_balance_outlined, Icons.inventory_2_outlined, Icons.star_outline_rounded, Icons.description_outlined, Icons.build_outlined, Icons.engineering_outlined];
-    final kpiColors = [AppColors.accent, AppColors.success, AppColors.danger, AppColors.info, AppColors.accent, AppColors.warning, AppColors.success, AppColors.danger, AppColors.success, AppColors.accent, AppColors.info, AppColors.warning, AppColors.success, AppColors.accent, AppColors.warning, AppColors.info];
+    // Phase 07.1: decorative per-index tint now resolves to centralized
+    // semantic states (order-preserving 1:1 with the old rotation).
+    final kpiStates = [KpiSemanticState.info, KpiSemanticState.success, KpiSemanticState.danger, KpiSemanticState.info, KpiSemanticState.info, KpiSemanticState.warning, KpiSemanticState.success, KpiSemanticState.danger, KpiSemanticState.success, KpiSemanticState.info, KpiSemanticState.info, KpiSemanticState.warning, KpiSemanticState.success, KpiSemanticState.info, KpiSemanticState.warning, KpiSemanticState.info];
 
     final kpis = await _r.getKpis();
     _kpis = kpis.asMap().entries.map((e) => OwnerKpi(
       label: e.value.label, value: e.value.value,
       icon: kpiIcons[e.key < kpiIcons.length ? e.key : 0],
-      color: kpiColors[e.key < kpiColors.length ? e.key : 0],
+      state: kpiStates[e.key < kpiStates.length ? e.key : 0],
       sub: e.value.sub,
     )).toList();
 

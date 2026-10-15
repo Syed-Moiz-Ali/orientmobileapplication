@@ -17,7 +17,7 @@ import 'package:customer_app/features/customer/presentation/support/customer_des
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_booking_item.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_bookings_tab.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_bookings_skeleton.dart';
+// Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 import 'package:customer_app/features/customer/presentation/widgets/customer_scaffold.dart';
 
 void main() {
@@ -319,7 +319,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byType(CustomerBookingsSkeleton), findsOneWidget);
+      expect(find.byType(AppSkeleton), findsWidgets);
     });
 
     testWidgets('offers a retry when nothing could be loaded', (tester) async {
@@ -795,8 +795,10 @@ void main() {
       );
       await tester.pump();
 
+      // Phase 07.1: skeleton engine migrated to AppSkeleton (golden
+      // re-baselined after native inspection — same shapes, shared shimmer).
       await expectLater(
-        find.byType(CustomerBookingsSkeleton),
+        find.byType(CustomerBookingsTab),
         matchesGoldenFile('goldens/customer_bookings_loading_mobile.png'),
       );
     });

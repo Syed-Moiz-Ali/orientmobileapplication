@@ -164,7 +164,7 @@ class AppKpiCard extends StatelessWidget {
             ),
             if (trendRow != null) ...[
               const SizedBox(width: AppDimensions.s12),
-              trendRow,
+              Flexible(child: trendRow),
             ],
           ],
         ),
@@ -198,7 +198,9 @@ class AppKpiCard extends StatelessWidget {
               Row(
                 children: [
                   if (trendRow != null) ...[
-                    trendRow,
+                    // Phase 07.1: flexed so long trend labels ellipsize instead
+                    // of overflowing narrow (142 px) grid tiles at 320 px.
+                    Flexible(child: trendRow),
                     const SizedBox(width: AppDimensions.s8),
                   ],
                   if (supportingText != null)
@@ -244,13 +246,17 @@ class AppKpiCard extends StatelessWidget {
       children: [
         Icon(iconData, size: 14, color: color),
         const SizedBox(width: 4),
-        Text(
-          t.label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.labelSmall?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w700,
+        // Flexed so the label ellipsizes inside narrow tiles instead of
+        // overflowing the trend row (Phase 07.1 hardening).
+        Flexible(
+          child: Text(
+            t.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         if (t.timeFrame != null) ...[

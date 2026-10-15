@@ -94,7 +94,7 @@ class TechnicianJobsView extends ConsumerWidget {
       return _scrollable(
         Semantics(
           liveRegion: true,
-          child: TechnicianEmptyState(
+          child: EmptyState(
             icon: Icons.cloud_off_rounded,
             title: "We couldn't load your jobs",
             message: 'Check your connection and try again.',
@@ -106,7 +106,7 @@ class TechnicianJobsView extends ConsumerWidget {
     }
     if (!hasJobs) {
       return _scrollable(
-        TechnicianEmptyState(
+        EmptyState(
           icon: Icons.assignment_outlined,
           title: 'No assigned jobs',
           message: 'There are no jobs assigned to you right now.',
@@ -117,7 +117,7 @@ class TechnicianJobsView extends ConsumerWidget {
     }
     if (jobs.isEmpty) {
       return _scrollable(
-        TechnicianEmptyState(
+        EmptyState(
           icon: Icons.search_off_rounded,
           title: 'No matching jobs',
           message: 'No jobs match your search and filter.',
@@ -177,6 +177,17 @@ class _JobsToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Phase 07.1: bespoke _JobFilterChip migrated to the centralized
+    // AppFilterBar (same options + live counts; the shared bar scrolls
+    // horizontally instead of wrapping — verified no-overflow at 320 px).
+    final options = notifier.filterOptions.where((f) => f != 'All').toList();
+    // The shared bar localizes its own "All" chip, so the All count is keyed
+    // by the localized label (provider state stays English-canonical).
+    final counts = <String, int>{
+      SharedCoreL10n.of(context).filterBarAll: allJobs.length,
+      for (final filter in options)
+        filter: allJobs.where((job) => job.status.label == filter).length,
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -186,100 +197,19 @@ class _JobsToolbar extends StatelessWidget {
           onClear: () => notifier.updateSearch(''),
         ),
         const SizedBox(height: AppDimensions.s12),
-        // Wraps instead of scrolling horizontally: every filter stays
-        // discoverable and reachable on the narrowest phones without a hidden
-        // off-screen chip.
-        Wrap(
-          spacing: AppDimensions.s8,
-          runSpacing: AppDimensions.s8,
-          children: [
-            for (final filter in notifier.filterOptions)
-              _JobFilterChip(
-                label: filter,
-                count: filter == 'All'
-                    ? allJobs.length
-                    : allJobs.where((job) => job.status.label == filter).length,
-                selected: state.selectedFilter == filter,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  notifier.updateFilter(filter);
-                },
-              ),
-          ],
+        AppFilterBar(
+          options: options,
+          selected: state.selectedFilter == 'All'
+              ? null
+              : state.selectedFilter,
+          counts: counts,
+          countSemantics: (label, count) => 'Filter jobs: $label, $count jobs',
+          onSelected: (value) {
+            HapticFeedback.selectionClick();
+            notifier.updateFilter(value ?? 'All');
+          },
         ),
       ],
-    );
-  }
-}
-
-class _JobFilterChip extends StatelessWidget {
-  final String label;
-  final int count;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _JobFilterChip({
-    required this.label,
-    required this.count,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final fg = selected ? colors.onPrimary : colors.onSurface;
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: 'Filter jobs: $label, $count jobs',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-          child: Ink(
-            height: AppDimensions.touchTarget,
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s14),
-            decoration: BoxDecoration(
-              color: selected ? colors.primary : colors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-              border: Border.all(
-                color: selected ? colors.primary : colors.outlineVariant,
-              ),
-            ),
-            child: Center(
-              widthFactor: 1,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: fg,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                    ),
-                  ),
-                  if (count > 0) ...[
-                    const SizedBox(width: AppDimensions.s6),
-                    Text(
-                      '$count',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: selected
-                            ? colors.onPrimary
-                            : colors.onSurfaceVariant,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

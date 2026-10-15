@@ -49,29 +49,28 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               children: [
                 // ── 1. STATS BANNER ─────────────────────────────────────────
+                // Phase 07.1: bespoke _JobsMetricPill migrated to AppKpiCard.
                 Row(
                   children: [
                     Expanded(
-                      child: _JobsMetricPill(
+                      child: AppKpiCard.compact(
                         label: 'Total Assigned',
                         value: '${notifier.totalAssigned}',
-                        color: colorScheme.primary,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _JobsMetricPill(
+                      child: AppKpiCard.compact(
                         label: 'In Progress',
                         value: '${notifier.inProgressCount}',
-                        color: colorScheme.secondary,
+                        semanticState: KpiSemanticState.info,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _JobsMetricPill(
+                      child: AppKpiCard.compact(
                         label: 'Completed',
                         value: '${notifier.completedCount}',
-                        color: colorScheme.primary,
                       ),
                     ),
                   ],
@@ -199,58 +198,6 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _JobsMetricPill extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _JobsMetricPill({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: textTheme.titleMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              fontSize: 10.5,
-            ),
-          ),
-        ],
       ),
     );
   }

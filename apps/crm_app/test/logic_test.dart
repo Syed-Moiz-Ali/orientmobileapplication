@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 
 void main() {
@@ -20,8 +21,7 @@ void main() {
         label: 'Leads',
         value: '42',
         icon: Icons.people,
-        color: Colors.blue,
-        bgColor: Colors.blueGrey,
+        state: KpiSemanticState.info,
         trend: '+12%',
         trendUp: true,
       );
@@ -29,8 +29,7 @@ void main() {
         label: 'Leads',
         value: '42',
         icon: Icons.people,
-        color: Colors.blue,
-        bgColor: Colors.blueGrey,
+        state: KpiSemanticState.info,
         trend: '+12%',
         trendUp: true,
       );
@@ -38,8 +37,7 @@ void main() {
         label: 'Leads',
         value: '43',
         icon: Icons.people,
-        color: Colors.blue,
-        bgColor: Colors.blueGrey,
+        state: KpiSemanticState.info,
         trend: '+12%',
         trendUp: true,
       );

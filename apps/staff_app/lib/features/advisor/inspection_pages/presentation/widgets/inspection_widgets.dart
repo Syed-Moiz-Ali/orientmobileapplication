@@ -294,41 +294,6 @@ class TealSwitch extends StatelessWidget {
   );
 }
 
-class SearchField extends StatelessWidget {
-  final String hint;
-  final ValueChanged<String> onChanged;
-  const SearchField({super.key, required this.hint, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      color: AppColors.canvas,
-      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
-      border: Border.all(color: AppColors.line, width: 1.5),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    child: Row(
-      children: [
-        const Icon(Icons.search, color: AppColors.text3, size: 16),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextField(
-            onChanged: onChanged,
-            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(fontSize: 13, color: AppColors.text3),
-              isDense: true,
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
 class InfoCard extends StatelessWidget {
   final Widget child;
   const InfoCard({super.key, required this.child});

@@ -20,7 +20,7 @@ import 'package:customer_app/features/customer/presentation/providers/customer_p
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_notification_presentation.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_skeleton.dart';
+// Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 
 /// The inbox is truthful only if three things hold: read state really reaches
 /// the workshop, the badge and the list read from one canonical count, and a
@@ -479,7 +479,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byType(CustomerSkeleton), findsOneWidget);
+      expect(find.byType(AppSkeleton), findsWidgets);
       expect(find.text("You're all caught up"), findsNothing);
     });
 

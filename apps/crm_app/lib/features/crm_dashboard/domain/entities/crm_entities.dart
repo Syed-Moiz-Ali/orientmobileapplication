@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart';
 
 class CrmKpiEntity {
   final String label;
   final String value;
   final IconData icon;
-  final Color color;
-  final Color bgColor;
+
+  /// Centralized tint role (Phase 07.1): the decorative per-index `Color` /
+  /// `bgColor` rotation is deleted — the adapter maps each KPI to a semantic
+  /// state and the shared [AppKpiCard] resolves the ink.
+  final KpiSemanticState state;
   final String trend;
   final bool trendUp;
 
@@ -13,8 +17,7 @@ class CrmKpiEntity {
     required this.label,
     required this.value,
     required this.icon,
-    required this.color,
-    required this.bgColor,
+    this.state = KpiSemanticState.neutral,
     required this.trend,
     required this.trendUp,
   });
@@ -27,17 +30,16 @@ class CrmKpiEntity {
           label == other.label &&
           value == other.value &&
           icon == other.icon &&
-          color == other.color &&
-          bgColor == other.bgColor &&
+          state == other.state &&
           trend == other.trend &&
           trendUp == other.trendUp;
 
   @override
-  int get hashCode => Object.hash(runtimeType, label, value, icon, color, bgColor, trend, trendUp);
+  int get hashCode => Object.hash(runtimeType, label, value, icon, state, trend, trendUp);
 
   @override
   String toString() =>
-      'CrmKpiEntity(label: $label, value: $value, icon: $icon, color: $color, bgColor: $bgColor, trend: $trend, trendUp: $trendUp)';
+      'CrmKpiEntity(label: $label, value: $value, icon: $icon, state: $state, trend: $trend, trendUp: $trendUp)';
 }
 
 class CrmChannelEntity {
