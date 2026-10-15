@@ -31,6 +31,12 @@ class SharedAuthLocalizationsAr extends SharedAuthLocalizations {
   String get authTrustBays => 'مُحسّن لمنصات الورش عالية الإنتاجية';
 
   @override
+  String get authEyebrow => 'تسجيل دخول آمن';
+
+  @override
+  String get authStatusOk => 'جميع الأنظمة تعمل';
+
+  @override
   String get authSecurityBadge =>
       'بتسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية.';
 

@@ -40,8 +40,7 @@ class LoginView extends ConsumerStatefulWidget {
     this.onForgotPassword,
     this.allowRegistration = false,
     this.appName = 'Orient Workshop',
-    this.appPurpose =
-        'Manage workshop bookings, job cards, approvals, and service updates.',
+    this.appPurpose = 'Manage workshop bookings, job cards, approvals, and service updates.',
     this.intendedUsers = 'Workshop users',
     this.securityNotice,
   });
@@ -106,8 +105,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       error = t.validationEnterIdentifier;
     } else if (_isEmail(value) && !value.contains('@')) {
       error = t.validationEnterValidEmail;
-    } else if (!_isEmail(value) &&
-        value.replaceAll(RegExp(r'[^0-9]'), '').length < 8) {
+    } else if (!_isEmail(value) && value.replaceAll(RegExp(r'[^0-9]'), '').length < 8) {
       error = t.validationEnterValidPhone;
     }
     setState(() {
@@ -202,9 +200,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       subtitle = t.loginRegisterSubtitle;
     } else if (codeMode) {
       title = t.loginSecurityCodeTitle;
-      subtitle = state.otpSent
-          ? t.loginOtpSentSubtitle
-          : t.loginSecurityCodeSubtitle;
+      subtitle = state.otpSent ? t.loginOtpSentSubtitle : t.loginSecurityCodeSubtitle;
     } else {
       title = t.loginWelcomeTitle;
       subtitle = t.loginWelcomeSubtitle;
@@ -235,10 +231,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
             switchOutCurve: AppMotion.exit,
             layoutBuilder: (currentChild, previousChildren) => Stack(
               alignment: Alignment.topCenter,
-              children: [
-                ...previousChildren,
-                if (currentChild != null) currentChild,
-              ],
+              children: [...previousChildren, if (currentChild != null) currentChild],
             ),
             child: registering
                 ? _RegisterForm(
@@ -346,39 +339,76 @@ class _MethodSwitcher extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final passwordSelected = mode == _SignInMode.password;
 
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.s4),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          _tab(
-            context,
-            passwordLabel,
-            mode == _SignInMode.password,
-            () => onChanged(_SignInMode.password),
-          ),
-          _tab(
-            context,
-            codeLabel,
-            mode == _SignInMode.code,
-            () => onChanged(_SignInMode.code),
-          ),
-        ],
+    return Semantics(
+      container: true,
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.s4),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        // One sliding cobalt thumb (AnimatedAlign, RTL-safe): the active
+        // method owns the color, the idle one recedes. Labels sit above
+        // transparently and keep their own selected semantics for
+        // assistive technology.
+        child: Stack(
+          children: [
+            AnimatedAlign(
+              duration: AppMotion.resolve(context, AppMotion.fast),
+              curve: AppMotion.enter,
+              alignment: passwordSelected ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd,
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  decoration: BoxDecoration(
+                    color: colors.primary,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.primary.withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                _tab(
+                  context,
+                  icon: Icons.lock_outline_rounded,
+                  label: passwordLabel,
+                  selected: passwordSelected,
+                  onTap: () => onChanged(_SignInMode.password),
+                ),
+                _tab(
+                  context,
+                  icon: Icons.sms_outlined,
+                  label: codeLabel,
+                  selected: !passwordSelected,
+                  onTap: () => onChanged(_SignInMode.code),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _tab(
-    BuildContext context,
-    String label,
-    bool selected,
-    VoidCallback onTap,
-  ) {
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -391,32 +421,29 @@ class _MethodSwitcher extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-            child: AnimatedContainer(
-              duration: AppMotion.resolve(context, AppMotion.fast),
-              curve: AppMotion.enter,
+            hoverColor: colors.primary.withValues(alpha: 0.08),
+            child: Container(
               constraints: const BoxConstraints(minHeight: 48),
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.s8,
-                vertical: AppDimensions.s10,
-              ),
-              decoration: BoxDecoration(
-                color: selected ? colors.surface : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                border: Border.all(
-                  color: selected ? colors.outlineVariant : Colors.transparent,
-                ),
-                boxShadow: selected ? AppDimensions.shadowSurface : null,
-              ),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: selected ? colors.onSurface : colors.onSurfaceVariant,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s8, vertical: AppDimensions.s10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: AppDimensions.iconSm, color: selected ? colors.onPrimary : colors.onSurfaceVariant),
+                  const SizedBox(width: AppDimensions.s6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: selected ? colors.onPrimary : colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -450,8 +477,7 @@ class _IdentifierRow extends StatelessWidget {
     this.onSubmitted,
   });
 
-  bool _looksLikeEmail(String value) =>
-      value.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(value);
+  bool _looksLikeEmail(String value) => value.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(value);
 
   @override
   Widget build(BuildContext context) {
@@ -477,10 +503,7 @@ class _IdentifierRow extends StatelessWidget {
             onSubmitted: onSubmitted,
           );
         }
-        final labelStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          height: 1.3,
-        );
+        final labelStyle = Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700, height: 1.3);
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -492,11 +515,7 @@ class _IdentifierRow extends StatelessWidget {
               children: [
                 Text('\u00A0', style: labelStyle),
                 const SizedBox(height: AppDimensions.s8),
-                AuthCountryCodeButton(
-                  value: state.countryCode,
-                  enabled: enabled,
-                  onChanged: onCountryChanged,
-                ),
+                AuthCountryCodeButton(value: state.countryCode, enabled: enabled, onChanged: onCountryChanged),
               ],
             ),
             const SizedBox(width: AppDimensions.s8),
@@ -564,7 +583,6 @@ class _SignInPasswordForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AuthNoticeSlot(message: banner),
           _IdentifierRow(
             controller: identifierCtrl,
             state: state,
@@ -591,13 +609,10 @@ class _SignInPasswordForm extends StatelessWidget {
             const SizedBox(height: AppDimensions.s4),
             Align(
               alignment: AlignmentDirectional.centerEnd,
-              child: AuthLinkButton(
-                label: t.loginActionForgotPassword,
-                onPressed: busy ? null : onForgotPassword,
-              ),
+              child: AuthLinkButton(label: t.loginActionForgotPassword, onPressed: busy ? null : onForgotPassword),
             ),
           ],
-          const SizedBox(height: AppDimensions.s20),
+          const SizedBox(height: AppDimensions.s24),
           AuthPrimaryButton(
             label: t.loginActionContinue,
             icon: Icons.arrow_forward_rounded,
@@ -607,10 +622,7 @@ class _SignInPasswordForm extends StatelessWidget {
           if (allowRegistration) ...[
             const SizedBox(height: AppDimensions.s12),
             Center(
-              child: AuthLinkButton(
-                label: t.loginNewCustomer,
-                onPressed: busy ? null : notifier.toggleRegister,
-              ),
+              child: AuthLinkButton(label: t.loginNewCustomer, onPressed: busy ? null : notifier.toggleRegister),
             ),
           ],
         ],
@@ -663,7 +675,6 @@ class _RegisterForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AuthNoticeSlot(message: banner),
           AuthTextField(
             controller: nameCtrl,
             label: t.loginFieldFullName,
@@ -717,10 +728,7 @@ class _RegisterForm extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s8),
           Center(
-            child: AuthLinkButton(
-              label: t.loginAlreadyHaveAccount,
-              onPressed: busy ? null : notifier.toggleRegister,
-            ),
+            child: AuthLinkButton(label: t.loginAlreadyHaveAccount, onPressed: busy ? null : notifier.toggleRegister),
           ),
         ],
       ),
@@ -770,34 +778,24 @@ class _CodeForm extends StatelessWidget {
               onChanged: notifier.setOtp,
               errorText: state.error,
               enabled: !busy,
-              onSubmitted: (_) =>
-                  email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
+              onSubmitted: (_) => email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
             ),
             const SizedBox(height: AppDimensions.s24),
             AuthPrimaryButton(
               label: t.loginActionVerifyCode,
               icon: Icons.verified_rounded,
               isLoading: state.isLoading,
-              onPressed: () =>
-                  email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
+              onPressed: () => email ? notifier.verifyEmailOtp() : notifier.verifySmsOtp(),
             ),
             const SizedBox(height: AppDimensions.s8),
             Wrap(
               alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
               spacing: AppDimensions.s8,
               runSpacing: AppDimensions.s4,
               children: [
-                AuthLinkButton(
-                  label: t.loginActionChangeIdentifier,
-                  onPressed: busy ? null : notifier.reset,
-                ),
-                AuthLinkButton(
-                  label: state.resendCooldown > 0
-                      ? t.loginActionResendIn(state.resendCooldown)
-                      : t.loginActionResendCode,
-                  subtle: true,
-                  onPressed: state.resendCooldown > 0 || busy ? null : onSendCode,
-                ),
+                AuthLinkButton(label: t.loginActionChangeIdentifier, onPressed: busy ? null : notifier.reset),
+                AuthResendAction(cooldownSeconds: state.resendCooldown, busy: busy, onResend: onSendCode),
               ],
             ),
           ],
@@ -809,7 +807,6 @@ class _CodeForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AuthNoticeSlot(message: banner),
           _IdentifierRow(
             controller: identifierCtrl,
             state: state,
@@ -819,7 +816,7 @@ class _CodeForm extends StatelessWidget {
             onCountryChanged: onCountryChanged,
             onSubmitted: (_) => onSendCode(),
           ),
-          const SizedBox(height: AppDimensions.s20),
+          const SizedBox(height: AppDimensions.s24),
           AuthPrimaryButton(
             label: t.loginActionSendCode,
             icon: Icons.arrow_forward_rounded,

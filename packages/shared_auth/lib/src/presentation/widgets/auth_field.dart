@@ -99,9 +99,12 @@ class _AuthTextFieldState extends State<AuthTextField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final disabled = context.semanticColors;
     final t = SharedAuthL10n.of(context);
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
-    final accent = hasError
+    final accent = !widget.enabled
+        ? disabled.disabledInk
+        : hasError
         ? colors.error
         : _focused
         ? colors.primary
@@ -122,11 +125,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
             Expanded(
               child: Text(
                 widget.label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
-                ),
+                style: theme.textTheme.labelMedium?.copyWith(color: accent, fontWeight: FontWeight.w700, height: 1.3),
               ),
             ),
             if (widget.labelTrailing != null) widget.labelTrailing!,
@@ -147,7 +146,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           cursorColor: colors.primary,
           cursorRadius: const Radius.circular(AppDimensions.r2),
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: widget.enabled ? colors.onSurface : colors.onSurfaceVariant,
+            color: widget.enabled ? colors.onSurface : disabled.disabledInk,
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
@@ -155,29 +154,23 @@ class _AuthTextFieldState extends State<AuthTextField> {
             errorText: widget.errorText,
             errorMaxLines: 2,
             filled: true,
-            fillColor: widget.enabled
+            // Recessed fill at rest, lifting to the surface on focus so the
+            // field feels responsive; disabled uses the semantic pair.
+            fillColor: !widget.enabled
+                ? disabled.disabledFill
+                : _focused && !hasError
                 ? colors.surface
                 : colors.surfaceContainerLow,
             isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.s14,
-              vertical: AppDimensions.s16,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: AppDimensions.s14, vertical: AppDimensions.s16),
             prefixIcon: Icon(widget.icon, size: AppDimensions.iconMd),
             prefixIconColor: accent,
-            prefixIconConstraints: const BoxConstraints(
-              minWidth: 44,
-              minHeight: 44,
-            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             suffixIcon: widget.obscureText
                 ? IconButton(
-                    onPressed: widget.enabled
-                        ? () => setState(() => _hidden = !_hidden)
-                        : null,
+                    onPressed: widget.enabled ? () => setState(() => _hidden = !_hidden) : null,
                     icon: Icon(
-                      _hidden
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
+                      _hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                       size: AppDimensions.iconMd,
                     ),
                     color: colors.onSurfaceVariant,
@@ -188,28 +181,22 @@ class _AuthTextFieldState extends State<AuthTextField> {
                 : null,
             border: outline(colors.outline),
             enabledBorder: outline(colors.outline),
-            disabledBorder: outline(
-              colors.outline.withValues(alpha: 0.6),
-            ),
-            focusedBorder: outline(colors.primary, 1.5),
+            disabledBorder: outline(disabled.disabledBorder),
+            // 2px primary focus ring; errors keep the 1.2/1.5 error ramp so
+            // focus and invalid never share one treatment.
+            focusedBorder: outline(colors.primary, 2),
             errorBorder: outline(colors.error, 1.2),
             focusedErrorBorder: outline(colors.error, 1.5),
             hintStyle: theme.textTheme.bodyMedium?.copyWith(
               color: colors.onSurfaceVariant,
               fontWeight: FontWeight.w400,
             ),
-            errorStyle: theme.textTheme.bodySmall?.copyWith(
-              color: colors.error,
-              fontWeight: FontWeight.w600,
-            ),
+            errorStyle: theme.textTheme.bodySmall?.copyWith(color: colors.error, fontWeight: FontWeight.w600),
           ),
           onChanged: widget.onChanged,
           onSubmitted: widget.onSubmitted,
         ),
-        if (widget.belowField != null) ...[
-          const SizedBox(height: AppDimensions.s8),
-          widget.belowField!,
-        ],
+        if (widget.belowField != null) ...[const SizedBox(height: AppDimensions.s8), widget.belowField!],
       ],
     );
   }
@@ -273,9 +260,7 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
         width: width,
         height: 56,
         textStyle: theme.textTheme.titleMedium?.copyWith(
-          color: widget.enabled
-              ? colorScheme.onSurface
-              : colorScheme.onSurfaceVariant,
+          color: widget.enabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
           fontSize: 20,
           fontWeight: FontWeight.w900,
         ),
@@ -305,13 +290,11 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
           const SizedBox(height: AppDimensions.s10),
           LayoutBuilder(
             builder: (context, constraints) {
-              final fieldWidth = ((constraints.maxWidth - 40) / 6)
-                  .clamp(42.0, 54.0)
-                  .toDouble();
+              final fieldWidth = ((constraints.maxWidth - 40) / 6).clamp(42.0, 54.0).toDouble();
               final defaultTheme = pinTheme(
                 width: fieldWidth,
                 borderColor: colorScheme.outlineVariant,
-                fillColor: colorScheme.surface,
+                fillColor: colorScheme.surfaceContainerLow,
               );
 
               return Directionality(
@@ -328,7 +311,7 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
                     width: fieldWidth,
                     borderColor: colorScheme.primary,
                     fillColor: colorScheme.surface,
-                    borderWidth: 1.8,
+                    borderWidth: 2,
                   ),
                   submittedPinTheme: pinTheme(
                     width: fieldWidth,
@@ -337,10 +320,8 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
                   ),
                   disabledPinTheme: pinTheme(
                     width: fieldWidth,
-                    borderColor: colorScheme.outlineVariant.withValues(
-                      alpha: 0.6,
-                    ),
-                    fillColor: colorScheme.surfaceContainerLow,
+                    borderColor: context.semanticColors.disabledBorder,
+                    fillColor: context.semanticColors.disabledFill,
                   ),
                   errorPinTheme: pinTheme(
                     width: fieldWidth,
@@ -361,10 +342,7 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
               liveRegion: true,
               child: Text(
                 widget.errorText!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.error,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.error, fontWeight: FontWeight.w600),
               ),
             ),
           ],

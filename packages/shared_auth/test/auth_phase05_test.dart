@@ -266,6 +266,57 @@ void main() {
       expect(find.text('App-specific terms apply.'), findsOneWidget);
     });
   });
+
+  group('resend action', () {
+    testWidgets('cooldown renders a progress ring and quiet countdown', (
+      tester,
+    ) async {
+      var resent = false;
+      await tester.pumpWidget(
+        _host(
+          home: Scaffold(
+            body: AuthResendAction(
+              cooldownSeconds: 24,
+              busy: false,
+              onResend: () => resent = true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final ring = tester.widget<CircularProgressIndicator>(
+        find.byType(CircularProgressIndicator),
+      );
+      expect(ring.value, closeTo(24 / 30, 0.001));
+      expect(find.text('Resend in 24 seconds'), findsOneWidget);
+      await tester.tap(find.text('Resend in 24 seconds'));
+      await tester.pump();
+      expect(resent, isFalse);
+    });
+
+    testWidgets('idle renders a tappable resend link', (tester) async {
+      var resent = false;
+      await tester.pumpWidget(
+        _host(
+          home: Scaffold(
+            body: AuthResendAction(
+              cooldownSeconds: 0,
+              busy: false,
+              onResend: () => resent = true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Resend code'), findsOneWidget);
+      await tester.tap(find.text('Resend code'));
+      await tester.pump();
+      expect(resent, isTrue);
+    });
+  });
 }
 
 Future<void> _pumpLogin(

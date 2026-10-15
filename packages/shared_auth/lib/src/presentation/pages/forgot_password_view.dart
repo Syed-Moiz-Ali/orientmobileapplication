@@ -446,7 +446,6 @@ class _ResetStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resendAvailable = resendCooldown == 0 && !isLoading;
     final t = SharedAuthL10n.of(context);
 
     return AutofillGroup(
@@ -490,6 +489,7 @@ class _ResetStep extends StatelessWidget {
           const SizedBox(height: AppDimensions.s8),
           Wrap(
             alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             spacing: AppDimensions.s8,
             runSpacing: AppDimensions.s4,
             children: [
@@ -497,12 +497,10 @@ class _ResetStep extends StatelessWidget {
                 label: t.loginActionChangeIdentifier,
                 onPressed: isLoading ? null : onEditIdentifier,
               ),
-              AuthLinkButton(
-                label: resendCooldown > 0
-                    ? t.loginActionResendIn(resendCooldown)
-                    : t.loginActionResendCode,
-                subtle: true,
-                onPressed: resendAvailable ? onResend : null,
+              AuthResendAction(
+                cooldownSeconds: resendCooldown,
+                busy: isLoading,
+                onResend: onResend,
               ),
             ],
           ),

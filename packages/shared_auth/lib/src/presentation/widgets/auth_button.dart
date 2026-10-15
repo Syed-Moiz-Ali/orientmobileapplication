@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_core/shared_core.dart';
 
 /// Primary call-to-action for authentication surfaces.
@@ -36,15 +37,17 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final disabledTokens = context.semanticColors;
     final disabled = widget.onPressed == null || widget.isLoading;
 
     // The label follows the button ink explicitly: on-primary while
-    // enabled/busy (AA on cobalt in both themes), neutral disabled ink when
-    // genuinely disabled. Inheriting the theme text color here previously
-    // failed contrast, so this mapping is load-bearing.
+    // enabled/busy (AA on cobalt in both themes), the semantic disabled ink
+    // when genuinely disabled — never a faded primary. Inheriting the theme
+    // text color here previously failed contrast, so this mapping is
+    // load-bearing.
     final genuinelyDisabled = widget.onPressed == null && !widget.isLoading;
     final labelColor = genuinelyDisabled
-        ? colorScheme.onSurfaceVariant
+        ? disabledTokens.disabledInk
         : colorScheme.onPrimary;
 
     final Widget button = FilledButton(
@@ -53,13 +56,13 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         // Busy keeps active-strength fill + ink so spinner and label stay AA;
-        // genuinely disabled uses the neutral treatment.
+        // genuinely disabled uses the semantic disabled pair.
         disabledBackgroundColor: widget.isLoading
             ? colorScheme.primary
-            : colorScheme.surfaceContainerHighest,
+            : disabledTokens.disabledFill,
         disabledForegroundColor: widget.isLoading
             ? colorScheme.onPrimary
-            : colorScheme.onSurfaceVariant,
+            : disabledTokens.disabledInk,
         elevation: 0,
         shadowColor: Colors.transparent,
         minimumSize: const Size.fromHeight(52),
@@ -112,6 +115,24 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
       ),
     );
 
+    // Restrained cobalt lift while actionable; flat while busy/disabled so
+    // the elevation itself communicates state.
+    final Widget lifted = disabled
+        ? SizedBox(width: double.infinity, child: button)
+        : DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.primary.withValues(alpha: 0.28),
+                  blurRadius: 14,
+                  offset: const Offset(0, 7),
+                ),
+              ],
+            ),
+            child: SizedBox(width: double.infinity, child: button),
+          );
+
     return Listener(
       onPointerDown: disabled ? null : (_) => _setPressed(true),
       onPointerUp: disabled ? null : (_) => _setPressed(false),
@@ -120,7 +141,7 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
         scale: _pressed ? 0.985 : 1,
         duration: AppMotion.instant,
         curve: AppMotion.standardCurve,
-        child: SizedBox(width: double.infinity, child: button),
+        child: lifted,
       ),
     );
   }
@@ -150,6 +171,8 @@ class AuthLinkButton extends StatelessWidget {
 
     return TextButton(
       onPressed: onPressed,
+      // Subtle 8% self-overlay on hover/focus/press (desktop pointer +
+      // keyboard focus) so secondary actions feel responsive, never flat.
       style: TextButton.styleFrom(
         foregroundColor: color,
         disabledForegroundColor: colorScheme.onSurfaceVariant.withValues(
@@ -161,6 +184,8 @@ class AuthLinkButton extends StatelessWidget {
         ),
         minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
+      ).copyWith(
+        overlayColor: WidgetStatePropertyAll(color.withValues(alpha: 0.08)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -187,6 +212,60 @@ class AuthLinkButton extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Resend control shared by the one-time-code and recovery flows.
+///
+/// While [cooldownSeconds] is positive it renders a 20px progress ring (the
+/// remaining fraction of the 30s window) beside quiet countdown copy; at zero
+/// it becomes a subtle link. [busy] disables interaction without changing the
+/// treatment, so resend never competes with the primary CTA.
+class AuthResendAction extends StatelessWidget {
+  final int cooldownSeconds;
+  final bool busy;
+  final VoidCallback onResend;
+
+  const AuthResendAction({
+    super.key,
+    required this.cooldownSeconds,
+    required this.busy,
+    required this.onResend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = SharedAuthL10n.of(context);
+    final waiting = cooldownSeconds > 0;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (waiting) ...[
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              value: cooldownSeconds / 30,
+              strokeWidth: 2.5,
+              color: colors.primary,
+              backgroundColor: colors.outlineVariant,
+              semanticsLabel: t.loginActionResendIn(cooldownSeconds),
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s8),
+        ],
+        AuthLinkButton(
+          label: waiting
+              ? t.loginActionResendIn(cooldownSeconds)
+              : t.loginActionResendCode,
+          subtle: true,
+          onPressed: waiting || busy ? null : onResend,
+        ),
+      ],
     );
   }
 }

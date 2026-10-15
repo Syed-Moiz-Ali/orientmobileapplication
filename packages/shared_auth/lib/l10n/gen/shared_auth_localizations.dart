@@ -143,6 +143,18 @@ abstract class SharedAuthLocalizations {
   /// **'Optimized for high-throughput workshop bays'**
   String get authTrustBays;
 
+  /// Overline above the identity panel headline
+  ///
+  /// In en, this message translates to:
+  /// **'Secure sign-in'**
+  String get authEyebrow;
+
+  /// Platform status line on the identity panel
+  ///
+  /// In en, this message translates to:
+  /// **'All systems operational'**
+  String get authStatusOk;
+
   /// Generic legal text under the auth form; apps may override with their own localized security notice
   ///
   /// In en, this message translates to:

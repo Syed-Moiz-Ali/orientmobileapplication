@@ -31,6 +31,12 @@ class SharedAuthLocalizationsEn extends SharedAuthLocalizations {
   String get authTrustBays => 'Optimized for high-throughput workshop bays';
 
   @override
+  String get authEyebrow => 'Secure sign-in';
+
+  @override
+  String get authStatusOk => 'All systems operational';
+
+  @override
   String get authSecurityBadge =>
       'By signing in, you agree to the Terms of Service and Privacy Policy.';
 

@@ -251,3 +251,54 @@ baselining: emoji-flag tofu in the prefix button; full-width expired mark.
   domain swatches stay with the domain owner (not rendered by any auth
   widget); `supervisor_login_view.dart` stays Phase 11-owned; `LogoutDialog`
   untouched (locked `shared_core`, already compliant).
+
+## 21. Premium switcher pass (same phase, switcher layout kept)
+
+Per review direction the segmented password/code switcher stays and was
+elevated to SaaS grade instead of a stepped rewrite. Presentation-only,
+zero new strings, zero contract changes:
+
+- Sliding thumb (`AnimatedAlign` + `AlignmentDirectional`, RTL-safe) with
+  per-option icons (lock / sms) and cobalt selected icon; labels keep
+  individual `selected` semantics; 48px targets; desktop hover wash.
+- `AuthTextField`: 2px primary focus ring; disabled fill/border/ink from the
+  semantic disabled tokens (never faded primary, never alpha washes).
+- `AuthPrimaryButton`: genuinely-disabled uses `disabledFill`/`disabledInk`;
+  busy keeps cobalt + spinner.
+- `AuthLinkButton`: 8% self-overlay on hover/focus/press.
+- New shared `AuthResendAction` (ring + quiet countdown, idle link) adopted
+  by the login code form and the recovery reset step; covered by 2 widget
+  tests (ring fraction 24/30 disabled-tap; idle tap resends).
+- Rhythm: 24px air above primary CTAs; identity trust chips 36px with
+  inverse hairline.
+- Suite: **92/92**, analyzer 0, theme/foundation/parity guards green,
+  staff downstream analyze clean; 16 affected goldens re-rendered +
+  natively inspected (no overflow/tofu/contrast defects); evidence refreshed
+  (26 PNGs). Gate 1 PASS; Gate 2 still pending Product Owner, live NOT
+  PERFORMED.
+
+## 22. Visual transformation pass (same phase — this is the visible one)
+
+The previous passes were grammar-level (correct but plain). This pass
+changes what the eye sees, with zero contract/string-architecture changes
+(2 additive l10n keys only: `authEyebrow`, `authStatusOk`, EN+AR + regen):
+
+- **Monogram brand mark** — localized initial ("O" / "أ") on the cobalt
+  tile replaces the generic wrench glyph, on every surface including splash
+  callers via the shared lockup.
+- **Cobalt pill switcher** — the active method owns a solid cobalt sliding
+  thumb with white ink; the idle method recedes. Unmistakable at a glance.
+- **Filled inputs** — recessed `surfaceContainerLow` fill at rest lifting to
+  `surface` on focus; borderless until the 2px primary ring or the error
+  ramp. OTP boxes follow the same grammar.
+- **Carded desktop/tablet form** — 480 card (16px, hairline, shadow) on every
+  non-compact width; mobile stays flat full-bleed, gutter 20.
+- **Navy panel with voice** — overline eyebrow, larger headline, status pill
+  (success dot + operational line), hairline trust chips, legal footnote.
+- **CTA depth + footer divider** — restrained cobalt lift while actionable
+  (flat when busy/disabled); hairline divider separates the legal footer.
+- Titles tightened to `headlineSmall` 800 per the design-system H1 role.
+- Suite **92/92**, analyzer 0, all guards green; 25 goldens re-rendered +
+  natively inspected (compact/tablet/expanded EN/AR, dark spots, OTP,
+  recovery, splash, register, reset, session-expired); evidence refreshed.
+  Gate 1 PASS; Gate 2 pending Product Owner, live NOT PERFORMED.

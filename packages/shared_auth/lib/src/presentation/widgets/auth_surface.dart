@@ -6,19 +6,18 @@ import 'package:shared_core/shared_core.dart';
 
 /// Shared authentication shell used by every Orient app.
 ///
-/// Composition (from scratch, Archetype 1 — focused identity access):
-/// - compact: single focused column, max 480 wide, condensed brand lockup.
-/// - medium: same column boxed on a surface card so extra width reads as
-///   deliberate instead of stretched.
-/// - expanded/large: split — reading-start navy identity panel (brand mark,
-///   app identity, trust points, security badge) + reading-end focused form
-///   (max 480), whole canvas capped at 1440 and centered.
+/// Composition (Archetype 1 — focused identity access):
+/// - compact: full-bleed focused column, gutter 20, flat (no card shadow).
+/// - medium: boxed surface card (16px radius, hairline, padding 28) centered.
+/// - expanded/large: split in a centered 1440 canvas — reading-start navy
+///   identity panel (monogram, eyebrow, headline, app identity, trust rows,
+///   status line) + reading-end form in a 480 card with the same grammar.
 ///
-/// Breakpoints come from the single authority ([AppAdaptiveSpec] via
-/// [AppAdaptiveBuilder]); no width literals or `MediaQuery` reads live here.
-/// Styling resolves through `ColorScheme.inverseSurface` / `onInverseSurface` /
-/// `inversePrimary` only — tonal steps derive from `onInverseSurface`.
-///
+/// Breakpoints come from the single authority ([AppAdaptiveBuilder] +
+/// `adaptive.pick()` / `isCompact` / `isExpanded` / `isLarge`); no width
+/// literals or `MediaQuery` reads live here. Styling resolves through
+/// `ColorScheme` roles (`inverseSurface` / `onInverseSurface` /
+/// `inversePrimary`) only — tonal steps derive from `onInverseSurface`.
 ///
 /// The shell is independent of Riverpod so it renders in isolation (tests,
 /// previews) and is reused by [LoginView], [ForgotPasswordView] and
@@ -73,7 +72,6 @@ class AuthShell extends StatelessWidget {
             child: AppAdaptiveBuilder(
               builder: (context, adaptive) {
                 final split = adaptive.isExpanded || adaptive.isLarge;
-                final boxed = adaptive.isMedium;
 
                 final form = _AuthFormPane(
                   title: title,
@@ -85,7 +83,8 @@ class AuthShell extends StatelessWidget {
                   footer: footer ?? SecurityBadge(text: securityNotice),
                   showBrand: !split,
                   showContext: !split,
-                  boxed: boxed,
+                  // Every non-compact width gets the card; mobile stays flat.
+                  boxed: !adaptive.isCompact,
                   child: child,
                 );
 
@@ -189,7 +188,7 @@ class _AuthFormPane extends StatelessWidget {
               header: true,
               child: Text(
                 title,
-                style: theme.textTheme.headlineMedium?.copyWith(
+                style: theme.textTheme.headlineSmall?.copyWith(
                   color: colors.onSurface,
                   fontWeight: FontWeight.w800,
                   letterSpacing: AppTypography.tracking(context, -0.5),
@@ -205,9 +204,11 @@ class _AuthFormPane extends StatelessWidget {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: AppDimensions.s20),
+            const SizedBox(height: AppDimensions.s24),
             child,
-            const SizedBox(height: AppDimensions.s28),
+            const SizedBox(height: AppDimensions.s24),
+            Divider(color: colors.outlineVariant, height: 1, thickness: 1),
+            const SizedBox(height: AppDimensions.s20),
             footer,
           ],
         );
@@ -265,6 +266,7 @@ class _AuthIdentityPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
     final t = SharedAuthL10n.of(context);
 
     return ColoredBox(
@@ -284,12 +286,24 @@ class _AuthIdentityPanel extends StatelessWidget {
                 const _AuthBrandLockup(onDark: true, size: 46),
                 const SizedBox(height: AppDimensions.s32),
                 Text(
+                  // Latin overlines read uppercase with wide tracking; Arabic
+                  // keeps its natural form (no case to transform).
+                  t.authEyebrow.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.inversePrimary,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: AppTypography.tracking(context, 1.4),
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s12),
+                Text(
                   t.authIdentityHeadline,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: colors.onInverseSurface,
                     fontWeight: FontWeight.w800,
                     letterSpacing: AppTypography.tracking(context, -0.5),
-                    height: 1.3,
+                    height: 1.25,
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s12),
@@ -333,6 +347,41 @@ class _AuthIdentityPanel extends StatelessWidget {
                   label: t.authTrustBays,
                 ),
                 const SizedBox(height: AppDimensions.s32),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s12,
+                    vertical: AppDimensions.s10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _inverseRaised(colors),
+                    borderRadius: BorderRadius.circular(AppDimensions.rPill),
+                    border: Border.all(color: _inverseBorder(colors)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: semantic.success.base,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.s8),
+                      Flexible(
+                        child: Text(
+                          t.authStatusOk,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: _inverseMuted(colors),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s20),
                 _InverseSecurityNote(text: securityNotice),
               ],
             ),
@@ -430,19 +479,22 @@ class _AuthContextBlock extends StatelessWidget {
   }
 }
 
-/// Compact Orient lockup. Uses a programmatic mark rather than the bundled
-/// image asset, which belongs to the technology vendor and not the brand.
+/// Orient monogram lockup. The tile carries the localized brand initial
+/// ("O" / "أ") on the cobalt fill — a programmatic mark owned by the product,
+/// unlike the bundled vendor image asset.
 class _AuthBrandLockup extends StatelessWidget {
   final double size;
   final bool onDark;
 
-  const _AuthBrandLockup({this.size = 38, this.onDark = false});
+  const _AuthBrandLockup({this.size = 40, this.onDark = false});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final t = SharedAuthL10n.of(context);
+    final brand = t.authBrandName;
+    final monogram = brand.isEmpty ? 'O' : brand.substring(0, 1);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -450,14 +502,18 @@ class _AuthBrandLockup extends StatelessWidget {
         Container(
           width: size,
           height: size,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: colors.primary,
-            borderRadius: BorderRadius.circular(size * 0.28),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
           ),
-          child: Icon(
-            Icons.build_rounded,
-            color: colors.onPrimary,
-            size: size * 0.5,
+          child: Text(
+            monogram,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: colors.onPrimary,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
           ),
         ),
         const SizedBox(width: AppDimensions.s12),
@@ -513,13 +569,14 @@ class _AuthTrustPoint extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 32,
-          height: 32,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: _inverseRaised(colors),
             borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+            border: Border.all(color: _inverseBorder(colors)),
           ),
-          child: Icon(icon, size: 17, color: colors.inversePrimary),
+          child: Icon(icon, size: 18, color: colors.inversePrimary),
         ),
         const SizedBox(width: AppDimensions.s12),
         Expanded(

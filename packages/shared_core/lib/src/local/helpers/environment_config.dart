@@ -4,8 +4,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class EnvironmentConfig {
   EnvironmentConfig._();
 
-  static const String _defaultBaseUrl =
-      'https://56zk48dj-8080.inc1.devtunnels.ms/api/v1';
+  // Production backend. This is also the fallback when no BASE_URL is
+  // provided via .env, so no code path can point at the retired dev tunnel.
+  static const String _defaultBaseUrl = 'https://g.erpmass.com/api/v1';
   static const String _defaultAppEnv = 'development';
 
   static bool _initialized = false;

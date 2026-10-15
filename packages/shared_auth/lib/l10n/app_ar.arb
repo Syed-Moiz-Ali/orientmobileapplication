@@ -8,6 +8,8 @@
   "authTrustRoles": "وصول حسب الأدوار وسجل تدقيق متوافق",
   "authTrustSync": "مزامنة مشفّرة تعمل دون اتصال",
   "authTrustBays": "مُحسّن لمنصات الورش عالية الإنتاجية",
+  "authEyebrow": "تسجيل دخول آمن",
+  "authStatusOk": "جميع الأنظمة تعمل",
   "authSecurityBadge": "بتسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية.",
   "authRestoringSessionSemantics": "جارٍ استعادة جلستك الآمنة",
   "authRestoringSession": "جارٍ استعادة جلستك",

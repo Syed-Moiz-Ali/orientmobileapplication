@@ -88,7 +88,14 @@ class AuthCountryCodeButton extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
             padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s10),
             decoration: BoxDecoration(
-              border: Border.all(color: colors.outline),
+              color: enabled
+                  ? colors.surfaceContainerLow
+                  : context.semanticColors.disabledFill,
+              border: Border.all(
+                color: enabled
+                    ? colors.outlineVariant
+                    : context.semanticColors.disabledBorder,
+              ),
               borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
             ),
             child: Row(
