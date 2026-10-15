@@ -97,6 +97,10 @@ class AdvisorProfileSheet extends ConsumerWidget {
           ),
           const AdvisorDivider(),
           const SizedBox(height: AppDimensions.s8),
+          // Identity + language/theme/logout: the shared EN/AR switcher.
+          // Theme follows the system brightness via the centralized theme.
+          const LanguageSwitcher(),
+          const SizedBox(height: AppDimensions.s8),
           AdvisorOutlineAction(
             label: t.advisorProfileLogout,
             icon: Icons.logout_rounded,

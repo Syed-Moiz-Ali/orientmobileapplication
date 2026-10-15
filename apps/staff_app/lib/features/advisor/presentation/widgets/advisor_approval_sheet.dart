@@ -6,6 +6,12 @@ import 'advisor_sheet.dart';
 import 'advisor_detail_line.dart';
 import 'advisor_outline_action.dart';
 import 'advisor_solid_action.dart';
+import 'advisor_status.dart';
+
+/// Estimate approval sheet: record summary plus approve / send-back actions.
+/// Line items beyond the recorded estimate header do not exist on
+/// [PendingApprovalEntity], so the sheet presents the recorded diff
+/// (amount + identifiers) without inventing line-item rows.
 
 /// Estimate approval sheet: record summary plus approve / send-back actions.
 class AdvisorApprovalSheet extends StatelessWidget {
@@ -43,9 +49,14 @@ class AdvisorApprovalSheet extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Text(
-                  pa.isEstimate ? money : pa.typeLabel,
-                  style: AppTextStyles.displayMedium(color: colors.onSurface),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    pa.isEstimate
+                        ? money
+                        : advisorApprovalTypeLabel(t, pa.approvalType),
+                    style: AppTextStyles.displayMedium(color: colors.onSurface),
+                  ),
                 ),
                 const SizedBox(height: AppDimensions.s4),
                 Text(
@@ -75,7 +86,7 @@ class AdvisorApprovalSheet extends StatelessWidget {
             icon: pa.isEstimate
                 ? Icons.receipt_long_outlined
                 : Icons.assignment_turned_in_outlined,
-            label: pa.typeLabel,
+            label: advisorApprovalTypeLabel(t, pa.approvalType),
             value: pa.estimateId,
           ),
           const SizedBox(height: AppDimensions.s16),

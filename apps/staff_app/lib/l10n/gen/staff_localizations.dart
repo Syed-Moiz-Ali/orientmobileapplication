@@ -434,6 +434,258 @@ abstract class StaffLocalizations {
   /// **'Cancelled'**
   String get advisorFilterCancelled;
 
+  /// Today-tab eyebrow above the greeting
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get advisorTodayEyebrow;
+
+  /// Jobs status filter: intake
+  ///
+  /// In en, this message translates to:
+  /// **'Intake'**
+  String get advisorFilterIntake;
+
+  /// Jobs status filter: inspection
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection'**
+  String get advisorFilterInspection;
+
+  /// Jobs status filter: approved
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get advisorFilterApproved;
+
+  /// Jobs status filter: work in progress
+  ///
+  /// In en, this message translates to:
+  /// **'WIP'**
+  String get advisorFilterWip;
+
+  /// Jobs status filter: ready
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get advisorFilterReady;
+
+  /// Jobs sort control label
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get advisorSortLabel;
+
+  /// Jobs sort option: newest first
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get advisorSortNewest;
+
+  /// Jobs sort option: oldest first
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get advisorSortOldest;
+
+  /// Jobs sort option: customer name
+  ///
+  /// In en, this message translates to:
+  /// **'Customer A–Z'**
+  String get advisorSortCustomer;
+
+  /// See-all affordance on capped sections
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get advisorSeeAll;
+
+  /// Empty attention radar title
+  ///
+  /// In en, this message translates to:
+  /// **'All clear'**
+  String get advisorAttentionEmptyTitle;
+
+  /// Empty attention radar supporting text
+  ///
+  /// In en, this message translates to:
+  /// **'No urgent approvals or follow-ups right now.'**
+  String get advisorAttentionEmptyHint;
+
+  /// Quick-action tile: approvals
+  ///
+  /// In en, this message translates to:
+  /// **'Approvals'**
+  String get advisorActionApprovalsTitle;
+
+  /// Quick-action tile subtitle: approvals
+  ///
+  /// In en, this message translates to:
+  /// **'Pending sign-off'**
+  String get advisorActionApprovalsSubtitle;
+
+  /// Quick-action tile: search
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get advisorActionSearchTitle;
+
+  /// Quick-action tile subtitle: search
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs and customers'**
+  String get advisorActionSearchSubtitle;
+
+  /// Metric delta line for today's intake
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} today'**
+  String advisorDeltaToday(int count);
+
+  /// Job detail section: lifecycle stages
+  ///
+  /// In en, this message translates to:
+  /// **'Stages'**
+  String get advisorSectionStages;
+
+  /// Job detail section: inspection checklist
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist'**
+  String get advisorSectionChecklist;
+
+  /// Job detail section: estimates
+  ///
+  /// In en, this message translates to:
+  /// **'Estimates'**
+  String get advisorSectionEstimates;
+
+  /// Job detail section: invoices
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get advisorSectionInvoices;
+
+  /// Job detail section: notes
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get advisorSectionNotes;
+
+  /// Lifecycle stage: intake
+  ///
+  /// In en, this message translates to:
+  /// **'Intake'**
+  String get advisorStageIntake;
+
+  /// Lifecycle stage: inspection
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection'**
+  String get advisorStageInspection;
+
+  /// Lifecycle stage: estimate
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate'**
+  String get advisorStageEstimate;
+
+  /// Lifecycle stage: repair
+  ///
+  /// In en, this message translates to:
+  /// **'Repair'**
+  String get advisorStageRepair;
+
+  /// Lifecycle stage: quality control
+  ///
+  /// In en, this message translates to:
+  /// **'QC'**
+  String get advisorStageQc;
+
+  /// Lifecycle stage: ready
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get advisorStageReady;
+
+  /// Empty estimates section on job detail
+  ///
+  /// In en, this message translates to:
+  /// **'No estimates for this job yet.'**
+  String get advisorEmptyEstimates;
+
+  /// Empty invoices section on job detail
+  ///
+  /// In en, this message translates to:
+  /// **'No invoices for this job yet.'**
+  String get advisorEmptyInvoices;
+
+  /// Empty notes section on job detail
+  ///
+  /// In en, this message translates to:
+  /// **'No notes for this job yet.'**
+  String get advisorEmptyNotes;
+
+  /// Empty checklist section on job detail
+  ///
+  /// In en, this message translates to:
+  /// **'No checklist items recorded yet.'**
+  String get advisorEmptyChecklist;
+
+  /// Job detail rail section: activity history
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get advisorSectionActivity;
+
+  /// Search sheet section: recent searches
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get advisorSearchRecent;
+
+  /// Collapse affordance on expanded sections
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get advisorShowLess;
+
+  /// Localized approval type: estimate
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate'**
+  String get advisorApprovalTypeEstimate;
+
+  /// Localized approval type: job card
+  ///
+  /// In en, this message translates to:
+  /// **'Job card'**
+  String get advisorApprovalTypeJobCard;
+
+  /// Localized approval type: inspection
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection'**
+  String get advisorApprovalTypeInspection;
+
+  /// Reminder urgency: high
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get advisorPriorityHigh;
+
+  /// Reminder urgency: medium
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up'**
+  String get advisorPriorityMedium;
+
+  /// Reminder urgency: low
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get advisorPriorityLow;
+
   /// Title of the assigned-bookings section on the jobs list
   ///
   /// In en, this message translates to:

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
+import 'advisor_status.dart';
 
 /// A pending approval card. Uses a narrow-safe composition (Expanded title +
 /// money, and a wrapping status row) so it never overflows at 320 px / 1.3x.
@@ -70,7 +71,9 @@ class AdvisorApprovalRow extends StatelessWidget {
               runSpacing: AppDimensions.s4,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                StatusPill.warning(pa.typeLabel),
+                StatusPill.warning(
+                  advisorApprovalTypeLabel(t, pa.approvalType),
+                ),
                 Text(
                   pa.timeAgo,
                   style: theme.textTheme.labelSmall?.copyWith(

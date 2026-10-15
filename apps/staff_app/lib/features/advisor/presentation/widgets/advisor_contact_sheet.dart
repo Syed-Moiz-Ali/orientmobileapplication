@@ -55,12 +55,16 @@ class AdvisorContactSheet extends StatelessWidget {
                         color: colors.onSurface,
                       ),
                     ),
-                    Text(
-                      '${r.vehicleId} · ${r.task}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
+                    // Identifiers (plate / task ref) never mirror in RTL.
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        '${r.vehicleId} · ${r.task}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],

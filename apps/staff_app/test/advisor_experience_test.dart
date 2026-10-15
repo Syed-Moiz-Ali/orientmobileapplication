@@ -125,19 +125,20 @@ void main() {
   ) async {
     await _pump(tester, const AdvisorHomeView());
 
-    expect(find.text('SERVICE ADVISOR'), findsOneWidget);
+    expect(find.text('TODAY'), findsOneWidget);
     expect(find.text('Service Desk'), findsOneWidget);
     expect(find.text('Work Summary'), findsOneWidget);
     expect(find.textContaining('Scan Vehicle'), findsWidgets);
     expect(find.textContaining('New Job'), findsWidgets);
-    expect(find.textContaining('Vehicle Inspection'), findsWidgets);
-    expect(find.textContaining('Workshop Reports'), findsWidgets);
+    expect(find.textContaining('Approvals'), findsWidgets);
+    expect(find.textContaining('Search'), findsWidgets);
     expect(find.text('Needs Attention'), findsOneWidget);
-    expect(find.text('EST-5521'), findsWidgets);
+    expect(find.text('DXB-4821 · EST-5521'), findsOneWidget);
     expect(find.text('Rashid Al Nuaimi'), findsWidgets);
 
-    expect(find.text('ADVISOR INTAKE · COMMAND'), findsNothing);
-    expect(find.text('Shift Throughput'), findsNothing);
+    expect(find.text('Vehicle Inspection'), findsNothing);
+    expect(find.text('Workshop Reports'), findsNothing);
+    expect(find.text('SERVICE ADVISOR'), findsNothing);
     expect(find.text('RADAR'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -145,7 +146,7 @@ void main() {
   testWidgets('Today renders Arabic copy and mirrors in RTL', (tester) async {
     await _pump(tester, const AdvisorHomeView(), locale: const Locale('ar'));
 
-    expect(find.text('مستشار خدمة'), findsOneWidget);
+    expect(find.text('اليوم'), findsWidgets);
     expect(find.text('مكتب الخدمة'), findsOneWidget);
     expect(find.text('ملخص العمل'), findsOneWidget);
     expect(
@@ -187,8 +188,12 @@ void main() {
     expect(find.text('Toyota Land Cruiser'), findsOneWidget);
     expect(find.text('Nissan Patrol'), findsOneWidget);
     expect(find.text('All'), findsWidgets);
-    expect(find.text('In Progress'), findsWidgets);
-    expect(find.text('Completed'), findsWidgets);
+    expect(find.text('Intake'), findsWidgets);
+    expect(find.text('Inspection'), findsWidgets);
+    expect(find.text('Approved'), findsWidgets);
+    expect(find.text('WIP'), findsWidgets);
+    expect(find.text('Ready'), findsWidgets);
+    expect(find.text('Newest first'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -257,9 +262,18 @@ void main() {
 
     expect(find.text('JC-2026-1042'), findsWidgets);
     expect(find.text('Rashid Al Nuaimi'), findsWidgets);
-    expect(find.text('Vehicle Details'), findsOneWidget);
-    expect(find.text('Next Step'), findsOneWidget);
-    expect(find.text('Call Customer'), findsOneWidget);
+    expect(find.text('DXB M 84920'), findsOneWidget);
+    expect(find.textContaining('1HGCM82633A004352'), findsOneWidget);
+    expect(find.text('0501234567'), findsOneWidget);
+    expect(find.text('Stages'), findsOneWidget);
+    expect(find.text('Checklist'), findsOneWidget);
+    expect(find.text('Estimates'), findsOneWidget);
+    expect(find.text('Invoices'), findsOneWidget);
+    expect(find.text('Notes'), findsOneWidget);
+    expect(find.text('Add Inspection'), findsWidgets);
+    expect(find.text('Call'), findsOneWidget);
+    expect(find.text('WhatsApp'), findsOneWidget);
+    expect(find.text('Vehicle Details'), findsNothing);
     expect(find.text('Vehicle Telemetry'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -453,7 +467,10 @@ class _FakeAdvisorRemoteDataSource implements AdvisorRemoteDataSource {
     return const JobCardDetailResponse(
       id: 'JC-2026-1042',
       customerName: 'Rashid Al Nuaimi',
+      phoneNumber: '0501234567',
       vehicleInfo: '2024 Toyota Land Cruiser',
+      registrationNumber: 'DXB M 84920',
+      vin: '1HGCM82633A004352',
       status: 'inProgress',
       technician: 'Alex Morgan',
       odometer: 14200,

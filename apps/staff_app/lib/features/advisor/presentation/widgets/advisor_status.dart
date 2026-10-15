@@ -47,20 +47,33 @@ StatusPill advisorStatusPill(StaffLocalizations t, JobCardStatus status) {
   };
 }
 
-/// Stable filter key for the Jobs status chips (locale-independent).
+/// Localized approval-type label for the advisor workspace. The domain
+/// entity's `typeLabel` getter is frozen English copy, so presentation
+/// resolves its own localized wording from the raw `approvalType` value.
+String advisorApprovalTypeLabel(StaffLocalizations t, String approvalType) =>
+    switch (approvalType) {
+      'job_card' => t.advisorApprovalTypeJobCard,
+      'inspection' => t.advisorApprovalTypeInspection,
+      _ => t.advisorApprovalTypeEstimate,
+    };
+
+/// Stable filter key for the Jobs work-matrix filter rail
+/// (locale-independent). Taxonomy follows the Phase 06 rework §3 rail:
+/// All / Intake / Inspection / Approved / WIP / Ready. Cancelled cards are
+/// reachable under All only. Filtering is presentation state; status
+/// semantics are unchanged.
 String advisorStatusFilterKey(JobCardStatus status) => switch (status) {
-  JobCardStatus.inProgress || JobCardStatus.workAssigned => 'inProgress',
-  JobCardStatus.completed ||
+  JobCardStatus.vehicleReceived || JobCardStatus.pending => 'intake',
+  JobCardStatus.inspected || JobCardStatus.qualityCheck => 'inspection',
   JobCardStatus.approved ||
-  JobCardStatus.delivered ||
-  JobCardStatus.qualityCheckPassed => 'completed',
-  JobCardStatus.pending ||
   JobCardStatus.pendingApproval ||
   JobCardStatus.awaitingSupervisor ||
-  JobCardStatus.waitingCustomerApproval ||
-  JobCardStatus.waitingParts => 'pending',
-  JobCardStatus.qualityCheck ||
-  JobCardStatus.vehicleReceived ||
-  JobCardStatus.inspected => 'qc',
+  JobCardStatus.waitingCustomerApproval => 'approved',
+  JobCardStatus.inProgress ||
+  JobCardStatus.workAssigned ||
+  JobCardStatus.waitingParts => 'wip',
+  JobCardStatus.completed ||
+  JobCardStatus.qualityCheckPassed ||
+  JobCardStatus.delivered => 'ready',
   JobCardStatus.cancelled => 'cancelled',
 };

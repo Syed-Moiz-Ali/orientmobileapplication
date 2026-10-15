@@ -24,6 +24,9 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
   final _ctrl = TextEditingController();
   String _query = '';
 
+  /// Session-only recent searches (presentation state; cleared on dismiss).
+  final List<String> _recent = <String>[];
+
   @override
   void dispose() {
     _ctrl.dispose();
@@ -56,6 +59,18 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
         )
         .toList();
   }
+
+  void _remember(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    setState(() {
+      _recent.remove(q);
+      _recent.insert(0, q);
+      if (_recent.length > 5) _recent.removeRange(5, _recent.length);
+    });
+  }
+
+  void _runQuery(String query) => setState(() => _query = query);
 
   List<Map<String, dynamic>> _searchCustomers() {
     if (_query.isEmpty) return [];
@@ -100,6 +115,29 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
         approvalResults.isNotEmpty ||
         customerResults.isNotEmpty;
 
+    // Keyboard path: Enter in the field opens the top hit (Tab reaches every
+    // row natively). Taps also feed the session recents.
+    VoidCallback? firstHit;
+    if (cardResults.isNotEmpty) {
+      final j = cardResults.first;
+      firstHit = () {
+        _remember(_query);
+        final router = GoRouter.of(context);
+        Navigator.pop(context);
+        router.push(AppRoutes.advisorJobDetail, extra: j);
+      };
+    } else if (customerResults.isNotEmpty) {
+      firstHit = () {
+        _remember(_query);
+        Navigator.pop(context);
+      };
+    } else if (approvalResults.isNotEmpty) {
+      firstHit = () {
+        _remember(_query);
+        Navigator.pop(context);
+      };
+    }
+
     return AdvisorSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -121,6 +159,8 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
                   autofocus: true,
                   hintText: t.advisorSearchHint,
                   onChanged: (v) => setState(() => _query = v),
+                  onClear: () => setState(() => _query = ''),
+                  onSubmitted: (_) => firstHit?.call(),
                 ),
               ),
               const SizedBox(width: AppDimensions.s8),
@@ -131,6 +171,50 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
               ),
             ],
           ),
+          if (_query.isEmpty) ...[
+            const SizedBox(height: AppDimensions.s12),
+            Text(
+              t.advisorSearchPillSubtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (_recent.isNotEmpty) ...[
+              const SizedBox(height: AppDimensions.s12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      t.advisorSearchRecent,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => setState(_recent.clear),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(0, AppDimensions.touchTarget),
+                    ),
+                    child: Text(SharedCoreL10n.of(context).filterBarClear),
+                  ),
+                ],
+              ),
+              ..._recent.map(
+                (q) => _result(
+                  context,
+                  icon: Icons.history_rounded,
+                  title: q,
+                  subtitle: '',
+                  onTap: () {
+                    _ctrl.text = q;
+                    _runQuery(q);
+                  },
+                ),
+              ),
+            ],
+          ],
           if (_query.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.s16),
             if (!hasResults)
@@ -163,6 +247,7 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
                             title: j.customerName,
                             subtitle: '${j.vehicleInfo} · ${j.id}',
                             onTap: () {
+                              _remember(_query);
                               final router = GoRouter.of(context);
                               Navigator.pop(context);
                               router.push(AppRoutes.advisorJobDetail, extra: j);

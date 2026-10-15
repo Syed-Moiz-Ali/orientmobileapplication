@@ -49,14 +49,48 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     );
   }
 
-  List<(String, String)> _chips(StaffLocalizations t) => [
-    ('all', t.advisorFilterAll),
-    ('inProgress', t.advisorFilterInProgress),
-    ('completed', t.advisorFilterCompleted),
-    ('pending', t.advisorFilterPending),
-    ('qc', t.advisorFilterQc),
-    ('cancelled', t.advisorFilterCancelled),
+  List<String> _filterKeys(StaffLocalizations t) => [
+    'intake',
+    'inspection',
+    'approved',
+    'wip',
+    'ready',
   ];
+
+  String _filterLabel(StaffLocalizations t, String key) => switch (key) {
+    'intake' => t.advisorFilterIntake,
+    'inspection' => t.advisorFilterInspection,
+    'approved' => t.advisorFilterApproved,
+    'wip' => t.advisorFilterWip,
+    'ready' => t.advisorFilterReady,
+    _ => t.advisorFilterAll,
+  };
+
+  List<JobCardEntity> _sorted(List<JobCardEntity> input, String sort) {
+    switch (sort) {
+      case 'customer':
+        final list = input.toList()
+          ..sort(
+            (a, b) => a.customerName.toLowerCase().compareTo(
+              b.customerName.toLowerCase(),
+            ),
+          );
+        return list;
+      case 'oldest':
+        // The repository's canonical order is newest-first (server order), so
+        // oldest-first is its reversal. No timestamp parsing is invented.
+        return input.reversed.toList();
+      case 'newest':
+      default:
+        return input.toList();
+    }
+  }
+
+  void _clearAllFilters() {
+    _searchCtrl.clear();
+    ref.read(_jobsSearchProvider.notifier).state = '';
+    ref.read(_jobsFilterProvider.notifier).state = null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,8 +102,41 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     final bookingsAsync = ref.watch(advisorAssignedBookingsProvider);
     final jobCards = jobsAsync.valueOrNull ?? const <JobCardEntity>[];
     final selectedFilter = ref.watch(_jobsFilterProvider);
+    final sort = ref.watch(_jobsSortProvider);
     final isLoading = jobsAsync.isLoading || bookingsAsync.isLoading;
     final hasError = jobsAsync.hasError || bookingsAsync.hasError;
+
+    final query = ref.watch(_jobsSearchProvider).toLowerCase();
+    final visible = _sorted(
+      jobCards.where((jc) {
+        final matchesFilter =
+            selectedFilter == null ||
+            advisorStatusFilterKey(jc.status) == selectedFilter;
+        final matchesSearch =
+            query.isEmpty ||
+            jc.id.toLowerCase().contains(query) ||
+            jc.customerName.toLowerCase().contains(query) ||
+            jc.vehicleInfo.toLowerCase().contains(query);
+        return matchesFilter && matchesSearch;
+      }).toList(),
+      sort,
+    );
+    final counts = <String, int>{
+      for (final key in _filterKeys(t))
+        _filterLabel(t, key): jobCards
+            .where((jc) => advisorStatusFilterKey(jc.status) == key)
+            .length,
+    };
+    final sortLabels = [
+      t.advisorSortNewest,
+      t.advisorSortOldest,
+      t.advisorSortCustomer,
+    ];
+    final sortLabel = switch (sort) {
+      'oldest' => t.advisorSortOldest,
+      'customer' => t.advisorSortCustomer,
+      _ => t.advisorSortNewest,
+    };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -101,7 +168,7 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                     ),
                   ),
                   if (!isLoading && jobCards.isNotEmpty)
-                    StatusPill.neutral('${jobCards.length}'),
+                    StatusPill.neutral('${visible.length}'),
                 ],
               ),
               const SizedBox(height: AppDimensions.s12),
@@ -129,32 +196,62 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
             ],
           ),
         ),
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: context.pagePadding.left),
-            itemCount: _chips(t).length,
-            separatorBuilder: (_, __) =>
-                const SizedBox(width: AppDimensions.s8),
-            itemBuilder: (_, i) {
-              final (key, label) = _chips(t)[i];
-              final active = key == selectedFilter;
-              return Center(
-                child: ChoiceChip(
-                  label: Text(label),
-                  selected: active,
-                  onSelected: (_) {
-                    HapticFeedback.selectionClick();
-                    ref.read(_jobsFilterProvider.notifier).state = key;
-                  },
-                ),
-              );
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: context.pagePadding.left,
+          ),
+          child: AppFilterBar(
+            options: [for (final key in _filterKeys(t)) _filterLabel(t, key)],
+            selected: selectedFilter == null
+                ? null
+                : _filterLabel(t, selectedFilter),
+            counts: counts,
+            onSelected: (label) {
+              HapticFeedback.selectionClick();
+              if (label == null) {
+                ref.read(_jobsFilterProvider.notifier).state = null;
+                return;
+              }
+              final hit = _filterKeys(
+                t,
+              ).where((k) => _filterLabel(t, k) == label).firstOrNull;
+              ref.read(_jobsFilterProvider.notifier).state = hit;
             },
           ),
         ),
         const SizedBox(height: AppDimensions.s8),
-        Expanded(child: _buildSurface(t, jobCards, selectedFilter, isLoading)),
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: context.pagePadding.left,
+          ),
+          child: AppDropdownButton(
+            label: t.advisorSortLabel,
+            value: sortLabel,
+            items: sortLabels,
+            isExpanded: true,
+            onChanged: (label) {
+              HapticFeedback.selectionClick();
+              ref.read(_jobsSortProvider.notifier).state = switch (label) {
+                _ when label == t.advisorSortOldest => 'oldest',
+                _ when label == t.advisorSortCustomer => 'customer',
+                _ => 'newest',
+              };
+            },
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        Expanded(
+          child: _buildSurface(
+            t,
+            jobCards,
+            visible,
+            query,
+            selectedFilter,
+            sort,
+            isLoading,
+            hasError,
+          ),
+        ),
       ],
     );
   }
@@ -162,70 +259,206 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
   Widget _buildSurface(
     StaffLocalizations t,
     List<JobCardEntity> allCards,
-    String filter,
+    List<JobCardEntity> visible,
+    String query,
+    String? filter,
+    String sort,
     bool isLoading,
+    bool hasError,
   ) {
-    final query = ref.watch(_jobsSearchProvider).toLowerCase();
     final bookings =
         ref.watch(advisorAssignedBookingsProvider).valueOrNull ??
         const <AdvisorBookingResponse>[];
     final showBookings =
-        query.isEmpty && filter == 'all' && bookings.isNotEmpty;
-
-    final filtered = allCards.where((jc) {
-      final matchesFilter =
-          filter == 'all' || advisorStatusFilterKey(jc.status) == filter;
-      final matchesSearch =
-          query.isEmpty ||
-          jc.id.toLowerCase().contains(query) ||
-          jc.customerName.toLowerCase().contains(query) ||
-          jc.vehicleInfo.toLowerCase().contains(query);
-      return matchesFilter && matchesSearch;
-    }).toList();
+        query.isEmpty && filter == null && bookings.isNotEmpty;
 
     if (isLoading && allCards.isEmpty) {
-      return ListView(
-        padding: EdgeInsets.fromLTRB(
-          context.pagePadding.left,
-          AppDimensions.s8,
-          context.pagePadding.right,
-          (AppDimensions.s64 + AppDimensions.s24),
+      if (context.isCompact) {
+        return ListView(
+          padding: EdgeInsets.fromLTRB(
+            context.pagePadding.left,
+            AppDimensions.s8,
+            context.pagePadding.right,
+            (AppDimensions.s64 + AppDimensions.s24),
+          ),
+          children: const [AppSkeleton.listRows(rows: 4)],
+        );
+      }
+      return Padding(
+        padding: const EdgeInsets.all(AppDimensions.s16),
+        child: AppTable<JobCardEntity>(
+          columns: _columns(t),
+          items: const [],
+          cells: (context, jc) => const [],
+          isLoading: true,
+          skeletonRows: 6,
         ),
-        children: const [AppSkeleton.listRows(rows: 4)],
       );
     }
 
-    if (filtered.isEmpty && !showBookings) {
-      final hasQuery = query.isNotEmpty || filter != 'all';
+    if (hasError && allCards.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: AppDimensions.s32),
+        padding: EdgeInsets.fromLTRB(
+          context.pagePadding.left,
+          AppDimensions.s16,
+          context.pagePadding.right,
+          AppDimensions.s16,
+        ),
         children: [
-          hasQuery
-              ? EmptyState.noMatch(
-                  icon: Icons.search_off_rounded,
-                  message: t.advisorNoMatchingJobs,
-                )
-              : EmptyState(
-                  icon: Icons.assignment_outlined,
-                  title: t.advisorNoJobs,
-                  message: t.advisorNoJobsHint,
-                ),
+          AppInfoPanel.danger(
+            message: t.advisorDataError,
+            action: TextButton(
+              onPressed: () {
+                ref.invalidate(advisorRecentJobCardsProvider);
+                ref.invalidate(advisorAssignedBookingsProvider);
+              },
+              child: Text(t.advisorActionRefreshJobCard),
+            ),
+          ),
         ],
       );
     }
 
-    final master = _buildMaster(t, filtered, bookings, showBookings);
-    if (context.isCompact) return master;
+    if (visible.isEmpty && !showBookings) {
+      final hasQuery = query.isNotEmpty || filter != null;
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppDimensions.s32,
+          horizontal: AppDimensions.s24,
+        ),
+        children: [
+          if (hasQuery) ...[
+            EmptyState.noMatch(
+              icon: Icons.search_off_rounded,
+              message: t.advisorNoMatchingJobs,
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            Center(
+              child: TextButton(
+                onPressed: _clearAllFilters,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, AppDimensions.touchTarget),
+                ),
+                child: Text(SharedCoreL10n.of(context).filterBarClear),
+              ),
+            ),
+          ] else ...[
+            EmptyState(
+              icon: Icons.assignment_outlined,
+              title: t.advisorNoJobs,
+              message: t.advisorNoJobsHint,
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            Center(
+              child: PrimaryButton(
+                label: t.advisorActionNewJobTitle,
+                icon: Icons.add_rounded,
+                isExpanded: false,
+                onPressed: () =>
+                    context.push(AppRoutes.vehicleCustomer),
+              ),
+            ),
+          ],
+        ],
+      );
+    }
 
-    // Wide layouts: master–detail work matrix (selection is local; opening the
-    // full job card still routes through the caller's push navigation).
+    if (context.isCompact) return _buildCompactList(t, visible, bookings, showBookings);
+
+    // Wide layouts: master–detail work matrix with a sortable table (sticky
+    // header via maxHeight). Selection is local; opening the full job card
+    // still routes through the caller's push navigation.
     return AppMasterDetailScaffold(
       detailOpen: _selected != null,
-      masterMinWidth: 360,
-      masterMaxWidth: 520,
+      masterMinWidth: 400,
+      masterMaxWidth: 640,
       placeholder: _JobPreviewPlaceholder(key: const ValueKey('jobs-preview')),
-      master: master,
+      master: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (showBookings) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.s16,
+                AppDimensions.s8,
+                AppDimensions.s16,
+                0,
+              ),
+              child: _buildAssignedBookingsSection(t, bookings),
+            ),
+          ],
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.s16),
+              child: LayoutBuilder(
+                builder: (context, constraints) => AppTable<JobCardEntity>(
+                  columns: _columns(t, sortable: true),
+                  items: visible,
+                  // Sticky header via a bounded body. The 4px guard absorbs
+                  // sub-pixel rounding between the expanded pane and the
+                  // table's internal header so the fit never overflows.
+                  maxHeight: (constraints.maxHeight - 4).clamp(
+                    200.0,
+                    constraints.maxHeight,
+                  ),
+                  sortIndex: switch (sort) {
+                    'customer' => 0,
+                    'oldest' || 'newest' => 4,
+                    _ => null,
+                  },
+                  sortAscending: sort != 'newest',
+                  onSort: (index) {
+                    HapticFeedback.selectionClick();
+                    if (index == 0) {
+                      ref.read(_jobsSortProvider.notifier).state = 'customer';
+                    } else if (index == 4) {
+                      ref.read(_jobsSortProvider.notifier).state =
+                          sort == 'newest' ? 'oldest' : 'newest';
+                    }
+                  },
+                  isSelected: (jc) => _selected?.id == jc.id,
+                  onRowTap: (jc) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selected = jc);
+                  },
+                  // No leading avatar in the dense matrix: the preview pane
+                  // carries identity, and the width serves data columns.
+                  // No kebab either: tap selects into the preview pane with
+                  // its Open CTA, and the compact list keeps the sheet
+                  // overflow. Both buy room for identifiers and pills.
+                  cells: (context, jc) => [
+                    AppTableCell.text(context, jc.customerName),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          jc.id,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.mono(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                    AppTableCell.text(context, jc.vehicleInfo),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: advisorStatusPill(t, jc.status),
+                    ),
+                    AppTableCell.text(context, jc.time),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       detail: _selected == null
           ? _JobPreviewPlaceholder()
           : _JobPreviewPane(
@@ -235,13 +468,23 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     );
   }
 
-  Widget _buildMaster(
+  List<AppTableColumn> _columns(StaffLocalizations t, {bool sortable = false}) => [
+    AppTableColumn(label: t.advisorJobsColumnCustomer, flex: 2, sortable: sortable),
+    AppTableColumn(label: t.advisorJobsColumnJobCard, flex: 2),
+    AppTableColumn(label: t.advisorFieldVehicle, flex: 2),
+    AppTableColumn(label: t.advisorJobsColumnStatus, flex: 3),
+    AppTableColumn(label: t.advisorJobsColumnTime, flex: 2, sortable: sortable),
+  ];
+
+  Widget _buildCompactList(
     StaffLocalizations t,
-    List<JobCardEntity> filtered,
+    List<JobCardEntity> visible,
     List<AdvisorBookingResponse> bookings,
     bool showBookings,
   ) {
-    final wide = !context.isCompact;
+    // Compact: touch rows (customer, job-id mono LTR, status pill, time,
+    // overflow → JobCardSheet). No plate field exists on JobCardEntity, so
+    // the job identifier chip carries the mono LTR slot (zero invented data).
     return RefreshIndicator(
       color: Theme.of(context).colorScheme.primary,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -249,58 +492,20 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
-          wide ? AppDimensions.s16 : context.pagePadding.left,
+          context.pagePadding.left,
           AppDimensions.s8,
-          wide ? AppDimensions.s16 : context.pagePadding.right,
+          context.pagePadding.right,
           (AppDimensions.s64 + AppDimensions.s24),
         ),
         children: [
           if (showBookings) _buildAssignedBookingsSection(t, bookings),
-          if (wide)
-            AppTable<JobCardEntity>(
-              columns: [
-                AppTableColumn(label: t.advisorJobsColumnCustomer, flex: 3),
-                AppTableColumn(label: t.advisorJobsColumnJobCard, flex: 2),
-                AppTableColumn(label: t.advisorFieldVehicle, flex: 3),
-                AppTableColumn(label: t.advisorJobsColumnStatus, flex: 2),
-                AppTableColumn(label: t.advisorJobsColumnTime, flex: 2),
-              ],
-              items: filtered,
-              isSelected: (jc) => _selected?.id == jc.id,
-              onRowTap: (jc) {
-                HapticFeedback.selectionClick();
-                setState(() => _selected = jc);
-              },
-              leadingCell: (context, jc) => _JobAvatar(jc: jc),
-              cells: (context, jc) => [
-                AppTableCell.text(context, jc.customerName),
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    jc.id,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.mono(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                AppTableCell.text(context, jc.vehicleInfo),
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: advisorStatusPill(t, jc.status),
-                ),
-                AppTableCell.text(context, jc.time),
-              ],
-            )
-          else
-            ...filtered.map(
-              (jc) => AdvisorJobCardRow(
-                jc: jc,
-                onTap: widget.onJobCard,
-                onMore: () => _showQuickCard(jc),
-              ),
+          ...visible.map(
+            (jc) => AdvisorJobCardRow(
+              jc: jc,
+              onTap: widget.onJobCard,
+              onMore: () => _showQuickCard(jc),
             ),
+          ),
         ],
       ),
     );
@@ -583,4 +788,5 @@ class _JobPreviewTile extends StatelessWidget {
 }
 
 final _jobsSearchProvider = StateProvider<String>((ref) => '');
-final _jobsFilterProvider = StateProvider<String>((ref) => 'all');
+final _jobsFilterProvider = StateProvider<String?>((ref) => null);
+final _jobsSortProvider = StateProvider<String>((ref) => 'newest');

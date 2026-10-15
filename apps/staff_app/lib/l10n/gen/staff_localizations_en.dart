@@ -192,6 +192,135 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorFilterCancelled => 'Cancelled';
 
   @override
+  String get advisorTodayEyebrow => 'Today';
+
+  @override
+  String get advisorFilterIntake => 'Intake';
+
+  @override
+  String get advisorFilterInspection => 'Inspection';
+
+  @override
+  String get advisorFilterApproved => 'Approved';
+
+  @override
+  String get advisorFilterWip => 'WIP';
+
+  @override
+  String get advisorFilterReady => 'Ready';
+
+  @override
+  String get advisorSortLabel => 'Sort';
+
+  @override
+  String get advisorSortNewest => 'Newest first';
+
+  @override
+  String get advisorSortOldest => 'Oldest first';
+
+  @override
+  String get advisorSortCustomer => 'Customer A–Z';
+
+  @override
+  String get advisorSeeAll => 'See all';
+
+  @override
+  String get advisorAttentionEmptyTitle => 'All clear';
+
+  @override
+  String get advisorAttentionEmptyHint =>
+      'No urgent approvals or follow-ups right now.';
+
+  @override
+  String get advisorActionApprovalsTitle => 'Approvals';
+
+  @override
+  String get advisorActionApprovalsSubtitle => 'Pending sign-off';
+
+  @override
+  String get advisorActionSearchTitle => 'Search';
+
+  @override
+  String get advisorActionSearchSubtitle => 'Jobs and customers';
+
+  @override
+  String advisorDeltaToday(int count) {
+    return '+$count today';
+  }
+
+  @override
+  String get advisorSectionStages => 'Stages';
+
+  @override
+  String get advisorSectionChecklist => 'Checklist';
+
+  @override
+  String get advisorSectionEstimates => 'Estimates';
+
+  @override
+  String get advisorSectionInvoices => 'Invoices';
+
+  @override
+  String get advisorSectionNotes => 'Notes';
+
+  @override
+  String get advisorStageIntake => 'Intake';
+
+  @override
+  String get advisorStageInspection => 'Inspection';
+
+  @override
+  String get advisorStageEstimate => 'Estimate';
+
+  @override
+  String get advisorStageRepair => 'Repair';
+
+  @override
+  String get advisorStageQc => 'QC';
+
+  @override
+  String get advisorStageReady => 'Ready';
+
+  @override
+  String get advisorEmptyEstimates => 'No estimates for this job yet.';
+
+  @override
+  String get advisorEmptyInvoices => 'No invoices for this job yet.';
+
+  @override
+  String get advisorEmptyNotes => 'No notes for this job yet.';
+
+  @override
+  String get advisorEmptyChecklist => 'No checklist items recorded yet.';
+
+  @override
+  String get advisorSectionActivity => 'Activity';
+
+  @override
+  String get advisorSearchRecent => 'Recent';
+
+  @override
+  String get advisorShowLess => 'Show less';
+
+  @override
+  String get advisorApprovalTypeEstimate => 'Estimate';
+
+  @override
+  String get advisorApprovalTypeJobCard => 'Job card';
+
+  @override
+  String get advisorApprovalTypeInspection => 'Inspection';
+
+  @override
+  String get advisorPriorityHigh => 'Urgent';
+
+  @override
+  String get advisorPriorityMedium => 'Follow-up';
+
+  @override
+  String get advisorPriorityLow => 'Reminder';
+
+  @override
   String get advisorAssignedIntakeQueue => 'Assigned intake queue';
 
   @override

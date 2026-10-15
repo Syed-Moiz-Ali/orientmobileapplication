@@ -240,6 +240,22 @@ void main() {
     );
   });
 
+  testWidgets('empty attention home 390 en', (tester) async {
+    await _pump(
+      tester,
+      const AdvisorHomeView(),
+      overrides: [
+        advisorPendingApprovalsProvider.overrideWith(
+          (ref) => Future.value(const <PendingApprovalEntity>[]),
+        ),
+      ],
+    );
+    await expectLater(
+      find.byType(AdvisorHomeView),
+      matchesGoldenFile('goldens/advisor_states_attention_empty_390_en.png'),
+    );
+  });
+
   // ── Desktop jobs matrix ────────────────────────────────────────────────────
   testWidgets('jobs desktop matrix 1280 en', (tester) async {
     await _pump(
@@ -418,7 +434,10 @@ class _FakeAdvisorRemoteDataSource implements AdvisorRemoteDataSource {
       const JobCardDetailResponse(
         id: 'JC-2026-1042',
         customerName: 'Rashid Al Nuaimi',
+        phoneNumber: '0501234567',
         vehicleInfo: '2024 Toyota Land Cruiser',
+        registrationNumber: 'DXB M 84920',
+        vin: '1HGCM82633A004352',
         status: 'inProgress',
         technician: 'Alex Morgan',
         odometer: 14200,

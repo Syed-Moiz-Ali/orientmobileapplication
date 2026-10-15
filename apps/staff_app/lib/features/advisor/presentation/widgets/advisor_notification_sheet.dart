@@ -57,20 +57,25 @@ class AdvisorNotificationSheet extends ConsumerWidget {
 
     final localItems = _loadNotifications(infoColor);
     final remoteAsync = ref.watch(advisorNotificationsProvider);
-    final remoteItems =
-        (remoteAsync.value ?? const <StaffNotificationResponse>[])
-            .map(
-              (n) => AdvisorNotificationData(
-                n.title,
-                n.body,
-                n.isRead
-                    ? Icons.notifications_outlined
-                    : Icons.notifications_active_rounded,
-                n.isRead ? colors.onSurfaceVariant : infoColor,
-                n.time,
-              ),
-            )
-            .toList();
+    final remote = remoteAsync.value ?? const <StaffNotificationResponse>[];
+    // Grouped inbox: unread first, then read, then locally cached items.
+    final ordered = [
+      ...remote.where((n) => !n.isRead),
+      ...remote.where((n) => n.isRead),
+    ];
+    final remoteItems = ordered
+        .map(
+          (n) => AdvisorNotificationData(
+            n.title,
+            n.body,
+            n.isRead
+                ? Icons.notifications_outlined
+                : Icons.notifications_active_rounded,
+            n.isRead ? colors.onSurfaceVariant : infoColor,
+            n.time,
+          ),
+        )
+        .toList();
     final items = [...remoteItems, ...localItems];
 
     return AdvisorSheet(
@@ -89,7 +94,8 @@ class AdvisorNotificationSheet extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (items.isNotEmpty)
+              if (items.isNotEmpty) ...[
+                StatusPill.neutral('${items.length}'),
                 TextButton(
                   onPressed: () {
                     _clearAll();
@@ -101,6 +107,7 @@ class AdvisorNotificationSheet extends ConsumerWidget {
                   ),
                   child: Text(t.advisorClearAll),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: AppDimensions.s12),

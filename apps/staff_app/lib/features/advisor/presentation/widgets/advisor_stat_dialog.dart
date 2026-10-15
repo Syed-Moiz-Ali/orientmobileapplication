@@ -12,6 +12,7 @@ import 'advisor_solid_action.dart';
 class AdvisorStatDialog extends StatelessWidget {
   final String label;
   final int count;
+  final String delta;
   final Color color;
   final VoidCallback? onViewAll;
 
@@ -19,6 +20,7 @@ class AdvisorStatDialog extends StatelessWidget {
     super.key,
     required this.label,
     required this.count,
+    this.delta = '',
     required this.color,
     this.onViewAll,
   });
@@ -68,6 +70,17 @@ class AdvisorStatDialog extends StatelessWidget {
                   color: colors.onSurface,
                 ),
               ),
+              if (delta.isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.s4),
+                Text(
+                  delta,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
               const SizedBox(height: AppDimensions.s6),
               Text(
                 t.advisorStatViewAllHint,

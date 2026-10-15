@@ -234,7 +234,10 @@ class _FakeAdvisorRemoteDataSource implements AdvisorRemoteDataSource {
     return const JobCardDetailResponse(
       id: 'JC-2026-1042',
       customerName: 'Rashid Al Nuaimi',
+      phoneNumber: '0501234567',
       vehicleInfo: '2024 Toyota Land Cruiser',
+      registrationNumber: 'DXB M 84920',
+      vin: '1HGCM82633A004352',
       status: 'inProgress',
       technician: 'Alex Morgan',
       odometer: 14200,

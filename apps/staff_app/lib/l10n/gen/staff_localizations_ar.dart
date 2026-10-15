@@ -191,6 +191,135 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorFilterCancelled => 'ملغى';
 
   @override
+  String get advisorTodayEyebrow => 'اليوم';
+
+  @override
+  String get advisorFilterIntake => 'الاستلام';
+
+  @override
+  String get advisorFilterInspection => 'الفحص';
+
+  @override
+  String get advisorFilterApproved => 'معتمد';
+
+  @override
+  String get advisorFilterWip => 'قيد التنفيذ';
+
+  @override
+  String get advisorFilterReady => 'جاهز';
+
+  @override
+  String get advisorSortLabel => 'ترتيب';
+
+  @override
+  String get advisorSortNewest => 'الأحدث أولاً';
+
+  @override
+  String get advisorSortOldest => 'الأقدم أولاً';
+
+  @override
+  String get advisorSortCustomer => 'العميل أ–ي';
+
+  @override
+  String get advisorSeeAll => 'عرض الكل';
+
+  @override
+  String get advisorAttentionEmptyTitle => 'كل شيء واضح';
+
+  @override
+  String get advisorAttentionEmptyHint =>
+      'لا توجد موافقات عاجلة أو متابعات حالياً.';
+
+  @override
+  String get advisorActionApprovalsTitle => 'الموافقات';
+
+  @override
+  String get advisorActionApprovalsSubtitle => 'بانتظار الاعتماد';
+
+  @override
+  String get advisorActionSearchTitle => 'بحث';
+
+  @override
+  String get advisorActionSearchSubtitle => 'المهام والعملاء';
+
+  @override
+  String advisorDeltaToday(int count) {
+    return '+$count اليوم';
+  }
+
+  @override
+  String get advisorSectionStages => 'المراحل';
+
+  @override
+  String get advisorSectionChecklist => 'قائمة الفحص';
+
+  @override
+  String get advisorSectionEstimates => 'التقديرات';
+
+  @override
+  String get advisorSectionInvoices => 'الفواتير';
+
+  @override
+  String get advisorSectionNotes => 'الملاحظات';
+
+  @override
+  String get advisorStageIntake => 'الاستلام';
+
+  @override
+  String get advisorStageInspection => 'الفحص';
+
+  @override
+  String get advisorStageEstimate => 'التقدير';
+
+  @override
+  String get advisorStageRepair => 'الإصلاح';
+
+  @override
+  String get advisorStageQc => 'الجودة';
+
+  @override
+  String get advisorStageReady => 'جاهز';
+
+  @override
+  String get advisorEmptyEstimates => 'لا توجد تقديرات لهذه المهمة بعد.';
+
+  @override
+  String get advisorEmptyInvoices => 'لا توجد فواتير لهذه المهمة بعد.';
+
+  @override
+  String get advisorEmptyNotes => 'لا توجد ملاحظات لهذه المهمة بعد.';
+
+  @override
+  String get advisorEmptyChecklist => 'لا توجد عناصر فحص مسجلة بعد.';
+
+  @override
+  String get advisorSectionActivity => 'النشاط';
+
+  @override
+  String get advisorSearchRecent => 'الأخيرة';
+
+  @override
+  String get advisorShowLess => 'عرض أقل';
+
+  @override
+  String get advisorApprovalTypeEstimate => 'تقدير';
+
+  @override
+  String get advisorApprovalTypeJobCard => 'بطاقة عمل';
+
+  @override
+  String get advisorApprovalTypeInspection => 'فحص';
+
+  @override
+  String get advisorPriorityHigh => 'عاجل';
+
+  @override
+  String get advisorPriorityMedium => 'متابعة';
+
+  @override
+  String get advisorPriorityLow => 'تذكير';
+
+  @override
   String get advisorAssignedIntakeQueue => 'قائمة الاستلام المسندة';
 
   @override
