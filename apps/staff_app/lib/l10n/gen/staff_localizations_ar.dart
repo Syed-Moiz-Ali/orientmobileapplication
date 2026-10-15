@@ -120,9 +120,6 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorActionReportsSubtitle => 'سجلات الأداء';
 
   @override
-  String get advisorAttentionTitle => 'بحاجة إلى إجراء';
-
-  @override
   String get advisorWorkSummary => 'ملخص العمل';
 
   @override
@@ -224,11 +221,15 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorSeeAll => 'عرض الكل';
 
   @override
-  String get advisorAttentionEmptyTitle => 'كل شيء واضح';
+  String get advisorMetricReady => 'جاهز';
 
   @override
-  String get advisorAttentionEmptyHint =>
-      'لا توجد موافقات عاجلة أو متابعات حالياً.';
+  String get advisorDueToday => 'مستحق اليوم';
+
+  @override
+  String advisorHomeUpdatedAt(String time) {
+    return 'آخر تحديث $time';
+  }
 
   @override
   String get advisorActionApprovalsTitle => 'الموافقات';
@@ -2079,4 +2080,418 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String advisorIntakeAttachmentError(String message) {
     return 'تعذّر إضافة المرفق: $message';
   }
+
+  @override
+  String get advisorStudioTitle => 'تقدير الإصلاح';
+
+  @override
+  String get advisorStudioSubtitle => 'أنشئ تقدير العميل لبطاقة العمل هذه';
+
+  @override
+  String get advisorStudioStepParts => 'القطع';
+
+  @override
+  String get advisorStudioStepLabor => 'الأجور';
+
+  @override
+  String get advisorStudioStepReview => 'المراجعة';
+
+  @override
+  String get advisorStudioTierMandatory => 'إصلاحات السلامة الإلزامية';
+
+  @override
+  String get advisorStudioTierOptional => 'تحسينات اختيارية';
+
+  @override
+  String get advisorStudioCategoryParts => 'القطع';
+
+  @override
+  String get advisorStudioCategoryLabor => 'الأجور';
+
+  @override
+  String get advisorStudioCategorySublet => 'أعمال خارجية';
+
+  @override
+  String advisorStudioEmptyCategory(String category) {
+    return 'لا توجد عناصر $category بعد';
+  }
+
+  @override
+  String advisorStudioAddItem(String category) {
+    return 'إضافة $category';
+  }
+
+  @override
+  String advisorStudioStockIn(int bay) {
+    return 'متوفر · خانة $bay';
+  }
+
+  @override
+  String advisorStudioStockOrder(String hours) {
+    return 'طلب · $hours';
+  }
+
+  @override
+  String advisorStudioLaborDetail(String hours, String rate) {
+    return '$hours س × $rate';
+  }
+
+  @override
+  String get advisorStudioLineTotal => 'إجمالي السطر';
+
+  @override
+  String get advisorStudioQuantity => 'الكمية';
+
+  @override
+  String get advisorStudioRemoveItem => 'حذف العنصر';
+
+  @override
+  String get advisorStudioPartsSubtotal => 'إجمالي القطع';
+
+  @override
+  String get advisorStudioLabor => 'الأجور';
+
+  @override
+  String get advisorStudioVat => 'ضريبة القيمة المضافة (5%)';
+
+  @override
+  String get advisorStudioTotal => 'الإجمالي';
+
+  @override
+  String get advisorStudioTrustLine =>
+      'ضريبة قيمة مضافة إلزامية 5% · الأسعار بالدرهم الإماراتي';
+
+  @override
+  String get advisorStudioConfirm => 'مراجعة التقدير';
+
+  @override
+  String get advisorStudioAddItems => 'إضافة عناصر التقدير';
+
+  @override
+  String get advisorStudioLoading => 'جارٍ تحميل عناصر التقدير…';
+
+  @override
+  String get advisorStudioError => 'تعذّر تحميل عناصر التقدير.';
+
+  @override
+  String get advisorStudioNoMatch => 'لا توجد عناصر مطابقة';
+
+  @override
+  String advisorStudioRemoved(String name) {
+    return 'تم حذف $name';
+  }
+
+  @override
+  String get advisorStudioFromInspection => 'تم الفحص وإرفاقه';
+
+  @override
+  String get advisorStudioReset => 'إعادة تعيين';
+
+  @override
+  String get advisorStudioResetTitle => 'مسح هذا التقدير؟';
+
+  @override
+  String get advisorStudioResetBody =>
+      'سيتم حذف جميع الخدمات والقطع والأسعار والملاحظات المدخلة هنا.';
+
+  @override
+  String get advisorStudioResetKeep => 'متابعة التحرير';
+
+  @override
+  String get advisorStudioResetConfirm => 'مسح التقدير';
+
+  @override
+  String get advisorStudioSelectServicesTitle => 'اختر الخدمات المطلوبة';
+
+  @override
+  String get advisorStudioSelectServicesSubtitle =>
+      'يمكن إدخال الأسعار بعد إضافتها';
+
+  @override
+  String get advisorStudioSearchServices => 'ابحث عن الخدمات';
+
+  @override
+  String get advisorStudioSelectPartsTitle => 'اختر القطع المطلوبة';
+
+  @override
+  String get advisorStudioSelectPartsSubtitle =>
+      'يمكن تحديث الكمية والسعر بعد إضافتها';
+
+  @override
+  String get advisorStudioSearchParts => 'ابحث عن القطع';
+
+  @override
+  String get advisorStudioNoServices => 'لا توجد خدمات';
+
+  @override
+  String get advisorStudioNoParts => 'لا توجد قطع';
+
+  @override
+  String advisorStudioSelectedCount(int count) {
+    return 'تم اختيار $count';
+  }
+
+  @override
+  String get advisorStudioDone => 'تم';
+
+  @override
+  String get advisorStudioAddSelectedServices => 'إضافة الخدمات';
+
+  @override
+  String get advisorStudioAddSelectedParts => 'إضافة القطع';
+
+  @override
+  String get advisorStudioTapToAdd => 'اضغط للإضافة';
+
+  @override
+  String get advisorStudioAdded => 'أُضيف إلى التقدير';
+
+  @override
+  String get advisorStudioSubletHint =>
+      'يتم حجز الأعمال الخارجية خارج هذا التقدير.';
+
+  @override
+  String get advisorEstimateShareTitle => 'مشاركة التقدير';
+
+  @override
+  String get advisorEstimateInvoiceTitle => 'تقدير';
+
+  @override
+  String get advisorEstimateCustomer => 'العميل';
+
+  @override
+  String get advisorEstimateVehicle => 'المركبة';
+
+  @override
+  String get advisorEstimatePreparedOn => 'أُعدّ في';
+
+  @override
+  String get advisorEstimateShareWhatsApp => 'مشاركة عبر واتساب';
+
+  @override
+  String get advisorEstimateCopyLink => 'نسخ الرابط';
+
+  @override
+  String get advisorEstimateLinkCopied => 'تم نسخ رابط التقدير';
+
+  @override
+  String get advisorEstimateShareHint =>
+      'أرسل للعميل تقديراً تفاعلياً للموافقة.';
+
+  @override
+  String get advisorEstimateSummaryTitle => 'الملخص';
+
+  @override
+  String get advisorEstimateSubTotal => 'المجموع الفرعي';
+
+  @override
+  String get advisorEstimateGrandTotal => 'الإجمالي العام';
+
+  @override
+  String get advisorEstimateNoContact => 'لا يوجد رقم هاتف للعميل';
+
+  @override
+  String get advisorEstimateCreateOrder => 'إنشاء أمر إصلاح';
+
+  @override
+  String get advisorEstimateAddSignature => 'إضافة توقيع';
+
+  @override
+  String get advisorEstimateSigned => 'تم التوقيع';
+
+  @override
+  String get advisorEstimateSignatureLabel => 'توقيع العميل';
+
+  @override
+  String get advisorEstimateSignatureTitle => 'توقيع العميل';
+
+  @override
+  String get advisorEstimateSignatureClear => 'مسح';
+
+  @override
+  String get advisorEstimateSignatureUse => 'استخدام التوقيع';
+
+  @override
+  String get advisorEstimateReviewTitle => 'مراجعة التقدير';
+
+  @override
+  String get advisorEstimateMissingJob => 'بطاقة العمل مفقودة';
+
+  @override
+  String get advisorEstimateNoItems =>
+      'لا توجد عناصر إصلاح. أضف عملاً إضافياً أو أعد المحاولة بعد الفحص.';
+
+  @override
+  String get advisorEstimateCreated => 'تم إنشاء أمر الإصلاح';
+
+  @override
+  String get advisorEstimateCreateFailed => 'تعذّر إنشاء أمر الإصلاح';
+
+  @override
+  String get advisorDispatchTitle => 'توزيع الخانات';
+
+  @override
+  String get advisorDispatchSubtitle => 'أسند مهام الإصلاح إلى فني';
+
+  @override
+  String get advisorDispatchTechnicianSection => 'الفني';
+
+  @override
+  String get advisorDispatchSelectTech => 'اختر فنياً';
+
+  @override
+  String advisorDispatchLoad(int count) {
+    return '$count مهمة نشطة';
+  }
+
+  @override
+  String get advisorDispatchFree => 'متفرغ الآن';
+
+  @override
+  String advisorDispatchAvailableIn(String hours) {
+    return 'متفرغ خلال $hours';
+  }
+
+  @override
+  String get advisorDispatchSkillBrakes => 'الفرامل';
+
+  @override
+  String get advisorDispatchSkillAc => 'التكييف';
+
+  @override
+  String get advisorDispatchSkillElectrical => 'الكهرباء';
+
+  @override
+  String get advisorDispatchTaskSection => 'عناصر الإصلاح';
+
+  @override
+  String get advisorDispatchAddExtraWork => 'إضافة عمل إضافي';
+
+  @override
+  String get advisorDispatchHoursHint => 'ساعة';
+
+  @override
+  String get advisorDispatchTaskHint => 'أضف بند عمل إضافي';
+
+  @override
+  String get advisorDispatchEmpty => 'لا توجد عناصر عمل مُنشأة.';
+
+  @override
+  String advisorDispatchSelected(String name) {
+    return 'تم اختيار $name';
+  }
+
+  @override
+  String advisorDispatchCta(int count) {
+    return 'إسناد $count مهمة';
+  }
+
+  @override
+  String get advisorDispatchCtaOne => 'إسناد مهمة واحدة';
+
+  @override
+  String get advisorDispatchNeedTech => 'الرجاء اختيار فني';
+
+  @override
+  String get advisorDispatchNeedTask => 'الرجاء إضافة مهمة واحدة على الأقل';
+
+  @override
+  String get advisorDispatchSuccess => 'تم إسناد المهام بنجاح';
+
+  @override
+  String get advisorDispatchFailed => 'تعذّر إسناد المهام';
+
+  @override
+  String advisorDispatchError(String message) {
+    return 'خطأ: $message';
+  }
+
+  @override
+  String advisorDispatchAssignedTo(String name) {
+    return 'مُسند إلى $name';
+  }
+
+  @override
+  String get advisorDispatchLoading => 'جارٍ تحميل عناصر الإصلاح…';
+
+  @override
+  String get advisorStudioDetails => 'تفاصيل التقدير';
+
+  @override
+  String get advisorStudioReference => 'رقم المرجع';
+
+  @override
+  String get advisorStudioReferenceHint => 'مثال: LPO-2026-001';
+
+  @override
+  String get advisorStudioRequests => 'طلبات العميل';
+
+  @override
+  String get advisorStudioRequestsHint => 'طلبات / شكاوى العميل';
+
+  @override
+  String get advisorStudioRecommendations => 'توصيات الورشة';
+
+  @override
+  String get advisorStudioRecommendationsHint => 'أدخل توصيات الورشة هنا';
+
+  @override
+  String get advisorStudioDelivery => 'التسليم المتوقع';
+
+  @override
+  String get advisorStudioDeliveryPick => 'اختر التاريخ والوقت';
+
+  @override
+  String get advisorStudioNotify => 'إشعار المالك (رسائل وبريد)';
+
+  @override
+  String get advisorStudioTag => 'الوسم';
+
+  @override
+  String get advisorStudioTagHint => 'أدخل وسماً (مثل VIP، أسطول، تأمين)';
+
+  @override
+  String get advisorStudioTagAction => 'حفظ الوسم';
+
+  @override
+  String get advisorStudioMedia => 'وسائط ما قبل الخدمة';
+
+  @override
+  String get advisorStudioMediaAdd => 'إضافة وسائط';
+
+  @override
+  String get advisorStudioMediaCamera => 'التقاط صورة';
+
+  @override
+  String get advisorStudioMediaGallery => 'اختيار من المعرض';
+
+  @override
+  String get advisorStudioMediaVideo => 'تسجيل فيديو';
+
+  @override
+  String get advisorEstimateApprovalTitle => 'موافقة العميل';
+
+  @override
+  String get advisorEstimateApprovalSubtitle =>
+      'اختر كيف سيوافق العميل على هذا التقدير.';
+
+  @override
+  String get advisorEstimateApprovalHere => 'موافقة العميل هنا';
+
+  @override
+  String get advisorEstimateApprovalHereHint =>
+      'استخدمه عندما راجع العميل التقدير وقبله معك.';
+
+  @override
+  String get advisorEstimateApprovalApp => 'إرسال إلى تطبيق العميل';
+
+  @override
+  String get advisorEstimateApprovalAppHint =>
+      'ينتظر العمل حتى يوافق العميل من حسابه.';
+
+  @override
+  String get advisorEstimateSubmit => 'إرسال التقدير';
+
+  @override
+  String get advisorEstimateSubmitting => 'جارٍ إرسال التقدير…';
 }

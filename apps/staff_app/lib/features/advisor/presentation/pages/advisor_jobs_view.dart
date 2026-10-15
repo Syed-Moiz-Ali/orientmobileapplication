@@ -171,7 +171,7 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                     StatusPill.neutral('${visible.length}'),
                 ],
               ),
-              const SizedBox(height: AppDimensions.s12),
+              const SizedBox(height: AppDimensions.s8),
               if (hasError) ...[
                 AppInfoPanel.danger(
                   message: t.advisorDataError,
@@ -372,8 +372,8 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     // still routes through the caller's push navigation.
     return AppMasterDetailScaffold(
       detailOpen: _selected != null,
-      masterMinWidth: 400,
-      masterMaxWidth: 640,
+      masterMinWidth: 440,
+      masterMaxWidth: 720,
       placeholder: _JobPreviewPlaceholder(key: const ValueKey('jobs-preview')),
       master: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -469,10 +469,10 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
   }
 
   List<AppTableColumn> _columns(StaffLocalizations t, {bool sortable = false}) => [
-    AppTableColumn(label: t.advisorJobsColumnCustomer, flex: 2, sortable: sortable),
+    AppTableColumn(label: t.advisorJobsColumnCustomer, flex: 3, sortable: sortable),
     AppTableColumn(label: t.advisorJobsColumnJobCard, flex: 2),
-    AppTableColumn(label: t.advisorFieldVehicle, flex: 2),
-    AppTableColumn(label: t.advisorJobsColumnStatus, flex: 3),
+    AppTableColumn(label: t.advisorFieldVehicle, flex: 3),
+    AppTableColumn(label: t.advisorJobsColumnStatus, flex: 2),
     AppTableColumn(label: t.advisorJobsColumnTime, flex: 2, sortable: sortable),
   ];
 
@@ -482,9 +482,11 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     List<AdvisorBookingResponse> bookings,
     bool showBookings,
   ) {
-    // Compact: touch rows (customer, job-id mono LTR, status pill, time,
-    // overflow → JobCardSheet). No plate field exists on JobCardEntity, so
-    // the job identifier chip carries the mono LTR slot (zero invented data).
+    // Compact: divider rows in the shared grammar (status dot + customer +
+    // plate + job mono LTR + pill + time + overflow → JobCardSheet). No plate
+    // field exists on JobCardEntity, so the row splits local-first
+    // vehicleInfo ("Model · PLATE") and never invents data.
+    final colors = Theme.of(context).colorScheme;
     return RefreshIndicator(
       color: Theme.of(context).colorScheme.primary,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -499,11 +501,24 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
         ),
         children: [
           if (showBookings) _buildAssignedBookingsSection(t, bookings),
-          ...visible.map(
-            (jc) => AdvisorJobCardRow(
-              jc: jc,
-              onTap: widget.onJobCard,
-              onMore: () => _showQuickCard(jc),
+          Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: colors.outlineVariant),
+                bottom: BorderSide(color: colors.outlineVariant),
+              ),
+            ),
+            child: Column(
+              children: [
+                for (var i = 0; i < visible.length; i++) ...[
+                  if (i > 0) Divider(height: 1, thickness: 1, color: colors.outlineVariant),
+                  AdvisorJobCardRow(
+                    jc: visible[i],
+                    onTap: widget.onJobCard,
+                    onMore: () => _showQuickCard(visible[i]),
+                  ),
+                ],
+              ],
             ),
           ),
         ],

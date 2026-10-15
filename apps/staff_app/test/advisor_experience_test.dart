@@ -120,21 +120,32 @@ void main() {
         );
   });
 
-  testWidgets('Today renders header, metrics, attention and recent work', (
+  testWidgets('Today renders greeting header, strip, assigned and summary', (
     tester,
   ) async {
     await _pump(tester, const AdvisorHomeView());
 
-    expect(find.text('TODAY'), findsOneWidget);
-    expect(find.text('Service Desk'), findsOneWidget);
-    expect(find.text('Work Summary'), findsOneWidget);
+    // Greeting-led header (product exception: no WorkspaceAppBar on this tab).
+    expect(find.byType(WorkspaceAppBar), findsNothing);
+    expect(find.textContaining('Good to see you'), findsWidgets);
+    expect(find.byType(OfflineStatusPill), findsOneWidget);
     expect(find.textContaining('Scan Vehicle'), findsWidgets);
     expect(find.textContaining('New Job'), findsWidgets);
     expect(find.textContaining('Approvals'), findsWidgets);
-    expect(find.textContaining('Search'), findsWidgets);
-    expect(find.text('Needs Attention'), findsOneWidget);
-    expect(find.text('DXB-4821 · EST-5521'), findsOneWidget);
+    // Search moved out of the grid into the 30% search hero (plate-aware).
+    expect(find.text('Search'), findsOneWidget);
+    expect(find.textContaining('Search by registration'), findsWidgets);
+    // Assigned work orders own the viewport; summary sits last, no analytics.
+    expect(find.text('ASSIGNED WORK ORDERS'), findsOneWidget);
+    expect(find.text('See all'), findsWidgets);
+    expect(find.text('WORK SUMMARY'), findsOneWidget);
     expect(find.text('Rashid Al Nuaimi'), findsWidgets);
+
+    // Deleted surfaces stay deleted.
+    expect(find.text('Needs Attention'), findsNothing);
+    expect(find.text('Service Desk'), findsNothing);
+    expect(find.text('TODAY'), findsNothing);
+    expect(find.text('Analytics'), findsNothing);
 
     expect(find.text('Vehicle Inspection'), findsNothing);
     expect(find.text('Workshop Reports'), findsNothing);
@@ -146,9 +157,11 @@ void main() {
   testWidgets('Today renders Arabic copy and mirrors in RTL', (tester) async {
     await _pump(tester, const AdvisorHomeView(), locale: const Locale('ar'));
 
-    expect(find.text('اليوم'), findsWidgets);
-    expect(find.text('مكتب الخدمة'), findsOneWidget);
+    expect(find.textContaining('مرحباً'), findsWidgets);
+    expect(find.text('أوامر العمل المسندة'), findsOneWidget);
     expect(find.text('ملخص العمل'), findsOneWidget);
+    expect(find.text('بحاجة إلى إجراء'), findsNothing);
+    expect(find.text('مكتب الخدمة'), findsNothing);
     expect(
       Directionality.of(tester.element(find.byType(AdvisorHomeView))),
       TextDirection.rtl,

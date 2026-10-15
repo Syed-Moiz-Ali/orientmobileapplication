@@ -120,9 +120,6 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorActionReportsSubtitle => 'Performance logs';
 
   @override
-  String get advisorAttentionTitle => 'Needs Attention';
-
-  @override
   String get advisorWorkSummary => 'Work Summary';
 
   @override
@@ -225,11 +222,15 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorSeeAll => 'See all';
 
   @override
-  String get advisorAttentionEmptyTitle => 'All clear';
+  String get advisorMetricReady => 'Ready';
 
   @override
-  String get advisorAttentionEmptyHint =>
-      'No urgent approvals or follow-ups right now.';
+  String get advisorDueToday => 'Due today';
+
+  @override
+  String advisorHomeUpdatedAt(String time) {
+    return 'Updated $time';
+  }
 
   @override
   String get advisorActionApprovalsTitle => 'Approvals';
@@ -2092,4 +2093,420 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String advisorIntakeAttachmentError(String message) {
     return 'Could not add attachment: $message';
   }
+
+  @override
+  String get advisorStudioTitle => 'Repair Estimate';
+
+  @override
+  String get advisorStudioSubtitle =>
+      'Build the customer estimate for this job card';
+
+  @override
+  String get advisorStudioStepParts => 'Parts';
+
+  @override
+  String get advisorStudioStepLabor => 'Labor';
+
+  @override
+  String get advisorStudioStepReview => 'Review';
+
+  @override
+  String get advisorStudioTierMandatory => 'Mandatory Safety Repairs';
+
+  @override
+  String get advisorStudioTierOptional => 'Optional Enhancements';
+
+  @override
+  String get advisorStudioCategoryParts => 'Parts';
+
+  @override
+  String get advisorStudioCategoryLabor => 'Labor';
+
+  @override
+  String get advisorStudioCategorySublet => 'Sublet';
+
+  @override
+  String advisorStudioEmptyCategory(String category) {
+    return 'No $category items yet';
+  }
+
+  @override
+  String advisorStudioAddItem(String category) {
+    return 'Add $category';
+  }
+
+  @override
+  String advisorStudioStockIn(int bay) {
+    return 'In-Stock · Bay $bay';
+  }
+
+  @override
+  String advisorStudioStockOrder(String hours) {
+    return 'Order · $hours';
+  }
+
+  @override
+  String advisorStudioLaborDetail(String hours, String rate) {
+    return '${hours}h × $rate';
+  }
+
+  @override
+  String get advisorStudioLineTotal => 'Line total';
+
+  @override
+  String get advisorStudioQuantity => 'Quantity';
+
+  @override
+  String get advisorStudioRemoveItem => 'Remove item';
+
+  @override
+  String get advisorStudioPartsSubtotal => 'Parts subtotal';
+
+  @override
+  String get advisorStudioLabor => 'Labor';
+
+  @override
+  String get advisorStudioVat => 'VAT (5%)';
+
+  @override
+  String get advisorStudioTotal => 'Total';
+
+  @override
+  String get advisorStudioTrustLine =>
+      'Statutory 5% VAT · Prices in UAE dirhams';
+
+  @override
+  String get advisorStudioConfirm => 'Review Estimate';
+
+  @override
+  String get advisorStudioAddItems => 'Add Estimate Items';
+
+  @override
+  String get advisorStudioLoading => 'Loading estimate items…';
+
+  @override
+  String get advisorStudioError => 'Could not load estimate items.';
+
+  @override
+  String get advisorStudioNoMatch => 'No matching items';
+
+  @override
+  String advisorStudioRemoved(String name) {
+    return '$name removed';
+  }
+
+  @override
+  String get advisorStudioFromInspection => 'Inspection completed and attached';
+
+  @override
+  String get advisorStudioReset => 'Reset';
+
+  @override
+  String get advisorStudioResetTitle => 'Clear this estimate?';
+
+  @override
+  String get advisorStudioResetBody =>
+      'All services, parts, pricing and notes entered here will be removed.';
+
+  @override
+  String get advisorStudioResetKeep => 'Keep editing';
+
+  @override
+  String get advisorStudioResetConfirm => 'Clear estimate';
+
+  @override
+  String get advisorStudioSelectServicesTitle => 'Select required services';
+
+  @override
+  String get advisorStudioSelectServicesSubtitle =>
+      'Pricing can be entered after adding them';
+
+  @override
+  String get advisorStudioSearchServices => 'Search services';
+
+  @override
+  String get advisorStudioSelectPartsTitle => 'Select required parts';
+
+  @override
+  String get advisorStudioSelectPartsSubtitle =>
+      'Quantity and price can be updated after adding them';
+
+  @override
+  String get advisorStudioSearchParts => 'Search parts';
+
+  @override
+  String get advisorStudioNoServices => 'No services found';
+
+  @override
+  String get advisorStudioNoParts => 'No parts found';
+
+  @override
+  String advisorStudioSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get advisorStudioDone => 'Done';
+
+  @override
+  String get advisorStudioAddSelectedServices => 'Add services';
+
+  @override
+  String get advisorStudioAddSelectedParts => 'Add parts';
+
+  @override
+  String get advisorStudioTapToAdd => 'Tap to add';
+
+  @override
+  String get advisorStudioAdded => 'Added to estimate';
+
+  @override
+  String get advisorStudioSubletHint =>
+      'Vendor work is booked outside this estimate.';
+
+  @override
+  String get advisorEstimateShareTitle => 'Share estimate';
+
+  @override
+  String get advisorEstimateInvoiceTitle => 'ESTIMATE';
+
+  @override
+  String get advisorEstimateCustomer => 'Customer';
+
+  @override
+  String get advisorEstimateVehicle => 'Vehicle';
+
+  @override
+  String get advisorEstimatePreparedOn => 'Prepared on';
+
+  @override
+  String get advisorEstimateShareWhatsApp => 'Share on WhatsApp';
+
+  @override
+  String get advisorEstimateCopyLink => 'Copy link';
+
+  @override
+  String get advisorEstimateLinkCopied => 'Estimate link copied';
+
+  @override
+  String get advisorEstimateShareHint =>
+      'Send the customer an interactive estimate for approval.';
+
+  @override
+  String get advisorEstimateSummaryTitle => 'Summary';
+
+  @override
+  String get advisorEstimateSubTotal => 'Subtotal';
+
+  @override
+  String get advisorEstimateGrandTotal => 'Grand total';
+
+  @override
+  String get advisorEstimateNoContact => 'No customer phone on file';
+
+  @override
+  String get advisorEstimateCreateOrder => 'Create Repair Order';
+
+  @override
+  String get advisorEstimateAddSignature => 'Add signature';
+
+  @override
+  String get advisorEstimateSigned => 'Signed';
+
+  @override
+  String get advisorEstimateSignatureLabel => 'CUSTOMER SIGNATURE';
+
+  @override
+  String get advisorEstimateSignatureTitle => 'Customer Signature';
+
+  @override
+  String get advisorEstimateSignatureClear => 'Clear';
+
+  @override
+  String get advisorEstimateSignatureUse => 'Use signature';
+
+  @override
+  String get advisorEstimateReviewTitle => 'Review Estimate';
+
+  @override
+  String get advisorEstimateMissingJob => 'Job Card is missing';
+
+  @override
+  String get advisorEstimateNoItems =>
+      'No repair items found. Add extra work or retry after inspection.';
+
+  @override
+  String get advisorEstimateCreated => 'Repair order created';
+
+  @override
+  String get advisorEstimateCreateFailed => 'Could not create the repair order';
+
+  @override
+  String get advisorDispatchTitle => 'Bay Dispatch';
+
+  @override
+  String get advisorDispatchSubtitle => 'Assign repair tasks to a technician';
+
+  @override
+  String get advisorDispatchTechnicianSection => 'Technician';
+
+  @override
+  String get advisorDispatchSelectTech => 'Select a technician';
+
+  @override
+  String advisorDispatchLoad(int count) {
+    return '$count active jobs';
+  }
+
+  @override
+  String get advisorDispatchFree => 'Free now';
+
+  @override
+  String advisorDispatchAvailableIn(String hours) {
+    return 'Free in $hours';
+  }
+
+  @override
+  String get advisorDispatchSkillBrakes => 'Brakes';
+
+  @override
+  String get advisorDispatchSkillAc => 'AC';
+
+  @override
+  String get advisorDispatchSkillElectrical => 'Electrical';
+
+  @override
+  String get advisorDispatchTaskSection => 'Repair items';
+
+  @override
+  String get advisorDispatchAddExtraWork => 'Add extra work';
+
+  @override
+  String get advisorDispatchHoursHint => 'hrs';
+
+  @override
+  String get advisorDispatchTaskHint => 'Add extra work item';
+
+  @override
+  String get advisorDispatchEmpty => 'No generated work items found.';
+
+  @override
+  String advisorDispatchSelected(String name) {
+    return '$name selected';
+  }
+
+  @override
+  String advisorDispatchCta(int count) {
+    return 'Assign $count tasks';
+  }
+
+  @override
+  String get advisorDispatchCtaOne => 'Assign 1 task';
+
+  @override
+  String get advisorDispatchNeedTech => 'Please select a technician';
+
+  @override
+  String get advisorDispatchNeedTask => 'Please add at least one task';
+
+  @override
+  String get advisorDispatchSuccess => 'Tasks assigned successfully';
+
+  @override
+  String get advisorDispatchFailed => 'Failed to assign tasks';
+
+  @override
+  String advisorDispatchError(String message) {
+    return 'Error: $message';
+  }
+
+  @override
+  String advisorDispatchAssignedTo(String name) {
+    return 'Assigned to $name';
+  }
+
+  @override
+  String get advisorDispatchLoading => 'Loading repair items…';
+
+  @override
+  String get advisorStudioDetails => 'Estimate details';
+
+  @override
+  String get advisorStudioReference => 'Reference number';
+
+  @override
+  String get advisorStudioReferenceHint => 'Example: LPO-2026-001';
+
+  @override
+  String get advisorStudioRequests => 'Customer requests';
+
+  @override
+  String get advisorStudioRequestsHint => 'Customer requests / complaints';
+
+  @override
+  String get advisorStudioRecommendations => 'Garage recommendations';
+
+  @override
+  String get advisorStudioRecommendationsHint =>
+      'Enter garage recommendations here';
+
+  @override
+  String get advisorStudioDelivery => 'Estimated delivery';
+
+  @override
+  String get advisorStudioDeliveryPick => 'Select date & time';
+
+  @override
+  String get advisorStudioNotify => 'Notify owner (SMS & email)';
+
+  @override
+  String get advisorStudioTag => 'Tag';
+
+  @override
+  String get advisorStudioTagHint => 'Enter a tag (e.g. VIP, Fleet, Insurance)';
+
+  @override
+  String get advisorStudioTagAction => 'Set tag';
+
+  @override
+  String get advisorStudioMedia => 'Pre-service media';
+
+  @override
+  String get advisorStudioMediaAdd => 'Add media';
+
+  @override
+  String get advisorStudioMediaCamera => 'Take photo';
+
+  @override
+  String get advisorStudioMediaGallery => 'Choose from gallery';
+
+  @override
+  String get advisorStudioMediaVideo => 'Record video';
+
+  @override
+  String get advisorEstimateApprovalTitle => 'Customer approval';
+
+  @override
+  String get advisorEstimateApprovalSubtitle =>
+      'Choose how the customer will approve this estimate.';
+
+  @override
+  String get advisorEstimateApprovalHere => 'Customer approved here';
+
+  @override
+  String get advisorEstimateApprovalHereHint =>
+      'Use when the customer reviewed and accepted the estimate with you.';
+
+  @override
+  String get advisorEstimateApprovalApp => 'Send to customer app';
+
+  @override
+  String get advisorEstimateApprovalAppHint =>
+      'The job waits until the customer approves from their account.';
+
+  @override
+  String get advisorEstimateSubmit => 'Submit estimate';
+
+  @override
+  String get advisorEstimateSubmitting => 'Submitting estimate…';
 }

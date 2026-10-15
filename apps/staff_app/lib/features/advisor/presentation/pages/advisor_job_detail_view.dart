@@ -354,105 +354,47 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     JobCardStatus.cancelled => 0,
   };
 
+  // Identity facts + contact actions only. Job id, customer, vehicle and the
+  // status pill already own the AppPageHeader above, so this card no longer
+  // repeats them — it carries the plate/VIN/ODO facts and Call/WhatsApp.
   Widget _identityHeader(StaffLocalizations t, bool hasData) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final vehicle = _apiVal(
-      _details?.vehicleInfo ?? '',
-      hasData ? '${_getVal('make')} ${_getVal('model')}'.trim() : _jc.vehicleInfo,
-    );
-    final customer = _apiVal(
-      _details?.customerName ?? '',
-      hasData ? _getVal('customerName') : _jc.customerName,
-    );
     final vin = _apiVal(_details?.vin ?? '', _getVal('vin'));
     final odo = _displayOdometer;
+    final hasFacts =
+        _displayPlate.isNotEmpty || vin.isNotEmpty || odo.isNotEmpty;
 
     return AppCard.standard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Text(
-                        _jc.id,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.mono(color: colors.onSurface),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      vehicle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppDimensions.s12),
-              advisorStatusPill(t, _jc.status),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          Row(
-            children: [
-              Icon(
-                Icons.person_outline_rounded,
-                size: AppDimensions.iconMd,
-                color: colors.primary,
-              ),
-              const SizedBox(width: AppDimensions.s8),
-              Expanded(
-                child: Text(
-                  customer,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              if (_displayPlate.isNotEmpty) ...[
-                const SizedBox(width: AppDimensions.s8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.s10,
-                    vertical: AppDimensions.s4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusControl,
-                    ),
-                  ),
-                  child: Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Text(
-                      _displayPlate.toUpperCase(),
-                      style: AppTextStyles.mono(color: colors.onSurface),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          if (vin.isNotEmpty || odo.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.s10),
+          if (hasFacts)
             Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
               spacing: AppDimensions.s16,
               runSpacing: AppDimensions.s4,
               children: [
+                if (_displayPlate.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.s10,
+                      vertical: AppDimensions.s4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusControl,
+                      ),
+                    ),
+                    child: Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        _displayPlate.toUpperCase(),
+                        style: AppTextStyles.mono(color: colors.onSurface),
+                      ),
+                    ),
+                  ),
                 if (vin.isNotEmpty)
                   Directionality(
                     textDirection: TextDirection.ltr,
@@ -477,9 +419,8 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
                   ),
               ],
             ),
-          ],
           if (_displayPhone.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.s14),
+            if (hasFacts) const SizedBox(height: AppDimensions.s14),
             Row(
               children: [
                 Expanded(

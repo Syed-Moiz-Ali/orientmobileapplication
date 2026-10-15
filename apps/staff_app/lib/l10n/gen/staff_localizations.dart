@@ -302,19 +302,13 @@ abstract class StaffLocalizations {
   /// **'Performance logs'**
   String get advisorActionReportsSubtitle;
 
-  /// Section title for pending approvals and reminders
-  ///
-  /// In en, this message translates to:
-  /// **'Needs Attention'**
-  String get advisorAttentionTitle;
-
-  /// Section title for the shift metric tiles
+  /// Section title for the shift metric strip
   ///
   /// In en, this message translates to:
   /// **'Work Summary'**
   String get advisorWorkSummary;
 
-  /// Section action opening the Reports tab
+  /// Legacy section action (unused on home; retained for parity)
   ///
   /// In en, this message translates to:
   /// **'Analytics'**
@@ -500,17 +494,23 @@ abstract class StaffLocalizations {
   /// **'See all'**
   String get advisorSeeAll;
 
-  /// Empty attention radar title
+  /// Home summary metric: ready job cards
   ///
   /// In en, this message translates to:
-  /// **'All clear'**
-  String get advisorAttentionEmptyTitle;
+  /// **'Ready'**
+  String get advisorMetricReady;
 
-  /// Empty attention radar supporting text
+  /// Urgent-row microcopy for work due today
   ///
   /// In en, this message translates to:
-  /// **'No urgent approvals or follow-ups right now.'**
-  String get advisorAttentionEmptyHint;
+  /// **'Due today'**
+  String get advisorDueToday;
+
+  /// Home freshness timestamp after pull-refresh
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {time}'**
+  String advisorHomeUpdatedAt(String time);
 
   /// Quick-action tile: approvals
   ///
@@ -4003,6 +4003,762 @@ abstract class StaffLocalizations {
   /// In en, this message translates to:
   /// **'Could not add attachment: {message}'**
   String advisorIntakeAttachmentError(String message);
+
+  /// Work order studio screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Repair Estimate'**
+  String get advisorStudioTitle;
+
+  /// Work order studio supporting line
+  ///
+  /// In en, this message translates to:
+  /// **'Build the customer estimate for this job card'**
+  String get advisorStudioSubtitle;
+
+  /// Studio stepper step: parts
+  ///
+  /// In en, this message translates to:
+  /// **'Parts'**
+  String get advisorStudioStepParts;
+
+  /// Studio stepper step: labor
+  ///
+  /// In en, this message translates to:
+  /// **'Labor'**
+  String get advisorStudioStepLabor;
+
+  /// Studio stepper step: review
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get advisorStudioStepReview;
+
+  /// Tier group: mandatory safety
+  ///
+  /// In en, this message translates to:
+  /// **'Mandatory Safety Repairs'**
+  String get advisorStudioTierMandatory;
+
+  /// Tier group: optional enhancements
+  ///
+  /// In en, this message translates to:
+  /// **'Optional Enhancements'**
+  String get advisorStudioTierOptional;
+
+  /// Category mini-header: parts
+  ///
+  /// In en, this message translates to:
+  /// **'Parts'**
+  String get advisorStudioCategoryParts;
+
+  /// Category mini-header: labor
+  ///
+  /// In en, this message translates to:
+  /// **'Labor'**
+  String get advisorStudioCategoryLabor;
+
+  /// Category mini-header: sublet
+  ///
+  /// In en, this message translates to:
+  /// **'Sublet'**
+  String get advisorStudioCategorySublet;
+
+  /// Collapsed empty category message
+  ///
+  /// In en, this message translates to:
+  /// **'No {category} items yet'**
+  String advisorStudioEmptyCategory(String category);
+
+  /// Add CTA for a category
+  ///
+  /// In en, this message translates to:
+  /// **'Add {category}'**
+  String advisorStudioAddItem(String category);
+
+  /// Parts stock pill when the item is on the shelf
+  ///
+  /// In en, this message translates to:
+  /// **'In-Stock · Bay {bay}'**
+  String advisorStudioStockIn(int bay);
+
+  /// Parts stock pill when the item must be ordered
+  ///
+  /// In en, this message translates to:
+  /// **'Order · {hours}'**
+  String advisorStudioStockOrder(String hours);
+
+  /// Labor operation hours and unit rate
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h × {rate}'**
+  String advisorStudioLaborDetail(String hours, String rate);
+
+  /// Accessible label for a row line total
+  ///
+  /// In en, this message translates to:
+  /// **'Line total'**
+  String get advisorStudioLineTotal;
+
+  /// Quantity stepper semantic label
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get advisorStudioQuantity;
+
+  /// Remove row tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Remove item'**
+  String get advisorStudioRemoveItem;
+
+  /// Money dock: parts subtotal
+  ///
+  /// In en, this message translates to:
+  /// **'Parts subtotal'**
+  String get advisorStudioPartsSubtotal;
+
+  /// Money dock: labor total
+  ///
+  /// In en, this message translates to:
+  /// **'Labor'**
+  String get advisorStudioLabor;
+
+  /// Money dock: statutory VAT line
+  ///
+  /// In en, this message translates to:
+  /// **'VAT (5%)'**
+  String get advisorStudioVat;
+
+  /// Money dock: grand total
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get advisorStudioTotal;
+
+  /// Money dock trust line
+  ///
+  /// In en, this message translates to:
+  /// **'Statutory 5% VAT · Prices in UAE dirhams'**
+  String get advisorStudioTrustLine;
+
+  /// Money dock primary confirm CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Review Estimate'**
+  String get advisorStudioConfirm;
+
+  /// Money dock CTA when the estimate is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Add Estimate Items'**
+  String get advisorStudioAddItems;
+
+  /// Studio loading state
+  ///
+  /// In en, this message translates to:
+  /// **'Loading estimate items…'**
+  String get advisorStudioLoading;
+
+  /// Studio error state message
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load estimate items.'**
+  String get advisorStudioError;
+
+  /// Studio no-match state message
+  ///
+  /// In en, this message translates to:
+  /// **'No matching items'**
+  String get advisorStudioNoMatch;
+
+  /// Toast after removing a line
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed'**
+  String advisorStudioRemoved(String name);
+
+  /// Banner when the estimate follows an inspection
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection completed and attached'**
+  String get advisorStudioFromInspection;
+
+  /// Reset estimate action
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get advisorStudioReset;
+
+  /// Reset confirmation title
+  ///
+  /// In en, this message translates to:
+  /// **'Clear this estimate?'**
+  String get advisorStudioResetTitle;
+
+  /// Reset confirmation body
+  ///
+  /// In en, this message translates to:
+  /// **'All services, parts, pricing and notes entered here will be removed.'**
+  String get advisorStudioResetBody;
+
+  /// Reset confirmation cancel action
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get advisorStudioResetKeep;
+
+  /// Reset confirmation destructive action
+  ///
+  /// In en, this message translates to:
+  /// **'Clear estimate'**
+  String get advisorStudioResetConfirm;
+
+  /// Service picker intro title
+  ///
+  /// In en, this message translates to:
+  /// **'Select required services'**
+  String get advisorStudioSelectServicesTitle;
+
+  /// Service picker intro subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing can be entered after adding them'**
+  String get advisorStudioSelectServicesSubtitle;
+
+  /// Service picker search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search services'**
+  String get advisorStudioSearchServices;
+
+  /// Parts picker intro title
+  ///
+  /// In en, this message translates to:
+  /// **'Select required parts'**
+  String get advisorStudioSelectPartsTitle;
+
+  /// Parts picker intro subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity and price can be updated after adding them'**
+  String get advisorStudioSelectPartsSubtitle;
+
+  /// Parts picker search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search parts'**
+  String get advisorStudioSearchParts;
+
+  /// Service picker no-match message
+  ///
+  /// In en, this message translates to:
+  /// **'No services found'**
+  String get advisorStudioNoServices;
+
+  /// Parts picker no-match message
+  ///
+  /// In en, this message translates to:
+  /// **'No parts found'**
+  String get advisorStudioNoParts;
+
+  /// Picker selected count pill
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String advisorStudioSelectedCount(int count);
+
+  /// Picker confirm action when nothing is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get advisorStudioDone;
+
+  /// Picker confirm action for services
+  ///
+  /// In en, this message translates to:
+  /// **'Add services'**
+  String get advisorStudioAddSelectedServices;
+
+  /// Picker confirm action for parts
+  ///
+  /// In en, this message translates to:
+  /// **'Add parts'**
+  String get advisorStudioAddSelectedParts;
+
+  /// Picker row idle hint
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to add'**
+  String get advisorStudioTapToAdd;
+
+  /// Picker row selected hint
+  ///
+  /// In en, this message translates to:
+  /// **'Added to estimate'**
+  String get advisorStudioAdded;
+
+  /// Sublet category helper line
+  ///
+  /// In en, this message translates to:
+  /// **'Vendor work is booked outside this estimate.'**
+  String get advisorStudioSubletHint;
+
+  /// Share sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Share estimate'**
+  String get advisorEstimateShareTitle;
+
+  /// Invoice document heading
+  ///
+  /// In en, this message translates to:
+  /// **'ESTIMATE'**
+  String get advisorEstimateInvoiceTitle;
+
+  /// Invoice customer label
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get advisorEstimateCustomer;
+
+  /// Invoice vehicle label
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get advisorEstimateVehicle;
+
+  /// Invoice prepared-on label
+  ///
+  /// In en, this message translates to:
+  /// **'Prepared on'**
+  String get advisorEstimatePreparedOn;
+
+  /// Share sheet WhatsApp CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Share on WhatsApp'**
+  String get advisorEstimateShareWhatsApp;
+
+  /// Share sheet copy-link action
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get advisorEstimateCopyLink;
+
+  /// Copy-link toast
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate link copied'**
+  String get advisorEstimateLinkCopied;
+
+  /// Share sheet helper line
+  ///
+  /// In en, this message translates to:
+  /// **'Send the customer an interactive estimate for approval.'**
+  String get advisorEstimateShareHint;
+
+  /// Invoice summary heading
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get advisorEstimateSummaryTitle;
+
+  /// Invoice subtotal row
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get advisorEstimateSubTotal;
+
+  /// Invoice grand total row
+  ///
+  /// In en, this message translates to:
+  /// **'Grand total'**
+  String get advisorEstimateGrandTotal;
+
+  /// WhatsApp share disabled reason
+  ///
+  /// In en, this message translates to:
+  /// **'No customer phone on file'**
+  String get advisorEstimateNoContact;
+
+  /// Preview submit action
+  ///
+  /// In en, this message translates to:
+  /// **'Create Repair Order'**
+  String get advisorEstimateCreateOrder;
+
+  /// Preview signature capture action
+  ///
+  /// In en, this message translates to:
+  /// **'Add signature'**
+  String get advisorEstimateAddSignature;
+
+  /// Preview signature captured state
+  ///
+  /// In en, this message translates to:
+  /// **'Signed'**
+  String get advisorEstimateSigned;
+
+  /// Signature block eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'CUSTOMER SIGNATURE'**
+  String get advisorEstimateSignatureLabel;
+
+  /// Signature sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Signature'**
+  String get advisorEstimateSignatureTitle;
+
+  /// Signature clear action
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get advisorEstimateSignatureClear;
+
+  /// Signature confirm action
+  ///
+  /// In en, this message translates to:
+  /// **'Use signature'**
+  String get advisorEstimateSignatureUse;
+
+  /// Preview screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Review Estimate'**
+  String get advisorEstimateReviewTitle;
+
+  /// Preview guard when job card is absent
+  ///
+  /// In en, this message translates to:
+  /// **'Job Card is missing'**
+  String get advisorEstimateMissingJob;
+
+  /// Preview guard when no lines exist
+  ///
+  /// In en, this message translates to:
+  /// **'No repair items found. Add extra work or retry after inspection.'**
+  String get advisorEstimateNoItems;
+
+  /// Preview create success
+  ///
+  /// In en, this message translates to:
+  /// **'Repair order created'**
+  String get advisorEstimateCreated;
+
+  /// Preview create failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the repair order'**
+  String get advisorEstimateCreateFailed;
+
+  /// Assign tasks screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Bay Dispatch'**
+  String get advisorDispatchTitle;
+
+  /// Assign tasks supporting line
+  ///
+  /// In en, this message translates to:
+  /// **'Assign repair tasks to a technician'**
+  String get advisorDispatchSubtitle;
+
+  /// Technician section heading
+  ///
+  /// In en, this message translates to:
+  /// **'Technician'**
+  String get advisorDispatchTechnicianSection;
+
+  /// Technician section helper
+  ///
+  /// In en, this message translates to:
+  /// **'Select a technician'**
+  String get advisorDispatchSelectTech;
+
+  /// Technician load caption
+  ///
+  /// In en, this message translates to:
+  /// **'{count} active jobs'**
+  String advisorDispatchLoad(int count);
+
+  /// Technician availability: free
+  ///
+  /// In en, this message translates to:
+  /// **'Free now'**
+  String get advisorDispatchFree;
+
+  /// Technician availability after a delay
+  ///
+  /// In en, this message translates to:
+  /// **'Free in {hours}'**
+  String advisorDispatchAvailableIn(String hours);
+
+  /// Technician skill chip: brakes
+  ///
+  /// In en, this message translates to:
+  /// **'Brakes'**
+  String get advisorDispatchSkillBrakes;
+
+  /// Technician skill chip: air conditioning
+  ///
+  /// In en, this message translates to:
+  /// **'AC'**
+  String get advisorDispatchSkillAc;
+
+  /// Technician skill chip: electrical
+  ///
+  /// In en, this message translates to:
+  /// **'Electrical'**
+  String get advisorDispatchSkillElectrical;
+
+  /// Task list section heading
+  ///
+  /// In en, this message translates to:
+  /// **'Repair items'**
+  String get advisorDispatchTaskSection;
+
+  /// Add task row action
+  ///
+  /// In en, this message translates to:
+  /// **'Add extra work'**
+  String get advisorDispatchAddExtraWork;
+
+  /// Task hours field hint
+  ///
+  /// In en, this message translates to:
+  /// **'hrs'**
+  String get advisorDispatchHoursHint;
+
+  /// Task description field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Add extra work item'**
+  String get advisorDispatchTaskHint;
+
+  /// Task list empty message
+  ///
+  /// In en, this message translates to:
+  /// **'No generated work items found.'**
+  String get advisorDispatchEmpty;
+
+  /// Toast after selecting a technician
+  ///
+  /// In en, this message translates to:
+  /// **'{name} selected'**
+  String advisorDispatchSelected(String name);
+
+  /// Dispatch CTA with task count
+  ///
+  /// In en, this message translates to:
+  /// **'Assign {count} tasks'**
+  String advisorDispatchCta(int count);
+
+  /// Dispatch CTA for a single task
+  ///
+  /// In en, this message translates to:
+  /// **'Assign 1 task'**
+  String get advisorDispatchCtaOne;
+
+  /// Validation: no technician selected
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a technician'**
+  String get advisorDispatchNeedTech;
+
+  /// Validation: no task selected
+  ///
+  /// In en, this message translates to:
+  /// **'Please add at least one task'**
+  String get advisorDispatchNeedTask;
+
+  /// Assign success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks assigned successfully'**
+  String get advisorDispatchSuccess;
+
+  /// Assign failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to assign tasks'**
+  String get advisorDispatchFailed;
+
+  /// Assign error toast
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String advisorDispatchError(String message);
+
+  /// Dock caption of the chosen technician
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to {name}'**
+  String advisorDispatchAssignedTo(String name);
+
+  /// Task list loading state
+  ///
+  /// In en, this message translates to:
+  /// **'Loading repair items…'**
+  String get advisorDispatchLoading;
+
+  /// Estimate metadata section heading
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate details'**
+  String get advisorStudioDetails;
+
+  /// Reference number field label
+  ///
+  /// In en, this message translates to:
+  /// **'Reference number'**
+  String get advisorStudioReference;
+
+  /// Reference number field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Example: LPO-2026-001'**
+  String get advisorStudioReferenceHint;
+
+  /// Customer requests field label
+  ///
+  /// In en, this message translates to:
+  /// **'Customer requests'**
+  String get advisorStudioRequests;
+
+  /// Customer requests field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Customer requests / complaints'**
+  String get advisorStudioRequestsHint;
+
+  /// Garage recommendations field label
+  ///
+  /// In en, this message translates to:
+  /// **'Garage recommendations'**
+  String get advisorStudioRecommendations;
+
+  /// Garage recommendations field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enter garage recommendations here'**
+  String get advisorStudioRecommendationsHint;
+
+  /// Estimated delivery field label
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated delivery'**
+  String get advisorStudioDelivery;
+
+  /// Estimated delivery picker placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Select date & time'**
+  String get advisorStudioDeliveryPick;
+
+  /// Notify owner toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'Notify owner (SMS & email)'**
+  String get advisorStudioNotify;
+
+  /// Tag field label
+  ///
+  /// In en, this message translates to:
+  /// **'Tag'**
+  String get advisorStudioTag;
+
+  /// Tag field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a tag (e.g. VIP, Fleet, Insurance)'**
+  String get advisorStudioTagHint;
+
+  /// Tag dialog confirm action
+  ///
+  /// In en, this message translates to:
+  /// **'Set tag'**
+  String get advisorStudioTagAction;
+
+  /// Pre-service media section label
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-service media'**
+  String get advisorStudioMedia;
+
+  /// Add pre-service media action
+  ///
+  /// In en, this message translates to:
+  /// **'Add media'**
+  String get advisorStudioMediaAdd;
+
+  /// Media source: camera
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get advisorStudioMediaCamera;
+
+  /// Media source: gallery
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get advisorStudioMediaGallery;
+
+  /// Media source: video
+  ///
+  /// In en, this message translates to:
+  /// **'Record video'**
+  String get advisorStudioMediaVideo;
+
+  /// Approval method picker title
+  ///
+  /// In en, this message translates to:
+  /// **'Customer approval'**
+  String get advisorEstimateApprovalTitle;
+
+  /// Approval method picker subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how the customer will approve this estimate.'**
+  String get advisorEstimateApprovalSubtitle;
+
+  /// Approval method: in person
+  ///
+  /// In en, this message translates to:
+  /// **'Customer approved here'**
+  String get advisorEstimateApprovalHere;
+
+  /// Approval method in-person hint
+  ///
+  /// In en, this message translates to:
+  /// **'Use when the customer reviewed and accepted the estimate with you.'**
+  String get advisorEstimateApprovalHereHint;
+
+  /// Approval method: customer app
+  ///
+  /// In en, this message translates to:
+  /// **'Send to customer app'**
+  String get advisorEstimateApprovalApp;
+
+  /// Approval method customer-app hint
+  ///
+  /// In en, this message translates to:
+  /// **'The job waits until the customer approves from their account.'**
+  String get advisorEstimateApprovalAppHint;
+
+  /// Preview submit action
+  ///
+  /// In en, this message translates to:
+  /// **'Submit estimate'**
+  String get advisorEstimateSubmit;
+
+  /// Preview submit in-flight label
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting estimate…'**
+  String get advisorEstimateSubmitting;
 }
 
 class _StaffLocalizationsDelegate

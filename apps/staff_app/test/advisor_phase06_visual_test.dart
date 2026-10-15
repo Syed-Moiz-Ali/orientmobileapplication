@@ -54,6 +54,16 @@ const _mockStats = AdvisorStatsEntity(
 
 const _mockJobs = <JobCardEntity>[
   JobCardEntity(
+    id: 'JC-2026-1041',
+    customerName: 'Ahmed Al Farsi',
+    vehicleInfo: 'Toyota Corolla · DXB-4821',
+    time: '08:00 AM',
+    status: JobCardStatus.pendingApproval,
+    technician: '',
+    odometer: 20000,
+    fuelLevel: '60%',
+  ),
+  JobCardEntity(
     id: 'JC-2026-1042',
     customerName: 'Rashid Al Nuaimi',
     vehicleInfo: 'Toyota Land Cruiser',
@@ -72,6 +82,36 @@ const _mockJobs = <JobCardEntity>[
     technician: '',
     odometer: 32000,
     fuelLevel: '50%',
+  ),
+  JobCardEntity(
+    id: 'JC-2026-1050',
+    customerName: 'Khalid Al Zaabi',
+    vehicleInfo: 'Honda Accord',
+    time: '11:30 AM',
+    status: JobCardStatus.waitingParts,
+    technician: '',
+    odometer: 45000,
+    fuelLevel: '40%',
+  ),
+  JobCardEntity(
+    id: 'JC-2026-1051',
+    customerName: 'Mariam Al Suwaidi',
+    vehicleInfo: 'Hyundai Tucson',
+    time: '12:00 PM',
+    status: JobCardStatus.completed,
+    technician: '',
+    odometer: 60000,
+    fuelLevel: '80%',
+  ),
+  JobCardEntity(
+    id: 'JC-2026-1052',
+    customerName: 'Omar Al Shamsi',
+    vehicleInfo: 'Kia Sportage',
+    time: '12:30 PM',
+    status: JobCardStatus.delivered,
+    technician: '',
+    odometer: 15000,
+    fuelLevel: '90%',
   ),
 ];
 

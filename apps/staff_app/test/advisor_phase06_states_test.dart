@@ -240,11 +240,14 @@ void main() {
     );
   });
 
-  testWidgets('empty attention home 390 en', (tester) async {
+  testWidgets('empty assigned home 390 en', (tester) async {
     await _pump(
       tester,
       const AdvisorHomeView(),
       overrides: [
+        advisorRecentJobCardsProvider.overrideWith(
+          (ref) => Future.value(const <JobCardEntity>[]),
+        ),
         advisorPendingApprovalsProvider.overrideWith(
           (ref) => Future.value(const <PendingApprovalEntity>[]),
         ),
@@ -252,7 +255,7 @@ void main() {
     );
     await expectLater(
       find.byType(AdvisorHomeView),
-      matchesGoldenFile('goldens/advisor_states_attention_empty_390_en.png'),
+      matchesGoldenFile('goldens/advisor_states_home_empty_390_en.png'),
     );
   });
 

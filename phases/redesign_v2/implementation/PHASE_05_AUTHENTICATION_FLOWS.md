@@ -147,3 +147,14 @@ This phase is UI TRANSFORMATION ONLY. Do not touch API logic or business behavio
 - Any diff outside `*/presentation/` + `*/widgets/` + l10n `*.arb` + test/golden files must carry a one-line justification or be reverted. New backend endpoints, mock production data, altered payloads, swallowed errors, changed validation = instant FAIL.
 - Proof: report lists every non-UI file touched with reason; contracts section states frozen items verified green by suites.
 
+
+---
+
+## Reference Quality Bar (Binding — Match Shipped Premium, Never Ship Cheaper)
+Two shipped files define the house bar. Study them before writing a widget:
+
+- `apps/staff_app/lib/features/advisor/presentation/pages/advisor_home_view.dart` (greeting header, hero, tiles, divider-rows, skeleton-mirrors-geometry, toasts, haptics)
+- `apps/staff_app/lib/features/advisor/presentation/pages/advisor_job_detail_view.dart` (dossier hierarchy, breadcrumbs, lifecycle, action dock)
+
+Every new surface must read as their sibling side-by-side: same spacing rhythm, same row/card grammar adapted to task, same state coverage, same motion restraint. Cheaper output = Gate 2 FAIL. Non-staff phases: apply the same grammar spirit to your module + hold your own best screen as secondary reference; never use module difference as excuse for lower grade.
+

@@ -49,14 +49,81 @@ const _mockStats = AdvisorStatsEntity(
   totalOpenJobCards: 12,
 );
 
+// Six urgent-first rows for the 390px viewport test (distinct times).
+const _mockViewportJobs = <JobCardEntity>[
+  JobCardEntity(
+    id: 'JC-2026-1041',
+    customerName: 'Ahmed Al Farsi',
+    vehicleInfo: 'Toyota Corolla',
+    time: '08:00 AM',
+    status: JobCardStatus.pendingApproval,
+    technician: '',
+    odometer: 20000,
+    fuelLevel: '60%',
+  ),
+  JobCardEntity(
+    id: 'JC-2026-1042',
+    customerName: 'Rashid Al Nuaimi',
+    vehicleInfo: 'Toyota Land Cruiser',
+    time: '08:30 AM',
+    status: JobCardStatus.waitingParts,
+    technician: 'Alex Morgan',
+    odometer: 14200,
+    fuelLevel: '75%',
+  ),
+  JobCardEntity(
+    id: 'JC-2026-1043',
+    customerName: 'Fatima Al Mansoori',
+    vehicleInfo: 'Nissan Patrol',
+    time: '09:00 AM',
+    status: JobCardStatus.inProgress,
+    technician: 'Alex Morgan',
+    odometer: 32000,
+    fuelLevel: '50%',
+  ),
+  JobCardEntity(
+    id: 'JC-2026-1044',
+    customerName: 'Khalid Al Zaabi',
+    vehicleInfo: 'Honda Accord',
+    time: '09:30 AM',
+    status: JobCardStatus.inProgress,
+    technician: '',
+    odometer: 45000,
+    fuelLevel: '40%',
+  ),
+  JobCardEntity(
+    id: 'JC-2026-1045',
+    customerName: 'Mariam Al Suwaidi',
+    vehicleInfo: 'Hyundai Tucson',
+    time: '10:00 AM',
+    status: JobCardStatus.completed,
+    technician: '',
+    odometer: 60000,
+    fuelLevel: '80%',
+  ),
+  JobCardEntity(
+    id: 'JC-2026-1046',
+    customerName: 'Omar Al Shamsi',
+    vehicleInfo: 'Kia Sportage',
+    time: '10:30 AM',
+    status: JobCardStatus.delivered,
+    technician: '',
+    odometer: 15000,
+    fuelLevel: '90%',
+  ),
+];
+
 void main() {
-  testWidgets('advisor shell adopts WorkspaceAppBar + OfflineStatusPill', (
+  testWidgets('advisor home uses a greeting header, not WorkspaceAppBar', (
     tester,
   ) async {
     await _pump(tester, const AdvisorHomeView());
-    expect(find.byType(WorkspaceAppBar), findsOneWidget);
+    // Product exception (Phase 06 correction D2): shell chrome rejected for
+    // this tab; the greeting header owns search + offline pill + bell + avatar.
+    expect(find.byType(WorkspaceAppBar), findsNothing);
     expect(find.byType(OfflineStatusPill), findsOneWidget);
     expect(find.byType(WorkspaceSearchShortcuts), findsOneWidget);
+    expect(find.textContaining('Good to see you'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
@@ -73,33 +140,62 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the app-bar search trigger also opens the search sheet', (
+  testWidgets('the header search button also opens the search sheet', (
     tester,
   ) async {
     await _pump(tester, const AdvisorHomeView());
-    final trigger = find.bySemanticsLabel(RegExp(r'Search'));
-    expect(trigger, findsWidgets);
-    await tester.tap(trigger.first, warnIfMissed: false);
+    final trigger = find.widgetWithIcon(IconButton, Icons.search_rounded);
+    expect(trigger, findsOneWidget);
+    await tester.tap(trigger, warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(find.byType(AdvisorSearchSheet), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('search hero leads, all assigned rows reachable at 390', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const AdvisorHomeView(),
+      size: const Size(390, 844),
+      overrides: [
+        advisorRecentJobCardsProvider.overrideWith(
+          (ref) => Future.value(_mockViewportJobs),
+        ),
+      ],
+    );
+    // Live direction (30% search hero) trades first-fold rows for search
+    // prominence: hero + grid own the first viewport, rows sit one scroll
+    // below. All six urgent-first rows must be reachable with zero overflow.
+    expect(find.text('Search'), findsOneWidget);
+    for (final time in ['08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM']) {
+      await tester.dragUntilVisible(
+        find.text(time),
+        find.byType(CustomScrollView),
+        const Offset(0, -300),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(time), findsOneWidget);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   for (final size in const [Size(390, 844), Size(768, 1024), Size(1280, 800)]) {
-    testWidgets('advisor shell renders without overflow at ${size.width}px', (
+    testWidgets('advisor home renders without overflow at ${size.width}px', (
       tester,
     ) async {
       await _pump(tester, const AdvisorHomeView(), size: size);
-      expect(find.byType(WorkspaceAppBar), findsOneWidget);
+      expect(find.byType(OfflineStatusPill), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
 
-  testWidgets('dark theme renders the advisor shell without exceptions', (
+  testWidgets('dark theme renders the advisor home without exceptions', (
     tester,
   ) async {
     await _pump(tester, const AdvisorHomeView(), dark: true);
-    expect(find.byType(WorkspaceAppBar), findsOneWidget);
+    expect(find.byType(OfflineStatusPill), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -132,6 +228,7 @@ Future<void> _pump(
   Locale locale = const Locale('en'),
   Size size = const Size(390, 844),
   bool dark = false,
+  List<Override> overrides = const [],
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -158,6 +255,7 @@ Future<void> _pump(
         advisorRemoteDataSourceProvider.overrideWithValue(
           _FakeAdvisorRemoteDataSource(),
         ),
+        ...overrides,
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
