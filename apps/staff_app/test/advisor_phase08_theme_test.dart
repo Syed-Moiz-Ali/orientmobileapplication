@@ -21,6 +21,8 @@ void main() {
     'lib/features/advisor/presentation/pages/choose_inspection_view.dart',
     'lib/features/advisor/presentation/pages/inspection_sheet_view.dart',
     'lib/features/advisor/presentation/pages/inspection_preview_view.dart',
+    'lib/features/advisor/presentation/pages/real_damage_canvas.dart',
+    'lib/features/advisor/presentation/pages/damage_detail_sheet.dart',
     'lib/features/advisor/inspection_pages/presentation/vehicle_map/hud_pin_bridge.dart',
   ];
 

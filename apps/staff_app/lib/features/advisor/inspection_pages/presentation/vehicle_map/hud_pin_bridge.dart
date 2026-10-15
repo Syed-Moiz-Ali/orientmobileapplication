@@ -3,106 +3,221 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/vehicle_damage_map_model.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-// ─── HUD PIN BRIDGE (Phase 08) ───────────────────────────────────────────────
-// Damage pins dropped on the 8-zone blueprint are stored as regular
-// [VehicleDamageFinding] records on synthetic `hud_<zone>` parts, so the
-// existing persist/sync payload (`vehicleBodyCondition.parts`) carries them
-// with zero contract change. Findings recorded at intake on real SVG parts
-// (e.g. `front_left_door`) are listed alongside and stay deletable.
+// ─── DAMAGE PIN BRIDGE (Phase 08) ────────────────────────────────────────────
+// Pins dropped on the real 25-part top-view map (`advisor_car_top_mapping.json`)
+// are stored as regular [VehicleDamageFinding] records keyed by the REAL part
+// id (e.g. `front_left_fender`), so the existing persist/sync payload
+// (`vehicleBodyCondition.parts`, see `vehicleBodyConditionPayload`) carries
+// them with zero contract change: same parts shape, pin = part + damage
+// detail (kind, severity, size descriptor in `damageLocation`, note, photos).
+//
+// Severity presentation follows the frozen theme roles — never raw hex:
+// minor → damageMinor (info blue), moderate → damageModerate (warning amber),
+// severe → damageSevere (danger crimson).
+//
+// The dummy 8-zone blueprint (`hud_<zone>` parts) is gone: unknown part ids
+// (including stale `hud_*` keys from old drafts) fall back to a prettified id.
 
-String hudPartId(VehicleZone zone) => 'hud_${zone.name}';
+/// The five damage kinds offered by the HUD detail sheet.
+const damageDetailKinds = <VehicleDamageType>[
+  VehicleDamageType.scratch,
+  VehicleDamageType.dent,
+  VehicleDamageType.crack,
+  VehicleDamageType.paintChip,
+  VehicleDamageType.broken,
+];
 
-VehicleZone? hudZoneForPart(String partId) {
-  if (!partId.startsWith('hud_')) return null;
-  final name = partId.substring(4);
-  for (final zone in VehicleZone.values) {
-    if (zone.name == name) return zone;
-  }
-  return null;
-}
+/// Damage size descriptors, persisted in [VehicleDamageFinding.damageLocation].
+const damageDetailSizes = <String>['coin', 'palm', 'span'];
 
-String hudZoneLabel(StaffLocalizations t, VehicleZone zone) {
-  switch (zone) {
-    case VehicleZone.front:
-      return t.advisorHudZoneFront;
-    case VehicleZone.frontLeft:
-      return t.advisorHudZoneFrontLeft;
-    case VehicleZone.sideLeft:
-      return t.advisorHudZoneSideLeft;
-    case VehicleZone.rearLeft:
-      return t.advisorHudZoneRearLeft;
-    case VehicleZone.rear:
-      return t.advisorHudZoneRear;
-    case VehicleZone.rearRight:
-      return t.advisorHudZoneRearRight;
-    case VehicleZone.sideRight:
-      return t.advisorHudZoneSideRight;
-    case VehicleZone.frontRight:
-      return t.advisorHudZoneFrontRight;
-  }
-}
-
-Offset hudZoneAnchor(VehicleZone zone) {
-  switch (zone) {
-    case VehicleZone.front:
-      return const Offset(0.5, 0.07);
-    case VehicleZone.frontLeft:
-      return const Offset(0.17, 0.22);
-    case VehicleZone.sideLeft:
-      return const Offset(0.05, 0.5);
-    case VehicleZone.rearLeft:
-      return const Offset(0.17, 0.78);
-    case VehicleZone.rear:
-      return const Offset(0.5, 0.93);
-    case VehicleZone.rearRight:
-      return const Offset(0.83, 0.78);
-    case VehicleZone.sideRight:
-      return const Offset(0.95, 0.5);
-    case VehicleZone.frontRight:
-      return const Offset(0.83, 0.22);
-  }
-}
-
-/// Amber minor / Crimson structural / Blue glass-lamp, per the HUD spec.
-DamageKind hudKindForFindings(List<VehicleDamageFinding> findings) {
-  if (findings.any((f) => f.damageType == VehicleDamageType.crack)) {
-    return DamageKind.glass;
-  }
-  if (findings.any((f) => f.severity == VehicleDamageSeverity.major)) {
-    return DamageKind.dent;
-  }
-  return DamageKind.scratch;
-}
-
-VehicleDamageFinding hudFindingForKind(DamageKind kind, VehicleZone zone) {
-  final anchor = hudZoneAnchor(zone);
+String damageKindLabel(StaffLocalizations t, VehicleDamageType kind) {
   switch (kind) {
-    case DamageKind.scratch:
-      return VehicleDamageFinding(
-        id: 'HUD-${DateTime.now().microsecondsSinceEpoch}',
-        partId: hudPartId(zone),
-        damageType: VehicleDamageType.scratch,
-        severity: VehicleDamageSeverity.minor,
-        normalizedX: anchor.dx,
-        normalizedY: anchor.dy,
-      );
-    case DamageKind.dent:
-      return VehicleDamageFinding(
-        id: 'HUD-${DateTime.now().microsecondsSinceEpoch}',
-        partId: hudPartId(zone),
-        damageType: VehicleDamageType.dent,
-        severity: VehicleDamageSeverity.major,
-        normalizedX: anchor.dx,
-        normalizedY: anchor.dy,
-      );
-    case DamageKind.glass:
-      return VehicleDamageFinding(
-        id: 'HUD-${DateTime.now().microsecondsSinceEpoch}',
-        partId: hudPartId(zone),
-        damageType: VehicleDamageType.crack,
-        severity: VehicleDamageSeverity.moderate,
-        normalizedX: anchor.dx,
-        normalizedY: anchor.dy,
-      );
+    case VehicleDamageType.scratch:
+      return t.advisorDamageKindScratch;
+    case VehicleDamageType.dent:
+      return t.advisorDamageKindDent;
+    case VehicleDamageType.crack:
+      return t.advisorDamageKindCrack;
+    case VehicleDamageType.paintChip:
+      return t.advisorDamageKindPaint;
+    case VehicleDamageType.broken:
+      return t.advisorDamageKindBroken;
+    case VehicleDamageType.deepScratch:
+      return t.advisorDamageKindScratch;
+    case VehicleDamageType.repainted:
+    case VehicleDamageType.faded:
+    case VehicleDamageType.rust:
+    case VehicleDamageType.other:
+      return t.advisorDamageKindPaint;
   }
+}
+
+IconData damageKindIcon(VehicleDamageType kind) {
+  switch (kind) {
+    case VehicleDamageType.scratch:
+    case VehicleDamageType.deepScratch:
+      return Icons.gesture_rounded;
+    case VehicleDamageType.dent:
+      return Icons.car_crash_outlined;
+    case VehicleDamageType.crack:
+      return Icons.lightbulb_outline_rounded;
+    case VehicleDamageType.paintChip:
+    case VehicleDamageType.repainted:
+    case VehicleDamageType.faded:
+    case VehicleDamageType.rust:
+      return Icons.format_paint_outlined;
+    case VehicleDamageType.broken:
+    case VehicleDamageType.other:
+      return Icons.handyman_outlined;
+  }
+}
+
+/// The kind's default severity; the sheet lets the advisor override it.
+VehicleDamageSeverity defaultSeverityForKind(VehicleDamageType kind) {
+  switch (kind) {
+    case VehicleDamageType.scratch:
+    case VehicleDamageType.paintChip:
+    case VehicleDamageType.faded:
+      return VehicleDamageSeverity.minor;
+    case VehicleDamageType.dent:
+    case VehicleDamageType.deepScratch:
+    case VehicleDamageType.crack:
+    case VehicleDamageType.repainted:
+    case VehicleDamageType.rust:
+      return VehicleDamageSeverity.moderate;
+    case VehicleDamageType.broken:
+    case VehicleDamageType.other:
+      return VehicleDamageSeverity.major;
+  }
+}
+
+String damageSeverityLabel(StaffLocalizations t, VehicleDamageSeverity severity) {
+  switch (severity) {
+    case VehicleDamageSeverity.minor:
+      return t.advisorDamageMinor;
+    case VehicleDamageSeverity.moderate:
+      return t.advisorDamageModerate;
+    case VehicleDamageSeverity.major:
+      return t.advisorDamageSevere;
+  }
+}
+
+/// Frozen theme tone for a severity — the single verdict grammar for pins,
+/// tints and pills.
+AppStatusColors damageSeverityTone(
+  AppSemanticColors semantic,
+  VehicleDamageSeverity severity,
+) {
+  switch (severity) {
+    case VehicleDamageSeverity.minor:
+      return semantic.damageMinor;
+    case VehicleDamageSeverity.moderate:
+      return semantic.damageModerate;
+    case VehicleDamageSeverity.major:
+      return semantic.damageSevere;
+  }
+}
+
+String damageSizeLabel(StaffLocalizations t, String size) {
+  switch (size) {
+    case 'coin':
+      return t.advisorDamageSizeCoin;
+    case 'palm':
+      return t.advisorDamageSizePalm;
+    case 'span':
+      return t.advisorDamageSizeSpan;
+    default:
+      return size;
+  }
+}
+
+String damageCategoryLabel(
+  StaffLocalizations t,
+  VehiclePartCategory category,
+) {
+  switch (category) {
+    case VehiclePartCategory.body:
+      return t.advisorDamageCatBody;
+    case VehiclePartCategory.glass:
+      return t.advisorDamageCatGlass;
+    case VehiclePartCategory.wheel:
+      return t.advisorDamageCatWheel;
+    case VehiclePartCategory.light:
+      return t.advisorDamageCatLight;
+    case VehiclePartCategory.mirror:
+      return t.advisorDamageCatMirror;
+    case VehiclePartCategory.other:
+      return t.advisorDamageCatBody;
+  }
+}
+
+/// Localized part name for a real map part id, with prettified-id fallback
+/// (covers stale `hud_*` keys from pre-rework drafts).
+String damagePartLabel(StaffLocalizations t, String partId) {
+  switch (partId) {
+    case 'front_bumper':
+      return t.advisorPartFrontBumper;
+    case 'hood':
+      return t.advisorPartHood;
+    case 'front_left_headlight':
+      return t.advisorPartFrontLeftHeadlight;
+    case 'front_right_headlight':
+      return t.advisorPartFrontRightHeadlight;
+    case 'front_windshield':
+      return t.advisorPartFrontWindshield;
+    case 'roof':
+      return t.advisorPartRoof;
+    case 'rear_windshield':
+      return t.advisorPartRearWindshield;
+    case 'trunk':
+      return t.advisorPartTrunk;
+    case 'rear_bumper':
+      return t.advisorPartRearBumper;
+    case 'front_left_fender':
+      return t.advisorPartFrontLeftFender;
+    case 'front_right_fender':
+      return t.advisorPartFrontRightFender;
+    case 'front_left_door':
+      return t.advisorPartFrontLeftDoor;
+    case 'rear_left_door':
+      return t.advisorPartRearLeftDoor;
+    case 'front_right_door':
+      return t.advisorPartFrontRightDoor;
+    case 'rear_right_door':
+      return t.advisorPartRearRightDoor;
+    case 'rear_left_quarter':
+      return t.advisorPartRearLeftQuarter;
+    case 'rear_right_quarter':
+      return t.advisorPartRearRightQuarter;
+    case 'left_mirror':
+      return t.advisorPartLeftMirror;
+    case 'right_mirror':
+      return t.advisorPartRightMirror;
+    case 'front_left_wheel':
+      return t.advisorPartFrontLeftWheel;
+    case 'front_right_wheel':
+      return t.advisorPartFrontRightWheel;
+    case 'rear_left_wheel':
+      return t.advisorPartRearLeftWheel;
+    case 'rear_right_wheel':
+      return t.advisorPartRearRightWheel;
+    case 'rear_left_taillight':
+      return t.advisorPartRearLeftTaillight;
+    case 'rear_right_taillight':
+      return t.advisorPartRearRightTaillight;
+    default:
+      return partId.replaceAll('_', ' ');
+  }
+}
+
+/// Worst severity across findings — drives zone tinting (severe wins).
+VehicleDamageSeverity? worstSeverity(List<VehicleDamageFinding> findings) {
+  if (findings.any((f) => f.severity == VehicleDamageSeverity.major)) {
+    return VehicleDamageSeverity.major;
+  }
+  if (findings.any((f) => f.severity == VehicleDamageSeverity.moderate)) {
+    return VehicleDamageSeverity.moderate;
+  }
+  if (findings.isNotEmpty) return VehicleDamageSeverity.minor;
+  return null;
 }

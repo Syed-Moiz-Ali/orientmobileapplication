@@ -494,7 +494,7 @@ class StaffLocalizationsAr extends StaffLocalizations {
 
   @override
   String get advisorHudCanvasHint =>
-      'انقر على منطقة لتثبيت علامة ضرر. تظهر العلامات أدناه ويمكن حذفها.';
+      'انقر على جزء من الهيكل لتسجيل ضرر. قرّب بالتكبير واسحب للتحريك.';
 
   @override
   String get advisorHudKindTitle => 'ما نوع الضرر؟';
@@ -525,7 +525,7 @@ class StaffLocalizationsAr extends StaffLocalizations {
 
   @override
   String get advisorHudNoPinsHint =>
-      'انقر على المخطط أعلاه لتحديد أول نقطة ضرر.';
+      'انقر على السيارة أعلاه لتسجيل أول نقطة ضرر.';
 
   @override
   String get advisorHudDeletePin => 'حذف العلامة';
@@ -666,7 +666,200 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorHudShowPins => 'عرض القائمة';
 
   @override
+  String get advisorHudLegendTitle => 'دليل شدة الضرر';
+
+  @override
   String get advisorHudHidePins => 'إخفاء';
+
+  @override
+  String get advisorDamageKindScratch => 'خدش / احتكاك';
+
+  @override
+  String get advisorDamageKindDent => 'انبعاج';
+
+  @override
+  String get advisorDamageKindCrack => 'شرخ';
+
+  @override
+  String get advisorDamageKindPaint => 'تلف الدهان';
+
+  @override
+  String get advisorDamageKindBroken => 'مكسور / مفقود';
+
+  @override
+  String get advisorDamageMinor => 'بسيط';
+
+  @override
+  String get advisorDamageModerate => 'متوسط';
+
+  @override
+  String get advisorDamageSevere => 'جسيم';
+
+  @override
+  String get advisorDamageSizeCoin => 'بحجم العملة';
+
+  @override
+  String get advisorDamageSizePalm => 'بحجم الكف';
+
+  @override
+  String get advisorDamageSizeSpan => 'بحجم الشبر';
+
+  @override
+  String get advisorDamageCatBody => 'هيكل';
+
+  @override
+  String get advisorDamageCatGlass => 'زجاج';
+
+  @override
+  String get advisorDamageCatWheel => 'عجلة';
+
+  @override
+  String get advisorDamageCatLight => 'مصباح';
+
+  @override
+  String get advisorDamageCatMirror => 'مرآة';
+
+  @override
+  String get advisorDamageLogTitle => 'تسجيل ضرر';
+
+  @override
+  String get advisorDamageEditTitle => 'تعديل الضرر';
+
+  @override
+  String get advisorDamageKindSection => 'نوع الضرر';
+
+  @override
+  String get advisorDamageSeveritySection => 'درجة الضرر';
+
+  @override
+  String get advisorDamageSizeSection => 'الحجم';
+
+  @override
+  String get advisorDamageSizeOptional => 'اختياري';
+
+  @override
+  String get advisorDamagePhotoSection => 'الدليل المصور';
+
+  @override
+  String get advisorDamagePhotoRequired =>
+      'الصورة مطلوبة للضرر المتوسط والجسيم.';
+
+  @override
+  String get advisorDamageAddPhoto => 'إضافة صورة';
+
+  @override
+  String get advisorDamageNoteHint => 'أضف ملاحظة (اختياري)';
+
+  @override
+  String get advisorDamageVoiceSection => 'ملاحظة صوتية';
+
+  @override
+  String get advisorDamageAddPin => 'إضافة علامة';
+
+  @override
+  String get advisorDamageSaveChanges => 'حفظ التعديلات';
+
+  @override
+  String get advisorDamageKindRequired => 'اختر نوع الضرر للمتابعة.';
+
+  @override
+  String get advisorDamageDeleteTitle => 'حذف هذه العلامة؟';
+
+  @override
+  String get advisorDamageDelete => 'حذف';
+
+  @override
+  String get advisorDamageEdit => 'تعديل';
+
+  @override
+  String get advisorDamageMapLoading => 'جارٍ تحميل خريطة المركبة…';
+
+  @override
+  String get advisorDamageMapError => 'تعذّر تحميل خريطة المركبة.';
+
+  @override
+  String get advisorDamageResetView => 'إعادة العرض';
+
+  @override
+  String get advisorDamageZoomIn => 'تكبير';
+
+  @override
+  String get advisorDamageZoomOut => 'تصغير';
+
+  @override
+  String get advisorPartFrontBumper => 'المصد الأمامي';
+
+  @override
+  String get advisorPartHood => 'غطاء المحرك';
+
+  @override
+  String get advisorPartFrontLeftHeadlight => 'المصباح الأمامي الأيسر';
+
+  @override
+  String get advisorPartFrontRightHeadlight => 'المصباح الأمامي الأيمن';
+
+  @override
+  String get advisorPartFrontWindshield => 'الزجاج الأمامي';
+
+  @override
+  String get advisorPartRoof => 'السقف';
+
+  @override
+  String get advisorPartRearWindshield => 'الزجاج الخلفي';
+
+  @override
+  String get advisorPartTrunk => 'صندوق الأمتعة';
+
+  @override
+  String get advisorPartRearBumper => 'المصد الخلفي';
+
+  @override
+  String get advisorPartFrontLeftFender => 'الرفرف الأمامي الأيسر';
+
+  @override
+  String get advisorPartFrontRightFender => 'الرفرف الأمامي الأيمن';
+
+  @override
+  String get advisorPartFrontLeftDoor => 'الباب الأمامي الأيسر';
+
+  @override
+  String get advisorPartRearLeftDoor => 'الباب الخلفي الأيسر';
+
+  @override
+  String get advisorPartFrontRightDoor => 'الباب الأمامي الأيمن';
+
+  @override
+  String get advisorPartRearRightDoor => 'الباب الخلفي الأيمن';
+
+  @override
+  String get advisorPartRearLeftQuarter => 'الرفرف الخلفي الأيسر';
+
+  @override
+  String get advisorPartRearRightQuarter => 'الرفرف الخلفي الأيمن';
+
+  @override
+  String get advisorPartLeftMirror => 'المرآة اليسرى';
+
+  @override
+  String get advisorPartRightMirror => 'المرآة اليمنى';
+
+  @override
+  String get advisorPartFrontLeftWheel => 'العجلة الأمامية اليسرى';
+
+  @override
+  String get advisorPartFrontRightWheel => 'العجلة الأمامية اليمنى';
+
+  @override
+  String get advisorPartRearLeftWheel => 'العجلة الخلفية اليسرى';
+
+  @override
+  String get advisorPartRearRightWheel => 'العجلة الخلفية اليمنى';
+
+  @override
+  String get advisorPartRearLeftTaillight => 'المصباح الخلفي الأيسر';
+
+  @override
+  String get advisorPartRearRightTaillight => 'المصباح الخلفي الأيمن';
 
   @override
   String get advisorHealthTitle => 'تقرير صحة المركبة';

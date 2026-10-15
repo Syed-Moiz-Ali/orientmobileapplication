@@ -402,7 +402,7 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorInspectionPoor => 'Poor';
 
   @override
-  String get advisorPackageTitle => 'Choose inspection package';
+  String get advisorPackageTitle => 'Choose package';
 
   @override
   String get advisorPackageSubtitle =>
@@ -431,7 +431,7 @@ class StaffLocalizationsEn extends StaffLocalizations {
 
   @override
   String advisorPackageDuration(int minutes) {
-    return '~$minutes min';
+    return '$minutes min';
   }
 
   @override
@@ -499,7 +499,7 @@ class StaffLocalizationsEn extends StaffLocalizations {
 
   @override
   String get advisorHudCanvasHint =>
-      'Tap a zone to drop a damage pin. Pins are listed below and can be deleted.';
+      'Tap a body part to log damage. Pinch to zoom, drag to pan.';
 
   @override
   String get advisorHudKindTitle => 'What kind of damage?';
@@ -530,7 +530,7 @@ class StaffLocalizationsEn extends StaffLocalizations {
 
   @override
   String get advisorHudNoPinsHint =>
-      'Tap the blueprint above to mark the first damage point.';
+      'Tap the car above to log the first damage point.';
 
   @override
   String get advisorHudDeletePin => 'Delete pin';
@@ -671,7 +671,200 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorHudShowPins => 'Show list';
 
   @override
+  String get advisorHudLegendTitle => 'Severity legend';
+
+  @override
   String get advisorHudHidePins => 'Hide';
+
+  @override
+  String get advisorDamageKindScratch => 'Scratch / Scuff';
+
+  @override
+  String get advisorDamageKindDent => 'Dent';
+
+  @override
+  String get advisorDamageKindCrack => 'Crack';
+
+  @override
+  String get advisorDamageKindPaint => 'Paint damage';
+
+  @override
+  String get advisorDamageKindBroken => 'Broken / Missing';
+
+  @override
+  String get advisorDamageMinor => 'Minor';
+
+  @override
+  String get advisorDamageModerate => 'Moderate';
+
+  @override
+  String get advisorDamageSevere => 'Severe';
+
+  @override
+  String get advisorDamageSizeCoin => 'Coin';
+
+  @override
+  String get advisorDamageSizePalm => 'Palm';
+
+  @override
+  String get advisorDamageSizeSpan => 'Hand span';
+
+  @override
+  String get advisorDamageCatBody => 'Body';
+
+  @override
+  String get advisorDamageCatGlass => 'Glass';
+
+  @override
+  String get advisorDamageCatWheel => 'Wheel';
+
+  @override
+  String get advisorDamageCatLight => 'Light';
+
+  @override
+  String get advisorDamageCatMirror => 'Mirror';
+
+  @override
+  String get advisorDamageLogTitle => 'Log damage';
+
+  @override
+  String get advisorDamageEditTitle => 'Edit damage';
+
+  @override
+  String get advisorDamageKindSection => 'Damage kind';
+
+  @override
+  String get advisorDamageSeveritySection => 'Severity';
+
+  @override
+  String get advisorDamageSizeSection => 'Size';
+
+  @override
+  String get advisorDamageSizeOptional => 'Optional';
+
+  @override
+  String get advisorDamagePhotoSection => 'Photo evidence';
+
+  @override
+  String get advisorDamagePhotoRequired =>
+      'A photo is required for Moderate and Severe damage.';
+
+  @override
+  String get advisorDamageAddPhoto => 'Add photo';
+
+  @override
+  String get advisorDamageNoteHint => 'Add a note (optional)';
+
+  @override
+  String get advisorDamageVoiceSection => 'Voice note';
+
+  @override
+  String get advisorDamageAddPin => 'Add pin';
+
+  @override
+  String get advisorDamageSaveChanges => 'Save changes';
+
+  @override
+  String get advisorDamageKindRequired => 'Choose a damage kind to continue.';
+
+  @override
+  String get advisorDamageDeleteTitle => 'Delete this pin?';
+
+  @override
+  String get advisorDamageDelete => 'Delete';
+
+  @override
+  String get advisorDamageEdit => 'Edit';
+
+  @override
+  String get advisorDamageMapLoading => 'Loading vehicle map…';
+
+  @override
+  String get advisorDamageMapError => 'Vehicle map could not be loaded.';
+
+  @override
+  String get advisorDamageResetView => 'Reset view';
+
+  @override
+  String get advisorDamageZoomIn => 'Zoom in';
+
+  @override
+  String get advisorDamageZoomOut => 'Zoom out';
+
+  @override
+  String get advisorPartFrontBumper => 'Front Bumper';
+
+  @override
+  String get advisorPartHood => 'Hood / Bonnet';
+
+  @override
+  String get advisorPartFrontLeftHeadlight => 'Front Left Headlight';
+
+  @override
+  String get advisorPartFrontRightHeadlight => 'Front Right Headlight';
+
+  @override
+  String get advisorPartFrontWindshield => 'Front Windshield';
+
+  @override
+  String get advisorPartRoof => 'Roof';
+
+  @override
+  String get advisorPartRearWindshield => 'Rear Windshield';
+
+  @override
+  String get advisorPartTrunk => 'Boot / Trunk';
+
+  @override
+  String get advisorPartRearBumper => 'Rear Bumper';
+
+  @override
+  String get advisorPartFrontLeftFender => 'Front Left Fender';
+
+  @override
+  String get advisorPartFrontRightFender => 'Front Right Fender';
+
+  @override
+  String get advisorPartFrontLeftDoor => 'Front Left Door';
+
+  @override
+  String get advisorPartRearLeftDoor => 'Rear Left Door';
+
+  @override
+  String get advisorPartFrontRightDoor => 'Front Right Door';
+
+  @override
+  String get advisorPartRearRightDoor => 'Rear Right Door';
+
+  @override
+  String get advisorPartRearLeftQuarter => 'Rear Left Quarter Panel';
+
+  @override
+  String get advisorPartRearRightQuarter => 'Rear Right Quarter Panel';
+
+  @override
+  String get advisorPartLeftMirror => 'Left Mirror';
+
+  @override
+  String get advisorPartRightMirror => 'Right Mirror';
+
+  @override
+  String get advisorPartFrontLeftWheel => 'Front Left Wheel / Tyre';
+
+  @override
+  String get advisorPartFrontRightWheel => 'Front Right Wheel / Tyre';
+
+  @override
+  String get advisorPartRearLeftWheel => 'Rear Left Wheel / Tyre';
+
+  @override
+  String get advisorPartRearRightWheel => 'Rear Right Wheel / Tyre';
+
+  @override
+  String get advisorPartRearLeftTaillight => 'Rear Left Tail Light';
+
+  @override
+  String get advisorPartRearRightTaillight => 'Rear Right Tail Light';
 
   @override
   String get advisorHealthTitle => 'Vehicle health report';

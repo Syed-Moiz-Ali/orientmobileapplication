@@ -279,4 +279,56 @@ gap: **NOT PERFORMED** (no device/emulator/browser).
 
 ---
 
+## 14. Rework — UX-principles pass: best experience per screen (2026-10-15)
+
+**Defect:** the three Phase 08 screens shared one visual recipe (padded
+card + section header + scrolling list), so two screens read as the same
+page with swapped text. The approved checkpoints composition teaches
+PRINCIPLES, not a template. This pass recomposes each screen around ITS
+task (decision / capture / judgment) while sharing one theme language.
+
+**Task → concept → composition (nothing cloned):**
+
+| Screen (job) | Concepts applied | Composition (distinct, not copied) |
+| :--- | :--- | :--- |
+| Package picker (DECIDE: compare tiers fast, pick one, go) | 1 content-owns-viewport; 2 same-budget-different-controls (sort row); 3 details collapsed until selected; 4 Continue CTA; 5 selectable cards, never rings; 6 sticky progress+sort anchor | Slim header + 4px progress + ONE 40px sort row (Recommended/Quickest/Most thorough); minimal one-line intro; selected tier expands (breakdown + focus), others collapse to name + meta; footer summary + Continue; 3-up ≥1000px |
+| Damage-map tab (CAPTURE: eyes on the car) | 1 canvas owns viewport; 2 segmented control row (its own); 3 pin list collapsed until zone tapped; 4 Done-marking CTA; 5 kind = bottom-sheet picker, never rings; 6 canvas fills, pins float | Full-bleed blueprint (legend off; kind sheet carries it) with floating hint + count badge; pins in a 48px collapsible strip (Show list/Hide, 48dp deletes); footer Done marking → checkpoints; LTR-locked geometry |
+| Checkpoints tab (GRADE: tactile verdicts) | 1 list owns viewport (72.6%); 2 segmented + icon-search row; 3 evidence dock collapsed per card; 4 Review CTA; 5 rings-as-segmented verdict; 6 sticky segmented+chips anchor | Unchanged composition from §13 (rings, snap chips, sticky mini-header, dock, Review sheet → Continue) — the reference the other screens learn from, not copy |
+| Dossier (JUDGE: scan severity, act) | 1 findings own viewport (score is one row); 2 share/export control row (its own); 3 Good collapsed + legacy collapsed by default; 4 Convert + Submit verbs; 5 status headers, never rings; 6 sticky score strip anchor | One-row sticky score strip (badge + health + 3 splits) + 44px Share/Export row (real clipboard payloads); Mandatory expanded / Recommended open / Good collapsed; pin recap LTR; legacy body collapsed; Convert + Submit footer |
+| Sheets/dialogs (INTERRUPT: decide in 3s) | Compact, one question, primary + dismiss | Kind bottom-sheet (3 collapsed rows → pin); pin sheet (list + Done); Review sheet (progress + pins + notify + Continue → onPreview); note sheet (field + Save); submit confirm (primary + Review-again dismiss) |
+
+**Viewport audit (390×844, widget-measured, asserted EN):**
+picker tiers scroll ≥50%, damage canvas ≥50%, checkpoints list ≥55%
+(EN+AR), dossier findings own the scroll beneath the 44px strip + 44px
+share/export anchors. Matrix re-verified: 320/390/768, dark, AR, 1.3× —
+no overflow (one 2px full-bleed exceed caught by tests and fixed by
+reserving the shared frame's 1px border top+bottom; shared widget
+untouched).
+
+**Chrome budget:** each screen ≤ ~112px header + 4px progress + ONE
+control row — but the row differs per task (picker sort / HUD
+segmented+search / dossier share+export).
+
+**l10n:** 12 new keys (sort ×3, done-marking, continue, show/hide pins,
+share, export, copied, expand, collapse) with exact EN/AR parity, plus
+`advisorPackageStart` reworded Start inspection → Continue (AR متابعة);
+`arb_parity_test` green, untranslated clean.
+
+**Goldens re-rendered (Phase 08-owned only, reviewed native):** all 10
+`inspection_*` baselines — package/hud/checks/health EN+AR+768. They
+show DIFFERENT layouts (tier studio / full-bleed canvas / ring list /
+score-strip dossier) sharing ONE language (navy ink, cobalt action,
+hairline borders, 8/12/16 radii). Evidence overwritten in
+`reports/PHASE_08/screens/`. No other golden touched.
+
+**Suites:** staff **422/41** (was 413/41; +9 principles tests: sort,
+disclosure, viewport, collapse, done-marking, mandatory/good defaults,
+share row, legacy-collapsed; the 41 are the name-identical pre-existing
+Phase 05/10/11 stale goldens); shared **417/417** (zone-tap + guards
+green after clearing one stale gitignored firebase build artifact —
+environmental, no source change); analyzer 0; theme + fixed-ink +
+deprecation + parity guards green. Live-device gap: **NOT PERFORMED**.
+
+---
+
 **Phase 08 executed in isolation. Phase 09 and later were not started.**

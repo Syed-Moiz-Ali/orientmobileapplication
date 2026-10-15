@@ -7,12 +7,12 @@ import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
-import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/hud_pin_bridge.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 import 'inspection_provider.dart';
+import 'real_damage_canvas.dart';
 
 /// Phase 08 — Concept A vehicle health report (Archetype 6 output).
 ///
@@ -83,63 +83,132 @@ class _InspectionPreviewViewState extends ConsumerState<InspectionPreviewView> {
             _ScoreStrip(score: score, state: state),
             _ShareExportRow(state: state, score: score),
             Expanded(
-              child: AppResponsivePage(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AppPageHeader(
-                      title: t.advisorHealthTitle,
-                      subtitle: t.advisorHealthSubtitle,
-                      breadcrumbs: [
-                        AppBreadcrumbItem(
-                          label: StaffLocalizations.of(
-                            context,
-                          )!.advisorNavJobs,
-                          onTap: widget.onBack,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final findings = Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (remaining > 0 && hasRatings) ...[
+                        _IncompleteNotice(
+                          remaining: remaining,
+                          onEdit: widget.onBack,
                         ),
-                        AppBreadcrumbItem.current(t.advisorHealthTitle),
+                        const SizedBox(height: 12),
+                      ],
+                      if (!hasRatings)
+                        EmptyState(
+                          icon: Icons.health_and_safety_outlined,
+                          title: t.advisorHealthEmpty,
+                          message: t.advisorHealthEmptyHint,
+                        )
+                      else ...[
+                        _FindingGroup(
+                          status: ItemStatus.poor,
+                          state: state,
+                          initiallyExpanded: true,
+                        ),
+                        const SizedBox(height: 10),
+                        _FindingGroup(
+                          status: ItemStatus.fair,
+                          state: state,
+                          initiallyExpanded: true,
+                        ),
+                        const SizedBox(height: 10),
+                        _FindingGroup(
+                          status: ItemStatus.good,
+                          state: state,
+                          initiallyExpanded: false,
+                        ),
+                      ],
+                    ],
+                  );
+                  final rail = Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (hasRatings) ...[
+                        _DamageRecap(state: state),
+                        _LegacyBodySection(state: state),
+                      ],
+                    ],
+                  );
+                  // Expanded/large windows: genuine two-col dossier —
+                  // score+groups left, recap+legacy actions rail right
+                  // (340px). Compact/medium stay a single judgment stream
+                  // (recap first). Window class only, never raw widths.
+                  final wide = context.isExpanded || context.isLarge;
+                  if (wide && hasRatings) {
+                    return AppResponsivePage(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Wayfinding without a duplicated H1: the app bar
+                          // already titles this dossier.
+                          AppBreadcrumbs(
+                            items: [
+                              AppBreadcrumbItem(
+                                label: StaffLocalizations.of(
+                                  context,
+                                )!.advisorNavJobs,
+                                onTap: widget.onBack,
+                              ),
+                              AppBreadcrumbItem.current(t.advisorHealthTitle),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            t.advisorHealthSubtitle,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(flex: 3, child: findings),
+                              const SizedBox(width: 16),
+                              SizedBox(width: 340, child: rail),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    );
+                  }
+                  return AppResponsivePage(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AppPageHeader(
+                          title: t.advisorHealthTitle,
+                          subtitle: t.advisorHealthSubtitle,
+                          breadcrumbs: [
+                            AppBreadcrumbItem(
+                              label: StaffLocalizations.of(
+                                context,
+                              )!.advisorNavJobs,
+                              onTap: widget.onBack,
+                            ),
+                            AppBreadcrumbItem.current(t.advisorHealthTitle),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        if (hasRatings) ...[
+                          _DamageRecap(state: state),
+                          const SizedBox(height: 12),
+                        ],
+                        findings,
+                        if (hasRatings) _LegacyBodySection(state: state),
+                        const SizedBox(height: 24),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    if (remaining > 0 && hasRatings) ...[
-                      _IncompleteNotice(
-                        remaining: remaining,
-                        onEdit: widget.onBack,
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    if (!hasRatings)
-                      EmptyState(
-                        icon: Icons.health_and_safety_outlined,
-                        title: t.advisorHealthEmpty,
-                        message: t.advisorHealthEmptyHint,
-                      )
-                    else ...[
-                      _DamageRecap(state: state),
-                      const SizedBox(height: 12),
-                      _FindingGroup(
-                        status: ItemStatus.poor,
-                        state: state,
-                        initiallyExpanded: true,
-                      ),
-                      const SizedBox(height: 10),
-                      _FindingGroup(
-                        status: ItemStatus.fair,
-                        state: state,
-                        initiallyExpanded: true,
-                      ),
-                      const SizedBox(height: 10),
-                      _FindingGroup(
-                        status: ItemStatus.good,
-                        state: state,
-                        initiallyExpanded: false,
-                      ),
-                      _LegacyBodySection(state: state),
-                    ],
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
             _ReportFooter(
@@ -291,34 +360,15 @@ class _ScoreStrip extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    t.advisorHealthScore(score),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: scoreColor,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    t.advisorHealthScoredOf(
-                      state.completedCount,
-                      state.totalItems,
-                    ),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              child: Text(
+                t.advisorHealthScore(score),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: scoreColor,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 8),
@@ -487,24 +537,12 @@ class _DamageRecap extends StatelessWidget {
     final t = StaffLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
 
-    final hudZones = <VehicleZone>[];
-    var legacyCount = 0;
-    state.vehiclePartInspections.forEach((partId, inspection) {
-      if (inspection.findings.isEmpty) return;
-      final zone = hudZoneForPart(partId);
-      if (zone != null) {
-        if (!hudZones.contains(zone)) hudZones.add(zone);
-      } else {
-        legacyCount += inspection.findings.length;
-      }
-    });
-    final hudCount = hudZones.fold<int>(
-      0,
-      (sum, z) =>
-          sum +
-          (state.vehiclePartInspections[hudPartId(z)]?.findings.length ?? 0),
-    );
-    if (hudCount + legacyCount == 0) return const SizedBox.shrink();
+    // One grammar for every pin: map-authored and intake findings share the
+    // same real part ids, so the recap renders them together.
+    final total = state.vehiclePartInspections.values
+        .expand((p) => p.findings)
+        .length;
+    if (total == 0) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -517,36 +555,20 @@ class _DamageRecap extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionHeader(
-            title: '${t.advisorHudPinsTitle} · ${hudCount + legacyCount}',
+            title: '${t.advisorHudPinsTitle} · $total',
             leadingIcon: Icons.push_pin_outlined,
           ),
           const SizedBox(height: 8),
-          // The recap geometry is LTR-locked inside the shared widget and
-          // never mirrors in AR RTL (spec 2.2 exception 1).
-          SpatialDamageHud(
-            hotspots: [
-              for (final zone in hudZones)
-                DamageHotspot(
-                  zone: zone,
-                  kind: hudKindForFindings(
-                    state.vehiclePartInspections[hudPartId(zone)]?.findings ??
-                        const [],
-                  ),
-                  label: hudZoneLabel(t, zone),
-                ),
-            ],
+          // The recap geometry is LTR-locked inside the canvas and never
+          // mirrors in AR RTL (spec §2.2 exception 1). Read-only: pins are
+          // managed on the damage-map tab.
+          SizedBox(
             height: 200,
-          ),
-          if (legacyCount > 0) ...[
-            const SizedBox(height: 8),
-            Text(
-              '${t.advisorBodyConditionHint} · ${t.advisorHealthAttachments(legacyCount)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
+            child: RealDamageCanvas(
+              inspections: state.vehiclePartInspections,
+              editable: false,
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -573,9 +595,7 @@ class _LegacyBodySectionState extends State<_LegacyBodySection> {
 
     var legacyCount = 0;
     widget.state.vehiclePartInspections.forEach((partId, inspection) {
-      if (hudZoneForPart(partId) == null) {
-        legacyCount += inspection.findings.length;
-      }
+      legacyCount += inspection.findings.length;
     });
     if (legacyCount == 0) return const SizedBox.shrink();
 
@@ -967,42 +987,28 @@ class _ReportFooter extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final wide = constraints.maxWidth >= 560;
-                final convert = SizedBox(
-                  width: wide ? null : double.infinity,
+            // One primary verb (Convert) + one secondary verb (Submit):
+            // always side-by-side, never two stacked full-width primaries.
+            Row(
+              children: [
+                Expanded(
                   child: PrimaryButton(
                     label: t.advisorHealthConvert,
                     icon: Icons.request_quote_outlined,
                     onPressed: !hasRatings || isSubmitting ? null : onConvert,
                   ),
-                );
-                final submit = SizedBox(
-                  width: wide ? null : double.infinity,
-                  child: PrimaryButton(
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SecondaryButton(
                     label: isSubmitting
                         ? t.advisorHealthSubmitting
                         : t.advisorHealthSubmit,
-                    icon: Icons.cloud_upload_outlined,
-                    isLoading: isSubmitting,
+                    leadingIcon: Icons.cloud_upload_outlined,
                     onPressed: !hasRatings || isSubmitting ? null : onSubmit,
                   ),
-                );
-                if (wide) {
-                  return Row(
-                    children: [
-                      Expanded(child: convert),
-                      const SizedBox(width: 10),
-                      Expanded(child: submit),
-                    ],
-                  );
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [convert, const SizedBox(height: 8), submit],
-                );
-              },
+                ),
+              ],
             ),
             TextButton.icon(
               onPressed: isSubmitting ? null : onBack,

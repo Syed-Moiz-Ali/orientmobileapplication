@@ -31,6 +31,15 @@ const _delegates = <LocalizationsDelegate<dynamic>>[
   GlobalCupertinoLocalizations.delegate,
 ];
 
+/// Bounded settle (same rationale as the hud suite): fixed 30x100ms
+/// pumps instead of pumpAndSettle, so golden renders can never stick
+/// on the sheet's infinite shimmer/spinner animations.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 30; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
 InspectionState _goldenSheetSeed() => InspectionState(
   sections: const [
     InspectionSection(
@@ -55,42 +64,45 @@ InspectionState _goldenSheetSeed() => InspectionState(
     'engine_0': ItemStatus.good,
   },
   vehiclePartInspections: {
-    'hud_front': const VehiclePartInspection(
-      partId: 'hud_front',
+    'hood': const VehiclePartInspection(
+      partId: 'hood',
       findings: [
         VehicleDamageFinding(
-          partId: 'hud_front',
+          partId: 'hood',
           id: 'F1',
           damageType: VehicleDamageType.scratch,
           severity: VehicleDamageSeverity.minor,
           normalizedX: 0.5,
-          normalizedY: 0.07,
+          normalizedY: 0.16,
         ),
       ],
     ),
-    'hud_sideLeft': const VehiclePartInspection(
-      partId: 'hud_sideLeft',
+    'front_left_door': const VehiclePartInspection(
+      partId: 'front_left_door',
       findings: [
         VehicleDamageFinding(
-          partId: 'hud_sideLeft',
+          partId: 'front_left_door',
           id: 'F2',
           damageType: VehicleDamageType.dent,
           severity: VehicleDamageSeverity.major,
-          normalizedX: 0.05,
-          normalizedY: 0.5,
+          damageLocation: 'palm',
+          photos: ['/tmp/door.jpg'],
+          normalizedX: 0.27,
+          normalizedY: 0.38,
         ),
       ],
     ),
-    'hud_rear': const VehiclePartInspection(
-      partId: 'hud_rear',
+    'rear_windshield': const VehiclePartInspection(
+      partId: 'rear_windshield',
       findings: [
         VehicleDamageFinding(
-          partId: 'hud_rear',
+          partId: 'rear_windshield',
           id: 'F3',
           damageType: VehicleDamageType.crack,
           severity: VehicleDamageSeverity.moderate,
+          photos: ['/tmp/glass.jpg'],
           normalizedX: 0.5,
-          normalizedY: 0.93,
+          normalizedY: 0.71,
         ),
       ],
     ),
@@ -113,16 +125,16 @@ InspectionState _goldenPreviewSeed() => InspectionState(
   },
   jobCardId: 'JC-1042',
   vehiclePartInspections: {
-    'hud_front': const VehiclePartInspection(
-      partId: 'hud_front',
+    'hood': const VehiclePartInspection(
+      partId: 'hood',
       findings: [
         VehicleDamageFinding(
-          partId: 'hud_front',
+          partId: 'hood',
           id: 'F1',
           damageType: VehicleDamageType.scratch,
           severity: VehicleDamageSeverity.minor,
           normalizedX: 0.5,
-          normalizedY: 0.07,
+          normalizedY: 0.16,
         ),
       ],
     ),
@@ -199,6 +211,48 @@ void main() {
     );
   });
 
+  testWidgets('damage map with all 25 parts pinned 390 en', (tester) async {
+    final definition = await VehicleMapLoader.load();
+    final severities = VehicleDamageSeverity.values;
+    final types = [
+      VehicleDamageType.scratch,
+      VehicleDamageType.dent,
+      VehicleDamageType.crack,
+    ];
+    final inspections = <String, VehiclePartInspection>{};
+    for (var i = 0; i < definition.parts.length; i++) {
+      final part = definition.parts[i];
+      final center = part.path.getBounds().center;
+      inspections[part.id] = VehiclePartInspection(
+        partId: part.id,
+        findings: [
+          VehicleDamageFinding(
+            partId: part.id,
+            id: 'ALL-$i',
+            damageType: types[i % types.length],
+            severity: severities[i % severities.length],
+            normalizedX: (center.dx / 1254).clamp(0.0, 1.0),
+            normalizedY: (center.dy / 1254).clamp(0.0, 1.0),
+          ),
+        ],
+      );
+    }
+    await _pumpSheet(
+      tester,
+      InspectionState(
+        sections: _goldenSheetSeed().sections,
+        statuses: _goldenSheetSeed().statuses,
+        vehiclePartInspections: inspections,
+      ),
+      const Size(390, 844),
+      const Locale('en'),
+    );
+    await expectLater(
+      find.byType(InspectionSheetView),
+      matchesGoldenFile('goldens/inspection_damage_allpins_390_en.png'),
+    );
+  });
+
   testWidgets('hud checkpoints 390 en', (tester) async {
     final t = await StaffLocalizations.delegate.load(const Locale('en'));
     await _pumpSheet(
@@ -208,9 +262,9 @@ void main() {
       const Locale('en'),
     );
     await tester.tap(find.textContaining(t.advisorHudTabChecks));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     await expectLater(
       find.byType(InspectionSheetView),
       matchesGoldenFile('goldens/inspection_checks_390_en.png'),
@@ -242,6 +296,45 @@ void main() {
       matchesGoldenFile('goldens/inspection_health_768_en.png'),
     );
   });
+
+  testWidgets('package picker 1280 en desktop panoramic', (tester) async {
+    await _pump(
+      tester,
+      ChooseInspectionView(onSelect: () {}, onSkip: () {}, onBack: () {}),
+      const Size(1280, 800),
+      const Locale('en'),
+    );
+    await expectLater(
+      find.byType(ChooseInspectionView),
+      matchesGoldenFile('goldens/inspection_package_1280_en.png'),
+    );
+  });
+
+  testWidgets('hud desktop side-by-side 1280 en', (tester) async {
+    await _pumpSheet(
+      tester,
+      _goldenSheetSeed(),
+      const Size(1280, 800),
+      const Locale('en'),
+    );
+    await expectLater(
+      find.byType(InspectionSheetView),
+      matchesGoldenFile('goldens/inspection_hud_1280_en.png'),
+    );
+  });
+
+  testWidgets('health report two-col 1280 en', (tester) async {
+    await _pumpPreview(
+      tester,
+      _goldenPreviewSeed(),
+      const Size(1280, 800),
+      const Locale('en'),
+    );
+    await expectLater(
+      find.byType(InspectionPreviewView),
+      matchesGoldenFile('goldens/inspection_health_1280_en.png'),
+    );
+  });
 }
 
 Future<void> _pump(
@@ -269,7 +362,7 @@ Future<void> _pump(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await _settle(tester);
 }
 
 Future<void> _pumpSheet(
@@ -304,7 +397,7 @@ Future<void> _pumpSheet(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await _settle(tester);
 }
 
 Future<void> _pumpPreview(
@@ -333,7 +426,7 @@ Future<void> _pumpPreview(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await _settle(tester);
 }
 
 class _FakeLocal implements AdvisorLocalDataSource {

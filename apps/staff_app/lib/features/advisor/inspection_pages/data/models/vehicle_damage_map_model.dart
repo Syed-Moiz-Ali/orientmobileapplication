@@ -209,7 +209,29 @@ class VehicleMapLoader {
   static const assetPath = 'assets/vehicle_maps/advisor_car_top_mapping.json';
   static Future<VehicleMapDefinition>? _cached;
 
-  static Future<VehicleMapDefinition> load() => _cached ??= _load();
+  /// Last successfully parsed definition. Repeat renders (tab switches,
+  /// re-pumps, dossier recap) reuse it synchronously instead of
+  /// re-subscribing to the load future.
+  static VehicleMapDefinition? _last;
+
+  /// Synchronous peek at the last loaded definition, or null before the
+  /// first successful load.
+  static VehicleMapDefinition? get cached => _last;
+
+  static Future<VehicleMapDefinition> load() =>
+      _cached ??= _load().then((definition) {
+        _last = definition;
+        return definition;
+      });
+
+  /// Drops the cached definition so the next [load] re-reads the asset.
+  /// Used by the HUD retry card after a map load failure.
+  static Future<VehicleMapDefinition> reload() {
+    _cached = null;
+    return load();
+  }
+
+
 
   static Future<VehicleMapDefinition> _load() async {
     final raw = jsonDecode(await rootBundle.loadString(assetPath));

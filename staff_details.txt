@@ -1,0 +1,72 @@
+Orient Workshop - Owner Login + Staff Details
+===========================================
+Production URL: https://g.erpmass.com/api/v1
+
+Owner Login (for testing)
+-------------------------
+App: Owner application / login
+Mobile: 971501234568
+OTP Request: POST /auth/send-otp {"type":"sms","phone":"971501234568"}
+OTP Verify: POST /auth/verify-otp {"type":"sms","phone":"971501234568","otp":"123456"}
+OTP: 123456
+Role: owner
+
+Staff Created (via POST /owner/team with Owner JWT)
+---------------------------------------------------
+
+1. Advisor
+   id: 14
+   userId: 25
+   empId: ADV-TEST-001
+   name: Test Advisor
+   role: advisor
+   email: advisor.test001@orient.dev
+   phone: 971501111001
+   password: Password@123
+   branchId: 1
+   branch: Main Branch - Dubai
+   shift: Morning (08:00 - 17:00)
+   designation: Service Advisor
+   department: Service
+   isActive: true
+   Login: staff app with phone/email + password OR OTP (123456 in dev / SMS in prod)
+
+2. Technician
+   id: 15
+   userId: 26
+   empId: TECH-TEST-001
+   name: Test Technician
+   role: technician
+   email: technician.test001@orient.dev
+   phone: 971501111002
+   password: Password@123
+   branchId: 1
+   branch: Main Branch - Dubai
+   shift: Morning (08:00 - 17:00)
+   designation: Technician
+   department: Workshop
+   isActive: true
+   Login: staff app with phone/email + password OR OTP
+
+3. Supervisor
+   id: 16
+   userId: 27
+   empId: SUP-TEST-001
+   name: Test Supervisor
+   role: supervisor
+   email: supervisor.test001@orient.dev
+   phone: 971501111003
+   password: Password@123
+   branchId: 1
+   branch: Main Branch - Dubai
+   shift: Morning (08:00 - 17:00)
+   designation: Supervisor
+   department: Workshop
+   isActive: true
+   Login: staff app with phone/email + password OR OTP
+
+Notes
+-----
+- Created on production: https://g.erpmass.com/api/v1
+- All 3 staff linked to user logins (password + OTP enabled).
+- Verify: GET /owner/team with Owner token.

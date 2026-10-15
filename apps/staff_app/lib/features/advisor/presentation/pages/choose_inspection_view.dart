@@ -266,49 +266,73 @@ class _ChooseInspectionViewState extends ConsumerState<ChooseInspectionView> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Tablet/desktop: three tiers side by side; compact
-                    // widths stack. Viewport (not the constrained content
-                    // box) drives the breakpoint.
+                    // Medium windows: 2-col tiers (first two side-by-side,
+                    // third full-width). Expanded/large: panoramic 3-up
+                    // tiers + summary rail (not stretched). The window
+                    // class (AppResponsive) drives it — never raw widths.
                     Builder(
                       builder: (context) {
-                        final wide =
-                            MediaQuery.sizeOf(context).width >= 1000;
-                        if (wide) {
+                        final expanded =
+                            context.isExpanded || context.isLarge;
+                        final medium = !context.isCompact;
+                        Widget tier(int i) => _PackageCard(
+                          package: ordered[i],
+                          selected:
+                              ordered[i].templateName == _selectedTemplate,
+                          onTap: () => setState(
+                            () => _selectedTemplate =
+                                ordered[i].templateName,
+                          ),
+                        );
+                        if (expanded) {
                           return Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              for (var i = 0; i < ordered.length; i++) ...[
-                                Expanded(
-                                  child: _PackageCard(
-                                    package: ordered[i],
-                                    selected:
-                                        ordered[i].templateName ==
-                                        _selectedTemplate,
-                                    onTap: () => setState(
-                                      () => _selectedTemplate =
-                                          ordered[i].templateName,
-                                    ),
-                                  ),
+                              Expanded(
+                                flex: 3,
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    for (var i = 0; i < ordered.length; i++) ...[
+                                      Expanded(child: tier(i)),
+                                      if (i < ordered.length - 1)
+                                        const SizedBox(width: 12),
+                                    ],
+                                  ],
                                 ),
-                                if (i < ordered.length - 1)
-                                  const SizedBox(width: 12),
-                              ],
+                              ),
+                              const SizedBox(width: 16),
+                              SizedBox(
+                                width: 300,
+                                child: _DesktopSummaryRail(
+                                  selected: _selected,
+                                  onStart: _startInspection,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        if (medium) {
+                          return Column(
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: tier(0)),
+                                  const SizedBox(width: 10),
+                                  Expanded(child: tier(1)),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              tier(2),
                             ],
                           );
                         }
                         return Column(
                           children: [
                             for (var i = 0; i < ordered.length; i++) ...[
-                              _PackageCard(
-                                package: ordered[i],
-                                selected:
-                                    ordered[i].templateName ==
-                                    _selectedTemplate,
-                                onTap: () => setState(
-                                  () => _selectedTemplate =
-                                      ordered[i].templateName,
-                                ),
-                              ),
+                              tier(i),
                               if (i < ordered.length - 1)
                                 const SizedBox(height: 10),
                             ],
@@ -321,9 +345,18 @@ class _ChooseInspectionViewState extends ConsumerState<ChooseInspectionView> {
                 ),
               ),
             ),
-            _PickerFooter(
-              selected: _selected,
-              onStart: _startInspection,
+            Builder(
+              builder: (context) {
+                // Expanded/large windows carry Continue in the summary
+                // rail; the bottom dock stays compact/medium only.
+                if (context.isExpanded || context.isLarge) {
+                  return const SizedBox.shrink();
+                }
+                return _PickerFooter(
+                  selected: _selected,
+                  onStart: _startInspection,
+                );
+              },
             ),
           ],
         ),
@@ -600,6 +633,71 @@ class _Chip extends StatelessWidget {
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Desktop-only summary rail: selected tier recap + Continue CTA beside
+/// the panoramic 3-up tiers (not a stretched phone dock).
+class _DesktopSummaryRail extends StatelessWidget {
+  final _InspectionPackage selected;
+  final VoidCallback onStart;
+
+  const _DesktopSummaryRail({required this.selected, required this.onStart});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.r16),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            t.advisorPackageSelected,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _packageName(t, selected),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            t.advisorPackageCheckpoints(selected.checkpoints),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            t.advisorPackageDuration(selected.minutes),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: 12),
+          PrimaryButton(
+            label: t.advisorPackageStart,
+            icon: Icons.arrow_forward_rounded,
+            onPressed: onStart,
           ),
         ],
       ),

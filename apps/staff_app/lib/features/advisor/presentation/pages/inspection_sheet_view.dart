@@ -11,12 +11,15 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/core/services/audio_recorder_service.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
+import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/vehicle_damage_map_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/hud_pin_bridge.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
+import 'damage_detail_sheet.dart';
 import 'inspection_provider.dart';
+import 'real_damage_canvas.dart';
 
 // ─── INSPECTION SHEET (SPATIAL HUD) ──────────────────────────────────────────
 
@@ -122,23 +125,32 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
                   ? const AppResponsivePage(
                       child: AppSkeleton.listRows(rows: 4),
                     )
-                  : _tab == 0
-                  ? _DamageCanvasTab(state: state)
-                  : _CheckpointsTab(
-                      state: state,
-                      selectedSectionId: _selectedSectionId,
-                      onSection: (id) =>
-                          setState(() => _selectedSectionId = id),
-                      expandedSections: _expandedSections,
-                      onToggleExpanded: (id) => setState(() {
-                        if (_expandedSections.contains(id)) {
-                          _expandedSections.remove(id);
-                        } else {
-                          _expandedSections.add(id);
-                        }
-                      }),
+                  // Map and checkpoints are SEPARATE full-width tabs at
+                  // every width: never side-by-side panes. IndexedStack
+                  // preserves each room's scroll, selection and zoom
+                  // across tab switches.
+                  : IndexedStack(
+                      index: _tab,
+                      children: [
+                        _DamageCanvasTab(state: state),
+                        _CheckpointsTab(
+                          state: state,
+                          selectedSectionId: _selectedSectionId,
+                          onSection: (id) =>
+                              setState(() => _selectedSectionId = id),
+                          expandedSections: _expandedSections,
+                          onToggleExpanded: (id) => setState(() {
+                            if (_expandedSections.contains(id)) {
+                              _expandedSections.remove(id);
+                            } else {
+                              _expandedSections.add(id);
+                            }
+                          }),
+                        ),
+                      ],
                     ),
             ),
+            // One docked CTA for the active tab's job (any width).
             _HudFooter(
               callbacks: widget.callbacks,
               tab: _tab,
@@ -149,6 +161,116 @@ class _InspectionSheetViewState extends ConsumerState<InspectionSheetView> {
       ),
     );
   }
+}
+
+// ─── SHARED DAMAGE FLOWS ───────────────────────────────────────────────────
+// One capture/edit pipeline for the damage tab and the pins drawer:
+// detail sheet → provider persist (bridge payload unchanged) → voice merge.
+
+void _mergeDamageVoice(
+  WidgetRef ref,
+  String findingId,
+  List<String> photos,
+  String voicePath,
+) {
+  if (voicePath.isEmpty) return;
+  final notifier = ref.read(inspectionProvider.notifier);
+  final current = ref
+      .read(inspectionProvider)
+      .media['vehicle-damage:$findingId'];
+  notifier.setMedia(
+    'vehicle-damage:$findingId',
+    (current ?? ItemMedia(photoPaths: photos)).copyWith(audioPath: voicePath),
+  );
+}
+
+Future<VehicleDamageFinding?> showAddDamageFlow({
+  required BuildContext context,
+  required WidgetRef ref,
+  required String partId,
+  required VehiclePartCategory category,
+  required Offset normalized,
+}) async {
+  final result = await showDamageDetailSheet(
+    context: context,
+    partId: partId,
+    category: category,
+    normalized: normalized,
+  );
+  if (result == null) return null;
+  ref.read(inspectionProvider.notifier).addVehicleDamageFinding(result.finding);
+  _mergeDamageVoice(
+    ref,
+    result.finding.id,
+    result.finding.photos,
+    result.voicePath,
+  );
+  return result.finding;
+}
+
+Future<VehicleDamageFinding?> showEditDamageFlow({
+  required BuildContext context,
+  required WidgetRef ref,
+  required VehicleDamageFinding finding,
+}) async {
+  // The canvas already loaded the definition, so the sync peek resolves
+  // without an async gap (stale ids fall back to other).
+  final part = VehicleMapLoader.cached?.partById(finding.partId);
+  final voice =
+      ref
+          .read(inspectionProvider)
+          .media['vehicle-damage:${finding.id}']
+          ?.audioPath ??
+      '';
+  final result = await showDamageDetailSheet(
+    context: context,
+    partId: finding.partId,
+    category: part?.category ?? VehiclePartCategory.other,
+    existing: finding,
+    existingVoice: voice,
+  );
+  if (result == null) return null;
+  ref
+      .read(inspectionProvider.notifier)
+      .updateVehicleDamageFinding(result.finding);
+  _mergeDamageVoice(
+    ref,
+    result.finding.id,
+    result.finding.photos,
+    result.voicePath,
+  );
+  return result.finding;
+}
+
+/// Pins with content (plus non-default conditions): the one pin grammar
+/// shared by the mobile strip, the desktop rail and the chips dock.
+Map<String, VehiclePartInspection> pinsEntries(InspectionState state) {
+  final entries = <String, VehiclePartInspection>{};
+  state.vehiclePartInspections.forEach((partId, inspection) {
+    if (inspection.findings.isNotEmpty ||
+        inspection.condition != VehiclePartCondition.uninspected) {
+      entries[partId] = inspection;
+    }
+  });
+  return entries;
+}
+
+int pinsTotal(InspectionState state) =>
+    state.vehiclePartInspections.values.expand((p) => p.findings).length;
+
+/// Review sheet (progress + pins + notify + Continue → dossier): the single
+/// grading gate, opened from the mobile footer and the desktop left dock.
+Future<void> showInspectionReviewSheet(
+  BuildContext context,
+  WidgetRef ref,
+  InspectionCallbacks callbacks,
+) {
+  HapticFeedback.lightImpact();
+  return showAppModalSheet<void>(
+    context: context,
+    title: StaffLocalizations.of(context)!.advisorHudReview,
+    builder: (ctx) => _ReviewSheetBody(callbacks: callbacks),
+  );
 }
 
 // One compact control row: 40px segmented tabs + icon-expandable search.
@@ -318,108 +440,130 @@ class _DamageCanvasTab extends ConsumerStatefulWidget {
 }
 
 class _DamageCanvasTabState extends ConsumerState<_DamageCanvasTab> {
-  bool _pinsExpanded = false;
+  String? _selectedId;
+  final TransformationController _zoomCtrl = TransformationController();
 
-  List<DamageHotspot> _hotspots() {
-    final spots = <DamageHotspot>[];
-    widget.state.vehiclePartInspections.forEach((partId, inspection) {
-      final zone = hudZoneForPart(partId);
-      if (zone == null || inspection.findings.isEmpty) return;
-      spots.add(
-        DamageHotspot(
-          zone: zone,
-          kind: hudKindForFindings(inspection.findings),
-          code: 'D-${spots.length + 1}',
-        ),
-      );
-    });
-    return spots;
+  @override
+  void dispose() {
+    _zoomCtrl.dispose();
+    super.dispose();
+  }
+
+  /// One selected object, two views: first tap selects the pin (chip on
+  /// the canvas + highlighted drawer row), tapping it again opens the
+  /// edit sheet. Drawer rows select on tap, edit via their edit button.
+  void _selectOrEdit(VehicleDamageFinding finding) {
+    if (_selectedId == finding.id) {
+      _editFlow(finding);
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() => _selectedId = finding.id);
+  }
+
+  void _resetZoom() {
+    HapticFeedback.selectionClick();
+    _zoomCtrl.value = Matrix4.identity();
+  }
+
+  void _stepZoom(double factor) {
+    HapticFeedback.selectionClick();
+    final next = (_zoomCtrl.value.getMaxScaleOnAxis() * factor).clamp(1.0, 4.0);
+    _zoomCtrl.value = Matrix4.identity()..scaleByDouble(next, next, next, 1);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Tablet 40/60 master-detail (canvas + pins). Viewport (not the
-    // constrained content box) drives the breakpoint.
-    final wide = MediaQuery.sizeOf(context).width >= 600;
-    final canvas = _FullBleedCanvas(
-      hotspots: _hotspots(),
-      onZoneTap: (zone) => _openKindSheet(context, ref, zone),
-      onHotspotTap: (spot) => _openPinSheet(context, ref, spot.zone),
-    );
-    final pins = _CollapsiblePinsStrip(
-      state: widget.state,
-      expanded: _pinsExpanded,
-      onToggle: () => setState(() => _pinsExpanded = !_pinsExpanded),
-    );
-    if (wide) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(flex: 3, child: canvas),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: SingleChildScrollView(
-              padding: const EdgeInsetsDirectional.only(end: 12, bottom: 16),
-              child: pins,
-            ),
-          ),
-        ],
-      );
-    }
+    final state = widget.state;
+    final total = pinsTotal(state);
+    // Wider canvas on expanded/large windows (720), capped at 560 on
+    // compact/medium. Window class only — never raw widths.
+    final canvasMax = context.adaptive.pick(compact: 560.0, medium: 560.0, expanded: 720.0, large: 720.0);
+
     return Column(
       children: [
-        Expanded(child: canvas),
-        pins,
+        // Studio title block: title + count + zoom/reset, then legend.
+        _MapTitleBlock(
+          total: total,
+          onZoomIn: () => _stepZoom(1.25),
+          onZoomOut: () => _stepZoom(0.8),
+          onResetView: _resetZoom,
+        ),
+        Expanded(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: canvasMax),
+              child: _MapSurface(
+                state: state,
+                selectedFindingId: _selectedId,
+                zoomController: _zoomCtrl,
+                onPartTap: (partId, category, normalized) =>
+                    _addFlow(partId, category, normalized),
+                onFindingTap: _selectOrEdit,
+                onFindingEdit: _editFlow,
+              ),
+            ),
+          ),
+        ),
+        // Pin chips docked at the canvas bottom: quick select.
+        if (total > 0)
+          _PinChipsDock(
+            state: state,
+            selectedFindingId: _selectedId,
+            onSelect: _selectOrEdit,
+          ),
+        _PinsBar(
+          state: state,
+          onShowList: () => showPinsManager(
+            context: context,
+            ref: ref,
+            state: state,
+            selectedFindingId: _selectedId,
+            onSelect: _selectOrEdit,
+            onEdit: _editFlow,
+          ),
+        ),
       ],
     );
   }
 
-  Future<void> _openKindSheet(
-    BuildContext context,
-    WidgetRef ref,
-    VehicleZone zone,
+  Future<void> _addFlow(
+    String partId,
+    VehiclePartCategory category,
+    Offset normalized,
   ) async {
-    final t = StaffLocalizations.of(context)!;
     HapticFeedback.mediumImpact();
-    final picked = await showAppModalSheet<DamageKind>(
+    final finding = await showAddDamageFlow(
       context: context,
-      title: '${t.advisorHudKindTitle} — ${hudZoneLabel(t, zone)}',
-      builder: (ctx) => _KindPicker(zone: zone),
+      ref: ref,
+      partId: partId,
+      category: category,
+      normalized: normalized,
     );
-    if (picked != null) {
-      ref
-          .read(inspectionProvider.notifier)
-          .addVehicleDamageFinding(hudFindingForKind(picked, zone));
-      // Progressive disclosure: the pin strip stays collapsed until the
-      // first zone tap produces a pin, then opens to confirm the capture.
-      if (mounted) setState(() => _pinsExpanded = true);
+    if (finding != null && mounted) {
+      setState(() => _selectedId = finding.id);
     }
   }
 
-  Future<void> _openPinSheet(
-    BuildContext context,
-    WidgetRef ref,
-    VehicleZone zone,
-  ) async {
-    await showAppModalSheet<void>(
-      context: context,
-      title:
-          '${StaffLocalizations.of(context)!.advisorHudPinsTitle} — ${hudZoneLabel(StaffLocalizations.of(context)!, zone)}',
-      builder: (ctx) => _ZonePinsSheet(zone: zone),
-    );
+  Future<void> _editFlow(VehicleDamageFinding finding) async {
+    HapticFeedback.selectionClick();
+    await showEditDamageFlow(context: context, ref: ref, finding: finding);
   }
 }
 
-class _FullBleedCanvas extends StatelessWidget {
-  final List<DamageHotspot> hotspots;
-  final ValueChanged<VehicleZone> onZoneTap;
-  final ValueChanged<DamageHotspot> onHotspotTap;
+/// Studio title block: "Damage map · N" + 48dp zoom/reset controls,
+/// then the severity legend row. Flat surface above the sunken canvas.
+class _MapTitleBlock extends StatelessWidget {
+  final int total;
+  final VoidCallback onZoomIn;
+  final VoidCallback onZoomOut;
+  final VoidCallback onResetView;
 
-  const _FullBleedCanvas({
-    required this.hotspots,
-    required this.onZoneTap,
-    required this.onHotspotTap,
+  const _MapTitleBlock({
+    required this.total,
+    required this.onZoomIn,
+    required this.onZoomOut,
+    required this.onResetView,
   });
 
   @override
@@ -427,343 +571,154 @@ class _FullBleedCanvas extends StatelessWidget {
     final t = StaffLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
 
-    // Full-bleed capture surface: the blueprint fills the viewport with
-    // floating hint + count chips instead of card chrome.
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // The shared framed diagram costs a 1px border top+bottom beyond
-        // `height`; reserve it so the full-bleed canvas never exceeds the
-        // tight space the tab gives it.
-        final canvasHeight = constraints.maxHeight.isFinite
-            ? (constraints.maxHeight - 4).clamp(200.0, double.infinity)
-            : 420.0;
-        return Stack(
-          children: [
-            // The blueprint geometry is LTR-locked inside the shared widget
-            // and never mirrors in AR RTL (spec 2.2 exception 1). The
-            // kind bottom-sheet carries the damage legend, so the capture
-            // surface stays a pure full-bleed canvas.
-            SpatialDamageHud(
-              hotspots: hotspots,
-              onZoneTap: onZoneTap,
-              onHotspotTap: onHotspotTap,
-              height: canvasHeight,
-              showLegend: false,
-            ),
-            PositionedDirectional(
-              top: 8,
-              start: 12,
-              end: 12,
-          child: Row(
+    return Container(
+      padding: const EdgeInsetsDirectional.only(start: 16, end: 4, top: 4),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.surface.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
-                    border: Border.all(color: colors.outlineVariant),
-                  ),
-                  child: Text(
-                    t.advisorHudCanvasHint,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+              Icon(
+                Icons.directions_car_outlined,
+                size: 20,
+                color: colors.onSurfaceVariant,
               ),
               const SizedBox(width: 8),
-              Semantics(
-                label: '${t.advisorHudPinsTitle} ${hotspots.length}',
-                child: Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
+              Expanded(
+                child: Text(
+                  '${t.advisorHudTabDamage} · $total',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
-                  child: Text(
-                    '${hotspots.length}',
-                    style: TextStyle(
-                      // FIXED-INK: white count on the saturated action fill.
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ],
+              _StudioControl(
+                tooltip: t.advisorDamageZoomIn,
+                icon: Icons.add_rounded,
+                onTap: onZoomIn,
               ),
-            ),
-          ],
-        );
-      },
+              _StudioControl(
+                tooltip: t.advisorDamageZoomOut,
+                icon: Icons.remove_rounded,
+                onTap: onZoomOut,
+              ),
+              _StudioControl(
+                tooltip: t.advisorDamageResetView,
+                icon: Icons.center_focus_strong_rounded,
+                onTap: onResetView,
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: _MapLegend(),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _KindPicker extends StatelessWidget {
-  final VehicleZone zone;
+class _StudioControl extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
 
-  const _KindPicker({required this.zone});
+  const _StudioControl({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: IconButton(
+        onPressed: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        tooltip: tooltip,
+        icon: Icon(
+          icon,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          size: 22,
+        ),
+      ),
+    );
+  }
+}
+
+/// Pin chips docked at the canvas bottom: severity dot + part label,
+/// tap to select (shared selection with canvas pins + drawer rows).
+class _PinChipsDock extends StatelessWidget {
+  final InspectionState state;
+  final String? selectedFindingId;
+  final ValueChanged<VehicleDamageFinding> onSelect;
+
+  const _PinChipsDock({
+    required this.state,
+    required this.selectedFindingId,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final entries = pinsEntries(state);
+    final findings = [
+      for (final entry in entries.entries) ...entry.value.findings,
+    ];
+
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.outlineVariant)),
+      ),
+      child: ListView.separated(
+        padding: const EdgeInsetsDirectional.only(
+          start: 12,
+          end: 12,
+          top: 8,
+          bottom: 8,
+        ),
+        scrollDirection: Axis.horizontal,
+        itemCount: findings.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        itemBuilder: (context, i) => _PinChip(
+          finding: findings[i],
+          selected: selectedFindingId == findings[i].id,
+          onTap: () => onSelect(findings[i]),
+        ),
+      ),
+    );
+  }
+}
+
+/// The pins bar: collapsed summary + Show list (drawer/sheet, never a
+/// side pane).
+class _PinsBar extends StatelessWidget {
+  final InspectionState state;
+  final VoidCallback onShowList;
+
+  const _PinsBar({required this.state, required this.onShowList});
 
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
-    final semantic = context.semanticColors;
-    final options = [
-      (
-        kind: DamageKind.scratch,
-        title: t.advisorHudKindMinor,
-        hint: t.advisorHudKindMinorHint,
-        icon: Icons.gesture_rounded,
-        base: semantic.warning.base,
-        subtle: semantic.warning.subtle,
-        ink: semantic.warning.ink,
-      ),
-      (
-        kind: DamageKind.dent,
-        title: t.advisorHudKindStructural,
-        hint: t.advisorHudKindStructuralHint,
-        icon: Icons.car_crash_outlined,
-        base: semantic.danger.base,
-        subtle: semantic.danger.subtle,
-        ink: semantic.danger.ink,
-      ),
-      (
-        kind: DamageKind.glass,
-        title: t.advisorHudKindGlass,
-        hint: t.advisorHudKindGlassHint,
-        icon: Icons.lightbulb_outline_rounded,
-        base: semantic.info.base,
-        subtle: semantic.info.subtle,
-        ink: semantic.info.ink,
-      ),
-    ];
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final o in options)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                Navigator.pop(context, o.kind);
-              },
-              child: Semantics(
-                button: true,
-                label: o.title,
-                child: Container(
-                  constraints: const BoxConstraints(minHeight: 56),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: o.subtle,
-                    borderRadius: BorderRadius.circular(AppDimensions.r12),
-                    border: Border.all(color: o.base.withValues(alpha: 0.45)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: o.base,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          o.icon,
-                          // FIXED-INK: white glyph on the saturated kind fill.
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              o.title,
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: o.ink,
-                                  ),
-                            ),
-                            Text(
-                              o.hint,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        const SizedBox(height: 12),
-      ],
-    );
-  }
-}
-
-class _ZonePinsSheet extends ConsumerWidget {
-  final VehicleZone zone;
-
-  const _ZonePinsSheet({required this.zone});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = StaffLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final notifier = ref.read(inspectionProvider.notifier);
-    final inspection = ref
-        .watch(inspectionProvider)
-        .vehiclePartInspections[hudPartId(zone)];
-
-    final findings = inspection?.findings ?? const <VehicleDamageFinding>[];
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (findings.isEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text(
-              t.advisorHudNoPins,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
-            ),
-          )
-        else
-          for (final f in findings)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  border: Border.all(color: colors.outlineVariant),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        SpatialDamageHud.labelForKind(
-                          context,
-                          hudKindForFindings([f]),
-                        ),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 48,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          HapticFeedback.selectionClick();
-                          notifier.removeVehicleDamageFinding(
-                            hudPartId(zone),
-                            f.id,
-                          );
-                          if (ref
-                                  .read(inspectionProvider)
-                                  .vehiclePartInspections[hudPartId(zone)]
-                                  ?.findings
-                                  .isEmpty ??
-                              true) {
-                            Navigator.pop(context);
-                          }
-                        },
-                        icon: const Icon(
-                          Icons.delete_outline_rounded,
-                          size: 20,
-                        ),
-                        label: Text(t.advisorHudDeletePin),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-          child: SizedBox(
-            width: double.infinity,
-            child: PrimaryButton(
-              label: StaffLocalizations.of(context)!.advisorHudDone,
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CollapsiblePinsStrip extends ConsumerWidget {
-  final InspectionState state;
-  final bool expanded;
-  final VoidCallback onToggle;
-
-  const _CollapsiblePinsStrip({
-    required this.state,
-    required this.expanded,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = StaffLocalizations.of(context)!;
-    final colors = Theme.of(context).colorScheme;
-    final notifier = ref.read(inspectionProvider.notifier);
-
-    final hudEntries = <VehicleZone, VehiclePartInspection>{};
-    final legacyEntries = <String, VehiclePartInspection>{};
-    state.vehiclePartInspections.forEach((partId, inspection) {
-      if (inspection.findings.isEmpty &&
-          inspection.condition == VehiclePartCondition.uninspected) {
-        return;
-      }
-      final zone = hudZoneForPart(partId);
-      if (zone != null) {
-        hudEntries[zone] = inspection;
-      } else if (inspection.findings.isNotEmpty) {
-        legacyEntries[partId] = inspection;
-      }
-    });
-
-    final total =
-        hudEntries.values.expand((p) => p.findings).length +
-        legacyEntries.values.expand((p) => p.findings).length;
-    final isEmpty = hudEntries.isEmpty && legacyEntries.isEmpty;
+    final total = pinsTotal(state);
 
     return Container(
       decoration: BoxDecoration(
@@ -772,111 +727,334 @@ class _CollapsiblePinsStrip extends ConsumerWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Collapsed summary bar — the list stays hidden until a zone
-            // is tapped (or the bar itself is tapped to audit pins).
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                onToggle();
-              },
-              child: Semantics(
-                button: true,
-                expanded: expanded,
-                label: '${t.advisorHudPinsTitle} $total',
-                child: Container(
-                  height: 48,
-                  padding: const EdgeInsetsDirectional.only(start: 16, end: 8),
-                  color: Colors.transparent,
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.push_pin_outlined,
-                        size: 20,
-                        color: colors.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          total == 0
-                              ? t.advisorHudNoPins
-                              : '${t.advisorHudPinsTitle} · $total',
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        alignment: Alignment.center,
-                        child: Text(
-                          expanded
-                              ? t.advisorHudHidePins
-                              : t.advisorHudShowPins,
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(
-                                color: colors.primary,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                      ),
-                      Icon(
-                        expanded
-                            ? Icons.keyboard_arrow_down_rounded
-                            : Icons.keyboard_arrow_up_rounded,
-                        color: colors.onSurfaceVariant,
-                        size: 22,
-                      ),
-                    ],
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onShowList();
+          },
+          child: Semantics(
+            button: true,
+            label: '${t.advisorHudPinsTitle} $total',
+            child: Container(
+              height: 48,
+              padding: const EdgeInsetsDirectional.only(start: 16, end: 8),
+              color: Colors.transparent,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.push_pin_outlined,
+                    size: 20,
+                    color: colors.onSurfaceVariant,
                   ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      total == 0
+                          ? t.advisorHudNoPins
+                          : '${t.advisorHudPinsTitle} · $total',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    alignment: Alignment.center,
+                    child: Text(
+                      t.advisorHudShowPins,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.keyboard_arrow_up_rounded,
+                    color: colors.onSurfaceVariant,
+                    size: 22,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pin manager: bottom sheet on compact/medium, right end-drawer on
+/// expanded/large (Esc closes). Never a side pane.
+Future<void> showPinsManager({
+  required BuildContext context,
+  required WidgetRef ref,
+  required InspectionState state,
+  required String? selectedFindingId,
+  required ValueChanged<VehicleDamageFinding> onSelect,
+  required ValueChanged<VehicleDamageFinding> onEdit,
+}) {
+  final t = StaffLocalizations.of(context)!;
+  final total = pinsTotal(state);
+  final list = _PinsList(
+    selectedFindingId: selectedFindingId,
+    onSelect: (f) {
+      onSelect(f);
+      // Selection reflects under the drawer; it stays open for auditing.
+    },
+    onEdit: onEdit,
+  );
+  if (context.isExpanded || context.isLarge) {
+    final colors = Theme.of(context).colorScheme;
+    return showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (dialogContext, _, __) => Align(
+        alignment: AlignmentDirectional.centerEnd,
+        child: SizedBox(
+          width: 360,
+          height: double.infinity,
+          child: Material(
+            color: colors.surface,
+            borderRadius: const BorderRadiusDirectional.only(
+              topStart: Radius.circular(AppDimensions.r16),
+              bottomStart: Radius.circular(AppDimensions.r16),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Focus(
+              autofocus: true,
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent &&
+                    event.logicalKey == LogicalKeyboardKey.escape) {
+                  Navigator.of(dialogContext).pop();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    height: 56,
+                    padding: const EdgeInsetsDirectional.only(
+                      start: 16,
+                      end: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: colors.outlineVariant),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${t.advisorHudPinsTitle} · $total',
+                            style: Theme.of(dialogContext).textTheme.labelLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: IconButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(),
+                            tooltip: MaterialLocalizations.of(
+                              dialogContext,
+                            ).closeButtonTooltip,
+                            icon: const Icon(Icons.close_rounded, size: 22),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(child: list),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      transitionBuilder: (context, animation, _, child) => SlideTransition(
+        position:
+            Tween<Offset>(
+              begin: Directionality.of(context) == TextDirection.rtl
+                  ? const Offset(-1, 0)
+                  : const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
+        child: child,
+      ),
+    );
+  }
+  return showAppModalSheet<void>(
+    context: context,
+    title: '${t.advisorHudPinsTitle} · $total',
+    builder: (_) => list,
+  );
+}
+
+/// Full-bleed capture surface: the vector car fills a sunken studio
+/// canvas (a different room from the flat items list) with a floating
+/// hint and a severity legend. The pin count lives on the studio
+/// toolbar — never as a floating square.
+class _MapSurface extends StatelessWidget {
+  final InspectionState state;
+  final String? selectedFindingId;
+  final TransformationController zoomController;
+  final void Function(
+    String partId,
+    VehiclePartCategory category,
+    Offset normalized,
+  )
+  onPartTap;
+  final ValueChanged<VehicleDamageFinding> onFindingTap;
+  final ValueChanged<VehicleDamageFinding> onFindingEdit;
+
+  const _MapSurface({
+    required this.state,
+    required this.selectedFindingId,
+    required this.zoomController,
+    required this.onPartTap,
+    required this.onFindingTap,
+    required this.onFindingEdit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final empty = pinsTotal(state) == 0;
+
+    // Sunken studio tone: panels read as car paint on both themes and on
+    // web-wide canvases instead of washing out on bare white. The title
+    // block above carries title + legend; the canvas keeps a first-run
+    // coachmark only while zero pins exist.
+    return Container(
+      color: context.semanticColors.surfaceSunken,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            // The map geometry is LTR-locked inside the canvas and never
+            // mirrors in AR RTL (spec §2.2 exception 1).
+            child: RealDamageCanvas(
+              inspections: state.vehiclePartInspections,
+              selectedFindingId: selectedFindingId,
+              transformationController: zoomController,
+              onPartTap: (part, normalized) =>
+                  onPartTap(part.id, part.category, normalized),
+              onFindingTap: onFindingTap,
+              onFindingEdit: onFindingEdit,
+            ),
+          ),
+          if (empty)
+            PositionedDirectional(
+              top: 8,
+              start: 12,
+              end: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.surface.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(AppDimensions.r12),
+                  border: Border.all(color: colors.outlineVariant),
+                ),
+                child: Text(
+                  t.advisorHudCanvasHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
-            if (expanded)
-              Container(
-                constraints: const BoxConstraints(maxHeight: 220),
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                child: isEmpty
-                    ? Text(
-                        t.advisorHudNoPinsHint,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            for (final zone in VehicleZone.values)
-                              if (hudEntries.containsKey(zone))
-                                for (final f in hudEntries[zone]!.findings)
-                                  _PinRow(
-                                    title:
-                                        '${hudZoneLabel(t, zone)} — ${SpatialDamageHud.labelForKind(context, hudKindForFindings([f]))}',
-                                    onDelete: () => notifier
-                                        .removeVehicleDamageFinding(
-                                          hudPartId(zone),
-                                          f.id,
-                                        ),
-                                  ),
-                            for (final entry in legacyEntries.entries)
-                              for (final f in entry.value.findings)
-                                _PinRow(
-                                  title:
-                                      '${entry.key} — ${SpatialDamageHud.labelForKind(context, hudKindForFindings([f]))}',
-                                  onDelete: () => notifier
-                                      .removeVehicleDamageFinding(
-                                        entry.key,
-                                        f.id,
-                                      ),
-                                ),
-                          ],
-                        ),
-                      ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Canvas legend: frozen severity grammar (blue minor, amber moderate,
+/// crimson severe) shared with zones, pins and pills.
+class _MapLegend extends StatelessWidget {
+  const _MapLegend();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final entries = [
+      (
+        semantic.damageMinor,
+        damageSeverityLabel(t, VehicleDamageSeverity.minor),
+      ),
+      (
+        semantic.damageModerate,
+        damageSeverityLabel(t, VehicleDamageSeverity.moderate),
+      ),
+      (
+        semantic.damageSevere,
+        damageSeverityLabel(t, VehicleDamageSeverity.major),
+      ),
+    ];
+
+    return Semantics(
+      label: t.advisorHudLegendTitle,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: colors.surface.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(AppDimensions.r8),
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        // Wrap: narrow 320px viewports fold to two lines instead of
+        // overflowing a fixed Row.
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            for (var i = 0; i < entries.length; i++)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: entries[i].$1.base,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    entries[i].$2,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
           ],
         ),
@@ -885,54 +1063,233 @@ class _CollapsiblePinsStrip extends ConsumerWidget {
   }
 }
 
-class _PinRow extends StatelessWidget {
-  final String title;
+
+/// One managed damage pin: part label, kind + severity pill, photo
+/// thumbnail when present, 48dp edit/delete. Delete confirms inline
+/// (two-step inside the row, never a blind one-tap destroy).
+class _DamagePinRow extends StatefulWidget {
+  final String partId;
+  final VehicleDamageFinding finding;
+  final bool selected;
+  final VoidCallback? onSelect;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _PinRow({required this.title, required this.onDelete});
+  const _DamagePinRow({
+    required this.partId,
+    required this.finding,
+    this.selected = false,
+    this.onSelect,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  State<_DamagePinRow> createState() => _DamagePinRowState();
+}
+
+class _DamagePinRowState extends State<_DamagePinRow> {
+  bool _confirming = false;
 
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
+    final finding = widget.finding;
+    final tone = damageSeverityTone(context.semanticColors, finding.severity);
+    final meta = [
+      damageKindLabel(t, finding.damageType),
+      if (finding.damageLocation.isNotEmpty)
+        damageSizeLabel(t, finding.damageLocation),
+      if (finding.note.isNotEmpty) finding.note,
+    ].join(' · ');
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsetsDirectional.only(start: 12),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppDimensions.r12),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+    final selected = widget.selected;
+    return GestureDetector(
+      onTap: widget.onSelect == null
+          ? null
+          : () {
+              HapticFeedback.selectionClick();
+              widget.onSelect!();
+            },
+      child: Semantics(
+        button: widget.onSelect != null,
+        selected: selected,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsetsDirectional.only(start: 12),
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.primary.withValues(alpha: 0.10)
+                : colors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppDimensions.r12),
+            border: Border.all(
+              color: selected ? colors.primary : colors.outlineVariant,
+              width: selected ? 1.5 : 1,
             ),
           ),
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: IconButton(
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                onDelete();
-              },
-              tooltip: t.advisorHudDeletePin,
-              icon: Icon(
-                Icons.delete_outline_rounded,
-                color: colors.error,
-                size: 22,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  if (finding.photos.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 10),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppDimensions.r8),
+                          border: Border.all(color: colors.outlineVariant),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppDimensions.r8),
+                          child: localImage(
+                            finding.photos.first,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 10),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: tone.base.withValues(alpha: 0.16),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          damageKindIcon(finding.damageType),
+                          color: tone.base,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          damagePartLabel(t, widget.partId),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          meta,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.onSurfaceVariant),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: tone.base.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Text(
+                      damageSeverityLabel(t, finding.severity),
+                      style: TextStyle(
+                        color: tone.ink,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: IconButton(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        widget.onEdit();
+                      },
+                      tooltip: t.advisorDamageEdit,
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        color: colors.onSurfaceVariant,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: IconButton(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _confirming = !_confirming);
+                      },
+                      tooltip: t.advisorHudDeletePin,
+                      icon: Icon(
+                        _confirming
+                            ? Icons.close_rounded
+                            : Icons.delete_outline_rounded,
+                        color: colors.error,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
+              if (_confirming)
+                Container(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 0,
+                    end: 8,
+                    top: 0,
+                    bottom: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          t.advisorDamageDeleteTitle,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: colors.error,
+                              ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 48,
+                        child: TextButton(
+                          onPressed: () {
+                            HapticFeedback.mediumImpact();
+                            widget.onDelete();
+                          },
+                          child: Text(t.advisorDamageDelete),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 48,
+                        child: TextButton(
+                          onPressed: () => setState(() => _confirming = false),
+                          child: Text(
+                            MaterialLocalizations.of(context).cancelButtonLabel,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -983,7 +1340,7 @@ class _CheckpointsTab extends ConsumerWidget {
         active.items.isNotEmpty &&
         !expandedSections.contains(active.id);
 
-    return Column(
+    final body = Column(
       children: [
         SizedBox(
           height: 44,
@@ -1106,6 +1463,17 @@ class _CheckpointsTab extends ConsumerWidget {
         ),
       ],
     );
+    // Expanded/large windows: content caps at 960 centered instead of
+    // stretching full-bleed. Window class only — never raw widths.
+    if (context.isExpanded || context.isLarge) {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 960),
+          child: body,
+        ),
+      );
+    }
+    return body;
   }
 }
 
@@ -1301,225 +1669,261 @@ class _CheckpointCardState extends ConsumerState<_CheckpointCard> {
         ? context.semanticColors.inspectionFail.base
         : null;
 
+    // Items-pane grammar: flat card on the default surface; severity
+    // lives in the verdict segmented control + a 3px left accent only —
+    // cards never borrow map-pin shapes or status fills.
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.r12),
-        border: Border.all(
-          color: ringColor ?? colors.outlineVariant,
-          width: status != null ? 1.5 : 1,
-        ),
+        border: Border.all(color: colors.outlineVariant),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: (ringColor ?? colors.onSurfaceVariant).withValues(
-                    alpha: 0.14,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '${widget.index}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      color: ringColor ?? colors.onSurfaceVariant,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ),
+      // Severity accent: a 3px bar pinned to the card's leading edge.
+      // (A non-uniform Border + borderRadius crashes paint, so the bar
+      // is a separate fill, not a border side.)
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 3,
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: ringColor ?? Colors.transparent,
+                borderRadius: BorderRadius.circular(AppDimensions.r4),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  widget.itemName,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    height: 1.25,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (evidenceCount > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Icon(
-                        Icons.attachment_rounded,
-                        size: 12,
-                        color: colors.primary,
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: (ringColor ?? colors.onSurfaceVariant)
+                              .withValues(alpha: 0.14),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${widget.index}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: ringColor ?? colors.onSurfaceVariant,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$evidenceCount',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: colors.primary,
-                          fontFeatures: const [FontFeature.tabularFigures()],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.itemName,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                height: 1.25,
+                              ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (evidenceCount > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.attachment_rounded,
+                                size: 12,
+                                color: colors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$evidenceCount',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color: colors.primary,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (status != null)
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: IconButton(
+                            onPressed: () =>
+                                notifier.setStatus(widget.itemId, null),
+                            tooltip: StaffLocalizations.of(
+                              context,
+                            )!.advisorHudResetGrade,
+                            padding: EdgeInsets.zero,
+                            icon: Icon(
+                              Icons.refresh_rounded,
+                              color: colors.onSurfaceVariant,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Compact grading rings: 48px segmented control inline in the
+                  // card header — emerald / amber / crimson. No tiny radios.
+                  Row(
+                    children: [
+                      _GradeRing(
+                        status: ItemStatus.good,
+                        selected: status == ItemStatus.good,
+                        onTap: () => notifier.setStatus(
+                          widget.itemId,
+                          status == ItemStatus.good ? null : ItemStatus.good,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      _GradeRing(
+                        status: ItemStatus.fair,
+                        selected: status == ItemStatus.fair,
+                        onTap: () => notifier.setStatus(
+                          widget.itemId,
+                          status == ItemStatus.fair ? null : ItemStatus.fair,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      _GradeRing(
+                        status: ItemStatus.poor,
+                        selected: status == ItemStatus.poor,
+                        onTap: () => notifier.setStatus(
+                          widget.itemId,
+                          status == ItemStatus.poor ? null : ItemStatus.poor,
                         ),
                       ),
                     ],
                   ),
-                ),
-              if (status != null)
-                SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: IconButton(
-                    onPressed: () => notifier.setStatus(widget.itemId, null),
-                    tooltip: StaffLocalizations.of(context)!
-                        .advisorHudResetGrade,
-                    padding: EdgeInsets.zero,
-                    icon: Icon(
-                      Icons.refresh_rounded,
-                      color: colors.onSurfaceVariant,
-                      size: 18,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Compact grading rings: 48px segmented control inline in the
-          // card header — emerald / amber / crimson. No tiny radios.
-          Row(
-            children: [
-              _GradeRing(
-                status: ItemStatus.good,
-                selected: status == ItemStatus.good,
-                onTap: () => notifier.setStatus(
-                  widget.itemId,
-                  status == ItemStatus.good ? null : ItemStatus.good,
-                ),
-              ),
-              const SizedBox(width: 6),
-              _GradeRing(
-                status: ItemStatus.fair,
-                selected: status == ItemStatus.fair,
-                onTap: () => notifier.setStatus(
-                  widget.itemId,
-                  status == ItemStatus.fair ? null : ItemStatus.fair,
-                ),
-              ),
-              const SizedBox(width: 6),
-              _GradeRing(
-                status: ItemStatus.poor,
-                selected: status == ItemStatus.poor,
-                onTap: () => notifier.setStatus(
-                  widget.itemId,
-                  status == ItemStatus.poor ? null : ItemStatus.poor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _dockOpen = !_dockOpen);
-            },
-            child: Semantics(
-              button: true,
-              expanded: _dockOpen,
-              label: StaffLocalizations.of(context)!.advisorHudDockTitle,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: evidenceCount > 0
-                      ? colors.primary.withValues(alpha: 0.08)
-                      : colors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(AppDimensions.r8),
-                  border: Border.all(
-                    color: evidenceCount > 0
-                        ? colors.primary.withValues(alpha: 0.3)
-                        : colors.outlineVariant,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _dockOpen
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      size: 20,
-                      color: colors.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        StaffLocalizations.of(context)!.advisorHudDockTitle,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (evidenceCount > 0)
-                      Container(
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _dockOpen = !_dockOpen);
+                    },
+                    child: Semantics(
+                      button: true,
+                      expanded: _dockOpen,
+                      label: StaffLocalizations.of(
+                        context,
+                      )!.advisorHudDockTitle,
+                      child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
+                          horizontal: 10,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        child: Text(
-                          '$evidenceCount',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: colors.primary,
-                            fontFeatures: const [FontFeature.tabularFigures()],
+                          color: evidenceCount > 0
+                              ? colors.primary.withValues(alpha: 0.08)
+                              : colors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(AppDimensions.r8),
+                          border: Border.all(
+                            color: evidenceCount > 0
+                                ? colors.primary.withValues(alpha: 0.3)
+                                : colors.outlineVariant,
                           ),
                         ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _dockOpen
+                                  ? Icons.keyboard_arrow_up_rounded
+                                  : Icons.keyboard_arrow_down_rounded,
+                              size: 20,
+                              color: colors.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                StaffLocalizations.of(
+                                  context,
+                                )!.advisorHudDockTitle,
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (evidenceCount > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.primary.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(100),
+                                ),
+                                child: Text(
+                                  '$evidenceCount',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: colors.primary,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.attach_file_rounded,
+                              size: 18,
+                              color: evidenceCount > 0
+                                  ? colors.primary
+                                  : colors.onSurfaceVariant,
+                            ),
+                          ],
+                        ),
                       ),
-                    const SizedBox(width: 2),
-                    Icon(
-                      Icons.attach_file_rounded,
-                      size: 18,
-                      color: evidenceCount > 0
-                          ? colors.primary
-                          : colors.onSurfaceVariant,
+                    ),
+                  ),
+                  if (_dockOpen) ...[
+                    const SizedBox(height: 8),
+                    _EvidenceDock(
+                      itemId: widget.itemId,
+                      itemName: widget.itemName,
                     ),
                   ],
-                ),
+                ],
               ),
             ),
-          ),
-          if (_dockOpen) ...[
-            const SizedBox(height: 8),
-            _EvidenceDock(itemId: widget.itemId, itemName: widget.itemName),
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
 class _GradeRing extends StatelessWidget {
+  // Card wrappers: Container > IntrinsicHeight > Row[bar, Expanded > Column].
   final ItemStatus status;
   final bool selected;
   final VoidCallback onTap;
@@ -2162,14 +2566,8 @@ class _HudFooter extends ConsumerWidget {
     );
   }
 
-  Future<void> _openReviewSheet(BuildContext context, WidgetRef ref) {
-    HapticFeedback.lightImpact();
-    return showAppModalSheet<void>(
-      context: context,
-      title: StaffLocalizations.of(context)!.advisorHudReview,
-      builder: (ctx) => _ReviewSheetBody(callbacks: callbacks),
-    );
-  }
+  Future<void> _openReviewSheet(BuildContext context, WidgetRef ref) =>
+      showInspectionReviewSheet(context, ref, callbacks);
 }
 
 class _ReviewSheetBody extends ConsumerWidget {
@@ -2242,6 +2640,146 @@ class _ReviewSheetBody extends ConsumerWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The full pins management list (select/edit/delete rows) for the pins
+/// drawer/sheet. It watches the provider itself: drawer routes are built
+/// once, so a captured snapshot would go stale after edits/deletes.
+class _PinsList extends ConsumerWidget {
+  final String? selectedFindingId;
+  final ValueChanged<VehicleDamageFinding> onSelect;
+  final ValueChanged<VehicleDamageFinding> onEdit;
+
+  const _PinsList({
+    required this.selectedFindingId,
+    required this.onSelect,
+    required this.onEdit,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final state = ref.watch(inspectionProvider);
+    final notifier = ref.read(inspectionProvider.notifier);
+    final entries = pinsEntries(state);
+    final total = pinsTotal(state);
+
+    if (entries.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            t.advisorHudNoPinsHint,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            '${t.advisorHudPinsTitle} · $total',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ),
+        for (final entry in entries.entries)
+          for (final f in entry.value.findings)
+            _DamagePinRow(
+              partId: entry.key,
+              finding: f,
+              selected: selectedFindingId == f.id,
+              onSelect: () => onSelect(f),
+              onEdit: () => onEdit(f),
+              onDelete: () =>
+                  notifier.removeVehicleDamageFinding(entry.key, f.id),
+            ),
+      ],
+    );
+  }
+}
+
+
+/// One docked pin chip: severity dot + part short label. Numbers live
+/// on the canvas pins only, so dock order never disagrees with them.
+class _PinChip extends StatelessWidget {
+  final VehicleDamageFinding finding;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PinChip({
+    required this.finding,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final tone = damageSeverityTone(context.semanticColors, finding.severity);
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label:
+          '${damagePartLabel(t, finding.partId)} — ${damageSeverityLabel(t, finding.severity)}',
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: Container(
+          height: 36,
+          padding: const EdgeInsetsDirectional.only(start: 10, end: 10),
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.primary.withValues(alpha: 0.14)
+                : colors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(
+              color: selected ? colors.primary : colors.outlineVariant,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: tone.base,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 120),
+                child: Text(
+                  damagePartLabel(t, finding.partId),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

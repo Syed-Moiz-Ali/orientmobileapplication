@@ -833,7 +833,7 @@ abstract class StaffLocalizations {
   /// Package picker screen title
   ///
   /// In en, this message translates to:
-  /// **'Choose inspection package'**
+  /// **'Choose package'**
   String get advisorPackageTitle;
 
   /// Package picker supporting text
@@ -881,7 +881,7 @@ abstract class StaffLocalizations {
   /// Estimated package duration chip
   ///
   /// In en, this message translates to:
-  /// **'~{minutes} min'**
+  /// **'{minutes} min'**
   String advisorPackageDuration(int minutes);
 
   /// Package checkpoint count
@@ -1001,7 +1001,7 @@ abstract class StaffLocalizations {
   /// Damage canvas hint
   ///
   /// In en, this message translates to:
-  /// **'Tap a zone to drop a damage pin. Pins are listed below and can be deleted.'**
+  /// **'Tap a body part to log damage. Pinch to zoom, drag to pan.'**
   String get advisorHudCanvasHint;
 
   /// Damage kind picker title
@@ -1061,7 +1061,7 @@ abstract class StaffLocalizations {
   /// Empty pins hint
   ///
   /// In en, this message translates to:
-  /// **'Tap the blueprint above to mark the first damage point.'**
+  /// **'Tap the car above to log the first damage point.'**
   String get advisorHudNoPinsHint;
 
   /// Delete damage pin action
@@ -1322,11 +1322,395 @@ abstract class StaffLocalizations {
   /// **'Show list'**
   String get advisorHudShowPins;
 
+  /// Damage map severity legend title
+  ///
+  /// In en, this message translates to:
+  /// **'Severity legend'**
+  String get advisorHudLegendTitle;
+
   /// Collapse pins strip
   ///
   /// In en, this message translates to:
   /// **'Hide'**
   String get advisorHudHidePins;
+
+  /// Damage kind: scratch or scuff
+  ///
+  /// In en, this message translates to:
+  /// **'Scratch / Scuff'**
+  String get advisorDamageKindScratch;
+
+  /// Damage kind: dent
+  ///
+  /// In en, this message translates to:
+  /// **'Dent'**
+  String get advisorDamageKindDent;
+
+  /// Damage kind: crack
+  ///
+  /// In en, this message translates to:
+  /// **'Crack'**
+  String get advisorDamageKindCrack;
+
+  /// Damage kind: paint damage
+  ///
+  /// In en, this message translates to:
+  /// **'Paint damage'**
+  String get advisorDamageKindPaint;
+
+  /// Damage kind: broken or missing part
+  ///
+  /// In en, this message translates to:
+  /// **'Broken / Missing'**
+  String get advisorDamageKindBroken;
+
+  /// Damage severity: minor
+  ///
+  /// In en, this message translates to:
+  /// **'Minor'**
+  String get advisorDamageMinor;
+
+  /// Damage severity: moderate
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get advisorDamageModerate;
+
+  /// Damage severity: severe
+  ///
+  /// In en, this message translates to:
+  /// **'Severe'**
+  String get advisorDamageSevere;
+
+  /// Damage size: coin-sized
+  ///
+  /// In en, this message translates to:
+  /// **'Coin'**
+  String get advisorDamageSizeCoin;
+
+  /// Damage size: palm-sized
+  ///
+  /// In en, this message translates to:
+  /// **'Palm'**
+  String get advisorDamageSizePalm;
+
+  /// Damage size: hand-span
+  ///
+  /// In en, this message translates to:
+  /// **'Hand span'**
+  String get advisorDamageSizeSpan;
+
+  /// Part category: body
+  ///
+  /// In en, this message translates to:
+  /// **'Body'**
+  String get advisorDamageCatBody;
+
+  /// Part category: glass
+  ///
+  /// In en, this message translates to:
+  /// **'Glass'**
+  String get advisorDamageCatGlass;
+
+  /// Part category: wheel
+  ///
+  /// In en, this message translates to:
+  /// **'Wheel'**
+  String get advisorDamageCatWheel;
+
+  /// Part category: light
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get advisorDamageCatLight;
+
+  /// Part category: mirror
+  ///
+  /// In en, this message translates to:
+  /// **'Mirror'**
+  String get advisorDamageCatMirror;
+
+  /// Damage detail sheet title (new pin)
+  ///
+  /// In en, this message translates to:
+  /// **'Log damage'**
+  String get advisorDamageLogTitle;
+
+  /// Damage detail sheet title (edit pin)
+  ///
+  /// In en, this message translates to:
+  /// **'Edit damage'**
+  String get advisorDamageEditTitle;
+
+  /// Damage kind picker section
+  ///
+  /// In en, this message translates to:
+  /// **'Damage kind'**
+  String get advisorDamageKindSection;
+
+  /// Damage severity picker section
+  ///
+  /// In en, this message translates to:
+  /// **'Severity'**
+  String get advisorDamageSeveritySection;
+
+  /// Damage size picker section
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get advisorDamageSizeSection;
+
+  /// Damage size optional tag
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get advisorDamageSizeOptional;
+
+  /// Damage photo section
+  ///
+  /// In en, this message translates to:
+  /// **'Photo evidence'**
+  String get advisorDamagePhotoSection;
+
+  /// Photo-required rule note
+  ///
+  /// In en, this message translates to:
+  /// **'A photo is required for Moderate and Severe damage.'**
+  String get advisorDamagePhotoRequired;
+
+  /// Add damage photo action
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get advisorDamageAddPhoto;
+
+  /// Damage note field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note (optional)'**
+  String get advisorDamageNoteHint;
+
+  /// Damage voice note section
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note'**
+  String get advisorDamageVoiceSection;
+
+  /// Confirm new damage pin
+  ///
+  /// In en, this message translates to:
+  /// **'Add pin'**
+  String get advisorDamageAddPin;
+
+  /// Confirm damage pin edits
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get advisorDamageSaveChanges;
+
+  /// Kind-required validation error
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a damage kind to continue.'**
+  String get advisorDamageKindRequired;
+
+  /// Inline pin delete confirmation
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this pin?'**
+  String get advisorDamageDeleteTitle;
+
+  /// Confirm pin delete
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get advisorDamageDelete;
+
+  /// Edit pin action
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get advisorDamageEdit;
+
+  /// Vehicle map loading state
+  ///
+  /// In en, this message translates to:
+  /// **'Loading vehicle map…'**
+  String get advisorDamageMapLoading;
+
+  /// Vehicle map error state
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle map could not be loaded.'**
+  String get advisorDamageMapError;
+
+  /// Reset map zoom and pan
+  ///
+  /// In en, this message translates to:
+  /// **'Reset view'**
+  String get advisorDamageResetView;
+
+  /// Map zoom-in stepper
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get advisorDamageZoomIn;
+
+  /// Map zoom-out stepper
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get advisorDamageZoomOut;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Bumper'**
+  String get advisorPartFrontBumper;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Hood / Bonnet'**
+  String get advisorPartHood;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Left Headlight'**
+  String get advisorPartFrontLeftHeadlight;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Right Headlight'**
+  String get advisorPartFrontRightHeadlight;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Windshield'**
+  String get advisorPartFrontWindshield;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Roof'**
+  String get advisorPartRoof;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Windshield'**
+  String get advisorPartRearWindshield;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Boot / Trunk'**
+  String get advisorPartTrunk;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Bumper'**
+  String get advisorPartRearBumper;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Left Fender'**
+  String get advisorPartFrontLeftFender;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Right Fender'**
+  String get advisorPartFrontRightFender;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Left Door'**
+  String get advisorPartFrontLeftDoor;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Left Door'**
+  String get advisorPartRearLeftDoor;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Right Door'**
+  String get advisorPartFrontRightDoor;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Right Door'**
+  String get advisorPartRearRightDoor;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Left Quarter Panel'**
+  String get advisorPartRearLeftQuarter;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Right Quarter Panel'**
+  String get advisorPartRearRightQuarter;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Left Mirror'**
+  String get advisorPartLeftMirror;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Right Mirror'**
+  String get advisorPartRightMirror;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Left Wheel / Tyre'**
+  String get advisorPartFrontLeftWheel;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Front Right Wheel / Tyre'**
+  String get advisorPartFrontRightWheel;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Left Wheel / Tyre'**
+  String get advisorPartRearLeftWheel;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Right Wheel / Tyre'**
+  String get advisorPartRearRightWheel;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Left Tail Light'**
+  String get advisorPartRearLeftTaillight;
+
+  /// Vehicle part name
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Right Tail Light'**
+  String get advisorPartRearRightTaillight;
 
   /// Preview screen title
   ///
