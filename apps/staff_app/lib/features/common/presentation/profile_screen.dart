@@ -6,14 +6,19 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/models/profile_data.dart';
 import 'package:staff_app/core/router/app_router.dart';
+import 'package:staff_app/features/common/presentation/providers/staff_attendance_provider.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 /// Signed-in staff account surface shared by Technicians, Advisors and
-/// Supervisors: who am I, what work/contact details does the app actually
-/// know, the real account actions, and sign out.
+/// Supervisors: identity dossier, real preferences, the account actions that
+/// exist, and a guarded danger zone.
 ///
-/// Only values that can be sourced from the session profile are shown. There
-/// is no profile editing, no photo upload, no notification preferences and no
-/// performance content because no API or local contract exists for them.
+/// Phase 12 dossier-mini recomposition (home-grammar sibling of the advisor
+/// job dossier): identity card (64 avatar + name + role badge + branch·shift
+/// + attendance dot) owns the top; preference rows, work/contact groups and
+/// the danger zone follow. Only values sourced from the session profile are
+/// shown. Notification preferences, theme switching and photo upload stay
+/// out: no API or local contract exists for them (asserted by tests).
 class StaffProfileScreen extends ConsumerWidget {
   final ProfileData? data;
 
@@ -21,20 +26,21 @@ class StaffProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = StaffLocalizations.of(context)!;
     final auth = ref.watch(authNotifierProvider);
     final me = auth is AuthAuthenticated ? auth.profile : null;
     final profile = _StaffProfile.from(profile: me, data: data);
 
     final canPop = Navigator.of(context).canPop();
-    final workFields = _workFields(profile);
-    final contactFields = _contactFields(profile);
+    final workFields = _workFields(t, profile);
+    final contactFields = _contactFields(t, profile);
 
     final header = AppPageHeader(
-      title: 'Profile',
+      title: t.staffProfileTitle,
       leading: canPop
           ? IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
-              tooltip: 'Back',
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
               onPressed: () {
                 HapticFeedback.selectionClick();
                 context.pop();
@@ -44,16 +50,27 @@ class StaffProfileScreen extends ConsumerWidget {
     );
 
     final identity = _IdentityCard(profile: profile);
+    final prefs = const _PrefsSection();
     final work = workFields.isNotEmpty
-        ? _FieldGroupSection(title: 'Work Information', fields: workFields)
+        ? _FieldGroupSection(title: t.staffProfileWork, fields: workFields)
         : null;
     final contact = contactFields.isNotEmpty
-        ? _FieldGroupSection(title: 'Contact Details', fields: contactFields)
+        ? _FieldGroupSection(title: t.staffProfileContact, fields: contactFields)
         : null;
     const account = _AccountPanel();
-    final signOut = _SignOutSection(ref: ref);
+    final danger = _DangerSection(ref: ref);
+
+    // Identity left + preferences and facts right on wide viewports; a
+    // single dossier stream below that. Never a stretched phone column.
+    final wide = context.adaptive.pick(
+      compact: false,
+      medium: false,
+      expanded: true,
+      large: true,
+    );
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: AppPageFrame(
           child: LayoutBuilder(
@@ -61,9 +78,8 @@ class StaffProfileScreen extends ConsumerWidget {
               final headerGap = SizedBox(
                 height: context.adaptive.sectionSpacing * 0.75,
               );
-              final isWide = constraints.maxWidth >= 640;
 
-              if (isWide) {
+              if (wide) {
                 return Align(
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
@@ -77,13 +93,13 @@ class StaffProfileScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(
-                              width: 320,
+                              width: 340,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   identity,
                                   const SizedBox(height: AppDimensions.s24),
-                                  account,
+                                  prefs,
                                 ],
                               ),
                             ),
@@ -98,9 +114,11 @@ class StaffProfileScreen extends ConsumerWidget {
                                   ],
                                   if (contact != null) ...[
                                     contact,
-                                    const SizedBox(height: AppDimensions.s32),
+                                    const SizedBox(height: AppDimensions.s24),
                                   ],
-                                  signOut,
+                                  account,
+                                  const SizedBox(height: AppDimensions.s24),
+                                  danger,
                                 ],
                               ),
                             ),
@@ -119,6 +137,8 @@ class StaffProfileScreen extends ConsumerWidget {
                   header,
                   headerGap,
                   identity,
+                  const SizedBox(height: AppDimensions.s24),
+                  prefs,
                   if (work != null) ...[
                     const SizedBox(height: AppDimensions.s24),
                     work,
@@ -129,8 +149,8 @@ class StaffProfileScreen extends ConsumerWidget {
                   ],
                   const SizedBox(height: AppDimensions.s28),
                   account,
-                  const SizedBox(height: AppDimensions.s32),
-                  signOut,
+                  const SizedBox(height: AppDimensions.s24),
+                  danger,
                   const SizedBox(height: AppDimensions.s24),
                 ],
               );
@@ -200,7 +220,7 @@ class _StaffProfile {
   }
 }
 
-List<_ProfileField> _workFields(_StaffProfile profile) {
+List<_ProfileField> _workFields(StaffLocalizations t, _StaffProfile profile) {
   final showDesignation =
       profile.designation.isNotEmpty &&
       profile.designation.toLowerCase() != profile.role.toLowerCase();
@@ -209,61 +229,69 @@ List<_ProfileField> _workFields(_StaffProfile profile) {
     if (showDesignation)
       _ProfileField(
         icon: Icons.assignment_ind_outlined,
-        label: 'Designation',
+        label: t.staffProfileDesignation,
         value: profile.designation,
       ),
     if (profile.department.isNotEmpty)
       _ProfileField(
         icon: Icons.groups_2_outlined,
-        label: 'Department',
+        label: t.staffProfileDepartment,
         value: profile.department,
       ),
     if (profile.branch.isNotEmpty)
       _ProfileField(
         icon: Icons.business_outlined,
-        label: 'Branch',
+        label: t.staffProfileBranch,
         value: profile.branch,
       ),
     if (profile.shift.isNotEmpty)
       _ProfileField(
         icon: Icons.schedule_outlined,
-        label: 'Shift',
+        label: t.staffProfileShift,
         value: profile.shift,
       ),
   ];
 }
 
-List<_ProfileField> _contactFields(_StaffProfile profile) {
+List<_ProfileField> _contactFields(
+  StaffLocalizations t,
+  _StaffProfile profile,
+) {
   return <_ProfileField>[
     if (profile.email.isNotEmpty)
       _ProfileField(
         icon: Icons.email_outlined,
-        label: 'Email',
+        label: t.staffProfileEmail,
         value: profile.email,
       ),
     if (profile.phone.isNotEmpty)
       _ProfileField(
         icon: Icons.phone_outlined,
-        label: 'Phone',
+        label: t.staffProfilePhone,
         value: profile.phone,
         isMono: true,
       ),
   ];
 }
 
-/// Compact, professional identity surface without giant circular avatars or
-/// fake chips. Values wrap instead of truncating so long names, emails and
-/// identifiers stay readable at 320px and at 1.6x text scaling.
-class _IdentityCard extends StatelessWidget {
+/// Identity dossier card: 64 avatar (once), name, role badge, branch·shift
+/// context and the live attendance dot. Long values wrap instead of
+/// truncating so names and emails stay readable at 320px and 1.6x.
+class _IdentityCard extends ConsumerWidget {
   final _StaffProfile profile;
 
   const _IdentityCard({required this.profile});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final hasEmpId = profile.empId.isNotEmpty;
+    final contextLine = [
+      profile.branch,
+      profile.shift,
+    ].where((s) => s.trim().isNotEmpty).join(' · ');
+    final attendance = ref.watch(staffAttendanceProvider);
 
     return Container(
       padding: const EdgeInsets.all(AppDimensions.s20),
@@ -280,8 +308,8 @@ class _IdentityCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
                   color: colors.primaryContainer.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
@@ -293,7 +321,7 @@ class _IdentityCard extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   profile.initials,
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: colors.onPrimaryContainer,
                   ),
@@ -324,11 +352,27 @@ class _IdentityCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    const SizedBox(height: AppDimensions.s6),
+                    StatusPill.neutral(profile.role),
                   ],
                 ),
               ),
             ],
           ),
+          if (contextLine.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s10),
+            Text(
+              contextLine,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+          const SizedBox(height: AppDimensions.s8),
+          _AttendanceDot(state: attendance),
           if (hasEmpId) ...[
             const SizedBox(height: AppDimensions.s16),
             Divider(
@@ -358,12 +402,17 @@ class _IdentityCard extends StatelessWidget {
                   ),
                   const SizedBox(width: AppDimensions.s4),
                   Flexible(
-                    child: Text(
-                      profile.empId,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontFamily: AppFontFamilies.mono,
-                        fontWeight: FontWeight.w700,
-                        color: colors.onSurfaceVariant,
+                    child: Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        profile.empId,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontFamily: AppFontFamilies.mono,
+                          fontWeight: FontWeight.w700,
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
@@ -372,6 +421,232 @@ class _IdentityCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Live attendance dot sourced from the shared attendance provider (neutral
+/// while loading or on error — never a fabricated state).
+class _AttendanceDot extends StatelessWidget {
+  final StaffAttendanceState state;
+  const _AttendanceDot({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
+    final t = StaffLocalizations.of(context)!;
+    final known =
+        !state.isLoading && state.error.isEmpty;
+    final dot = !known
+        ? semantic.neutral.base
+        : switch (state.status) {
+            StaffAttendanceStatus.working => semantic.success.base,
+            StaffAttendanceStatus.onBreak => semantic.warning.base,
+            StaffAttendanceStatus.notPunchedIn => semantic.neutral.base,
+            StaffAttendanceStatus.punchedOut => semantic.neutral.base,
+          };
+    final label = switch (state.status) {
+      StaffAttendanceStatus.working => t.staffAttWorking,
+      StaffAttendanceStatus.onBreak => t.staffAttOnBreak,
+      StaffAttendanceStatus.notPunchedIn => t.staffAttNotPunched,
+      StaffAttendanceStatus.punchedOut => t.staffAttShiftComplete,
+    };
+    return Semantics(
+      container: true,
+      label: label,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: AppDimensions.s6),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Real preferences only: the shared language switcher (persisted locale),
+/// a change-password sheet over the real OTP recovery flow, and navigation
+/// to the sync diagnostics. Theme switching, notification preferences and
+/// photo upload stay out: no contract exists for them.
+class _PrefsSection extends StatelessWidget {
+  const _PrefsSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(header: true, child: SectionHeader(title: t.staffProfilePrefs)),
+        const SizedBox(height: AppDimensions.s8),
+        const LanguageSwitcher(),
+        const SizedBox(height: AppDimensions.s8),
+        _PrefsRow(
+          icon: Icons.lock_reset_rounded,
+          title: t.staffProfileChangePassword,
+          onTap: () => _openChangePassword(context),
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        _PrefsRow(
+          icon: Icons.sync_rounded,
+          title: t.staffProfileStorage,
+          subtitle: t.staffProfileStorageSubtitle,
+          onTap: () => context.push(AppRoutes.settings),
+        ),
+      ],
+    );
+  }
+
+  void _openChangePassword(BuildContext context) {
+    HapticFeedback.selectionClick();
+    final t = StaffLocalizations.of(context)!;
+    showAppModalSheet<void>(
+      context: context,
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s8,
+          AppDimensions.s20,
+          AppDimensions.s20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              t.staffProfileChangePasswordTitle,
+              style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s8),
+            Text(
+              t.staffProfileChangePasswordBody,
+              style: Theme.of(
+                sheetContext,
+              ).textTheme.bodySmall?.copyWith(height: 1.45),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            PrimaryButton(
+              label: t.staffProfileContinue,
+              icon: Icons.arrow_forward_rounded,
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                sheetContext.push(AppRoutes.forgotPassword);
+              },
+            ),
+            const SizedBox(height: AppDimensions.s8),
+            SecondaryButton(
+              label: t.staffProfileCancel,
+              onPressed: () => Navigator.pop(sheetContext),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PrefsRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  const _PrefsRow({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        side: BorderSide(
+          color: colors.outlineVariant.withValues(alpha: 0.8),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AppDimensions.touchTarget,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s16,
+              vertical: AppDimensions.s12,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: AppDimensions.iconSm, color: colors.primary),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                DirectionalIcon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -510,17 +785,18 @@ class _AccountPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Semantics(header: true, child: SectionHeader(title: 'Account')),
+        Semantics(header: true, child: SectionHeader(title: t.staffProfileAccount)),
         const SizedBox(height: AppDimensions.s8),
         _AccountSurface(
           children: [
             _AccountActionRow(
               icon: Icons.lock_reset_rounded,
-              title: 'Reset password',
-              subtitle: 'Verify your identity, then choose a new password',
+              title: t.staffProfileResetPassword,
+              subtitle: t.staffProfileResetSubtitle,
               onTap: () {
                 HapticFeedback.selectionClick();
                 context.push(AppRoutes.forgotPassword);
@@ -535,8 +811,8 @@ class _AccountPanel extends StatelessWidget {
             ),
             _AccountActionRow(
               icon: Icons.article_outlined,
-              title: 'Open source licences',
-              subtitle: 'Legal notices for the software in this app',
+              title: t.staffProfileLicences,
+              subtitle: t.staffProfileLicencesSubtitle,
               onTap: () {
                 HapticFeedback.selectionClick();
                 showLicensePage(
@@ -632,8 +908,9 @@ class _AccountActionRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(
+                DirectionalIcon(
                   Icons.chevron_right_rounded,
+                  size: 20,
                   color: colors.onSurfaceVariant,
                 ),
               ],
@@ -645,19 +922,48 @@ class _AccountActionRow extends StatelessWidget {
   }
 }
 
+/// Danger zone: the session sign-out behind its truthful confirmation. Cache
+/// management lives one tap away in Settings (single home, no duplication).
+class _DangerSection extends StatelessWidget {
+  final WidgetRef ref;
+
+  const _DangerSection({required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(header: true, child: SectionHeader(title: t.staffProfileDanger)),
+        const SizedBox(height: AppDimensions.s8),
+        _PrefsRow(
+          icon: Icons.sync_rounded,
+          title: t.staffProfileStorage,
+          subtitle: t.staffProfileStorageSubtitle,
+          onTap: () => context.push(AppRoutes.settings),
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        _SignOutButton(ref: ref),
+      ],
+    );
+  }
+}
+
 /// Sign out action with a truthful confirmation.
 ///
 /// Sign-out clears the device cache and any queued operations, so when work is
 /// still waiting to sync the technician is warned before signing out instead
 /// of silently losing changes saved on this device.
-class _SignOutSection extends StatelessWidget {
+class _SignOutButton extends StatelessWidget {
   final WidgetRef ref;
 
-  const _SignOutSection({required this.ref});
+  const _SignOutButton({required this.ref});
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final t = StaffLocalizations.of(context)!;
 
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
@@ -669,22 +975,23 @@ class _SignOutSection extends StatelessWidget {
         ),
       ),
       icon: const Icon(Icons.logout_rounded, size: AppDimensions.iconSm),
-      label: const Text(
-        'Sign out',
-        style: TextStyle(fontWeight: FontWeight.w700),
+      label: Text(
+        t.staffProfileSignOut,
+        style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       onPressed: () async {
         HapticFeedback.heavyImpact();
         final pending = HiveCleaner.hasPendingSync();
         final confirmed = await showAppConfirmationDialog(
           context,
-          title: pending ? 'Sign out with unsynced work?' : 'Sign out?',
+          title: pending
+              ? t.staffProfileSignOutUnsyncedTitle
+              : t.staffProfileSignOutTitle,
           message: pending
-              ? 'Some work is still waiting to sync. Signing out will remove '
-                    'the changes saved on this device.'
-              : 'You will need to sign in again to continue.',
-          confirmLabel: 'Sign out',
-          cancelLabel: 'Stay signed in',
+              ? t.staffProfileSignOutUnsyncedMessage
+              : t.staffProfileSignOutMessage,
+          confirmLabel: t.staffProfileSignOut,
+          cancelLabel: t.staffProfileStaySignedIn,
           icon: Icons.logout_rounded,
           destructive: true,
         );

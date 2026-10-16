@@ -6757,6 +6757,624 @@ abstract class StaffLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get svProfileSettings;
+
+  /// Profile screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get staffProfileTitle;
+
+  /// Work fields section
+  ///
+  /// In en, this message translates to:
+  /// **'Work Information'**
+  String get staffProfileWork;
+
+  /// Contact fields section
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Details'**
+  String get staffProfileContact;
+
+  /// Designation field
+  ///
+  /// In en, this message translates to:
+  /// **'Designation'**
+  String get staffProfileDesignation;
+
+  /// Department field
+  ///
+  /// In en, this message translates to:
+  /// **'Department'**
+  String get staffProfileDepartment;
+
+  /// Branch field
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get staffProfileBranch;
+
+  /// Shift field
+  ///
+  /// In en, this message translates to:
+  /// **'Shift'**
+  String get staffProfileShift;
+
+  /// Email field
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get staffProfileEmail;
+
+  /// Phone field
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get staffProfilePhone;
+
+  /// Account section
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get staffProfileAccount;
+
+  /// Reset password action
+  ///
+  /// In en, this message translates to:
+  /// **'Reset password'**
+  String get staffProfileResetPassword;
+
+  /// Reset password hint
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your identity, then choose a new password'**
+  String get staffProfileResetSubtitle;
+
+  /// Licences action
+  ///
+  /// In en, this message translates to:
+  /// **'Open source licences'**
+  String get staffProfileLicences;
+
+  /// Licences hint
+  ///
+  /// In en, this message translates to:
+  /// **'Legal notices for the software in this app'**
+  String get staffProfileLicencesSubtitle;
+
+  /// Preferences section
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get staffProfilePrefs;
+
+  /// Change password action
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get staffProfileChangePassword;
+
+  /// Change password sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Change password?'**
+  String get staffProfileChangePasswordTitle;
+
+  /// Change password sheet body
+  ///
+  /// In en, this message translates to:
+  /// **'Password changes use one-time-code verification. Continue to the recovery flow to choose a new password.'**
+  String get staffProfileChangePasswordBody;
+
+  /// Sheet continue action
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get staffProfileContinue;
+
+  /// Sheet cancel action
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get staffProfileCancel;
+
+  /// Storage settings nav row
+  ///
+  /// In en, this message translates to:
+  /// **'Storage & sync'**
+  String get staffProfileStorage;
+
+  /// Storage nav hint
+  ///
+  /// In en, this message translates to:
+  /// **'Offline copies, sync status and cache'**
+  String get staffProfileStorageSubtitle;
+
+  /// Danger section
+  ///
+  /// In en, this message translates to:
+  /// **'Danger zone'**
+  String get staffProfileDanger;
+
+  /// Sign out action
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get staffProfileSignOut;
+
+  /// Sign out confirm title
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out?'**
+  String get staffProfileSignOutTitle;
+
+  /// Sign out confirm body
+  ///
+  /// In en, this message translates to:
+  /// **'You will need to sign in again to continue.'**
+  String get staffProfileSignOutMessage;
+
+  /// Unsynced sign out title
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out with unsynced work?'**
+  String get staffProfileSignOutUnsyncedTitle;
+
+  /// Unsynced sign out body
+  ///
+  /// In en, this message translates to:
+  /// **'Some work is still waiting to sync. Signing out will remove the changes saved on this device.'**
+  String get staffProfileSignOutUnsyncedMessage;
+
+  /// Sign out cancel action
+  ///
+  /// In en, this message translates to:
+  /// **'Stay signed in'**
+  String get staffProfileStaySignedIn;
+
+  /// Attendance screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get staffAttTitle;
+
+  /// Attendance state
+  ///
+  /// In en, this message translates to:
+  /// **'Not punched in'**
+  String get staffAttNotPunched;
+
+  /// Attendance state
+  ///
+  /// In en, this message translates to:
+  /// **'Working'**
+  String get staffAttWorking;
+
+  /// Attendance state
+  ///
+  /// In en, this message translates to:
+  /// **'On break'**
+  String get staffAttOnBreak;
+
+  /// Attendance state
+  ///
+  /// In en, this message translates to:
+  /// **'Shift complete'**
+  String get staffAttShiftComplete;
+
+  /// Idle hint
+  ///
+  /// In en, this message translates to:
+  /// **'Your shift has not started yet. Punch in to begin recording today\'s hours.'**
+  String get staffAttNotPunchedHint;
+
+  /// Working hint
+  ///
+  /// In en, this message translates to:
+  /// **'Active shift in progress. Your hours are being recorded.'**
+  String get staffAttWorkingHint;
+
+  /// Break hint
+  ///
+  /// In en, this message translates to:
+  /// **'Shift is temporarily paused on break.'**
+  String get staffAttBreakHint;
+
+  /// Done hint
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s shift is finished. Recorded hours have been submitted.'**
+  String get staffAttDoneHint;
+
+  /// Status eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT STATUS'**
+  String get staffAttCurrentStatus;
+
+  /// Punch in CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Punch In'**
+  String get staffAttPunchIn;
+
+  /// Punch in busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Punching in…'**
+  String get staffAttPunchingIn;
+
+  /// Punch out CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Punch Out'**
+  String get staffAttPunchOut;
+
+  /// Punch out busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Punching out…'**
+  String get staffAttPunchingOut;
+
+  /// Punch in confirm title
+  ///
+  /// In en, this message translates to:
+  /// **'Punch in now?'**
+  String get staffAttPunchInTitle;
+
+  /// Punch in confirm body
+  ///
+  /// In en, this message translates to:
+  /// **'Your arrival time will be recorded by the workshop server.'**
+  String get staffAttPunchInBody;
+
+  /// Punch out confirm title
+  ///
+  /// In en, this message translates to:
+  /// **'Punch out now?'**
+  String get staffAttPunchOutTitle;
+
+  /// Punch out confirm body
+  ///
+  /// In en, this message translates to:
+  /// **'This completes today\'s shift and records your work hours.'**
+  String get staffAttPunchOutBody;
+
+  /// Punch in toast
+  ///
+  /// In en, this message translates to:
+  /// **'You are punched in.'**
+  String get staffAttInToast;
+
+  /// Punch out toast
+  ///
+  /// In en, this message translates to:
+  /// **'You are punched out.'**
+  String get staffAttOutToast;
+
+  /// Punch failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance was not updated.'**
+  String get staffAttFailToast;
+
+  /// Time grid title
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Recorded Time'**
+  String get staffAttTodayRecord;
+
+  /// Punch in row label
+  ///
+  /// In en, this message translates to:
+  /// **'Punch in'**
+  String get staffAttPunchInRow;
+
+  /// Punch out row label
+  ///
+  /// In en, this message translates to:
+  /// **'Punch out'**
+  String get staffAttPunchOutRow;
+
+  /// Hours row label
+  ///
+  /// In en, this message translates to:
+  /// **'Hours worked'**
+  String get staffAttHours;
+
+  /// Break row label
+  ///
+  /// In en, this message translates to:
+  /// **'Break time'**
+  String get staffAttBreakRow;
+
+  /// Shift done line
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s shift is complete. Your recorded hours are shown above.'**
+  String get staffAttDoneLine;
+
+  /// Punch timestamp microcopy
+  ///
+  /// In en, this message translates to:
+  /// **'Punched in at {time}'**
+  String staffAttPunchedAt(String time);
+
+  /// Punch out microcopy
+  ///
+  /// In en, this message translates to:
+  /// **'Punched out at {time}'**
+  String staffAttOutAt(String time);
+
+  /// Elapsed microcopy
+  ///
+  /// In en, this message translates to:
+  /// **'On shift for {time}'**
+  String staffAttOnShiftFor(String time);
+
+  /// Progress bar basis caption
+  ///
+  /// In en, this message translates to:
+  /// **'8h workday basis'**
+  String get staffAttBasis;
+
+  /// Calendar title
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get staffAttMonthTitle;
+
+  /// History limitation note
+  ///
+  /// In en, this message translates to:
+  /// **'Only today\'s record is kept on this device. Past days need a workshop history feed.'**
+  String get staffAttHistoryNote;
+
+  /// Day sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Day record'**
+  String get staffAttDayTitle;
+
+  /// Day empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No record for this day.'**
+  String get staffAttNoRecord;
+
+  /// Shift page title
+  ///
+  /// In en, this message translates to:
+  /// **'Shift Details'**
+  String get staffShiftTitle;
+
+  /// Shift page subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled work hours and assignment'**
+  String get staffShiftSubtitle;
+
+  /// Schedule section
+  ///
+  /// In en, this message translates to:
+  /// **'Shift Schedule'**
+  String get staffShiftSchedule;
+
+  /// Shift eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'ASSIGNED SHIFT'**
+  String get staffShiftAssigned;
+
+  /// Start label
+  ///
+  /// In en, this message translates to:
+  /// **'Shift Start'**
+  String get staffShiftStart;
+
+  /// End label
+  ///
+  /// In en, this message translates to:
+  /// **'Shift End'**
+  String get staffShiftEnd;
+
+  /// Assignment section
+  ///
+  /// In en, this message translates to:
+  /// **'Assignment Details'**
+  String get staffShiftAssignment;
+
+  /// Member label
+  ///
+  /// In en, this message translates to:
+  /// **'Staff Member'**
+  String get staffShiftMember;
+
+  /// Employee id label
+  ///
+  /// In en, this message translates to:
+  /// **'Employee ID'**
+  String get staffShiftEmpId;
+
+  /// Branch label
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned Branch'**
+  String get staffShiftBranch;
+
+  /// Supervisor label
+  ///
+  /// In en, this message translates to:
+  /// **'Supervisor on duty'**
+  String get staffShiftSupervisor;
+
+  /// Bay label
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned bay'**
+  String get staffShiftBay;
+
+  /// Breaks label
+  ///
+  /// In en, this message translates to:
+  /// **'Breaks'**
+  String get staffShiftBreaks;
+
+  /// Shift fallback
+  ///
+  /// In en, this message translates to:
+  /// **'Standard Shift'**
+  String get staffShiftDefault;
+
+  /// Shift empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No shift details were shared with this device.'**
+  String get staffShiftEmpty;
+
+  /// Settings title
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get staffSettingsTitle;
+
+  /// Settings subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Application information & local storage'**
+  String get staffSettingsSubtitle;
+
+  /// Sync section
+  ///
+  /// In en, this message translates to:
+  /// **'Data & Sync'**
+  String get staffSettingsSync;
+
+  /// Sync status label
+  ///
+  /// In en, this message translates to:
+  /// **'Local Sync Status'**
+  String get staffSettingsSyncStatus;
+
+  /// Pending count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending operations'**
+  String staffSettingsPending(int count);
+
+  /// Pending hint
+  ///
+  /// In en, this message translates to:
+  /// **'Offline changes are queued and will sync when connection is restored.'**
+  String get staffSettingsPendingHint;
+
+  /// Idle line
+  ///
+  /// In en, this message translates to:
+  /// **'No pending local operations'**
+  String get staffSettingsIdle;
+
+  /// Idle hint
+  ///
+  /// In en, this message translates to:
+  /// **'All recorded offline actions have been processed.'**
+  String get staffSettingsIdleHint;
+
+  /// Pending pill
+  ///
+  /// In en, this message translates to:
+  /// **'PENDING'**
+  String get staffSettingsPendingPill;
+
+  /// Idle pill
+  ///
+  /// In en, this message translates to:
+  /// **'IDLE'**
+  String get staffSettingsIdlePill;
+
+  /// Force sync CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Force Sync Now'**
+  String get staffSettingsForceSync;
+
+  /// Sync busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get staffSettingsSyncing;
+
+  /// Sync done toast
+  ///
+  /// In en, this message translates to:
+  /// **'Sync finished.'**
+  String get staffSettingsSyncedToast;
+
+  /// Sync fail toast
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed. Will retry automatically.'**
+  String get staffSettingsSyncFailed;
+
+  /// Last attempt line
+  ///
+  /// In en, this message translates to:
+  /// **'Last attempt {time} (this session)'**
+  String staffSettingsLastAttempt(String time);
+
+  /// App section
+  ///
+  /// In en, this message translates to:
+  /// **'Application'**
+  String get staffSettingsApp;
+
+  /// Version label
+  ///
+  /// In en, this message translates to:
+  /// **'App Version'**
+  String get staffSettingsVersion;
+
+  /// Device label
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get staffSettingsDevice;
+
+  /// Cache label
+  ///
+  /// In en, this message translates to:
+  /// **'Cached data'**
+  String get staffSettingsCache;
+
+  /// Cache count hint
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items stored on this device'**
+  String staffSettingsCacheHint(int count);
+
+  /// Clear cache action
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cache'**
+  String get staffSettingsClearCache;
+
+  /// Clear confirm title
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cached data?'**
+  String get staffSettingsClearTitle;
+
+  /// Clear confirm body
+  ///
+  /// In en, this message translates to:
+  /// **'Removes offline job copies, drafts and queued uploads from this device. Your account and server records are untouched.'**
+  String get staffSettingsClearBody;
+
+  /// Clear done toast
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleared.'**
+  String get staffSettingsCacheCleared;
 }
 
 class _StaffLocalizationsDelegate

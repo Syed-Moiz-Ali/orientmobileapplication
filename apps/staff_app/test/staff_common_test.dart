@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_auth/shared_auth.dart';
@@ -8,6 +9,16 @@ import 'package:staff_app/features/common/presentation/profile_screen.dart';
 import 'package:staff_app/features/common/presentation/providers/staff_attendance_provider.dart';
 import 'package:staff_app/features/common/presentation/simple_pages.dart';
 import 'package:staff_app/features/common/presentation/staff_attendance_screen.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
+const _testDelegates = <LocalizationsDelegate<dynamic>>[
+  StaffLocalizations.delegate,
+  SharedCoreLocalizations.delegate,
+  SharedAuthLocalizations.delegate,
+  GlobalMaterialLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+];
 
 class _FakeAuthNotifier extends AuthNotifier {
   final MeResponse? _profile;
@@ -83,11 +94,13 @@ Future<void> _pumpApp(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(BrandConfig.orient),
+        supportedLocales: AppLocales.supported,
+        localizationsDelegates: _testDelegates,
         builder: (context, widget) => MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: textScaler),
           child: widget!,
         ),
-        home: child,
+        home: Scaffold(body: child),
       ),
     ),
   );

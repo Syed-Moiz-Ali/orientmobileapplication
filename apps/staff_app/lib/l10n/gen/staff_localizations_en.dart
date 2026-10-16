@@ -3577,4 +3577,343 @@ class StaffLocalizationsEn extends StaffLocalizations {
 
   @override
   String get svProfileSettings => 'Settings';
+
+  @override
+  String get staffProfileTitle => 'Profile';
+
+  @override
+  String get staffProfileWork => 'Work Information';
+
+  @override
+  String get staffProfileContact => 'Contact Details';
+
+  @override
+  String get staffProfileDesignation => 'Designation';
+
+  @override
+  String get staffProfileDepartment => 'Department';
+
+  @override
+  String get staffProfileBranch => 'Branch';
+
+  @override
+  String get staffProfileShift => 'Shift';
+
+  @override
+  String get staffProfileEmail => 'Email';
+
+  @override
+  String get staffProfilePhone => 'Phone';
+
+  @override
+  String get staffProfileAccount => 'Account';
+
+  @override
+  String get staffProfileResetPassword => 'Reset password';
+
+  @override
+  String get staffProfileResetSubtitle =>
+      'Verify your identity, then choose a new password';
+
+  @override
+  String get staffProfileLicences => 'Open source licences';
+
+  @override
+  String get staffProfileLicencesSubtitle =>
+      'Legal notices for the software in this app';
+
+  @override
+  String get staffProfilePrefs => 'Preferences';
+
+  @override
+  String get staffProfileChangePassword => 'Change password';
+
+  @override
+  String get staffProfileChangePasswordTitle => 'Change password?';
+
+  @override
+  String get staffProfileChangePasswordBody =>
+      'Password changes use one-time-code verification. Continue to the recovery flow to choose a new password.';
+
+  @override
+  String get staffProfileContinue => 'Continue';
+
+  @override
+  String get staffProfileCancel => 'Cancel';
+
+  @override
+  String get staffProfileStorage => 'Storage & sync';
+
+  @override
+  String get staffProfileStorageSubtitle =>
+      'Offline copies, sync status and cache';
+
+  @override
+  String get staffProfileDanger => 'Danger zone';
+
+  @override
+  String get staffProfileSignOut => 'Sign out';
+
+  @override
+  String get staffProfileSignOutTitle => 'Sign out?';
+
+  @override
+  String get staffProfileSignOutMessage =>
+      'You will need to sign in again to continue.';
+
+  @override
+  String get staffProfileSignOutUnsyncedTitle => 'Sign out with unsynced work?';
+
+  @override
+  String get staffProfileSignOutUnsyncedMessage =>
+      'Some work is still waiting to sync. Signing out will remove the changes saved on this device.';
+
+  @override
+  String get staffProfileStaySignedIn => 'Stay signed in';
+
+  @override
+  String get staffAttTitle => 'Attendance';
+
+  @override
+  String get staffAttNotPunched => 'Not punched in';
+
+  @override
+  String get staffAttWorking => 'Working';
+
+  @override
+  String get staffAttOnBreak => 'On break';
+
+  @override
+  String get staffAttShiftComplete => 'Shift complete';
+
+  @override
+  String get staffAttNotPunchedHint =>
+      'Your shift has not started yet. Punch in to begin recording today\'s hours.';
+
+  @override
+  String get staffAttWorkingHint =>
+      'Active shift in progress. Your hours are being recorded.';
+
+  @override
+  String get staffAttBreakHint => 'Shift is temporarily paused on break.';
+
+  @override
+  String get staffAttDoneHint =>
+      'Today\'s shift is finished. Recorded hours have been submitted.';
+
+  @override
+  String get staffAttCurrentStatus => 'CURRENT STATUS';
+
+  @override
+  String get staffAttPunchIn => 'Punch In';
+
+  @override
+  String get staffAttPunchingIn => 'Punching in…';
+
+  @override
+  String get staffAttPunchOut => 'Punch Out';
+
+  @override
+  String get staffAttPunchingOut => 'Punching out…';
+
+  @override
+  String get staffAttPunchInTitle => 'Punch in now?';
+
+  @override
+  String get staffAttPunchInBody =>
+      'Your arrival time will be recorded by the workshop server.';
+
+  @override
+  String get staffAttPunchOutTitle => 'Punch out now?';
+
+  @override
+  String get staffAttPunchOutBody =>
+      'This completes today\'s shift and records your work hours.';
+
+  @override
+  String get staffAttInToast => 'You are punched in.';
+
+  @override
+  String get staffAttOutToast => 'You are punched out.';
+
+  @override
+  String get staffAttFailToast => 'Attendance was not updated.';
+
+  @override
+  String get staffAttTodayRecord => 'Today\'s Recorded Time';
+
+  @override
+  String get staffAttPunchInRow => 'Punch in';
+
+  @override
+  String get staffAttPunchOutRow => 'Punch out';
+
+  @override
+  String get staffAttHours => 'Hours worked';
+
+  @override
+  String get staffAttBreakRow => 'Break time';
+
+  @override
+  String get staffAttDoneLine =>
+      'Today’s shift is complete. Your recorded hours are shown above.';
+
+  @override
+  String staffAttPunchedAt(String time) {
+    return 'Punched in at $time';
+  }
+
+  @override
+  String staffAttOutAt(String time) {
+    return 'Punched out at $time';
+  }
+
+  @override
+  String staffAttOnShiftFor(String time) {
+    return 'On shift for $time';
+  }
+
+  @override
+  String get staffAttBasis => '8h workday basis';
+
+  @override
+  String get staffAttMonthTitle => 'This month';
+
+  @override
+  String get staffAttHistoryNote =>
+      'Only today\'s record is kept on this device. Past days need a workshop history feed.';
+
+  @override
+  String get staffAttDayTitle => 'Day record';
+
+  @override
+  String get staffAttNoRecord => 'No record for this day.';
+
+  @override
+  String get staffShiftTitle => 'Shift Details';
+
+  @override
+  String get staffShiftSubtitle => 'Scheduled work hours and assignment';
+
+  @override
+  String get staffShiftSchedule => 'Shift Schedule';
+
+  @override
+  String get staffShiftAssigned => 'ASSIGNED SHIFT';
+
+  @override
+  String get staffShiftStart => 'Shift Start';
+
+  @override
+  String get staffShiftEnd => 'Shift End';
+
+  @override
+  String get staffShiftAssignment => 'Assignment Details';
+
+  @override
+  String get staffShiftMember => 'Staff Member';
+
+  @override
+  String get staffShiftEmpId => 'Employee ID';
+
+  @override
+  String get staffShiftBranch => 'Assigned Branch';
+
+  @override
+  String get staffShiftSupervisor => 'Supervisor on duty';
+
+  @override
+  String get staffShiftBay => 'Assigned bay';
+
+  @override
+  String get staffShiftBreaks => 'Breaks';
+
+  @override
+  String get staffShiftDefault => 'Standard Shift';
+
+  @override
+  String get staffShiftEmpty =>
+      'No shift details were shared with this device.';
+
+  @override
+  String get staffSettingsTitle => 'Settings';
+
+  @override
+  String get staffSettingsSubtitle => 'Application information & local storage';
+
+  @override
+  String get staffSettingsSync => 'Data & Sync';
+
+  @override
+  String get staffSettingsSyncStatus => 'Local Sync Status';
+
+  @override
+  String staffSettingsPending(int count) {
+    return '$count pending operations';
+  }
+
+  @override
+  String get staffSettingsPendingHint =>
+      'Offline changes are queued and will sync when connection is restored.';
+
+  @override
+  String get staffSettingsIdle => 'No pending local operations';
+
+  @override
+  String get staffSettingsIdleHint =>
+      'All recorded offline actions have been processed.';
+
+  @override
+  String get staffSettingsPendingPill => 'PENDING';
+
+  @override
+  String get staffSettingsIdlePill => 'IDLE';
+
+  @override
+  String get staffSettingsForceSync => 'Force Sync Now';
+
+  @override
+  String get staffSettingsSyncing => 'Syncing…';
+
+  @override
+  String get staffSettingsSyncedToast => 'Sync finished.';
+
+  @override
+  String get staffSettingsSyncFailed =>
+      'Sync failed. Will retry automatically.';
+
+  @override
+  String staffSettingsLastAttempt(String time) {
+    return 'Last attempt $time (this session)';
+  }
+
+  @override
+  String get staffSettingsApp => 'Application';
+
+  @override
+  String get staffSettingsVersion => 'App Version';
+
+  @override
+  String get staffSettingsDevice => 'Device';
+
+  @override
+  String get staffSettingsCache => 'Cached data';
+
+  @override
+  String staffSettingsCacheHint(int count) {
+    return '$count items stored on this device';
+  }
+
+  @override
+  String get staffSettingsClearCache => 'Clear cache';
+
+  @override
+  String get staffSettingsClearTitle => 'Clear cached data?';
+
+  @override
+  String get staffSettingsClearBody =>
+      'Removes offline job copies, drafts and queued uploads from this device. Your account and server records are untouched.';
+
+  @override
+  String get staffSettingsCacheCleared => 'Cache cleared.';
 }

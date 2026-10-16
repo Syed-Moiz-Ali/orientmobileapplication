@@ -75,13 +75,22 @@ void main() {
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(BrandConfig.orient),
+            supportedLocales: AppLocales.supported,
+            localizationsDelegates: const [
+              StaffLocalizations.delegate,
+              SharedCoreLocalizations.delegate,
+              SharedAuthLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             builder: (context, child) => MediaQuery(
               data: MediaQuery.of(
                 context,
               ).copyWith(textScaler: TextScaler.linear(scale)),
               child: child!,
             ),
-            home: StaffProfileScreen(data: profile),
+            home: Scaffold(body: StaffProfileScreen(data: profile)),
           ),
         ),
       );

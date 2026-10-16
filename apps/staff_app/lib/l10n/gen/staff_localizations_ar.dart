@@ -3553,4 +3553,338 @@ class StaffLocalizationsAr extends StaffLocalizations {
 
   @override
   String get svProfileSettings => 'الإعدادات';
+
+  @override
+  String get staffProfileTitle => 'الملف الشخصي';
+
+  @override
+  String get staffProfileWork => 'معلومات العمل';
+
+  @override
+  String get staffProfileContact => 'بيانات التواصل';
+
+  @override
+  String get staffProfileDesignation => 'المسمى الوظيفي';
+
+  @override
+  String get staffProfileDepartment => 'القسم';
+
+  @override
+  String get staffProfileBranch => 'الفرع';
+
+  @override
+  String get staffProfileShift => 'الوردية';
+
+  @override
+  String get staffProfileEmail => 'البريد الإلكتروني';
+
+  @override
+  String get staffProfilePhone => 'الهاتف';
+
+  @override
+  String get staffProfileAccount => 'الحساب';
+
+  @override
+  String get staffProfileResetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get staffProfileResetSubtitle =>
+      'تحقق من هويتك ثم اختر كلمة مرور جديدة';
+
+  @override
+  String get staffProfileLicences => 'تراخيص المصادر المفتوحة';
+
+  @override
+  String get staffProfileLicencesSubtitle =>
+      'إشعارات قانونية للبرامج في هذا التطبيق';
+
+  @override
+  String get staffProfilePrefs => 'التفضيلات';
+
+  @override
+  String get staffProfileChangePassword => 'تغيير كلمة المرور';
+
+  @override
+  String get staffProfileChangePasswordTitle => 'تغيير كلمة المرور؟';
+
+  @override
+  String get staffProfileChangePasswordBody =>
+      'يتم تغيير كلمة المرور عبر رمز تحقق لمرة واحدة. تابع إلى تدفق الاسترداد لاختيار كلمة مرور جديدة.';
+
+  @override
+  String get staffProfileContinue => 'متابعة';
+
+  @override
+  String get staffProfileCancel => 'إلغاء';
+
+  @override
+  String get staffProfileStorage => 'التخزين والمزامنة';
+
+  @override
+  String get staffProfileStorageSubtitle =>
+      'النسخ المحلية وحالة المزامنة وذاكرة التخزين';
+
+  @override
+  String get staffProfileDanger => 'منطقة الخطر';
+
+  @override
+  String get staffProfileSignOut => 'تسجيل الخروج';
+
+  @override
+  String get staffProfileSignOutTitle => 'تسجيل الخروج؟';
+
+  @override
+  String get staffProfileSignOutMessage =>
+      'ستحتاج إلى تسجيل الدخول مجدداً للمتابعة.';
+
+  @override
+  String get staffProfileSignOutUnsyncedTitle =>
+      'تسجيل الخروج مع عمل غير مُزامَن؟';
+
+  @override
+  String get staffProfileSignOutUnsyncedMessage =>
+      'لا يزال بعض العمل بانتظار المزامنة. سيؤدي تسجيل الخروج إلى إزالة التغييرات المحفوظة على هذا الجهاز.';
+
+  @override
+  String get staffProfileStaySignedIn => 'البقاء مسجلاً';
+
+  @override
+  String get staffAttTitle => 'الحضور';
+
+  @override
+  String get staffAttNotPunched => 'لم يتم تسجيل الحضور';
+
+  @override
+  String get staffAttWorking => 'يعمل';
+
+  @override
+  String get staffAttOnBreak => 'في استراحة';
+
+  @override
+  String get staffAttShiftComplete => 'اكتملت الوردية';
+
+  @override
+  String get staffAttNotPunchedHint =>
+      'لم تبدأ ورديتك بعد. سجّل حضورك لبدء تسجيل ساعات اليوم.';
+
+  @override
+  String get staffAttWorkingHint => 'الوردية نشطة. يتم تسجيل ساعاتك.';
+
+  @override
+  String get staffAttBreakHint => 'الوردية متوقفة مؤقتاً للاستراحة.';
+
+  @override
+  String get staffAttDoneHint => 'انتهت وردية اليوم. تم إرسال الساعات المسجلة.';
+
+  @override
+  String get staffAttCurrentStatus => 'الحالة الحالية';
+
+  @override
+  String get staffAttPunchIn => 'تسجيل الحضور';
+
+  @override
+  String get staffAttPunchingIn => 'جارٍ تسجيل الحضور…';
+
+  @override
+  String get staffAttPunchOut => 'تسجيل الانصراف';
+
+  @override
+  String get staffAttPunchingOut => 'جارٍ تسجيل الانصراف…';
+
+  @override
+  String get staffAttPunchInTitle => 'تسجيل الحضور الآن؟';
+
+  @override
+  String get staffAttPunchInBody => 'سيتم تسجيل وقت وصولك لدى خادم الورشة.';
+
+  @override
+  String get staffAttPunchOutTitle => 'تسجيل الانصراف الآن؟';
+
+  @override
+  String get staffAttPunchOutBody => 'يُكمل هذا وردية اليوم ويسجل ساعات عملك.';
+
+  @override
+  String get staffAttInToast => 'تم تسجيل حضورك.';
+
+  @override
+  String get staffAttOutToast => 'تم تسجيل انصرافك.';
+
+  @override
+  String get staffAttFailToast => 'تعذّر تحديث الحضور.';
+
+  @override
+  String get staffAttTodayRecord => 'الوقت المسجل اليوم';
+
+  @override
+  String get staffAttPunchInRow => 'تسجيل الحضور';
+
+  @override
+  String get staffAttPunchOutRow => 'تسجيل الانصراف';
+
+  @override
+  String get staffAttHours => 'ساعات العمل';
+
+  @override
+  String get staffAttBreakRow => 'وقت الاستراحة';
+
+  @override
+  String get staffAttDoneLine =>
+      'اكتملت وردية اليوم. ساعاتك المسجلة معروضة أعلاه.';
+
+  @override
+  String staffAttPunchedAt(String time) {
+    return 'تم تسجيل الحضور في $time';
+  }
+
+  @override
+  String staffAttOutAt(String time) {
+    return 'تم تسجيل الانصراف في $time';
+  }
+
+  @override
+  String staffAttOnShiftFor(String time) {
+    return 'على رأس العمل منذ $time';
+  }
+
+  @override
+  String get staffAttBasis => 'على أساس يوم عمل 8 ساعات';
+
+  @override
+  String get staffAttMonthTitle => 'هذا الشهر';
+
+  @override
+  String get staffAttHistoryNote =>
+      'لا يُحفظ على هذا الجهاز سوى سجل اليوم. الأيام السابقة تحتاج إلى سجل من الورشة.';
+
+  @override
+  String get staffAttDayTitle => 'سجل اليوم';
+
+  @override
+  String get staffAttNoRecord => 'لا يوجد سجل لهذا اليوم.';
+
+  @override
+  String get staffShiftTitle => 'تفاصيل الوردية';
+
+  @override
+  String get staffShiftSubtitle => 'ساعات العمل المجدولة والمهمة';
+
+  @override
+  String get staffShiftSchedule => 'جدول الوردية';
+
+  @override
+  String get staffShiftAssigned => 'الوردية المسندة';
+
+  @override
+  String get staffShiftStart => 'بداية الوردية';
+
+  @override
+  String get staffShiftEnd => 'نهاية الوردية';
+
+  @override
+  String get staffShiftAssignment => 'تفاصيل المهمة';
+
+  @override
+  String get staffShiftMember => 'عضو الفريق';
+
+  @override
+  String get staffShiftEmpId => 'الرقم الوظيفي';
+
+  @override
+  String get staffShiftBranch => 'الفرع المسند';
+
+  @override
+  String get staffShiftSupervisor => 'المشرف المناوب';
+
+  @override
+  String get staffShiftBay => 'قناة العمل المسندة';
+
+  @override
+  String get staffShiftBreaks => 'الاستراحات';
+
+  @override
+  String get staffShiftDefault => 'وردية عادية';
+
+  @override
+  String get staffShiftEmpty => 'لم تتم مشاركة تفاصيل الوردية مع هذا الجهاز.';
+
+  @override
+  String get staffSettingsTitle => 'الإعدادات';
+
+  @override
+  String get staffSettingsSubtitle => 'معلومات التطبيق والتخزين المحلي';
+
+  @override
+  String get staffSettingsSync => 'البيانات والمزامنة';
+
+  @override
+  String get staffSettingsSyncStatus => 'حالة المزامنة المحلية';
+
+  @override
+  String staffSettingsPending(int count) {
+    return '$count عمليات معلقة';
+  }
+
+  @override
+  String get staffSettingsPendingHint =>
+      'التغييرات المحلية في قائمة الانتظار وستُزامَن عند عودة الاتصال.';
+
+  @override
+  String get staffSettingsIdle => 'لا توجد عمليات محلية معلقة';
+
+  @override
+  String get staffSettingsIdleHint => 'تمت معالجة جميع الإجراءات المسجلة.';
+
+  @override
+  String get staffSettingsPendingPill => 'معلّق';
+
+  @override
+  String get staffSettingsIdlePill => 'متزامن';
+
+  @override
+  String get staffSettingsForceSync => 'مزامنة الآن';
+
+  @override
+  String get staffSettingsSyncing => 'جارٍ المزامنة…';
+
+  @override
+  String get staffSettingsSyncedToast => 'اكتملت المزامنة.';
+
+  @override
+  String get staffSettingsSyncFailed =>
+      'فشلت المزامنة. ستُعاد المحاولة تلقائياً.';
+
+  @override
+  String staffSettingsLastAttempt(String time) {
+    return 'آخر محاولة $time (هذه الجلسة)';
+  }
+
+  @override
+  String get staffSettingsApp => 'التطبيق';
+
+  @override
+  String get staffSettingsVersion => 'إصدار التطبيق';
+
+  @override
+  String get staffSettingsDevice => 'الجهاز';
+
+  @override
+  String get staffSettingsCache => 'البيانات المخزنة';
+
+  @override
+  String staffSettingsCacheHint(int count) {
+    return '$count عناصر مخزنة على هذا الجهاز';
+  }
+
+  @override
+  String get staffSettingsClearCache => 'مسح التخزين';
+
+  @override
+  String get staffSettingsClearTitle => 'مسح البيانات المخزنة؟';
+
+  @override
+  String get staffSettingsClearBody =>
+      'يزيل نسخ المهام والمسودات وعمليات الرفع المعلقة من هذا الجهاز. حسابك وسجلات الخادم لن تتأثر.';
+
+  @override
+  String get staffSettingsCacheCleared => 'تم مسح التخزين المؤقت.';
 }

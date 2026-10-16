@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +14,16 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/core/models/profile_data.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/common/presentation/profile_screen.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
+const _profileTestDelegates = <LocalizationsDelegate<dynamic>>[
+  StaffLocalizations.delegate,
+  SharedCoreLocalizations.delegate,
+  SharedAuthLocalizations.delegate,
+  GlobalMaterialLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+];
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -236,6 +247,8 @@ void main() {
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(BrandConfig.orient),
+            supportedLocales: AppLocales.supported,
+            localizationsDelegates: _profileTestDelegates,
             navigatorObservers: [observer],
             home: StaffProfileScreen(data: technician),
           ),
@@ -831,7 +844,9 @@ Future<void> _pump(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: theme ?? AppTheme.light(BrandConfig.orient),
-        home: StaffProfileScreen(data: data),
+        supportedLocales: AppLocales.supported,
+        localizationsDelegates: _profileTestDelegates,
+        home: Scaffold(body: StaffProfileScreen(data: data)),
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: textScaler),
           child: child!,

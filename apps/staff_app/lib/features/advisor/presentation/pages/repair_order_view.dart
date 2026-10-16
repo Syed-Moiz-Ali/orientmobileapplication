@@ -67,8 +67,14 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
 
   // Presentation-only studio state (never persisted, never sent).
   String _query = '';
+  // Both tiers start expanded: every priced line is visible on arrival, and
+  // each group stays collapsible per the dossier pattern.
+  bool _mandatoryExpanded = true;
+  bool _optionalExpanded = true;
   final ScrollController _scroll = ScrollController();
-  final GlobalKey _laborKey = GlobalKey();
+  final ScrollController _studioScroll = ScrollController();
+  final GlobalKey _laborKeyMandatory = GlobalKey();
+  final GlobalKey _laborKeyOptional = GlobalKey();
 
   @override
   void initState() {
@@ -82,6 +88,7 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
   @override
   void dispose() {
     _scroll.dispose();
+    _studioScroll.dispose();
     super.dispose();
   }
 
@@ -337,24 +344,37 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
     bool matches(String name) =>
         q.isEmpty || name.toLowerCase().contains(q);
 
-    // Flat search filter over provider lines. No grouping: every service
-    // stays in Labor, every part in Parts, so a line can never hide inside
-    // a collapsed group the advisor did not open.
-    final services = <({int index, ServiceLineItem item})>[
+    // Deterministic tier split over provider lines (display grouping only —
+    // the lines, totals and math stay provider-owned). A safety keyword makes
+    // a line Mandatory; everything else is an Optional Enhancement. Search
+    // auto-opens both tiers so a match can never hide inside a collapsed
+    // group the advisor did not open.
+    List<({int index, ServiceLineItem item})> tierServices(RepairTier tier) => [
       for (var i = 0; i < state.serviceLines.length; i++)
-        if (matches(state.serviceLines[i].name))
+        if (matches(state.serviceLines[i].name) &&
+            classifyRepairTier(state.serviceLines[i].name) == tier)
           (index: i, item: state.serviceLines[i]),
     ];
-    final parts = <({int index, PartLineItem item})>[
+    List<({int index, PartLineItem item})> tierParts(RepairTier tier) => [
       for (var i = 0; i < state.partLines.length; i++)
-        if (matches(state.partLines[i].name))
+        if (matches(state.partLines[i].name) &&
+            classifyRepairTier(state.partLines[i].name) == tier)
           (index: i, item: state.partLines[i]),
     ];
+    final mandatoryServices = tierServices(RepairTier.mandatory);
+    final optionalServices = tierServices(RepairTier.optional);
+    final mandatoryParts = tierParts(RepairTier.mandatory);
+    final optionalParts = tierParts(RepairTier.optional);
     final noMatch =
         q.isNotEmpty &&
-        services.isEmpty &&
-        parts.isEmpty &&
+        mandatoryServices.isEmpty &&
+        optionalServices.isEmpty &&
+        mandatoryParts.isEmpty &&
+        optionalParts.isEmpty &&
         !_loadingGeneratedItems;
+    // A live query reveals every tier; idle tiers follow their toggles.
+    final mandatoryOpen = _mandatoryExpanded || q.isNotEmpty;
+    final optionalOpen = _optionalExpanded || q.isNotEmpty;
 
     final lineCount = state.serviceLines.length + state.partLines.length;
 
@@ -370,42 +390,16 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
       expanded: 1180.0,
     );
 
-    final studio = _StudioColumn(
+    final studioSlivers = _studioSlivers(
       state: state,
-      loading: _loadingGeneratedItems,
-      hasError: _itemsError,
-      query: _query,
+      notifier: notifier,
+      mandatoryServices: mandatoryServices,
+      optionalServices: optionalServices,
+      mandatoryParts: mandatoryParts,
+      optionalParts: optionalParts,
       noMatch: noMatch,
-      services: services,
-      parts: parts,
-      onQuery: (v) => setState(() => _query = v),
-      onClearQuery: () => setState(() => _query = ''),
-      onAddServices: () {
-        HapticFeedback.selectionClick();
-        setState(() {
-          _pendingServices =
-              state.serviceLines.map((s) => s.name).toList();
-          _showServices = true;
-        });
-      },
-      onAddParts: () {
-        HapticFeedback.selectionClick();
-        setState(() {
-          _pendingParts = state.partLines.map((p) => p.name).toList();
-          _showParts = true;
-        });
-      },
-      onSuggest: (index, item) =>
-          _suggestPrice(context, index, item, notifier),
-      onRemoveService: _removeService,
-      onRemovePart: _removePart,
-      onRetry: () {
-        setState(() {
-          _loadedGeneratedItems = false;
-        });
-        _loadGeneratedWorkItems();
-      },
-      laborKey: _laborKey,
+      mandatoryOpen: mandatoryOpen,
+      optionalOpen: optionalOpen,
     );
 
     final rail = _StudioRail(
@@ -448,113 +442,68 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
-            child: CustomScrollView(
-              controller: _scroll,
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimensions.s20,
-                    AppDimensions.s16,
-                    AppDimensions.s20,
-                    0,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: _StudioGreetingHeader(
-                      vehicleLine: _vehicleTitle,
-                      customerName: _getVal('customerName'),
-                      plate: _plateNumber,
-                      pendingSync: pendingSync,
-                      fromInspection: widget.fromInspection,
-                      onBack: widget.onBack,
-                      onReset: () => _confirmReset(notifier),
-                      onShare: () => _openShare(state),
-                    ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimensions.s20,
-                    AppDimensions.s12,
-                    AppDimensions.s20,
-                    0,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: AppBreadcrumbs(
-                      items: [
-                        AppBreadcrumbItem(
-                          label: t.advisorNavJobs,
-                          onTap: widget.onBack,
+            child: wide
+                // Desktop: pinned header chrome, then studio (60%, own
+                // sticky headers) beside a totals/assign rail (40%, dock
+                // pinned at its foot). Never a stretched phone column.
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _headerBlock(
+                        t: t,
+                        state: state,
+                        notifier: notifier,
+                        pendingSync: pendingSync,
+                        stepIndex: stepIndex,
+                      ),
+                      Expanded(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: CustomScrollView(
+                                controller: _studioScroll,
+                                physics:
+                                    const AlwaysScrollableScrollPhysics(),
+                                slivers: studioSlivers,
+                              ),
+                            ),
+                            const SizedBox(width: AppDimensions.s24),
+                            Expanded(flex: 2, child: rail),
+                          ],
                         ),
-                        AppBreadcrumbItem.current(t.advisorStudioTitle),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimensions.s20,
-                    AppDimensions.s12,
-                    AppDimensions.s20,
-                    0,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: AppCard.standard(
-                      child: AppStepper(
-                        steps: [
-                          t.advisorStudioStepParts,
-                          t.advisorStudioStepLabor,
-                          t.advisorStudioStepReview,
-                        ],
-                        currentIndex: stepIndex,
-                        onStepTap: (i) => _onStepTap(i, state),
                       ),
-                    ),
-                  ),
-                ),
-                if (wide)
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimensions.s20,
-                      AppDimensions.s16,
-                      AppDimensions.s20,
-                      AppDimensions.s24,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 3, child: studio),
-                          const SizedBox(width: AppDimensions.s24),
-                          Expanded(flex: 2, child: rail),
-                        ],
-                      ),
-                    ),
+                    ],
                   )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimensions.s20,
-                      AppDimensions.s16,
-                      AppDimensions.s20,
-                      AppDimensions.s24,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          studio,
-                          const SizedBox(height: AppDimensions.s16),
-                          _EstimateDetailsCard(
+                : CustomScrollView(
+                    controller: _scroll,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      ..._headerSlivers(
+                        t: t,
+                        state: state,
+                        notifier: notifier,
+                        pendingSync: pendingSync,
+                        stepIndex: stepIndex,
+                      ),
+                      ...studioSlivers,
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimensions.s20,
+                          AppDimensions.s16,
+                          AppDimensions.s20,
+                          AppDimensions.s24,
+                        ),
+                        sliver: SliverToBoxAdapter(
+                          child: _EstimateDetailsCard(
                             state: state,
                             onMedia: _addPreServiceMedia,
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-              ],
-            ),
           ),
         ),
       ),
@@ -567,22 +516,532 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
       _openPreview(state);
       return;
     }
-    final target = index == 0 ? null : _laborKey;
-    final ctx = target?.currentContext;
-    if (ctx != null) {
+    // Scrolls the studio pane (compact page scroll or wide studio pane).
+    final wide = context.adaptive.pick(
+      compact: false,
+      medium: false,
+      expanded: true,
+      large: true,
+    );
+    final controller = wide ? _studioScroll : _scroll;
+    BuildContext? target;
+    if (index == 1) {
+      target =
+          _laborKeyMandatory.currentContext ??
+          _laborKeyOptional.currentContext;
+    }
+    if (target != null) {
       Scrollable.ensureVisible(
-        ctx,
+        target,
         duration: AppMotion.resolve(context, AppMotion.standard),
         curve: AppMotion.standardCurve,
         alignment: 0.05,
       );
-    } else {
-      _scroll.animateTo(
+    } else if (controller.hasClients) {
+      controller.animateTo(
         0,
         duration: AppMotion.resolve(context, AppMotion.standard),
         curve: AppMotion.standardCurve,
       );
     }
+  }
+
+  /// Greeting + breadcrumbs + stepper as a box (wide chrome + sheets).
+  Widget _headerBlock({
+    required StaffLocalizations t,
+    required InspectionState state,
+    required InspectionNotifier notifier,
+    required int pendingSync,
+    required int stepIndex,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.s20,
+        AppDimensions.s16,
+        AppDimensions.s20,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _StudioGreetingHeader(
+            vehicleLine: _vehicleTitle,
+            customerName: _getVal('customerName'),
+            plate: _plateNumber,
+            pendingSync: pendingSync,
+            fromInspection: widget.fromInspection,
+            onBack: widget.onBack,
+            onReset: () => _confirmReset(notifier),
+            onShare: () => _openShare(state),
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          AppBreadcrumbs(
+            items: [
+              AppBreadcrumbItem(
+                label: t.advisorNavJobs,
+                onTap: widget.onBack,
+              ),
+              AppBreadcrumbItem.current(t.advisorStudioTitle),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          AppCard.standard(
+            child: AppStepper(
+              steps: [
+                t.advisorStudioStepParts,
+                t.advisorStudioStepLabor,
+                t.advisorStudioStepReview,
+              ],
+              currentIndex: stepIndex,
+              onStepTap: (i) => _onStepTap(i, state),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Greeting + breadcrumbs + stepper as slivers (compact page scroll).
+  List<Widget> _headerSlivers({
+    required StaffLocalizations t,
+    required InspectionState state,
+    required InspectionNotifier notifier,
+    required int pendingSync,
+    required int stepIndex,
+  }) {
+    SliverPadding box(EdgeInsets padding, Widget child) => SliverPadding(
+      padding: padding,
+      sliver: SliverToBoxAdapter(child: child),
+    );
+    return [
+      box(
+        const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s16,
+          AppDimensions.s20,
+          0,
+        ),
+        _StudioGreetingHeader(
+          vehicleLine: _vehicleTitle,
+          customerName: _getVal('customerName'),
+          plate: _plateNumber,
+          pendingSync: pendingSync,
+          fromInspection: widget.fromInspection,
+          onBack: widget.onBack,
+          onReset: () => _confirmReset(notifier),
+          onShare: () => _openShare(state),
+        ),
+      ),
+      box(
+        const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s12,
+          AppDimensions.s20,
+          0,
+        ),
+        AppBreadcrumbs(
+          items: [
+            AppBreadcrumbItem(
+              label: t.advisorNavJobs,
+              onTap: widget.onBack,
+            ),
+            AppBreadcrumbItem.current(t.advisorStudioTitle),
+          ],
+        ),
+      ),
+      box(
+        const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s12,
+          AppDimensions.s20,
+          0,
+        ),
+        AppCard.standard(
+          child: AppStepper(
+            steps: [
+              t.advisorStudioStepParts,
+              t.advisorStudioStepLabor,
+              t.advisorStudioStepReview,
+            ],
+            currentIndex: stepIndex,
+            onStepTap: (i) => _onStepTap(i, state),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  /// Studio list slivers shared by both widths: search → states → tier
+  /// groups (toggle header + sticky 32px category headers + divider rows +
+  /// Add) → sublet. Category headers pin while their rows scroll beneath.
+  List<Widget> _studioSlivers({
+    required InspectionState state,
+    required InspectionNotifier notifier,
+    required List<({int index, ServiceLineItem item})> mandatoryServices,
+    required List<({int index, ServiceLineItem item})> optionalServices,
+    required List<({int index, PartLineItem item})> mandatoryParts,
+    required List<({int index, PartLineItem item})> optionalParts,
+    required bool noMatch,
+    required bool mandatoryOpen,
+    required bool optionalOpen,
+  }) {
+    final t = StaffLocalizations.of(context)!;
+
+    void addServices() {
+      HapticFeedback.selectionClick();
+      setState(() {
+        _pendingServices = state.serviceLines.map((s) => s.name).toList();
+        _showServices = true;
+      });
+    }
+
+    void addParts() {
+      HapticFeedback.selectionClick();
+      setState(() {
+        _pendingParts = state.partLines.map((p) => p.name).toList();
+        _showParts = true;
+      });
+    }
+
+    SliverPadding box(EdgeInsets padding, Widget child) => SliverPadding(
+      padding: padding,
+      sliver: SliverToBoxAdapter(child: child),
+    );
+
+    final slivers = <Widget>[
+      box(
+        const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s16,
+          AppDimensions.s20,
+          0,
+        ),
+        AppSearchField(
+          hintText: t.advisorActionSearchTitle,
+          onChanged: (v) => setState(() => _query = v),
+          onClear: () => setState(() => _query = ''),
+        ),
+      ),
+    ];
+
+    if (_loadingGeneratedItems) {
+      slivers.add(
+        box(
+          const EdgeInsets.fromLTRB(
+            AppDimensions.s20,
+            AppDimensions.s16,
+            AppDimensions.s20,
+            AppDimensions.s24,
+          ),
+          const _StudioSkeleton(),
+        ),
+      );
+      return slivers;
+    }
+
+    if (_itemsError &&
+        state.serviceLines.isEmpty &&
+        state.partLines.isEmpty) {
+      slivers.add(
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.s20),
+            child: Center(
+              child: EmptyState.error(
+                message: t.advisorStudioError,
+                onRetry: () {
+                  setState(() => _loadedGeneratedItems = false);
+                  _loadGeneratedWorkItems();
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      return slivers;
+    }
+
+    if (noMatch) {
+      slivers.add(
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.s20),
+            child: Center(
+              child: EmptyState.noMatch(
+                message: t.advisorStudioNoMatch,
+                actionLabel: t.advisorActionClose,
+                onAction: () => setState(() => _query = ''),
+              ),
+            ),
+          ),
+        ),
+      );
+      return slivers;
+    }
+
+    slivers.addAll(
+      _tierSlivers(
+        tier: RepairTier.mandatory,
+        open: mandatoryOpen,
+        onToggle: () =>
+            setState(() => _mandatoryExpanded = !_mandatoryExpanded),
+        services: mandatoryServices,
+        parts: mandatoryParts,
+        laborHeaderKey: _laborKeyMandatory,
+        state: state,
+        notifier: notifier,
+        onAddServices: addServices,
+        onAddParts: addParts,
+      ),
+    );
+    slivers.addAll(
+      _tierSlivers(
+        tier: RepairTier.optional,
+        open: optionalOpen,
+        onToggle: () => setState(() => _optionalExpanded = !_optionalExpanded),
+        services: optionalServices,
+        parts: optionalParts,
+        laborHeaderKey: _laborKeyOptional,
+        state: state,
+        notifier: notifier,
+        onAddServices: addServices,
+        onAddParts: addParts,
+      ),
+    );
+
+    // Sublet is vendor work booked outside this estimate: a sticky header
+    // plus the honest helper line, never invented lines.
+    slivers.add(
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s16,
+          AppDimensions.s20,
+          0,
+        ),
+        sliver: SliverPersistentHeader(
+          pinned: true,
+          delegate: _MiniHeaderDelegate(
+            icon: Icons.handyman_outlined,
+            title: t.advisorStudioCategorySublet,
+          ),
+        ),
+      ),
+    );
+    slivers.add(
+      box(
+        const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s8,
+          AppDimensions.s20,
+          AppDimensions.s24,
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s12,
+            vertical: AppDimensions.s14,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          child: Text(
+            t.advisorStudioSubletHint,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ),
+    );
+    return slivers;
+  }
+
+  /// One collapsible tier: toggle header card, then (when open) its Parts
+  /// and Labor categories, each with a sticky mini-header.
+  List<Widget> _tierSlivers({
+    required RepairTier tier,
+    required bool open,
+    required VoidCallback onToggle,
+    required List<({int index, ServiceLineItem item})> services,
+    required List<({int index, PartLineItem item})> parts,
+    required GlobalKey laborHeaderKey,
+    required InspectionState state,
+    required InspectionNotifier notifier,
+    required VoidCallback onAddServices,
+    required VoidCallback onAddParts,
+  }) {
+    final t = StaffLocalizations.of(context)!;
+    final isMandatory = tier == RepairTier.mandatory;
+
+    SliverPadding box(EdgeInsets padding, Widget child) => SliverPadding(
+      padding: padding,
+      sliver: SliverToBoxAdapter(child: child),
+    );
+
+    final slivers = <Widget>[
+      box(
+        const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s16,
+          AppDimensions.s20,
+          0,
+        ),
+        _TierHeader(
+          title: isMandatory
+              ? t.advisorStudioTierMandatory
+              : t.advisorStudioTierOptional,
+          icon: isMandatory
+              ? Icons.shield_outlined
+              : Icons.auto_awesome_outlined,
+          count: services.length + parts.length,
+          expanded: open,
+          onToggle: onToggle,
+        ),
+      ),
+    ];
+    if (!open) return slivers;
+
+    slivers.addAll(
+      _categorySlivers<({int index, PartLineItem item})>(
+        kind: _CategoryKind.parts,
+        lines: parts,
+        onAdd: onAddParts,
+        row: (entry) => _StudioPartRow(
+          index: entry.index,
+          item: entry.item,
+          tier: tier,
+          onRemove: () => _removePart(entry.index, entry.item.name),
+        ),
+      ),
+    );
+    slivers.add(
+      box(
+        const EdgeInsets.symmetric(horizontal: AppDimensions.s20),
+        const SizedBox(height: AppDimensions.s12),
+      ),
+    );
+    slivers.addAll(
+      _categorySlivers<({int index, ServiceLineItem item})>(
+        kind: _CategoryKind.labor,
+        lines: services,
+        onAdd: onAddServices,
+        headerKey: laborHeaderKey,
+        row: (entry) => _StudioLaborRow(
+          index: entry.index,
+          item: entry.item,
+          tier: tier,
+          onSuggest: () =>
+              _suggestPrice(context, entry.index, entry.item, notifier),
+          onRemove: () => _removeService(entry.index, entry.item.name),
+        ),
+      ),
+    );
+    return slivers;
+  }
+
+  /// One category: sticky 32px mini-header, divider rows (or the empty
+  /// line), then the always-visible Add action.
+  List<Widget> _categorySlivers<T>({
+    required _CategoryKind kind,
+    required List<T> lines,
+    required VoidCallback onAdd,
+    required Widget Function(T entry) row,
+    GlobalKey? headerKey,
+  }) {
+    final t = StaffLocalizations.of(context)!;
+    final title = kind == _CategoryKind.parts
+        ? t.advisorStudioCategoryParts
+        : t.advisorStudioCategoryLabor;
+    final icon = kind == _CategoryKind.parts
+        ? Icons.settings_outlined
+        : Icons.build_outlined;
+
+    SliverPadding box(EdgeInsets padding, Widget child) => SliverPadding(
+      padding: padding,
+      sliver: SliverToBoxAdapter(child: child),
+    );
+
+    final slivers = <Widget>[
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s20),
+        sliver: SliverPersistentHeader(
+          key: headerKey,
+          pinned: true,
+          delegate: _MiniHeaderDelegate(
+            icon: icon,
+            title: title,
+            countLabel: '${lines.length}',
+          ),
+        ),
+      ),
+    ];
+    if (lines.isEmpty) {
+      // Empty category states what is missing; the Add action below stays
+      // visible so the picker is always one tap away.
+      slivers.add(
+        box(
+          const EdgeInsets.fromLTRB(
+            AppDimensions.s20,
+            AppDimensions.s8,
+            AppDimensions.s20,
+            0,
+          ),
+          Text(
+            t.advisorStudioEmptyCategory(title),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Home divider-row grammar: 1px separators, never cards-per-row.
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.s20,
+            AppDimensions.s8,
+            AppDimensions.s20,
+            0,
+          ),
+          sliver: SliverList.separated(
+            itemCount: lines.length,
+            itemBuilder: (_, i) => row(lines[i]),
+            separatorBuilder: (_, __) => Divider(
+              height: 1,
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+        ),
+      );
+    }
+    // Always visible: the service/part picker stays reachable whether the
+    // section is empty or already has lines. Primary-tinted outline so the
+    // action reads as a button, not body text.
+    slivers.add(
+      box(
+        const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s8,
+          AppDimensions.s20,
+          0,
+        ),
+        SecondaryButton(
+          label: t.advisorStudioAddItem(title),
+          leadingIcon: Icons.add_rounded,
+          foregroundColor: Theme.of(context).colorScheme.primary,
+          borderColor: Theme.of(context).colorScheme.primary,
+          onPressed: onAdd,
+        ),
+      ),
+    );
+    return slivers;
   }
 
   Future<void> _confirmReset(InspectionNotifier notifier) async {
@@ -981,278 +1440,170 @@ class _StudioGreetingHeader extends StatelessWidget {
   }
 }
 
-// ─── STUDIO COLUMN (flat Parts + Labor sections) ─────────────────────────────
-// One section per category, always fully visible: Parts, then Labor, then
-// the Sublet note. The Add action sits at the end of its own section —
-// reachable whether the section is empty or already has lines.
-class _StudioColumn extends StatelessWidget {
-  final InspectionState state;
-  final bool loading;
-  final bool hasError;
-  final String query;
-  final bool noMatch;
-  final List<({int index, ServiceLineItem item})> services;
-  final List<({int index, PartLineItem item})> parts;
-  final ValueChanged<String> onQuery;
-  final VoidCallback onClearQuery;
-  final VoidCallback onAddServices;
-  final VoidCallback onAddParts;
-  final void Function(int index, ServiceLineItem item) onSuggest;
-  final void Function(int index, String name) onRemoveService;
-  final void Function(int index, String name) onRemovePart;
-  final VoidCallback onRetry;
-  final GlobalKey laborKey;
+// ─── TIER GROUP (dossier pattern, collapsible) ───────────────────────────────
+// Toggle header card for one estimate tier. Categories below carry their own
+// sticky mini-headers; severity side-bars on the rows repeat the tier, so a
+// collapsed-then-reopened group still reads unambiguously.
+class _TierHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final int count;
+  final bool expanded;
+  final VoidCallback onToggle;
 
-  const _StudioColumn({
-    required this.state,
-    required this.loading,
-    required this.hasError,
-    required this.query,
-    required this.noMatch,
-    required this.services,
-    required this.parts,
-    required this.onQuery,
-    required this.onClearQuery,
-    required this.onAddServices,
-    required this.onAddParts,
-    required this.onSuggest,
-    required this.onRemoveService,
-    required this.onRemovePart,
-    required this.onRetry,
-    required this.laborKey,
+  const _TierHeader({
+    required this.title,
+    required this.icon,
+    required this.count,
+    required this.expanded,
+    required this.onToggle,
   });
 
   @override
   Widget build(BuildContext context) {
-    final t = StaffLocalizations.of(context)!;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AppSearchField(
-          hintText: t.advisorActionSearchTitle,
-          onChanged: onQuery,
-          onClear: onClearQuery,
-        ),
-        const SizedBox(height: AppDimensions.s16),
-        if (loading)
-          const _StudioSkeleton()
-        else if (hasError &&
-            state.serviceLines.isEmpty &&
-            state.partLines.isEmpty)
-          EmptyState.error(
-            message: t.advisorStudioError,
-            onRetry: onRetry,
-          )
-        else if (noMatch)
-          EmptyState.noMatch(
-            message: t.advisorStudioNoMatch,
-            actionLabel: t.advisorActionClose,
-            onAction: onClearQuery,
-          )
-        else ...[
-          _CategorySection(
-            kind: _CategoryKind.parts,
-            lines: parts,
-            onAdd: onAddParts,
-            row: (entry) => _StudioPartRow(
-              index: entry.index,
-              item: entry.item,
-              onRemove: () => onRemovePart(entry.index, entry.item.name),
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return AppCard.standard(
+      child: Semantics(
+        button: true,
+        expanded: expanded,
+        label: title,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onToggle();
+          },
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          splashColor: colors.primary.withValues(alpha: 0.08),
+          highlightColor: colors.primary.withValues(alpha: 0.04),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppDimensions.s4),
+            child: Row(
+              children: [
+                Icon(icon, size: AppDimensions.iconSm, color: colors.primary),
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusXs,
+                    ),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s4),
+                AnimatedRotation(
+                  turns: expanded ? 0.5 : 0,
+                  duration: AppMotion.resolve(context, AppMotion.fast),
+                  child: Icon(
+                    Icons.expand_more_rounded,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: AppDimensions.s16),
-          Container(
-            key: laborKey,
-            child: _CategorySection(
-              kind: _CategoryKind.labor,
-              lines: services,
-              onAdd: onAddServices,
-              row: (entry) => _StudioLaborRow(
-                index: entry.index,
-                item: entry.item,
-                onSuggest: () => onSuggest(entry.index, entry.item),
-                onRemove: () =>
-                    onRemoveService(entry.index, entry.item.name),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── STICKY 32px MINI-HEADER ─────────────────────────────────────────────────
+// Pins while its category rows scroll beneath (both panes). Fixed 32px
+// geometry so skeleton and content share one rhythm.
+class _MiniHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final IconData icon;
+  final String title;
+  final String? countLabel;
+
+  const _MiniHeaderDelegate({
+    required this.icon,
+    required this.title,
+    this.countLabel,
+  });
+
+  @override
+  double get minExtent => 32;
+
+  @override
+  double get maxExtent => 32;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Container(
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s12),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: AppDimensions.iconSm, color: colors.primary),
+          const SizedBox(width: AppDimensions.s8),
+          Expanded(
+            child: Text(
+              title.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: colors.onSurfaceVariant,
+                letterSpacing: 0.6,
               ),
             ),
           ),
-          const SizedBox(height: AppDimensions.s16),
-          const _SubletSection(),
+          if (countLabel != null)
+            Text(
+              countLabel!,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w800,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
         ],
-      ],
+      ),
     );
   }
+
+  @override
+  bool shouldRebuild(covariant _MiniHeaderDelegate oldDelegate) =>
+      oldDelegate.icon != icon ||
+      oldDelegate.title != title ||
+      oldDelegate.countLabel != countLabel;
 }
 
 enum _CategoryKind { parts, labor }
-
-class _CategorySection<T> extends StatelessWidget {
-  final _CategoryKind kind;
-  final List<T> lines;
-  final VoidCallback onAdd;
-  final Widget Function(T entry) row;
-
-  const _CategorySection({
-    required this.kind,
-    required this.lines,
-    required this.onAdd,
-    required this.row,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final t = StaffLocalizations.of(context)!;
-    final title = kind == _CategoryKind.parts
-        ? t.advisorStudioCategoryParts
-        : t.advisorStudioCategoryLabor;
-    final icon = kind == _CategoryKind.parts
-        ? Icons.settings_outlined
-        : Icons.build_outlined;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // 32px section mini-header (sticky when this column scrolls inside
-        // the studio CustomScrollView via the parent slivers; fixed 32px
-        // geometry here so skeleton and content share one rhythm).
-        Container(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s12),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: AppDimensions.iconSm, color: colors.primary),
-              const SizedBox(width: AppDimensions.s8),
-              Expanded(
-                child: Text(
-                  title.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: colors.onSurfaceVariant,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-              ),
-              Text(
-                '${lines.length}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  fontWeight: FontWeight.w800,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s8),
-        if (lines.isEmpty)
-          // Empty category states what is missing; the Add action below
-          // stays visible so the picker is always one tap away.
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppDimensions.s8),
-            child: Text(
-              t.advisorStudioEmptyCategory(title),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-          )
-        else
-          // Home divider-row grammar: 1px dividers, never cards-per-row.
-          Column(
-            children: [
-              for (var i = 0; i < lines.length; i++) ...[
-                if (i > 0) Divider(height: 1, color: colors.outlineVariant),
-                row(lines[i]),
-              ],
-            ],
-          ),
-        // Always visible: the service/part picker stays reachable whether
-        // the section is empty or already has lines. Primary-tinted outline
-        // so the action reads as a button, not body text.
-        SecondaryButton(
-          label: t.advisorStudioAddItem(title),
-          leadingIcon: Icons.add_rounded,
-          foregroundColor: colors.primary,
-          borderColor: colors.primary,
-          onPressed: onAdd,
-        ),
-      ],
-    );
-  }
-}
-
-class _SubletSection extends StatelessWidget {
-  const _SubletSection();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final t = StaffLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s12),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.handyman_outlined,
-                size: AppDimensions.iconSm,
-                color: colors.primary,
-              ),
-              const SizedBox(width: AppDimensions.s8),
-              Expanded(
-                child: Text(
-                  t.advisorStudioCategorySublet.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: colors.onSurfaceVariant,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s8),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s12,
-            vertical: AppDimensions.s14,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-            border: Border.all(color: colors.outlineVariant),
-          ),
-          child: Text(
-            t.advisorStudioSubletHint,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              height: 1.4,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 // ─── ROW PRICING FIELDS (rate + discount %, provider-owned) ─────────────────
 // Same writes as the previous composition (`updateXLine` rate /
@@ -1408,17 +1759,20 @@ class _RowPricingFieldsState extends State<_RowPricingFields> {
 }
 
 // ─── STUDIO ROWS (home row grammar, 72px) ────────────────────────────────────
-// Title 15/600 + meta 12 muted LTR + right line-total tabular. Parts add
-// stock pill + qty stepper + rate/discount; labor adds hours × rate + tech
-// avatar + rate/discount + price suggest. Min-height 72 keeps 1.3x clean.
+// 3px tier side color + title 15/600 + meta 12 muted LTR + right line-total
+// tabular. Parts add stock pill + qty stepper + rate/discount; labor adds
+// hours × rate + tech avatar + rate/discount + price suggest. Min-height 72
+// keeps 1.3x text clean.
 class _StudioPartRow extends ConsumerWidget {
   final int index;
   final PartLineItem item;
+  final RepairTier tier;
   final VoidCallback onRemove;
 
   const _StudioPartRow({
     required this.index,
     required this.item,
+    required this.tier,
     required this.onRemove,
   });
 
@@ -1426,8 +1780,12 @@ class _StudioPartRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
     final t = StaffLocalizations.of(context)!;
     final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
+    final side = tier == RepairTier.mandatory
+        ? semantic.danger.base
+        : semantic.info.base;
     final inStock = inStockFor(item.name);
     final money = models.MoneyAed(item.amount).format(arabic: arabic);
     final unit = models.MoneyAed(item.rate).format(arabic: arabic);
@@ -1437,14 +1795,20 @@ class _StudioPartRow extends ConsumerWidget {
       label: '${item.name}, $money',
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 72),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s12,
-            vertical: AppDimensions.s12,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Container(width: 3, color: side),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s12,
+                    vertical: AppDimensions.s12,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1545,6 +1909,10 @@ class _StudioPartRow extends ConsumerWidget {
                     ],
                   ),
                 ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1553,12 +1921,14 @@ class _StudioPartRow extends ConsumerWidget {
 class _StudioLaborRow extends ConsumerWidget {
   final int index;
   final ServiceLineItem item;
+  final RepairTier tier;
   final VoidCallback onSuggest;
   final VoidCallback onRemove;
 
   const _StudioLaborRow({
     required this.index,
     required this.item,
+    required this.tier,
     required this.onSuggest,
     required this.onRemove,
   });
@@ -1567,8 +1937,12 @@ class _StudioLaborRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
     final t = StaffLocalizations.of(context)!;
     final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
+    final side = tier == RepairTier.mandatory
+        ? semantic.danger.base
+        : semantic.info.base;
     final money = models.MoneyAed(item.amount).format(arabic: arabic);
     final rate = models.MoneyAed(item.rate).format(arabic: arabic);
     final initial = item.name.trim().isEmpty
@@ -1580,14 +1954,20 @@ class _StudioLaborRow extends ConsumerWidget {
       label: '${item.name}, $money',
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 72),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s12,
-            vertical: AppDimensions.s12,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Container(width: 3, color: side),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s12,
+                    vertical: AppDimensions.s12,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1623,11 +2003,11 @@ class _StudioLaborRow extends ConsumerWidget {
                                 const SizedBox(height: 2),
                                 Directionality(
                                   textDirection: TextDirection.ltr,
-                                  child: Text(
-                                    t.advisorStudioLaborDetail(
-                                      '${item.qty}h',
-                                      rate,
-                                    ),
+                                    child: Text(
+                                      t.advisorStudioLaborDetail(
+                                        '${item.qty}',
+                                        rate,
+                                      ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: theme.textTheme.bodySmall?.copyWith(
@@ -1711,6 +2091,10 @@ class _StudioLaborRow extends ConsumerWidget {
                     ],
                   ),
                 ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1753,7 +2137,9 @@ class _StudioSkeleton extends StatelessWidget {
   }
 }
 
-// ─── STUDIO RAIL (desktop 40%: totals + assign) ──────────────────────────────
+// ─── STUDIO RAIL (desktop 40%: scroll content + pinned totals dock) ─────────
+// Wide-only: the assign card + estimate details scroll while the money dock
+// stays pinned at the rail foot.
 class _StudioRail extends StatelessWidget {
   final InspectionState state;
   final int lineCount;
@@ -1785,38 +2171,48 @@ class _StudioRail extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppCard.standard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SectionHeader(
+                        title: t.advisorDispatchTechnicianSection,
+                        subtitle: t.advisorDispatchSubtitle,
+                        leadingIcon: Icons.engineering_outlined,
+                      ),
+                      SecondaryButton(
+                        label: t.advisorActionAssignTechnician,
+                        leadingIcon: Icons.assignment_ind_outlined,
+                        onPressed: onAssign,
+                      ),
+                      const SizedBox(height: AppDimensions.s8),
+                      SecondaryButton(
+                        label: t.advisorEstimateShareTitle,
+                        leadingIcon: Icons.ios_share_rounded,
+                        onPressed: onShare,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s16),
+                _EstimateDetailsCard(state: state, onMedia: onMedia),
+                const SizedBox(height: AppDimensions.s16),
+              ],
+            ),
+          ),
+        ),
         RepairPriceBreakdownDock(
           partsTotal: state.partsTotal,
           laborTotal: state.servicesTotal,
           lineCount: lineCount,
           onConfirm: onConfirm,
         ),
-        const SizedBox(height: AppDimensions.s16),
-        AppCard.standard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SectionHeader(
-                title: t.advisorDispatchTechnicianSection,
-                subtitle: t.advisorDispatchSubtitle,
-                leadingIcon: Icons.engineering_outlined,
-              ),
-              SecondaryButton(
-                label: t.advisorActionAssignTechnician,
-                leadingIcon: Icons.assignment_ind_outlined,
-                onPressed: onAssign,
-              ),
-              const SizedBox(height: AppDimensions.s8),
-              SecondaryButton(
-                label: t.advisorEstimateShareTitle,
-                leadingIcon: Icons.ios_share_rounded,
-                onPressed: onShare,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s16),
-        _EstimateDetailsCard(state: state, onMedia: onMedia),
       ],
     );
   }
@@ -1909,6 +2305,8 @@ class _EstimateDetailsCardState extends ConsumerState<_EstimateDetailsCard> {
               Expanded(
                 child: Text(
                   t.advisorStudioDelivery,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colors.onSurface,
@@ -1916,11 +2314,12 @@ class _EstimateDetailsCardState extends ConsumerState<_EstimateDetailsCard> {
                 ),
               ),
               const SizedBox(width: AppDimensions.s8),
-              SecondaryButton(
-                label: deliveryLabel,
-                leadingIcon: Icons.event_outlined,
-                isExpanded: false,
-                onPressed: () async {
+              Flexible(
+                child: SecondaryButton(
+                  label: deliveryLabel,
+                  leadingIcon: Icons.event_outlined,
+                  isExpanded: false,
+                  onPressed: () async {
                   final d = await showDatePicker(
                     context: context,
                     initialDate:
@@ -1940,6 +2339,7 @@ class _EstimateDetailsCardState extends ConsumerState<_EstimateDetailsCard> {
                     }
                   }
                 },
+                ),
               ),
             ],
           ),
