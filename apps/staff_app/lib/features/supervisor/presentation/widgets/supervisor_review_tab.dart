@@ -2,306 +2,200 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/qc_checklist_sheet.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_components.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-/// Quality control verification tab for completed technician repair orders.
+/// Quality-control queue: completed repairs awaiting sign-off, opened into the
+/// QC checklist sheet. Presentation only.
 class SupervisorReviewTab extends ConsumerWidget {
   const SupervisorReviewTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
+    final t = StaffLocalizations.of(context)!;
     final state = ref.watch(supervisorDashboardProvider);
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final awaiting = notifier.awaitingCompletions;
-    final isWide = MediaQuery.sizeOf(context).width >= 768;
+    final loading = state.isReviewLoading && awaiting.isEmpty;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: RefreshIndicator(
-            onRefresh: notifier.refreshReview,
-            color: colorScheme.primary,
-            backgroundColor: colorScheme.surface,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-              children: [
-                // ── Header Bar ──────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Quality Control Inspection',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurface,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Inspect and verify completed repair orders before delivery',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (state.isReviewLoading)
-                      const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    else
-                      IconButton(
-                        tooltip: 'Refresh Inspections',
-                        onPressed: () {
-                          HapticFeedback.selectionClick();
-                          notifier.refreshReview();
-                        },
-                        icon: Icon(
-                          Icons.refresh_rounded,
-                          color: colorScheme.onSurfaceVariant,
-                          size: 20,
-                        ),
-                      ),
-                  ],
+    return RefreshIndicator(
+      onRefresh: notifier.refreshReview,
+      color: context.colors.primary,
+      backgroundColor: context.colors.surface,
+      child: AppResponsivePage(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          context.pagePadding.left,
+          AppDimensions.s16,
+          context.pagePadding.right,
+          AppDimensions.s40,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppPageHeader(
+              title: t.svReviewTitle,
+              subtitle: t.svReviewSubtitle,
+              leading: const Icon(Icons.verified_outlined),
+              actions: [
+                IconButton(
+                  tooltip: SharedCoreL10n.of(context).commonRetry,
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    notifier.refreshReview();
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
                 ),
-                const SizedBox(height: 16),
-
-                // Error notice if present
-                if (state.reviewError.isNotEmpty) ...[
-                  _ReviewNotice(
-                    message: state.reviewError,
-                    onRetry: notifier.refreshReview,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // ── Cards List or Grid ──────────────────────────────────
-                if (awaiting.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
-                    child: EmptyState(
-                      icon: Icons.verified_outlined,
-                      title: 'No repairs awaiting QC sign-off',
-                      message:
-                          'All completed technician work orders have been verified and closed.',
-                    ),
-                  )
-                else if (isWide)
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: awaiting.map((job) {
-                      return SizedBox(
-                        width: (1100 - 48) / 2,
-                        child: _QcJobCard(job: job),
-                      );
-                    }).toList(),
-                  )
-                else
-                  ...awaiting.map(
-                    (job) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _QcJobCard(job: job),
-                    ),
-                  ),
               ],
             ),
-          ),
+            const SizedBox(height: AppDimensions.s16),
+            if (state.reviewError.isNotEmpty)
+              AppInfoPanel.danger(
+                message: t.svReviewError,
+                action: TextButton(
+                  onPressed: notifier.refreshReview,
+                  child: Text(SharedCoreL10n.of(context).commonRetry),
+                ),
+              )
+            else if (loading)
+              const AppSkeleton.listRows(rows: 5)
+            else if (awaiting.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppDimensions.s40),
+                child: EmptyState(
+                  icon: Icons.verified_outlined,
+                  title: t.svReviewEmpty,
+                  message: t.svReviewEmptyMessage,
+                ),
+              )
+            else
+              for (final job in awaiting)
+                _QcRow(
+                  jobCardId: job.jobCardId,
+                  jobCardRef: job.jobCardRef,
+                  customerName: job.customerName,
+                  vehicleInfo: job.vehicleInfo,
+                  technician: job.technician,
+                  done: job.done,
+                  total: job.total,
+                  workItems: job.items
+                      .map((e) => e.description)
+                      .where((d) => d.trim().isNotEmpty)
+                      .toList(),
+                ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _QcJobCard extends StatelessWidget {
-  final dynamic job;
+class _QcRow extends StatelessWidget {
+  final int jobCardId;
+  final String jobCardRef;
+  final String customerName;
+  final String vehicleInfo;
+  final String technician;
+  final int done;
+  final int total;
+  final List<String> workItems;
 
-  const _QcJobCard({required this.job});
+  const _QcRow({
+    required this.jobCardId,
+    required this.jobCardRef,
+    required this.customerName,
+    required this.vehicleInfo,
+    required this.technician,
+    required this.done,
+    required this.total,
+    required this.workItems,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final t = StaffLocalizations.of(context)!;
+    final progress = total > 0 ? (done / total).clamp(0.0, 1.0) : 0.0;
 
-    final int total = job.total as int? ?? 0;
-    final int done = job.done as int? ?? 0;
-    final double progress = total > 0 ? done / total : 0.0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppDimensions.s12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.assignment_outlined,
-                      size: 16,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
+              Row(
+                children: [
+                  Expanded(
+                    child: Directionality(
+                      textDirection: TextDirection.ltr,
                       child: Text(
-                        job.jobCardRef as String? ?? 'Job Card',
+                        jobCardRef,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
+                        style: supervisorMono(
+                          context,
+                          color: context.colors.onSurface,
+                        ).copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.s8),
+                  StatusPill.info(t.svReviewProgress(done, total)),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$customerName · $vehicleInfo',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  if (technician.isNotEmpty) ...[
+                    const SizedBox(width: AppDimensions.s8),
+                    Text(
+                      initialsOf(technician),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '$done/$total DONE',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSecondaryContainer,
-                    fontWeight: FontWeight.w800,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
+              const SizedBox(height: AppDimensions.s10),
+              AppLinearProgress(value: progress, height: 5),
+              const SizedBox(height: AppDimensions.s12),
+              PrimaryButton(
+                label: t.svReviewStart,
+                icon: Icons.fact_check_rounded,
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  showQcChecklistSheet(
+                    context,
+                    jobCardId: jobCardId,
+                    jobCardRef: jobCardRef,
+                    customerName: customerName,
+                    vehicleInfo: vehicleInfo,
+                    workItems: workItems,
+                  );
+                },
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${job.customerName} · ${job.vehicleInfo}',
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 5,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation(colorScheme.primary),
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            height: 40,
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => QcChecklistSheet(
-                    jobCardId: job.jobCardId as int? ?? 0,
-                    jobCardRef: job.jobCardRef as String? ?? '',
-                    customerName: job.customerName as String? ?? '',
-                    vehicleInfo: job.vehicleInfo as String? ?? '',
-                    workItems: (job.items as List<dynamic>? ?? [])
-                        .map((e) => (e.description as String? ?? '').trim())
-                        .where((d) => d.isNotEmpty)
-                        .toList(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.fact_check_rounded, size: 16),
-              label: const Text(
-                'Start QC Inspection',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReviewNotice extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ReviewNotice({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: colors.errorContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.error.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.cloud_off_rounded,
-            color: colors.onErrorContainer,
-            size: 18,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: colors.onErrorContainer),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Retry',
-            visualDensity: VisualDensity.compact,
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded, size: 18),
-          ),
-        ],
-      ),
+        ),
+        Divider(height: 1, color: context.colors.outlineVariant),
+      ],
     );
   }
 }

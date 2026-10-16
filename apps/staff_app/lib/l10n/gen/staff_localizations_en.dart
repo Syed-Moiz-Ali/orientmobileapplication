@@ -3054,4 +3054,527 @@ class StaffLocalizationsEn extends StaffLocalizations {
   @override
   String get techEscError =>
       'We couldn\'t send the escalation. Check your connection and try again.';
+
+  @override
+  String get svWorkspaceName => 'Supervisor';
+
+  @override
+  String svGreeting(String name) {
+    return 'Floor command, $name';
+  }
+
+  @override
+  String svBaysOccupied(int occupied, int total) {
+    return '$occupied/$total bays active';
+  }
+
+  @override
+  String get svNavFloor => 'Floor';
+
+  @override
+  String get svNavJobs => 'Jobs';
+
+  @override
+  String get svNavQueue => 'Queue';
+
+  @override
+  String get svNavReview => 'Review';
+
+  @override
+  String get svNavReports => 'Reports';
+
+  @override
+  String get svNavStaff => 'Staff';
+
+  @override
+  String get svNavSchedule => 'Schedule';
+
+  @override
+  String get svProfileLabel => 'Supervisor profile';
+
+  @override
+  String get svNotificationsTitle => 'Floor notifications';
+
+  @override
+  String get svNotificationsEmpty => 'No notifications';
+
+  @override
+  String get svNotificationsEmptyMessage => 'You are all caught up.';
+
+  @override
+  String get svNotificationsMarkAll => 'Mark all read';
+
+  @override
+  String get svSearchTitle => 'Find on the floor';
+
+  @override
+  String get svSearchHint => 'Search job card, customer, or plate';
+
+  @override
+  String get svFloorTitle => 'Workshop floor';
+
+  @override
+  String svFloorSubtitle(int count, int total) {
+    return '$count active · $total bays';
+  }
+
+  @override
+  String get svFloorLegend => 'Bay status';
+
+  @override
+  String get svBayOccupied => 'Occupied';
+
+  @override
+  String get svBayIdle => 'Idle';
+
+  @override
+  String get svBayPartsDelay => 'Parts delay';
+
+  @override
+  String get svBayQc => 'QC';
+
+  @override
+  String get svFloorTapHint => 'Tap a bay to dispatch a technician';
+
+  @override
+  String get svFloorEmpty => 'No active jobs on the floor';
+
+  @override
+  String get svFloorEmptyMessage =>
+      'New jobs appear the moment they are assigned.';
+
+  @override
+  String get svFloorNoMatch => 'No bays match this filter';
+
+  @override
+  String get svFloorErrorTitle => 'Floor unavailable';
+
+  @override
+  String get svFloorError => 'Could not load the floor. Pull to refresh.';
+
+  @override
+  String get svFloorQueueTitle => 'Incoming queue';
+
+  @override
+  String get svFloorQueueEmpty => 'The queue is clear';
+
+  @override
+  String get svFloorUtilisation => 'Floor utilisation';
+
+  @override
+  String get svBaysLabel => 'Bays';
+
+  @override
+  String get svQueueTitle => 'Incoming queue';
+
+  @override
+  String get svQueueSubtitle => 'Priority-sorted bookings and breakdowns';
+
+  @override
+  String get svQueuePriorityVip => 'VIP';
+
+  @override
+  String get svQueuePriorityPromised => 'Promised today';
+
+  @override
+  String get svQueuePriorityInsurance => 'Insurance';
+
+  @override
+  String get svQueuePriorityEmergency => 'Emergency';
+
+  @override
+  String get svQueueBookings => 'Bookings';
+
+  @override
+  String get svQueueBreakdowns => 'Breakdowns';
+
+  @override
+  String get svQueueAssign => 'Assign advisor';
+
+  @override
+  String get svQueueEmpty => 'The queue is clear';
+
+  @override
+  String get svQueueEmptyMessage => 'No bookings or breakdowns waiting.';
+
+  @override
+  String get svQueueNoMatch => 'No matching queue items';
+
+  @override
+  String get svQueueError => 'Could not refresh the dispatch queue.';
+
+  @override
+  String get svQueueAssignTitle => 'Route to advisor';
+
+  @override
+  String get svQueueAssignHint => 'Service advisor';
+
+  @override
+  String get svQueueAssigned => 'Booking assigned';
+
+  @override
+  String get svQueueDispatched => 'Breakdown dispatched';
+
+  @override
+  String get svQueueAssignFailed => 'Could not assign. Try again.';
+
+  @override
+  String get svQueueNoAdvisors => 'No active advisors available to assign';
+
+  @override
+  String get svJobsTitle => 'Active jobs';
+
+  @override
+  String svJobsSubtitle(int count) {
+    return '$count on the floor';
+  }
+
+  @override
+  String get svJobsSearchHint => 'Search job card, customer, or plate';
+
+  @override
+  String get svJobsEmpty => 'No active jobs';
+
+  @override
+  String get svJobsEmptyMessage => 'Assign work to see jobs on the floor.';
+
+  @override
+  String get svJobsNoMatch => 'No matching jobs';
+
+  @override
+  String get svJobsError => 'Could not load active jobs.';
+
+  @override
+  String get svJobsTotal => 'Total';
+
+  @override
+  String get svJobsInProgress => 'In progress';
+
+  @override
+  String get svJobsCompleted => 'Completed';
+
+  @override
+  String svJobsTasks(int done, int total) {
+    return '$done/$total tasks';
+  }
+
+  @override
+  String get svJobsAssign => 'Assign work';
+
+  @override
+  String get svReviewTitle => 'Quality control';
+
+  @override
+  String get svReviewSubtitle => 'Verify completed repairs before delivery';
+
+  @override
+  String get svReviewStart => 'Start QC';
+
+  @override
+  String get svReviewEmpty => 'Nothing awaiting sign-off';
+
+  @override
+  String get svReviewEmptyMessage =>
+      'Completed repairs appear here for verification.';
+
+  @override
+  String get svReviewError => 'Could not load QC work.';
+
+  @override
+  String svReviewProgress(int done, int total) {
+    return '$done/$total done';
+  }
+
+  @override
+  String get svQcTitle => 'Quality control review';
+
+  @override
+  String get svQcRepairVerification => 'Repair verification';
+
+  @override
+  String get svQcRoadTest => 'Road test';
+
+  @override
+  String get svQcTorque => 'Torque audit';
+
+  @override
+  String get svQcFluid => 'Fluid levels';
+
+  @override
+  String get svQcWash => 'Final wash';
+
+  @override
+  String get svQcCheckpoints => 'Sign-off checkpoints';
+
+  @override
+  String get svQcPhotoProof => 'Photo proof';
+
+  @override
+  String get svQcPhotoAdd => 'Add photo';
+
+  @override
+  String get svQcPhotoAttached => 'Attached';
+
+  @override
+  String get svQcPhotoUnavailable =>
+      'Photo capture is not available for this job.';
+
+  @override
+  String get svQcNotes => 'Inspector notes';
+
+  @override
+  String get svQcNotesHint =>
+      'Required when sending back — describe the rework needed';
+
+  @override
+  String get svQcReject => 'Send back';
+
+  @override
+  String get svQcApprove => 'Approve & pass';
+
+  @override
+  String svQcVerified(int count, int total) {
+    return '$count/$total verified';
+  }
+
+  @override
+  String get svQcRejectReasonRequired =>
+      'Add revision details before sending back.';
+
+  @override
+  String get svQcVerifyAll => 'Verify every checkpoint to approve.';
+
+  @override
+  String get svQcApproved => 'QC passed — job approved';
+
+  @override
+  String get svQcRejected => 'Sent back for revision';
+
+  @override
+  String get svQcFailed => 'Could not complete QC review. Try again.';
+
+  @override
+  String get svReportsTitle => 'Operations report';
+
+  @override
+  String get svReportsSubtitle => 'Throughput, rework, and floor utilisation';
+
+  @override
+  String get svReportsThroughput => 'Throughput';
+
+  @override
+  String get svReportsRework => 'Rework';
+
+  @override
+  String get svReportsUtilisation => 'Utilisation';
+
+  @override
+  String get svReportsJobsPerTech => 'Jobs per technician';
+
+  @override
+  String get svReportsCategories => 'Job categories';
+
+  @override
+  String get svReportsCategoriesEmpty => 'No category data recorded';
+
+  @override
+  String get svReportsWorkload => 'Advisor load';
+
+  @override
+  String get svReportsWorkloadEmpty => 'No workload data recorded';
+
+  @override
+  String get svReportsFloor => 'Floor status';
+
+  @override
+  String get svReportsTechnicians => 'Technicians';
+
+  @override
+  String get svReportsDepartments => 'Departments';
+
+  @override
+  String get svReportsInQueue => 'In queue';
+
+  @override
+  String get svReportsFinancial => 'Financials';
+
+  @override
+  String get svReportsEmpty => 'No report data';
+
+  @override
+  String get svReportsError => 'Live report data is unavailable right now.';
+
+  @override
+  String get svReportsNoHistory =>
+      'No history yet — showing current floor figures only.';
+
+  @override
+  String get svStaffTitle => 'Workshop roster';
+
+  @override
+  String svStaffSubtitle(int count) {
+    return '$count specialists on shift';
+  }
+
+  @override
+  String get svStaffTechnicians => 'Technicians';
+
+  @override
+  String get svStaffDepartments => 'Departments';
+
+  @override
+  String get svStaffEmpty => 'No staff on shift';
+
+  @override
+  String get svStaffEmptyMessage => 'No registered technicians.';
+
+  @override
+  String get svStaffDeptEmpty => 'No departments';
+
+  @override
+  String get svStaffDeptEmptyMessage => 'No registered workshop units.';
+
+  @override
+  String get svStaffRole => 'Floor specialist';
+
+  @override
+  String get svStaffOnShift => 'On shift';
+
+  @override
+  String svStaffLoad(int count) {
+    return '$count active';
+  }
+
+  @override
+  String get svScheduleTitle => 'Bay schedule';
+
+  @override
+  String get svScheduleSubtitle => 'Today\'s appointment agenda';
+
+  @override
+  String get svScheduleTime => 'Time';
+
+  @override
+  String get svScheduleVehicle => 'Customer · vehicle';
+
+  @override
+  String get svScheduleService => 'Service';
+
+  @override
+  String get svScheduleStatus => 'Status';
+
+  @override
+  String get svScheduleEmpty => 'No appointments scheduled';
+
+  @override
+  String get svScheduleEmptyMessage => 'Upcoming bookings appear here.';
+
+  @override
+  String get svScheduleViewInQueue => 'View in queue';
+
+  @override
+  String get svScheduleToday => 'Today';
+
+  @override
+  String get svScheduleError => 'Could not load the schedule.';
+
+  @override
+  String get svAssignTitle => 'Dispatch to technician';
+
+  @override
+  String get svAssignSubtitle => 'Pick a technician to take this job';
+
+  @override
+  String get svAssignTarget => 'Target job';
+
+  @override
+  String get svAssignTargetHint => 'Job card number (e.g. JC-2026-1042)';
+
+  @override
+  String get svAssignTechTitle => 'Technicians';
+
+  @override
+  String get svAssignSkills => 'Skills';
+
+  @override
+  String svAssignLoad(int count) {
+    return '$count active';
+  }
+
+  @override
+  String get svAssignDispatch => 'Dispatch';
+
+  @override
+  String svAssignDispatched(String name) {
+    return 'Dispatched to $name';
+  }
+
+  @override
+  String get svAssignEmpty => 'No technicians available';
+
+  @override
+  String get svAssignEmptyMessage => 'Register technicians to dispatch work.';
+
+  @override
+  String get svAssignNoTarget => 'Add a target job card before dispatching.';
+
+  @override
+  String get svAssignFailed => 'Could not dispatch. Try again.';
+
+  @override
+  String get svAssignBrief => 'Task brief (optional)';
+
+  @override
+  String get svAssignBriefHint => 'Describe the work for the technician';
+
+  @override
+  String get svRouteAssignTitle => 'Work assignment';
+
+  @override
+  String get svRouteAssignSubtitle => 'Dispatch tasks to technicians';
+
+  @override
+  String get svRouteJobsTitle => 'Active jobs';
+
+  @override
+  String get svRouteJobsSubtitle => 'Workshop operations';
+
+  @override
+  String get svRouteQueueTitle => 'Incoming work';
+
+  @override
+  String get svRouteQueueSubtitle => 'Bookings & breakdowns';
+
+  @override
+  String get svRouteReviewTitle => 'Quality control';
+
+  @override
+  String get svRouteReviewSubtitle => 'Verify completed repairs';
+
+  @override
+  String get svRouteStaffTitle => 'Workshop roster';
+
+  @override
+  String get svRouteStaffSubtitle => 'Technicians & departments';
+
+  @override
+  String get svRouteScheduleTitle => 'Scheduled appointments';
+
+  @override
+  String get svRouteScheduleSubtitle => 'Today\'s bookings';
+
+  @override
+  String get svRouteReportsTitle => 'Operations report';
+
+  @override
+  String get svRouteReportsSubtitle => 'Workshop summary & metrics';
+
+  @override
+  String get svBreadcrumbConsole => 'Supervisor console';
+
+  @override
+  String get svProfileShift => 'Shift timeline';
+
+  @override
+  String get svProfileSettings => 'Settings';
 }

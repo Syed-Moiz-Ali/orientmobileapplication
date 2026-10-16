@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_scaffold.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
 
@@ -106,7 +108,7 @@ void main() {
     });
   });
 
-  group('SupervisorScaffold centralized chrome', () {
+  group('SupervisorScaffold centralized chrome (Phase 11 greeting shell)', () {
     for (final width in [320.0, 768.0, 1280.0]) {
       for (final locale in [const Locale('en'), const Locale('ar')]) {
         final tag = locale.languageCode;
@@ -114,13 +116,13 @@ void main() {
           tester,
         ) async {
           await _pumpScaffold(tester, locale: locale, width: width);
-          expect(find.text('Workshop Overview'), findsWidgets);
-          expect(
-            find.text('Shift operations & floor activity'),
-            findsOneWidget,
-          );
-          expect(find.byType(WorkspaceAppBar), findsOneWidget);
+          // Phase 11 migrated the bespoke bar to a greeting header (advisor
+          // home grammar) — no WorkspaceAppBar on the supervisor shell.
           expect(find.byType(SupervisorScaffold), findsOneWidget);
+          expect(find.byType(WorkspaceAppBar), findsNothing);
+          if (locale.languageCode == 'en') {
+            expect(find.textContaining('Floor command'), findsOneWidget);
+          }
           expect(tester.takeException(), isNull);
         });
       }
@@ -133,7 +135,7 @@ void main() {
         width: 320,
         textScale: 1.3,
       );
-      expect(find.byType(WorkspaceAppBar), findsOneWidget);
+      expect(find.byType(SupervisorScaffold), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -212,7 +214,9 @@ Future<void> _pumpScaffold(
           locale: locale,
           supportedLocales: AppLocales.supported,
           localizationsDelegates: const [
+            StaffLocalizations.delegate,
             SharedCoreLocalizations.delegate,
+            SharedAuthLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,

@@ -2,651 +2,496 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_components.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-/// Incoming dispatch queue for bookings and emergency breakdowns.
-class SupervisorQueueTab extends ConsumerWidget {
-  const SupervisorQueueTab({super.key});
-
-  Future<void> _assign(
-    BuildContext context,
-    WidgetRef ref, {
-    required int id,
-    required bool isBooking,
-    required String label,
-  }) async {
-    final notifier = ref.read(supervisorDashboardProvider.notifier);
-    final advisors = notifier.advisors;
-    if (advisors.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No active advisors available to assign')),
-      );
-      return;
-    }
-
-    int selectedId = advisors.first.id;
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          final theme = Theme.of(context);
-          final colorScheme = theme.colorScheme;
-          final textTheme = theme.textTheme;
-
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 540),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: colorScheme.outlineVariant,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        isBooking
-                            ? 'Route Booking to Service Advisor'
-                            : 'Assign Breakdown to Advisor',
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        label,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      DropdownButtonFormField<int>(
-                        initialValue: selectedId,
-                        dropdownColor: colorScheme.surface,
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 14,
-                        ),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: colorScheme.surfaceContainerLow,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: colorScheme.outlineVariant,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: colorScheme.outlineVariant,
-                            ),
-                          ),
-                          labelText: 'Select Service Advisor',
-                        ),
-                        items: advisors.map((a) {
-                          return DropdownMenuItem<int>(
-                            value: a.id,
-                            child: Text(a.name),
-                          );
-                        }).toList(),
-                        onChanged: (v) =>
-                            setSheetState(() => selectedId = v ?? selectedId),
-                      ),
-                      const SizedBox(height: 22),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size(0, 48),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () async {
-                            HapticFeedback.lightImpact();
-                            Navigator.pop(context);
-                            final msg = isBooking
-                                ? await notifier.assignBooking(id, selectedId)
-                                : await notifier.assignBreakdown(
-                                    id,
-                                    selectedId,
-                                  );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(msg),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                          },
-                          child: Text(
-                            isBooking ? 'Route to Advisor' : 'Assign Advisor',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+/// Incoming dispatch queue (Phase 11): priority-sorted bookings and emergency
+/// breakdowns as divider rows, routed to advisors through a shared modal.
+class SupervisorQueueTab extends ConsumerStatefulWidget {
+  final VoidCallback onOpenReview;
+  const SupervisorQueueTab({super.key, required this.onOpenReview});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+  ConsumerState<SupervisorQueueTab> createState() => _SupervisorQueueTabState();
+}
+
+class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
+  String? _filter;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final state = ref.watch(supervisorDashboardProvider);
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final bookings = notifier.bookings;
     final breakdowns = notifier.breakdowns;
-    final state = ref.watch(supervisorDashboardProvider);
-    final isLoading = state.isQueueLoading;
-    final isWide = MediaQuery.sizeOf(context).width >= 900;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: RefreshIndicator(
-            onRefresh: notifier.refreshQueue,
-            color: colorScheme.primary,
-            backgroundColor: colorScheme.surface,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-              children: [
-                // ── Header Bar ──────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Incoming Work Queue',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurface,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Route incoming appointments and roadside breakdowns to advisors',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isLoading)
-                      const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    else
-                      IconButton(
-                        tooltip: 'Refresh Queue',
-                        onPressed: () {
-                          HapticFeedback.selectionClick();
-                          notifier.refreshQueue();
-                        },
-                        icon: Icon(
-                          Icons.refresh_rounded,
-                          color: colorScheme.onSurfaceVariant,
-                          size: 20,
-                        ),
-                      ),
-                  ],
+    final vip = t.svQueuePriorityVip;
+    final promised = t.svQueuePriorityPromised;
+    final insurance = t.svQueuePriorityInsurance;
+
+    final sortedBookings = [...bookings]
+      ..sort(
+        (a, b) => queuePriorityRank(bookingPriority(a)).compareTo(
+          queuePriorityRank(bookingPriority(b)),
+        ),
+      );
+    final visibleBookings = _filter == null
+        ? sortedBookings
+        : sortedBookings
+              .where((b) => _priorityLabel(t, b) == _filter)
+              .toList();
+
+    final counts = {
+      vip: bookings.where((b) => _priorityLabel(t, b) == vip).length,
+      promised: bookings.where((b) => _priorityLabel(t, b) == promised).length,
+      insurance: bookings
+          .where((b) => _priorityLabel(t, b) == insurance)
+          .length,
+    };
+
+    final isEmpty =
+        bookings.isEmpty && breakdowns.isEmpty && !state.isQueueLoading;
+    final isNoMatch = _filter != null &&
+        visibleBookings.isEmpty &&
+        breakdowns.isEmpty;
+
+    return RefreshIndicator(
+      onRefresh: notifier.refreshQueue,
+      color: context.colors.primary,
+      backgroundColor: context.colors.surface,
+      child: AppResponsivePage(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          context.pagePadding.left,
+          AppDimensions.s16,
+          context.pagePadding.right,
+          AppDimensions.s40,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppPageHeader(
+              title: t.svQueueTitle,
+              subtitle: t.svQueueSubtitle,
+              leading: const Icon(Icons.alt_route_outlined),
+              actions: [
+                IconButton(
+                  tooltip: SharedCoreL10n.of(context).commonRetry,
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    notifier.refreshQueue();
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
                 ),
-                const SizedBox(height: 16),
-
-                // Error notice if present
-                if (state.queueError.isNotEmpty) ...[
-                  _QueueNotice(
-                    message: state.queueError,
-                    onRetry: notifier.refreshQueue,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // ── Content Sections ─────────────────────────────────────
-                if (isWide)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Bookings column
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _sectionHeader(
-                              context,
-                              icon: Icons.event_available_rounded,
-                              label: 'Scheduled Appointments',
-                              count: bookings.length,
-                            ),
-                            const SizedBox(height: 12),
-                            if (bookings.isEmpty)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 32),
-                                child: EmptyState(
-                                  icon: Icons.event_available_outlined,
-                                  title: 'No pending appointments',
-                                  message:
-                                      'All customer bookings have been assigned.',
-                                ),
-                              )
-                            else
-                              ...bookings.map(
-                                (b) => _QueueCard(
-                                  icon: Icons.event_rounded,
-                                  iconColor: colorScheme.primary,
-                                  title: '${b.serviceType} · ${b.vehicleName}',
-                                  details: [
-                                    '${b.customerName} · ${b.plateNumber}',
-                                    if (b.bookingDate.isNotEmpty) b.bookingDate,
-                                  ],
-                                  status: b.status,
-                                  onAssign: () => _assign(
-                                    context,
-                                    ref,
-                                    id: b.id,
-                                    isBooking: true,
-                                    label: b.serviceType,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      // Breakdowns column
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _sectionHeader(
-                              context,
-                              icon: Icons.emergency_rounded,
-                              label: 'Emergency Breakdowns',
-                              count: breakdowns.length,
-                              badgeColor: colorScheme.error,
-                            ),
-                            const SizedBox(height: 12),
-                            if (breakdowns.isEmpty)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 32),
-                                child: EmptyState(
-                                  icon: Icons.car_crash_outlined,
-                                  title: 'No breakdown requests',
-                                  message:
-                                      'No roadside emergencies waiting for assignment.',
-                                ),
-                              )
-                            else
-                              ...breakdowns.map(
-                                (b) => _QueueCard(
-                                  icon: Icons.emergency_rounded,
-                                  iconColor: colorScheme.error,
-                                  title: b.issue,
-                                  details: [
-                                    '${b.customerName} · ${b.vehicleName} ${b.vehiclePlate}',
-                                    if (b.location.isNotEmpty) b.location,
-                                  ],
-                                  status: b.status,
-                                  onAssign: () => _assign(
-                                    context,
-                                    ref,
-                                    id: b.id,
-                                    isBooking: false,
-                                    label: b.issue,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  )
-                else ...[
-                  // Mobile stacked sections
-                  _sectionHeader(
-                    context,
-                    icon: Icons.event_available_rounded,
-                    label: 'Scheduled Appointments',
-                    count: bookings.length,
-                  ),
-                  const SizedBox(height: 10),
-                  if (bookings.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: EmptyState(
-                        icon: Icons.event_available_outlined,
-                        title: 'No pending appointments',
-                        message: 'All customer bookings have been assigned.',
-                      ),
-                    )
-                  else
-                    ...bookings.map(
-                      (b) => _QueueCard(
-                        icon: Icons.event_rounded,
-                        iconColor: colorScheme.primary,
-                        title: '${b.serviceType} · ${b.vehicleName}',
-                        details: [
-                          '${b.customerName} · ${b.plateNumber}',
-                          if (b.bookingDate.isNotEmpty) b.bookingDate,
-                        ],
-                        status: b.status,
-                        onAssign: () => _assign(
-                          context,
-                          ref,
-                          id: b.id,
-                          isBooking: true,
-                          label: b.serviceType,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 24),
-
-                  _sectionHeader(
-                    context,
-                    icon: Icons.emergency_rounded,
-                    label: 'Emergency Breakdowns',
-                    count: breakdowns.length,
-                    badgeColor: colorScheme.error,
-                  ),
-                  const SizedBox(height: 10),
-                  if (breakdowns.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: EmptyState(
-                        icon: Icons.car_crash_outlined,
-                        title: 'No breakdown requests',
-                        message:
-                            'No roadside emergencies waiting for assignment.',
-                      ),
-                    )
-                  else
-                    ...breakdowns.map(
-                      (b) => _QueueCard(
-                        icon: Icons.emergency_rounded,
-                        iconColor: colorScheme.error,
-                        title: b.issue,
-                        details: [
-                          '${b.customerName} · ${b.vehicleName} ${b.vehiclePlate}',
-                          if (b.location.isNotEmpty) b.location,
-                        ],
-                        status: b.status,
-                        onAssign: () => _assign(
-                          context,
-                          ref,
-                          id: b.id,
-                          isBooking: false,
-                          label: b.issue,
-                        ),
-                      ),
-                    ),
-                ],
               ],
             ),
-          ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFilterBar(
+              options: [vip, promised, insurance],
+              selected: _filter,
+              counts: counts,
+              onSelected: (v) => setState(() => _filter = v),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            if (state.queueError.isNotEmpty)
+              AppInfoPanel.danger(
+                message: t.svQueueError,
+                action: TextButton(
+                  onPressed: notifier.refreshQueue,
+                  child: Text(SharedCoreL10n.of(context).commonRetry),
+                ),
+              )
+            else if (state.isQueueLoading && isEmpty)
+              const AppSkeleton.listRows(rows: 6)
+            else if (isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppDimensions.s32),
+                child: EmptyState(
+                  icon: Icons.inbox_outlined,
+                  title: t.svQueueEmpty,
+                  message: t.svQueueEmptyMessage,
+                ),
+              )
+            else ...[
+              if (isNoMatch && breakdowns.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
+                  child: EmptyState.noMatch(
+                    message: t.svQueueNoMatch,
+                    actionLabel: SharedCoreL10n.of(context).filterBarClear,
+                    onAction: () => setState(() => _filter = null),
+                  ),
+                )
+              else ...[
+                _SectionLabel(
+                  icon: Icons.emergency_rounded,
+                  tone: context.semanticColors.danger,
+                  label: t.svQueueBreakdowns,
+                  count: breakdowns.length,
+                ),
+                if (breakdowns.isEmpty)
+                  _EmptyLine(message: t.svQueueEmptyMessage)
+                else
+                  for (final b in breakdowns)
+                    _QueueRow(
+                      icon: Icons.emergency_rounded,
+                      tone: context.semanticColors.danger,
+                      title: b.vehicleName.isNotEmpty ? b.vehicleName : b.issue,
+                      detail: b.issue,
+                      plate: b.vehiclePlate,
+                      trailing: StatusPill.danger(t.svQueuePriorityEmergency),
+                      onAssign: () => _route(
+                        isBooking: false,
+                        id: b.id,
+                        label: b.vehicleName,
+                      ),
+                    ),
+                const SizedBox(height: AppDimensions.s24),
+                _SectionLabel(
+                  icon: Icons.event_available_rounded,
+                  tone: context.semanticColors.info,
+                  label: t.svQueueBookings,
+                  count: visibleBookings.length,
+                ),
+                if (visibleBookings.isEmpty)
+                  _EmptyLine(message: t.svQueueEmptyMessage)
+                else
+                  for (final b in visibleBookings)
+                    _QueueRow(
+                      icon: Icons.event_rounded,
+                      tone: context.semanticColors.info,
+                      title: b.vehicleName.isNotEmpty ? b.vehicleName : b.serviceType,
+                      detail: b.serviceType,
+                      plate: b.plateNumber,
+                      trailing: _priorityPill(t, b),
+                      onAssign: () => _route(
+                        isBooking: true,
+                        id: b.id,
+                        label: b.serviceType,
+                      ),
+                    ),
+              ],
+            ],
+          ],
         ),
       ),
     );
   }
 
-  Widget _sectionHeader(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required int count,
-    Color? badgeColor,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  String _priorityLabel(StaffLocalizations t, BookingQueueResponse b) =>
+      switch (bookingPriority(b)) {
+        SupervisorQueuePriority.vip => t.svQueuePriorityVip,
+        SupervisorQueuePriority.promisedToday => t.svQueuePriorityPromised,
+        SupervisorQueuePriority.insurance => t.svQueuePriorityInsurance,
+        SupervisorQueuePriority.normal => '',
+      };
 
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: badgeColor ?? colorScheme.primary),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onSurface,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-          decoration: BoxDecoration(
-            color: (badgeColor ?? colorScheme.primary).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            '$count',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: badgeColor ?? colorScheme.primary,
-              fontWeight: FontWeight.w800,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ),
-      ],
+  Widget _priorityPill(StaffLocalizations t, BookingQueueResponse b) =>
+      switch (bookingPriority(b)) {
+        SupervisorQueuePriority.vip => StatusPill.warning(t.svQueuePriorityVip),
+        SupervisorQueuePriority.promisedToday =>
+          StatusPill.info(t.svQueuePriorityPromised),
+        SupervisorQueuePriority.insurance =>
+          StatusPill.neutral(t.svQueuePriorityInsurance),
+        SupervisorQueuePriority.normal => const SizedBox.shrink(),
+      };
+
+  Future<void> _route({
+    required bool isBooking,
+    required int id,
+    required String label,
+  }) async {
+    final t = StaffLocalizations.of(context)!;
+    final notifier = ref.read(supervisorDashboardProvider.notifier);
+    final advisors = notifier.advisors;
+    if (advisors.isEmpty) {
+      showSupervisorToast(context, t.svQueueNoAdvisors,
+          icon: Icons.info_outline_rounded,
+          color: context.semanticColors.warning.base);
+      return;
+    }
+    final selected = await showAppModalSheet<int>(
+      context: context,
+      title: t.svQueueAssignTitle,
+      builder: (_) => _AdvisorPicker(advisors: advisors, label: label),
+    );
+    if (selected == null || !mounted) return;
+    final msg = isBooking
+        ? await notifier.assignBooking(id, selected)
+        : await notifier.assignBreakdown(id, selected);
+    if (!mounted) return;
+    final ok = isBooking
+        ? msg == 'Booking assigned'
+        : msg == 'Breakdown dispatched';
+    showSupervisorToast(
+      context,
+      ok
+          ? (isBooking ? t.svQueueAssigned : t.svQueueDispatched)
+          : t.svQueueAssignFailed,
+      icon: ok ? Icons.check_circle_outline : Icons.error_outline,
+      color: ok ? context.semanticColors.success.base : context.semanticColors.danger.base,
     );
   }
 }
 
-class _QueueCard extends StatelessWidget {
+class _SectionLabel extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
+  final AppStatusColors tone;
+  final String label;
+  final int count;
+
+  const _SectionLabel({
+    required this.icon,
+    required this.tone,
+    required this.label,
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+      child: Row(
+        children: [
+          Icon(icon, size: AppDimensions.iconSm, color: tone.base),
+          const SizedBox(width: AppDimensions.s8),
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: context.colors.onSurface,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s8,
+              vertical: 2,
+            ),
+            decoration: BoxDecoration(
+              color: tone.subtle,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+              border: Border.all(color: tone.border),
+            ),
+            child: Text(
+              '$count',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: tone.ink,
+                fontWeight: FontWeight.w800,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QueueRow extends StatelessWidget {
+  final IconData icon;
+  final AppStatusColors tone;
   final String title;
-  final List<String> details;
-  final String status;
+  final String detail;
+  final String plate;
+  final Widget trailing;
   final VoidCallback onAssign;
 
-  const _QueueCard({
+  const _QueueRow({
     required this.icon,
-    required this.iconColor,
+    required this.tone,
     required this.title,
-    required this.details,
-    required this.status,
+    required this.detail,
+    required this.plate,
+    required this.trailing,
     required this.onAssign,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+    final t = StaffLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppDimensions.s12),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: iconColor, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(icon, size: AppDimensions.iconMd, color: tone.base),
+                  const SizedBox(width: AppDimensions.s10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: colorScheme.onSurface,
-                            ),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: context.colors.onSurface,
                           ),
                         ),
-                        if (status.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              status.toUpperCase(),
-                              style: textTheme.labelSmall?.copyWith(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.onSurfaceVariant,
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            if (detail.isNotEmpty)
+                              Expanded(
+                                child: Text(
+                                  detail,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: context.colors.onSurfaceVariant,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            if (plate.isNotEmpty) ...[
+                              Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Text(
+                                  plate,
+                                  style: supervisorMono(
+                                    context,
+                                    color: context.colors.onSurfaceVariant,
+                                  ).copyWith(fontSize: 11),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    ...details.map(
-                      (line) => Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Text(
-                          line,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: AppDimensions.s8),
+                  trailing,
+                ],
+              ),
+              const SizedBox(height: AppDimensions.s10),
+              SecondaryButton(
+                label: t.svQueueAssign,
+                leadingIcon: Icons.person_add_alt_1_rounded,
+                onPressed: onAssign,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 38,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                onAssign();
-              },
-              icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
-              label: const Text('Assign Advisor'),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
+        Divider(height: 1, color: context.colors.outlineVariant),
+      ],
+    );
+  }
+}
+
+class _EmptyLine extends StatelessWidget {
+  final String message;
+  const _EmptyLine({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.s16),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: context.colors.onSurfaceVariant,
+        ),
       ),
     );
   }
 }
 
-class _QueueNotice extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
+/// Advisor picker content for the shared responsive modal.
+class _AdvisorPicker extends StatefulWidget {
+  final List<AssignableStaffResponse> advisors;
+  final String label;
 
-  const _QueueNotice({required this.message, required this.onRetry});
+  const _AdvisorPicker({required this.advisors, required this.label});
+
+  @override
+  State<_AdvisorPicker> createState() => _AdvisorPickerState();
+}
+
+class _AdvisorPickerState extends State<_AdvisorPicker> {
+  late int _selected = widget.advisors.first.id;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: colors.errorContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.error.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.cloud_off_rounded,
-            color: colors.onErrorContainer,
-            size: 18,
+    final theme = Theme.of(context);
+    final t = StaffLocalizations.of(context)!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          t.svQueueAssignHint,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: context.colors.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: colors.onErrorContainer),
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        for (final a in widget.advisors)
+          InkWell(
+            onTap: () => setState(() => _selected = a.id),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: AppDimensions.s12,
+                horizontal: AppDimensions.s4,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    a.id == _selected
+                        ? Icons.check_circle_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    size: AppDimensions.iconMd,
+                    color: a.id == _selected
+                        ? context.colors.primary
+                        : context.colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: AppDimensions.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          a.name,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: context.colors.onSurface,
+                          ),
+                        ),
+                        if (a.role.isNotEmpty)
+                          Text(
+                            a.role,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: context.colors.onSurfaceVariant,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          IconButton(
-            tooltip: 'Retry',
-            visualDensity: VisualDensity.compact,
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded, size: 18),
-          ),
-        ],
-      ),
+        const SizedBox(height: AppDimensions.s12),
+        PrimaryButton(
+          label: t.svQueueAssign,
+          icon: Icons.arrow_forward_rounded,
+          onPressed: () => Navigator.of(context).pop(_selected),
+        ),
+      ],
     );
   }
 }

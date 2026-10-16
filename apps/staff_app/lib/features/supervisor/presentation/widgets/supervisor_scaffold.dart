@@ -4,78 +4,104 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
+
 import 'package:staff_app/core/models/profile_data.dart';
 import 'package:staff_app/core/router/app_router.dart';
-import 'package:staff_app/features/common/presentation/profile_screen.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/staff_notification_bell.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_components.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_queue_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_reports_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_review_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_schedule_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_staff_tab.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-class SupervisorScaffold extends ConsumerWidget {
+/// Supervisor workspace shell (Phase 11).
+///
+/// Greeting-style header owns identity (name, branch · shift, live floor-status
+/// pill, Synced pill, notifications, profile) — no bespoke app bar (the Phase
+/// 07.1 migration removed the bespoke `SupervisorAppBar`; this shell keeps the
+/// shared navigation + offline vocabulary and adds the greeting header above
+/// the tab stack, in home-grammar siblinghood with the advisor hub).
+class SupervisorScaffold extends ConsumerStatefulWidget {
   const SupervisorScaffold({super.key});
 
-  static const _navItems = <AppNavItem>[
+  @override
+  ConsumerState<SupervisorScaffold> createState() => _SupervisorScaffoldState();
+}
+
+class _SupervisorScaffoldState extends ConsumerState<SupervisorScaffold> {
+  int _navIndex = 0;
+
+  List<AppNavItem> _items(StaffLocalizations t) => <AppNavItem>[
     AppNavItem(
       selectedIcon: Icons.dashboard_rounded,
       icon: Icons.dashboard_outlined,
-      label: 'Today',
+      label: t.svNavFloor,
     ),
     AppNavItem(
       selectedIcon: Icons.assignment_rounded,
       icon: Icons.assignment_outlined,
-      label: 'Assign',
+      label: t.svNavJobs,
     ),
     AppNavItem(
       selectedIcon: Icons.alt_route_rounded,
       icon: Icons.alt_route_outlined,
-      label: 'Queue',
+      label: t.svNavQueue,
     ),
     AppNavItem(
       selectedIcon: Icons.verified_rounded,
       icon: Icons.verified_outlined,
-      label: 'Review',
+      label: t.svNavReview,
     ),
     AppNavItem(
-      selectedIcon: Icons.person_rounded,
-      icon: Icons.person_outlined,
-      label: 'Profile',
+      selectedIcon: Icons.bar_chart_rounded,
+      icon: Icons.bar_chart_outlined,
+      label: t.svNavReports,
+    ),
+    AppNavItem(
+      selectedIcon: Icons.groups_rounded,
+      icon: Icons.groups_outlined,
+      label: t.svNavStaff,
+    ),
+    AppNavItem(
+      selectedIcon: Icons.calendar_month_rounded,
+      icon: Icons.calendar_month_outlined,
+      label: t.svNavSchedule,
     ),
   ];
 
-  static const _pages = <Widget>[
-    SupervisorDashboardTab(),
-    SupervisorAssignSheet(),
-    SupervisorQueueTab(),
-    SupervisorReviewTab(),
-    StaffProfileScreen(),
-  ];
+  void _showProfile() {
+    showProfileSheet(
+      context,
+      _profileSheetData(context, ref),
+      onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
+    );
+  }
+
+  void _openAssign() => showSupervisorAssignSheet(context);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(supervisorDashboardProvider);
-    final notifier = ref.read(supervisorDashboardProvider.notifier);
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     final adaptive = context.adaptive;
-    final effectiveIndex = state.selectedIndex < _pages.length
-        ? state.selectedIndex
-        : 0;
-    final queueBadges = notifier.bookings.isEmpty
-        ? const <int>{}
-        : const <int>{2};
+    final items = _items(t);
 
     return DashboardShell(
-      appBar: _SupervisorChrome(selectedIndex: effectiveIndex),
+      showOfflineBanner: false,
+      appBar: null,
       body: AppAdaptiveNavigationFrame(
-        items: _navItems,
-        selectedIndex: effectiveIndex,
-        onSelected: notifier.selectTab,
-        badgeIndices: queueBadges,
+        items: items,
+        selectedIndex: _navIndex,
+        onSelected: (index) => setState(() => _navIndex = index),
         headerBuilder: (ctx, ext) =>
-            OrientBrandMark(workspace: 'Supervisor', compact: !ext),
+            OrientBrandMark(workspace: t.svWorkspaceName, compact: !ext),
         footerBuilder: (ctx, ext) => InkWell(
-          onTap: () => notifier.selectTab(4),
+          onTap: _showProfile,
           borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -85,24 +111,14 @@ class SupervisorScaffold extends ConsumerWidget {
             child: ext
                 ? Row(
                     children: [
-                      CircleAvatar(
+                      _SupervisorAvatar(
                         radius: 16,
-                        backgroundColor: Theme.of(
-                          ctx,
-                        ).colorScheme.primary.withValues(alpha: 0.14),
-                        child: Text(
-                          'S',
-                          style: TextStyle(
-                            color: Theme.of(ctx).colorScheme.primary,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                          ),
-                        ),
+                        initials: _profile(ref)?.initials ?? 'S',
                       ),
                       const SizedBox(width: AppDimensions.s10),
                       Expanded(
                         child: Text(
-                          'Supervisor Profile',
+                          t.svProfileLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(ctx).textTheme.labelMedium?.copyWith(
@@ -114,130 +130,241 @@ class SupervisorScaffold extends ConsumerWidget {
                     ],
                   )
                 : Tooltip(
-                    message: 'Supervisor Profile',
-                    child: CircleAvatar(
+                    message: t.svProfileLabel,
+                    child: _SupervisorAvatar(
                       radius: 18,
-                      backgroundColor: Theme.of(
-                        ctx,
-                      ).colorScheme.primary.withValues(alpha: 0.14),
-                      child: Text(
-                        'S',
-                        style: TextStyle(
-                          color: Theme.of(ctx).colorScheme.primary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
+                      initials: _profile(ref)?.initials ?? 'S',
                     ),
                   ),
           ),
         ),
-        child: IndexedStack(index: effectiveIndex, children: _pages),
+        child: Column(
+          children: [
+            _SupervisorGreetingHeader(
+              onProfile: _showProfile,
+              onOpenFloor: () => setState(() => _navIndex = 0),
+            ),
+            Expanded(
+              child: IndexedStack(
+                index: _navIndex,
+                children: [
+                  SupervisorDashboardTab(
+                    onOpenAssign: _openAssign,
+                    onOpenQueue: () => setState(() => _navIndex = 2),
+                    onOpenReview: () => setState(() => _navIndex = 3),
+                  ),
+                  SupervisorJobsTab(onOpenAssign: _openAssign),
+                  SupervisorQueueTab(
+                    onOpenReview: () => setState(() => _navIndex = 3),
+                  ),
+                  const SupervisorReviewTab(),
+                  const SupervisorReportsTab(),
+                  const SupervisorStaffTab(),
+                  SupervisorScheduleTab(onOpenQueue: _openQueueFromSchedule),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: adaptive.useNavigationRail
           ? null
           : AppBottomNavigation(
-              items: _navItems,
-              selectedIndex: effectiveIndex,
-              onSelected: notifier.selectTab,
-              badgeIndices: queueBadges,
+              items: items,
+              selectedIndex: _navIndex,
+              onSelected: (index) => setState(() => _navIndex = index),
             ),
-      floatingActionButton: effectiveIndex == 1
-          ? FloatingActionButton.extended(
-              onPressed: state.isAssignWorkLoading
-                  ? null
-                  : () async {
-                      HapticFeedback.mediumImpact();
-                      await notifier.saveAndAssign();
-                      if (!context.mounted) return;
-                      final message = state.assignWorkSuccess.isNotEmpty
-                          ? state.assignWorkSuccess
-                          : state.assignWorkError.isNotEmpty
-                          ? state.assignWorkError
-                          : 'Assignments saved';
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(message)));
-                    },
-              icon: state.isAssignWorkLoading
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_rounded),
-              label: Text(
-                state.isAssignWorkLoading ? 'Saving' : 'Save and assign',
+    );
+  }
+
+  void _openQueueFromSchedule() => setState(() => _navIndex = 2);
+}
+
+/// Greeting header: eyebrow date, greeting title, branch · shift context and a
+/// live floor-status pill on the leading column; Synced pill, notifications and
+/// avatar on the trailing column.
+class _SupervisorGreetingHeader extends ConsumerWidget {
+  final VoidCallback onProfile;
+  final VoidCallback onOpenFloor;
+
+  const _SupervisorGreetingHeader({
+    required this.onProfile,
+    required this.onOpenFloor,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final profile = _profile(ref);
+    final name = (profile?.name.isNotEmpty ?? false) ? profile!.name : 'Supervisor';
+    final date = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(DateTime.now());
+    final contextLine = [
+      profile?.branchName ?? '',
+      profile?.shift ?? '',
+    ].where((s) => s.trim().isNotEmpty).join(' · ');
+    // Watching the state (not only the notifier) is what makes the pill update
+    // the moment the async floor load replaces the empty first frame.
+    final dashboard = ref.watch(supervisorDashboardProvider);
+    final notifier = ref.read(supervisorDashboardProvider.notifier);
+    final occupied = (notifier.jobs.length +
+            notifier.bookings.length +
+            notifier.awaitingCompletions.length)
+        .clamp(0, kSupervisorBayCount);
+    final hasError = dashboard.dashboardError.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.s20,
+        AppDimensions.s16,
+        AppDimensions.s20,
+        AppDimensions.s12,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  date,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: AppTypography.tracking(context, 0.8),
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s4),
+                Text(
+                  t.svGreeting(name),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurface,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                if (contextLine.isNotEmpty) ...[
+                  const SizedBox(height: AppDimensions.s4),
+                  Text(
+                    contextLine,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppDimensions.s8),
+                _FloorStatusPill(
+                  occupied: occupied,
+                  totalBays: kSupervisorBayCount,
+                  hasError: hasError,
+                  onTap: onOpenFloor,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s8),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const OfflineStatusPill(),
+              const SizedBox(width: AppDimensions.s4),
+              const StaffNotificationBell(),
+              const SizedBox(width: AppDimensions.s4),
+              InkWell(
+                onTap: onProfile,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                child: Tooltip(
+                  message: t.svProfileLabel,
+                  child: _SupervisorAvatar(
+                    radius: 16,
+                    initials: profile?.initials ?? 'S',
+                  ),
+                ),
               ),
-            )
-          : null,
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// Phase 07.1 centralized chrome: the bespoke `SupervisorAppBar` is deleted —
-/// title, subtitle, brand mark and actions now compose the shared
-/// [WorkspaceAppBar] (same copy, same actions, same profile-sheet behavior).
-class _SupervisorChrome extends ConsumerWidget
-    implements PreferredSizeWidget {
-  final int selectedIndex;
+/// Live workshop-floor status pill: success when bays are working, neutral when
+/// the floor is quiet. Tapping returns to the floor board.
+class _FloorStatusPill extends StatelessWidget {
+  final int occupied;
+  final int totalBays;
+  final bool hasError;
+  final VoidCallback onTap;
 
-  const _SupervisorChrome({required this.selectedIndex});
-
-  static const _titles = [
-    'Workshop Overview',
-    'Work Assignment',
-    'Incoming Queue',
-    'Quality Control',
-    'Staff Profile',
-  ];
-
-  static const _subtitles = [
-    'Shift operations & floor activity',
-    'Assign tasks to technicians',
-    'Incoming bookings & breakdowns',
-    'Review and verify completed repairs',
-    'Personal & shift details',
-  ];
+  const _FloorStatusPill({
+    required this.occupied,
+    required this.totalBays,
+    required this.hasError,
+    required this.onTap,
+  });
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final label = t.svBaysOccupied(occupied, totalBays);
+    final Widget pill;
+    if (hasError) {
+      pill = StatusPill.danger(
+        t.svFloorErrorTitle,
+        icon: Icons.cloud_off_rounded,
+      );
+    } else if (occupied > 0) {
+      pill = StatusPill.success(label, icon: Icons.grid_view_rounded);
+    } else {
+      pill = StatusPill.neutral(label, icon: Icons.grid_view_rounded);
+    }
+    return TileTap(onTap: onTap, child: pill);
+  }
+}
+
+/// Minimal tap wrapper that keeps the 48 dp touch target around a pill.
+class TileTap extends StatelessWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  const TileTap({super.key, required this.onTap, required this.child});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
-    return WorkspaceAppBar(
-      title: _titles[selectedIndex],
-      subtitle: _subtitles[selectedIndex],
-      toolbarHeight: 64,
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: colors.primary.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Icon(
-          Icons.engineering_rounded,
-          color: colors.primary,
-          size: 20,
-        ),
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.s4),
+        child: child,
       ),
-      actions: [
-        const StaffNotificationBell(),
-        const SizedBox(width: 6),
-        Padding(
-          padding: const EdgeInsets.only(right: 14),
-          child: UserAvatar(
-            initials: _profile(ref)?.initials ?? 'S',
-            onTap: () => showProfileSheet(
-              context,
-              _profileSheetData(context, ref),
-              onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
-            ),
-          ),
-        ),
-      ],
     );
+  }
+}
+
+class _SupervisorAvatar extends StatelessWidget {
+  final double radius;
+  final String initials;
+  const _SupervisorAvatar({required this.radius, this.initials = 'S'});
+
+  @override
+  Widget build(BuildContext context) {
+    return UserAvatar(initials: initials, size: radius * 2);
   }
 }
 
@@ -247,6 +374,7 @@ MeResponse? _profile(WidgetRef ref) {
 }
 
 ProfileSheetData _profileSheetData(BuildContext context, WidgetRef ref) {
+  final t = StaffLocalizations.of(context)!;
   final profile = _profile(ref);
   final name = profile?.name.isNotEmpty == true ? profile!.name : 'Supervisor';
   final role = profile?.designation.isNotEmpty == true
@@ -268,21 +396,21 @@ ProfileSheetData _profileSheetData(BuildContext context, WidgetRef ref) {
     roleLabel: role,
     roleBadge: profile?.department.isNotEmpty == true
         ? profile!.department
-        : 'Workshop operations',
+        : t.svWorkspaceName,
     menuItems: [
       ProfileSheetItem(
         icon: Icons.person_outline_rounded,
-        label: 'My Profile',
+        label: t.advisorProfileMyProfile,
         onTap: () => context.push(AppRoutes.profile, extra: details),
       ),
       ProfileSheetItem(
         icon: Icons.fingerprint_rounded,
-        label: 'Attendance · Punch In / Out',
+        label: t.advisorProfileAttendance,
         onTap: () => context.push(AppRoutes.attendance),
       ),
       ProfileSheetItem(
         icon: Icons.calendar_month_outlined,
-        label: 'Shift Timeline',
+        label: t.svProfileShift,
         onTap: () => context.push(
           AppRoutes.shiftDetails,
           extra: {'shift': details.shift, 'branch': details.branch},
@@ -290,7 +418,7 @@ ProfileSheetData _profileSheetData(BuildContext context, WidgetRef ref) {
       ),
       ProfileSheetItem(
         icon: Icons.settings_outlined,
-        label: 'Settings',
+        label: t.svProfileSettings,
         onTap: () => context.push(AppRoutes.settings),
       ),
     ],

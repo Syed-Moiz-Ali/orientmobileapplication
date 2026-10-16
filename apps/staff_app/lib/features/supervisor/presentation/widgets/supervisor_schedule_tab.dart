@@ -2,259 +2,229 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 
-/// Contextual workshop appointment schedule view for supervisor.
-class SupervisorScheduleTab extends ConsumerWidget {
-  const SupervisorScheduleTab({super.key});
+import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_components.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
+/// Compact agenda cell keeps the time only (mirrors the bay-tile meta rule).
+String _shortTime(String bookingDate) {
+  final parts = bookingDate.trim().split(RegExp(r'\s+'));
+  if (parts.length > 1) return parts.sublist(1).join(' ');
+  return bookingDate.trim();
+}
+
+/// Bay schedule: today's appointment agenda as a compact matrix with the
+/// current day highlighted, plus a filter over the agenda status. Rows open the
+/// dispatch queue. Real booking data only.
+class SupervisorScheduleTab extends ConsumerStatefulWidget {
+  final VoidCallback onOpenQueue;
+  const SupervisorScheduleTab({super.key, required this.onOpenQueue});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+  ConsumerState<SupervisorScheduleTab> createState() =>
+      _SupervisorScheduleTabState();
+}
 
-    final notifier = ref.read(supervisorDashboardProvider.notifier);
+class _SupervisorScheduleTabState
+    extends ConsumerState<SupervisorScheduleTab> {
+  String? _filter;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     final state = ref.watch(supervisorDashboardProvider);
+    final notifier = ref.read(supervisorDashboardProvider.notifier);
     final bookings = notifier.bookings;
-    final isWide = MediaQuery.sizeOf(context).width >= 768;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: RefreshIndicator(
-            onRefresh: notifier.refreshQueue,
-            color: colorScheme.primary,
-            backgroundColor: colorScheme.surface,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-              children: [
-                // ── 1. SCHEDULE HEADER ──────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Scheduled Appointments',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurface,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Upcoming customer bookings awaiting service routing',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${bookings.length} BOOKED',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w800,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+    final todayLabel = t.svScheduleToday;
+    final confirmedLabel = SharedCoreL10n.of(context).statusConfirmed;
+    final pendingLabel = SharedCoreL10n.of(context).statusPending;
 
-                if (state.queueError.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.errorContainer.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: colorScheme.error.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.cloud_off_rounded,
-                          color: colorScheme.onErrorContainer,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            state.queueError,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onErrorContainer,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
+    final sorted = [...bookings]
+      ..sort((a, b) => a.bookingDate.compareTo(b.bookingDate));
+    final filtered = _filter == null
+        ? sorted
+        : sorted.where((b) {
+            if (_filter == todayLabel) return bookingIsToday(b);
+            if (_filter == confirmedLabel) {
+              return b.status.toLowerCase().contains('confirm');
+            }
+            if (_filter == pendingLabel) {
+              return b.status.toLowerCase().contains('pending');
+            }
+            return true;
+          }).toList();
 
-                // ── 2. SCHEDULE CARDS ───────────────────────────────────────
-                if (bookings.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
-                    child: EmptyState(
-                      icon: Icons.calendar_today_outlined,
-                      title: 'No appointments scheduled',
-                      message:
-                          'All upcoming customer bookings have been processed.',
-                    ),
-                  )
-                else if (isWide)
-                  Wrap(
-                    spacing: 14,
-                    runSpacing: 14,
-                    children: bookings.map((b) {
-                      return SizedBox(
-                        width: (1100 - 48) / 2,
-                        child: _AppointmentCard(booking: b),
-                      );
-                    }).toList(),
-                  )
-                else
-                  ...bookings.map(
-                    (b) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _AppointmentCard(booking: b),
-                    ),
-                  ),
-              ],
+    final counts = {
+      todayLabel: bookings.where(bookingIsToday).length,
+      confirmedLabel: bookings
+          .where((b) => b.status.toLowerCase().contains('confirm'))
+          .length,
+      pendingLabel: bookings
+          .where((b) => b.status.toLowerCase().contains('pending'))
+          .length,
+    };
+
+    final isEmpty = bookings.isEmpty && !state.isQueueLoading;
+    final isNoMatch = _filter != null && filtered.isEmpty && bookings.isNotEmpty;
+
+    return RefreshIndicator(
+      onRefresh: notifier.refreshQueue,
+      color: context.colors.primary,
+      backgroundColor: context.colors.surface,
+      child: AppResponsivePage(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          context.pagePadding.left,
+          AppDimensions.s16,
+          context.pagePadding.right,
+          AppDimensions.s40,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppPageHeader(
+              title: t.svScheduleTitle,
+              subtitle: t.svScheduleSubtitle,
+              leading: const Icon(Icons.calendar_month_outlined),
+              trailing: StatusPill.info(todayLabel),
             ),
-          ),
+            const SizedBox(height: AppDimensions.s16),
+            AppFilterBar(
+              options: [todayLabel, confirmedLabel, pendingLabel],
+              selected: _filter,
+              counts: counts,
+              onSelected: (v) => setState(() => _filter = v),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            if (state.queueError.isNotEmpty)
+              AppInfoPanel.danger(
+                message: t.svScheduleError,
+                action: TextButton(
+                  onPressed: notifier.refreshQueue,
+                  child: Text(SharedCoreL10n.of(context).commonRetry),
+                ),
+              )
+            else if (state.isQueueLoading && isEmpty)
+              const AppSkeleton.table(rows: 6, columns: 4)
+            else if (isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppDimensions.s40),
+                child: EmptyState(
+                  icon: Icons.calendar_today_outlined,
+                  title: t.svScheduleEmpty,
+                  message: t.svScheduleEmptyMessage,
+                ),
+              )
+            else if (isNoMatch)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
+                child: EmptyState.noMatch(
+                  message: t.svScheduleEmpty,
+                  actionLabel: SharedCoreL10n.of(context).filterBarClear,
+                  onAction: () => setState(() => _filter = null),
+                ),
+              )
+            else
+              _ScheduleTable(
+                bookings: filtered,
+                onOpenQueue: () {
+                  HapticFeedback.selectionClick();
+                  widget.onOpenQueue();
+                },
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _AppointmentCard extends ConsumerWidget {
-  final dynamic booking;
+class _ScheduleTable extends StatelessWidget {
+  final List<BookingQueueResponse> bookings;
+  final VoidCallback onOpenQueue;
 
-  const _AppointmentCard({required this.booking});
+  const _ScheduleTable({required this.bookings, required this.onOpenQueue});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final notifier = ref.read(supervisorDashboardProvider.notifier);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.calendar_today_outlined,
-                  color: colorScheme.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${booking.serviceType} · ${booking.vehicleName}',
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: colorScheme.onSurface,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (booking.bookingDate != null &&
-                            (booking.bookingDate as String).isNotEmpty)
-                          Text(
-                            booking.bookingDate as String,
-                            style: textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${booking.customerName} · ${booking.plateNumber}',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 38,
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                // Navigate to queue tab to route
-                notifier.selectTab(2);
-              },
-              icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-              label: const Text('View in Queue'),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    return AppTable<BookingQueueResponse>(
+      columns: [
+        AppTableColumn(label: t.svScheduleTime, flex: 2, numeric: true),
+        AppTableColumn(label: t.svScheduleVehicle, flex: 3),
+        AppTableColumn(label: t.svScheduleService, flex: 3),
+        AppTableColumn(label: t.svScheduleStatus, flex: 2),
+      ],
+      items: bookings,
+      itemKey: (b) => ValueKey('sv-schedule-${b.id}'),
+      isSelected: bookingIsToday,
+      onRowTap: (_) => onOpenQueue(),
+      cells: (ctx, b) => [
+        AppTableCell.custom(
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              b.bookingDate,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: supervisorMono(
+                ctx,
+                color: context.colors.onSurfaceVariant,
               ),
             ),
           ),
+          AlignmentDirectional.centerEnd,
+        ),
+        AppTableCell.text(ctx, b.vehicleName.isNotEmpty ? b.vehicleName : b.customerName),
+        AppTableCell.text(ctx, b.serviceType),
+        AppTableCell.custom(
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: supervisorStatusPill(b.status),
+          ),
+          AlignmentDirectional.centerStart,
+        ),
+      ],
+      compactBuilder: (ctx, b) => Row(
+        children: [
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              _shortTime(b.bookingDate),
+              style: supervisorMono(
+                ctx,
+                color: context.colors.onSurfaceVariant,
+              ).copyWith(fontSize: 11),
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  b.vehicleName.isNotEmpty ? b.vehicleName : b.customerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  b.serviceType,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s8),
+          supervisorStatusPill(b.status),
         ],
       ),
     );

@@ -5767,6 +5767,996 @@ abstract class StaffLocalizations {
   /// In en, this message translates to:
   /// **'We couldn\'t send the escalation. Check your connection and try again.'**
   String get techEscError;
+
+  /// Supervisor workspace label on the brand mark
+  ///
+  /// In en, this message translates to:
+  /// **'Supervisor'**
+  String get svWorkspaceName;
+
+  /// Supervisor greeting header
+  ///
+  /// In en, this message translates to:
+  /// **'Floor command, {name}'**
+  String svGreeting(String name);
+
+  /// Floor status pill in the header
+  ///
+  /// In en, this message translates to:
+  /// **'{occupied}/{total} bays active'**
+  String svBaysOccupied(int occupied, int total);
+
+  /// Supervisor navigation: floor grid
+  ///
+  /// In en, this message translates to:
+  /// **'Floor'**
+  String get svNavFloor;
+
+  /// Supervisor navigation: active jobs
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs'**
+  String get svNavJobs;
+
+  /// Supervisor navigation: incoming queue
+  ///
+  /// In en, this message translates to:
+  /// **'Queue'**
+  String get svNavQueue;
+
+  /// Supervisor navigation: quality control
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get svNavReview;
+
+  /// Supervisor navigation: reports
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get svNavReports;
+
+  /// Supervisor navigation: roster
+  ///
+  /// In en, this message translates to:
+  /// **'Staff'**
+  String get svNavStaff;
+
+  /// Supervisor navigation: schedule
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get svNavSchedule;
+
+  /// Supervisor profile tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Supervisor profile'**
+  String get svProfileLabel;
+
+  /// Notifications sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Floor notifications'**
+  String get svNotificationsTitle;
+
+  /// Notifications empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications'**
+  String get svNotificationsEmpty;
+
+  /// Notifications empty message
+  ///
+  /// In en, this message translates to:
+  /// **'You are all caught up.'**
+  String get svNotificationsEmptyMessage;
+
+  /// Mark all notifications read
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get svNotificationsMarkAll;
+
+  /// Supervisor search title
+  ///
+  /// In en, this message translates to:
+  /// **'Find on the floor'**
+  String get svSearchTitle;
+
+  /// Supervisor search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search job card, customer, or plate'**
+  String get svSearchHint;
+
+  /// Floor grid section title
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop floor'**
+  String get svFloorTitle;
+
+  /// Floor grid subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'{count} active · {total} bays'**
+  String svFloorSubtitle(int count, int total);
+
+  /// Floor legend label
+  ///
+  /// In en, this message translates to:
+  /// **'Bay status'**
+  String get svFloorLegend;
+
+  /// Bay status: occupied
+  ///
+  /// In en, this message translates to:
+  /// **'Occupied'**
+  String get svBayOccupied;
+
+  /// Bay status: idle
+  ///
+  /// In en, this message translates to:
+  /// **'Idle'**
+  String get svBayIdle;
+
+  /// Bay status: parts delay
+  ///
+  /// In en, this message translates to:
+  /// **'Parts delay'**
+  String get svBayPartsDelay;
+
+  /// Bay status: QC pending
+  ///
+  /// In en, this message translates to:
+  /// **'QC'**
+  String get svBayQc;
+
+  /// Floor grid tap hint
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a bay to dispatch a technician'**
+  String get svFloorTapHint;
+
+  /// Floor empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No active jobs on the floor'**
+  String get svFloorEmpty;
+
+  /// Floor empty message
+  ///
+  /// In en, this message translates to:
+  /// **'New jobs appear the moment they are assigned.'**
+  String get svFloorEmptyMessage;
+
+  /// Floor no-match message
+  ///
+  /// In en, this message translates to:
+  /// **'No bays match this filter'**
+  String get svFloorNoMatch;
+
+  /// Floor error title
+  ///
+  /// In en, this message translates to:
+  /// **'Floor unavailable'**
+  String get svFloorErrorTitle;
+
+  /// Floor error message
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the floor. Pull to refresh.'**
+  String get svFloorError;
+
+  /// Floor side queue rail title
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming queue'**
+  String get svFloorQueueTitle;
+
+  /// Floor side queue empty
+  ///
+  /// In en, this message translates to:
+  /// **'The queue is clear'**
+  String get svFloorQueueEmpty;
+
+  /// Floor utilisation label
+  ///
+  /// In en, this message translates to:
+  /// **'Floor utilisation'**
+  String get svFloorUtilisation;
+
+  /// Bays metric label
+  ///
+  /// In en, this message translates to:
+  /// **'Bays'**
+  String get svBaysLabel;
+
+  /// Queue tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming queue'**
+  String get svQueueTitle;
+
+  /// Queue tab subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Priority-sorted bookings and breakdowns'**
+  String get svQueueSubtitle;
+
+  /// Queue priority filter: VIP
+  ///
+  /// In en, this message translates to:
+  /// **'VIP'**
+  String get svQueuePriorityVip;
+
+  /// Queue priority: promised today
+  ///
+  /// In en, this message translates to:
+  /// **'Promised today'**
+  String get svQueuePriorityPromised;
+
+  /// Queue priority: insurance
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance'**
+  String get svQueuePriorityInsurance;
+
+  /// Queue priority: emergency breakdown
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency'**
+  String get svQueuePriorityEmergency;
+
+  /// Queue section: bookings
+  ///
+  /// In en, this message translates to:
+  /// **'Bookings'**
+  String get svQueueBookings;
+
+  /// Queue section: breakdowns
+  ///
+  /// In en, this message translates to:
+  /// **'Breakdowns'**
+  String get svQueueBreakdowns;
+
+  /// Queue row assign action
+  ///
+  /// In en, this message translates to:
+  /// **'Assign advisor'**
+  String get svQueueAssign;
+
+  /// Queue empty title
+  ///
+  /// In en, this message translates to:
+  /// **'The queue is clear'**
+  String get svQueueEmpty;
+
+  /// Queue empty message
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings or breakdowns waiting.'**
+  String get svQueueEmptyMessage;
+
+  /// Queue no-match message
+  ///
+  /// In en, this message translates to:
+  /// **'No matching queue items'**
+  String get svQueueNoMatch;
+
+  /// Queue error message
+  ///
+  /// In en, this message translates to:
+  /// **'Could not refresh the dispatch queue.'**
+  String get svQueueError;
+
+  /// Assign advisor sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Route to advisor'**
+  String get svQueueAssignTitle;
+
+  /// Assign advisor dropdown label
+  ///
+  /// In en, this message translates to:
+  /// **'Service advisor'**
+  String get svQueueAssignHint;
+
+  /// Booking assigned toast
+  ///
+  /// In en, this message translates to:
+  /// **'Booking assigned'**
+  String get svQueueAssigned;
+
+  /// Breakdown dispatched toast
+  ///
+  /// In en, this message translates to:
+  /// **'Breakdown dispatched'**
+  String get svQueueDispatched;
+
+  /// Assign failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Could not assign. Try again.'**
+  String get svQueueAssignFailed;
+
+  /// No advisors available
+  ///
+  /// In en, this message translates to:
+  /// **'No active advisors available to assign'**
+  String get svQueueNoAdvisors;
+
+  /// Jobs tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Active jobs'**
+  String get svJobsTitle;
+
+  /// Jobs tab subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'{count} on the floor'**
+  String svJobsSubtitle(int count);
+
+  /// Jobs search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search job card, customer, or plate'**
+  String get svJobsSearchHint;
+
+  /// Jobs empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No active jobs'**
+  String get svJobsEmpty;
+
+  /// Jobs empty message
+  ///
+  /// In en, this message translates to:
+  /// **'Assign work to see jobs on the floor.'**
+  String get svJobsEmptyMessage;
+
+  /// Jobs no-match title
+  ///
+  /// In en, this message translates to:
+  /// **'No matching jobs'**
+  String get svJobsNoMatch;
+
+  /// Jobs error message
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load active jobs.'**
+  String get svJobsError;
+
+  /// Jobs metric: total
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get svJobsTotal;
+
+  /// Jobs metric: in progress
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get svJobsInProgress;
+
+  /// Jobs metric: completed
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get svJobsCompleted;
+
+  /// Jobs task progress
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{total} tasks'**
+  String svJobsTasks(int done, int total);
+
+  /// Jobs assign action
+  ///
+  /// In en, this message translates to:
+  /// **'Assign work'**
+  String get svJobsAssign;
+
+  /// Review tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Quality control'**
+  String get svReviewTitle;
+
+  /// Review tab subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Verify completed repairs before delivery'**
+  String get svReviewSubtitle;
+
+  /// Start QC action
+  ///
+  /// In en, this message translates to:
+  /// **'Start QC'**
+  String get svReviewStart;
+
+  /// Review empty title
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing awaiting sign-off'**
+  String get svReviewEmpty;
+
+  /// Review empty message
+  ///
+  /// In en, this message translates to:
+  /// **'Completed repairs appear here for verification.'**
+  String get svReviewEmptyMessage;
+
+  /// Review error message
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load QC work.'**
+  String get svReviewError;
+
+  /// Review progress
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{total} done'**
+  String svReviewProgress(int done, int total);
+
+  /// QC sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Quality control review'**
+  String get svQcTitle;
+
+  /// QC checklist group: repair items
+  ///
+  /// In en, this message translates to:
+  /// **'Repair verification'**
+  String get svQcRepairVerification;
+
+  /// QC checkpoint: road test
+  ///
+  /// In en, this message translates to:
+  /// **'Road test'**
+  String get svQcRoadTest;
+
+  /// QC checkpoint: torque audit
+  ///
+  /// In en, this message translates to:
+  /// **'Torque audit'**
+  String get svQcTorque;
+
+  /// QC checkpoint: fluid levels
+  ///
+  /// In en, this message translates to:
+  /// **'Fluid levels'**
+  String get svQcFluid;
+
+  /// QC checkpoint: final wash
+  ///
+  /// In en, this message translates to:
+  /// **'Final wash'**
+  String get svQcWash;
+
+  /// QC checkpoints group label
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-off checkpoints'**
+  String get svQcCheckpoints;
+
+  /// QC photo section label
+  ///
+  /// In en, this message translates to:
+  /// **'Photo proof'**
+  String get svQcPhotoProof;
+
+  /// QC add photo action
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get svQcPhotoAdd;
+
+  /// QC photo attached state
+  ///
+  /// In en, this message translates to:
+  /// **'Attached'**
+  String get svQcPhotoAttached;
+
+  /// QC photo unavailability note
+  ///
+  /// In en, this message translates to:
+  /// **'Photo capture is not available for this job.'**
+  String get svQcPhotoUnavailable;
+
+  /// QC notes label
+  ///
+  /// In en, this message translates to:
+  /// **'Inspector notes'**
+  String get svQcNotes;
+
+  /// QC notes hint
+  ///
+  /// In en, this message translates to:
+  /// **'Required when sending back — describe the rework needed'**
+  String get svQcNotesHint;
+
+  /// QC reject action
+  ///
+  /// In en, this message translates to:
+  /// **'Send back'**
+  String get svQcReject;
+
+  /// QC approve action
+  ///
+  /// In en, this message translates to:
+  /// **'Approve & pass'**
+  String get svQcApprove;
+
+  /// QC verified counter
+  ///
+  /// In en, this message translates to:
+  /// **'{count}/{total} verified'**
+  String svQcVerified(int count, int total);
+
+  /// QC reject requires a reason
+  ///
+  /// In en, this message translates to:
+  /// **'Add revision details before sending back.'**
+  String get svQcRejectReasonRequired;
+
+  /// QC approve requires all checkpoints
+  ///
+  /// In en, this message translates to:
+  /// **'Verify every checkpoint to approve.'**
+  String get svQcVerifyAll;
+
+  /// QC approved toast
+  ///
+  /// In en, this message translates to:
+  /// **'QC passed — job approved'**
+  String get svQcApproved;
+
+  /// QC rejected toast
+  ///
+  /// In en, this message translates to:
+  /// **'Sent back for revision'**
+  String get svQcRejected;
+
+  /// QC failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete QC review. Try again.'**
+  String get svQcFailed;
+
+  /// Reports tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Operations report'**
+  String get svReportsTitle;
+
+  /// Reports tab subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Throughput, rework, and floor utilisation'**
+  String get svReportsSubtitle;
+
+  /// Report metric: throughput
+  ///
+  /// In en, this message translates to:
+  /// **'Throughput'**
+  String get svReportsThroughput;
+
+  /// Report metric: rework
+  ///
+  /// In en, this message translates to:
+  /// **'Rework'**
+  String get svReportsRework;
+
+  /// Report metric: utilisation
+  ///
+  /// In en, this message translates to:
+  /// **'Utilisation'**
+  String get svReportsUtilisation;
+
+  /// Report metric: jobs per technician
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs per technician'**
+  String get svReportsJobsPerTech;
+
+  /// Report section: job categories
+  ///
+  /// In en, this message translates to:
+  /// **'Job categories'**
+  String get svReportsCategories;
+
+  /// Report categories empty
+  ///
+  /// In en, this message translates to:
+  /// **'No category data recorded'**
+  String get svReportsCategoriesEmpty;
+
+  /// Report section: advisor workload
+  ///
+  /// In en, this message translates to:
+  /// **'Advisor load'**
+  String get svReportsWorkload;
+
+  /// Report workload empty
+  ///
+  /// In en, this message translates to:
+  /// **'No workload data recorded'**
+  String get svReportsWorkloadEmpty;
+
+  /// Report section: floor status
+  ///
+  /// In en, this message translates to:
+  /// **'Floor status'**
+  String get svReportsFloor;
+
+  /// Report floor: technicians
+  ///
+  /// In en, this message translates to:
+  /// **'Technicians'**
+  String get svReportsTechnicians;
+
+  /// Report floor: departments
+  ///
+  /// In en, this message translates to:
+  /// **'Departments'**
+  String get svReportsDepartments;
+
+  /// Report floor: queue count
+  ///
+  /// In en, this message translates to:
+  /// **'In queue'**
+  String get svReportsInQueue;
+
+  /// Report section: financials
+  ///
+  /// In en, this message translates to:
+  /// **'Financials'**
+  String get svReportsFinancial;
+
+  /// Report empty message
+  ///
+  /// In en, this message translates to:
+  /// **'No report data'**
+  String get svReportsEmpty;
+
+  /// Report error message
+  ///
+  /// In en, this message translates to:
+  /// **'Live report data is unavailable right now.'**
+  String get svReportsError;
+
+  /// Report history honesty note
+  ///
+  /// In en, this message translates to:
+  /// **'No history yet — showing current floor figures only.'**
+  String get svReportsNoHistory;
+
+  /// Staff tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop roster'**
+  String get svStaffTitle;
+
+  /// Staff tab subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'{count} specialists on shift'**
+  String svStaffSubtitle(int count);
+
+  /// Staff section: technicians
+  ///
+  /// In en, this message translates to:
+  /// **'Technicians'**
+  String get svStaffTechnicians;
+
+  /// Staff section: departments
+  ///
+  /// In en, this message translates to:
+  /// **'Departments'**
+  String get svStaffDepartments;
+
+  /// Staff empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No staff on shift'**
+  String get svStaffEmpty;
+
+  /// Staff empty message
+  ///
+  /// In en, this message translates to:
+  /// **'No registered technicians.'**
+  String get svStaffEmptyMessage;
+
+  /// Staff departments empty
+  ///
+  /// In en, this message translates to:
+  /// **'No departments'**
+  String get svStaffDeptEmpty;
+
+  /// Staff departments empty message
+  ///
+  /// In en, this message translates to:
+  /// **'No registered workshop units.'**
+  String get svStaffDeptEmptyMessage;
+
+  /// Staff role label
+  ///
+  /// In en, this message translates to:
+  /// **'Floor specialist'**
+  String get svStaffRole;
+
+  /// Staff on-shift pill
+  ///
+  /// In en, this message translates to:
+  /// **'On shift'**
+  String get svStaffOnShift;
+
+  /// Staff load chip
+  ///
+  /// In en, this message translates to:
+  /// **'{count} active'**
+  String svStaffLoad(int count);
+
+  /// Schedule tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Bay schedule'**
+  String get svScheduleTitle;
+
+  /// Schedule tab subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s appointment agenda'**
+  String get svScheduleSubtitle;
+
+  /// Schedule matrix column: time
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get svScheduleTime;
+
+  /// Schedule matrix column: customer and vehicle
+  ///
+  /// In en, this message translates to:
+  /// **'Customer · vehicle'**
+  String get svScheduleVehicle;
+
+  /// Schedule matrix column: service
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get svScheduleService;
+
+  /// Schedule matrix column: status
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get svScheduleStatus;
+
+  /// Schedule empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No appointments scheduled'**
+  String get svScheduleEmpty;
+
+  /// Schedule empty message
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming bookings appear here.'**
+  String get svScheduleEmptyMessage;
+
+  /// Schedule row action
+  ///
+  /// In en, this message translates to:
+  /// **'View in queue'**
+  String get svScheduleViewInQueue;
+
+  /// Schedule today highlight
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get svScheduleToday;
+
+  /// Schedule error message
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the schedule.'**
+  String get svScheduleError;
+
+  /// Assign sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatch to technician'**
+  String get svAssignTitle;
+
+  /// Assign sheet subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a technician to take this job'**
+  String get svAssignSubtitle;
+
+  /// Assign sheet target job label
+  ///
+  /// In en, this message translates to:
+  /// **'Target job'**
+  String get svAssignTarget;
+
+  /// Assign target job hint
+  ///
+  /// In en, this message translates to:
+  /// **'Job card number (e.g. JC-2026-1042)'**
+  String get svAssignTargetHint;
+
+  /// Assign sheet technician list title
+  ///
+  /// In en, this message translates to:
+  /// **'Technicians'**
+  String get svAssignTechTitle;
+
+  /// Assign technician skills label
+  ///
+  /// In en, this message translates to:
+  /// **'Skills'**
+  String get svAssignSkills;
+
+  /// Assign technician load
+  ///
+  /// In en, this message translates to:
+  /// **'{count} active'**
+  String svAssignLoad(int count);
+
+  /// Assign dispatch action
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatch'**
+  String get svAssignDispatch;
+
+  /// Assign success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatched to {name}'**
+  String svAssignDispatched(String name);
+
+  /// Assign empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No technicians available'**
+  String get svAssignEmpty;
+
+  /// Assign empty message
+  ///
+  /// In en, this message translates to:
+  /// **'Register technicians to dispatch work.'**
+  String get svAssignEmptyMessage;
+
+  /// Assign requires a target job
+  ///
+  /// In en, this message translates to:
+  /// **'Add a target job card before dispatching.'**
+  String get svAssignNoTarget;
+
+  /// Assign failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Could not dispatch. Try again.'**
+  String get svAssignFailed;
+
+  /// Assign task brief label
+  ///
+  /// In en, this message translates to:
+  /// **'Task brief (optional)'**
+  String get svAssignBrief;
+
+  /// Assign task brief hint
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the work for the technician'**
+  String get svAssignBriefHint;
+
+  /// Pushed sub-page title: assignment
+  ///
+  /// In en, this message translates to:
+  /// **'Work assignment'**
+  String get svRouteAssignTitle;
+
+  /// Pushed sub-page subtitle: assignment
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatch tasks to technicians'**
+  String get svRouteAssignSubtitle;
+
+  /// Pushed sub-page title: jobs
+  ///
+  /// In en, this message translates to:
+  /// **'Active jobs'**
+  String get svRouteJobsTitle;
+
+  /// Pushed sub-page subtitle: jobs
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop operations'**
+  String get svRouteJobsSubtitle;
+
+  /// Pushed sub-page title: queue
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming work'**
+  String get svRouteQueueTitle;
+
+  /// Pushed sub-page subtitle: queue
+  ///
+  /// In en, this message translates to:
+  /// **'Bookings & breakdowns'**
+  String get svRouteQueueSubtitle;
+
+  /// Pushed sub-page title: review
+  ///
+  /// In en, this message translates to:
+  /// **'Quality control'**
+  String get svRouteReviewTitle;
+
+  /// Pushed sub-page subtitle: review
+  ///
+  /// In en, this message translates to:
+  /// **'Verify completed repairs'**
+  String get svRouteReviewSubtitle;
+
+  /// Pushed sub-page title: staff
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop roster'**
+  String get svRouteStaffTitle;
+
+  /// Pushed sub-page subtitle: staff
+  ///
+  /// In en, this message translates to:
+  /// **'Technicians & departments'**
+  String get svRouteStaffSubtitle;
+
+  /// Pushed sub-page title: schedule
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled appointments'**
+  String get svRouteScheduleTitle;
+
+  /// Pushed sub-page subtitle: schedule
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s bookings'**
+  String get svRouteScheduleSubtitle;
+
+  /// Pushed sub-page title: reports
+  ///
+  /// In en, this message translates to:
+  /// **'Operations report'**
+  String get svRouteReportsTitle;
+
+  /// Pushed sub-page subtitle: reports
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop summary & metrics'**
+  String get svRouteReportsSubtitle;
+
+  /// Breadcrumb root for supervisor sub-pages
+  ///
+  /// In en, this message translates to:
+  /// **'Supervisor console'**
+  String get svBreadcrumbConsole;
+
+  /// Profile sheet menu: shift timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Shift timeline'**
+  String get svProfileShift;
+
+  /// Profile sheet menu: settings
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get svProfileSettings;
 }
 
 class _StaffLocalizationsDelegate

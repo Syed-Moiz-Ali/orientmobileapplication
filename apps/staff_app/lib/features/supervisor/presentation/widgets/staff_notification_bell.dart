@@ -1,10 +1,15 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 
+import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
+/// Floor notifications bell + sheet, presented through the shared responsive
+/// modal. Polling cadence and read-marking contracts are unchanged.
 class StaffNotificationBell extends ConsumerStatefulWidget {
   const StaffNotificationBell({super.key});
 
@@ -33,250 +38,184 @@ class _StaffNotificationBellState extends ConsumerState<StaffNotificationBell> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final t = StaffLocalizations.of(context)!;
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final unread = notifier.unreadNotifications;
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () async {
-            HapticFeedback.selectionClick();
-            await notifier.loadNotifications();
-            if (!context.mounted) return;
-            showModalBottomSheet(
-              context: context,
-              backgroundColor: Colors.transparent,
-              isScrollControlled: true,
-              builder: (_) => const _StaffNotificationsSheet(),
-            );
-          },
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colorScheme.outlineVariant),
-            ),
-            child: Icon(
-              Icons.notifications_none_rounded,
-              color: colorScheme.onSurface,
-              size: 20,
-            ),
+    return Semantics(
+      button: true,
+      label: t.svNotificationsTitle,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AppButton.quietIcon(
+            icon: Icons.notifications_none_rounded,
+            tooltip: t.svNotificationsTitle,
+            onPressed: () async {
+              HapticFeedback.selectionClick();
+              await notifier.loadNotifications();
+              if (!context.mounted) return;
+              showAppModalSheet<void>(
+                context: context,
+                title: t.svNotificationsTitle,
+                builder: (_) => const _NotificationsContent(),
+              );
+            },
           ),
-        ),
-        if (unread > 0)
-          Positioned(
-            right: -2,
-            top: -2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              decoration: BoxDecoration(
-                color: colorScheme.error,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colorScheme.surface, width: 1.5),
-              ),
-              child: Text(
-                '$unread',
-                style: TextStyle(
-                  color: colorScheme.onError,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
+          if (unread > 0)
+            PositionedDirectional(
+              top: 2,
+              end: 2,
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 18),
+                height: 18,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: context.colors.error,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                  border: Border.all(color: context.colors.surface, width: 1.5),
+                ),
+                child: Text(
+                  unread > 99 ? '99+' : '$unread',
+                  style: TextStyle(
+                    color: context.colors.onError,
+                    fontSize: 10,
+                    height: 1,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _StaffNotificationsSheet extends ConsumerWidget {
-  const _StaffNotificationsSheet();
+class _NotificationsContent extends ConsumerWidget {
+  const _NotificationsContent();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = StaffLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final notifications = notifier.notifications;
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 540),
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.65,
-          minChildSize: 0.4,
-          maxChildSize: 0.92,
-          builder: (_, ctrl) => Container(
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 3.5,
-                        height: 18,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Floor Notifications',
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () async {
-                          HapticFeedback.selectionClick();
-                          for (final n in notifications.where(
-                            (n) => !n.isRead,
-                          )) {
-                            await notifier.markNotificationRead(n.id);
-                          }
-                        },
-                        child: Text(
-                          'Mark all read',
-                          style: TextStyle(color: colorScheme.primary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(height: 1, color: colorScheme.outlineVariant),
-                Expanded(
-                  child: notifications.isEmpty
-                      ? const Center(
-                          child: EmptyState(
-                            icon: Icons.notifications_none_rounded,
-                            title: 'No notifications',
-                            message: 'You are all caught up.',
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: ctrl,
-                          padding: const EdgeInsets.all(16),
-                          itemCount: notifications.length,
-                          itemBuilder: (_, i) {
-                            final n = notifications[i];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(14),
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  notifier.markNotificationRead(n.id);
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                    color: n.isRead
-                                        ? colorScheme.surface
-                                        : colorScheme.surfaceContainerLow,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: n.isRead
-                                          ? colorScheme.outlineVariant
-                                          : colorScheme.primary.withValues(
-                                              alpha: 0.3,
-                                            ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Icon(
-                                        n.isRead
-                                            ? Icons.notifications_none_rounded
-                                            : Icons
-                                                  .notifications_active_rounded,
-                                        size: 18,
-                                        color: n.isRead
-                                            ? colorScheme.onSurfaceVariant
-                                            : colorScheme.primary,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              n.title,
-                                              style: textTheme.titleSmall
-                                                  ?.copyWith(
-                                                    color:
-                                                        colorScheme.onSurface,
-                                                    fontWeight: n.isRead
-                                                        ? FontWeight.w600
-                                                        : FontWeight.w800,
-                                                  ),
-                                            ),
-                                            if (n.body.isNotEmpty) ...[
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                n.body,
-                                                style: textTheme.bodySmall
-                                                    ?.copyWith(
-                                                      color: colorScheme
-                                                          .onSurfaceVariant,
-                                                    ),
-                                              ),
-                                            ],
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              n.time,
-                                              style: textTheme.labelSmall
-                                                  ?.copyWith(
-                                                    color: colorScheme
-                                                        .onSurfaceVariant,
-                                                    fontSize: 10,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (notifications.any((n) => !n.isRead))
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton(
+              onPressed: () async {
+                HapticFeedback.selectionClick();
+                for (final n in notifications.where((n) => !n.isRead)) {
+                  await notifier.markNotificationRead(n.id);
+                }
+              },
+              child: Text(t.svNotificationsMarkAll),
             ),
           ),
-        ),
-      ),
+        if (notifications.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
+            child: EmptyState(
+              icon: Icons.notifications_none_rounded,
+              title: t.svNotificationsEmpty,
+              message: t.svNotificationsEmptyMessage,
+            ),
+          )
+        else
+          Flexible(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: notifications.length,
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppDimensions.s8),
+              itemBuilder: (_, i) {
+                final n = notifications[i];
+                return InkWell(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    notifier.markNotificationRead(n.id);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(AppDimensions.s12),
+                    decoration: BoxDecoration(
+                      color: n.isRead
+                          ? context.semanticColors.surfaceRaised
+                          : context.semanticColors.info.subtle,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusCard,
+                      ),
+                      border: Border.all(
+                        color: n.isRead
+                            ? context.semanticColors.borderDefault
+                            : context.semanticColors.info.border,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          n.isRead
+                              ? Icons.notifications_none_rounded
+                              : Icons.notifications_active_rounded,
+                          size: AppDimensions.iconSm,
+                          color: n.isRead
+                              ? context.colors.onSurfaceVariant
+                              : context.colors.primary,
+                        ),
+                        const SizedBox(width: AppDimensions.s12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                n.title,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color: context.colors.onSurface,
+                                  fontWeight: n.isRead
+                                      ? FontWeight.w600
+                                      : FontWeight.w800,
+                                ),
+                              ),
+                              if (n.body.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  n.body,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: context.colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                              if (n.time.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  n.time,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: context.colors.onSurfaceVariant,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        const SizedBox(height: AppDimensions.s8),
+      ],
     );
   }
 }

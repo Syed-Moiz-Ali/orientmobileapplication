@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_staff_tab.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
 import 'package:staff_app/features/technician/presentation/widgets/escalation_sheet.dart';
 import 'package:staff_app/features/technician/presentation/widgets/job_detail_sheet.dart';
@@ -20,7 +23,8 @@ void main() {
     await _pumpExperience(tester, const TechnicianTodayView());
 
     expect(find.text('On the bay'), findsOneWidget);
-    expect(find.text('Toyota Land Cruiser'), findsOneWidget);
+    // Vehicle identity lives in the shell banner; the tab owns the task.
+    expect(find.text('Brake inspection and measurement'), findsOneWidget);
     expect(find.text('Complete task'), findsOneWidget);
     expect(find.text('Request part'), findsOneWidget);
     expect(find.text('Escalate'), findsOneWidget);
@@ -81,7 +85,7 @@ void main() {
     );
 
     expect(find.text('Request a part'), findsOneWidget);
-    expect(find.text('Send request'), findsOneWidget);
+    expect(find.text('Send request · 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await _pumpExperience(
@@ -154,6 +158,15 @@ Future<void> _pumpSupervisorExperience(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(BrandConfig.orient),
+        supportedLocales: AppLocales.supported,
+        localizationsDelegates: const [
+          StaffLocalizations.delegate,
+          SharedCoreLocalizations.delegate,
+          SharedAuthLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: textScaler),
           child: child!,
@@ -182,6 +195,15 @@ Future<void> _pumpExperience(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(BrandConfig.orient),
+        supportedLocales: AppLocales.supported,
+        localizationsDelegates: const [
+          StaffLocalizations.delegate,
+          SharedCoreLocalizations.delegate,
+          SharedAuthLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: textScaler),
           child: child!,

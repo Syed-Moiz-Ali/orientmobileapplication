@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
-import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_scaffold.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
@@ -12,257 +14,211 @@ import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_qu
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_reports_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_review_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_schedule_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_scaffold.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_staff_tab.dart';
 
+/// Phase 11 — supervisor floor-command experience coverage. The composition is
+/// a spatial floor board + task-specific tabs, so assertions follow the new
+/// layout (bay board, priority rows, QC checklist) rather than the retired
+/// dashboard template.
 void main() {
-  group('Supervisor Experience Redesign Tests', () {
-    testWidgets('Supervisor App Bar displays operational title and subtitle', (
+  group('Supervisor Phase 11 experience', () {
+    testWidgets('shell renders greeting header, floor pill and bottom nav', (
       tester,
     ) async {
-      // Phase 07.1: the bespoke SupervisorAppBar is deleted — the same
-      // chrome now composes WorkspaceAppBar inside SupervisorScaffold.
-      await _pumpSupervisorTestWidget(tester, const SupervisorScaffold());
-
-      expect(find.text('Workshop Overview'), findsWidgets);
-      expect(find.text('Shift operations & floor activity'), findsOneWidget);
-      expect(find.byIcon(Icons.engineering_rounded), findsOneWidget);
-
-      // Verify no tactical sci-fi titles
-      expect(find.text('Command Center'), findsNothing);
-      expect(find.text('Telemetry'), findsNothing);
+      await _pump(tester, const SupervisorScaffold());
+      expect(find.textContaining('Floor command'), findsOneWidget);
+      expect(find.byType(AppBottomNavigation), findsOneWidget);
+      expect(find.text('Floor'), findsWidgets);
+      expect(find.text('Queue'), findsWidgets);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-      'Supervisor Today Tab renders operational header, attention areas, and active jobs',
-      (tester) async {
-        await _pumpSupervisorTestWidget(tester, const SupervisorDashboardTab());
+    testWidgets('floor tab renders 16-bay board with legend and job tiles', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        SupervisorDashboardTab(
+          onOpenAssign: () {},
+          onOpenQueue: () {},
+          onOpenReview: () {},
+        ),
+      );
+      expect(find.text('Workshop floor'), findsOneWidget);
+      expect(find.text('Occupied'), findsWidgets);
+      expect(find.text('Idle'), findsWidgets);
+      // Bay identifiers are Latin, LTR.
+      expect(find.text('B-01'), findsOneWidget);
+      expect(find.text('B-16'), findsOneWidget);
+      // A real assigned job surfaces inside its tile.
+      expect(find.text('Toyota Land Cruiser (DXB A 4821)'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
 
-        // Header and context
-        expect(find.text('Workshop Overview'), findsOneWidget);
-        expect(find.textContaining('active jobs •'), findsOneWidget);
+    testWidgets('floor legend maps states and tapping a bay opens dispatch', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        SupervisorDashboardTab(
+          onOpenAssign: () => _assignOpened = true,
+          onOpenQueue: () {},
+          onOpenReview: () {},
+        ),
+      );
+      _assignOpened = false;
+      await tester.tap(find.text('B-01'));
+      await tester.pump();
+      expect(_assignOpened, isTrue);
+      expect(tester.takeException(), isNull);
+    });
 
-        // Operational Attention Area
-        expect(find.text('Attention Required'), findsOneWidget);
-        // Phase 07.1: attention tiles migrated to AppKpiCard (labels render
-        // as overlines per the shared tile contract).
-        expect(find.text('UNASSIGNED BOOKINGS'), findsOneWidget);
-        expect(find.text('BREAKDOWNS WAITING'), findsOneWidget);
-        expect(find.text('AWAITING INSPECTION'), findsOneWidget);
+    testWidgets('assign sheet renders technician cards and a dispatch primary', (
+      tester,
+    ) async {
+      await _pump(tester, const SupervisorAssignSheet());
+      expect(find.text('Pick a technician to take this job'), findsOneWidget);
+      expect(find.text('Technicians'), findsWidgets);
+      expect(find.text('Alex Morgan'), findsOneWidget);
+      expect(find.text('Sam Rivera'), findsOneWidget);
+      expect(find.text('Dispatch'), findsOneWidget);
+      // Dispatch is disabled until a technician is selected.
+      final dispatch = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Dispatch'),
+      );
+      expect(dispatch.onPressed, isNull);
+      await tester.tap(find.text('Alex Morgan'));
+      await tester.pump();
+      final enabled = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Dispatch'),
+      );
+      expect(enabled.onPressed, isNotNull);
+      expect(tester.takeException(), isNull);
+    });
 
-        // Active jobs preview
-        expect(find.text('Active Workshop Jobs'), findsOneWidget);
-        expect(find.textContaining('JC-2026-1042'), findsWidgets);
-        expect(find.textContaining('Toyota Land Cruiser'), findsWidgets);
+    testWidgets('queue tab renders priority rows and advisor routing', (
+      tester,
+    ) async {
+      await _pump(tester, SupervisorQueueTab(onOpenReview: () {}));
+      expect(find.text('Incoming queue'), findsWidgets);
+      expect(find.text('Bookings'), findsOneWidget);
+      expect(find.text('Breakdowns'), findsOneWidget);
+      expect(find.text('Assign advisor'), findsWidgets);
+      expect(find.text('Engine overheating on highway'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
 
-        // Quick Navigation Matrix
-        expect(find.text('Active Jobs'), findsOneWidget);
-        expect(find.text('Workshop Roster'), findsOneWidget);
-        expect(find.text('Bay Schedule'), findsOneWidget);
-        expect(find.text('Operations Report'), findsOneWidget);
+    testWidgets('review tab opens the QC checklist with disabled approve', (
+      tester,
+    ) async {
+      await _pump(tester, const SupervisorReviewTab());
+      expect(find.text('Quality control'), findsWidgets);
+      expect(find.text('Start QC'), findsOneWidget);
 
-        // Verify purged sci-fi widgets
-        expect(find.text('Command Center'), findsNothing);
-        expect(find.text('Bottleneck Radar HUD'), findsNothing);
-        expect(find.text('Real-Time Job Logs'), findsNothing);
-        expect(tester.takeException(), isNull);
-      },
-    );
+      await tester.tap(find.text('Start QC'));
+      await tester.pumpAndSettle();
 
-    testWidgets(
-      'Supervisor Assign Sheet renders target job card search and task roster',
-      (tester) async {
-        await _pumpSupervisorTestWidget(tester, const SupervisorAssignSheet());
+      expect(find.text('Quality control review'), findsOneWidget);
+      expect(find.text('Road test'), findsOneWidget);
+      expect(find.text('Torque audit'), findsOneWidget);
+      expect(find.text('Fluid levels'), findsOneWidget);
+      expect(find.text('Final wash'), findsOneWidget);
+      expect(find.text('Send back'), findsOneWidget);
 
-        expect(find.text('Target Job Card'), findsOneWidget);
-        expect(find.byType(AppSearchField), findsOneWidget);
-        expect(find.text('Task Assignment Roster'), findsOneWidget);
-        expect(find.text('Add Task'), findsOneWidget);
-        expect(find.text('Task Specifications'), findsOneWidget);
-        expect(find.text('Work Description'), findsOneWidget);
-        expect(find.text('Department / Section'), findsOneWidget);
-        expect(find.text('Assigned Technician'), findsOneWidget);
-        expect(find.text('Date of Work'), findsOneWidget);
-        expect(find.text('Standard Time'), findsOneWidget);
+      final approve = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Approve & pass'),
+      );
+      expect(approve.onPressed, isNull);
+      expect(tester.takeException(), isNull);
+    });
 
-        expect(tester.takeException(), isNull);
-      },
-    );
+    testWidgets('jobs tab renders search, filter and divider rows', (
+      tester,
+    ) async {
+      await _pump(tester, SupervisorJobsTab(onOpenAssign: () {}));
+      expect(find.text('Active jobs'), findsWidgets);
+      expect(find.byType(AppSearchField), findsOneWidget);
+      expect(find.text('In progress'), findsWidgets);
+      expect(find.text('JC-2026-1042'), findsWidgets);
+      expect(find.text('2/3 tasks'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
 
-    testWidgets(
-      'Supervisor Queue Tab renders appointments and breakdowns with truthful advisor assignment',
-      (tester) async {
-        await _pumpSupervisorTestWidget(tester, const SupervisorQueueTab());
+    testWidgets('staff tab renders roster without fabricated availability', (
+      tester,
+    ) async {
+      await _pump(tester, const SupervisorStaffTab());
+      expect(find.text('Workshop roster'), findsWidgets);
+      expect(find.text('Alex Morgan'), findsOneWidget);
+      expect(find.text('Mechanical'), findsOneWidget);
+      expect(find.textContaining('Available for assignment'), findsNothing);
+      expect(find.textContaining('CAPACITY'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
 
-        expect(find.text('Incoming Work Queue'), findsOneWidget);
-        expect(find.text('Scheduled Appointments'), findsOneWidget);
-        expect(find.text('Emergency Breakdowns'), findsOneWidget);
-        expect(
-          find.text('Engine Oil & Filter Service · Lexus LX 600'),
-          findsOneWidget,
-        );
-        expect(find.text('Engine overheating on highway'), findsOneWidget);
+    testWidgets('schedule tab renders the agenda matrix with today highlight', (
+      tester,
+    ) async {
+      await _pump(tester, SupervisorScheduleTab(onOpenQueue: () {}));
+      expect(find.text('Bay schedule'), findsWidgets);
+      expect(find.text('Today'), findsWidgets);
+      expect(find.text('Periodic Maintenance'), findsWidgets);
+      expect(find.textContaining('BAY 01'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
 
-        // Verify truthful copy: Assign Advisor, not Dispatch Squad
-        expect(find.text('Assign Advisor'), findsWidgets);
-        expect(find.text('Dispatch Squad'), findsNothing);
-        expect(find.text('Breakdown Radar'), findsNothing);
+    testWidgets('reports tab renders a metric strip and sparse tables', (
+      tester,
+    ) async {
+      await _pump(tester, const SupervisorReportsTab());
+      expect(find.text('Operations report'), findsWidgets);
+      expect(find.text('THROUGHPUT'), findsWidgets);
+      expect(find.text('UTILISATION'), findsWidgets);
+      expect(find.text('Job categories'), findsWidgets);
+      expect(find.textContaining('RATE'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
 
-        expect(tester.takeException(), isNull);
-      },
-    );
+    testWidgets('views survive 1.3x text scale and wide desktop without error', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        SupervisorDashboardTab(
+          onOpenAssign: () {},
+          onOpenQueue: () {},
+          onOpenReview: () {},
+        ),
+        size: const Size(320, 780),
+        textScale: 1.3,
+      );
+      expect(tester.takeException(), isNull);
 
-    testWidgets(
-      'Supervisor Review Tab and QC Checklist Sheet handle checklist validation',
-      (tester) async {
-        await _pumpSupervisorTestWidget(tester, const SupervisorReviewTab());
-
-        expect(find.text('Quality Control Inspection'), findsOneWidget);
-        expect(find.text('JC-2026-1042'), findsWidgets);
-        expect(find.text('Start QC Inspection'), findsOneWidget);
-
-        // Tap Start QC Inspection to open sheet
-        await tester.tap(find.text('Start QC Inspection'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Quality Control Review'), findsOneWidget);
-        expect(find.text('Send Back'), findsOneWidget);
-        expect(find.text('Approve & Pass QC'), findsOneWidget);
-
-        // Checklist items
-        expect(find.text('Inspect front brake pads'), findsOneWidget);
-        expect(find.text('Torque wheel lug nuts to spec'), findsOneWidget);
-
-        // Approve button should be disabled initially (allChecked is false)
-        final approveButton = tester.widget<FilledButton>(
-          find.widgetWithText(FilledButton, 'Approve & Pass QC'),
-        );
-        expect(approveButton.onPressed, isNull);
-
-        expect(tester.takeException(), isNull);
-      },
-    );
-
-    testWidgets(
-      'Supervisor Jobs Tab renders active jobs with search field and progress',
-      (tester) async {
-        await _pumpSupervisorTestWidget(tester, const SupervisorJobsTab());
-
-        // Phase 07.1: metric tiles migrated to AppKpiCard (overline labels).
-        expect(find.text('TOTAL ASSIGNED'), findsOneWidget);
-        expect(find.text('Active Workshop Jobs'), findsOneWidget);
-        expect(find.byType(AppSearchField), findsOneWidget);
-        expect(find.text('JC-2026-1042'), findsWidgets);
-        expect(find.text('Rashid Al Nuaimi'), findsWidgets);
-        expect(find.text('2/3 tasks completed'), findsOneWidget);
-
-        expect(tester.takeException(), isNull);
-      },
-    );
-
-    testWidgets(
-      'Supervisor Staff Tab renders registered roster without fake availability claims',
-      (tester) async {
-        await _pumpSupervisorTestWidget(tester, const SupervisorStaffTab());
-
-        expect(find.text('2 specialists on shift'), findsOneWidget);
-        expect(find.text('Floor Technicians'), findsOneWidget);
-        expect(find.text('Workshop Departments'), findsOneWidget);
-        expect(find.text('Alex Morgan'), findsOneWidget);
-        expect(find.text('Sam Rivera'), findsOneWidget);
-        expect(find.text('Mechanical'), findsOneWidget);
-        expect(find.text('Diagnostics'), findsOneWidget);
-
-        // Verify purged fake claims
-        expect(find.textContaining('Available for assignment'), findsNothing);
-        expect(find.textContaining('CAPACITY'), findsNothing);
-        expect(tester.takeException(), isNull);
-      },
-    );
-
-    testWidgets(
-      'Supervisor Schedule Tab renders scheduled appointments without fake bay numbers',
-      (tester) async {
-        await _pumpSupervisorTestWidget(tester, const SupervisorScheduleTab());
-
-        expect(find.text('Scheduled Appointments'), findsOneWidget);
-        expect(
-          find.text('Periodic Maintenance · Toyota Land Cruiser'),
-          findsOneWidget,
-        );
-        expect(find.text('View in Queue'), findsWidgets);
-
-        // Verify fake bay allocation is purged
-        expect(find.textContaining('BAY 01'), findsNothing);
-        expect(find.textContaining('BAY 02'), findsNothing);
-        expect(tester.takeException(), isNull);
-      },
-    );
-
-    testWidgets(
-      'Supervisor Reports Tab renders truthful metrics without fabricated charts',
-      (tester) async {
-        await _pumpSupervisorTestWidget(tester, const SupervisorReportsTab());
-
-        expect(find.text('Workshop Operations Report'), findsOneWidget);
-        // Phase 07.1: report tiles migrated to AppKpiCard (overline labels).
-        expect(find.text('TOTAL VOLUME'), findsOneWidget);
-        expect(find.text('IN PROGRESS'), findsOneWidget);
-        expect(find.text('COMPLETED'), findsOneWidget);
-        expect(find.text('Job Category Distribution'), findsOneWidget);
-        expect(find.text('Operational Status'), findsOneWidget);
-
-        // Verify fabricated telemetry and charts are completely absent
-        expect(find.text(r'$42,850.00'), findsNothing);
-        expect(find.text('+24.6%'), findsNothing);
-        expect(find.text('94.2% RATE'), findsNothing);
-        expect(find.text('Financial Telemetry Logs'), findsNothing);
-        expect(tester.takeException(), isNull);
-      },
-    );
-
-    testWidgets(
-      'Supervisor views maintain responsive layout under larger text scaling (1.25x)',
-      (tester) async {
-        await _pumpSupervisorTestWidget(
-          tester,
-          const SupervisorDashboardTab(),
-          textScaler: const TextScaler.linear(1.25),
-        );
-
-        expect(find.text('Workshop Overview'), findsOneWidget);
-        expect(tester.takeException(), isNull);
-      },
-    );
-
-    testWidgets(
-      'Supervisor views render cleanly on wide tablet/desktop screens (1024x768)',
-      (tester) async {
-        await _pumpSupervisorTestWidget(
-          tester,
-          const SupervisorDashboardTab(),
-          physicalSize: const Size(1024, 768),
-        );
-
-        expect(find.text('Workshop Overview'), findsOneWidget);
-        expect(find.text('Active Workshop Jobs'), findsOneWidget);
-        final exc = tester.takeException();
-        if (exc != null) {
-          debugPrint('DEBUG WIDE SCREEN EXCEPTION: $exc');
-        }
-        expect(exc, isNull);
-      },
-    );
+      await _pump(
+        tester,
+        SupervisorDashboardTab(
+          onOpenAssign: () {},
+          onOpenQueue: () {},
+          onOpenReview: () {},
+        ),
+        size: const Size(1280, 900),
+      );
+      expect(find.text('Workshop floor'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }
 
-Future<void> _pumpSupervisorTestWidget(
+bool _assignOpened = false;
+
+Future<void> _pump(
   WidgetTester tester,
   Widget child, {
-  TextScaler textScaler = TextScaler.noScaling,
-  Size? physicalSize,
+  Size size = const Size(390, 844),
+  double textScale = 1.0,
 }) async {
-  tester.view.physicalSize = physicalSize ?? const Size(390, 844);
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
@@ -276,8 +232,19 @@ Future<void> _pumpSupervisorTestWidget(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(BrandConfig.orient),
+        supportedLocales: AppLocales.supported,
+        localizationsDelegates: const [
+          StaffLocalizations.delegate,
+          SharedCoreLocalizations.delegate,
+          SharedAuthLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         builder: (context, c) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+          ),
           child: c!,
         ),
         home: Scaffold(body: child),
@@ -386,6 +353,7 @@ class _MockSupervisorDashboardNotifier extends SupervisorDashboardNotifier {
       jobCardRef: 'JC-2026-1042',
       customerName: 'Rashid Al Nuaimi',
       vehicleInfo: '2024 Toyota Land Cruiser',
+      technician: 'Alex Morgan',
       done: 2,
       total: 2,
       items: [

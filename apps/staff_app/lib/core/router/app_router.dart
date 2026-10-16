@@ -176,65 +176,86 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.supervisorAssign,
         name: AppRoutes.supervisorAssign,
-        builder: (context, state) => const SupervisorSubPageWrapper(
-          title: 'Task Assignment',
-          subtitle: 'Dispatch Tasks to Technicians',
-          child: SupervisorAssignSheet(),
-        ),
+        builder: (context, state) {
+          final t = StaffLocalizations.of(context)!;
+          return SupervisorSubPageWrapper(
+            title: t.svRouteAssignTitle,
+            subtitle: t.svRouteAssignSubtitle,
+            child: const SupervisorAssignSheet(),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.supervisorJobs,
         name: AppRoutes.supervisorJobs,
-        builder: (context, state) => const SupervisorSubPageWrapper(
-          title: 'Active Jobs',
-          subtitle: 'Workshop Operations',
-          child: SupervisorJobsTab(),
-        ),
+        builder: (context, state) {
+          final t = StaffLocalizations.of(context)!;
+          return SupervisorSubPageWrapper(
+            title: t.svRouteJobsTitle,
+            subtitle: t.svRouteJobsSubtitle,
+            child: SupervisorJobsTab(onOpenAssign: () {}),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.supervisorQueue,
         name: AppRoutes.supervisorQueue,
-        builder: (context, state) => const SupervisorSubPageWrapper(
-          title: 'Incoming Work',
-          subtitle: 'Bookings & Breakdowns',
-          child: SupervisorQueueTab(),
-        ),
+        builder: (context, state) {
+          final t = StaffLocalizations.of(context)!;
+          return SupervisorSubPageWrapper(
+            title: t.svRouteQueueTitle,
+            subtitle: t.svRouteQueueSubtitle,
+            child: SupervisorQueueTab(onOpenReview: () {}),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.supervisorReview,
         name: AppRoutes.supervisorReview,
-        builder: (context, state) => const SupervisorSubPageWrapper(
-          title: 'Quality Control',
-          subtitle: 'Review and verify completed repairs',
-          child: SupervisorReviewTab(),
-        ),
+        builder: (context, state) {
+          final t = StaffLocalizations.of(context)!;
+          return SupervisorSubPageWrapper(
+            title: t.svRouteReviewTitle,
+            subtitle: t.svRouteReviewSubtitle,
+            child: const SupervisorReviewTab(),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.supervisorStaff,
         name: AppRoutes.supervisorStaff,
-        builder: (context, state) => const SupervisorSubPageWrapper(
-          title: 'Workshop Roster',
-          subtitle: 'Technicians & Departments',
-          child: SupervisorStaffTab(),
-        ),
+        builder: (context, state) {
+          final t = StaffLocalizations.of(context)!;
+          return SupervisorSubPageWrapper(
+            title: t.svRouteStaffTitle,
+            subtitle: t.svRouteStaffSubtitle,
+            child: const SupervisorStaffTab(),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.supervisorSchedule,
         name: AppRoutes.supervisorSchedule,
-        builder: (context, state) => const SupervisorSubPageWrapper(
-          title: 'Scheduled Appointments',
-          subtitle: "Today's Bookings",
-          child: SupervisorScheduleTab(),
-        ),
+        builder: (context, state) {
+          final t = StaffLocalizations.of(context)!;
+          return SupervisorSubPageWrapper(
+            title: t.svRouteScheduleTitle,
+            subtitle: t.svRouteScheduleSubtitle,
+            child: SupervisorScheduleTab(onOpenQueue: () {}),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.supervisorReports,
         name: AppRoutes.supervisorReports,
-        builder: (context, state) => const SupervisorSubPageWrapper(
-          title: 'Operations Report',
-          subtitle: 'Workshop summary & revenue metrics',
-          child: SupervisorReportsTab(),
-        ),
+        builder: (context, state) {
+          final t = StaffLocalizations.of(context)!;
+          return SupervisorSubPageWrapper(
+            title: t.svRouteReportsTitle,
+            subtitle: t.svRouteReportsSubtitle,
+            child: const SupervisorReportsTab(),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.technicianDashboard,
@@ -467,6 +488,8 @@ String _displayRole(UserRole role) {
   };
 }
 
+/// Pushed supervisor sub-page chrome (Phase 11): shared [WorkspaceAppBar] plus a
+/// wayfinding breadcrumb trail above the surface, replacing the bespoke `AppBar`.
 class SupervisorSubPageWrapper extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -481,45 +504,39 @@ class SupervisorSubPageWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
+    final t = StaffLocalizations.of(context);
+    final root = t?.svBreadcrumbConsole ?? 'Supervisor console';
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        foregroundColor: colors.onSurface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colors.onSurface),
-          onPressed: () => context.pop(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: textTheme.titleMedium?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.2,
-              ),
-            ),
-            const SizedBox(height: 1),
-            Text(
-              subtitle,
-              style: textTheme.labelSmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-                fontSize: 10.5,
-              ),
-            ),
-          ],
-        ),
+      appBar: WorkspaceAppBar(
+        title: title,
+        subtitle: subtitle,
+        showBack: true,
+        onBack: () => context.pop(),
+        frosted: !context.isCompact,
       ),
-      body: child,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.s20,
+              AppDimensions.s12,
+              AppDimensions.s20,
+              AppDimensions.s4,
+            ),
+            child: AppBreadcrumbs(
+              items: [
+                AppBreadcrumbItem(
+                  label: root,
+                  onTap: () => context.pop(),
+                ),
+                AppBreadcrumbItem.current(title),
+              ],
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
     );
   }
 }

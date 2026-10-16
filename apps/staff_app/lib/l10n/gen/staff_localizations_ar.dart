@@ -3035,4 +3035,522 @@ class StaffLocalizationsAr extends StaffLocalizations {
   @override
   String get techEscError =>
       'تعذّر إرسال التصعيد. تحقق من الاتصال وحاول مجدداً.';
+
+  @override
+  String get svWorkspaceName => 'المشرف';
+
+  @override
+  String svGreeting(String name) {
+    return 'قيادة الأرضية، $name';
+  }
+
+  @override
+  String svBaysOccupied(int occupied, int total) {
+    return '$occupied/$total منصة قيد العمل';
+  }
+
+  @override
+  String get svNavFloor => 'الأرضية';
+
+  @override
+  String get svNavJobs => 'الأعمال';
+
+  @override
+  String get svNavQueue => 'الطابور';
+
+  @override
+  String get svNavReview => 'المراجعة';
+
+  @override
+  String get svNavReports => 'التقارير';
+
+  @override
+  String get svNavStaff => 'الفريق';
+
+  @override
+  String get svNavSchedule => 'الجدول';
+
+  @override
+  String get svProfileLabel => 'ملف المشرف';
+
+  @override
+  String get svNotificationsTitle => 'إشعارات الأرضية';
+
+  @override
+  String get svNotificationsEmpty => 'لا إشعارات';
+
+  @override
+  String get svNotificationsEmptyMessage => 'لا جديد لديك.';
+
+  @override
+  String get svNotificationsMarkAll => 'تعليم الكل كمقروء';
+
+  @override
+  String get svSearchTitle => 'بحث في الأرضية';
+
+  @override
+  String get svSearchHint => 'ابحث برقم المهمة أو العميل أو اللوحة';
+
+  @override
+  String get svFloorTitle => 'أرضية الورشة';
+
+  @override
+  String svFloorSubtitle(int count, int total) {
+    return '$count قيد العمل · $total منصة';
+  }
+
+  @override
+  String get svFloorLegend => 'حالة المنصة';
+
+  @override
+  String get svBayOccupied => 'مشغولة';
+
+  @override
+  String get svBayIdle => 'شاغرة';
+
+  @override
+  String get svBayPartsDelay => 'تأخّر قطع';
+
+  @override
+  String get svBayQc => 'فحص الجودة';
+
+  @override
+  String get svFloorTapHint => 'اضغط على منصة لإسناد فني';
+
+  @override
+  String get svFloorEmpty => 'لا أعمال نشطة على الأرضية';
+
+  @override
+  String get svFloorEmptyMessage => 'تظهر الأعمال الجديدة فور إسنادها.';
+
+  @override
+  String get svFloorNoMatch => 'لا منصات مطابقة لهذه التصفية';
+
+  @override
+  String get svFloorErrorTitle => 'الأرضية غير متاحة';
+
+  @override
+  String get svFloorError => 'تعذّر تحميل الأرضية. اسحب للتحديث.';
+
+  @override
+  String get svFloorQueueTitle => 'الطابور الوارد';
+
+  @override
+  String get svFloorQueueEmpty => 'الطابور فارغ';
+
+  @override
+  String get svFloorUtilisation => 'إشغال الأرضية';
+
+  @override
+  String get svBaysLabel => 'المنصات';
+
+  @override
+  String get svQueueTitle => 'الطابور الوارد';
+
+  @override
+  String get svQueueSubtitle => 'حجوزات وأعطال مرتّبة حسب الأولوية';
+
+  @override
+  String get svQueuePriorityVip => 'كبار العملاء';
+
+  @override
+  String get svQueuePriorityPromised => 'وعد اليوم';
+
+  @override
+  String get svQueuePriorityInsurance => 'تأمين';
+
+  @override
+  String get svQueuePriorityEmergency => 'طوارئ';
+
+  @override
+  String get svQueueBookings => 'الحجوزات';
+
+  @override
+  String get svQueueBreakdowns => 'الأعطال';
+
+  @override
+  String get svQueueAssign => 'إسناد مستشار';
+
+  @override
+  String get svQueueEmpty => 'الطابور فارغ';
+
+  @override
+  String get svQueueEmptyMessage => 'لا حجوزات أو أعطال بالانتظار.';
+
+  @override
+  String get svQueueNoMatch => 'لا عناصر مطابقة في الطابور';
+
+  @override
+  String get svQueueError => 'تعذّر تحديث طابور الإرسال.';
+
+  @override
+  String get svQueueAssignTitle => 'توجيه إلى مستشار';
+
+  @override
+  String get svQueueAssignHint => 'مستشار الخدمة';
+
+  @override
+  String get svQueueAssigned => 'تم إسناد الحجز';
+
+  @override
+  String get svQueueDispatched => 'تم إرسال البلاغ';
+
+  @override
+  String get svQueueAssignFailed => 'تعذّر الإسناد. حاول مجدداً.';
+
+  @override
+  String get svQueueNoAdvisors => 'لا مستشارون نشطون متاحون للإسناد';
+
+  @override
+  String get svJobsTitle => 'الأعمال النشطة';
+
+  @override
+  String svJobsSubtitle(int count) {
+    return '$count على الأرضية';
+  }
+
+  @override
+  String get svJobsSearchHint => 'ابحث برقم المهمة أو العميل أو اللوحة';
+
+  @override
+  String get svJobsEmpty => 'لا أعمال نشطة';
+
+  @override
+  String get svJobsEmptyMessage => 'أسند عملاً لعرض المهام على الأرضية.';
+
+  @override
+  String get svJobsNoMatch => 'لا أعمال مطابقة';
+
+  @override
+  String get svJobsError => 'تعذّر تحميل الأعمال النشطة.';
+
+  @override
+  String get svJobsTotal => 'الإجمالي';
+
+  @override
+  String get svJobsInProgress => 'قيد التنفيذ';
+
+  @override
+  String get svJobsCompleted => 'مكتملة';
+
+  @override
+  String svJobsTasks(int done, int total) {
+    return '$done/$total مهام';
+  }
+
+  @override
+  String get svJobsAssign => 'إسناد عمل';
+
+  @override
+  String get svReviewTitle => 'مراقبة الجودة';
+
+  @override
+  String get svReviewSubtitle => 'تحقّق من الإصلاحات المكتملة قبل التسليم';
+
+  @override
+  String get svReviewStart => 'بدء الفحص';
+
+  @override
+  String get svReviewEmpty => 'لا شيء بانتظار الاعتماد';
+
+  @override
+  String get svReviewEmptyMessage => 'تظهر الإصلاحات المكتملة هنا للتحقق.';
+
+  @override
+  String get svReviewError => 'تعذّر تحميل أعمال الفحص.';
+
+  @override
+  String svReviewProgress(int done, int total) {
+    return '$done/$total مكتملة';
+  }
+
+  @override
+  String get svQcTitle => 'مراجعة مراقبة الجودة';
+
+  @override
+  String get svQcRepairVerification => 'التحقق من الإصلاح';
+
+  @override
+  String get svQcRoadTest => 'اختبار الطريق';
+
+  @override
+  String get svQcTorque => 'تدقيق العزم';
+
+  @override
+  String get svQcFluid => 'مستويات السوائل';
+
+  @override
+  String get svQcWash => 'الغسيل النهائي';
+
+  @override
+  String get svQcCheckpoints => 'نقاط الاعتماد';
+
+  @override
+  String get svQcPhotoProof => 'إثبات مصوّر';
+
+  @override
+  String get svQcPhotoAdd => 'إضافة صورة';
+
+  @override
+  String get svQcPhotoAttached => 'مرفقة';
+
+  @override
+  String get svQcPhotoUnavailable => 'التقاط الصور غير متاح لهذه المهمة.';
+
+  @override
+  String get svQcNotes => 'ملاحظات المفتش';
+
+  @override
+  String get svQcNotesHint => 'مطلوبة عند الإرجاع — صف العمل المطلوب';
+
+  @override
+  String get svQcReject => 'إرجاع';
+
+  @override
+  String get svQcApprove => 'اعتماد ونجاح';
+
+  @override
+  String svQcVerified(int count, int total) {
+    return '$count/$total تم التحقق';
+  }
+
+  @override
+  String get svQcRejectReasonRequired => 'أضف تفاصيل المراجعة قبل الإرجاع.';
+
+  @override
+  String get svQcVerifyAll => 'تحقق من كل نقطة للاعتماد.';
+
+  @override
+  String get svQcApproved => 'نجح الفحص — تم اعتماد المهمة';
+
+  @override
+  String get svQcRejected => 'تم الإرجاع للمراجعة';
+
+  @override
+  String get svQcFailed => 'تعذّر إكمال مراجعة الجودة. حاول مجدداً.';
+
+  @override
+  String get svReportsTitle => 'تقرير العمليات';
+
+  @override
+  String get svReportsSubtitle => 'الإنتاجية وإعادة العمل وإشغال الأرضية';
+
+  @override
+  String get svReportsThroughput => 'الإنتاجية';
+
+  @override
+  String get svReportsRework => 'إعادة العمل';
+
+  @override
+  String get svReportsUtilisation => 'الاستغلال';
+
+  @override
+  String get svReportsJobsPerTech => 'أعمال لكل فني';
+
+  @override
+  String get svReportsCategories => 'فئات الأعمال';
+
+  @override
+  String get svReportsCategoriesEmpty => 'لا بيانات فئات مسجّلة';
+
+  @override
+  String get svReportsWorkload => 'حِمل المستشارين';
+
+  @override
+  String get svReportsWorkloadEmpty => 'لا بيانات حِمل مسجّلة';
+
+  @override
+  String get svReportsFloor => 'حالة الأرضية';
+
+  @override
+  String get svReportsTechnicians => 'الفنيون';
+
+  @override
+  String get svReportsDepartments => 'الأقسام';
+
+  @override
+  String get svReportsInQueue => 'في الطابور';
+
+  @override
+  String get svReportsFinancial => 'المالية';
+
+  @override
+  String get svReportsEmpty => 'لا بيانات تقرير';
+
+  @override
+  String get svReportsError => 'بيانات التقرير المباشرة غير متاحة حالياً.';
+
+  @override
+  String get svReportsNoHistory =>
+      'لا سجل بعد — تُعرض أرقام الأرضية الحالية فقط.';
+
+  @override
+  String get svStaffTitle => 'كشف الورشة';
+
+  @override
+  String svStaffSubtitle(int count) {
+    return '$count متخصص في المناوبة';
+  }
+
+  @override
+  String get svStaffTechnicians => 'الفنيون';
+
+  @override
+  String get svStaffDepartments => 'الأقسام';
+
+  @override
+  String get svStaffEmpty => 'لا فريق في المناوبة';
+
+  @override
+  String get svStaffEmptyMessage => 'لا فنيون مسجّلون.';
+
+  @override
+  String get svStaffDeptEmpty => 'لا أقسام';
+
+  @override
+  String get svStaffDeptEmptyMessage => 'لا وحدات ورشة مسجّلة.';
+
+  @override
+  String get svStaffRole => 'متخصص أرضية';
+
+  @override
+  String get svStaffOnShift => 'في المناوبة';
+
+  @override
+  String svStaffLoad(int count) {
+    return '$count نشط';
+  }
+
+  @override
+  String get svScheduleTitle => 'جدول المنصات';
+
+  @override
+  String get svScheduleSubtitle => 'أجندة مواعيد اليوم';
+
+  @override
+  String get svScheduleTime => 'الوقت';
+
+  @override
+  String get svScheduleVehicle => 'العميل · المركبة';
+
+  @override
+  String get svScheduleService => 'الخدمة';
+
+  @override
+  String get svScheduleStatus => 'الحالة';
+
+  @override
+  String get svScheduleEmpty => 'لا مواعيد مجدولة';
+
+  @override
+  String get svScheduleEmptyMessage => 'تظهر الحجوزات القادمة هنا.';
+
+  @override
+  String get svScheduleViewInQueue => 'عرض في الطابور';
+
+  @override
+  String get svScheduleToday => 'اليوم';
+
+  @override
+  String get svScheduleError => 'تعذّر تحميل الجدول.';
+
+  @override
+  String get svAssignTitle => 'إسناد إلى فني';
+
+  @override
+  String get svAssignSubtitle => 'اختر فنياً لتنفيذ هذه المهمة';
+
+  @override
+  String get svAssignTarget => 'المهمة المستهدفة';
+
+  @override
+  String get svAssignTargetHint => 'رقم بطاقة العمل (مثال JC-2026-1042)';
+
+  @override
+  String get svAssignTechTitle => 'الفنيون';
+
+  @override
+  String get svAssignSkills => 'المهارات';
+
+  @override
+  String svAssignLoad(int count) {
+    return '$count نشط';
+  }
+
+  @override
+  String get svAssignDispatch => 'إسناد';
+
+  @override
+  String svAssignDispatched(String name) {
+    return 'أُسندت إلى $name';
+  }
+
+  @override
+  String get svAssignEmpty => 'لا فنيون متاحون';
+
+  @override
+  String get svAssignEmptyMessage => 'سجّل الفنيين لإسناد الأعمال.';
+
+  @override
+  String get svAssignNoTarget => 'أضف بطاقة عمل مستهدفة قبل الإسناد.';
+
+  @override
+  String get svAssignFailed => 'تعذّر الإسناد. حاول مجدداً.';
+
+  @override
+  String get svAssignBrief => 'ملخص المهمة (اختياري)';
+
+  @override
+  String get svAssignBriefHint => 'صف العمل للفني';
+
+  @override
+  String get svRouteAssignTitle => 'إسناد الأعمال';
+
+  @override
+  String get svRouteAssignSubtitle => 'إسناد المهام للفنيين';
+
+  @override
+  String get svRouteJobsTitle => 'الأعمال النشطة';
+
+  @override
+  String get svRouteJobsSubtitle => 'عمليات الورشة';
+
+  @override
+  String get svRouteQueueTitle => 'الأعمال الواردة';
+
+  @override
+  String get svRouteQueueSubtitle => 'الحجوزات والأعطال';
+
+  @override
+  String get svRouteReviewTitle => 'مراقبة الجودة';
+
+  @override
+  String get svRouteReviewSubtitle => 'تحقق من الإصلاحات المكتملة';
+
+  @override
+  String get svRouteStaffTitle => 'كشف الورشة';
+
+  @override
+  String get svRouteStaffSubtitle => 'الفنيون والأقسام';
+
+  @override
+  String get svRouteScheduleTitle => 'المواعيد المجدولة';
+
+  @override
+  String get svRouteScheduleSubtitle => 'حجوزات اليوم';
+
+  @override
+  String get svRouteReportsTitle => 'تقرير العمليات';
+
+  @override
+  String get svRouteReportsSubtitle => 'ملخص الورشة والمؤشرات';
+
+  @override
+  String get svBreadcrumbConsole => 'منصة المشرف';
+
+  @override
+  String get svProfileShift => 'الخط الزمني للمناوبة';
+
+  @override
+  String get svProfileSettings => 'الإعدادات';
 }
