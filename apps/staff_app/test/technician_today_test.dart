@@ -2,31 +2,55 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_today_view.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
+/// Localizations for the localized console (EN default in these tests).
+const _delegates = <LocalizationsDelegate<dynamic>>[
+  StaffLocalizations.delegate,
+  SharedCoreLocalizations.delegate,
+  SharedAuthLocalizations.delegate,
+  GlobalMaterialLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+];
+
+/// Bounded settle: the execution card owns a live 1s stopwatch tick, so
+/// pumpAndSettle would wait on its timer forever. Fixed 100ms pumps drain
+/// transitions deterministically, hang-free.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 20; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
 
 void main() {
   setUpAll(_loadFonts);
 
   group('Technician Today execution states', () {
     testWidgets(
-      'renders the active job with real vehicle, reference and plate',
+      'renders the active job with its live task and stopwatch',
       (tester) async {
         await _pump(tester, jobs: const [_inProgressJob]);
 
         expect(find.text('CURRENT WORK'), findsOneWidget);
         expect(find.text('On the bay'), findsOneWidget);
-        expect(find.text('Toyota Camry'), findsOneWidget);
-        expect(find.text('A 12345'), findsOneWidget);
-        expect(find.text('JO-1024'), findsOneWidget);
+        // Identity lives in the shell banner; the tab owns the task.
+        expect(find.text('Replace front brake pads'), findsOneWidget);
+        expect(find.byType(TechnicianStopwatch), findsOneWidget);
         expect(find.text('IN PROGRESS'), findsWidgets);
+        expect(find.text('1 of 3 tasks completed'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );
@@ -105,7 +129,7 @@ void main() {
     testWidgets('a refresh error retains the current work', (tester) async {
       await _pump(tester, jobs: const [_inProgressJob], error: 'offline');
 
-      expect(find.text('Toyota Camry'), findsOneWidget);
+      expect(find.text('Replace front brake pads'), findsOneWidget);
       expect(find.text('offline'), findsOneWidget);
     });
 
@@ -126,7 +150,7 @@ void main() {
       await _pump(tester, jobs: const [_inProgressJob], router: true);
 
       await tester.tap(find.text('Job details'));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(find.text('JOB_DETAIL'), findsOneWidget);
     });
@@ -141,7 +165,7 @@ void main() {
       );
 
       await tester.tap(find.text('Nissan Patrol'));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(find.text('JOB_DETAIL'), findsOneWidget);
     });
@@ -189,7 +213,7 @@ void main() {
         size: const Size(1440, 900),
       );
       expect(tester.takeException(), isNull);
-      expect(find.text('Toyota Camry'), findsOneWidget);
+      expect(find.text('On the bay'), findsOneWidget);
     });
 
     testWidgets('renders in dark mode', (tester) async {
@@ -199,7 +223,7 @@ void main() {
         theme: AppTheme.dark(BrandConfig.orient),
       );
       expect(tester.takeException(), isNull);
-      expect(find.text('Toyota Camry'), findsOneWidget);
+      expect(find.text('On the bay'), findsOneWidget);
     });
 
     testWidgets('keeps every primary action at 48px or more', (tester) async {
@@ -222,7 +246,11 @@ void main() {
 
   group('Technician Today references', () {
     testWidgets('active mobile', (tester) async {
-      await _pump(tester, jobs: const [_inProgressJob, _pendingJob]);
+      await _pump(
+        tester,
+        jobs: const [_inProgressNoClockJob, _pendingJob],
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
+      );
       await expectLater(
         find.byType(TechnicianTodayView),
         matchesGoldenFile('goldens/technician_today_active_mobile.png'),
@@ -230,7 +258,11 @@ void main() {
     });
 
     testWidgets('no active mobile', (tester) async {
-      await _pump(tester, jobs: const [_completedJob]);
+      await _pump(
+        tester,
+        jobs: const [_completedJob],
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
+      );
       await expectLater(
         find.byType(TechnicianTodayView),
         matchesGoldenFile('goldens/technician_today_no_active_mobile.png'),
@@ -238,7 +270,11 @@ void main() {
     });
 
     testWidgets('empty mobile', (tester) async {
-      await _pump(tester, jobs: const []);
+      await _pump(
+        tester,
+        jobs: const [],
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
+      );
       await expectLater(
         find.byType(TechnicianTodayView),
         matchesGoldenFile('goldens/technician_today_empty_mobile.png'),
@@ -248,8 +284,9 @@ void main() {
     testWidgets('tablet', (tester) async {
       await _pump(
         tester,
-        jobs: const [_inProgressJob, _pendingJob],
+        jobs: const [_inProgressNoClockJob, _pendingJob],
         size: const Size(1024, 768),
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
       );
       await expectLater(
         find.byType(TechnicianTodayView),
@@ -260,8 +297,9 @@ void main() {
     testWidgets('desktop', (tester) async {
       await _pump(
         tester,
-        jobs: const [_inProgressJob, _pendingJob],
+        jobs: const [_inProgressNoClockJob, _pendingJob],
         size: const Size(1440, 900),
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
       );
       await expectLater(
         find.byType(TechnicianTodayView),
@@ -272,8 +310,9 @@ void main() {
     testWidgets('dark mobile', (tester) async {
       await _pump(
         tester,
-        jobs: const [_inProgressJob, _pendingJob],
+        jobs: const [_inProgressNoClockJob, _pendingJob],
         theme: AppTheme.dark(BrandConfig.orient),
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
       );
       await expectLater(
         find.byType(TechnicianTodayView),
@@ -284,8 +323,9 @@ void main() {
     testWidgets('large text mobile', (tester) async {
       await _pump(
         tester,
-        jobs: const [_inProgressJob, _pendingJob],
+        jobs: const [_inProgressNoClockJob, _pendingJob],
         textScaler: const TextScaler.linear(1.6),
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
       );
       await expectLater(
         find.byType(TechnicianTodayView),
@@ -314,6 +354,41 @@ const _inProgressJob = TechnicianJobEntity(
       description: 'Replace front brake pads',
       status: TaskStatus.inProgress,
       startTime: '10:42',
+    ),
+    WorkTaskEntity(
+      id: 2,
+      ref: 'task-2',
+      description: 'Brake fluid flush',
+      status: TaskStatus.completed,
+    ),
+    WorkTaskEntity(
+      id: 3,
+      ref: 'task-3',
+      description: 'Road test',
+      status: TaskStatus.pending,
+    ),
+  ],
+);
+
+/// Golden stills must be deterministic: the live stopwatch ticks with the
+/// wall clock, so golden fixtures use a running task WITHOUT a recorded
+/// start time (a real backend shape — empty stamps arrive unstarted).
+const _inProgressNoClockJob = TechnicianJobEntity(
+  jobCardNo: 'JO-1024',
+  dateOfWork: '24 Aug',
+  startTime: '09:30 AM',
+  vehicleBrand: 'Toyota',
+  vehicleModel: 'Camry',
+  plateNumber: 'A 12345',
+  customerName: 'Ahmed Al Mansoori',
+  customerPhone: '+971 50 111 2233',
+  status: TechJobStatus.inProgress,
+  tasks: [
+    WorkTaskEntity(
+      id: 1,
+      ref: 'task-1',
+      description: 'Replace front brake pads',
+      status: TaskStatus.inProgress,
     ),
     WorkTaskEntity(
       id: 2,
@@ -446,6 +521,7 @@ Future<void> _pump(
   Size size = const Size(390, 844),
   TextScaler textScaler = TextScaler.noScaling,
   ThemeData? theme,
+  DateTime? fixedRefreshAt,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -461,13 +537,18 @@ Future<void> _pump(
   if (router) {
     home = MaterialApp.router(
       debugShowCheckedModeBanner: false,
+      locale: const Locale('en'),
+      supportedLocales: StaffLocalizations.supportedLocales,
+      localizationsDelegates: _delegates,
       theme: theme ?? AppTheme.light(BrandConfig.orient),
       routerConfig: GoRouter(
         initialLocation: '/',
         routes: [
           GoRoute(
             path: '/',
-            builder: (_, __) => const Scaffold(body: TechnicianTodayView()),
+            builder: (_, __) => Scaffold(
+              body: TechnicianTodayView(fixedRefreshAt: fixedRefreshAt),
+            ),
           ),
           GoRoute(
             path: AppRoutes.technicianJobDetail,
@@ -483,8 +564,11 @@ Future<void> _pump(
   } else {
     home = MaterialApp(
       debugShowCheckedModeBanner: false,
+      locale: const Locale('en'),
+      supportedLocales: StaffLocalizations.supportedLocales,
+      localizationsDelegates: _delegates,
       theme: theme ?? AppTheme.light(BrandConfig.orient),
-      home: const Scaffold(body: TechnicianTodayView()),
+      home: Scaffold(body: TechnicianTodayView(fixedRefreshAt: fixedRefreshAt)),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: textScaler),
         child: child!,
@@ -496,7 +580,7 @@ Future<void> _pump(
   if (loading) {
     await tester.pump();
   } else {
-    await tester.pumpAndSettle();
+    await _settle(tester);
   }
 }
 

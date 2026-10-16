@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 import 'package:staff_app/features/technician/data/datasources/technician_providers.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
 
-/// Contextual parts request, launched from Job Detail.
+/// Contextual parts request, launched from Job Detail or Today.
 ///
 /// A short workshop-floor form: what part, how many, and why. It carries the
 /// current job context automatically and never browses inventory (the Technician
 /// API exposes none). Success means exactly what the endpoint confirms — the
 /// request was accepted — not that a part is ordered, approved or arriving.
+///
+/// Presented through [showAppModalSheet] by callers (bottom sheet on compact,
+/// centred dialog on tablet/desktop); this widget is the content only.
 class PartsRequestSheet extends ConsumerStatefulWidget {
   final String jobCardRef;
   final String technicianEmpId;
@@ -31,7 +35,6 @@ class PartsRequestSheet extends ConsumerStatefulWidget {
 }
 
 class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
-  final _formKey = GlobalKey<FormState>();
   final _partNameCtrl = TextEditingController();
   final _partNumberCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
@@ -39,6 +42,7 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
   String _urgency = 'Normal';
   bool _isLoading = false;
   String _error = '';
+  String _nameError = '';
 
   @override
   void dispose() {
@@ -48,13 +52,21 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
     super.dispose();
   }
 
+  bool get _isUrgent => _urgency == 'Urgent';
+
   Future<void> _submit() async {
     if (_isLoading) return;
-    if (!_formKey.currentState!.validate()) return;
+    final t = StaffLocalizations.of(context)!;
+    if (_partNameCtrl.text.trim().isEmpty) {
+      HapticFeedback.selectionClick();
+      setState(() => _nameError = t.techPartsNameError);
+      return;
+    }
     HapticFeedback.mediumImpact();
     setState(() {
       _isLoading = true;
       _error = '';
+      _nameError = '';
     });
     try {
       // Exact established request body; the endpoint has no response body, no
@@ -70,269 +82,307 @@ class _PartsRequestSheetState extends ConsumerState<PartsRequestSheet> {
       });
       if (!mounted) return;
       Navigator.pop(context, true);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Part request sent.')));
+      _toast(t.techPartsSent, icon: Icons.check_circle_outline_rounded);
     } catch (_) {
       // Keep the form and the technician's input; a retryable inline message.
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error =
-            "We couldn't send the request. Check your connection and try again.";
+        _error = t.techPartsError;
       });
     }
+  }
+
+  void _toast(String msg, {IconData? icon}) {
+    final ink = context.semanticColors.onPrimary;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: ink, size: AppDimensions.iconSm),
+              const SizedBox(width: AppDimensions.s8),
+            ],
+            Expanded(
+              child: Text(
+                msg,
+                style: TextStyle(color: ink, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: context.semanticColors.success.base,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final t = StaffLocalizations.of(context)!;
 
     return SafeArea(
       top: false,
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          heightFactor: 1,
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: 560,
-              maxHeight: MediaQuery.sizeOf(context).height * 0.92,
-            ),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                AppDimensions.s20,
-                AppDimensions.s10,
-                AppDimensions.s20,
-                AppDimensions.s24,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Semantics(
-                            header: true,
-                            child: Text(
-                              'Request a part',
-                              style: text.titleLarge?.copyWith(
-                                color: colors.onSurface,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.4,
-                              ),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Close',
-                          onPressed: _isLoading
-                              ? null
-                              : () => Navigator.pop(context),
-                          icon: const Icon(Icons.close_rounded),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppDimensions.s12),
-                    TechnicianJobContext(
-                      jobCardNo: widget.jobCardRef,
-                      vehicleLabel: widget.vehicleLabel,
-                      plateNumber: widget.plateNumber,
-                    ),
-                    const SizedBox(height: AppDimensions.s20),
-                    TextFormField(
-                      controller: _partNameCtrl,
-                      textInputAction: TextInputAction.next,
-                      autofocus: false,
-                      decoration: const InputDecoration(
-                        labelText: 'Part name',
-                        hintText: 'What part or material do you need?',
-                        prefixIcon: Icon(Icons.build_outlined),
-                      ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Enter the part you need'
-                          : null,
-                    ),
-                    const SizedBox(height: AppDimensions.s14),
-                    TextFormField(
-                      controller: _partNumberCtrl,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Part number (optional)',
-                        hintText: 'OEM or workshop reference',
-                        prefixIcon: Icon(Icons.tag_rounded),
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.s18),
-                    Container(
-                      padding: const EdgeInsets.all(AppDimensions.s14),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radiusControl,
-                        ),
-                        border: Border.all(color: colors.outlineVariant),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Quantity',
-                                  style: text.titleSmall?.copyWith(
-                                    color: colors.onSurface,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                Text(
-                                  'Units needed',
-                                  style: text.bodySmall?.copyWith(
-                                    color: colors.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton.filledTonal(
-                            tooltip: 'Decrease quantity',
-                            onPressed: _quantity > 1
-                                ? () => setState(() => _quantity--)
-                                : null,
-                            icon: const Icon(Icons.remove_rounded),
-                          ),
-                          SizedBox(
-                            width: 44,
-                            child: Text(
-                              '$_quantity',
-                              textAlign: TextAlign.center,
-                              style: text.titleMedium?.copyWith(
-                                color: colors.onSurface,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                          IconButton.filled(
-                            tooltip: 'Increase quantity',
-                            onPressed: _quantity < 999
-                                ? () => setState(() => _quantity++)
-                                : null,
-                            icon: const Icon(Icons.add_rounded),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.s18),
-                    Text(
-                      'Urgency',
-                      style: text.titleSmall?.copyWith(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s8,
+          AppDimensions.s20,
+          AppDimensions.s20,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      t.techPartsTitle,
+                      style: text.titleLarge?.copyWith(
                         color: colors.onSurface,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.4,
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.s8),
-                    SegmentedButton<String>(
-                      showSelectedIcon: false,
-                      segments: const [
-                        ButtonSegment(
-                          value: 'Normal',
-                          icon: Icon(Icons.schedule_rounded),
-                          label: Text('Normal'),
+                  ),
+                ),
+                IconButton(
+                  tooltip: t.techPartsClose,
+                  onPressed: _isLoading ? null : () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s12),
+            TechnicianJobContext(
+              jobCardNo: widget.jobCardRef,
+              vehicleLabel: widget.vehicleLabel,
+              plateNumber: widget.plateNumber,
+            ),
+            const SizedBox(height: AppDimensions.s20),
+            AppTextField(
+              controller: _partNameCtrl,
+              hint: t.techPartsNameHint,
+              label: t.techPartsName,
+              prefixIcon: Icons.build_outlined,
+              errorText: _nameError.isEmpty ? null : _nameError,
+              textInputAction: TextInputAction.next,
+              onChanged: (_) {
+                if (_nameError.isNotEmpty) {
+                  setState(() => _nameError = '');
+                }
+              },
+            ),
+            const SizedBox(height: AppDimensions.s14),
+            AppTextField(
+              controller: _partNumberCtrl,
+              hint: t.techPartsNumberHint,
+              label: t.techPartsNumber,
+              prefixIcon: Icons.tag_rounded,
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: AppDimensions.s18),
+            Container(
+              padding: const EdgeInsets.all(AppDimensions.s14),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(
+                  AppDimensions.radiusControl,
+                ),
+                border: Border.all(color: colors.outlineVariant),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t.techPartsQty,
+                          style: text.titleSmall?.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                        ButtonSegment(
-                          value: 'Urgent',
-                          icon: Icon(Icons.bolt_rounded),
-                          label: Text('Urgent'),
+                        Text(
+                          t.techPartsQtyHint,
+                          style: text.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
                         ),
                       ],
-                      selected: {_urgency},
-                      onSelectionChanged: (value) {
-                        HapticFeedback.selectionClick();
-                        setState(() => _urgency = value.first);
-                      },
                     ),
-                    const SizedBox(height: AppDimensions.s18),
-                    TextFormField(
-                      controller: _notesCtrl,
-                      minLines: 3,
-                      maxLines: 5,
-                      decoration: const InputDecoration(
-                        labelText: 'Notes (optional)',
-                        hintText: 'Fitment details or preferred alternatives',
-                        alignLabelWithHint: true,
+                  ),
+                  AppQuantityStepper(
+                    value: _quantity.toDouble(),
+                    min: 1,
+                    max: 999,
+                    semanticLabel: t.techPartsQty,
+                    onChanged: (v) =>
+                        setState(() => _quantity = v.toInt()),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s18),
+            Text(
+              t.techPartsUrgency,
+              style: text.titleSmall?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s8),
+            Row(
+              children: [
+                Expanded(
+                  child: _UrgencyOption(
+                    label: t.techPartsNormal,
+                    icon: Icons.schedule_rounded,
+                    selected: !_isUrgent,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _urgency = 'Normal');
+                    },
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
+                  child: _UrgencyOption(
+                    label: t.techPartsUrgent,
+                    icon: Icons.bolt_rounded,
+                    selected: _isUrgent,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _urgency = 'Urgent');
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s18),
+            AppTextField(
+              controller: _notesCtrl,
+              hint: t.techPartsNotesHint,
+              label: t.techPartsNotes,
+              minLines: 3,
+              maxLines: 5,
+            ),
+            if (_error.isNotEmpty) ...[
+              const SizedBox(height: AppDimensions.s16),
+              Semantics(
+                liveRegion: true,
+                child: Container(
+                  padding: const EdgeInsets.all(AppDimensions.s12),
+                  decoration: BoxDecoration(
+                    color: colors.errorContainer,
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusControl,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: AppDimensions.iconSm,
+                        color: colors.onErrorContainer,
                       ),
-                    ),
-                    if (_error.isNotEmpty) ...[
-                      const SizedBox(height: AppDimensions.s16),
-                      Semantics(
-                        liveRegion: true,
-                        child: Container(
-                          padding: const EdgeInsets.all(AppDimensions.s12),
-                          decoration: BoxDecoration(
-                            color: colors.errorContainer,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.radiusControl,
-                            ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.error_outline_rounded,
-                                size: AppDimensions.iconSm,
-                                color: colors.onErrorContainer,
-                              ),
-                              const SizedBox(width: AppDimensions.s8),
-                              Expanded(
-                                child: Text(
-                                  _error,
-                                  style: text.bodySmall?.copyWith(
-                                    color: colors.onErrorContainer,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
+                      const SizedBox(width: AppDimensions.s8),
+                      Expanded(
+                        child: Text(
+                          _error,
+                          style: text.bodySmall?.copyWith(
+                            color: colors.onErrorContainer,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ],
-                    const SizedBox(height: AppDimensions.s20),
-                    FilledButton.icon(
-                      onPressed: _isLoading ? null : _submit,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(
-                          AppDimensions.touchTarget,
-                        ),
-                      ),
-                      icon: _isLoading
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send_rounded),
-                      label: Text(
-                        _isLoading ? 'Sending\u2026' : 'Send request',
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
+            ],
+            const SizedBox(height: AppDimensions.s20),
+            PrimaryButton(
+              label: _isLoading
+                  ? t.techPartsSending
+                  : t.techPartsSendCount(_quantity),
+              icon: _isLoading ? null : Icons.send_rounded,
+              onPressed: _isLoading ? null : _submit,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 52px grease urgency toggle. Single-select pair, selected fills primary.
+class _UrgencyOption extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _UrgencyOption({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: selected ? colors.primary : colors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          side: BorderSide(
+            color: selected ? colors.primary : colors.outlineVariant,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          child: SizedBox(
+            height: 52,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: AppDimensions.iconMd,
+                  // FIXED-INK: white glyph on the saturated selected fill.
+                  color: selected
+                      ? colors.onPrimary
+                      : colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: selected
+                          ? colors.onPrimary
+                          : colors.onSurface,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

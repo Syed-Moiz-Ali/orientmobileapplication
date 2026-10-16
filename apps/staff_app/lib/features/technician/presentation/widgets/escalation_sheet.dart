@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 import 'package:staff_app/features/technician/data/datasources/technician_providers.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
@@ -11,6 +12,14 @@ import 'package:staff_app/features/technician/presentation/widgets/technician_co
 /// Raises a problem on the current job to the workshop workflow. It carries the
 /// job context automatically and never invents severity, a recipient or a ticket
 /// number — the endpoint returns none. Escalating does NOT change the job status.
+///
+/// The five issue types are the canonical backend values, so labels and the
+/// sent payload stay identical — only the touch targets grow to 52px grease
+/// rows. Photo evidence is intentionally absent: no escalation media endpoint
+/// exists, and attaching bytes to this payload would alter a frozen contract.
+///
+/// Presented through [showAppModalSheet] by callers (bottom sheet on compact,
+/// centred dialog on tablet/desktop); this widget is the content only.
 class EscalationSheet extends ConsumerStatefulWidget {
   final String jobCardRef;
   final String technicianEmpId;
@@ -30,12 +39,14 @@ class EscalationSheet extends ConsumerStatefulWidget {
 }
 
 class _EscalationSheetState extends ConsumerState<EscalationSheet> {
-  final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   String _issueType = 'Unexpected Damage';
   bool _isLoading = false;
   String _error = '';
+  String _detailsError = '';
 
+  /// Canonical issue types in display order. Values are the frozen backend
+  /// enum — labels render them verbatim.
   static const _issueTypes = <(String, IconData)>[
     ('Unexpected Damage', Icons.car_crash_outlined),
     ('Missing Part', Icons.inventory_2_outlined),
@@ -52,11 +63,17 @@ class _EscalationSheetState extends ConsumerState<EscalationSheet> {
 
   Future<void> _submit() async {
     if (_isLoading) return;
-    if (!_formKey.currentState!.validate()) return;
+    final t = StaffLocalizations.of(context)!;
+    if (_descriptionController.text.trim().isEmpty) {
+      HapticFeedback.selectionClick();
+      setState(() => _detailsError = t.techEscDetailsError);
+      return;
+    }
     HapticFeedback.heavyImpact();
     setState(() {
       _isLoading = true;
       _error = '';
+      _detailsError = '';
     });
     try {
       // Exact established request body; the endpoint returns no status, so only
@@ -69,231 +86,275 @@ class _EscalationSheetState extends ConsumerState<EscalationSheet> {
       });
       if (!mounted) return;
       Navigator.pop(context, true);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Escalation sent.')));
+      _toast(t.techEscSent, icon: Icons.campaign_rounded);
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error =
-            "We couldn't send the escalation. Check your connection and try again.";
+        _error = t.techEscError;
       });
     }
+  }
+
+  void _toast(String msg, {IconData? icon}) {
+    final ink = context.semanticColors.onPrimary;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: ink, size: AppDimensions.iconSm),
+              const SizedBox(width: AppDimensions.s8),
+            ],
+            Expanded(
+              child: Text(
+                msg,
+                style: TextStyle(color: ink, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: context.semanticColors.success.base,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final t = StaffLocalizations.of(context)!;
 
     return SafeArea(
       top: false,
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          heightFactor: 1,
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: 560,
-              maxHeight: MediaQuery.sizeOf(context).height * 0.92,
-            ),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                AppDimensions.s20,
-                AppDimensions.s10,
-                AppDimensions.s20,
-                AppDimensions.s24,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Semantics(
-                            header: true,
-                            child: Text(
-                              'Escalate an issue',
-                              style: text.titleLarge?.copyWith(
-                                color: colors.onSurface,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.4,
-                              ),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Close',
-                          onPressed: _isLoading
-                              ? null
-                              : () => Navigator.pop(context),
-                          icon: const Icon(Icons.close_rounded),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppDimensions.s12),
-                    TechnicianJobContext(
-                      jobCardNo: widget.jobCardRef,
-                      vehicleLabel: widget.vehicleLabel,
-                      plateNumber: widget.plateNumber,
-                    ),
-                    const SizedBox(height: AppDimensions.s20),
-                    Text(
-                      'What happened?',
-                      style: text.titleSmall?.copyWith(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s8,
+          AppDimensions.s20,
+          AppDimensions.s20,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      t.techEscTitle,
+                      style: text.titleLarge?.copyWith(
                         color: colors.onSurface,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.4,
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.s10),
-                    Wrap(
-                      spacing: AppDimensions.s8,
-                      runSpacing: AppDimensions.s8,
-                      children: _issueTypes.map((item) {
-                        final selected = _issueType == item.$1;
-                        return ChoiceChip(
-                          avatar: Icon(
-                            item.$2,
-                            size: 17,
-                            color: selected
-                                ? colors.onPrimary
-                                : colors.onSurfaceVariant,
-                          ),
-                          label: Text(item.$1),
-                          selected: selected,
-                          showCheckmark: false,
-                          selectedColor: colors.primary,
-                          labelStyle: text.labelLarge?.copyWith(
-                            color: selected
-                                ? colors.onPrimary
-                                : colors.onSurface,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          onSelected: (_) {
-                            HapticFeedback.selectionClick();
-                            setState(() => _issueType = item.$1);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: AppDimensions.s20),
-                    TextFormField(
-                      controller: _descriptionController,
-                      minLines: 4,
-                      maxLines: 7,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        labelText: 'Issue details',
-                        hintText: 'Describe what you found and what you need…',
-                        alignLabelWithHint: true,
+                  ),
+                ),
+                IconButton(
+                  tooltip: t.techPartsClose,
+                  onPressed: _isLoading ? null : () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s12),
+            TechnicianJobContext(
+              jobCardNo: widget.jobCardRef,
+              vehicleLabel: widget.vehicleLabel,
+              plateNumber: widget.plateNumber,
+            ),
+            const SizedBox(height: AppDimensions.s20),
+            Text(
+              t.techEscWhat,
+              style: text.titleSmall?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s10),
+            for (var i = 0; i < _issueTypes.length; i++) ...[
+              if (i > 0) const SizedBox(height: AppDimensions.s8),
+              _IssueRow(
+                label: _issueTypes[i].$1,
+                icon: _issueTypes[i].$2,
+                selected: _issueType == _issueTypes[i].$1,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _issueType = _issueTypes[i].$1);
+                },
+              ),
+            ],
+            const SizedBox(height: AppDimensions.s20),
+            AppTextField(
+              controller: _descriptionController,
+              hint: t.techEscDetailsHint,
+              label: t.techEscDetails,
+              errorText: _detailsError.isEmpty ? null : _detailsError,
+              minLines: 4,
+              maxLines: 7,
+              textCapitalization: TextCapitalization.sentences,
+              onChanged: (_) {
+                if (_detailsError.isNotEmpty) {
+                  setState(() => _detailsError = '');
+                }
+              },
+            ),
+            const SizedBox(height: AppDimensions.s12),
+            Container(
+              padding: const EdgeInsets.all(AppDimensions.s12),
+              decoration: BoxDecoration(
+                color: colors.errorContainer.withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(
+                  AppDimensions.radiusControl,
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: AppDimensions.iconSm,
+                    color: colors.onErrorContainer,
+                  ),
+                  const SizedBox(width: AppDimensions.s8),
+                  Expanded(
+                    child: Text(
+                      t.techEscSafety,
+                      style: text.bodySmall?.copyWith(
+                        color: colors.onErrorContainer,
+                        height: 1.4,
                       ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Describe the issue'
-                          : null,
                     ),
-                    const SizedBox(height: AppDimensions.s12),
-                    Container(
-                      padding: const EdgeInsets.all(AppDimensions.s12),
-                      decoration: BoxDecoration(
-                        color: colors.errorContainer.withValues(alpha: 0.45),
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radiusControl,
-                        ),
+                  ),
+                ],
+              ),
+            ),
+            if (_error.isNotEmpty) ...[
+              const SizedBox(height: AppDimensions.s16),
+              Semantics(
+                liveRegion: true,
+                child: Container(
+                  padding: const EdgeInsets.all(AppDimensions.s12),
+                  decoration: BoxDecoration(
+                    color: colors.errorContainer,
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusControl,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: AppDimensions.iconSm,
+                        color: colors.onErrorContainer,
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: AppDimensions.iconSm,
+                      const SizedBox(width: AppDimensions.s8),
+                      Expanded(
+                        child: Text(
+                          _error,
+                          style: text.bodySmall?.copyWith(
                             color: colors.onErrorContainer,
-                          ),
-                          const SizedBox(width: AppDimensions.s8),
-                          Expanded(
-                            child: Text(
-                              'For an immediate safety risk, stop work and '
-                              'contact the supervisor directly.',
-                              style: text.bodySmall?.copyWith(
-                                color: colors.onErrorContainer,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (_error.isNotEmpty) ...[
-                      const SizedBox(height: AppDimensions.s16),
-                      Semantics(
-                        liveRegion: true,
-                        child: Container(
-                          padding: const EdgeInsets.all(AppDimensions.s12),
-                          decoration: BoxDecoration(
-                            color: colors.errorContainer,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.radiusControl,
-                            ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.error_outline_rounded,
-                                size: AppDimensions.iconSm,
-                                color: colors.onErrorContainer,
-                              ),
-                              const SizedBox(width: AppDimensions.s8),
-                              Expanded(
-                                child: Text(
-                                  _error,
-                                  style: text.bodySmall?.copyWith(
-                                    color: colors.onErrorContainer,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ],
-                    const SizedBox(height: AppDimensions.s20),
-                    FilledButton.icon(
-                      onPressed: _isLoading ? null : _submit,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(
-                          AppDimensions.touchTarget,
-                        ),
-                        backgroundColor: colors.error,
-                        foregroundColor: colors.onError,
-                      ),
-                      icon: _isLoading
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.campaign_rounded),
-                      label: Text(
-                        _isLoading ? 'Sending\u2026' : 'Escalate issue',
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
+            ],
+            const SizedBox(height: AppDimensions.s20),
+            PrimaryButton(
+              label: _isLoading ? t.techEscSending : t.techEscSend,
+              icon: _isLoading ? null : Icons.campaign_rounded,
+              isError: true,
+              onPressed: _isLoading ? null : _submit,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 52px grease issue row: icon + canonical label + radio. Single-select; the
+/// value sent is the label verbatim (frozen backend enum).
+class _IssueRow extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _IssueRow({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: selected
+            ? colors.primary.withValues(alpha: 0.08)
+            : colors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          side: BorderSide(
+            color: selected ? colors.primary : colors.outlineVariant,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          child: SizedBox(
+            height: 52,
+            child: Row(
+              children: [
+                const SizedBox(width: AppDimensions.s14),
+                Icon(
+                  icon,
+                  size: AppDimensions.iconMd,
+                  color: selected
+                      ? colors.primary
+                      : colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: selected
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Icon(
+                  selected
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  size: AppDimensions.iconMd,
+                  color: selected
+                      ? colors.primary
+                      : colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppDimensions.s14),
+              ],
             ),
           ),
         ),

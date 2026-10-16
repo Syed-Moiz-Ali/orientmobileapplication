@@ -5,17 +5,24 @@ import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 /// Technician Productivity — "what work have I completed / progressed through?".
 ///
-/// Every figure is a real count from the technician's loaded work or the
-/// workshop's own today figure: no efficiency score, ranking, target, average
-/// repair time or chart, because the loaded data cannot honestly produce them.
+/// Phase 10 composition: the dossier keeps real counts (repairs completed,
+/// queue breakdown, shift record). On top, a workshop-figures strip renders
+/// ONLY when the backend actually returned productivity figures (the same
+/// condition the provider uses to adopt them): efficiency ratio, today's
+/// progress bar and delayed-job attention. No history endpoint exists, so
+/// there are no week bars and no deltas — a delta without history would be
+/// fabricated. With no server figures and no loaded work, the honest empty
+/// state shows instead.
 class TechnicianProductivityView extends ConsumerWidget {
   const TechnicianProductivityView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = StaffLocalizations.of(context)!;
     ref.watch(technicianRefreshProvider);
     final state = ref.watch(technicianDashboardProvider);
     final notifier = ref.read(technicianDashboardProvider.notifier);
@@ -31,22 +38,6 @@ class TechnicianProductivityView extends ConsumerWidget {
     final showSkeleton = state.isLoading && jobs.isEmpty;
     final empty = jobs.isEmpty && completedToday == 0 && !state.isLoading;
 
-    final summary = _SummaryColumn(
-      tasksCompleted: tasksCompleted,
-      tasksTotal: tasks.length,
-      completedToday: completedToday,
-      jobs: jobs,
-    );
-    final shift = _ShiftColumn(
-      status: state.attendanceStatus,
-      summary: state.attendanceSummary,
-      notifier: notifier,
-      onPunchIn: notifier.punchIn,
-      onStartBreak: notifier.startBreak,
-      onEndBreak: notifier.endBreak,
-      onPunchOut: notifier.punchOut,
-    );
-
     return RefreshIndicator(
       onRefresh: notifier.refresh,
       child: AppResponsivePage(
@@ -55,9 +46,9 @@ class TechnicianProductivityView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SectionHeader(
-              title: "Today's productivity",
-              subtitle: 'TODAY',
+            SectionHeader(
+              title: t.techProdTitle,
+              subtitle: t.techProdToday,
             ),
             const SizedBox(height: AppDimensions.s16),
             if (showSkeleton)
@@ -65,35 +56,261 @@ class TechnicianProductivityView extends ConsumerWidget {
             else if (firstLoadError)
               Semantics(
                 liveRegion: true,
-                child: EmptyState(
-                  icon: Icons.cloud_off_rounded,
-                  title: "We couldn't load your productivity",
-                  message: 'Check your connection and try again.',
-                  actionLabel: 'Retry',
-                  onAction: notifier.refresh,
+                child: EmptyState.error(
+                  message: t.techProdLoadError,
+                  onRetry: notifier.refresh,
                 ),
               )
             else if (empty)
-              const EmptyState(
+              EmptyState(
                 icon: Icons.insights_outlined,
-                title: 'No productivity data yet',
-                message:
-                    'Completed work will appear here as you progress through '
-                    'your assigned jobs.',
+                title: t.techProdEmpty,
+                message: t.techProdEmptyHint,
               )
             else ...[
               if (state.dashboardError.isNotEmpty) ...[
                 _OfflineNotice(message: state.dashboardError),
                 const SizedBox(height: AppDimensions.s16),
               ],
+              if (_hasServerFigures(notifier)) ...[
+                if (notifier.delayedJobs > 0) ...[
+                  _DelayedAttention(count: notifier.delayedJobs),
+                  const SizedBox(height: AppDimensions.s16),
+                ],
+                _WorkshopFiguresStrip(
+                  completedToday: completedToday,
+                  assigned: notifier.productivity.assignedJobs,
+                  efficiency: notifier.productivity.efficiency,
+                  avgTimePerJob: notifier.productivity.avgTimePerJob,
+                  totalHoursWorked: notifier.productivity.totalHoursWorked,
+                ),
+                const SizedBox(height: AppDimensions.s20),
+              ] else if (notifier.delayedJobs > 0) ...[
+                _DelayedAttention(count: notifier.delayedJobs),
+                const SizedBox(height: AppDimensions.s20),
+              ],
               AppSplitView(
                 primaryFlex: 3,
                 secondaryFlex: 2,
                 spacing: AppDimensions.s24,
-                primary: summary,
-                secondary: shift,
+                primary: _SummaryColumn(
+                  tasksCompleted: tasksCompleted,
+                  tasksTotal: tasks.length,
+                  completedToday: completedToday,
+                  jobs: jobs,
+                ),
+                secondary: _ShiftColumn(
+                  status: state.attendanceStatus,
+                  summary: state.attendanceSummary,
+                  notifier: notifier,
+                  onPunchIn: notifier.punchIn,
+                  onStartBreak: notifier.startBreak,
+                  onEndBreak: notifier.endBreak,
+                  onPunchOut: notifier.punchOut,
+                ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Figure content only — not the bare assigned count, which harnesses and
+  /// empty responses also carry. The strip renders exclusively from
+  /// backend-returned figures, so a no-data pump stays a counts-only page.
+  bool _hasServerFigures(TechnicianNotifier notifier) {
+    final prod = notifier.productivity;
+    return prod.efficiency > 0 ||
+        prod.totalHoursWorked.isNotEmpty ||
+        prod.avgTimePerJob.isNotEmpty;
+  }
+}
+
+/// Workshop-figures strip (TrendStat grammar: eyebrow + big tabular value +
+/// tone chip + progress bar + supporting lines). Rendered only with
+/// backend-returned figures — never synthesized.
+class _WorkshopFiguresStrip extends StatelessWidget {
+  final int completedToday;
+  final int assigned;
+  final double efficiency;
+  final String avgTimePerJob;
+  final String totalHoursWorked;
+
+  const _WorkshopFiguresStrip({
+    required this.completedToday,
+    required this.assigned,
+    required this.efficiency,
+    required this.avgTimePerJob,
+    required this.totalHoursWorked,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final percent = _efficiencyPercent(efficiency);
+    final progress = assigned <= 0
+        ? 0.0
+        : (completedToday / assigned).clamp(0.0, 1.0);
+
+    return AppCard.standard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t.techProdFigures.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.primary,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s10),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              '$percent%',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.displaySmall?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w900,
+                height: 1,
+                fontFeatures: const [
+                  FontFeature.tabularFigures(),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            t.techProdEfficiency,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s14),
+          AppLinearProgress(
+            value: progress,
+            label: t.techProdDayProgress,
+            showPercentage: true,
+          ),
+          if (avgTimePerJob.isNotEmpty || totalHoursWorked.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s12),
+            Row(
+              children: [
+                if (totalHoursWorked.isNotEmpty)
+                  Expanded(
+                    child: _FigureLine(
+                      label: t.techProdHoursLogged,
+                      value: totalHoursWorked,
+                    ),
+                  ),
+                if (avgTimePerJob.isNotEmpty)
+                  Expanded(
+                    child: _FigureLine(
+                      label: t.techProdTimePerRepair,
+                      value: avgTimePerJob,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  int _efficiencyPercent(double value) {
+    if (value <= 0) return 0;
+    if (value <= 1.0) return (value * 100).round();
+    return value.round().clamp(0, 100);
+  }
+}
+
+class _FigureLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _FigureLine({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: colors.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w800,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Amber attention row for delayed work when no server strip is shown.
+class _DelayedAttention extends StatelessWidget {
+  final int count;
+  const _DelayedAttention({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final semantic = context.semanticColors;
+    final t = StaffLocalizations.of(context)!;
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.s14,
+          vertical: AppDimensions.s12,
+        ),
+        decoration: BoxDecoration(
+          color: semantic.warning.subtle,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          border: Border.all(color: semantic.warning.border),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: AppDimensions.iconMd,
+              color: semantic.warning.base,
+            ),
+            const SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: Text(
+                t.techProdDelayedAlert(count),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: semantic.warning.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -121,6 +338,7 @@ class _SummaryColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -136,7 +354,7 @@ class _SummaryColumn extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'WORK COMPLETED',
+                t.techProdWorkDone,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colors.primary,
                   fontWeight: FontWeight.w900,
@@ -144,19 +362,23 @@ class _SummaryColumn extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppDimensions.s10),
-              Text(
-                '$completedToday',
-                style: theme.textTheme.displaySmall?.copyWith(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  '$completedToday',
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
               ),
-              const SizedBox(height: AppDimensions.r4),
+              const SizedBox(height: 4),
               Text(
                 completedToday == 1
-                    ? 'repair completed today'
-                    : 'repairs completed today',
+                    ? t.techProdRepairOne
+                    : t.techProdRepairMany,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colors.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -166,12 +388,12 @@ class _SummaryColumn extends StatelessWidget {
                 const SizedBox(height: AppDimensions.s16),
                 AppLinearProgress(
                   value: tasksCompleted / tasksTotal,
-                  label: '$tasksCompleted of $tasksTotal tasks completed',
+                  label: t.techTodayProgress(tasksCompleted, tasksTotal),
                 ),
               ] else ...[
                 const SizedBox(height: AppDimensions.s12),
                 Text(
-                  'No tasks recorded in your loaded work.',
+                  t.techProdNoTasks,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
@@ -182,22 +404,28 @@ class _SummaryColumn extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.s20),
         SectionHeader(
-          title: '${jobs.length} assigned',
-          subtitle: 'YOUR QUEUE',
+          title: t.techProdAssigned(jobs.length),
+          subtitle: t.techProdQueue,
         ),
         const SizedBox(height: AppDimensions.s12),
         _BreakdownRow(
-          label: 'In progress',
+          label: t.techProdInProgress,
           count: _count(TechJobStatus.inProgress),
         ),
-        _BreakdownRow(label: 'Pending', count: _count(TechJobStatus.pending)),
-        _BreakdownRow(label: 'Delayed', count: _count(TechJobStatus.delayed)),
         _BreakdownRow(
-          label: 'QC review',
+          label: t.techProdPending,
+          count: _count(TechJobStatus.pending),
+        ),
+        _BreakdownRow(
+          label: t.techProdDelayed,
+          count: _count(TechJobStatus.delayed),
+        ),
+        _BreakdownRow(
+          label: t.techProdQc,
           count: _count(TechJobStatus.qcReview),
         ),
         _BreakdownRow(
-          label: 'Completed',
+          label: t.techProdCompleted,
           count: _count(TechJobStatus.completed),
         ),
       ],
@@ -240,11 +468,15 @@ class _BreakdownRow extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            '$count',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w900,
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              '$count',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w900,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ],
@@ -277,11 +509,15 @@ class _ShiftColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(title: status.label, subtitle: 'SHIFT'),
+        SectionHeader(
+          title: _attendanceLabel(t, status),
+          subtitle: t.techProdShift,
+        ),
         const SizedBox(height: AppDimensions.s12),
         Container(
           padding: const EdgeInsets.all(AppDimensions.s16),
@@ -295,22 +531,22 @@ class _ShiftColumn extends StatelessWidget {
             children: [
               _ShiftLine(
                 icon: Icons.login_rounded,
-                label: 'Clocked in',
+                label: t.techProdClockedIn,
                 value: summary.punchIn,
               ),
               _ShiftLine(
                 icon: Icons.coffee_outlined,
-                label: 'Break taken',
+                label: t.techProdBreakTaken,
                 value: summary.breakTime,
               ),
               _ShiftLine(
                 icon: Icons.timelapse_rounded,
-                label: 'Net hours',
+                label: t.techProdNetHours,
                 value: summary.workHours,
               ),
               _ShiftLine(
                 icon: Icons.logout_rounded,
-                label: 'Clocked out',
+                label: t.techProdClockedOut,
                 value: summary.punchOut,
               ),
               const SizedBox(height: AppDimensions.s12),
@@ -323,6 +559,7 @@ class _ShiftColumn extends StatelessWidget {
   }
 
   List<Widget> _punchControls(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     Widget wrap(
       VoidCallback onPressed,
@@ -357,19 +594,24 @@ class _ShiftColumn extends StatelessWidget {
 
     switch (status) {
       case AttendanceStatus.notPunchedIn:
-        return [wrap(onPunchIn, Icons.fingerprint_rounded, 'Start shift')];
+        return [wrap(onPunchIn, Icons.fingerprint_rounded, t.techShiftStart)];
       case AttendanceStatus.working:
         return [
-          wrap(onStartBreak, Icons.coffee_rounded, 'Take break', filled: false),
+          wrap(
+            onStartBreak,
+            Icons.coffee_rounded,
+            t.techShiftBreak,
+            filled: false,
+          ),
           const SizedBox(height: AppDimensions.s8),
-          wrap(onPunchOut, Icons.logout_rounded, 'End shift'),
+          wrap(onPunchOut, Icons.logout_rounded, t.techShiftEnd),
         ];
       case AttendanceStatus.onBreak:
-        return [wrap(onEndBreak, Icons.play_arrow_rounded, 'Resume shift')];
+        return [wrap(onEndBreak, Icons.play_arrow_rounded, t.techShiftResume)];
       case AttendanceStatus.punchedOut:
         return [
           Text(
-            'Shift complete for today.',
+            t.techProdShiftDone,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
@@ -413,11 +655,17 @@ class _ShiftLine extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            value.isEmpty ? '--:--' : value,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w800,
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              value.isEmpty ? '--:--' : value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w800,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ],
@@ -425,6 +673,14 @@ class _ShiftLine extends StatelessWidget {
     );
   }
 }
+
+String _attendanceLabel(StaffLocalizations t, AttendanceStatus status) =>
+    switch (status) {
+      AttendanceStatus.working => t.techAttendanceWorking,
+      AttendanceStatus.onBreak => t.techAttendanceOnBreak,
+      AttendanceStatus.notPunchedIn => t.techAttendanceNotPunchedIn,
+      AttendanceStatus.punchedOut => t.techAttendancePunchedOut,
+    };
 
 class _OfflineNotice extends StatelessWidget {
   final String message;
@@ -468,9 +724,9 @@ class _ProductivitySkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: const [
+      children: [
         AppSkeleton.card(height: 150),
         SizedBox(height: AppDimensions.s20),
         AppSkeleton.card(height: 52),

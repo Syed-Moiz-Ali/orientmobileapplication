@@ -3,14 +3,27 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/features/technician/data/datasources/technician_remote_datasource.dart';
 import 'package:staff_app/features/technician/data/datasources/technician_providers.dart';
 import 'package:staff_app/features/technician/presentation/widgets/escalation_sheet.dart';
 import 'package:staff_app/features/technician/presentation/widgets/parts_request_sheet.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
+/// Localizations for the localized console (EN default in these tests).
+const _delegates = <LocalizationsDelegate<dynamic>>[
+  StaffLocalizations.delegate,
+  SharedCoreLocalizations.delegate,
+  SharedAuthLocalizations.delegate,
+  GlobalMaterialLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+];
 
 void main() {
   setUpAll(_loadFonts);
@@ -39,7 +52,7 @@ void main() {
       final remote = _FakeRemote();
       await _pump(tester, parts, remote: remote);
 
-      await tester.tap(find.text('Send request'));
+      await tester.tap(find.text('Send request · 1'));
       await tester.pumpAndSettle();
 
       expect(find.text('Enter the part you need'), findsOneWidget);
@@ -51,10 +64,10 @@ void main() {
       await _pump(tester, parts, remote: remote);
 
       await tester.enterText(
-        find.byType(TextFormField).first,
+        find.byType(TextField).first,
         'Front brake pad set',
       );
-      await tester.tap(find.text('Send request'));
+      await tester.tap(find.text('Send request · 1'));
       await tester.pumpAndSettle();
 
       expect(remote.parts, hasLength(1));
@@ -77,8 +90,8 @@ void main() {
       final remote = _FakeRemote()..gate = Completer<void>();
       await _pump(tester, parts, remote: remote);
 
-      await tester.enterText(find.byType(TextFormField).first, 'Oil filter');
-      final send = find.text('Send request');
+      await tester.enterText(find.byType(TextField).first, 'Oil filter');
+      final send = find.text('Send request · 1');
       await tester.tap(send);
       await tester.pump();
       expect(find.text('Sending\u2026'), findsOneWidget);
@@ -96,8 +109,8 @@ void main() {
       final remote = _FakeRemote(fail: true);
       await _pump(tester, parts, remote: remote);
 
-      await tester.enterText(find.byType(TextFormField).first, 'Alternator');
-      await tester.tap(find.text('Send request'));
+      await tester.enterText(find.byType(TextField).first, 'Alternator');
+      await tester.tap(find.text('Send request · 1'));
       await tester.pumpAndSettle();
 
       expect(
@@ -106,7 +119,7 @@ void main() {
       );
       // Input is preserved for a retry.
       expect(find.text('Alternator'), findsOneWidget);
-      expect(find.text('Send request'), findsOneWidget);
+      expect(find.text('Send request · 1'), findsOneWidget);
     });
 
     testWidgets('never shows inventory or stock content', (tester) async {
@@ -134,8 +147,13 @@ void main() {
         tester
             .getSize(
               find.ancestor(
-                of: find.text('Send request'),
-                matching: find.byWidgetPredicate((w) => w is FilledButton),
+                of: find.text('Send request · 1'),
+                matching: find.byWidgetPredicate(
+                  (w) =>
+                      w is FilledButton ||
+                      w is OutlinedButton ||
+                      w is ElevatedButton,
+                ),
               ),
             )
             .height,
@@ -184,7 +202,7 @@ void main() {
       await _pump(tester, escalation, remote: remote);
 
       await tester.enterText(
-        find.byType(TextFormField).first,
+        find.byType(TextField).first,
         'Found a cracked suspension mount that needs supervisor review.',
       );
       await tester.tap(find.text('Escalate issue'));
@@ -206,7 +224,7 @@ void main() {
       await _pump(tester, escalation, remote: remote);
 
       await tester.enterText(
-        find.byType(TextFormField).first,
+        find.byType(TextField).first,
         'The lift is not locking on the front arms.',
       );
       final send = find.text('Escalate issue');
@@ -228,7 +246,7 @@ void main() {
       await _pump(tester, escalation, remote: remote);
 
       await tester.enterText(
-        find.byType(TextFormField).first,
+        find.byType(TextField).first,
         'Suspension mount cracked and unsafe.',
       );
       await tester.tap(find.text('Escalate issue'));
@@ -266,7 +284,7 @@ void main() {
       await _pump(tester, escalation, remote: remote);
 
       await tester.enterText(
-        find.byType(TextFormField).first,
+        find.byType(TextField).first,
         'Need supervisor input on this repair.',
       );
       await tester.tap(find.text('Escalate issue'));
@@ -283,7 +301,12 @@ void main() {
             .getSize(
               find.ancestor(
                 of: find.text('Escalate issue'),
-                matching: find.byWidgetPredicate((w) => w is FilledButton),
+                matching: find.byWidgetPredicate(
+                  (w) =>
+                      w is FilledButton ||
+                      w is OutlinedButton ||
+                      w is ElevatedButton,
+                ),
               ),
             )
             .height,
@@ -322,8 +345,8 @@ void main() {
     testWidgets('parts request error mobile', (tester) async {
       final remote = _FakeRemote(fail: true);
       await _pump(tester, parts, remote: remote);
-      await tester.enterText(find.byType(TextFormField).first, 'Alternator');
-      await tester.tap(find.text('Send request'));
+      await tester.enterText(find.byType(TextField).first, 'Alternator');
+      await tester.tap(find.text('Send request · 1'));
       await tester.pumpAndSettle();
       await _golden(
         tester,
@@ -359,7 +382,7 @@ void main() {
       final remote = _FakeRemote(fail: true);
       await _pump(tester, escalation, remote: remote);
       await tester.enterText(
-        find.byType(TextFormField).first,
+        find.byType(TextField).first,
         'Suspension mount cracked and unsafe.',
       );
       await tester.tap(find.text('Escalate issue'));
@@ -449,6 +472,9 @@ Future<void> _pump(
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        locale: const Locale('en'),
+        supportedLocales: StaffLocalizations.supportedLocales,
+        localizationsDelegates: _delegates,
         theme: theme ?? AppTheme.light(BrandConfig.orient),
         home: Scaffold(
           body: Builder(

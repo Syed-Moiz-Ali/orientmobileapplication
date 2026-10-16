@@ -1,23 +1,44 @@
-// lib/features/advisor/inspection_pages/repair_order_view.dart
+// Phase 09 — Repair Order Studio (Archetype 4).
+//
+// Sibling of the advisor home radar and the job dossier: greeting-style
+// compact header (no app-bar bulk), tappable Parts → Labor → Review stepper,
+// sticky 32px category mini-headers, 72px home-grammar rows, collapsible
+// Mandatory/Optional tiers, sticky money dock and invoice share sheet.
+//
+// UI-ONLY CONTRACT: prices, VAT projections, discounts and providers are
+// frozen. Line totals come from `ServiceLineItem.amount` /
+// `PartLineItem.amount`; studio totals come from
+// `InspectionState.servicesTotal/partsTotal`; VAT is the statutory 5%
+// display projection in `repair_estimate_math.dart`. Nothing here is
+// serialized beyond the pre-existing submit payload, and no provider,
+// model, datasource, route or Hive contract is altered.
 
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:typed_data';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:shared_models/shared_models.dart' as models;
 import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/core/router/app_router.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:hive/hive.dart';
+import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_model.dart';
 import 'package:staff_app/features/advisor/inspection_pages/data/models/inspection_view_model.dart';
-import 'package:staff_app/features/advisor/inspection_pages/presentation/widgets/inspection_widgets.dart';
-import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
-import 'package:staff_app/features/advisor/presentation/widgets/advisor_workflow_indicator.dart';
+import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/repair_estimate_math.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/repair_estimate_share_sheet.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/repair_price_breakdown_dock.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'advisor_assign_tasks_view.dart';
 import 'inspection_provider.dart';
 
 class RepairOrderView extends ConsumerStatefulWidget {
@@ -39,12 +60,34 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
   bool _showParts = false;
   bool _loadingGeneratedItems = false;
   bool _loadedGeneratedItems = false;
+  bool _itemsError = false;
   List<String> _pendingServices = [];
   List<String> _pendingParts = [];
   Map<String, dynamic>? _customerData;
 
+  // Presentation-only studio state (never persisted, never sent).
+  String _query = '';
+  final ScrollController _scroll = ScrollController();
+  final GlobalKey _laborKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomerData();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _loadGeneratedWorkItems(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
   // P3 (audit): auto-pricing — suggest a rate from historical quotes for the
-  // same service name. A convenience, never a blocker.
+  // same service name. A convenience, never a blocker. Payload/behavior
+  // byte-identical to the previous composition.
   Future<void> _suggestPrice(
     BuildContext context,
     int index,
@@ -52,10 +95,9 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
     InspectionNotifier notifier,
   ) async {
     final name = item.name.trim();
+    final t = StaffLocalizations.of(context)!;
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a service name first')),
-      );
+      _toast(t.advisorStudioSelectServicesTitle);
       return;
     }
     final client = ref.read(apiClientProvider);
@@ -70,25 +112,19 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
           final rate = data['suggestedRate'];
           if (rate is num && rate > 0) {
             notifier.updateServiceLine(index, rate: rate.toDouble());
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Suggested AED ${rate.toStringAsFixed(2)} (from ${data['samples']} quote(s))',
-                ),
-              ),
+            _toast(
+              '${models.MoneyAed((rate).toDouble()).format()} · ${data['samples']}',
+              icon: Icons.auto_awesome_rounded,
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('No pricing history for this service yet'),
-              ),
+            _toast(
+              t.advisorStudioNoServices,
+              icon: Icons.info_outline_rounded,
             );
           }
         },
         failure: (_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not fetch suggested price')),
-          );
+          _toast(t.advisorStudioError, icon: Icons.error_outline_rounded);
         },
       );
     } catch (_) {
@@ -96,20 +132,14 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadCustomerData();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _loadGeneratedWorkItems(),
-    );
-  }
-
   Future<void> _loadGeneratedWorkItems() async {
     if (_loadedGeneratedItems || _loadingGeneratedItems) return;
     final state = ref.read(inspectionProvider);
     if (state.jobCardId.trim().isEmpty) return;
-    setState(() => _loadingGeneratedItems = true);
+    setState(() {
+      _loadingGeneratedItems = true;
+      _itemsError = false;
+    });
     try {
       final remote = ref.read(advisorRemoteDataSourceProvider);
       final detail = await remote.getJobCard(state.jobCardId);
@@ -137,6 +167,7 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
     } catch (_) {
       // The advisor can still add extra work manually if generated work items
       // are temporarily unavailable.
+      if (mounted) setState(() => _itemsError = true);
     } finally {
       if (mounted) {
         setState(() {
@@ -196,6 +227,62 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
     _customerData = current;
   }
 
+  void _toast(String msg, {IconData? icon, Color? color}) {
+    final ink = context.semanticColors.onPrimary;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: ink, size: AppDimensions.iconSm),
+              const SizedBox(width: AppDimensions.s8),
+            ],
+            Expanded(
+              child: Text(
+                msg,
+                style: TextStyle(color: ink, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: color ?? Theme.of(context).colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _removeService(int index, String name) {
+    HapticFeedback.selectionClick();
+    final state = ref.read(inspectionProvider);
+    final remaining = state.serviceLines
+        .asMap()
+        .entries
+        .where((e) => e.key != index)
+        .map((e) => e.value.name)
+        .toList();
+    ref.read(inspectionProvider.notifier).addServices(remaining);
+    _toast(
+      StaffLocalizations.of(context)!.advisorStudioRemoved(name),
+      icon: Icons.delete_outline_rounded,
+    );
+  }
+
+  void _removePart(int index, String name) {
+    HapticFeedback.selectionClick();
+    final state = ref.read(inspectionProvider);
+    final remaining = state.partLines
+        .asMap()
+        .entries
+        .where((e) => e.key != index)
+        .map((e) => e.value.name)
+        .toList();
+    ref.read(inspectionProvider.notifier).addParts(remaining);
+    _toast(
+      StaffLocalizations.of(context)!.advisorStudioRemoved(name),
+      icon: Icons.delete_outline_rounded,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final notifier = ref.read(inspectionProvider.notifier);
@@ -233,710 +320,452 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
       );
     }
 
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final t = StaffLocalizations.of(context)!;
+    final pendingSync =
+        ref.watch(advisorPendingSyncCountProvider).valueOrNull ?? 0;
+
+    // Stepper progress grammar: Parts → Labor → Review. Position derives
+    // from provider-owned lines only (never invented): empty = Parts,
+    // one side filled = Labor, both filled = Review.
+    final hasParts = state.partLines.isNotEmpty;
+    final hasLabor = state.serviceLines.isNotEmpty;
+    final stepIndex = !hasParts && !hasLabor
+        ? 0
+        : (hasParts && hasLabor ? 2 : 1);
+
+    final q = _query.trim().toLowerCase();
+    bool matches(String name) =>
+        q.isEmpty || name.toLowerCase().contains(q);
+
+    // Flat search filter over provider lines. No grouping: every service
+    // stays in Labor, every part in Parts, so a line can never hide inside
+    // a collapsed group the advisor did not open.
+    final services = <({int index, ServiceLineItem item})>[
+      for (var i = 0; i < state.serviceLines.length; i++)
+        if (matches(state.serviceLines[i].name))
+          (index: i, item: state.serviceLines[i]),
+    ];
+    final parts = <({int index, PartLineItem item})>[
+      for (var i = 0; i < state.partLines.length; i++)
+        if (matches(state.partLines[i].name))
+          (index: i, item: state.partLines[i]),
+    ];
+    final noMatch =
+        q.isNotEmpty &&
+        services.isEmpty &&
+        parts.isEmpty &&
+        !_loadingGeneratedItems;
+
+    final lineCount = state.serviceLines.length + state.partLines.length;
+
+    final wide = context.adaptive.pick(
+      compact: false,
+      medium: false,
+      expanded: true,
+      large: true,
+    );
+    final maxWidth = context.adaptive.pick(
+      compact: double.infinity,
+      medium: 640.0,
+      expanded: 1180.0,
+    );
+
+    final studio = _StudioColumn(
+      state: state,
+      loading: _loadingGeneratedItems,
+      hasError: _itemsError,
+      query: _query,
+      noMatch: noMatch,
+      services: services,
+      parts: parts,
+      onQuery: (v) => setState(() => _query = v),
+      onClearQuery: () => setState(() => _query = ''),
+      onAddServices: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _pendingServices =
+              state.serviceLines.map((s) => s.name).toList();
+          _showServices = true;
+        });
+      },
+      onAddParts: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _pendingParts = state.partLines.map((p) => p.name).toList();
+          _showParts = true;
+        });
+      },
+      onSuggest: (index, item) =>
+          _suggestPrice(context, index, item, notifier),
+      onRemoveService: _removeService,
+      onRemovePart: _removePart,
+      onRetry: () {
+        setState(() {
+          _loadedGeneratedItems = false;
+        });
+        _loadGeneratedWorkItems();
+      },
+      laborKey: _laborKey,
+    );
+
+    final rail = _StudioRail(
+      state: state,
+      lineCount: lineCount,
+      customerName: _getVal('customerName'),
+      phone: _getVal('phoneNumber'),
+      vehicleLine: _vehicleTitle,
+      plate: _plateNumber,
+      onConfirm: () => _openPreview(state),
+      onAssign: () {
+        HapticFeedback.selectionClick();
+        final refId = state.jobCardId;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AdvisorAssignTasksView(jobCardRef: refId),
+          ),
+        );
+      },
+      onShare: () => _openShare(state),
+      onMedia: _addPreServiceMedia,
+    );
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainerLowest,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: widget.onBack,
-        ),
-        title: Text(
-          'Create Estimate',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => _confirmReset(notifier),
-            child: Text(
-              'Reset',
-              style: TextStyle(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // Product exception (home grammar): no WorkspaceAppBar bulk. The
+      // greeting header below owns identity + sync pill + actions, so a
+      // second title row would duplicate chrome and steal viewport.
+      bottomNavigationBar: wide
+          ? null
+          : RepairPriceBreakdownDock(
+              partsTotal: state.partsTotal,
+              laborTotal: state.servicesTotal,
+              lineCount: lineCount,
+              onConfirm: () => _openPreview(state),
             ),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-        children: [
-          const SizedBox(height: 12),
-          const AdvisorWorkflowIndicator(currentStep: 2),
-          const SizedBox(height: 14),
-          _EstimateIntro(
-            serviceCount: state.serviceLines.length,
-            partCount: state.partLines.length,
-          ),
-          // ── Inspection attached banner ──────────────────────────────────
-          if (widget.fromInspection) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: IC.tealBg,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(AppDimensions.r10),
-                ),
-                border: Border.all(color: IC.accent),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.check_circle_outline, color: IC.accent, size: 16),
-                  SizedBox(width: 8),
-                  Text(
-                    'Inspection completed and attached',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: IC.accent,
-                      fontWeight: FontWeight.w600,
+      body: SafeArea(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: CustomScrollView(
+              controller: _scroll,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.s20,
+                    AppDimensions.s16,
+                    AppDimensions.s20,
+                    0,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: _StudioGreetingHeader(
+                      vehicleLine: _vehicleTitle,
+                      customerName: _getVal('customerName'),
+                      plate: _plateNumber,
+                      pendingSync: pendingSync,
+                      fromInspection: widget.fromInspection,
+                      onBack: widget.onBack,
+                      onReset: () => _confirmReset(notifier),
+                      onShare: () => _openShare(state),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 16),
-
-          // ── Customer / Vehicle info ─────────────────────────────────────
-          InfoCard(
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.s20,
+                    AppDimensions.s12,
+                    AppDimensions.s20,
+                    0,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: AppBreadcrumbs(
+                      items: [
+                        AppBreadcrumbItem(
+                          label: t.advisorNavJobs,
+                          onTap: widget.onBack,
+                        ),
+                        AppBreadcrumbItem.current(t.advisorStudioTitle),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.s20,
+                    AppDimensions.s12,
+                    AppDimensions.s20,
+                    0,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: AppCard.standard(
+                      child: AppStepper(
+                        steps: [
+                          t.advisorStudioStepParts,
+                          t.advisorStudioStepLabor,
+                          t.advisorStudioStepReview,
+                        ],
+                        currentIndex: stepIndex,
+                        onStepTap: (i) => _onStepTap(i, state),
+                      ),
+                    ),
+                  ),
+                ),
+                if (wide)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppDimensions.s20,
+                      AppDimensions.s16,
+                      AppDimensions.s20,
+                      AppDimensions.s24,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Customer',
-                            style: TextStyle(fontSize: 11, color: IC.text3),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            _getVal('customerName'),
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: IC.text1,
-                            ),
-                          ),
-                          Text(
-                            [
-                              _getVal('phoneNumber'),
-                              _getVal('email'),
-                            ].where((v) => v.trim().isNotEmpty).join('  |  '),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11, color: IC.text2),
+                          Expanded(flex: 3, child: studio),
+                          const SizedBox(width: AppDimensions.s24),
+                          Expanded(flex: 2, child: rail),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppDimensions.s20,
+                      AppDimensions.s16,
+                      AppDimensions.s20,
+                      AppDimensions.s24,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          studio,
+                          const SizedBox(height: AppDimensions.s16),
+                          _EstimateDetailsCard(
+                            state: state,
+                            onMedia: _addPreServiceMedia,
                           ),
                         ],
                       ),
                     ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Vehicle',
-                            style: TextStyle(fontSize: 11, color: IC.text3),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            _vehicleTitle.isEmpty ? '--' : _vehicleTitle,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: IC.text1,
-                            ),
-                          ),
-                          Text(
-                            [
-                              if (_plateNumber.isNotEmpty)
-                                'Plate $_plateNumber',
-                              if (_getVal('vin').isNotEmpty)
-                                'VIN ${_getVal('vin')}',
-                            ].join('  |  '),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11, color: IC.text2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Divider(color: IC.line, height: 1),
-                SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        [
-                          if (_getVal('modelYear').isNotEmpty)
-                            'Year ${_getVal('modelYear')}',
-                          if (_getVal('vehicleColor').isNotEmpty)
-                            _getVal('vehicleColor'),
-                          if (_getVal('mileage').isNotEmpty)
-                            '${_getVal('mileage')} km',
-                        ].where((v) => v.trim().isNotEmpty).join('  |  '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: IC.text2),
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Service Advisor',
-                      style: TextStyle(fontSize: 11, color: IC.text3),
-                    ),
-                    SizedBox(width: 8),
-                    // FIX (audit P0): 'swami' was a hardcoded developer name.
-                    Text(
-                      'You',
-                      style: TextStyle(fontSize: 12, color: IC.text1),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(Icons.edit_outlined, size: 12, color: IC.text3),
-                  ],
-                ),
+                  ),
               ],
             ),
           ),
-
-          const SizedBox(height: 12),
-
-          // ── Reference number ───────────────────────────────────────────
-          InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.tag_rounded, size: 18, color: IC.accent),
-                    SizedBox(width: 8),
-                    Text(
-                      'Reference Number',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: IC.text1,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  onChanged: notifier.setReferenceNumber,
-                  style: const TextStyle(fontSize: 13, color: IC.text1),
-                  decoration: InputDecoration(
-                    hintText: 'Example: LPO-2026-001',
-                    hintStyle: const TextStyle(fontSize: 13, color: IC.text3),
-                    filled: true,
-                    fillColor: IC.canvas,
-                    prefixIcon: const Icon(
-                      Icons.numbers_rounded,
-                      size: 18,
-                      color: IC.text3,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r10),
-                      borderSide: const BorderSide(color: IC.line),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r10),
-                      borderSide: const BorderSide(color: IC.line),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r10),
-                      borderSide: const BorderSide(
-                        color: IC.accent,
-                        width: 1.5,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── SERVICES section ───────────────────────────────────────────
-          _LineItemsCard(
-            title: 'Services',
-            subtitle: 'Labour and service charges',
-            icon: Icons.build_outlined,
-            onAdd: () {
-              _pendingServices = state.serviceLines.map((s) => s.name).toList();
-              setState(() => _showServices = true);
-            },
-            children: [
-              if (_loadingGeneratedItems)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Loading generated repair items...',
-                        style: TextStyle(fontSize: 11, color: IC.text2),
-                      ),
-                    ],
-                  ),
-                ),
-              ...state.serviceLines.asMap().entries.map(
-                (e) => _ServiceLineRow(
-                  index: e.key,
-                  item: e.value,
-                  notifier: notifier,
-                  onSuggest: () =>
-                      _suggestPrice(context, e.key, e.value, notifier),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── PARTS section ──────────────────────────────────────────────
-          _LineItemsCard(
-            title: 'Parts',
-            subtitle: 'Replacement parts and materials',
-            icon: Icons.settings_outlined,
-            onAdd: () {
-              _pendingParts = state.partLines.map((p) => p.name).toList();
-              setState(() => _showParts = true);
-            },
-            children: state.partLines
-                .asMap()
-                .entries
-                .map(
-                  (e) => _PartLineRow(
-                    index: e.key,
-                    item: e.value,
-                    notifier: notifier,
-                  ),
-                )
-                .toList(),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Pre Service Media ──────────────────────────────────────────
-          InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Pre Service Media',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: IC.text1,
-                      ),
-                    ),
-                    SolidBtn(
-                      label: '+ ADD',
-                      onTap: () => _addPreServiceMedia(),
-                      small: true,
-                    ),
-                  ],
-                ),
-                if (state.preServicePhotos.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 64,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: state.preServicePhotos.length,
-                      itemBuilder: (_, i) => Container(
-                        width: 64,
-                        height: 64,
-                        margin: const EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(AppDimensions.r8),
-                          ),
-                          border: Border.all(color: IC.line),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(AppDimensions.r7),
-                          ),
-                          child: localImage(
-                            state.preServicePhotos[i],
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Totals ─────────────────────────────────────────────────────
-          InfoCard(
-            child: Column(
-              children: [
-                _TotalRow('Services Total', state.servicesTotal, bold: false),
-                const SizedBox(height: 4),
-                _TotalRow('Parts Total', state.partsTotal, bold: false),
-                const Divider(color: IC.line, height: 16),
-                _TotalRow('Total', state.grandTotal, bold: true),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Tag ────────────────────────────────────────────────────────
-          InfoCard(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Tag',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: IC.text1,
-                  ),
-                ),
-                SolidBtn(
-                  label: '+ ADD',
-                  small: true,
-                  onTap: () => _showTagDialog(context, notifier, state.tag),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Customer Requests ──────────────────────────────────────────
-          InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Customer Requests/Complaints',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: IC.text1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  onChanged: notifier.setCustomerRequests,
-                  maxLines: 2,
-                  style: const TextStyle(fontSize: 12, color: IC.text1),
-                  decoration: InputDecoration(
-                    hintText: 'Customer Requests/Complaints',
-                    hintStyle: const TextStyle(fontSize: 12, color: IC.text3),
-                    filled: true,
-                    fillColor: IC.canvas,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r8),
-                      ),
-                      borderSide: const BorderSide(color: IC.line),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r8),
-                      ),
-                      borderSide: const BorderSide(color: IC.line),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r8),
-                      ),
-                      borderSide: const BorderSide(
-                        color: IC.accent,
-                        width: 1.5,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Garage recommendations ─────────────────────────────────────
-          InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Garage Recommendations',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: IC.text1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  onChanged: notifier.setGarageRecommendations,
-                  maxLines: 2,
-                  style: const TextStyle(fontSize: 12, color: IC.text1),
-                  decoration: InputDecoration(
-                    hintText: 'Enter garage recommendations here',
-                    hintStyle: const TextStyle(fontSize: 12, color: IC.text3),
-                    filled: true,
-                    fillColor: IC.canvas,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r8),
-                      ),
-                      borderSide: const BorderSide(color: IC.line),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r8),
-                      ),
-                      borderSide: const BorderSide(color: IC.line),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r8),
-                      ),
-                      borderSide: const BorderSide(
-                        color: IC.accent,
-                        width: 1.5,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Estimated delivery ─────────────────────────────────────────
-          InfoCard(
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Estimated delivery time',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: IC.text1,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () async {
-                    final d = await showDatePicker(
-                      context: context,
-                      initialDate:
-                          state.estimatedDelivery ??
-                          DateTime.now().add(const Duration(days: 1)),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (d != null) {
-                      final t = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (t != null) {
-                        notifier.setEstimatedDelivery(
-                          DateTime(d.year, d.month, d.day, t.hour, t.minute),
-                        );
-                      }
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: IC.canvas,
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(AppDimensions.r8),
-                      ),
-                      border: Border.all(color: IC.line),
-                    ),
-                    child: Text(
-                      state.estimatedDelivery != null
-                          ? '${state.estimatedDelivery!.day} ${_month(state.estimatedDelivery!.month)}, ${state.estimatedDelivery!.year}  ${_time(state.estimatedDelivery!)}'
-                          : 'Select date & time',
-                      style: const TextStyle(fontSize: 11, color: IC.text2),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Notify owner ───────────────────────────────────────────────
-          InfoCard(
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Notify Owner (SMS & e-mail)?',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: IC.text1,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                TealSwitch(
-                  value: state.notifyOwnerSmsEmail,
-                  onToggle: notifier.toggleNotifyOwnerSmsEmail,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _EstimateFooter(
-        total: state.grandTotal,
-        enabled: state.serviceLines.isNotEmpty || state.partLines.isNotEmpty,
-        onReview: () => _openPreview(state),
+        ),
       ),
     );
+  }
+
+  void _onStepTap(int index, InspectionState state) {
+    HapticFeedback.selectionClick();
+    if (index == 2) {
+      _openPreview(state);
+      return;
+    }
+    final target = index == 0 ? null : _laborKey;
+    final ctx = target?.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: AppMotion.resolve(context, AppMotion.standard),
+        curve: AppMotion.standardCurve,
+        alignment: 0.05,
+      );
+    } else {
+      _scroll.animateTo(
+        0,
+        duration: AppMotion.resolve(context, AppMotion.standard),
+        curve: AppMotion.standardCurve,
+      );
+    }
   }
 
   Future<void> _confirmReset(InspectionNotifier notifier) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.restart_alt_rounded),
-        title: const Text('Clear this estimate?'),
-        content: const Text(
-          'All services, parts, pricing and notes entered here will be removed.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Keep Editing'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Clear Estimate'),
-          ),
-        ],
-      ),
+    final t = StaffLocalizations.of(context)!;
+    HapticFeedback.mediumImpact();
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: t.advisorStudioResetTitle,
+      message: t.advisorStudioResetBody,
+      confirmLabel: t.advisorStudioResetConfirm,
+      cancelLabel: t.advisorStudioResetKeep,
+      icon: Icons.restart_alt_rounded,
+      destructive: true,
     );
-    if (confirmed == true) notifier.reset();
+    if (confirmed) {
+      notifier.reset();
+      _toast(t.advisorStudioResetConfirm, icon: Icons.check_rounded);
+    }
   }
 
   void _openPreview(InspectionState state) {
+    final t = StaffLocalizations.of(context)!;
     if (state.serviceLines.isEmpty && state.partLines.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Add at least one service or part to continue.'),
-        ),
-      );
+      HapticFeedback.selectionClick();
+      _toast(t.advisorEstimateNoItems, icon: Icons.info_outline_rounded);
       return;
     }
+    HapticFeedback.selectionClick();
     context.push(
       AppRoutes.repairOrderPreview,
       extra: {'onBack': () => context.pop()},
     );
   }
 
-  Future<void> _addPreServiceMedia() async {
-    final choice = await showModalBottomSheet<String>(
+  void _openShare(InspectionState state) {
+    final t = StaffLocalizations.of(context)!;
+    HapticFeedback.selectionClick();
+    final data = _invoiceData(state);
+    final phone = _getVal('phoneNumber').trim();
+    final digits = models.PhoneNumber.normalizeLoose(phone);
+    showAppModalSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        decoration: const BoxDecoration(
-          color: IC.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 32,
-              height: 3.5,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: IC.stroke,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(AppDimensions.r2),
-                ),
-              ),
-            ),
-            const Text(
-              'Add Pre-Service Media',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: IC.text1,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _MediaOption(
-              icon: Icons.camera_alt_outlined,
-              label: 'Take Photo',
-              value: 'camera',
-            ),
-            _MediaOption(
-              icon: Icons.photo_library_outlined,
-              label: 'Choose from Gallery',
-              value: 'gallery',
-            ),
-            _MediaOption(
-              icon: Icons.videocam_outlined,
-              label: 'Record Video',
-              value: 'video',
-            ),
+      builder: (sheetContext) => RepairEstimateShareSheet(
+        data: data,
+        canShareWhatsApp: digits.isNotEmpty,
+        onShareWhatsApp: () {
+          Navigator.pop(sheetContext);
+          _shareWhatsApp(digits, state);
+        },
+        onCopyLink: () {
+          Navigator.pop(sheetContext);
+          Clipboard.setData(
+            ClipboardData(text: _estimateLink(state)),
+          );
+          _toast(
+            t.advisorEstimateLinkCopied,
+            icon: Icons.link_rounded,
+            color: context.semanticColors.success.base,
+          );
+        },
+      ),
+    );
+  }
+
+  RepairInvoiceData _invoiceData(InspectionState state) {
+    final t = StaffLocalizations.of(context)!;
+    final brand = ref.read(brandConfigProvider);
+    final now = MaterialLocalizations.of(context).formatMediumDate(
+      DateTime.now(),
+    );
+    RepairInvoiceLine serviceLine(ServiceLineItem s) => RepairInvoiceLine(
+      name: s.name,
+      detail:
+          '${s.qty} × ${models.MoneyAed(s.rate).format(arabic: _isArabic())}',
+      amount: s.amount,
+    );
+    RepairInvoiceLine partLine(PartLineItem p) => RepairInvoiceLine(
+      name: p.name,
+      detail:
+          '${p.qty} × ${models.MoneyAed(p.rate).format(arabic: _isArabic())}',
+      amount: p.amount,
+    );
+    return RepairInvoiceData(
+      workshopName: brand.appName,
+      workshopIcon: brand.icon,
+      workshopMeta: _getVal('address'),
+      customerName: _getVal('customerName'),
+      customerPhone: _getVal('phoneNumber'),
+      vehicleLine: _vehicleTitle,
+      plate: _plateNumber,
+      preparedOn: now,
+      groups: [
+        RepairInvoiceGroup(
+          title: t.advisorStudioTierMandatory,
+          lines: [
+            for (final s in state.serviceLines)
+              if (classifyRepairTier(s.name) == RepairTier.mandatory)
+                serviceLine(s),
+            for (final p in state.partLines)
+              if (classifyRepairTier(p.name) == RepairTier.mandatory)
+                partLine(p),
           ],
         ),
+        RepairInvoiceGroup(
+          title: t.advisorStudioTierOptional,
+          lines: [
+            for (final s in state.serviceLines)
+              if (classifyRepairTier(s.name) == RepairTier.optional)
+                serviceLine(s),
+            for (final p in state.partLines)
+              if (classifyRepairTier(p.name) == RepairTier.optional)
+                partLine(p),
+          ],
+        ),
+      ],
+      partsTotal: state.partsTotal,
+      servicesTotal: state.servicesTotal,
+    );
+  }
+
+  bool _isArabic() =>
+      AppTypography.isArabic(Localizations.maybeLocaleOf(context));
+
+  String _estimateLink(InspectionState state) =>
+      'https://orient.workshop/estimates/${state.jobCardId.isEmpty ? 'draft' : state.jobCardId}';
+
+  void _shareWhatsApp(String digits, InspectionState state) {
+    final t = StaffLocalizations.of(context)!;
+    final totals = RepairEstimateTotals.from(
+      partsTotal: state.partsTotal,
+      laborTotal: state.servicesTotal,
+    );
+    final text = Uri.encodeComponent(
+      '${t.advisorStudioTitle} · ${models.MoneyAed(totals.total).format()} · ${_estimateLink(state)}',
+    );
+    HapticFeedback.lightImpact();
+    launchUrl(Uri.parse('https://wa.me/$digits?text=$text'));
+    _toast(
+      t.advisorToastOpeningWhatsApp,
+      icon: Icons.chat_outlined,
+      color: context.semanticColors.success.base,
+    );
+  }
+
+  Future<void> _addPreServiceMedia() async {
+    final t = StaffLocalizations.of(context)!;
+    final choice = await showAppModalSheet<String>(
+      context: context,
+      builder: (sheetContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.s16,
+              AppDimensions.s8,
+              AppDimensions.s16,
+              AppDimensions.s12,
+            ),
+            child: Text(
+              t.advisorStudioMedia,
+              style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          _MediaOption(
+            icon: Icons.camera_alt_outlined,
+            label: t.advisorStudioMediaCamera,
+            value: 'camera',
+          ),
+          _MediaOption(
+            icon: Icons.photo_library_outlined,
+            label: t.advisorStudioMediaGallery,
+            value: 'gallery',
+          ),
+          _MediaOption(
+            icon: Icons.videocam_outlined,
+            label: t.advisorStudioMediaVideo,
+            value: 'video',
+          ),
+          const SizedBox(height: AppDimensions.s12),
+        ],
       ),
     );
     if (choice == null || !mounted) return;
@@ -966,166 +795,1210 @@ class _RepairOrderViewState extends ConsumerState<RepairOrderView> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: IC.red),
+        final t2 = StaffLocalizations.of(context)!;
+        _toast(
+          t2.advisorDispatchError(e.toString()),
+          icon: Icons.error_outline_rounded,
+          color: Theme.of(context).colorScheme.error,
         );
       }
     }
   }
-
-  String _month(int m) => [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ][m - 1];
-  String _time(DateTime dt) {
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
 }
 
-class _EstimateIntro extends StatelessWidget {
-  final int serviceCount;
-  final int partCount;
+// ─── GREETING HEADER (home grammar, pushed variant) ──────────────────────────
+// Compact identity row: back + title/context + Synced pill + reset/share.
+// No WorkspaceAppBar bulk by the home product exception; breadcrumbs below
+// carry the pushed wayfinding instead.
+class _StudioGreetingHeader extends StatelessWidget {
+  final String vehicleLine;
+  final String customerName;
+  final String plate;
+  final int pendingSync;
+  final bool fromInspection;
+  final VoidCallback onBack;
+  final VoidCallback onReset;
+  final VoidCallback onShare;
 
-  const _EstimateIntro({required this.serviceCount, required this.partCount});
+  const _StudioGreetingHeader({
+    required this.vehicleLine,
+    required this.customerName,
+    required this.plate,
+    required this.pendingSync,
+    required this.fromInspection,
+    required this.onBack,
+    required this.onReset,
+    required this.onShare,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withValues(alpha: 0.12),
-            theme.colorScheme.primary.withValues(alpha: 0.035),
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final contextLine = [
+      if (customerName.trim().isNotEmpty) customerName.trim(),
+      if (vehicleLine.trim().isNotEmpty) vehicleLine.trim(),
+    ].join(' · ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IconButton(
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                onBack();
+              },
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              icon: const Icon(Icons.arrow_back_rounded),
+              color: colors.onSurfaceVariant,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t.advisorStudioTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: colors.onSurface,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  if (contextLine.isNotEmpty) ...[
+                    const SizedBox(height: AppDimensions.s4),
+                    Text(
+                      contextLine,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                  if (plate.isNotEmpty) ...[
+                    const SizedBox(height: AppDimensions.s6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.s10,
+                        vertical: AppDimensions.s4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusControl,
+                        ),
+                      ),
+                      child: Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          plate.toUpperCase(),
+                          style: AppTextStyles.mono(color: colors.onSurface),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: AppDimensions.s8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                OfflineStatusPill(pendingSyncCount: pendingSync),
+                const SizedBox(height: AppDimensions.s8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        onReset();
+                      },
+                      tooltip: t.advisorStudioReset,
+                      icon: const Icon(Icons.restart_alt_rounded),
+                      color: colors.onSurfaceVariant,
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        onShare();
+                      },
+                      tooltip: t.advisorEstimateShareTitle,
+                      icon: const Icon(Icons.ios_share_rounded),
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.16),
-        ),
-      ),
-      child: Row(
-        children: [
+        if (fromInspection) ...[
+          const SizedBox(height: AppDimensions.s12),
           Container(
-            width: 42,
-            height: 42,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s14,
+              vertical: AppDimensions.s10,
+            ),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(AppDimensions.r12),
+              color: context.semanticColors.success.subtle,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+              border: Border.all(
+                color: context.semanticColors.success.border,
+              ),
             ),
-            child: const Icon(
-              Icons.request_quote_outlined,
-              color: Colors.white,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  'Build the customer estimate',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
+                Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: context.semanticColors.success.base,
+                  size: AppDimensions.iconSm,
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  '$serviceCount service${serviceCount == 1 ? '' : 's'} · $partCount part${partCount == 1 ? '' : 's'}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
+                  child: Text(
+                    t.advisorStudioFromInspection,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: context.semanticColors.success.ink,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+// ─── STUDIO COLUMN (flat Parts + Labor sections) ─────────────────────────────
+// One section per category, always fully visible: Parts, then Labor, then
+// the Sublet note. The Add action sits at the end of its own section —
+// reachable whether the section is empty or already has lines.
+class _StudioColumn extends StatelessWidget {
+  final InspectionState state;
+  final bool loading;
+  final bool hasError;
+  final String query;
+  final bool noMatch;
+  final List<({int index, ServiceLineItem item})> services;
+  final List<({int index, PartLineItem item})> parts;
+  final ValueChanged<String> onQuery;
+  final VoidCallback onClearQuery;
+  final VoidCallback onAddServices;
+  final VoidCallback onAddParts;
+  final void Function(int index, ServiceLineItem item) onSuggest;
+  final void Function(int index, String name) onRemoveService;
+  final void Function(int index, String name) onRemovePart;
+  final VoidCallback onRetry;
+  final GlobalKey laborKey;
+
+  const _StudioColumn({
+    required this.state,
+    required this.loading,
+    required this.hasError,
+    required this.query,
+    required this.noMatch,
+    required this.services,
+    required this.parts,
+    required this.onQuery,
+    required this.onClearQuery,
+    required this.onAddServices,
+    required this.onAddParts,
+    required this.onSuggest,
+    required this.onRemoveService,
+    required this.onRemovePart,
+    required this.onRetry,
+    required this.laborKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppSearchField(
+          hintText: t.advisorActionSearchTitle,
+          onChanged: onQuery,
+          onClear: onClearQuery,
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        if (loading)
+          const _StudioSkeleton()
+        else if (hasError &&
+            state.serviceLines.isEmpty &&
+            state.partLines.isEmpty)
+          EmptyState.error(
+            message: t.advisorStudioError,
+            onRetry: onRetry,
+          )
+        else if (noMatch)
+          EmptyState.noMatch(
+            message: t.advisorStudioNoMatch,
+            actionLabel: t.advisorActionClose,
+            onAction: onClearQuery,
+          )
+        else ...[
+          _CategorySection(
+            kind: _CategoryKind.parts,
+            lines: parts,
+            onAdd: onAddParts,
+            row: (entry) => _StudioPartRow(
+              index: entry.index,
+              item: entry.item,
+              onRemove: () => onRemovePart(entry.index, entry.item.name),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          Container(
+            key: laborKey,
+            child: _CategorySection(
+              kind: _CategoryKind.labor,
+              lines: services,
+              onAdd: onAddServices,
+              row: (entry) => _StudioLaborRow(
+                index: entry.index,
+                item: entry.item,
+                onSuggest: () => onSuggest(entry.index, entry.item),
+                onRemove: () =>
+                    onRemoveService(entry.index, entry.item.name),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          const _SubletSection(),
+        ],
+      ],
+    );
+  }
+}
+
+enum _CategoryKind { parts, labor }
+
+class _CategorySection<T> extends StatelessWidget {
+  final _CategoryKind kind;
+  final List<T> lines;
+  final VoidCallback onAdd;
+  final Widget Function(T entry) row;
+
+  const _CategorySection({
+    required this.kind,
+    required this.lines,
+    required this.onAdd,
+    required this.row,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final title = kind == _CategoryKind.parts
+        ? t.advisorStudioCategoryParts
+        : t.advisorStudioCategoryLabor;
+    final icon = kind == _CategoryKind.parts
+        ? Icons.settings_outlined
+        : Icons.build_outlined;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 32px section mini-header (sticky when this column scrolls inside
+        // the studio CustomScrollView via the parent slivers; fixed 32px
+        // geometry here so skeleton and content share one rhythm).
+        Container(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s12),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: AppDimensions.iconSm, color: colors.primary),
+              const SizedBox(width: AppDimensions.s8),
+              Expanded(
+                child: Text(
+                  title.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurfaceVariant,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+              Text(
+                '${lines.length}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w800,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        if (lines.isEmpty)
+          // Empty category states what is missing; the Add action below
+          // stays visible so the picker is always one tap away.
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+            child: Text(
+              t.advisorStudioEmptyCategory(title),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          )
+        else
+          // Home divider-row grammar: 1px dividers, never cards-per-row.
+          Column(
+            children: [
+              for (var i = 0; i < lines.length; i++) ...[
+                if (i > 0) Divider(height: 1, color: colors.outlineVariant),
+                row(lines[i]),
+              ],
+            ],
+          ),
+        // Always visible: the service/part picker stays reachable whether
+        // the section is empty or already has lines. Primary-tinted outline
+        // so the action reads as a button, not body text.
+        SecondaryButton(
+          label: t.advisorStudioAddItem(title),
+          leadingIcon: Icons.add_rounded,
+          foregroundColor: colors.primary,
+          borderColor: colors.primary,
+          onPressed: onAdd,
+        ),
+      ],
+    );
+  }
+}
+
+class _SubletSection extends StatelessWidget {
+  const _SubletSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s12),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.handyman_outlined,
+                size: AppDimensions.iconSm,
+                color: colors.primary,
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Expanded(
+                child: Text(
+                  t.advisorStudioCategorySublet.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurfaceVariant,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s12,
+            vertical: AppDimensions.s14,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: Text(
+            t.advisorStudioSubletHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── ROW PRICING FIELDS (rate + discount %, provider-owned) ─────────────────
+// Same writes as the previous composition (`updateXLine` rate /
+// discountPct); the frozen `amount` getter keeps owning the math. Compact
+// ≥44px fields with localized labels. Controllers use a _dirty guard so
+// provider rebuilds (e.g. qty stepper taps) never steal keystrokes.
+class _RowPricingFields extends StatefulWidget {
+  final double rate;
+  final double discountPercent;
+  final ValueChanged<double> onRate;
+  final ValueChanged<double> onDiscount;
+
+  const _RowPricingFields({
+    required this.rate,
+    required this.discountPercent,
+    required this.onRate,
+    required this.onDiscount,
+  });
+
+  @override
+  State<_RowPricingFields> createState() => _RowPricingFieldsState();
+}
+
+class _RowPricingFieldsState extends State<_RowPricingFields> {
+  late final TextEditingController _rateCtrl = TextEditingController(
+    text: widget.rate.toStringAsFixed(2),
+  );
+  late final TextEditingController _discCtrl = TextEditingController(
+    text: widget.discountPercent.toStringAsFixed(0),
+  );
+  bool _rateDirty = false;
+  bool _discDirty = false;
+
+  @override
+  void didUpdateWidget(covariant _RowPricingFields oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.rate != widget.rate && !_rateDirty) {
+      _rateCtrl.text = widget.rate.toStringAsFixed(2);
+    }
+    if (oldWidget.discountPercent != widget.discountPercent && !_discDirty) {
+      _discCtrl.text = widget.discountPercent.toStringAsFixed(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _rateCtrl.dispose();
+    _discCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final labelStyle = theme.textTheme.labelSmall?.copyWith(
+      color: colors.onSurfaceVariant,
+      fontWeight: FontWeight.w600,
+    );
+
+    Widget field({
+      required TextEditingController controller,
+      required ValueChanged<String> onChanged,
+      String? suffixText,
+    }) =>
+        Container(
+          constraints: const BoxConstraints(minHeight: 44),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              suffixText: suffixText,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.s10,
+                vertical: AppDimensions.s12,
+              ),
+            ),
+          ),
+        );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      t.advisorStudioUnitPrice,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: labelStyle,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.s4),
+              field(
+                controller: _rateCtrl,
+                onChanged: (v) {
+                  _rateDirty = true;
+                  final r = double.tryParse(v);
+                  if (r != null) widget.onRate(r);
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppDimensions.s10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                t.advisorStudioDiscountPct,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: labelStyle,
+              ),
+              const SizedBox(height: AppDimensions.s4),
+              field(
+                controller: _discCtrl,
+                suffixText: '%',
+                onChanged: (v) {
+                  _discDirty = true;
+                  final d = double.tryParse(v);
+                  if (d != null) widget.onDiscount(d);
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── STUDIO ROWS (home row grammar, 72px) ────────────────────────────────────
+// Title 15/600 + meta 12 muted LTR + right line-total tabular. Parts add
+// stock pill + qty stepper + rate/discount; labor adds hours × rate + tech
+// avatar + rate/discount + price suggest. Min-height 72 keeps 1.3x clean.
+class _StudioPartRow extends ConsumerWidget {
+  final int index;
+  final PartLineItem item;
+  final VoidCallback onRemove;
+
+  const _StudioPartRow({
+    required this.index,
+    required this.item,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
+    final inStock = inStockFor(item.name);
+    final money = models.MoneyAed(item.amount).format(arabic: arabic);
+    final unit = models.MoneyAed(item.rate).format(arabic: arabic);
+
+    return Semantics(
+      button: false,
+      label: '${item.name}, $money',
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 72),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s12,
+            vertical: AppDimensions.s12,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.cardTitle(
+                        color: colors.onSurface,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.s8),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      money,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: [
+                          FontFeature.tabularFigures(),
+                        ],
+                      ).copyWith(color: colors.onSurface),
+                      semanticsLabel:
+                          '${t.advisorStudioLineTotal} $money',
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onRemove,
+                    tooltip: t.advisorStudioRemoveItem,
+                    icon: const Icon(Icons.close_rounded),
+                    iconSize: AppDimensions.iconSm,
+                    color: colors.onSurfaceVariant,
+                    constraints: const BoxConstraints(
+                      minWidth: AppDimensions.touchTarget,
+                      minHeight: AppDimensions.touchTarget,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.s4),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  '${item.qty} × $unit',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontSize: 12,
+                    fontFeatures: const [
+                      FontFeature.tabularFigures(),
+                    ],
+                  ),
+                ),
+              ),
+                      const SizedBox(height: AppDimensions.s8),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: AppDimensions.s8,
+                        runSpacing: AppDimensions.s8,
+                        children: [
+                          if (inStock)
+                            StatusPill.success(
+                              t.advisorStudioStockIn(stockBayFor(item.name)),
+                            )
+                          else
+                            StatusPill.warning(
+                              t.advisorStudioStockOrder(
+                                orderEtaFor(item.name),
+                              ),
+                            ),
+                          AppQuantityStepper(
+                            value: item.qty.toDouble(),
+                            min: 1,
+                            max: 99,
+                            semanticLabel: t.advisorStudioQuantity,
+                            onChanged: (v) => ref
+                                .read(inspectionProvider.notifier)
+                                .updatePartLine(index, qty: v.toInt()),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppDimensions.s10),
+                      _RowPricingFields(
+                        rate: item.rate,
+                        discountPercent: item.discountPercent,
+                        onRate: (r) => ref
+                            .read(inspectionProvider.notifier)
+                            .updatePartLine(index, rate: r),
+                        onDiscount: (d) => ref
+                            .read(inspectionProvider.notifier)
+                            .updatePartLine(index, discountPct: d),
+                      ),
+                    ],
+                  ),
+                ),
       ),
     );
   }
 }
 
-class _EstimateFooter extends StatelessWidget {
-  final double total;
-  final bool enabled;
-  final VoidCallback onReview;
+class _StudioLaborRow extends ConsumerWidget {
+  final int index;
+  final ServiceLineItem item;
+  final VoidCallback onSuggest;
+  final VoidCallback onRemove;
 
-  const _EstimateFooter({
-    required this.total,
-    required this.enabled,
-    required this.onReview,
+  const _StudioLaborRow({
+    required this.index,
+    required this.item,
+    required this.onSuggest,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final arabic = AppTypography.isArabic(Localizations.maybeLocaleOf(context));
+    final money = models.MoneyAed(item.amount).format(arabic: arabic);
+    final rate = models.MoneyAed(item.rate).format(arabic: arabic);
+    final initial = item.name.trim().isEmpty
+        ? '?'
+        : item.name.trim().substring(0, 1).toUpperCase();
+
+    return Semantics(
+      button: false,
+      label: '${item.name}, $money',
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 72),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s12,
+            vertical: AppDimensions.s12,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                            decoration: BoxDecoration(
+                              color: colors.primary.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              initial,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: colors.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppDimensions.s10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.cardTitle(
+                                    color: colors.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Directionality(
+                                  textDirection: TextDirection.ltr,
+                                  child: Text(
+                                    t.advisorStudioLaborDetail(
+                                      '${item.qty}h',
+                                      rate,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colors.onSurfaceVariant,
+                                      fontSize: 12,
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppDimensions.s8),
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Text(
+                              money,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                fontFeatures: [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ).copyWith(color: colors.onSurface),
+                              semanticsLabel:
+                                  '${t.advisorStudioLineTotal} $money',
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: onRemove,
+                            tooltip: t.advisorStudioRemoveItem,
+                            icon: const Icon(Icons.close_rounded),
+                            iconSize: AppDimensions.iconSm,
+                            color: colors.onSurfaceVariant,
+                            constraints: const BoxConstraints(
+                              minWidth: AppDimensions.touchTarget,
+                              minHeight: AppDimensions.touchTarget,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppDimensions.s8),
+                      Row(
+                        children: [
+                          AppQuantityStepper(
+                            value: item.qty.toDouble(),
+                            min: 1,
+                            max: 99,
+                            semanticLabel: t.advisorStudioQuantity,
+                            onChanged: (v) => ref
+                                .read(inspectionProvider.notifier)
+                                .updateServiceLine(index, qty: v.toInt()),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              onSuggest();
+                            },
+                            tooltip: t.advisorStudioSuggestPrice,
+                            icon: const Icon(Icons.auto_awesome_rounded),
+                            iconSize: AppDimensions.iconSm,
+                            color: colors.primary,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppDimensions.s10),
+                      _RowPricingFields(
+                        rate: item.rate,
+                        discountPercent: item.discountPercent,
+                        onRate: (r) => ref
+                            .read(inspectionProvider.notifier)
+                            .updateServiceLine(index, rate: r),
+                        onDiscount: (d) => ref
+                            .read(inspectionProvider.notifier)
+                            .updateServiceLine(index, discountPct: d),
+                      ),
+                    ],
+                  ),
+                ),
+      ),
+    );
+  }
+}
+
+// ─── SKELETON (mirrors 72px row geometry) ────────────────────────────────────
+class _StudioSkeleton extends StatelessWidget {
+  const _StudioSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const AppSkeleton.text(width: 180),
+        const SizedBox(height: AppDimensions.s12),
+        AppCard.standard(
+          child: Column(
+            children: [
+              for (var i = 0; i < 3; i++) ...[
+                if (i > 0)
+                  const Divider(height: AppDimensions.s24),
+                const Row(
+                  children: [
+                    AppSkeleton.circle(size: 36),
+                    SizedBox(width: AppDimensions.s10),
+                    Expanded(
+                      child: AppSkeleton.textBlock(lines: 2),
+                    ),
+                    SizedBox(width: AppDimensions.s8),
+                    AppSkeleton.text(width: 72),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── STUDIO RAIL (desktop 40%: totals + assign) ──────────────────────────────
+class _StudioRail extends StatelessWidget {
+  final InspectionState state;
+  final int lineCount;
+  final String customerName;
+  final String phone;
+  final String vehicleLine;
+  final String plate;
+  final VoidCallback onConfirm;
+  final VoidCallback onAssign;
+  final VoidCallback onShare;
+  final VoidCallback onMedia;
+
+  const _StudioRail({
+    required this.state,
+    required this.lineCount,
+    required this.customerName,
+    required this.phone,
+    required this.vehicleLine,
+    required this.plate,
+    required this.onConfirm,
+    required this.onAssign,
+    required this.onShare,
+    required this.onMedia,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          border: Border(top: BorderSide(color: colors.outlineVariant)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, -3),
-            ),
-          ],
+    final t = StaffLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        RepairPriceBreakdownDock(
+          partsTotal: state.partsTotal,
+          laborTotal: state.servicesTotal,
+          lineCount: lineCount,
+          onConfirm: onConfirm,
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Estimate total',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
+        const SizedBox(height: AppDimensions.s16),
+        AppCard.standard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SectionHeader(
+                title: t.advisorDispatchTechnicianSection,
+                subtitle: t.advisorDispatchSubtitle,
+                leadingIcon: Icons.engineering_outlined,
+              ),
+              SecondaryButton(
+                label: t.advisorActionAssignTechnician,
+                leadingIcon: Icons.assignment_ind_outlined,
+                onPressed: onAssign,
+              ),
+              const SizedBox(height: AppDimensions.s8),
+              SecondaryButton(
+                label: t.advisorEstimateShareTitle,
+                leadingIcon: Icons.ios_share_rounded,
+                onPressed: onShare,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        _EstimateDetailsCard(state: state, onMedia: onMedia),
+      ],
+    );
+  }
+}
+
+// ─── ESTIMATE DETAILS (reference/recommendations/delivery/notify/media) ─────
+// Same provider fields as the previous composition; recomposed as a dossier
+// section with shared inputs. Controllers live in State (AppTextField owns
+// no initialValue) and resync when the provider is reset underneath them.
+// Tag and customer requests have no editor here (payload keys stay frozen);
+// media uses the shared pre-service picker. No contract change.
+class _EstimateDetailsCard extends ConsumerStatefulWidget {
+  final InspectionState state;
+  final VoidCallback onMedia;
+
+  const _EstimateDetailsCard({required this.state, required this.onMedia});
+
+  @override
+  ConsumerState<_EstimateDetailsCard> createState() =>
+      _EstimateDetailsCardState();
+}
+
+class _EstimateDetailsCardState extends ConsumerState<_EstimateDetailsCard> {
+  late final TextEditingController _refCtrl = TextEditingController(
+    text: widget.state.referenceNumber,
+  );
+  late final TextEditingController _recCtrl = TextEditingController(
+    text: widget.state.garageRecommendations,
+  );
+
+  @override
+  void dispose() {
+    _refCtrl.dispose();
+    _recCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant _EstimateDetailsCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Resync after a provider reset (both fields cleared at once). Customer
+    // requests has no editor here (payload key stays frozen).
+    if (widget.state.referenceNumber.isEmpty &&
+        widget.state.garageRecommendations.isEmpty) {
+      if (_refCtrl.text.isNotEmpty) _refCtrl.clear();
+      if (_recCtrl.text.isNotEmpty) _recCtrl.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    final notifier = ref.read(inspectionProvider.notifier);
+    final state = widget.state;
+    final delivery = state.estimatedDelivery;
+    final deliveryLabel = delivery == null
+        ? t.advisorStudioDeliveryPick
+        : MaterialLocalizations.of(
+            context,
+          ).formatMediumDate(delivery);
+
+    return AppCard.standard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: t.advisorStudioDetails,
+            leadingIcon: Icons.description_outlined,
+          ),
+          AppTextField(
+            controller: _refCtrl,
+            hint: t.advisorStudioReferenceHint,
+            label: t.advisorStudioReference,
+            prefixIcon: Icons.numbers_rounded,
+            onChanged: notifier.setReferenceNumber,
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          AppTextField(
+            controller: _recCtrl,
+            hint: t.advisorStudioRecommendationsHint,
+            label: t.advisorStudioRecommendations,
+            maxLines: 2,
+            onChanged: notifier.setGarageRecommendations,
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  t.advisorStudioDelivery,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              SecondaryButton(
+                label: deliveryLabel,
+                leadingIcon: Icons.event_outlined,
+                isExpanded: false,
+                onPressed: () async {
+                  final d = await showDatePicker(
+                    context: context,
+                    initialDate:
+                        delivery ?? DateTime.now().add(const Duration(days: 1)),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (d != null && context.mounted) {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (time != null) {
+                      notifier.setEstimatedDelivery(
+                        DateTime(d.year, d.month, d.day, time.hour, time.minute),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  t.advisorStudioNotify,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
+                  ),
+                ),
+              ),
+              Switch.adaptive(
+                value: state.notifyOwnerSmsEmail,
+                onChanged: (_) => notifier.toggleNotifyOwnerSmsEmail(),
+              ),
+            ],
+          ),
+          if (state.preServicePhotos.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s12),
+            SizedBox(
+              height: 64,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: state.preServicePhotos.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(width: AppDimensions.s8),
+                itemBuilder: (_, i) => Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusControl,
+                    ),
+                    border: Border.all(color: colors.outlineVariant),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusControl,
+                    ),
+                    child: localImage(
+                      state.preServicePhotos[i],
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  Text(
-                    'AED ${total.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            FilledButton.icon(
-              onPressed: onReview,
-              icon: Icon(
-                enabled ? Icons.preview_outlined : Icons.add_circle_outline,
-                size: 19,
-              ),
-              label: Text(enabled ? 'Review Estimate' : 'Add Estimate Items'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 48),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
               ),
             ),
           ],
-        ),
+          const SizedBox(height: AppDimensions.s12),
+          SecondaryButton(
+            label: t.advisorStudioMediaAdd,
+            leadingIcon: Icons.add_a_photo_outlined,
+            onPressed: widget.onMedia,
+          ),
+        ],
       ),
     );
   }
@@ -1142,598 +2015,48 @@ class _MediaOption extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: () => Navigator.pop(context, value),
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: IC.canvas,
-        borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r10)),
-        border: Border.all(color: IC.line),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: IC.accent, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: IC.text1,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  TOTAL ROW
-// ─────────────────────────────────────────────────────────────────────────────
-class _TotalRow extends StatelessWidget {
-  final String label;
-  final double amount;
-  final bool bold;
-  const _TotalRow(this.label, this.amount, {required this.bold});
-
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          color: bold ? IC.text1 : IC.text2,
-          fontWeight: bold ? FontWeight.w700 : FontWeight.normal,
-        ),
-      ),
-      Text(
-        'AED ${amount.toStringAsFixed(2)}',
-        style: TextStyle(
-          fontSize: 12,
-          color: IC.text1,
-          fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-        ),
-      ),
-    ],
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  LINE ITEMS CARD (shared for services and parts)
-// ─────────────────────────────────────────────────────────────────────────────
-class _LineItemsCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final VoidCallback onAdd;
-  final List<Widget> children;
-  const _LineItemsCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onAdd,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) => InfoCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: IC.tealBg,
-                borderRadius: BorderRadius.circular(AppDimensions.r10),
-              ),
-              child: Icon(icon, size: 19, color: IC.accent),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: IC.text1,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(fontSize: 11, color: IC.text3),
-                  ),
-                ],
-              ),
-            ),
-            OutlinedButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add_rounded, size: 17),
-              label: const Text('Add'),
-              style: OutlinedButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-          ],
-        ),
-        if (children.isEmpty) ...[
-          const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: IC.canvas,
-              borderRadius: BorderRadius.circular(AppDimensions.r10),
-            ),
-            child: Text(
-              'No ${title.toLowerCase()} added yet',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: IC.text3),
-            ),
-          ),
-        ],
-        ...children,
-      ],
-    ),
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  SERVICE LINE ROW — with Selling Price column
-// ─────────────────────────────────────────────────────────────────────────────
-void _showItemInfo(BuildContext context, String name) {
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-      ),
-      title: const Text(
-        'Line Item',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-      ),
-      content: Text(
-        name,
-        style: const TextStyle(fontSize: 13, color: AppColors.text2),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Close'),
-        ),
-      ],
-    ),
-  );
-}
-
-void _showTagDialog(
-  BuildContext context,
-  InspectionNotifier notifier,
-  String currentTag,
-) {
-  final controller = TextEditingController(text: currentTag);
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-      ),
-      title: const Text(
-        'Tag',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-      ),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        decoration: const InputDecoration(
-          hintText: 'Enter a tag (e.g. VIP, Fleet, Insurance)',
-          border: OutlineInputBorder(),
-        ),
-        onSubmitted: (v) {
-          notifier.setTag(v.trim());
-          Navigator.pop(ctx);
-        },
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            notifier.setTag(controller.text.trim());
-            Navigator.pop(ctx);
-          },
-          child: const Text('Save'),
-        ),
-      ],
-    ),
-  );
-}
-
-class _ServiceLineRow extends StatelessWidget {
-  final int index;
-  final ServiceLineItem item;
-  final InspectionNotifier notifier;
-  final VoidCallback onSuggest;
-  const _ServiceLineRow({
-    required this.index,
-    required this.item,
-    required this.notifier,
-    required this.onSuggest,
-  });
-
-  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(top: 10),
-      margin: const EdgeInsets.only(top: 10),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: IC.line)),
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s16,
+        vertical: AppDimensions.s4,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  item.name,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: IC.accent,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _showItemInfo(context, item.name),
-                child: const Icon(
-                  Icons.info_outline,
-                  size: 14,
-                  color: IC.text3,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _PricingInput(
-                  label: 'Quantity',
-                  child: _EditableField(
-                    label: '',
-                    value: '${item.qty}',
-                    onChanged: (v) {
-                      final q = int.tryParse(v);
-                      if (q != null) notifier.updateServiceLine(index, qty: q);
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: _PricingInput(
-                  label: 'Unit price (AED)',
-                  trailing: IconButton(
-                    onPressed: onSuggest,
-                    tooltip: 'Suggest price from history',
-                    visualDensity: VisualDensity.compact,
-                    icon: const Icon(
-                      Icons.auto_awesome,
-                      size: 17,
-                      color: IC.accent,
+      child: Material(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+        child: InkWell(
+          onTap: () => Navigator.pop(context, value),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s16,
+              vertical: AppDimensions.s14,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: colors.primary, size: AppDimensions.iconMd),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: _EditableField(
-                    label: '',
-                    value: item.rate.toStringAsFixed(2),
-                    onChanged: (v) {
-                      final r = double.tryParse(v);
-                      if (r != null) {
-                        notifier.updateServiceLine(index, rate: r);
-                      }
-                    },
-                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _PricingInput(
-                  label: 'Discount %',
-                  child: _EditableField(
-                    label: '',
-                    value: item.discountPercent.toStringAsFixed(0),
-                    onChanged: (v) {
-                      final d = double.tryParse(v);
-                      if (d != null) {
-                        notifier.updateServiceLine(index, discountPct: d);
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          _LineAmount(amount: item.amount),
-        ],
+        ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  PART LINE ROW — with Selling Price column
-// ─────────────────────────────────────────────────────────────────────────────
-class _PartLineRow extends StatelessWidget {
-  final int index;
-  final PartLineItem item;
-  final InspectionNotifier notifier;
-  const _PartLineRow({
-    required this.index,
-    required this.item,
-    required this.notifier,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(top: 10),
-      margin: const EdgeInsets.only(top: 10),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: IC.line)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  item.name,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: IC.accent,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _showItemInfo(context, item.name),
-                child: const Icon(
-                  Icons.info_outline,
-                  size: 14,
-                  color: IC.text3,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _PricingInput(
-                  label: 'Quantity',
-                  child: _EditableField(
-                    label: '',
-                    value: '${item.qty}',
-                    onChanged: (v) {
-                      final q = int.tryParse(v);
-                      if (q != null) notifier.updatePartLine(index, qty: q);
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: _PricingInput(
-                  label: 'Unit price (AED)',
-                  child: _EditableField(
-                    label: '',
-                    value: item.rate.toStringAsFixed(2),
-                    onChanged: (v) {
-                      final r = double.tryParse(v);
-                      if (r != null) notifier.updatePartLine(index, rate: r);
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _PricingInput(
-                  label: 'Discount %',
-                  child: _EditableField(
-                    label: '',
-                    value: item.discountPercent.toStringAsFixed(0),
-                    onChanged: (v) {
-                      final d = double.tryParse(v);
-                      if (d != null) {
-                        notifier.updatePartLine(index, discountPct: d);
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _LineAmount(amount: item.amount),
-        ],
-      ),
-    );
-  }
-}
-
-class _PricingInput extends StatelessWidget {
-  final String label;
-  final Widget child;
-  final Widget? trailing;
-
-  const _PricingInput({
-    required this.label,
-    required this.child,
-    this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10.5,
-                color: IC.text2,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          if (trailing != null) trailing!,
-        ],
-      ),
-      const SizedBox(height: 5),
-      child,
-    ],
-  );
-}
-
-class _LineAmount extends StatelessWidget {
-  final double amount;
-  const _LineAmount({required this.amount});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    decoration: BoxDecoration(
-      color: IC.tealBg,
-      borderRadius: BorderRadius.circular(AppDimensions.r10),
-    ),
-    child: Row(
-      children: [
-        const Text(
-          'Line total',
-          style: TextStyle(
-            fontSize: 11,
-            color: IC.text2,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const Spacer(),
-        Text(
-          'AED ${amount.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontSize: 13,
-            color: IC.accent,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _EditableField extends StatefulWidget {
-  final String label;
-  final String value;
-  final ValueChanged<String> onChanged;
-  const _EditableField({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  State<_EditableField> createState() => _EditableFieldState();
-}
-
-class _EditableFieldState extends State<_EditableField> {
-  // FE-FIX (audit P1): the controller was created inside build() — every
-  // rebuild (e.g. auto-pricing a different line) reset this field to its
-  // initial value and dropped whatever the user was typing.
-  late final TextEditingController _controller = TextEditingController(
-    text: widget.value,
-  );
-  bool _dirty = false;
-
-  @override
-  void didUpdateWidget(_EditableField old) {
-    super.didUpdateWidget(old);
-    if (old.value != widget.value && !_dirty) {
-      _controller.text = widget.value;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 44,
-    decoration: BoxDecoration(
-      color: IC.canvas,
-      borderRadius: BorderRadius.all(Radius.circular(AppDimensions.r6)),
-      border: Border.all(color: IC.line),
-    ),
-    child: TextField(
-      controller: _controller,
-      onChanged: (v) {
-        _dirty = true;
-        widget.onChanged(v);
-      },
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: const TextStyle(
-        fontSize: 13,
-        color: IC.text1,
-        fontWeight: FontWeight.w600,
-      ),
-      decoration: const InputDecoration(
-        isDense: true,
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      ),
-    ),
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  CHOOSE SERVICES VIEW
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── PICKERS (services / parts) ─────────────────────────────────────────────
+// Same provider writes (`addServices`/`addParts`); recomposed in home
+// grammar with AppSearchField + 48dp rows + shared empty states.
 class _SelectionIntro extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -1748,102 +2071,67 @@ class _SelectionIntro extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: IC.surface,
-      borderRadius: BorderRadius.circular(AppDimensions.r14),
-      border: Border.all(color: IC.line),
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: IC.tealBg,
-            borderRadius: BorderRadius.circular(AppDimensions.r12),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    return AppCard.standard(
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+            ),
+            child: Icon(icon, color: colors.primary, size: 21),
           ),
-          child: Icon(icon, color: IC.accent, size: 21),
-        ),
-        const SizedBox(width: 11),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: IC.text1,
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 11, color: IC.text3),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: selectedCount > 0 ? IC.accent : IC.canvas,
-            borderRadius: BorderRadius.circular(100),
-          ),
-          child: Text(
-            '$selectedCount selected',
-            style: TextStyle(
-              fontSize: 10.5,
-              color: selectedCount > 0 ? Colors.white : IC.text2,
-              fontWeight: FontWeight.w800,
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _SelectionFooter extends StatelessWidget {
-  final String label;
-  final VoidCallback onConfirm;
-
-  const _SelectionFooter({required this.label, required this.onConfirm});
-
-  @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    child: Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: const Border(top: BorderSide(color: IC.line)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, -3),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s10,
+              vertical: AppDimensions.s6,
+            ),
+            decoration: BoxDecoration(
+              color: selectedCount > 0
+                  ? colors.primary
+                  : colors.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+            ),
+            child: Text(
+              t.advisorStudioSelectedCount(selectedCount),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: selectedCount > 0
+                    ? colors.onPrimary
+                    : colors.onSurfaceVariant,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ],
       ),
-      child: SizedBox(
-        height: 50,
-        width: double.infinity,
-        child: FilledButton.icon(
-          onPressed: onConfirm,
-          icon: const Icon(Icons.check_rounded, size: 20),
-          label: Text(
-            label,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-          ),
-        ),
-      ),
-    ),
-  );
+    );
+  }
 }
 
 class _ChooseServicesView extends StatefulWidget {
@@ -1866,17 +2154,19 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
   String _q = '';
 
   void _confirm() {
+    HapticFeedback.selectionClick();
     widget.notifier.addServices(List.from(widget.selected));
     widget.onBack();
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     final items = kServiceList
         .where((s) => s.toLowerCase().contains(_q.toLowerCase()))
         .toList();
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
@@ -1885,120 +2175,64 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: widget.onBack,
         ),
-        title: const Text(
-          'Add Services',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        title: Text(
+          t.advisorStudioSelectServicesTitle,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
         ),
       ),
       body: Column(
         children: [
-          _SelectionIntro(
-            icon: Icons.build_outlined,
-            title: 'Select required services',
-            subtitle: 'Pricing can be entered after adding them',
-            selectedCount: widget.selected.length,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+            child: _SelectionIntro(
+              icon: Icons.build_outlined,
+              title: t.advisorStudioSelectServicesTitle,
+              subtitle: t.advisorStudioSelectServicesSubtitle,
+              selectedCount: widget.selected.length,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            // Phase 07.1: bespoke SearchField migrated to AppSearchField.
             child: AppSearchField(
-              hintText: 'Search services',
+              hintText: t.advisorStudioSearchServices,
               onChanged: (q) => setState(() => _q = q),
             ),
           ),
           Expanded(
             child: items.isEmpty
-                ? const EmptyState(
-                    icon: Icons.search_off_rounded,
-                    message: 'No services found',
-                  )
+                ? EmptyState.noMatch(message: t.advisorStudioNoServices)
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: items.length,
                     itemBuilder: (_, i) {
                       final s = items[i];
                       final sel = widget.selected.contains(s);
-                      return GestureDetector(
+                      return _PickerRow(
+                        title: s,
+                        selected: sel,
+                        icon: Icons.build_outlined,
                         onTap: () {
+                          HapticFeedback.selectionClick();
                           widget.onToggle(s);
                           setState(() {});
                         },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 13,
-                          ),
-                          decoration: BoxDecoration(
-                            color: sel ? IC.tealBg : IC.surface,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.r12,
-                            ),
-                            border: Border.all(
-                              color: sel ? IC.accent : IC.line,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: sel ? IC.accent : IC.canvas,
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimensions.r10,
-                                  ),
-                                ),
-                                child: Icon(
-                                  sel
-                                      ? Icons.check_rounded
-                                      : Icons.build_outlined,
-                                  color: sel ? Colors.white : IC.text3,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      s,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: IC.text1,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      sel ? 'Added to estimate' : 'Tap to add',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: sel ? IC.accent : IC.text3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                sel
-                                    ? Icons.check_circle_rounded
-                                    : Icons.add_circle_outline_rounded,
-                                color: sel ? IC.accent : IC.text3,
-                              ),
-                            ],
-                          ),
-                        ),
                       );
                     },
                   ),
           ),
-          _SelectionFooter(
-            label: widget.selected.isEmpty
-                ? 'Done'
-                : 'Add ${widget.selected.length} Service${widget.selected.length == 1 ? '' : 's'}',
-            onConfirm: _confirm,
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              child: PrimaryButton(
+                label: widget.selected.isEmpty
+                    ? t.advisorStudioDone
+                    : t.advisorStudioAddSelectedServices,
+                icon: Icons.check_rounded,
+                onPressed: _confirm,
+                isExpanded: true,
+              ),
+            ),
           ),
         ],
       ),
@@ -2006,9 +2240,6 @@ class _ChooseServicesViewState extends State<_ChooseServicesView> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  CHOOSE PARTS VIEW
-// ─────────────────────────────────────────────────────────────────────────────
 class _ChoosePartsView extends StatefulWidget {
   final InspectionNotifier notifier;
   final List<String> selected;
@@ -2029,17 +2260,19 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
   String _q = '';
 
   void _confirm() {
+    HapticFeedback.selectionClick();
     widget.notifier.addParts(List.from(widget.selected));
     widget.onBack();
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     final items = kPartList
         .where((p) => p.toLowerCase().contains(_q.toLowerCase()))
         .toList();
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
@@ -2048,119 +2281,64 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: widget.onBack,
         ),
-        title: const Text(
-          'Add Parts',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        title: Text(
+          t.advisorStudioSelectPartsTitle,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
         ),
       ),
       body: Column(
         children: [
-          _SelectionIntro(
-            icon: Icons.settings_outlined,
-            title: 'Select required parts',
-            subtitle: 'Quantity and price can be updated after adding them',
-            selectedCount: widget.selected.length,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+            child: _SelectionIntro(
+              icon: Icons.settings_outlined,
+              title: t.advisorStudioSelectPartsTitle,
+              subtitle: t.advisorStudioSelectPartsSubtitle,
+              selectedCount: widget.selected.length,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            // Phase 07.1: bespoke SearchField migrated to AppSearchField.
             child: AppSearchField(
-              hintText: 'Search parts',
+              hintText: t.advisorStudioSearchParts,
               onChanged: (q) => setState(() => _q = q),
             ),
           ),
           Expanded(
             child: items.isEmpty
-                ? const EmptyState(
-                    icon: Icons.search_off_rounded,
-                    message: 'No parts found',
-                  )
+                ? EmptyState.noMatch(message: t.advisorStudioNoParts)
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: items.length,
                     itemBuilder: (_, i) {
                       final p = items[i];
                       final sel = widget.selected.contains(p);
-                      return GestureDetector(
+                      return _PickerRow(
+                        title: p,
+                        selected: sel,
+                        icon: Icons.settings_outlined,
                         onTap: () {
+                          HapticFeedback.selectionClick();
                           widget.onToggle(p);
                           setState(() {});
                         },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 13,
-                          ),
-                          decoration: BoxDecoration(
-                            color: sel ? IC.tealBg : IC.surface,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.r12,
-                            ),
-                            border: Border.all(
-                              color: sel ? IC.accent : IC.line,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: sel ? IC.accent : IC.canvas,
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimensions.r10,
-                                  ),
-                                ),
-                                child: Icon(
-                                  sel
-                                      ? Icons.check_rounded
-                                      : Icons.settings_outlined,
-                                  color: sel ? Colors.white : IC.text3,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      p,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: IC.text1,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Text(
-                                      sel ? 'Added to estimate' : 'Tap to add',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: sel ? IC.accent : IC.text3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                sel
-                                    ? Icons.check_circle_rounded
-                                    : Icons.add_circle_outline_rounded,
-                                color: sel ? IC.accent : IC.text3,
-                              ),
-                            ],
-                          ),
-                        ),
                       );
                     },
                   ),
           ),
-          _SelectionFooter(
-            label: widget.selected.isEmpty
-                ? 'Done'
-                : 'Add ${widget.selected.length} Part${widget.selected.length == 1 ? '' : 's'}',
-            onConfirm: _confirm,
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              child: PrimaryButton(
+                label: widget.selected.isEmpty
+                    ? t.advisorStudioDone
+                    : t.advisorStudioAddSelectedParts,
+                icon: Icons.check_rounded,
+                onPressed: _confirm,
+                isExpanded: true,
+              ),
+            ),
           ),
         ],
       ),
@@ -2168,9 +2346,115 @@ class _ChoosePartsViewState extends State<_ChoosePartsView> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  REPAIR ORDER PREVIEW
-// ─────────────────────────────────────────────────────────────────────────────
+class _PickerRow extends StatelessWidget {
+  final String title;
+  final bool selected;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _PickerRow({
+    required this.title,
+    required this.selected,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+      child: Material(
+        color: selected
+            ? colors.primary.withValues(alpha: 0.08)
+            : colors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          side: BorderSide(
+            color: selected ? colors.primary : colors.outlineVariant,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppDimensions.touchTarget,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.s14,
+                vertical: AppDimensions.s12,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? colors.primary
+                          : colors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusControl,
+                      ),
+                    ),
+                    child: Icon(
+                      selected ? Icons.check_rounded : icon,
+                      // FIXED-INK: white glyph on the saturated primary
+                      // selected fill; muted ink otherwise.
+                      color: selected
+                          ? colors.onPrimary
+                          : colors.onSurfaceVariant,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          selected
+                              ? t.advisorStudioAdded
+                              : t.advisorStudioTapToAdd,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: selected
+                                ? colors.primary
+                                : colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    selected
+                        ? Icons.check_circle_rounded
+                        : Icons.add_circle_outline_rounded,
+                    color: selected ? colors.primary : colors.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── REVIEW (invoice document + signature + submit) ──────────────────────────
+// Same submit payload as the previous composition (services/parts/totals/
+// notes/delivery/notify/advisorApproved); recomposed as a formal invoice
+// with the shared RepairInvoicePreview + share actions.
 class RepairOrderPreviewView extends ConsumerStatefulWidget {
   final VoidCallback onBack;
   const RepairOrderPreviewView({super.key, required this.onBack});
@@ -2184,6 +2468,7 @@ class _RepairOrderPreviewViewState
     extends ConsumerState<RepairOrderPreviewView> {
   Map<String, dynamic>? _customerData;
   Uint8List? _signatureBytes;
+  bool _submitting = false;
 
   @override
   void initState() {
@@ -2209,21 +2494,40 @@ class _RepairOrderPreviewViewState
 
   String _getVal(String key) => _customerData?[key]?.toString() ?? '';
 
-  Future<void> _captureSignature() async {
-    final result = await showModalBottomSheet<Uint8List>(
-      context: context,
-      backgroundColor: AppColors.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+  bool _isArabic() =>
+      AppTypography.isArabic(Localizations.maybeLocaleOf(context));
+
+  void _toast(String msg, {IconData? icon, Color? color}) {
+    final ink = context.semanticColors.onPrimary;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: ink, size: AppDimensions.iconSm),
+              const SizedBox(width: AppDimensions.s8),
+            ],
+            Expanded(
+              child: Text(
+                msg,
+                style: TextStyle(color: ink, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: color ?? Theme.of(context).colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
       ),
+    );
+  }
+
+  Future<void> _captureSignature() async {
+    final result = await showAppModalSheet<Uint8List>(
+      context: context,
       builder: (_) => const _SignaturePadSheet(),
     );
-    if (result == null || !mounted) return;
-    setState(() {
-      _signatureBytes = result;
-    });
-    // Persist the signature so it can be attached to the repair order later.
+    if (result == null || !mounted || result.isEmpty) return;
+    setState(() => _signatureBytes = result);
     final path = await saveSignatureFile(
       result,
       'signature_${DateTime.now().millisecondsSinceEpoch}.png',
@@ -2239,341 +2543,408 @@ class _RepairOrderPreviewViewState
     }
   }
 
+  RepairInvoiceData _invoiceData(InspectionState state) {
+    final t = StaffLocalizations.of(context)!;
+    final brand = ref.read(brandConfigProvider);
+    final now = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(DateTime.now());
+    final vehicle =
+        '${_getVal('make')} ${_getVal('model')}'.trim().isEmpty
+        ? _getVal('vehicleInfo')
+        : '${_getVal('make')} ${_getVal('model')}'.trim();
+    RepairInvoiceLine serviceLine(ServiceLineItem s) => RepairInvoiceLine(
+      name: s.name,
+      detail:
+          '${s.qty} × ${models.MoneyAed(s.rate).format(arabic: _isArabic())}',
+      amount: s.amount,
+    );
+    RepairInvoiceLine partLine(PartLineItem p) => RepairInvoiceLine(
+      name: p.name,
+      detail:
+          '${p.qty} × ${models.MoneyAed(p.rate).format(arabic: _isArabic())}',
+      amount: p.amount,
+    );
+    return RepairInvoiceData(
+      workshopName: brand.appName,
+      workshopIcon: brand.icon,
+      workshopMeta: _getVal('address'),
+      customerName: _getVal('customerName'),
+      customerPhone: _getVal('phoneNumber'),
+      vehicleLine: vehicle,
+      plate: _getVal('registrationNumber'),
+      preparedOn: now,
+      groups: [
+        RepairInvoiceGroup(
+          title: t.advisorStudioTierMandatory,
+          lines: [
+            for (final s in state.serviceLines)
+              if (classifyRepairTier(s.name) == RepairTier.mandatory)
+                serviceLine(s),
+            for (final p in state.partLines)
+              if (classifyRepairTier(p.name) == RepairTier.mandatory)
+                partLine(p),
+          ],
+        ),
+        RepairInvoiceGroup(
+          title: t.advisorStudioTierOptional,
+          lines: [
+            for (final s in state.serviceLines)
+              if (classifyRepairTier(s.name) == RepairTier.optional)
+                serviceLine(s),
+            for (final p in state.partLines)
+              if (classifyRepairTier(p.name) == RepairTier.optional)
+                partLine(p),
+          ],
+        ),
+      ],
+      partsTotal: state.partsTotal,
+      servicesTotal: state.servicesTotal,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(inspectionProvider);
-    final brand = ref.watch(brandConfigProvider);
-    final now = DateTime.now();
-    final customerName = _getVal('customerName');
-    final phone = _getVal('phoneNumber');
-    final email = _getVal('email');
-    final vehicle =
-        '${_getVal('make')} ${_getVal('model')}\n${_getVal('registrationNumber')}\n${_getVal('vin')}';
+    final t = StaffLocalizations.of(context)!;
+    final pendingSync =
+        ref.watch(advisorPendingSyncCountProvider).valueOrNull ?? 0;
+    final wide = context.adaptive.pick(
+      compact: false,
+      medium: false,
+      expanded: true,
+      large: true,
+    );
 
-    return Scaffold(
-      backgroundColor: IC.canvas,
-      appBar: AppBar(
-        backgroundColor: IC.navy,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: widget.onBack,
-        ),
-        title: const Text(
-          'Review Estimate',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: _captureSignature,
-            icon: Icon(
-              _signatureBytes == null
-                  ? Icons.draw_outlined
-                  : Icons.check_circle_rounded,
-              size: 17,
-            ),
-            label: Text(_signatureBytes == null ? 'Add signature' : 'Signed'),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          InfoCard(
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: IC.line, width: 2),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(AppDimensions.r8),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(brand.icon, color: IC.accent, size: 22),
-                          Text(
-                            brand.appName,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 7,
-                              color: IC.text3,
-                              fontWeight: FontWeight.w600,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            brand.appName.toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: IC.text1,
-                            ),
-                          ),
-                          Text(
-                            _getVal('address').isEmpty
-                                ? 'Auto Garage Services'
-                                : _getVal('address'),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: IC.text2,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.phone_outlined,
-                                size: 11,
-                                color: IC.text3,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                phone.isEmpty ? '--' : phone,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: IC.text2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.email_outlined,
-                                size: 11,
-                                color: IC.text3,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                email.isEmpty ? '--' : email,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: IC.text2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 14),
-                const Divider(color: IC.line),
-                const SizedBox(height: 8),
-
-                const Text(
-                  'Estimate',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: IC.text1,
-                    letterSpacing: 0,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: IC.canvas,
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                    border: Border.all(color: IC.line),
-                  ),
-                  child: Column(
-                    children: [
-                      _PreviewDetailRow(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Customer',
-                        value: customerName.isEmpty
-                            ? '--'
-                            : '$customerName\n$phone',
-                      ),
-                      const Divider(height: 20, color: IC.line),
-                      _PreviewDetailRow(
-                        icon: Icons.directions_car_outlined,
-                        label: 'Vehicle',
-                        value: _getVal('make').isEmpty ? '--' : vehicle,
-                      ),
-                      const Divider(height: 20, color: IC.line),
-                      _PreviewDetailRow(
-                        icon: Icons.calendar_today_outlined,
-                        label: 'Prepared on',
-                        value:
-                            '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} at ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 13,
-                  ),
-                  decoration: BoxDecoration(
-                    color: IC.tealBg,
-                    borderRadius: BorderRadius.circular(AppDimensions.r10),
-                  ),
-                  child: Row(
-                    children: [
-                      const Text(
-                        'Estimate total',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: IC.text2,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        'AED ${state.grandTotal.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: IC.accent,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_signatureBytes != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: IC.canvas,
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
-                      border: Border.all(color: IC.line),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'CUSTOMER SIGNATURE',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: IC.text3,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Image.memory(
-                          _signatureBytes!,
-                          height: 80,
-                          fit: BoxFit.contain,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          if (state.serviceLines.isNotEmpty) ...[
-            InfoCard(
-              child: Column(
-                children: [
-                  _TableHeader(const [
-                    'SERVICES',
-                    'QTY',
-                    'SELLING PRICE',
-                    'AMOUNT',
-                  ]),
-                  ...state.serviceLines.map(
-                    (s) => _TableRow([
-                      s.name,
-                      '${s.qty}.00',
-                      'AED ${s.rate.toStringAsFixed(2)}',
-                      'AED ${s.amount.toStringAsFixed(2)}',
-                    ]),
-                  ),
-                  const Divider(color: IC.line),
-                  _SectionTotal('TOTAL :', state.servicesTotal),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          if (state.partLines.isNotEmpty) ...[
-            InfoCard(
-              child: Column(
-                children: [
-                  _TableHeader(const [
-                    'PARTS',
-                    'QTY',
-                    'SELLING PRICE',
-                    'AMOUNT',
-                  ]),
-                  ...state.partLines.map(
-                    (p) => _TableRow([
-                      p.name,
-                      '${p.qty}.00',
-                      'AED ${p.rate.toStringAsFixed(2)}',
-                      'AED ${p.amount.toStringAsFixed(2)}',
-                    ]),
-                  ),
-                  const Divider(color: IC.line),
-                  _SectionTotal('TOTAL :', state.partsTotal),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          InfoCard(
+    final doc = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        RepairInvoicePreview(data: _invoiceData(state)),
+        if (_signatureBytes != null) ...[
+          const SizedBox(height: AppDimensions.s12),
+          AppCard.outlined(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'SUMMARY',
-                  style: TextStyle(
-                    fontSize: 13,
+                Text(
+                  t.advisorEstimateSignatureLabel,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: IC.text1,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    letterSpacing: 0.6,
                   ),
                 ),
-                const SizedBox(height: 10),
-                _SummaryRow('SUB TOTAL:', state.grandTotal),
-                _SummaryRow('GRAND TOTAL:', state.grandTotal, bold: true),
+                const SizedBox(height: AppDimensions.s6),
+                Image.memory(
+                  _signatureBytes!,
+                  height: 80,
+                  fit: BoxFit.contain,
+                ),
               ],
             ),
           ),
-
-          const SizedBox(height: 24),
         ],
+      ],
+    );
+
+    final actions = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppCard.standard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SectionHeader(
+                title: t.advisorEstimateSignatureTitle,
+                leadingIcon: Icons.draw_outlined,
+              ),
+              SecondaryButton(
+                label: _signatureBytes == null
+                    ? t.advisorEstimateAddSignature
+                    : t.advisorEstimateSigned,
+                leadingIcon: _signatureBytes == null
+                    ? Icons.draw_outlined
+                    : Icons.check_circle_rounded,
+                onPressed: _captureSignature,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        PrimaryButton(
+          label: t.advisorEstimateCreateOrder,
+          icon: Icons.send_outlined,
+          isLoading: _submitting,
+          onPressed: _submitting ? null : () => _submit(state),
+        ),
+      ],
+    );
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: WorkspaceAppBar(
+        title: t.advisorEstimateReviewTitle,
+        subtitle: _getVal('customerName').isEmpty
+            ? t.advisorStudioTitle
+            : _getVal('customerName'),
+        showBack: true,
+        onBack: _submitting ? null : widget.onBack,
+        frosted: !context.isCompact,
+        showOfflineStatus: true,
+        offlinePendingCount: pendingSync,
       ),
-      bottomNavigationBar: _CreateRepairOrderButton(onBack: widget.onBack),
+      bottomNavigationBar: wide
+          ? null
+          : SafeArea(
+              top: false,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border(
+                    top: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.s16,
+                  AppDimensions.s12,
+                  AppDimensions.s16,
+                  AppDimensions.s12,
+                ),
+                child: PrimaryButton(
+                  label: t.advisorEstimateCreateOrder,
+                  icon: Icons.send_outlined,
+                  isLoading: _submitting,
+                  onPressed: _submitting ? null : () => _submit(state),
+                ),
+              ),
+            ),
+      body: AppResponsivePage(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppPageHeader(
+              title: t.advisorEstimateReviewTitle,
+              subtitle: t.advisorEstimateShareHint,
+              breadcrumbs: [
+                AppBreadcrumbItem(
+                  label: t.advisorNavJobs,
+                  onTap: widget.onBack,
+                ),
+                AppBreadcrumbItem.current(t.advisorEstimateReviewTitle),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s12),
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: doc),
+                  const SizedBox(width: AppDimensions.s24),
+                  Expanded(flex: 2, child: actions),
+                ],
+              )
+            else ...[
+              doc,
+              const SizedBox(height: AppDimensions.s16),
+              actions,
+            ],
+            const SizedBox(height: AppDimensions.s24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit(InspectionState state) async {
+    final t = StaffLocalizations.of(context)!;
+    if (state.jobCardId.isEmpty) {
+      _toast(t.advisorEstimateMissingJob, icon: Icons.error_outline_rounded);
+      return;
+    }
+    if (state.serviceLines.isEmpty && state.partLines.isEmpty) {
+      _toast(t.advisorEstimateNoItems, icon: Icons.info_outline_rounded);
+      return;
+    }
+    final advisorApproved = await _chooseApprovalMethod();
+    if (advisorApproved == null || !context.mounted) return;
+    setState(() => _submitting = true);
+    try {
+      final detail = await ref
+          .read(advisorRemoteDataSourceProvider)
+          .getJobCard(state.jobCardId);
+      final jobCardId = detail.dbId > 0 ? '${detail.dbId}' : state.jobCardId;
+      // Frozen submit payload: identical keys/shapes to the previous
+      // composition (services/parts/totals/notes/delivery/notify/approval).
+      final response = await ref
+          .read(advisorRemoteDataSourceProvider)
+          .createRepairOrderStrict({
+            'jobCardId': jobCardId,
+            'services': state.serviceLines
+                .map((item) => item.toJson())
+                .toList(),
+            'parts': state.partLines.map((item) => item.toJson()).toList(),
+            'servicesTotal': state.servicesTotal,
+            'partsTotal': state.partsTotal,
+            'grandTotal': state.grandTotal,
+            'tag': state.tag,
+            'customerRequests': state.customerRequests,
+            'garageRecommendations': state.garageRecommendations,
+            'estimatedDelivery': state.estimatedDelivery?.toIso8601String(),
+            'notifyOwnerSmsEmail': state.notifyOwnerSmsEmail,
+            'advisorApproved': advisorApproved,
+          });
+      if (!context.mounted) return;
+      if (response.id.isEmpty) {
+        throw const UnknownException('Repair order was not created');
+      }
+      _toast(
+        advisorApproved
+            ? t.advisorEstimateCreated
+            : t.advisorEstimateSubmit,
+        icon: Icons.check_circle_outline_rounded,
+        color: context.semanticColors.success.base,
+      );
+      ref.read(inspectionProvider.notifier).reset();
+      context.go(AppRoutes.advisorDashboard);
+    } catch (_) {
+      if (!context.mounted) return;
+      _toast(t.advisorEstimateCreateFailed, icon: Icons.error_outline_rounded);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<bool?> _chooseApprovalMethod() {
+    final t = StaffLocalizations.of(context)!;
+    return showAppModalSheet<bool>(
+      context: context,
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s8,
+          AppDimensions.s20,
+          AppDimensions.s20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t.advisorEstimateApprovalTitle,
+              style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s6),
+            Text(
+              t.advisorEstimateApprovalSubtitle,
+              style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(sheetContext).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            _ApprovalMethodTile(
+              icon: Icons.handshake_outlined,
+              title: t.advisorEstimateApprovalHere,
+              subtitle: t.advisorEstimateApprovalHereHint,
+              onTap: () => Navigator.pop(sheetContext, true),
+            ),
+            const SizedBox(height: AppDimensions.s10),
+            _ApprovalMethodTile(
+              icon: Icons.phone_android_outlined,
+              title: t.advisorEstimateApprovalApp,
+              subtitle: t.advisorEstimateApprovalAppHint,
+              onTap: () => Navigator.pop(sheetContext, false),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-/// Minimal hand-drawn signature pad rendered with CustomPaint.
+class _ApprovalMethodTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ApprovalMethodTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.s14),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusControl,
+                  ),
+                ),
+                child: Icon(icon, color: colors.primary),
+              ),
+              const SizedBox(width: AppDimensions.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              DirectionalIcon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: colors.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── SIGNATURE PAD (hand-drawn, theme chrome) ────────────────────────────────
 class _SignaturePadSheet extends StatefulWidget {
   const _SignaturePadSheet();
 
@@ -2587,30 +2958,21 @@ class _SignaturePadSheetState extends State<_SignaturePadSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Customer Signature',
-              style: TextStyle(
-                fontSize: 16,
+            Text(
+              t.advisorEstimateSignatureTitle,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppDimensions.s14),
             GestureDetector(
               onPanStart: (d) => _current = [d.localPosition],
               onPanUpdate: (d) {
@@ -2626,37 +2988,46 @@ class _SignaturePadSheetState extends State<_SignaturePadSheet> {
                 width: double.infinity,
                 height: 200,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  // FIXED-INK: signature paper stays white in both themes so
+                  // the captured PNG keeps black-on-white ink.
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusCard,
+                  ),
+                  border: Border.all(color: colors.outlineVariant),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusCard,
+                  ),
                   child: CustomPaint(
                     painter: _SignaturePainter(
                       strokes: _strokes,
                       current: _current,
+                      ink: colors.onSurface,
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppDimensions.s14),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: SecondaryButton(
+                    label: t.advisorEstimateSignatureClear,
+                    leadingIcon: Icons.refresh_rounded,
                     onPressed: () => setState(() {
                       _strokes.clear();
                       _current = [];
                     }),
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('Clear'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.s12),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: PrimaryButton(
+                    label: t.advisorEstimateSignatureUse,
+                    icon: Icons.check_rounded,
                     onPressed: _strokes.isEmpty
                         ? null
                         : () async {
@@ -2665,8 +3036,6 @@ class _SignaturePadSheetState extends State<_SignaturePadSheet> {
                               Navigator.of(context).pop(bytes);
                             }
                           },
-                    icon: const Icon(Icons.check_rounded, size: 18),
-                    label: const Text('Use Signature'),
                   ),
                 ),
               ],
@@ -2682,11 +3051,18 @@ class _SignaturePadSheetState extends State<_SignaturePadSheet> {
     final canvas = Canvas(recorder);
     const width = 800.0;
     const height = 320.0;
+    // FIXED-INK: exported signature is black ink on white paper in both
+    // themes (document artifact, not themed UI).
     canvas.drawRect(
       Rect.fromLTWH(0, 0, width, height),
-      Paint()..color = Colors.white,
+      Paint()..color = const Color(0xFFFFFFFF),
     );
-    final painter = _SignaturePainter(strokes: _strokes, current: const []);
+    final painter = _SignaturePainter(
+      strokes: _strokes,
+      current: const [],
+      // FIXED-INK: exported signature ink stays black on white paper.
+      ink: const Color(0xFF000000),
+    );
     painter.paint(canvas, const Size(width, height));
     final picture = recorder.endRecording();
     final image = await picture.toImage(width.toInt(), height.toInt());
@@ -2698,13 +3074,18 @@ class _SignaturePadSheetState extends State<_SignaturePadSheet> {
 class _SignaturePainter extends CustomPainter {
   final List<List<Offset>> strokes;
   final List<Offset> current;
+  final Color ink;
 
-  const _SignaturePainter({required this.strokes, required this.current});
+  const _SignaturePainter({
+    required this.strokes,
+    required this.current,
+    required this.ink,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black
+      ..color = ink
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
@@ -2727,516 +3108,4 @@ class _SignaturePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SignaturePainter oldDelegate) => true;
-}
-
-class _PreviewDetailRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  const _PreviewDetailRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: IC.tealBg,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 18, color: IC.accent),
-      ),
-      const SizedBox(width: 10),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: IC.text3,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 12,
-                color: IC.text1,
-                height: 1.4,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
-class _TableHeader extends StatelessWidget {
-  final List<String> cols;
-  const _TableHeader(this.cols);
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.only(bottom: 10),
-    decoration: const BoxDecoration(
-      border: Border(bottom: BorderSide(color: IC.line)),
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: IC.tealBg,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(
-            cols[0] == 'SERVICES'
-                ? Icons.build_outlined
-                : Icons.settings_outlined,
-            color: IC.accent,
-            size: 18,
-          ),
-        ),
-        const SizedBox(width: 9),
-        Text(
-          cols[0][0] + cols[0].substring(1).toLowerCase(),
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-            color: IC.text1,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _TableRow extends StatelessWidget {
-  final List<String> cells;
-  const _TableRow(this.cells);
-
-  @override
-  Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(top: 8),
-    padding: const EdgeInsets.all(11),
-    decoration: BoxDecoration(
-      color: IC.canvas,
-      borderRadius: BorderRadius.circular(AppDimensions.r10),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          cells[0],
-          style: const TextStyle(
-            fontSize: 12,
-            color: IC.text1,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 9),
-        Row(
-          children: [
-            Expanded(
-              child: _PreviewPriceValue(label: 'Qty', value: cells[1]),
-            ),
-            Expanded(
-              child: _PreviewPriceValue(label: 'Unit price', value: cells[2]),
-            ),
-            Expanded(
-              child: _PreviewPriceValue(
-                label: 'Amount',
-                value: cells[3],
-                emphasized: true,
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-class _PreviewPriceValue extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool emphasized;
-
-  const _PreviewPriceValue({
-    required this.label,
-    required this.value,
-    this.emphasized = false,
-  });
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: const TextStyle(fontSize: 9.5, color: IC.text3)),
-      const SizedBox(height: 2),
-      FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerLeft,
-        child: Text(
-          value,
-          style: TextStyle(
-            fontSize: 11,
-            color: emphasized ? IC.accent : IC.text1,
-            fontWeight: emphasized ? FontWeight.w900 : FontWeight.w600,
-          ),
-        ),
-      ),
-    ],
-  );
-}
-
-class _CreateRepairOrderButton extends ConsumerStatefulWidget {
-  final VoidCallback onBack;
-  const _CreateRepairOrderButton({required this.onBack});
-
-  @override
-  ConsumerState<_CreateRepairOrderButton> createState() =>
-      _CreateRepairOrderButtonState();
-}
-
-class _CreateRepairOrderButtonState
-    extends ConsumerState<_CreateRepairOrderButton> {
-  bool _submitting = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: GestureDetector(
-          onTap: _submitting
-              ? null
-              : () async {
-                  final state = ref.read(inspectionProvider);
-                  if (state.jobCardId.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Job Card is missing')),
-                    );
-                    return;
-                  }
-                  if (state.serviceLines.isEmpty && state.partLines.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'No repair items found. Add extra work or retry after inspection.',
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-                  final advisorApproved = await _chooseApprovalMethod(context);
-                  if (advisorApproved == null || !context.mounted) return;
-                  setState(() => _submitting = true);
-                  try {
-                    final detail = await ref
-                        .read(advisorRemoteDataSourceProvider)
-                        .getJobCard(state.jobCardId);
-                    final jobCardId = detail.dbId > 0
-                        ? '${detail.dbId}'
-                        : state.jobCardId;
-                    final response = await ref
-                        .read(advisorRemoteDataSourceProvider)
-                        .createRepairOrderStrict({
-                          'jobCardId': jobCardId,
-                          'services': state.serviceLines
-                              .map((item) => item.toJson())
-                              .toList(),
-                          'parts': state.partLines
-                              .map((item) => item.toJson())
-                              .toList(),
-                          'servicesTotal': state.servicesTotal,
-                          'partsTotal': state.partsTotal,
-                          'grandTotal': state.grandTotal,
-                          'tag': state.tag,
-                          'customerRequests': state.customerRequests,
-                          'garageRecommendations': state.garageRecommendations,
-                          'estimatedDelivery': state.estimatedDelivery
-                              ?.toIso8601String(),
-                          'notifyOwnerSmsEmail': state.notifyOwnerSmsEmail,
-                          'advisorApproved': advisorApproved,
-                        });
-                    if (!context.mounted) return;
-                    if (response.id.isEmpty) {
-                      throw const UnknownException(
-                        'Repair order was not created',
-                      );
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          advisorApproved
-                              ? 'Estimate approved with the customer'
-                              : 'Estimate sent to the customer for approval',
-                        ),
-                        backgroundColor: IC.accent,
-                      ),
-                    );
-                    ref.read(inspectionProvider.notifier).reset();
-                    context.go(AppRoutes.advisorDashboard);
-                  } catch (error) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'We could not submit the estimate. Please check your connection and try again.',
-                        ),
-                      ),
-                    );
-                  } finally {
-                    if (mounted) setState(() => _submitting = false);
-                  }
-                },
-          child: Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: _submitting ? IC.navy.withValues(alpha: 0.72) : IC.navy,
-              borderRadius: BorderRadius.all(
-                Radius.circular(AppDimensions.r10),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (_submitting)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.3,
-                      color: Colors.white,
-                    ),
-                  )
-                else
-                  const Icon(
-                    Icons.send_outlined,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                const SizedBox(width: 9),
-                Text(
-                  _submitting ? 'Submitting Estimate…' : 'Submit Estimate',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<bool?> _chooseApprovalMethod(BuildContext context) {
-    return showModalBottomSheet<bool>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Customer approval',
-                style: Theme.of(
-                  sheetContext,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Choose how the customer will approve this estimate.',
-                style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(sheetContext).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _ApprovalMethodTile(
-                icon: Icons.handshake_outlined,
-                title: 'Customer approved here',
-                subtitle:
-                    'Use when the customer reviewed and accepted the estimate with you.',
-                onTap: () => Navigator.pop(sheetContext, true),
-              ),
-              const SizedBox(height: 10),
-              _ApprovalMethodTile(
-                icon: Icons.phone_android_outlined,
-                title: 'Send to customer app',
-                subtitle:
-                    'The job will wait until the customer approves from their account.',
-                onTap: () => Navigator.pop(sheetContext, false),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ApprovalMethodTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _ApprovalMethodTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(AppDimensions.r14),
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: Theme.of(context).colorScheme.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right_rounded),
-        ],
-      ),
-    ),
-  );
-}
-
-class _SectionTotal extends StatelessWidget {
-  final String label;
-  final double amount;
-  const _SectionTotal(this.label, this.amount);
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 4),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: IC.text1,
-            ),
-          ),
-        ),
-        Text(
-          'AED ${amount.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: IC.text1,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _SummaryRow extends StatelessWidget {
-  final String label;
-  final double amount;
-  final bool bold;
-  const _SummaryRow(this.label, this.amount, {this.bold = false});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
-              color: IC.text1,
-            ),
-          ),
-        ),
-        Text(
-          'AED ${amount.toStringAsFixed(2)}',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
-            color: IC.text1,
-          ),
-        ),
-      ],
-    ),
-  );
 }

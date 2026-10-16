@@ -2157,6 +2157,15 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorStudioQuantity => 'Quantity';
 
   @override
+  String get advisorStudioUnitPrice => 'Unit price';
+
+  @override
+  String get advisorStudioDiscountPct => 'Discount %';
+
+  @override
+  String get advisorStudioSuggestPrice => 'Suggest price from history';
+
+  @override
   String get advisorStudioRemoveItem => 'Remove item';
 
   @override
@@ -2509,4 +2518,540 @@ class StaffLocalizationsEn extends StaffLocalizations {
 
   @override
   String get advisorEstimateSubmitting => 'Submitting estimate…';
+
+  @override
+  String get techNavToday => 'Today';
+
+  @override
+  String get techNavJobs => 'Jobs';
+
+  @override
+  String get techNavProductivity => 'Productivity';
+
+  @override
+  String get techNavProfile => 'Profile';
+
+  @override
+  String get techProfileLabel => 'Technician Profile';
+
+  @override
+  String get techWorkspaceName => 'Technician';
+
+  @override
+  String techGreeting(String name) {
+    return 'Hello, $name';
+  }
+
+  @override
+  String get techShiftStart => 'Start shift';
+
+  @override
+  String get techShiftBreak => 'Take break';
+
+  @override
+  String get techShiftResume => 'Resume shift';
+
+  @override
+  String get techShiftDone => 'Shift complete';
+
+  @override
+  String get techShiftEnd => 'End shift';
+
+  @override
+  String get techShiftClockInHint => 'Clock in to begin today\'s work';
+
+  @override
+  String techShiftWorked(String work, String rest) {
+    return '$work worked · $rest break';
+  }
+
+  @override
+  String get techAttendanceNotPunchedIn => 'Not Punched In';
+
+  @override
+  String get techAttendanceWorking => 'Working';
+
+  @override
+  String get techAttendanceOnBreak => 'On Break';
+
+  @override
+  String get techAttendancePunchedOut => 'Punched Out';
+
+  @override
+  String get techBannerActive => 'Active job';
+
+  @override
+  String get techBannerReady => 'Ready for assignment';
+
+  @override
+  String get techBannerReadyHint =>
+      'Your next repair appears here when the desk assigns it.';
+
+  @override
+  String get techBannerPause => 'Pause';
+
+  @override
+  String get techBannerResume => 'Resume';
+
+  @override
+  String get techBannerOpen => 'Open job';
+
+  @override
+  String techBannerStarted(String time) {
+    return 'Started $time';
+  }
+
+  @override
+  String get techTodayCurrentWork => 'CURRENT WORK';
+
+  @override
+  String get techTodayOnBay => 'On the bay';
+
+  @override
+  String get techTodayReady => 'Ready for assignment';
+
+  @override
+  String get techTodayNoActive => 'No active repair right now';
+
+  @override
+  String get techTodayNoActiveHint =>
+      'Open your queue to review the next assigned vehicle, or start the next job below.';
+
+  @override
+  String get techTodayOpenJobs => 'Open my jobs';
+
+  @override
+  String get techTodayQueue => 'Assigned queue';
+
+  @override
+  String get techTodayUpNext => 'UP NEXT';
+
+  @override
+  String get techTodayViewAll => 'View all';
+
+  @override
+  String get techTodayQueueClear => 'Queue clear';
+
+  @override
+  String get techTodayQueueClearHint =>
+      'No other repairs are waiting. New assignments appear here as they are scheduled.';
+
+  @override
+  String get techTodaySummary => 'Shift summary';
+
+  @override
+  String get techTodayActiveBay => 'Active bay';
+
+  @override
+  String get techTodayTasksDone => 'Tasks done';
+
+  @override
+  String get techTodayRepairsDone => 'Repairs done';
+
+  @override
+  String get techTodayEmpty => 'No assigned jobs right now';
+
+  @override
+  String get techTodayEmptyHint =>
+      'You have no repairs assigned for this shift. Pull to refresh, or check back when the desk schedules work.';
+
+  @override
+  String get techTodayRefresh => 'Refresh';
+
+  @override
+  String get techTodayLoadError => 'We couldn\'t load today\'s work';
+
+  @override
+  String get techTodayErrorHint => 'Check your connection and try again.';
+
+  @override
+  String get techTodayRetry => 'Retry';
+
+  @override
+  String get techTodayJobDetails => 'Job details';
+
+  @override
+  String get techTodayTasks => 'Tasks';
+
+  @override
+  String get techTodayRequestPart => 'Request part';
+
+  @override
+  String get techTodayEscalate => 'Escalate';
+
+  @override
+  String get techTodayCompleteTask => 'Complete task';
+
+  @override
+  String get techTodayStartTask => 'Start next task';
+
+  @override
+  String get techTodayReviewJob => 'Review job';
+
+  @override
+  String get techTodayNextTask => 'NEXT TASK';
+
+  @override
+  String get techTodayInProgress => 'IN PROGRESS';
+
+  @override
+  String get techTodayJobOnHold => 'Job on hold';
+
+  @override
+  String get techTodayDelayedHint =>
+      'This repair is marked delayed at the workshop.';
+
+  @override
+  String techTodayProgress(int done, int total) {
+    return '$done of $total tasks completed';
+  }
+
+  @override
+  String techTodayStartsAt(String time) {
+    return 'Starts $time';
+  }
+
+  @override
+  String techTodayUpdated(String time) {
+    return 'Updated $time';
+  }
+
+  @override
+  String get techPlateMissing => 'Plate not recorded';
+
+  @override
+  String get techVehicleFallback => 'Vehicle';
+
+  @override
+  String get techJobsSearch => 'Search jobs';
+
+  @override
+  String get techJobsLoadError => 'We couldn\'t load your jobs';
+
+  @override
+  String get techJobsEmpty => 'No assigned jobs';
+
+  @override
+  String get techJobsEmptyHint =>
+      'There are no jobs assigned to you right now.';
+
+  @override
+  String get techJobsNoMatch => 'No matching jobs';
+
+  @override
+  String get techJobsNoMatchHint => 'No jobs match your search and filter.';
+
+  @override
+  String get techJobsClearFilters => 'Clear filters';
+
+  @override
+  String techJobsFilterSemantics(String label, int count) {
+    return 'Filter jobs: $label, $count jobs';
+  }
+
+  @override
+  String techJobsProgress(int done, int total) {
+    return '$done of $total tasks completed';
+  }
+
+  @override
+  String get techDetailTitle => 'Job details';
+
+  @override
+  String get techDetailCurrentTask => 'CURRENT TASK';
+
+  @override
+  String get techDetailCurrentTitle => 'Current task';
+
+  @override
+  String get techDetailNextTask => 'NEXT TASK';
+
+  @override
+  String get techDetailNextTitle => 'Next task';
+
+  @override
+  String get techDetailOnHold => 'ON HOLD';
+
+  @override
+  String get techDetailAllDone => 'Repair tasks complete';
+
+  @override
+  String get techDetailNoTasks => 'No tasks';
+
+  @override
+  String get techDetailExecution => 'EXECUTION';
+
+  @override
+  String techDetailTasksAssigned(int count) {
+    return '$count assigned';
+  }
+
+  @override
+  String get techDetailAllTasks => 'ALL TASKS';
+
+  @override
+  String get techDetailCompleteTask => 'Complete task';
+
+  @override
+  String get techDetailStartTask => 'Start next task';
+
+  @override
+  String get techDetailResumeTask => 'Resume task';
+
+  @override
+  String get techDetailStarting => 'Starting…';
+
+  @override
+  String get techDetailCompleting => 'Completing…';
+
+  @override
+  String get techDetailResuming => 'Resuming…';
+
+  @override
+  String get techDetailStart => 'Start';
+
+  @override
+  String get techDetailHold => 'Hold';
+
+  @override
+  String get techDetailHoldTask => 'Hold task';
+
+  @override
+  String get techDetailResume => 'Resume';
+
+  @override
+  String get techDetailComplete => 'Complete';
+
+  @override
+  String get techDetailElapsed => 'Elapsed';
+
+  @override
+  String get techDetailPaused => 'Paused';
+
+  @override
+  String get techDetailNoTasksHint =>
+      'No tasks have been added to this job. Ask the advisor before starting work.';
+
+  @override
+  String get techDetailQcNotice =>
+      'Repair work has been submitted for supervisor QC review.';
+
+  @override
+  String get techDetailLockedNotice =>
+      'This repair is completed. Technician edits are locked.';
+
+  @override
+  String get techDetailDelayed => 'Delayed';
+
+  @override
+  String get techDetailDelayedHint =>
+      'This repair is marked as delayed at the workshop. You can continue the tasks below once the issue is resolved.';
+
+  @override
+  String get techDetailSupport => 'Support';
+
+  @override
+  String get techDetailNeedHelp => 'NEED HELP?';
+
+  @override
+  String get techDetailCompleteRepair => 'Complete repair';
+
+  @override
+  String get techDetailConfirmTitle => 'Complete repair?';
+
+  @override
+  String get techDetailConfirmBody =>
+      'All remaining tasks will be recorded as completed and the job sent to supervisor QC review.';
+
+  @override
+  String get techDetailCancel => 'Cancel';
+
+  @override
+  String techDetailTaskLabel(int index, String desc, String status) {
+    return 'Task $index, $desc, $status';
+  }
+
+  @override
+  String get techProdTitle => 'Today\'s productivity';
+
+  @override
+  String get techProdToday => 'TODAY';
+
+  @override
+  String get techProdWorkDone => 'WORK COMPLETED';
+
+  @override
+  String get techProdRepairOne => 'repair completed today';
+
+  @override
+  String get techProdRepairMany => 'repairs completed today';
+
+  @override
+  String get techProdNoTasks => 'No tasks recorded in your loaded work.';
+
+  @override
+  String get techProdQueue => 'YOUR QUEUE';
+
+  @override
+  String techProdAssigned(int count) {
+    return '$count assigned';
+  }
+
+  @override
+  String get techProdInProgress => 'In progress';
+
+  @override
+  String get techProdPending => 'Pending';
+
+  @override
+  String get techProdDelayed => 'Delayed';
+
+  @override
+  String get techProdQc => 'QC review';
+
+  @override
+  String get techProdCompleted => 'Completed';
+
+  @override
+  String get techProdShift => 'SHIFT';
+
+  @override
+  String get techProdClockedIn => 'Clocked in';
+
+  @override
+  String get techProdBreakTaken => 'Break taken';
+
+  @override
+  String get techProdNetHours => 'Net hours';
+
+  @override
+  String get techProdClockedOut => 'Clocked out';
+
+  @override
+  String get techProdShiftDone => 'Shift complete for today.';
+
+  @override
+  String get techProdEmpty => 'No productivity data yet';
+
+  @override
+  String get techProdEmptyHint =>
+      'Completed work will appear here as you progress through your assigned jobs.';
+
+  @override
+  String get techProdLoadError => 'We couldn\'t load your productivity';
+
+  @override
+  String get techProdFigures => 'Workshop figures';
+
+  @override
+  String get techProdEfficiency => 'Efficiency';
+
+  @override
+  String get techProdDayProgress => 'Today\'s progress';
+
+  @override
+  String techProdDelayedAlert(int count) {
+    return '$count delayed — needs attention';
+  }
+
+  @override
+  String get techProdTimePerRepair => 'Time per repair';
+
+  @override
+  String get techProdHoursLogged => 'Hours logged';
+
+  @override
+  String get techPartsTitle => 'Request a part';
+
+  @override
+  String get techPartsClose => 'Close';
+
+  @override
+  String get techPartsName => 'Part name';
+
+  @override
+  String get techPartsNameHint => 'What part or material do you need?';
+
+  @override
+  String get techPartsNameError => 'Enter the part you need';
+
+  @override
+  String get techPartsNumber => 'Part number (optional)';
+
+  @override
+  String get techPartsNumberHint => 'OEM or workshop reference';
+
+  @override
+  String get techPartsQty => 'Quantity';
+
+  @override
+  String get techPartsQtyHint => 'Units needed';
+
+  @override
+  String get techPartsDec => 'Decrease quantity';
+
+  @override
+  String get techPartsInc => 'Increase quantity';
+
+  @override
+  String get techPartsUrgency => 'Urgency';
+
+  @override
+  String get techPartsNormal => 'Normal';
+
+  @override
+  String get techPartsUrgent => 'Urgent';
+
+  @override
+  String get techPartsNotes => 'Notes (optional)';
+
+  @override
+  String get techPartsNotesHint => 'Fitment details or preferred alternatives';
+
+  @override
+  String techPartsSendCount(int count) {
+    return 'Send request · $count';
+  }
+
+  @override
+  String get techPartsSending => 'Sending…';
+
+  @override
+  String get techPartsSent => 'Part request sent.';
+
+  @override
+  String get techPartsError =>
+      'We couldn\'t send the request. Check your connection and try again.';
+
+  @override
+  String get techEscTitle => 'Escalate an issue';
+
+  @override
+  String get techEscWhat => 'What happened?';
+
+  @override
+  String get techEscDetails => 'Issue details';
+
+  @override
+  String get techEscDetailsHint => 'Describe what you found and what you need…';
+
+  @override
+  String get techEscDetailsError => 'Describe the issue';
+
+  @override
+  String get techEscSafety =>
+      'For an immediate safety risk, stop work and contact the supervisor directly.';
+
+  @override
+  String get techEscSend => 'Escalate issue';
+
+  @override
+  String get techEscSending => 'Sending…';
+
+  @override
+  String get techEscSent => 'Escalation sent.';
+
+  @override
+  String get techEscError =>
+      'We couldn\'t send the escalation. Check your connection and try again.';
 }

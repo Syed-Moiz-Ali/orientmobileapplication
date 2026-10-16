@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
@@ -9,6 +11,40 @@ import 'package:staff_app/features/technician/data/datasources/technician_provid
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 
 final technicianRefreshProvider = StateProvider<int>((ref) => 0);
+
+/// Queued-operation count for the console's [OfflineStatusPill].
+///
+/// Presentation-only mirror of the advisor counter over the same `sync_queue`
+/// box (no new connectivity state is created here). Degrades to a single `0`
+/// when the box is unavailable (e.g. widget tests without Hive).
+///
+/// UI-ONLY JUSTIFICATION: new provider in a presentation file; existing
+/// providers, state shapes and contracts are untouched.
+final technicianPendingSyncCountProvider = StreamProvider<int>((ref) {
+  try {
+    final box = Hive.box<SyncOperation>('sync_queue');
+    return _pendingCountStream(box).distinct();
+  } catch (_) {
+    return Stream<int>.value(0);
+  }
+});
+
+Stream<int> _pendingCountStream(Box<SyncOperation> box) {
+  late StreamController<int> controller;
+  StreamSubscription<BoxEvent>? subscription;
+
+  controller = StreamController<int>(
+    onListen: () {
+      controller.add(box.length);
+      subscription = box.watch().listen((_) => controller.add(box.length));
+    },
+    onCancel: () async {
+      await subscription?.cancel();
+      subscription = null;
+    },
+  );
+  return controller.stream.distinct();
+}
 
 class TechnicianState {
   final int selectedTab;

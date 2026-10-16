@@ -2,28 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 /// Jobs — "what work is assigned to me, and which job should I open?".
 ///
-/// A scanning surface for the technician's queue, deliberately distinct from
-/// Today (execution). One search, canonical status filters, a compact and lazy
-/// job list, and no per-row operational buttons — those live in Job Detail.
-class TechnicianJobsView extends ConsumerWidget {
-  const TechnicianJobsView({super.key});
+/// Phase 10 scanning surface: one search, canonical status filters, an
+/// urgent-first queue of 72px high-touch rows (job + vehicle + plate pill +
+/// start-time pill + status), closing with freshness. No per-row operational
+/// buttons — those live in Job Detail.
+class TechnicianJobsView extends ConsumerStatefulWidget {
+  /// Fixed freshness instant for deterministic golden stills. Production
+  /// passes nothing and the footer reads the live clock.
+  final DateTime? fixedRefreshAt;
+
+  const TechnicianJobsView({super.key, this.fixedRefreshAt});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TechnicianJobsView> createState() =>
+      _TechnicianJobsViewState();
+}
+
+class _TechnicianJobsViewState extends ConsumerState<TechnicianJobsView> {
+  late DateTime _lastRefresh;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastRefresh = widget.fixedRefreshAt ?? DateTime.now();
+  }
+
+  Future<void> _refresh(TechnicianNotifier notifier) async {
+    await notifier.refresh();
+    if (mounted) setState(() => _lastRefresh = DateTime.now());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(technicianRefreshProvider);
     final state = ref.watch(technicianDashboardProvider);
     final notifier = ref.read(technicianDashboardProvider.notifier);
     final allJobs = notifier.allJobs;
-    final jobs = notifier.filteredJobs;
+    final jobs = _urgentFirst(notifier.filteredJobs);
 
     final hasJobs = allJobs.isNotEmpty;
     final firstLoadError =
@@ -33,7 +59,7 @@ class TechnicianJobsView extends ConsumerWidget {
         state.searchQuery.isNotEmpty || state.selectedFilter != 'All';
 
     return RefreshIndicator(
-      onRefresh: notifier.refresh,
+      onRefresh: () => _refresh(notifier),
       child: AppResponsivePage(
         scrollable: false,
         maxContentWidth: 1180,
@@ -50,8 +76,6 @@ class TechnicianJobsView extends ConsumerWidget {
             ],
             Expanded(
               child: _body(
-                context: context,
-                ref: ref,
                 notifier: notifier,
                 jobs: jobs,
                 showSkeleton: showSkeleton,
@@ -60,15 +84,31 @@ class TechnicianJobsView extends ConsumerWidget {
                 filtering: filtering,
               ),
             ),
+            _FreshnessFooter(lastRefresh: _lastRefresh),
+            const SizedBox(height: AppDimensions.s8),
           ],
         ),
       ),
     );
   }
 
+  /// Urgent-first ordering replaces queue position guessing: delayed and
+  /// running work sorts above pending, which sorts above review and done.
+  /// Filter/search matching is untouched — this only orders the matches.
+  List<TechnicianJobEntity> _urgentFirst(List<TechnicianJobEntity> jobs) {
+    int rank(TechnicianJobEntity job) => switch (job.status) {
+      TechJobStatus.delayed => 0,
+      TechJobStatus.inProgress => 1,
+      TechJobStatus.pending => 2,
+      TechJobStatus.qcReview => 3,
+      TechJobStatus.completed => 4,
+    };
+    final sorted = List<TechnicianJobEntity>.from(jobs);
+    sorted.sort((a, b) => rank(a).compareTo(rank(b)));
+    return sorted;
+  }
+
   Widget _body({
-    required BuildContext context,
-    required WidgetRef ref,
     required TechnicianNotifier notifier,
     required List<TechnicianJobEntity> jobs,
     required bool showSkeleton,
@@ -76,30 +116,17 @@ class TechnicianJobsView extends ConsumerWidget {
     required bool hasJobs,
     required bool filtering,
   }) {
+    final t = StaffLocalizations.of(context)!;
     if (showSkeleton) {
-      return _scrollable(
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: const [
-            AppSkeleton.card(height: 96),
-            SizedBox(height: AppDimensions.s10),
-            AppSkeleton.card(height: 96),
-            SizedBox(height: AppDimensions.s10),
-            AppSkeleton.card(height: 96),
-          ],
-        ),
-      );
+      return _scrollable(const AppSkeleton.listRows(rows: 4));
     }
     if (firstLoadError) {
       return _scrollable(
         Semantics(
           liveRegion: true,
-          child: EmptyState(
-            icon: Icons.cloud_off_rounded,
-            title: "We couldn't load your jobs",
-            message: 'Check your connection and try again.',
-            actionLabel: 'Retry',
-            onAction: notifier.refresh,
+          child: EmptyState.error(
+            message: t.techJobsLoadError,
+            onRetry: () => _refresh(notifier),
           ),
         ),
       );
@@ -108,20 +135,21 @@ class TechnicianJobsView extends ConsumerWidget {
       return _scrollable(
         EmptyState(
           icon: Icons.assignment_outlined,
-          title: 'No assigned jobs',
-          message: 'There are no jobs assigned to you right now.',
-          actionLabel: 'Refresh',
-          onAction: notifier.refresh,
+          title: t.techJobsEmpty,
+          message: t.techJobsEmptyHint,
+          actionLabel: t.techTodayRefresh,
+          onAction: () => _refresh(notifier),
         ),
       );
     }
     if (jobs.isEmpty) {
       return _scrollable(
-        EmptyState(
-          icon: Icons.search_off_rounded,
-          title: 'No matching jobs',
-          message: 'No jobs match your search and filter.',
-          actionLabel: 'Clear filters',
+        EmptyState.noMatch(
+          message: filtering
+              ? t.techJobsNoMatchHint
+              : t.techJobsNoMatch,
+          title: t.techJobsNoMatch,
+          actionLabel: t.techJobsClearFilters,
           onAction: () {
             notifier.updateSearch('');
             notifier.updateFilter('All');
@@ -133,14 +161,17 @@ class TechnicianJobsView extends ConsumerWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: AppDimensions.s24),
       itemCount: jobs.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppDimensions.s10),
+      separatorBuilder: (_, __) => Divider(
+        height: 1,
+        color: Theme.of(context).colorScheme.outlineVariant,
+      ),
       itemBuilder: (context, index) {
         final job = jobs[index];
         return TechnicianJobSummary(
           job: job,
           showProgress: true,
           emphasised: job.status == TechJobStatus.inProgress,
-          onTap: () => _openJob(context, ref, job),
+          onTap: () => _openJob(job),
         );
       },
     );
@@ -152,7 +183,7 @@ class TechnicianJobsView extends ConsumerWidget {
     children: [child],
   );
 
-  void _openJob(BuildContext context, WidgetRef ref, TechnicianJobEntity job) {
+  void _openJob(TechnicianJobEntity job) {
     HapticFeedback.selectionClick();
     ref.read(technicianDashboardProvider.notifier).openJob(job);
     context
@@ -177,12 +208,10 @@ class _JobsToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Phase 07.1: bespoke _JobFilterChip migrated to the centralized
-    // AppFilterBar (same options + live counts; the shared bar scrolls
-    // horizontally instead of wrapping — verified no-overflow at 320 px).
-    final options = notifier.filterOptions.where((f) => f != 'All').toList();
+    final t = StaffLocalizations.of(context)!;
     // The shared bar localizes its own "All" chip, so the All count is keyed
     // by the localized label (provider state stays English-canonical).
+    final options = notifier.filterOptions.where((f) => f != 'All').toList();
     final counts = <String, int>{
       SharedCoreL10n.of(context).filterBarAll: allJobs.length,
       for (final filter in options)
@@ -192,7 +221,7 @@ class _JobsToolbar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppSearchField(
-          hintText: 'Search jobs',
+          hintText: t.techJobsSearch,
           onChanged: notifier.updateSearch,
           onClear: () => notifier.updateSearch(''),
         ),
@@ -203,7 +232,8 @@ class _JobsToolbar extends StatelessWidget {
               ? null
               : state.selectedFilter,
           counts: counts,
-          countSemantics: (label, count) => 'Filter jobs: $label, $count jobs',
+          countSemantics: (label, count) =>
+              t.techJobsFilterSemantics(label, count),
           onSelected: (value) {
             HapticFeedback.selectionClick();
             notifier.updateFilter(value ?? 'All');
@@ -245,6 +275,29 @@ class _SavedDataNotice extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FreshnessFooter extends StatelessWidget {
+  final DateTime lastRefresh;
+  const _FreshnessFooter({required this.lastRefresh});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final time = intl.DateFormat('HH:mm').format(lastRefresh);
+    return Center(
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Text(
+          t.techTodayUpdated(time),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         ),
       ),
     );

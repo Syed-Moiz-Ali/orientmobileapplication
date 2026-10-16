@@ -4106,6 +4106,24 @@ abstract class StaffLocalizations {
   /// **'Quantity'**
   String get advisorStudioQuantity;
 
+  /// Rate field label on a studio row
+  ///
+  /// In en, this message translates to:
+  /// **'Unit price'**
+  String get advisorStudioUnitPrice;
+
+  /// Discount percent field label on a studio row
+  ///
+  /// In en, this message translates to:
+  /// **'Discount %'**
+  String get advisorStudioDiscountPct;
+
+  /// Auto-price suggestion tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest price from history'**
+  String get advisorStudioSuggestPrice;
+
   /// Remove row tooltip
   ///
   /// In en, this message translates to:
@@ -4759,6 +4777,996 @@ abstract class StaffLocalizations {
   /// In en, this message translates to:
   /// **'Submitting estimate…'**
   String get advisorEstimateSubmitting;
+
+  /// Technician nav: today
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get techNavToday;
+
+  /// Technician nav: jobs
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs'**
+  String get techNavJobs;
+
+  /// Technician nav: productivity
+  ///
+  /// In en, this message translates to:
+  /// **'Productivity'**
+  String get techNavProductivity;
+
+  /// Technician nav: profile
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get techNavProfile;
+
+  /// Technician rail profile label
+  ///
+  /// In en, this message translates to:
+  /// **'Technician Profile'**
+  String get techProfileLabel;
+
+  /// Technician workspace name
+  ///
+  /// In en, this message translates to:
+  /// **'Technician'**
+  String get techWorkspaceName;
+
+  /// Technician greeting with name
+  ///
+  /// In en, this message translates to:
+  /// **'Hello, {name}'**
+  String techGreeting(String name);
+
+  /// Shift action: punch in
+  ///
+  /// In en, this message translates to:
+  /// **'Start shift'**
+  String get techShiftStart;
+
+  /// Shift action: start break
+  ///
+  /// In en, this message translates to:
+  /// **'Take break'**
+  String get techShiftBreak;
+
+  /// Shift action: end break
+  ///
+  /// In en, this message translates to:
+  /// **'Resume shift'**
+  String get techShiftResume;
+
+  /// Shift terminal state
+  ///
+  /// In en, this message translates to:
+  /// **'Shift complete'**
+  String get techShiftDone;
+
+  /// Shift action: punch out
+  ///
+  /// In en, this message translates to:
+  /// **'End shift'**
+  String get techShiftEnd;
+
+  /// Shift hint before punch in
+  ///
+  /// In en, this message translates to:
+  /// **'Clock in to begin today\'s work'**
+  String get techShiftClockInHint;
+
+  /// Shift summary line
+  ///
+  /// In en, this message translates to:
+  /// **'{work} worked · {rest} break'**
+  String techShiftWorked(String work, String rest);
+
+  /// Attendance state
+  ///
+  /// In en, this message translates to:
+  /// **'Not Punched In'**
+  String get techAttendanceNotPunchedIn;
+
+  /// Attendance state
+  ///
+  /// In en, this message translates to:
+  /// **'Working'**
+  String get techAttendanceWorking;
+
+  /// Attendance state
+  ///
+  /// In en, this message translates to:
+  /// **'On Break'**
+  String get techAttendanceOnBreak;
+
+  /// Attendance state
+  ///
+  /// In en, this message translates to:
+  /// **'Punched Out'**
+  String get techAttendancePunchedOut;
+
+  /// Pinned banner eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'Active job'**
+  String get techBannerActive;
+
+  /// Pinned banner empty title
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for assignment'**
+  String get techBannerReady;
+
+  /// Pinned banner empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'Your next repair appears here when the desk assigns it.'**
+  String get techBannerReadyHint;
+
+  /// Banner inline pause action
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get techBannerPause;
+
+  /// Banner inline resume action
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get techBannerResume;
+
+  /// Banner open action
+  ///
+  /// In en, this message translates to:
+  /// **'Open job'**
+  String get techBannerOpen;
+
+  /// Banner started-at line
+  ///
+  /// In en, this message translates to:
+  /// **'Started {time}'**
+  String techBannerStarted(String time);
+
+  /// Today section eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT WORK'**
+  String get techTodayCurrentWork;
+
+  /// Today active title
+  ///
+  /// In en, this message translates to:
+  /// **'On the bay'**
+  String get techTodayOnBay;
+
+  /// Today idle title
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for assignment'**
+  String get techTodayReady;
+
+  /// Today idle empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No active repair right now'**
+  String get techTodayNoActive;
+
+  /// Today idle empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'Open your queue to review the next assigned vehicle, or start the next job below.'**
+  String get techTodayNoActiveHint;
+
+  /// Today idle action
+  ///
+  /// In en, this message translates to:
+  /// **'Open my jobs'**
+  String get techTodayOpenJobs;
+
+  /// Today queue title
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned queue'**
+  String get techTodayQueue;
+
+  /// Today queue eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'UP NEXT'**
+  String get techTodayUpNext;
+
+  /// Queue view-all action
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get techTodayViewAll;
+
+  /// Queue empty title
+  ///
+  /// In en, this message translates to:
+  /// **'Queue clear'**
+  String get techTodayQueueClear;
+
+  /// Queue empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'No other repairs are waiting. New assignments appear here as they are scheduled.'**
+  String get techTodayQueueClearHint;
+
+  /// Shift summary title
+  ///
+  /// In en, this message translates to:
+  /// **'Shift summary'**
+  String get techTodaySummary;
+
+  /// Shift summary metric
+  ///
+  /// In en, this message translates to:
+  /// **'Active bay'**
+  String get techTodayActiveBay;
+
+  /// Shift summary metric
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks done'**
+  String get techTodayTasksDone;
+
+  /// Shift summary metric
+  ///
+  /// In en, this message translates to:
+  /// **'Repairs done'**
+  String get techTodayRepairsDone;
+
+  /// Today empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No assigned jobs right now'**
+  String get techTodayEmpty;
+
+  /// Today empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'You have no repairs assigned for this shift. Pull to refresh, or check back when the desk schedules work.'**
+  String get techTodayEmptyHint;
+
+  /// Today refresh action
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get techTodayRefresh;
+
+  /// Today load error title
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load today\'s work'**
+  String get techTodayLoadError;
+
+  /// Today error hint
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get techTodayErrorHint;
+
+  /// Today retry action
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get techTodayRetry;
+
+  /// Today detail action
+  ///
+  /// In en, this message translates to:
+  /// **'Job details'**
+  String get techTodayJobDetails;
+
+  /// Today quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get techTodayTasks;
+
+  /// Today quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Request part'**
+  String get techTodayRequestPart;
+
+  /// Today quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Escalate'**
+  String get techTodayEscalate;
+
+  /// Today primary action
+  ///
+  /// In en, this message translates to:
+  /// **'Complete task'**
+  String get techTodayCompleteTask;
+
+  /// Today primary action
+  ///
+  /// In en, this message translates to:
+  /// **'Start next task'**
+  String get techTodayStartTask;
+
+  /// Today primary action
+  ///
+  /// In en, this message translates to:
+  /// **'Review job'**
+  String get techTodayReviewJob;
+
+  /// Today next-task eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT TASK'**
+  String get techTodayNextTask;
+
+  /// Today running eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'IN PROGRESS'**
+  String get techTodayInProgress;
+
+  /// Today blocker title
+  ///
+  /// In en, this message translates to:
+  /// **'Job on hold'**
+  String get techTodayJobOnHold;
+
+  /// Today blocker hint
+  ///
+  /// In en, this message translates to:
+  /// **'This repair is marked delayed at the workshop.'**
+  String get techTodayDelayedHint;
+
+  /// Task progress line
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} tasks completed'**
+  String techTodayProgress(int done, int total);
+
+  /// Job start-time pill
+  ///
+  /// In en, this message translates to:
+  /// **'Starts {time}'**
+  String techTodayStartsAt(String time);
+
+  /// Freshness footer
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {time}'**
+  String techTodayUpdated(String time);
+
+  /// Plate fallback
+  ///
+  /// In en, this message translates to:
+  /// **'Plate not recorded'**
+  String get techPlateMissing;
+
+  /// Vehicle fallback
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get techVehicleFallback;
+
+  /// Jobs search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search jobs'**
+  String get techJobsSearch;
+
+  /// Jobs load error title
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your jobs'**
+  String get techJobsLoadError;
+
+  /// Jobs empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No assigned jobs'**
+  String get techJobsEmpty;
+
+  /// Jobs empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'There are no jobs assigned to you right now.'**
+  String get techJobsEmptyHint;
+
+  /// Jobs no-match title
+  ///
+  /// In en, this message translates to:
+  /// **'No matching jobs'**
+  String get techJobsNoMatch;
+
+  /// Jobs no-match hint
+  ///
+  /// In en, this message translates to:
+  /// **'No jobs match your search and filter.'**
+  String get techJobsNoMatchHint;
+
+  /// Jobs clear action
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get techJobsClearFilters;
+
+  /// Filter chip semantics
+  ///
+  /// In en, this message translates to:
+  /// **'Filter jobs: {label}, {count} jobs'**
+  String techJobsFilterSemantics(String label, int count);
+
+  /// Jobs progress line
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} tasks completed'**
+  String techJobsProgress(int done, int total);
+
+  /// Job detail title
+  ///
+  /// In en, this message translates to:
+  /// **'Job details'**
+  String get techDetailTitle;
+
+  /// Detail running eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT TASK'**
+  String get techDetailCurrentTask;
+
+  /// Detail running section title
+  ///
+  /// In en, this message translates to:
+  /// **'Current task'**
+  String get techDetailCurrentTitle;
+
+  /// Detail next eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT TASK'**
+  String get techDetailNextTask;
+
+  /// Detail next section title
+  ///
+  /// In en, this message translates to:
+  /// **'Next task'**
+  String get techDetailNextTitle;
+
+  /// Detail held eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'ON HOLD'**
+  String get techDetailOnHold;
+
+  /// Detail done eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'Repair tasks complete'**
+  String get techDetailAllDone;
+
+  /// Detail empty eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks'**
+  String get techDetailNoTasks;
+
+  /// Detail section eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'EXECUTION'**
+  String get techDetailExecution;
+
+  /// Task list header
+  ///
+  /// In en, this message translates to:
+  /// **'{count} assigned'**
+  String techDetailTasksAssigned(int count);
+
+  /// Task list eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'ALL TASKS'**
+  String get techDetailAllTasks;
+
+  /// Detail primary action
+  ///
+  /// In en, this message translates to:
+  /// **'Complete task'**
+  String get techDetailCompleteTask;
+
+  /// Detail primary action
+  ///
+  /// In en, this message translates to:
+  /// **'Start next task'**
+  String get techDetailStartTask;
+
+  /// Detail primary action
+  ///
+  /// In en, this message translates to:
+  /// **'Resume task'**
+  String get techDetailResumeTask;
+
+  /// Detail busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Starting…'**
+  String get techDetailStarting;
+
+  /// Detail busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Completing…'**
+  String get techDetailCompleting;
+
+  /// Detail busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Resuming…'**
+  String get techDetailResuming;
+
+  /// Task action
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get techDetailStart;
+
+  /// Task action
+  ///
+  /// In en, this message translates to:
+  /// **'Hold'**
+  String get techDetailHold;
+
+  /// Task hold action
+  ///
+  /// In en, this message translates to:
+  /// **'Hold task'**
+  String get techDetailHoldTask;
+
+  /// Task resume action
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get techDetailResume;
+
+  /// Task complete action
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get techDetailComplete;
+
+  /// Stopwatch label
+  ///
+  /// In en, this message translates to:
+  /// **'Elapsed'**
+  String get techDetailElapsed;
+
+  /// Stopwatch paused label
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get techDetailPaused;
+
+  /// Detail empty tasks hint
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks have been added to this job. Ask the advisor before starting work.'**
+  String get techDetailNoTasksHint;
+
+  /// QC notice
+  ///
+  /// In en, this message translates to:
+  /// **'Repair work has been submitted for supervisor QC review.'**
+  String get techDetailQcNotice;
+
+  /// Locked notice
+  ///
+  /// In en, this message translates to:
+  /// **'This repair is completed. Technician edits are locked.'**
+  String get techDetailLockedNotice;
+
+  /// Delayed notice title
+  ///
+  /// In en, this message translates to:
+  /// **'Delayed'**
+  String get techDetailDelayed;
+
+  /// Delayed notice hint
+  ///
+  /// In en, this message translates to:
+  /// **'This repair is marked as delayed at the workshop. You can continue the tasks below once the issue is resolved.'**
+  String get techDetailDelayedHint;
+
+  /// Support section title
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get techDetailSupport;
+
+  /// Support section eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'NEED HELP?'**
+  String get techDetailNeedHelp;
+
+  /// Handover action
+  ///
+  /// In en, this message translates to:
+  /// **'Complete repair'**
+  String get techDetailCompleteRepair;
+
+  /// Handover confirm title
+  ///
+  /// In en, this message translates to:
+  /// **'Complete repair?'**
+  String get techDetailConfirmTitle;
+
+  /// Handover confirm body
+  ///
+  /// In en, this message translates to:
+  /// **'All remaining tasks will be recorded as completed and the job sent to supervisor QC review.'**
+  String get techDetailConfirmBody;
+
+  /// Handover cancel action
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get techDetailCancel;
+
+  /// Task row semantics
+  ///
+  /// In en, this message translates to:
+  /// **'Task {index}, {desc}, {status}'**
+  String techDetailTaskLabel(int index, String desc, String status);
+
+  /// Productivity title
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s productivity'**
+  String get techProdTitle;
+
+  /// Productivity eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'TODAY'**
+  String get techProdToday;
+
+  /// Productivity dossier eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'WORK COMPLETED'**
+  String get techProdWorkDone;
+
+  /// Singular repair caption
+  ///
+  /// In en, this message translates to:
+  /// **'repair completed today'**
+  String get techProdRepairOne;
+
+  /// Plural repair caption
+  ///
+  /// In en, this message translates to:
+  /// **'repairs completed today'**
+  String get techProdRepairMany;
+
+  /// Productivity no-tasks hint
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks recorded in your loaded work.'**
+  String get techProdNoTasks;
+
+  /// Productivity queue eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR QUEUE'**
+  String get techProdQueue;
+
+  /// Queue header
+  ///
+  /// In en, this message translates to:
+  /// **'{count} assigned'**
+  String techProdAssigned(int count);
+
+  /// Breakdown row
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get techProdInProgress;
+
+  /// Breakdown row
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get techProdPending;
+
+  /// Breakdown row
+  ///
+  /// In en, this message translates to:
+  /// **'Delayed'**
+  String get techProdDelayed;
+
+  /// Breakdown row
+  ///
+  /// In en, this message translates to:
+  /// **'QC review'**
+  String get techProdQc;
+
+  /// Breakdown row
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get techProdCompleted;
+
+  /// Shift eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'SHIFT'**
+  String get techProdShift;
+
+  /// Shift line
+  ///
+  /// In en, this message translates to:
+  /// **'Clocked in'**
+  String get techProdClockedIn;
+
+  /// Shift line
+  ///
+  /// In en, this message translates to:
+  /// **'Break taken'**
+  String get techProdBreakTaken;
+
+  /// Shift line
+  ///
+  /// In en, this message translates to:
+  /// **'Net hours'**
+  String get techProdNetHours;
+
+  /// Shift line
+  ///
+  /// In en, this message translates to:
+  /// **'Clocked out'**
+  String get techProdClockedOut;
+
+  /// Shift terminal hint
+  ///
+  /// In en, this message translates to:
+  /// **'Shift complete for today.'**
+  String get techProdShiftDone;
+
+  /// Productivity empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No productivity data yet'**
+  String get techProdEmpty;
+
+  /// Productivity empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'Completed work will appear here as you progress through your assigned jobs.'**
+  String get techProdEmptyHint;
+
+  /// Productivity error title
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your productivity'**
+  String get techProdLoadError;
+
+  /// Server figures strip title
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop figures'**
+  String get techProdFigures;
+
+  /// Server efficiency label
+  ///
+  /// In en, this message translates to:
+  /// **'Efficiency'**
+  String get techProdEfficiency;
+
+  /// Day progress label
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s progress'**
+  String get techProdDayProgress;
+
+  /// Delayed alert
+  ///
+  /// In en, this message translates to:
+  /// **'{count} delayed — needs attention'**
+  String techProdDelayedAlert(int count);
+
+  /// Server avg time label
+  ///
+  /// In en, this message translates to:
+  /// **'Time per repair'**
+  String get techProdTimePerRepair;
+
+  /// Server hours label
+  ///
+  /// In en, this message translates to:
+  /// **'Hours logged'**
+  String get techProdHoursLogged;
+
+  /// Parts sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Request a part'**
+  String get techPartsTitle;
+
+  /// Sheet close action
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get techPartsClose;
+
+  /// Part name label
+  ///
+  /// In en, this message translates to:
+  /// **'Part name'**
+  String get techPartsName;
+
+  /// Part name hint
+  ///
+  /// In en, this message translates to:
+  /// **'What part or material do you need?'**
+  String get techPartsNameHint;
+
+  /// Part name error
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the part you need'**
+  String get techPartsNameError;
+
+  /// Part number label
+  ///
+  /// In en, this message translates to:
+  /// **'Part number (optional)'**
+  String get techPartsNumber;
+
+  /// Part number hint
+  ///
+  /// In en, this message translates to:
+  /// **'OEM or workshop reference'**
+  String get techPartsNumberHint;
+
+  /// Quantity label
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get techPartsQty;
+
+  /// Quantity hint
+  ///
+  /// In en, this message translates to:
+  /// **'Units needed'**
+  String get techPartsQtyHint;
+
+  /// Quantity tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease quantity'**
+  String get techPartsDec;
+
+  /// Quantity tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Increase quantity'**
+  String get techPartsInc;
+
+  /// Urgency label
+  ///
+  /// In en, this message translates to:
+  /// **'Urgency'**
+  String get techPartsUrgency;
+
+  /// Urgency option
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get techPartsNormal;
+
+  /// Urgency option
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get techPartsUrgent;
+
+  /// Notes label
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (optional)'**
+  String get techPartsNotes;
+
+  /// Notes hint
+  ///
+  /// In en, this message translates to:
+  /// **'Fitment details or preferred alternatives'**
+  String get techPartsNotesHint;
+
+  /// Counter submit CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Send request · {count}'**
+  String techPartsSendCount(int count);
+
+  /// Parts busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get techPartsSending;
+
+  /// Parts success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Part request sent.'**
+  String get techPartsSent;
+
+  /// Parts error
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t send the request. Check your connection and try again.'**
+  String get techPartsError;
+
+  /// Escalation title
+  ///
+  /// In en, this message translates to:
+  /// **'Escalate an issue'**
+  String get techEscTitle;
+
+  /// Escalation chips label
+  ///
+  /// In en, this message translates to:
+  /// **'What happened?'**
+  String get techEscWhat;
+
+  /// Escalation details label
+  ///
+  /// In en, this message translates to:
+  /// **'Issue details'**
+  String get techEscDetails;
+
+  /// Escalation details hint
+  ///
+  /// In en, this message translates to:
+  /// **'Describe what you found and what you need…'**
+  String get techEscDetailsHint;
+
+  /// Escalation details error
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the issue'**
+  String get techEscDetailsError;
+
+  /// Escalation safety note
+  ///
+  /// In en, this message translates to:
+  /// **'For an immediate safety risk, stop work and contact the supervisor directly.'**
+  String get techEscSafety;
+
+  /// Escalation submit
+  ///
+  /// In en, this message translates to:
+  /// **'Escalate issue'**
+  String get techEscSend;
+
+  /// Escalation busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get techEscSending;
+
+  /// Escalation success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Escalation sent.'**
+  String get techEscSent;
+
+  /// Escalation error
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t send the escalation. Check your connection and try again.'**
+  String get techEscError;
 }
 
 class _StaffLocalizationsDelegate

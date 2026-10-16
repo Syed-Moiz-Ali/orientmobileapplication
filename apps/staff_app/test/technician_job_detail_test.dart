@@ -2,13 +2,35 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
 import 'package:staff_app/features/technician/presentation/widgets/job_detail_sheet.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
+/// Localizations for the localized console (EN default in these tests).
+const _delegates = <LocalizationsDelegate<dynamic>>[
+  StaffLocalizations.delegate,
+  SharedCoreLocalizations.delegate,
+  SharedAuthLocalizations.delegate,
+  GlobalMaterialLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+];
+
+/// Bounded settle: the focus panel and rows own a live 1s stopwatch tick
+/// while a task runs, so pumpAndSettle would wait on its timer forever.
+/// Fixed 100ms pumps drain transitions deterministically, hang-free.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 20; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
 
 void main() {
   setUpAll(_loadFonts);
@@ -19,8 +41,9 @@ void main() {
     ) async {
       await _pump(tester, _inProgressJob);
 
-      expect(find.text('JO-1024'), findsOneWidget);
-      expect(find.text('Toyota Camry'), findsOneWidget);
+      // Reference in breadcrumbs + identity; vehicle in page header + card.
+      expect(find.text('JO-1024'), findsWidgets);
+      expect(find.text('Toyota Camry'), findsWidgets);
       expect(find.text('A 12345'), findsOneWidget);
       expect(find.text('IN PROGRESS'), findsWidgets);
       expect(tester.takeException(), isNull);
@@ -33,6 +56,7 @@ void main() {
 
     testWidgets('status is not colour-only', (tester) async {
       await _pump(tester, _delayedJob);
+      // Page-header pill + identity pill both carry the text.
       expect(find.text('DELAYED'), findsWidgets);
     });
   });
@@ -62,7 +86,7 @@ void main() {
       await tester.tap(find.text('Start next task'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(find.text('CURRENT TASK'), findsOneWidget);
       expect(find.text('Complete task'), findsOneWidget);
@@ -76,7 +100,7 @@ void main() {
       await tester.tap(find.text('Complete task'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(
         find.text('Repair work has been submitted for supervisor QC review.'),
@@ -104,7 +128,7 @@ void main() {
       await tester.tap(start);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(fake.startCount, 1);
     });
@@ -127,7 +151,7 @@ void main() {
       await tester.tap(find.text('Start'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(fake.startCount, 1);
       expect(find.text('CURRENT TASK'), findsOneWidget);
@@ -139,10 +163,11 @@ void main() {
       final fake = _FakeTechnicianNotifier(_oneTaskRunningJob);
       await _pumpWith(tester, fake, _oneTaskRunningJob);
 
+      await tester.ensureVisible(find.text('Hold'));
       await tester.tap(find.text('Hold'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(fake.holdCount, 1);
       expect(find.text('ON HOLD'), findsWidgets);
@@ -153,10 +178,11 @@ void main() {
       final fake = _FakeTechnicianNotifier(_inProgressJob);
       await _pumpWith(tester, fake, _inProgressJob);
 
+      await tester.ensureVisible(find.text('Complete'));
       await tester.tap(find.text('Complete'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(fake.completeCount, 1);
       expect(find.text('2 of 3 tasks completed'), findsOneWidget);
@@ -222,11 +248,13 @@ void main() {
       await _pump(tester, _manyTaskJob(20));
 
       expect(find.text('Task 1'), findsWidgets);
+      // The breadcrumbs trail is itself a horizontal SingleChildScrollView;
+      // drag the outer vertical body scrollable.
       await tester.drag(
-        find.byType(SingleChildScrollView),
+        find.byType(SingleChildScrollView).first,
         const Offset(0, -2500),
       );
-      await tester.pumpAndSettle();
+      await _settle(tester);
       expect(find.text('Task 20'), findsOneWidget);
     });
 
@@ -247,9 +275,9 @@ void main() {
       await _pump(tester, _inProgressJob);
 
       await tester.ensureVisible(find.text('Request part'));
-      await tester.pumpAndSettle();
+      await _settle(tester);
       await tester.tap(find.text('Request part'));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(find.text('Request a part'), findsOneWidget);
     });
@@ -258,9 +286,9 @@ void main() {
       await _pump(tester, _inProgressJob);
 
       await tester.ensureVisible(find.text('Escalate issue'));
-      await tester.pumpAndSettle();
+      await _settle(tester);
       await tester.tap(find.text('Escalate issue'));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(find.text('Escalate an issue'), findsOneWidget);
     });
@@ -269,13 +297,13 @@ void main() {
       await _pump(tester, _inProgressJob);
 
       await tester.ensureVisible(find.text('Complete repair'));
-      await tester.pumpAndSettle();
+      await _settle(tester);
       await tester.tap(find.text('Complete repair'));
-      await tester.pumpAndSettle();
+      await _settle(tester);
 
       expect(find.text('Complete repair?'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
+      await _settle(tester);
       expect(find.text('CURRENT TASK'), findsOneWidget);
     });
 
@@ -291,7 +319,10 @@ void main() {
         final finder = find.ancestor(
           of: find.text(label),
           matching: find.byWidgetPredicate(
-            (w) => w is FilledButton || w is OutlinedButton,
+            (w) =>
+                w is FilledButton ||
+                w is OutlinedButton ||
+                w is ElevatedButton,
           ),
         );
         final size = tester.getSize(finder.first);
@@ -333,7 +364,8 @@ void main() {
     testWidgets('composes on desktop', (tester) async {
       await _pump(tester, _inProgressJob, size: const Size(1440, 900));
       expect(tester.takeException(), isNull);
-      expect(find.text('Toyota Camry'), findsOneWidget);
+      // Vehicle in the page header and again in the identity card.
+      expect(find.text('Toyota Camry'), findsWidgets);
     });
 
     testWidgets('renders in dark mode', (tester) async {
@@ -343,7 +375,7 @@ void main() {
         theme: AppTheme.dark(BrandConfig.orient),
       );
       expect(tester.takeException(), isNull);
-      expect(find.text('Toyota Camry'), findsOneWidget);
+      expect(find.text('Toyota Camry'), findsWidgets);
     });
   });
 
@@ -354,7 +386,7 @@ void main() {
     });
 
     testWidgets('in progress mobile', (tester) async {
-      await _pump(tester, _inProgressJob);
+      await _pump(tester, _noClockInProgressJob);
       await _golden(tester, 'technician_job_detail_in_progress_mobile');
     });
 
@@ -374,19 +406,19 @@ void main() {
     });
 
     testWidgets('tablet', (tester) async {
-      await _pump(tester, _inProgressJob, size: const Size(1024, 768));
+      await _pump(tester, _noClockInProgressJob, size: const Size(1024, 768));
       await _golden(tester, 'technician_job_detail_tablet');
     });
 
     testWidgets('desktop', (tester) async {
-      await _pump(tester, _inProgressJob, size: const Size(1440, 900));
+      await _pump(tester, _noClockInProgressJob, size: const Size(1440, 900));
       await _golden(tester, 'technician_job_detail_desktop');
     });
 
     testWidgets('dark mobile', (tester) async {
       await _pump(
         tester,
-        _inProgressJob,
+        _noClockInProgressJob,
         theme: AppTheme.dark(BrandConfig.orient),
       );
       await _golden(tester, 'technician_job_detail_dark_mobile');
@@ -395,7 +427,7 @@ void main() {
     testWidgets('large text mobile', (tester) async {
       await _pump(
         tester,
-        _verboseJob,
+        _noClockVerboseJob,
         textScaler: const TextScaler.linear(1.6),
       );
       await _golden(tester, 'technician_job_detail_large_text_mobile');
@@ -559,6 +591,62 @@ const _verboseJob = TechnicianJobEntity(
   ],
 );
 
+/// Golden stills must be deterministic: the live stopwatch ticks with the
+/// wall clock, so golden fixtures use a running task WITHOUT a recorded
+/// start time (a real backend shape — empty stamps arrive unstarted). The
+/// paused stopwatch still renders from `startTime` deterministically.
+const _noClockInProgressJob = TechnicianJobEntity(
+  jobCardNo: 'JO-1024',
+  dateOfWork: '24 Aug',
+  startTime: '09:30 AM',
+  vehicleBrand: 'Toyota',
+  vehicleModel: 'Camry',
+  plateNumber: 'A 12345',
+  customerName: 'Ahmed Al Mansoori',
+  status: TechJobStatus.inProgress,
+  tasks: [
+    WorkTaskEntity(
+      id: 1,
+      ref: 't1',
+      description: 'Replace front brake pads',
+      status: TaskStatus.inProgress,
+    ),
+    WorkTaskEntity(
+      id: 2,
+      ref: 't2',
+      description: 'Brake fluid flush',
+      status: TaskStatus.completed,
+      startTime: '09:40',
+      endTime: '10:20',
+    ),
+    WorkTaskEntity(
+      id: 3,
+      ref: 't3',
+      description: 'Road test',
+      status: TaskStatus.pending,
+    ),
+  ],
+);
+
+const _noClockVerboseJob = TechnicianJobEntity(
+  jobCardNo: 'JO-REFERENCE-2026-000000000099441',
+  dateOfWork: '24 Aug',
+  startTime: '09:30 AM',
+  vehicleBrand: 'Mercedes-Benz',
+  vehicleModel: 'GLE 450 4MATIC AMG Line',
+  plateNumber: 'DUBAI A 99441',
+  status: TechJobStatus.inProgress,
+  tasks: [
+    WorkTaskEntity(
+      id: 1,
+      ref: 't1',
+      description:
+          'Comprehensive front and rear suspension inspection and replacement',
+      status: TaskStatus.inProgress,
+    ),
+  ],
+);
+
 TechnicianJobEntity _manyTaskJob(int count) => TechnicianJobEntity(
   jobCardNo: 'JO-2000',
   dateOfWork: '24 Aug',
@@ -707,6 +795,9 @@ Future<void> _pumpWith(
       overrides: [technicianDashboardProvider.overrideWith(() => fake)],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        locale: const Locale('en'),
+        supportedLocales: StaffLocalizations.supportedLocales,
+        localizationsDelegates: _delegates,
         theme: theme ?? AppTheme.light(BrandConfig.orient),
         home: TechnicianJobDetailView(job: job),
         builder: (context, child) => MediaQuery(
@@ -716,7 +807,7 @@ Future<void> _pumpWith(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await _settle(tester);
 }
 
 Future<void> _loadFonts() async {

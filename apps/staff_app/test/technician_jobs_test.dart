@@ -2,15 +2,28 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_jobs_view.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
+/// Localizations for the localized console (EN default in these tests).
+const _delegates = <LocalizationsDelegate<dynamic>>[
+  StaffLocalizations.delegate,
+  SharedCoreLocalizations.delegate,
+  SharedAuthLocalizations.delegate,
+  GlobalMaterialLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+];
 
 void main() {
   setUpAll(_loadFonts);
@@ -320,6 +333,7 @@ void main() {
           _qcJob,
           _completedJob,
         ],
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
       );
       await expectLater(
         find.byType(TechnicianJobsView),
@@ -328,7 +342,11 @@ void main() {
     });
 
     testWidgets('search mobile', (tester) async {
-      await _pump(tester, jobs: const [_inProgressJob, _pendingJob]);
+      await _pump(
+        tester,
+        jobs: const [_inProgressJob, _pendingJob],
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
+      );
       await tester.enterText(find.byType(TextField), 'nissan');
       await tester.pumpAndSettle();
       await expectLater(
@@ -338,7 +356,11 @@ void main() {
     });
 
     testWidgets('filtered empty mobile', (tester) async {
-      await _pump(tester, jobs: const [_inProgressJob, _pendingJob]);
+      await _pump(
+        tester,
+        jobs: const [_inProgressJob, _pendingJob],
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
+      );
       await tester.enterText(find.byType(TextField), 'nothing-here');
       await tester.pumpAndSettle();
       await expectLater(
@@ -348,7 +370,11 @@ void main() {
     });
 
     testWidgets('empty mobile', (tester) async {
-      await _pump(tester, jobs: const []);
+      await _pump(
+        tester,
+        jobs: const [],
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
+      );
       await expectLater(
         find.byType(TechnicianJobsView),
         matchesGoldenFile('goldens/technician_jobs_empty_mobile.png'),
@@ -360,6 +386,7 @@ void main() {
         tester,
         jobs: const [_inProgressJob, _pendingJob, _delayedJob],
         size: const Size(1024, 768),
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
       );
       await expectLater(
         find.byType(TechnicianJobsView),
@@ -372,6 +399,7 @@ void main() {
         tester,
         jobs: const [_inProgressJob, _pendingJob, _delayedJob],
         size: const Size(1440, 900),
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
       );
       await expectLater(
         find.byType(TechnicianJobsView),
@@ -384,6 +412,7 @@ void main() {
         tester,
         jobs: const [_inProgressJob, _pendingJob, _delayedJob],
         theme: AppTheme.dark(BrandConfig.orient),
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
       );
       await expectLater(
         find.byType(TechnicianJobsView),
@@ -396,6 +425,7 @@ void main() {
         tester,
         jobs: const [_verboseJob, _pendingJob],
         textScaler: const TextScaler.linear(1.6),
+        fixedRefreshAt: DateTime(2026, 6, 24, 10, 42),
       );
       await expectLater(
         find.byType(TechnicianJobsView),
@@ -666,6 +696,7 @@ Future<void> _pump(
   Size size = const Size(390, 844),
   TextScaler textScaler = TextScaler.noScaling,
   ThemeData? theme,
+  DateTime? fixedRefreshAt,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -681,6 +712,9 @@ Future<void> _pump(
   if (router) {
     home = MaterialApp.router(
       debugShowCheckedModeBanner: false,
+      locale: const Locale('en'),
+      supportedLocales: StaffLocalizations.supportedLocales,
+      localizationsDelegates: _delegates,
       theme: theme ?? AppTheme.light(BrandConfig.orient),
       routerConfig: GoRouter(
         initialLocation: '/',
@@ -703,8 +737,13 @@ Future<void> _pump(
   } else {
     home = MaterialApp(
       debugShowCheckedModeBanner: false,
+      locale: const Locale('en'),
+      supportedLocales: StaffLocalizations.supportedLocales,
+      localizationsDelegates: _delegates,
       theme: theme ?? AppTheme.light(BrandConfig.orient),
-      home: const Scaffold(body: TechnicianJobsView()),
+      home: Scaffold(
+        body: TechnicianJobsView(fixedRefreshAt: fixedRefreshAt),
+      ),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: textScaler),
         child: child!,

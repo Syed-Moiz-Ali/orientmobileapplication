@@ -2143,6 +2143,15 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorStudioQuantity => 'الكمية';
 
   @override
+  String get advisorStudioUnitPrice => 'سعر الوحدة';
+
+  @override
+  String get advisorStudioDiscountPct => 'نسبة الخصم';
+
+  @override
+  String get advisorStudioSuggestPrice => 'اقتراح سعر من السجل';
+
+  @override
   String get advisorStudioRemoveItem => 'حذف العنصر';
 
   @override
@@ -2494,4 +2503,536 @@ class StaffLocalizationsAr extends StaffLocalizations {
 
   @override
   String get advisorEstimateSubmitting => 'جارٍ إرسال التقدير…';
+
+  @override
+  String get techNavToday => 'اليوم';
+
+  @override
+  String get techNavJobs => 'المهام';
+
+  @override
+  String get techNavProductivity => 'الإنتاجية';
+
+  @override
+  String get techNavProfile => 'الملف الشخصي';
+
+  @override
+  String get techProfileLabel => 'ملف الفني';
+
+  @override
+  String get techWorkspaceName => 'الفني';
+
+  @override
+  String techGreeting(String name) {
+    return 'مرحباً، $name';
+  }
+
+  @override
+  String get techShiftStart => 'بدء الوردية';
+
+  @override
+  String get techShiftBreak => 'أخذ استراحة';
+
+  @override
+  String get techShiftResume => 'استئناف الوردية';
+
+  @override
+  String get techShiftDone => 'اكتملت الوردية';
+
+  @override
+  String get techShiftEnd => 'إنهاء الوردية';
+
+  @override
+  String get techShiftClockInHint => 'سجّل حضورك لبدء عمل اليوم';
+
+  @override
+  String techShiftWorked(String work, String rest) {
+    return 'عمل $work · استراحة $rest';
+  }
+
+  @override
+  String get techAttendanceNotPunchedIn => 'لم يتم تسجيل الحضور';
+
+  @override
+  String get techAttendanceWorking => 'يعمل';
+
+  @override
+  String get techAttendanceOnBreak => 'في استراحة';
+
+  @override
+  String get techAttendancePunchedOut => 'سجّل الانصراف';
+
+  @override
+  String get techBannerActive => 'المهمة النشطة';
+
+  @override
+  String get techBannerReady => 'بانتظار مهمة';
+
+  @override
+  String get techBannerReadyHint => 'تظهر مهمتك التالية هنا عند إسنادها.';
+
+  @override
+  String get techBannerPause => 'إيقاف مؤقت';
+
+  @override
+  String get techBannerResume => 'استئناف';
+
+  @override
+  String get techBannerOpen => 'فتح المهمة';
+
+  @override
+  String techBannerStarted(String time) {
+    return 'بدأ $time';
+  }
+
+  @override
+  String get techTodayCurrentWork => 'العمل الحالي';
+
+  @override
+  String get techTodayOnBay => 'في منطقة العمل';
+
+  @override
+  String get techTodayReady => 'بانتظار مهمة';
+
+  @override
+  String get techTodayNoActive => 'لا يوجد إصلاح نشط الآن';
+
+  @override
+  String get techTodayNoActiveHint =>
+      'افتح قائمة المهام لمراجعة المركبة التالية، أو ابدأ المهمة التالية أدناه.';
+
+  @override
+  String get techTodayOpenJobs => 'افتح المهام';
+
+  @override
+  String get techTodayQueue => 'قائمة المهام المسندة';
+
+  @override
+  String get techTodayUpNext => 'التالي';
+
+  @override
+  String get techTodayViewAll => 'عرض الكل';
+
+  @override
+  String get techTodayQueueClear => 'القائمة فارغة';
+
+  @override
+  String get techTodayQueueClearHint =>
+      'لا توجد إصلاحات بانتظارك. تظهر المهام الجديدة هنا عند جدولتها.';
+
+  @override
+  String get techTodaySummary => 'ملخص الوردية';
+
+  @override
+  String get techTodayActiveBay => 'قناة نشطة';
+
+  @override
+  String get techTodayTasksDone => 'مهام منجزة';
+
+  @override
+  String get techTodayRepairsDone => 'إصلاحات مكتملة';
+
+  @override
+  String get techTodayEmpty => 'لا توجد مهام مسندة';
+
+  @override
+  String get techTodayEmptyHint =>
+      'ليس لديك إصلاحات مسندة لهذه الوردية. اسحب للتحديث، أو عُد عندما يجدول المكتب عملاً.';
+
+  @override
+  String get techTodayRefresh => 'تحديث';
+
+  @override
+  String get techTodayLoadError => 'تعذّر تحميل عمل اليوم';
+
+  @override
+  String get techTodayErrorHint => 'تحقق من الاتصال وحاول مجدداً.';
+
+  @override
+  String get techTodayRetry => 'إعادة المحاولة';
+
+  @override
+  String get techTodayJobDetails => 'تفاصيل المهمة';
+
+  @override
+  String get techTodayTasks => 'المهام';
+
+  @override
+  String get techTodayRequestPart => 'طلب قطعة';
+
+  @override
+  String get techTodayEscalate => 'تصعيد';
+
+  @override
+  String get techTodayCompleteTask => 'إكمال المهمة';
+
+  @override
+  String get techTodayStartTask => 'بدء المهمة التالية';
+
+  @override
+  String get techTodayReviewJob => 'مراجعة المهمة';
+
+  @override
+  String get techTodayNextTask => 'المهمة التالية';
+
+  @override
+  String get techTodayInProgress => 'قيد التنفيذ';
+
+  @override
+  String get techTodayJobOnHold => 'المهمة متوقفة';
+
+  @override
+  String get techTodayDelayedHint => 'هذا الإصلاح معلّق في الورشة.';
+
+  @override
+  String techTodayProgress(int done, int total) {
+    return '$done من $total مهام';
+  }
+
+  @override
+  String techTodayStartsAt(String time) {
+    return 'يبدأ $time';
+  }
+
+  @override
+  String techTodayUpdated(String time) {
+    return 'حُدّث $time';
+  }
+
+  @override
+  String get techPlateMissing => 'اللوحة غير مسجلة';
+
+  @override
+  String get techVehicleFallback => 'مركبة';
+
+  @override
+  String get techJobsSearch => 'ابحث في المهام';
+
+  @override
+  String get techJobsLoadError => 'تعذّر تحميل مهامك';
+
+  @override
+  String get techJobsEmpty => 'لا توجد مهام مسندة';
+
+  @override
+  String get techJobsEmptyHint => 'لا توجد مهام مسندة إليك الآن.';
+
+  @override
+  String get techJobsNoMatch => 'لا توجد مهام مطابقة';
+
+  @override
+  String get techJobsNoMatchHint => 'لا توجد مهام تطابق البحث والتصفية.';
+
+  @override
+  String get techJobsClearFilters => 'مسح التصفية';
+
+  @override
+  String techJobsFilterSemantics(String label, int count) {
+    return 'تصفية المهام: $label، $count مهام';
+  }
+
+  @override
+  String techJobsProgress(int done, int total) {
+    return '$done من $total مهام';
+  }
+
+  @override
+  String get techDetailTitle => 'تفاصيل المهمة';
+
+  @override
+  String get techDetailCurrentTask => 'المهمة الجارية';
+
+  @override
+  String get techDetailCurrentTitle => 'المهمة الحالية';
+
+  @override
+  String get techDetailNextTask => 'المهمة التالية';
+
+  @override
+  String get techDetailNextTitle => 'المهمة القادمة';
+
+  @override
+  String get techDetailOnHold => 'متوقفة';
+
+  @override
+  String get techDetailAllDone => 'اكتملت مهام الإصلاح';
+
+  @override
+  String get techDetailNoTasks => 'لا توجد مهام';
+
+  @override
+  String get techDetailExecution => 'التنفيذ';
+
+  @override
+  String techDetailTasksAssigned(int count) {
+    return '$count مسندة';
+  }
+
+  @override
+  String get techDetailAllTasks => 'كل المهام';
+
+  @override
+  String get techDetailCompleteTask => 'إكمال المهمة';
+
+  @override
+  String get techDetailStartTask => 'بدء المهمة التالية';
+
+  @override
+  String get techDetailResumeTask => 'استئناف المهمة';
+
+  @override
+  String get techDetailStarting => 'جارٍ البدء…';
+
+  @override
+  String get techDetailCompleting => 'جارٍ الإكمال…';
+
+  @override
+  String get techDetailResuming => 'جارٍ الاستئناف…';
+
+  @override
+  String get techDetailStart => 'بدء';
+
+  @override
+  String get techDetailHold => 'تعليق';
+
+  @override
+  String get techDetailHoldTask => 'تعليق المهمة';
+
+  @override
+  String get techDetailResume => 'استئناف';
+
+  @override
+  String get techDetailComplete => 'إكمال';
+
+  @override
+  String get techDetailElapsed => 'المنقضي';
+
+  @override
+  String get techDetailPaused => 'متوقف';
+
+  @override
+  String get techDetailNoTasksHint =>
+      'لم تُضف أي مهام لهذه المهمة. راجع المستشار قبل بدء العمل.';
+
+  @override
+  String get techDetailQcNotice => 'تم إرسال العمل للمراجعة من مشرف الجودة.';
+
+  @override
+  String get techDetailLockedNotice =>
+      'اكتمل هذا الإصلاح. تعديلات الفني مقفلة.';
+
+  @override
+  String get techDetailDelayed => 'معلّقة';
+
+  @override
+  String get techDetailDelayedHint =>
+      'هذا الإصلاح معلّق في الورشة. يمكنك متابعة المهام أدناه بعد حل المشكلة.';
+
+  @override
+  String get techDetailSupport => 'الدعم';
+
+  @override
+  String get techDetailNeedHelp => 'تحتاج مساعدة؟';
+
+  @override
+  String get techDetailCompleteRepair => 'إكمال الإصلاح';
+
+  @override
+  String get techDetailConfirmTitle => 'إكمال الإصلاح؟';
+
+  @override
+  String get techDetailConfirmBody =>
+      'سيتم تسجيل جميع المهام المتبقية كمكتملة وإرسال المهمة لمراجعة مشرف الجودة.';
+
+  @override
+  String get techDetailCancel => 'إلغاء';
+
+  @override
+  String techDetailTaskLabel(int index, String desc, String status) {
+    return 'المهمة $index، $desc، $status';
+  }
+
+  @override
+  String get techProdTitle => 'إنتاجية اليوم';
+
+  @override
+  String get techProdToday => 'اليوم';
+
+  @override
+  String get techProdWorkDone => 'العمل المنجز';
+
+  @override
+  String get techProdRepairOne => 'إصلاح مكتمل اليوم';
+
+  @override
+  String get techProdRepairMany => 'إصلاحات مكتملة اليوم';
+
+  @override
+  String get techProdNoTasks => 'لا توجد مهام مسجلة في عملك.';
+
+  @override
+  String get techProdQueue => 'قائمتك';
+
+  @override
+  String techProdAssigned(int count) {
+    return '$count مسندة';
+  }
+
+  @override
+  String get techProdInProgress => 'قيد التنفيذ';
+
+  @override
+  String get techProdPending => 'بانتظار';
+
+  @override
+  String get techProdDelayed => 'معلّقة';
+
+  @override
+  String get techProdQc => 'مراجعة الجودة';
+
+  @override
+  String get techProdCompleted => 'مكتملة';
+
+  @override
+  String get techProdShift => 'الوردية';
+
+  @override
+  String get techProdClockedIn => 'سُجّل الحضور';
+
+  @override
+  String get techProdBreakTaken => 'استراحة مأخوذة';
+
+  @override
+  String get techProdNetHours => 'صافي الساعات';
+
+  @override
+  String get techProdClockedOut => 'سُجّل الانصراف';
+
+  @override
+  String get techProdShiftDone => 'اكتملت الوردية لهذا اليوم.';
+
+  @override
+  String get techProdEmpty => 'لا توجد بيانات إنتاجية بعد';
+
+  @override
+  String get techProdEmptyHint =>
+      'يظهر العمل المنجز هنا مع تقدمك في المهام المسندة.';
+
+  @override
+  String get techProdLoadError => 'تعذّر تحميل إنتاجيتك';
+
+  @override
+  String get techProdFigures => 'أرقام الورشة';
+
+  @override
+  String get techProdEfficiency => 'الكفاءة';
+
+  @override
+  String get techProdDayProgress => 'تقدم اليوم';
+
+  @override
+  String techProdDelayedAlert(int count) {
+    return '$count معلّقة — تحتاج انتباهاً';
+  }
+
+  @override
+  String get techProdTimePerRepair => 'الوقت لكل إصلاح';
+
+  @override
+  String get techProdHoursLogged => 'الساعات المسجلة';
+
+  @override
+  String get techPartsTitle => 'طلب قطعة';
+
+  @override
+  String get techPartsClose => 'إغلاق';
+
+  @override
+  String get techPartsName => 'اسم القطعة';
+
+  @override
+  String get techPartsNameHint => 'ما القطعة أو المادة التي تحتاجها؟';
+
+  @override
+  String get techPartsNameError => 'أدخل القطعة التي تحتاجها';
+
+  @override
+  String get techPartsNumber => 'رقم القطعة (اختياري)';
+
+  @override
+  String get techPartsNumberHint => 'مرجع الشركة أو الورشة';
+
+  @override
+  String get techPartsQty => 'الكمية';
+
+  @override
+  String get techPartsQtyHint => 'الوحدات المطلوبة';
+
+  @override
+  String get techPartsDec => 'إنقاص الكمية';
+
+  @override
+  String get techPartsInc => 'زيادة الكمية';
+
+  @override
+  String get techPartsUrgency => 'الأولوية';
+
+  @override
+  String get techPartsNormal => 'عادية';
+
+  @override
+  String get techPartsUrgent => 'عاجلة';
+
+  @override
+  String get techPartsNotes => 'ملاحظات (اختياري)';
+
+  @override
+  String get techPartsNotesHint => 'تفاصيل التركيب أو البدائل المفضلة';
+
+  @override
+  String techPartsSendCount(int count) {
+    return 'إرسال الطلب · $count';
+  }
+
+  @override
+  String get techPartsSending => 'جارٍ الإرسال…';
+
+  @override
+  String get techPartsSent => 'تم إرسال الطلب.';
+
+  @override
+  String get techPartsError =>
+      'تعذّر إرسال الطلب. تحقق من الاتصال وحاول مجدداً.';
+
+  @override
+  String get techEscTitle => 'تصعيد مشكلة';
+
+  @override
+  String get techEscWhat => 'ماذا حدث؟';
+
+  @override
+  String get techEscDetails => 'تفاصيل المشكلة';
+
+  @override
+  String get techEscDetailsHint => 'صف ما وجدته وما تحتاجه…';
+
+  @override
+  String get techEscDetailsError => 'صف المشكلة';
+
+  @override
+  String get techEscSafety =>
+      'عند وجود خطر مباشر على السلامة، أوقف العمل وتواصل مع المشرف مباشرة.';
+
+  @override
+  String get techEscSend => 'تصعيد المشكلة';
+
+  @override
+  String get techEscSending => 'جارٍ الإرسال…';
+
+  @override
+  String get techEscSent => 'تم إرسال التصعيد.';
+
+  @override
+  String get techEscError =>
+      'تعذّر إرسال التصعيد. تحقق من الاتصال وحاول مجدداً.';
 }

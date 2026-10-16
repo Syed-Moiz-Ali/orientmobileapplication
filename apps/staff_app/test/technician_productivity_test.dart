@@ -2,13 +2,26 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_productivity_view.dart';
+import 'package:staff_app/l10n/gen/staff_localizations.dart';
+
+/// Localizations for the localized console (EN default in these tests).
+const _delegates = <LocalizationsDelegate<dynamic>>[
+  StaffLocalizations.delegate,
+  SharedCoreLocalizations.delegate,
+  SharedAuthLocalizations.delegate,
+  GlobalMaterialLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+];
 
 void main() {
   setUpAll(_loadFonts);
@@ -400,6 +413,9 @@ Future<void> _pump(
       overrides: [technicianDashboardProvider.overrideWith(() => fake)],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        locale: const Locale('en'),
+        supportedLocales: StaffLocalizations.supportedLocales,
+        localizationsDelegates: _delegates,
         theme: theme ?? AppTheme.light(BrandConfig.orient),
         home: const Scaffold(body: TechnicianProductivityView()),
         builder: (context, child) => MediaQuery(
