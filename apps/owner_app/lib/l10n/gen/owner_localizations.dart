@@ -643,6 +643,510 @@ abstract class OwnerLocalizations {
   /// In en, this message translates to:
   /// **'Yesterday'**
   String get ownerActYesterday;
+
+  /// Register app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Job register'**
+  String get ownerRegTitle;
+
+  /// Register app-bar subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'All active workshop jobs'**
+  String get ownerRegSubtitle;
+
+  /// Register search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search job, plate, customer…'**
+  String get ownerRegSearchHint;
+
+  /// Filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Intake'**
+  String get ownerRegIntake;
+
+  /// Filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection'**
+  String get ownerRegInspect;
+
+  /// Filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'WIP'**
+  String get ownerRegWip;
+
+  /// Filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'QC'**
+  String get ownerRegQc;
+
+  /// Filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get ownerRegReady;
+
+  /// Filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Invoiced'**
+  String get ownerRegInvoiced;
+
+  /// Table column
+  ///
+  /// In en, this message translates to:
+  /// **'Job'**
+  String get ownerRegJob;
+
+  /// Table column
+  ///
+  /// In en, this message translates to:
+  /// **'Plate'**
+  String get ownerRegPlate;
+
+  /// Table column
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get ownerRegCustomer;
+
+  /// Table column
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get ownerRegTotal;
+
+  /// Table column
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get ownerRegStatus;
+
+  /// Register count pill
+  ///
+  /// In en, this message translates to:
+  /// **'{count} jobs'**
+  String ownerRegCount(int count);
+
+  /// Preview pane placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Select a job to preview.'**
+  String get ownerRegSelectPrompt;
+
+  /// Register empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No job cards found.'**
+  String get ownerRegEmpty;
+
+  /// Register no-match state
+  ///
+  /// In en, this message translates to:
+  /// **'No jobs match this search.'**
+  String get ownerRegNoMatch;
+
+  /// Preview pane open action
+  ///
+  /// In en, this message translates to:
+  /// **'Open register'**
+  String get ownerRegOpen;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Intake'**
+  String get ownerJsReceived;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection'**
+  String get ownerJsInspected;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get ownerJsPending;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Pending approval'**
+  String get ownerJsPendingApproval;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting supervisor'**
+  String get ownerJsAwaitSupervisor;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get ownerJsApproved;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get ownerJsAssigned;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get ownerJsProgress;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting parts'**
+  String get ownerJsParts;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Quality check'**
+  String get ownerJsQc;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'QC passed'**
+  String get ownerJsQcPass;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting customer'**
+  String get ownerJsAwaitCustomer;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get ownerJsComplete;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get ownerJsDelivered;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get ownerJsCancelled;
+
+  /// Detail breadcrumb root
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs'**
+  String get ownerDetJobs;
+
+  /// Detail services panel
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get ownerDetServices;
+
+  /// Services empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No services listed.'**
+  String get ownerDetNoServices;
+
+  /// Detail assignment panel
+  ///
+  /// In en, this message translates to:
+  /// **'Assignment'**
+  String get ownerDetAssign;
+
+  /// Technician row
+  ///
+  /// In en, this message translates to:
+  /// **'Specialist'**
+  String get ownerDetTech;
+
+  /// Handover row
+  ///
+  /// In en, this message translates to:
+  /// **'Est. handover'**
+  String get ownerDetEta;
+
+  /// Stage row
+  ///
+  /// In en, this message translates to:
+  /// **'Stage'**
+  String get ownerDetStage;
+
+  /// Totals dock label
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get ownerDetTotal;
+
+  /// Honest financial-scope note
+  ///
+  /// In en, this message translates to:
+  /// **'Parts/labor split unavailable for this record.'**
+  String get ownerDetSplitNote;
+
+  /// Lifecycle step
+  ///
+  /// In en, this message translates to:
+  /// **'Intake'**
+  String get ownerDetStepIntake;
+
+  /// Lifecycle step
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection'**
+  String get ownerDetStepInspect;
+
+  /// Lifecycle step
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate'**
+  String get ownerDetStepEstimate;
+
+  /// Lifecycle step
+  ///
+  /// In en, this message translates to:
+  /// **'Repair'**
+  String get ownerDetStepRepair;
+
+  /// Lifecycle step
+  ///
+  /// In en, this message translates to:
+  /// **'QC'**
+  String get ownerDetStepQc;
+
+  /// Lifecycle step
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get ownerDetStepReady;
+
+  /// Completion CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Mark complete'**
+  String get ownerDetComplete;
+
+  /// Share action
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get ownerDetShare;
+
+  /// Completion confirm title
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as complete?'**
+  String get ownerDetConfirmTitle;
+
+  /// Completion confirm body
+  ///
+  /// In en, this message translates to:
+  /// **'The job card moves to Completed and syncs to the workshop register.'**
+  String get ownerDetConfirmBody;
+
+  /// Completion toast
+  ///
+  /// In en, this message translates to:
+  /// **'Job card marked as completed.'**
+  String get ownerDetDone;
+
+  /// Completion failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete the job card. Try again.'**
+  String get ownerDetFail;
+
+  /// Detail empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No job card selected.'**
+  String get ownerDetEmpty;
+
+  /// Detail empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'Open a job from the register.'**
+  String get ownerDetEmptyHint;
+
+  /// Dialog cancel
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get ownerDetCancel;
+
+  /// Status app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Live job pipeline'**
+  String get ownerStTitle;
+
+  /// Status app-bar subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Stage monitor with auto-refresh'**
+  String get ownerStSubtitle;
+
+  /// Status search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search job, customer, vehicle…'**
+  String get ownerStSearchHint;
+
+  /// Freshness stamp
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {time}'**
+  String ownerStUpdated(String time);
+
+  /// Stale banner
+  ///
+  /// In en, this message translates to:
+  /// **'Data may be stale. Pull to refresh.'**
+  String get ownerStStale;
+
+  /// Status empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No job cards in this stage.'**
+  String get ownerStEmpty;
+
+  /// Queue pod
+  ///
+  /// In en, this message translates to:
+  /// **'Intake queue'**
+  String get ownerStPodQueue;
+
+  /// Active pod
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get ownerStPodActive;
+
+  /// Done pod
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get ownerStPodDone;
+
+  /// Attention pod
+  ///
+  /// In en, this message translates to:
+  /// **'Attention'**
+  String get ownerStPodAttention;
+
+  /// Stage chip
+  ///
+  /// In en, this message translates to:
+  /// **'Inspection'**
+  String get ownerStgInspect;
+
+  /// Stage chip
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-request'**
+  String get ownerStgPreReq;
+
+  /// Stage chip
+  ///
+  /// In en, this message translates to:
+  /// **'Estimation'**
+  String get ownerStgEstimate;
+
+  /// Stage chip
+  ///
+  /// In en, this message translates to:
+  /// **'Approval'**
+  String get ownerStgApproval;
+
+  /// Stage chip
+  ///
+  /// In en, this message translates to:
+  /// **'Parts'**
+  String get ownerStgParts;
+
+  /// Stage chip
+  ///
+  /// In en, this message translates to:
+  /// **'WIP'**
+  String get ownerStgWip;
+
+  /// Stage chip
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get ownerStgComplete;
+
+  /// Stage chip
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get ownerStgCancel;
+
+  /// Approvals app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Pending authorizations'**
+  String get ownerApTitle;
+
+  /// Approvals app-bar subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts, goodwill and overrides'**
+  String get ownerApSubtitle;
+
+  /// Approvals hero eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting owner review'**
+  String get ownerApAwaiting;
+
+  /// Approvals hero count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} requests'**
+  String ownerApCount(int count);
+
+  /// Queue section title
+  ///
+  /// In en, this message translates to:
+  /// **'Review queue'**
+  String get ownerApList;
+
+  /// Approvals empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No pending approvals.'**
+  String get ownerApEmpty;
+
+  /// Approvals empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'Discount, goodwill and override requests will appear here.'**
+  String get ownerApEmptyHint;
+
+  /// Honest read-only note
+  ///
+  /// In en, this message translates to:
+  /// **'Approval actions are not available in this version.'**
+  String get ownerApNoAction;
 }
 
 class _OwnerLocalizationsDelegate

@@ -9,6 +9,8 @@ import 'package:owner_app/features/dashboard/presentation/widgets/kpi_grid.dart'
 import 'package:owner_app/features/job_cards/domain/entities/job_card.dart';
 import 'package:owner_app/features/job_cards/presentation/pages/job_cards_list_view.dart';
 import 'package:owner_app/features/job_cards/presentation/providers/job_card_providers.dart';
+import 'package:owner_app/l10n/gen/owner_localizations.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
 /// Phase 07.1 migration tests — owner_app.
@@ -124,7 +126,9 @@ void main() {
             locale: locale,
             supportedLocales: AppLocales.supported,
             localizationsDelegates: const [
+              OwnerLocalizations.delegate,
               SharedCoreLocalizations.delegate,
+              SharedAuthLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
@@ -142,13 +146,15 @@ void main() {
       expect(find.byType(AppFilterBar), findsOneWidget);
       expect(find.text('Ahmed'), findsOneWidget);
       expect(find.text('Sara'), findsOneWidget);
-      // The job tile also renders an "In Progress" status pill — tap the
-      // filter chip, not the tile.
+      // Phase 14 recomposition: the lifecycle chip for the in-progress
+      // status reads "WIP" — tap the filter chip, not a table row.
       final chip = find.descendant(
         of: find.byType(AppFilterBar),
-        matching: find.text('In Progress'),
+        matching: find.text('WIP'),
       );
       expect(chip, findsOneWidget);
+      await tester.ensureVisible(chip);
+      await tester.pumpAndSettle();
       await tester.tap(chip);
       await tester.pumpAndSettle();
       expect(find.text('Ahmed'), findsOneWidget);

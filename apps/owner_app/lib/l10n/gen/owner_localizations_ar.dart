@@ -293,4 +293,263 @@ class OwnerLocalizationsAr extends OwnerLocalizations {
 
   @override
   String get ownerActYesterday => 'أمس';
+
+  @override
+  String get ownerRegTitle => 'سجل بطاقات العمل';
+
+  @override
+  String get ownerRegSubtitle => 'جميع وظائف الورشة النشطة';
+
+  @override
+  String get ownerRegSearchHint => 'ابحث برقم العمل أو اللوحة أو العميل…';
+
+  @override
+  String get ownerRegIntake => 'الاستلام';
+
+  @override
+  String get ownerRegInspect => 'الفحص';
+
+  @override
+  String get ownerRegWip => 'قيد التنفيذ';
+
+  @override
+  String get ownerRegQc => 'الجودة';
+
+  @override
+  String get ownerRegReady => 'جاهزة';
+
+  @override
+  String get ownerRegInvoiced => 'مفوترة';
+
+  @override
+  String get ownerRegJob => 'العمل';
+
+  @override
+  String get ownerRegPlate => 'اللوحة';
+
+  @override
+  String get ownerRegCustomer => 'العميل';
+
+  @override
+  String get ownerRegTotal => 'الإجمالي';
+
+  @override
+  String get ownerRegStatus => 'الحالة';
+
+  @override
+  String ownerRegCount(int count) {
+    return '$count وظائف';
+  }
+
+  @override
+  String get ownerRegSelectPrompt => 'اختر عملًا للمعاينة.';
+
+  @override
+  String get ownerRegEmpty => 'لا توجد بطاقات عمل.';
+
+  @override
+  String get ownerRegNoMatch => 'لا وظائف تطابق هذا البحث.';
+
+  @override
+  String get ownerRegOpen => 'فتح السجل';
+
+  @override
+  String get ownerJsReceived => 'الاستلام';
+
+  @override
+  String get ownerJsInspected => 'الفحص';
+
+  @override
+  String get ownerJsPending => 'معلقة';
+
+  @override
+  String get ownerJsPendingApproval => 'بانتظار الموافقة';
+
+  @override
+  String get ownerJsAwaitSupervisor => 'بانتظار المشرف';
+
+  @override
+  String get ownerJsApproved => 'معتمدة';
+
+  @override
+  String get ownerJsAssigned => 'مسندة';
+
+  @override
+  String get ownerJsProgress => 'قيد التنفيذ';
+
+  @override
+  String get ownerJsParts => 'بانتظار القطع';
+
+  @override
+  String get ownerJsQc => 'فحص الجودة';
+
+  @override
+  String get ownerJsQcPass => 'اجتاز الجودة';
+
+  @override
+  String get ownerJsAwaitCustomer => 'بانتظار العميل';
+
+  @override
+  String get ownerJsComplete => 'مكتملة';
+
+  @override
+  String get ownerJsDelivered => 'تم التسليم';
+
+  @override
+  String get ownerJsCancelled => 'ملغاة';
+
+  @override
+  String get ownerDetJobs => 'الوظائف';
+
+  @override
+  String get ownerDetServices => 'الخدمات';
+
+  @override
+  String get ownerDetNoServices => 'لا خدمات مدرجة.';
+
+  @override
+  String get ownerDetAssign => 'الإسناد';
+
+  @override
+  String get ownerDetTech => 'الأخصائي';
+
+  @override
+  String get ownerDetEta => 'التسليم المتوقع';
+
+  @override
+  String get ownerDetStage => 'المرحلة';
+
+  @override
+  String get ownerDetTotal => 'الإجمالي';
+
+  @override
+  String get ownerDetSplitNote => 'تفصيل القطع/العمل غير متاح لهذا السجل.';
+
+  @override
+  String get ownerDetStepIntake => 'الاستلام';
+
+  @override
+  String get ownerDetStepInspect => 'الفحص';
+
+  @override
+  String get ownerDetStepEstimate => 'التقدير';
+
+  @override
+  String get ownerDetStepRepair => 'الإصلاح';
+
+  @override
+  String get ownerDetStepQc => 'الجودة';
+
+  @override
+  String get ownerDetStepReady => 'جاهزة';
+
+  @override
+  String get ownerDetComplete => 'إتمام العمل';
+
+  @override
+  String get ownerDetShare => 'مشاركة';
+
+  @override
+  String get ownerDetConfirmTitle => 'إتمام بطاقة العمل؟';
+
+  @override
+  String get ownerDetConfirmBody =>
+      'تنتقل البطاقة إلى مكتملة وتتزامن مع سجل الورشة.';
+
+  @override
+  String get ownerDetDone => 'تم إتمام بطاقة العمل.';
+
+  @override
+  String get ownerDetFail => 'تعذر إتمام البطاقة. حاول مرة أخرى.';
+
+  @override
+  String get ownerDetEmpty => 'لم تُختر بطاقة عمل.';
+
+  @override
+  String get ownerDetEmptyHint => 'افتح عملًا من السجل.';
+
+  @override
+  String get ownerDetCancel => 'إلغاء';
+
+  @override
+  String get ownerStTitle => 'خط العمل المباشر';
+
+  @override
+  String get ownerStSubtitle => 'مراقبة المراحل مع تحديث تلقائي';
+
+  @override
+  String get ownerStSearchHint => 'ابحث برقم العمل أو العميل أو المركبة…';
+
+  @override
+  String ownerStUpdated(String time) {
+    return 'حُدّثت $time';
+  }
+
+  @override
+  String get ownerStStale => 'قد تكون البيانات قديمة. اسحب للتحديث.';
+
+  @override
+  String get ownerStEmpty => 'لا بطاقات عمل في هذه المرحلة.';
+
+  @override
+  String get ownerStPodQueue => 'طابور الاستلام';
+
+  @override
+  String get ownerStPodActive => 'النشطة';
+
+  @override
+  String get ownerStPodDone => 'المنجزة';
+
+  @override
+  String get ownerStPodAttention => 'تحتاج انتباهًا';
+
+  @override
+  String get ownerStgInspect => 'الفحص';
+
+  @override
+  String get ownerStgPreReq => 'قبل الطلب';
+
+  @override
+  String get ownerStgEstimate => 'التقدير';
+
+  @override
+  String get ownerStgApproval => 'الموافقة';
+
+  @override
+  String get ownerStgParts => 'القطع';
+
+  @override
+  String get ownerStgWip => 'قيد التنفيذ';
+
+  @override
+  String get ownerStgComplete => 'مكتملة';
+
+  @override
+  String get ownerStgCancel => 'ملغاة';
+
+  @override
+  String get ownerApTitle => 'التصاريح المعلقة';
+
+  @override
+  String get ownerApSubtitle => 'الخصومات والضمان والتجاوزات';
+
+  @override
+  String get ownerApAwaiting => 'بانتظار مراجعة المالك';
+
+  @override
+  String ownerApCount(int count) {
+    return '$count طلبات';
+  }
+
+  @override
+  String get ownerApList => 'قائمة المراجعة';
+
+  @override
+  String get ownerApEmpty => 'لا موافقات معلقة.';
+
+  @override
+  String get ownerApEmptyHint => 'ستظهر طلبات الخصم والضمان والتجاوز هنا.';
+
+  @override
+  String get ownerApNoAction => 'إجراءات الموافقة غير متاحة في هذه النسخة.';
 }

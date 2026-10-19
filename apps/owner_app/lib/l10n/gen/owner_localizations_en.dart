@@ -293,4 +293,266 @@ class OwnerLocalizationsEn extends OwnerLocalizations {
 
   @override
   String get ownerActYesterday => 'Yesterday';
+
+  @override
+  String get ownerRegTitle => 'Job register';
+
+  @override
+  String get ownerRegSubtitle => 'All active workshop jobs';
+
+  @override
+  String get ownerRegSearchHint => 'Search job, plate, customer…';
+
+  @override
+  String get ownerRegIntake => 'Intake';
+
+  @override
+  String get ownerRegInspect => 'Inspection';
+
+  @override
+  String get ownerRegWip => 'WIP';
+
+  @override
+  String get ownerRegQc => 'QC';
+
+  @override
+  String get ownerRegReady => 'Ready';
+
+  @override
+  String get ownerRegInvoiced => 'Invoiced';
+
+  @override
+  String get ownerRegJob => 'Job';
+
+  @override
+  String get ownerRegPlate => 'Plate';
+
+  @override
+  String get ownerRegCustomer => 'Customer';
+
+  @override
+  String get ownerRegTotal => 'Total';
+
+  @override
+  String get ownerRegStatus => 'Status';
+
+  @override
+  String ownerRegCount(int count) {
+    return '$count jobs';
+  }
+
+  @override
+  String get ownerRegSelectPrompt => 'Select a job to preview.';
+
+  @override
+  String get ownerRegEmpty => 'No job cards found.';
+
+  @override
+  String get ownerRegNoMatch => 'No jobs match this search.';
+
+  @override
+  String get ownerRegOpen => 'Open register';
+
+  @override
+  String get ownerJsReceived => 'Intake';
+
+  @override
+  String get ownerJsInspected => 'Inspection';
+
+  @override
+  String get ownerJsPending => 'Pending';
+
+  @override
+  String get ownerJsPendingApproval => 'Pending approval';
+
+  @override
+  String get ownerJsAwaitSupervisor => 'Awaiting supervisor';
+
+  @override
+  String get ownerJsApproved => 'Approved';
+
+  @override
+  String get ownerJsAssigned => 'Assigned';
+
+  @override
+  String get ownerJsProgress => 'In progress';
+
+  @override
+  String get ownerJsParts => 'Waiting parts';
+
+  @override
+  String get ownerJsQc => 'Quality check';
+
+  @override
+  String get ownerJsQcPass => 'QC passed';
+
+  @override
+  String get ownerJsAwaitCustomer => 'Awaiting customer';
+
+  @override
+  String get ownerJsComplete => 'Completed';
+
+  @override
+  String get ownerJsDelivered => 'Delivered';
+
+  @override
+  String get ownerJsCancelled => 'Cancelled';
+
+  @override
+  String get ownerDetJobs => 'Jobs';
+
+  @override
+  String get ownerDetServices => 'Services';
+
+  @override
+  String get ownerDetNoServices => 'No services listed.';
+
+  @override
+  String get ownerDetAssign => 'Assignment';
+
+  @override
+  String get ownerDetTech => 'Specialist';
+
+  @override
+  String get ownerDetEta => 'Est. handover';
+
+  @override
+  String get ownerDetStage => 'Stage';
+
+  @override
+  String get ownerDetTotal => 'Total';
+
+  @override
+  String get ownerDetSplitNote =>
+      'Parts/labor split unavailable for this record.';
+
+  @override
+  String get ownerDetStepIntake => 'Intake';
+
+  @override
+  String get ownerDetStepInspect => 'Inspection';
+
+  @override
+  String get ownerDetStepEstimate => 'Estimate';
+
+  @override
+  String get ownerDetStepRepair => 'Repair';
+
+  @override
+  String get ownerDetStepQc => 'QC';
+
+  @override
+  String get ownerDetStepReady => 'Ready';
+
+  @override
+  String get ownerDetComplete => 'Mark complete';
+
+  @override
+  String get ownerDetShare => 'Share';
+
+  @override
+  String get ownerDetConfirmTitle => 'Mark as complete?';
+
+  @override
+  String get ownerDetConfirmBody =>
+      'The job card moves to Completed and syncs to the workshop register.';
+
+  @override
+  String get ownerDetDone => 'Job card marked as completed.';
+
+  @override
+  String get ownerDetFail => 'Could not complete the job card. Try again.';
+
+  @override
+  String get ownerDetEmpty => 'No job card selected.';
+
+  @override
+  String get ownerDetEmptyHint => 'Open a job from the register.';
+
+  @override
+  String get ownerDetCancel => 'Cancel';
+
+  @override
+  String get ownerStTitle => 'Live job pipeline';
+
+  @override
+  String get ownerStSubtitle => 'Stage monitor with auto-refresh';
+
+  @override
+  String get ownerStSearchHint => 'Search job, customer, vehicle…';
+
+  @override
+  String ownerStUpdated(String time) {
+    return 'Updated $time';
+  }
+
+  @override
+  String get ownerStStale => 'Data may be stale. Pull to refresh.';
+
+  @override
+  String get ownerStEmpty => 'No job cards in this stage.';
+
+  @override
+  String get ownerStPodQueue => 'Intake queue';
+
+  @override
+  String get ownerStPodActive => 'Active';
+
+  @override
+  String get ownerStPodDone => 'Done';
+
+  @override
+  String get ownerStPodAttention => 'Attention';
+
+  @override
+  String get ownerStgInspect => 'Inspection';
+
+  @override
+  String get ownerStgPreReq => 'Pre-request';
+
+  @override
+  String get ownerStgEstimate => 'Estimation';
+
+  @override
+  String get ownerStgApproval => 'Approval';
+
+  @override
+  String get ownerStgParts => 'Parts';
+
+  @override
+  String get ownerStgWip => 'WIP';
+
+  @override
+  String get ownerStgComplete => 'Completed';
+
+  @override
+  String get ownerStgCancel => 'Cancelled';
+
+  @override
+  String get ownerApTitle => 'Pending authorizations';
+
+  @override
+  String get ownerApSubtitle => 'Discounts, goodwill and overrides';
+
+  @override
+  String get ownerApAwaiting => 'Awaiting owner review';
+
+  @override
+  String ownerApCount(int count) {
+    return '$count requests';
+  }
+
+  @override
+  String get ownerApList => 'Review queue';
+
+  @override
+  String get ownerApEmpty => 'No pending approvals.';
+
+  @override
+  String get ownerApEmptyHint =>
+      'Discount, goodwill and override requests will appear here.';
+
+  @override
+  String get ownerApNoAction =>
+      'Approval actions are not available in this version.';
 }
