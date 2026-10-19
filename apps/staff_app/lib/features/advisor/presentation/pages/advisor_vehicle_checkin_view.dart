@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
@@ -44,6 +46,7 @@ class _AdvisorVehicleCheckinViewState
     extends ConsumerState<AdvisorVehicleCheckinView> {
   int _odometer = 0;
   final _notesCtrl = TextEditingController();
+  final _broughtByCtrl = TextEditingController();
   String _fuelLevel = '1/4';
   final List<String> _damages = [];
   bool _isLoading = false;
@@ -52,6 +55,7 @@ class _AdvisorVehicleCheckinViewState
   @override
   void dispose() {
     _notesCtrl.dispose();
+    _broughtByCtrl.dispose();
     super.dispose();
   }
 
@@ -116,6 +120,7 @@ class _AdvisorVehicleCheckinViewState
       });
       if (!mounted) return;
       if (result != null) {
+        await _persistBroughtByExtra(result.jobCardId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(t.advisorCheckInSuccess)),
         );
@@ -153,6 +158,43 @@ class _AdvisorVehicleCheckinViewState
         _confirming = false;
       });
     }
+  }
+
+  /// Local-only brought-by capture (no `broughtBy` field exists on
+  /// `CheckInRequest`/backend). Kept in Hive + queued as a future-key op so
+  /// the value is never silently dropped; the queued pill carries the
+  /// unsynced state truthfully.
+  Future<void> _persistBroughtByExtra(int jobCardId) async {
+    final broughtBy = _broughtByCtrl.text.trim();
+    if (broughtBy.isEmpty) return;
+    try {
+      final box = Hive.box<dynamic>('inspections');
+      await box.put('job_extras_$jobCardId', {
+        'type': 'job_card_extras',
+        'jobCardId': jobCardId,
+        'broughtBy': broughtBy,
+        'broughtByQueued': true,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+    } catch (_) {}
+    try {
+      final queue = ref.read(syncQueueProvider);
+      await queue.enqueue(
+        SyncOperation(
+          id: await IdGenerator.nextId('JCEX'),
+          entityType: 'job_card_extras',
+          entityId: '$jobCardId',
+          changeType: ChangeType.update,
+          payload: {
+            'jobCardId': jobCardId,
+            // Future backend key proposal (MISSING today):
+            'broughtBy': broughtBy,
+          },
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+      await ref.read(syncEngineProvider).syncAll();
+    } catch (_) {}
   }
 
   @override
@@ -305,6 +347,23 @@ class _AdvisorVehicleCheckinViewState
           ),
           const SizedBox(height: AppDimensions.s16),
           AppFormField(
+            label: t.advisorClientBroughtBy,
+            isOptional: true,
+            child: AppTextField(
+              controller: _broughtByCtrl,
+              hint: t.advisorClientBroughtByHint,
+              textInputAction: TextInputAction.next,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          Text(
+            t.advisorClientBroughtByMissing,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          AppFormField(
             label: t.advisorCheckInNotes,
             isOptional: true,
             child: AppTextField(
@@ -431,6 +490,8 @@ class _AdvisorVehicleCheckinViewState
             ? t.advisorCheckInEmptyDamages
             : _damages.join('\n'),
       ),
+      if (_broughtByCtrl.text.trim().isNotEmpty)
+        (t.advisorClientBroughtBy, _broughtByCtrl.text.trim()),
       if (_notesCtrl.text.trim().isNotEmpty)
         (t.advisorCheckInNotes, _notesCtrl.text.trim()),
     ];

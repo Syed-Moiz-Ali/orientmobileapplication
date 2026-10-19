@@ -3916,4 +3916,121 @@ class StaffLocalizationsEn extends StaffLocalizations {
 
   @override
   String get staffSettingsCacheCleared => 'Cache cleared.';
+
+  @override
+  String get advisorClientBroughtBy => 'Brought by';
+
+  @override
+  String get advisorClientBroughtByHint =>
+      'Name of the person who brought the vehicle';
+
+  @override
+  String get advisorClientBroughtByQueued =>
+      'Saved on this device · queued (needs server field)';
+
+  @override
+  String get advisorClientBroughtByMissing =>
+      'No server field for brought-by yet — kept locally and queued.';
+
+  @override
+  String advisorClientAdvisorHandled(String name) {
+    return 'Handled by $name';
+  }
+
+  @override
+  String advisorClientQueuedBy(String name) {
+    return 'Queued by $name';
+  }
+
+  @override
+  String get advisorClientComments => 'Comments';
+
+  @override
+  String get advisorClientCommentsEmpty => 'No comments yet.';
+
+  @override
+  String get advisorClientCommentsAdd => 'Add comment';
+
+  @override
+  String get advisorClientCommentsHint => 'Write a comment…';
+
+  @override
+  String get advisorClientCommentsDeleteTitle => 'Delete this comment?';
+
+  @override
+  String get advisorClientCommentsQueued =>
+      'Saved on this device · queued (needs server field)';
+
+  @override
+  String get advisorClientSignatures => 'Signatures';
+
+  @override
+  String get advisorClientSigCustomer => 'Customer';
+
+  @override
+  String get advisorClientSigAdvisor => 'Advisor';
+
+  @override
+  String advisorClientSigSignedOn(String time) {
+    return 'Signed $time';
+  }
+
+  @override
+  String get advisorClientSigMissing => 'Not signed yet';
+
+  @override
+  String get advisorClientSigClear => 'Clear';
+
+  @override
+  String get advisorClientShareTitle => 'Share job card';
+
+  @override
+  String advisorClientShareSummary(String id, String customer, String vehicle) {
+    return 'Job $id · $customer · $vehicle';
+  }
+
+  @override
+  String get advisorClientShareWhatsApp => 'WhatsApp';
+
+  @override
+  String get advisorClientShareEmail => 'Email';
+
+  @override
+  String get advisorClientShareWhatsAppDone =>
+      'Opened WhatsApp with the job summary (no PDF yet).';
+
+  @override
+  String get advisorClientShareEmailDone =>
+      'Opened email with the job summary (no PDF yet).';
+
+  @override
+  String get advisorClientShareNoPhone =>
+      'Add a customer number to share on WhatsApp.';
+
+  @override
+  String get advisorClientPdfMissing =>
+      'PDF export needs a client generator — sharing the job link and summary instead.';
+
+  @override
+  String get advisorClientSignLink => 'Customer sign link';
+
+  @override
+  String get advisorClientSendSignLink => 'Send sign link';
+
+  @override
+  String get advisorClientSignLinkSoon =>
+      'Coming soon — needs a server sign-link endpoint.';
+
+  @override
+  String get advisorClientPlatesTitle => 'Existing plates';
+
+  @override
+  String get advisorClientPlatesNew => 'New plate';
+
+  @override
+  String get advisorClientPlatesHint => 'Choose a plate or enter a new one';
+
+  @override
+  String get advisorClientPlatesNone =>
+      'No plates on file for this number — enter it manually.';
 }

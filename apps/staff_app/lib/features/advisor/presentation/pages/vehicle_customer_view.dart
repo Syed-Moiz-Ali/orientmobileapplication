@@ -20,6 +20,8 @@ import 'package:staff_app/features/advisor/presentation/providers/advisor_provid
 import 'package:staff_app/features/advisor/presentation/providers/vehicle_customer_provider.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/select_brand_sheet.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_signature_pad.dart';
+import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
+import 'package:shared_models/shared_models.dart' as models;
 import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.dart';
 import 'scan_vehicle_view.dart';
 import 'package:staff_app/features/advisor/inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart';
@@ -549,6 +551,8 @@ class _BodyState extends ConsumerState<_Body> {
             },
           ),
         ),
+        const SizedBox(height: AppDimensions.s12),
+        _PhonePlatesDropdown(phone: s.phoneNumber),
         const SizedBox(height: AppDimensions.s16),
         AppFormField(
           label: t.advisorIntakeEmail,
@@ -2434,6 +2438,115 @@ class _ResponsiveFieldGroup extends StatelessWidget {
       );
     },
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Existing plates by phone (CLIENT ITEM 6, backend-gated)
+//  Uses the existing generic `searchVehicles?q=<phone>` lookup; never invents
+//  vehicles. When the lookup returns plates a dropdown appears below the
+//  mobile number (existing plates + "New plate" manual entry, PlateNumber
+//  validated inline). When absent, only the manual field + note remain.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PhonePlatesDropdown extends ConsumerStatefulWidget {
+  final String phone;
+  const _PhonePlatesDropdown({required this.phone});
+
+  @override
+  ConsumerState<_PhonePlatesDropdown> createState() =>
+      _PhonePlatesDropdownState();
+}
+
+class _PhonePlatesDropdownState extends ConsumerState<_PhonePlatesDropdown> {
+  List<String> _plates = const [];
+  bool _loading = false;
+  String _lastQuery = '';
+  String? _selected;
+
+  @override
+  void didUpdateWidget(covariant _PhonePlatesDropdown oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.phone != oldWidget.phone) _maybeLookup();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _maybeLookup();
+  }
+
+  Future<void> _maybeLookup() async {
+    final q = widget.phone.trim();
+    if (q.length < 8 || q == _lastQuery) return;
+    _lastQuery = q;
+    setState(() => _loading = true);
+    try {
+      final remote = ref.read(advisorRemoteDataSourceProvider);
+      final vehicles = await remote.searchVehicles(q);
+      final plates = vehicles
+          .map((v) => v.plateNumber.isNotEmpty ? v.plateNumber : v.regNo)
+          .map((p) => p.trim())
+          .where((p) => p.isNotEmpty)
+          .toSet()
+          .take(10)
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _plates = plates;
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _applyPlate(String plate) {
+    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
+    final parsed = models.PlateNumber.tryParse(plate);
+    if (parsed != null) {
+      notifier
+        ..setEmirate(parsed.emirate)
+        ..setPlateCode(parsed.code)
+        ..setPlateNumber(parsed.number);
+    } else {
+      notifier.setRegistrationNumber(plate);
+    }
+    setState(() => _selected = plate);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    if (widget.phone.trim().length < 8) return const SizedBox.shrink();
+    if (_loading) {
+      return const AppLinearProgress(value: null, showPercentage: false);
+    }
+    if (_plates.isEmpty) {
+      return Text(
+        t.advisorClientPlatesNone,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: colors.onSurfaceVariant,
+        ),
+      );
+    }
+    return AppFormField(
+      label: t.advisorClientPlatesTitle,
+      child: AppDropdownButton(
+        value: _selected ?? '',
+        hint: t.advisorClientPlatesHint,
+        items: [..._plates, t.advisorClientPlatesNew],
+        onChanged: (v) {
+          if (v == t.advisorClientPlatesNew) {
+            setState(() => _selected = null);
+            return;
+          }
+          _applyPlate(v);
+        },
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

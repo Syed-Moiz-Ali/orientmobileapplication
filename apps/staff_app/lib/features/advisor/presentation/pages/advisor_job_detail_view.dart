@@ -20,6 +20,7 @@ import 'package:staff_app/features/advisor/presentation/providers/advisor_provid
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_approval_sheet.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_menu_item.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_sheet.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_signature_pad.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
@@ -43,6 +44,19 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   InspectionSummaryResponse? _inspection;
   bool _hasLocalSubmittedInspection = false;
   bool _detailsError = false;
+  // CLIENT ITEMS (backend-gated, local-first): brought-by + comments live in
+  // Hive `job_extras_<id>` + a queued `job_card_extras` op shaped for the
+  // future keys `broughtBy` / `comments`. Signatures are device-local until a
+  // server field lands. Nothing here claims server sync.
+  String _broughtBy = '';
+  bool _broughtByQueued = false;
+  List<Map<String, dynamic>> _comments = const [];
+  bool _commentsQueued = false;
+  final _commentCtrl = TextEditingController();
+  bool _customerSigned = false;
+  bool _advisorSigned = false;
+  String _customerSignedAt = '';
+  String _advisorSignedAt = '';
 
   String get _detailLookupId => _jc.dbId > 0 ? '${_jc.dbId}' : _jc.id;
   String get _jobCardRef =>
@@ -62,8 +76,80 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     _jc = widget.jc;
     _assignedTech = _jc.technician;
     _loadHiveData();
+    _loadExtras();
     _loadDetails();
     _loadInspection();
+  }
+
+  @override
+  void dispose() {
+    _commentCtrl.dispose();
+    super.dispose();
+  }
+
+  void _loadExtras() {
+    try {
+      final box = Hive.box<dynamic>('inspections');
+      final raw = box.get('job_extras_${widget.jc.dbId > 0 ? widget.jc.dbId : widget.jc.id}');
+      if (raw is Map) {
+        final map = Map<String, dynamic>.from(raw);
+        setState(() {
+          _broughtBy = (map['broughtBy'] ?? '').toString();
+          _broughtByQueued = map['broughtByQueued'] == true;
+          final comments = map['comments'];
+          if (comments is List) {
+            _comments = comments
+                .whereType<Map>()
+                .map(Map<String, dynamic>.from)
+                .toList();
+          }
+          _commentsQueued = map['commentsQueued'] == true;
+          _customerSigned = map['customerSigned'] == true;
+          _advisorSigned = map['advisorSigned'] == true;
+          _customerSignedAt = (map['customerSignedAt'] ?? '').toString();
+          _advisorSignedAt = (map['advisorSignedAt'] ?? '').toString();
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveExtras() async {
+    try {
+      final box = Hive.box<dynamic>('inspections');
+      await box.put(
+        'job_extras_${widget.jc.dbId > 0 ? widget.jc.dbId : widget.jc.id}',
+        {
+          'type': 'job_card_extras',
+          'broughtBy': _broughtBy,
+          'broughtByQueued': _broughtByQueued,
+          'comments': _comments,
+          'commentsQueued': _commentsQueued,
+          'customerSigned': _customerSigned,
+          'advisorSigned': _advisorSigned,
+          'customerSignedAt': _customerSignedAt,
+          'advisorSignedAt': _advisorSignedAt,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        },
+      );
+    } catch (_) {}
+    try {
+      final queue = ref.read(syncQueueProvider);
+      await queue.enqueue(
+        SyncOperation(
+          id: await IdGenerator.nextId('JCEX'),
+          entityType: 'job_card_extras',
+          entityId: widget.jc.dbId > 0 ? '${widget.jc.dbId}' : widget.jc.id,
+          changeType: ChangeType.update,
+          payload: {
+            // Future backend key proposals (both MISSING today):
+            'broughtBy': _broughtBy,
+            'comments': _comments,
+          },
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+      await ref.read(syncEngineProvider).syncAll();
+    } catch (_) {}
   }
 
   Future<void> _loadInspection() async {
@@ -246,6 +332,14 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
         _invoicesSection(t),
         const SizedBox(height: AppDimensions.s16),
         _notesSection(t),
+        const SizedBox(height: AppDimensions.s16),
+        _commentsSection(t),
+        const SizedBox(height: AppDimensions.s16),
+        _signaturesSection(t),
+        const SizedBox(height: AppDimensions.s16),
+        _shareSection(t),
+        const SizedBox(height: AppDimensions.s16),
+        _signLinkSection(t),
       ],
     );
 
@@ -357,6 +451,7 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
   // Identity facts + contact actions only. Job id, customer, vehicle and the
   // status pill already own the AppPageHeader above, so this card no longer
   // repeats them — it carries the plate/VIN/ODO facts and Call/WhatsApp.
+  // CLIENT ITEMS: logged-in advisor chip + locally-kept brought-by (queued).
   Widget _identityHeader(StaffLocalizations t, bool hasData) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
@@ -364,11 +459,93 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     final odo = _displayOdometer;
     final hasFacts =
         _displayPlate.isNotEmpty || vin.isNotEmpty || odo.isNotEmpty;
+    final advisor = ref.watch(advisorInfoProvider);
 
     return AppCard.standard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: colors.primary,
+                child: Text(
+                  advisor.initials,
+                  textDirection: TextDirection.ltr,
+                  style: TextStyle(
+                    color: colors.onPrimary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      advisor.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                    Text(
+                      t.advisorClientAdvisorHandled(advisor.name),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          if (_broughtBy.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppDimensions.s10),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.person_outline_rounded,
+                    size: AppDimensions.iconSm,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: AppDimensions.s10),
+                  Expanded(
+                    child: Text(
+                      '${t.advisorClientBroughtBy}: $_broughtBy',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (_broughtByQueued)
+                    PendingSyncChip(
+                      state: SyncChipState.queued,
+                      label: t.advisorClientBroughtByQueued,
+                    ),
+                ],
+              ),
+            ),
+          if (_broughtBy.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppDimensions.s12),
+              child: Text(
+                t.advisorClientBroughtByMissing,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
           if (hasFacts)
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -560,31 +737,45 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
     );
   }
 
-  Widget _activitySection(StaffLocalizations t) => _section(
-    t,
-    t.advisorSectionActivity,
-    Icons.history_rounded,
-    [
-      _detailRow(
-        Icons.schedule_outlined,
-        t.advisorFieldCreated,
-        _jc.createdDate.isNotEmpty ? _jc.createdDate : _jc.time,
-        isMono: true,
-      ),
-      _detailRow(
-        Icons.update_rounded,
-        t.advisorFieldLastUpdated,
-        _jc.lastUpdated.isNotEmpty ? _jc.lastUpdated : _jc.time,
-        isMono: true,
-      ),
-      if (_assignedTech.isNotEmpty)
+  Widget _activitySection(StaffLocalizations t) {
+    final advisor = ref.watch(advisorInfoProvider);
+    return _section(
+      t,
+      t.advisorSectionActivity,
+      Icons.history_rounded,
+      [
         _detailRow(
-          Icons.engineering_outlined,
-          t.advisorFieldTechnician,
-          _assignedTech,
+          Icons.schedule_outlined,
+          t.advisorFieldCreated,
+          _jc.createdDate.isNotEmpty ? _jc.createdDate : _jc.time,
+          isMono: true,
         ),
-    ],
-  );
+        _detailRow(
+          Icons.update_rounded,
+          t.advisorFieldLastUpdated,
+          _jc.lastUpdated.isNotEmpty ? _jc.lastUpdated : _jc.time,
+          isMono: true,
+        ),
+        _detailRow(
+          Icons.badge_outlined,
+          t.advisorFieldAdvisor,
+          t.advisorClientAdvisorHandled(advisor.name),
+        ),
+        if (_assignedTech.isNotEmpty)
+          _detailRow(
+            Icons.engineering_outlined,
+            t.advisorFieldTechnician,
+            _assignedTech,
+          ),
+        if (_broughtByQueued || _commentsQueued)
+          _detailRow(
+            Icons.cloud_upload_outlined,
+            t.advisorFieldAdvisor,
+            t.advisorClientQueuedBy(advisor.name),
+          ),
+      ],
+    );
+  }
 
   Widget _section(
     StaffLocalizations t,
@@ -853,6 +1044,303 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
           requests,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.45),
         ),
+    ]);
+  }
+
+  /// CLIENT ITEM (4) — repeatable local comments after the job descriptions.
+  /// No `comments` array exists on the backend, so rows live in Hive +
+  /// a queued `job_card_extras` op shaped for the future `comments` key.
+  Widget _commentsSection(StaffLocalizations t) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return _section(t, t.advisorClientComments, Icons.notes_outlined, [
+      if (_comments.isEmpty)
+        EmptyState(
+          icon: Icons.notes_outlined,
+          message: t.advisorClientCommentsEmpty,
+        )
+      else
+        for (var i = 0; i < _comments.length; i++)
+          Dismissible(
+            key: ValueKey('comment-$i-${(_comments[i]['text'] ?? '').hashCode}'),
+            direction: DismissDirection.endToStart,
+            confirmDismiss: (_) => showAppConfirmationDialog(
+              context,
+              title: t.advisorClientCommentsDeleteTitle,
+              message: (_comments[i]['text'] ?? '').toString(),
+              confirmLabel: t.advisorActionClose,
+              cancelLabel: SharedCoreL10n.of(context).commonCancel,
+              icon: Icons.delete_outline_rounded,
+              destructive: true,
+            ),
+            onDismissed: (_) => _deleteComment(i),
+            background: Container(
+              alignment: AlignmentDirectional.centerEnd,
+              padding: const EdgeInsetsDirectional.only(end: AppDimensions.s16),
+              decoration: BoxDecoration(
+                color: colors.error,
+                borderRadius: BorderRadius.circular(
+                  AppDimensions.radiusCard,
+                ),
+              ),
+              child: Icon(Icons.delete_outline_rounded, color: colors.onError),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+              child: AppCard.subtle(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      (_comments[i]['text'] ?? '').toString(),
+                      style: theme.textTheme.bodySmall?.copyWith(height: 1.45),
+                    ),
+                    const SizedBox(height: 4),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        (_comments[i]['at'] ?? '').toString(),
+                        style: AppTextStyles.mono(
+                          color: colors.onSurfaceVariant,
+                        ).copyWith(fontSize: 11),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      if (_commentsQueued && _comments.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppDimensions.s8),
+          child: PendingSyncChip(
+            state: SyncChipState.queued,
+            label: t.advisorClientCommentsQueued,
+          ),
+        ),
+      Row(
+        children: [
+          Expanded(
+            child: AppTextField(
+              controller: _commentCtrl,
+              hint: t.advisorClientCommentsHint,
+              textInputAction: TextInputAction.done,
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s8),
+          SecondaryButton(
+            label: t.advisorClientCommentsAdd,
+            leadingIcon: Icons.add_rounded,
+            isExpanded: false,
+            onPressed: _commentCtrl.text.trim().isEmpty ? null : _addComment,
+          ),
+        ],
+      ),
+    ]);
+  }
+
+  void _addComment() {
+    final text = _commentCtrl.text.trim();
+    if (text.isEmpty) return;
+    final now = DateTime.now();
+    final stamp =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} '
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    setState(() {
+      _comments = [..._comments, {'text': text, 'at': stamp}];
+      _commentsQueued = true;
+      _commentCtrl.clear();
+    });
+    _saveExtras();
+  }
+
+  void _deleteComment(int index) {
+    setState(() {
+      final next = List<Map<String, dynamic>>.from(_comments)..removeAt(index);
+      _comments = next;
+      _commentsQueued = next.isNotEmpty;
+    });
+    _saveExtras();
+  }
+
+  /// CLIENT ITEM (2a) — signatures come FIRST, then the share row.
+  Widget _signaturesSection(StaffLocalizations t) {
+    return _section(t, t.advisorClientSignatures, Icons.draw_outlined, [
+      _SignatureRow(
+        label: t.advisorClientSigCustomer,
+        signed: _customerSigned,
+        signedAt: _customerSignedAt,
+        signedLabel: (time) => t.advisorClientSigSignedOn(time),
+        missingLabel: t.advisorClientSigMissing,
+        clearLabel: t.advisorClientSigClear,
+        onCapture: () => _captureSignature(t, true),
+        onClear: () {
+          setState(() {
+            _customerSigned = false;
+            _customerSignedAt = '';
+          });
+          _saveExtras();
+        },
+      ),
+      const SizedBox(height: AppDimensions.s10),
+      _SignatureRow(
+        label: t.advisorClientSigAdvisor,
+        signed: _advisorSigned,
+        signedAt: _advisorSignedAt,
+        signedLabel: (time) => t.advisorClientSigSignedOn(time),
+        missingLabel: t.advisorClientSigMissing,
+        clearLabel: t.advisorClientSigClear,
+        onCapture: () => _captureSignature(t, false),
+        onClear: () {
+          setState(() {
+            _advisorSigned = false;
+            _advisorSignedAt = '';
+          });
+          _saveExtras();
+        },
+      ),
+    ]);
+  }
+
+  Future<void> _captureSignature(StaffLocalizations t, bool customer) async {
+    final bytes = await showModalBottomSheet<Uint8List>(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppDimensions.radiusSheet),
+        ),
+      ),
+      builder: (_) => AdvisorSignaturePad(
+        title: customer ? t.advisorClientSigCustomer : t.advisorClientSigAdvisor,
+      ),
+    );
+    if (bytes == null || bytes.isEmpty || !mounted) return;
+    final now = DateTime.now();
+    final stamp =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} '
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    setState(() {
+      if (customer) {
+        _customerSigned = true;
+        _customerSignedAt = stamp;
+      } else {
+        _advisorSigned = true;
+        _advisorSignedAt = stamp;
+      }
+    });
+    await _saveExtras();
+  }
+
+  /// CLIENT ITEM (2b) — share row: WhatsApp deep link + email with the job
+  /// LINK/summary. No PDF generator exists, so toasts state exactly what was
+  /// shared — never "PDF sent".
+  Widget _shareSection(StaffLocalizations t) {
+    final colors = Theme.of(context).colorScheme;
+    final summary = t.advisorClientShareSummary(
+      _jobCardRef,
+      _details?.customerName ?? _jc.customerName,
+      _details?.vehicleInfo ?? _jc.vehicleInfo,
+    );
+    final link = 'orient://advisor/job-cards/$_jobCardRef';
+    return _section(t, t.advisorClientShareTitle, Icons.share_outlined, [
+      Text(
+        t.advisorClientPdfMissing,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: colors.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: AppDimensions.s10),
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Text(
+          '$summary\n$link',
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.mono(color: colors.onSurfaceVariant),
+        ),
+      ),
+      const SizedBox(height: AppDimensions.s12),
+      Row(
+        children: [
+          Expanded(
+            child: SecondaryButton(
+              label: t.advisorClientShareWhatsApp,
+              leadingIcon: Icons.chat_outlined,
+              onPressed: _displayPhone.trim().isEmpty
+                  ? null
+                  : () => _shareWhatsApp(summary, link),
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s10),
+          Expanded(
+            child: SecondaryButton(
+              label: t.advisorClientShareEmail,
+              leadingIcon: Icons.mail_outline_rounded,
+              onPressed: () => _shareEmail(summary, link),
+            ),
+          ),
+        ],
+      ),
+      if (_displayPhone.trim().isEmpty) ...[
+        const SizedBox(height: AppDimensions.s8),
+        Text(
+          t.advisorClientShareNoPhone,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: colors.onSurfaceVariant,
+          ),
+        ),
+      ],
+    ]);
+  }
+
+  Future<void> _shareWhatsApp(String summary, String link) async {
+    final t = StaffLocalizations.of(context)!;
+    final digits = models.PhoneNumber.normalizeLoose(_displayPhone);
+    final text = Uri.encodeComponent('$summary\n$link');
+    final uri = Uri.parse('https://wa.me/$digits?text=$text');
+    HapticFeedback.lightImpact();
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(t.advisorClientShareWhatsAppDone)),
+    );
+  }
+
+  Future<void> _shareEmail(String summary, String link) async {
+    final t = StaffLocalizations.of(context)!;
+    final subject = Uri.encodeComponent('Job $_jobCardRef');
+    final body = Uri.encodeComponent('$summary\n$link');
+    final to = _displayEmail.trim();
+    final uri = Uri.parse('mailto:$to?subject=$subject&body=$body');
+    HapticFeedback.lightImpact();
+    await launchUrl(uri);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(t.advisorClientShareEmailDone)),
+    );
+  }
+
+  /// CLIENT ITEM (3) — sign-via-link CTA. No endpoint/callback exists, so the
+  /// CTA renders DISABLED with a "coming soon" note — never a dead button
+  /// that toasts success.
+  Widget _signLinkSection(StaffLocalizations t) {
+    final colors = Theme.of(context).colorScheme;
+    return _section(t, t.advisorClientSignLink, Icons.link_rounded, [
+      SecondaryButton(
+        label: t.advisorClientSendSignLink,
+        leadingIcon: Icons.send_outlined,
+        onPressed: null,
+      ),
+      const SizedBox(height: AppDimensions.s8),
+      Text(
+        t.advisorClientSignLinkSoon,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: colors.onSurfaceVariant,
+        ),
+      ),
     ]);
   }
 
@@ -1208,6 +1696,96 @@ class _AdvisorJobDetailViewState extends ConsumerState<AdvisorJobDetailView> {
       ),
     );
     await ref.read(syncEngineProvider).syncAll();
+  }
+}
+
+/// Sticky bottom dock for compact/medium viewports: exactly one contextual
+/// primary plus a secondary overflow entry. Wide viewports use the rail.
+/// Themed signature row for the dossier signatures section.
+class _SignatureRow extends StatelessWidget {
+  final String label;
+  final bool signed;
+  final String signedAt;
+  final String Function(String time) signedLabel;
+  final String missingLabel;
+  final String clearLabel;
+  final VoidCallback onCapture;
+  final VoidCallback onClear;
+
+  const _SignatureRow({
+    required this.label,
+    required this.signed,
+    required this.signedAt,
+    required this.signedLabel,
+    required this.missingLabel,
+    required this.clearLabel,
+    required this.onCapture,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
+    return AppCard.subtle(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s14,
+        vertical: AppDimensions.s12,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            signed ? Icons.check_circle_rounded : Icons.draw_outlined,
+            color: signed ? semantic.success.base : colors.onSurfaceVariant,
+            size: 20,
+          ),
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    signed ? signedLabel(signedAt) : missingLabel,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: signed
+                          ? semantic.success.base
+                          : colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (signed)
+            SecondaryButton(
+              label: clearLabel,
+              leadingIcon: Icons.refresh_rounded,
+              isExpanded: false,
+              height: 40,
+              onPressed: onClear,
+            )
+          else
+            SecondaryButton(
+              label: label,
+              leadingIcon: Icons.draw_outlined,
+              isExpanded: false,
+              height: 40,
+              onPressed: onCapture,
+            ),
+        ],
+      ),
+    );
   }
 }
 

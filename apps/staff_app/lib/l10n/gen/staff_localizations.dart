@@ -7375,6 +7375,204 @@ abstract class StaffLocalizations {
   /// In en, this message translates to:
   /// **'Cache cleared.'**
   String get staffSettingsCacheCleared;
+
+  /// Brought-by field label after odometer
+  ///
+  /// In en, this message translates to:
+  /// **'Brought by'**
+  String get advisorClientBroughtBy;
+
+  /// Brought-by field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Name of the person who brought the vehicle'**
+  String get advisorClientBroughtByHint;
+
+  /// Queued pill for local-only brought-by
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device · queued (needs server field)'**
+  String get advisorClientBroughtByQueued;
+
+  /// Missing backend field note for brought-by
+  ///
+  /// In en, this message translates to:
+  /// **'No server field for brought-by yet — kept locally and queued.'**
+  String get advisorClientBroughtByMissing;
+
+  /// Dossier handled-by line with advisor name
+  ///
+  /// In en, this message translates to:
+  /// **'Handled by {name}'**
+  String advisorClientAdvisorHandled(String name);
+
+  /// Activity queued-by line with advisor name
+  ///
+  /// In en, this message translates to:
+  /// **'Queued by {name}'**
+  String advisorClientQueuedBy(String name);
+
+  /// Job card comments section title
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get advisorClientComments;
+
+  /// Empty comments state
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet.'**
+  String get advisorClientCommentsEmpty;
+
+  /// Add comment action
+  ///
+  /// In en, this message translates to:
+  /// **'Add comment'**
+  String get advisorClientCommentsAdd;
+
+  /// Comment field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Write a comment…'**
+  String get advisorClientCommentsHint;
+
+  /// Comment delete confirmation title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this comment?'**
+  String get advisorClientCommentsDeleteTitle;
+
+  /// Queued pill for local-only comments
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device · queued (needs server field)'**
+  String get advisorClientCommentsQueued;
+
+  /// Job card signatures section title
+  ///
+  /// In en, this message translates to:
+  /// **'Signatures'**
+  String get advisorClientSignatures;
+
+  /// Customer signature label
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get advisorClientSigCustomer;
+
+  /// Advisor signature label
+  ///
+  /// In en, this message translates to:
+  /// **'Advisor'**
+  String get advisorClientSigAdvisor;
+
+  /// Signature timestamp line
+  ///
+  /// In en, this message translates to:
+  /// **'Signed {time}'**
+  String advisorClientSigSignedOn(String time);
+
+  /// Unsigned state
+  ///
+  /// In en, this message translates to:
+  /// **'Not signed yet'**
+  String get advisorClientSigMissing;
+
+  /// Signature clear action
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get advisorClientSigClear;
+
+  /// Share section title
+  ///
+  /// In en, this message translates to:
+  /// **'Share job card'**
+  String get advisorClientShareTitle;
+
+  /// Shared job summary text
+  ///
+  /// In en, this message translates to:
+  /// **'Job {id} · {customer} · {vehicle}'**
+  String advisorClientShareSummary(String id, String customer, String vehicle);
+
+  /// WhatsApp share action
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get advisorClientShareWhatsApp;
+
+  /// Email share action
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get advisorClientShareEmail;
+
+  /// Toast after opening WhatsApp share
+  ///
+  /// In en, this message translates to:
+  /// **'Opened WhatsApp with the job summary (no PDF yet).'**
+  String get advisorClientShareWhatsAppDone;
+
+  /// Toast after opening email share
+  ///
+  /// In en, this message translates to:
+  /// **'Opened email with the job summary (no PDF yet).'**
+  String get advisorClientShareEmailDone;
+
+  /// WhatsApp share disabled reason
+  ///
+  /// In en, this message translates to:
+  /// **'Add a customer number to share on WhatsApp.'**
+  String get advisorClientShareNoPhone;
+
+  /// Missing PDF generator note
+  ///
+  /// In en, this message translates to:
+  /// **'PDF export needs a client generator — sharing the job link and summary instead.'**
+  String get advisorClientPdfMissing;
+
+  /// Sign-link section title
+  ///
+  /// In en, this message translates to:
+  /// **'Customer sign link'**
+  String get advisorClientSignLink;
+
+  /// Send sign link CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Send sign link'**
+  String get advisorClientSendSignLink;
+
+  /// Disabled sign-link note
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon — needs a server sign-link endpoint.'**
+  String get advisorClientSignLinkSoon;
+
+  /// Existing plates dropdown label
+  ///
+  /// In en, this message translates to:
+  /// **'Existing plates'**
+  String get advisorClientPlatesTitle;
+
+  /// Manual plate entry option
+  ///
+  /// In en, this message translates to:
+  /// **'New plate'**
+  String get advisorClientPlatesNew;
+
+  /// Plate dropdown hint
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a plate or enter a new one'**
+  String get advisorClientPlatesHint;
+
+  /// No plates fallback note
+  ///
+  /// In en, this message translates to:
+  /// **'No plates on file for this number — enter it manually.'**
+  String get advisorClientPlatesNone;
 }
 
 class _StaffLocalizationsDelegate
