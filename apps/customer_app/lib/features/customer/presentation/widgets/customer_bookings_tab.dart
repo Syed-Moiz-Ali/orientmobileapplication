@@ -7,6 +7,8 @@ import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/support/failed_booking_sync.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_booking_item.dart';
@@ -25,6 +27,7 @@ class CustomerBookingsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final dash = ref.watch(customerDashboardProvider);
@@ -64,9 +67,9 @@ class CustomerBookingsTab extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: AppDimensions.s48),
           child: EmptyState(
             icon: Icons.sync_problem_rounded,
-            title: "We couldn't load your bookings",
-            message: 'Please try again in a moment.',
-            actionLabel: 'Retry',
+            title: t.bkLoadFailTitle,
+            message: t.bkLoadFailBody,
+            actionLabel: t.bkRetryCta,
             onAction: () => _refresh(ref),
           ),
         ),
@@ -136,7 +139,9 @@ class CustomerBookingsTab extends ConsumerWidget {
     final sections = <Widget>[
       if (activeOrdered.isNotEmpty)
         _BookingSection(
-          title: inWorkshop.isEmpty ? 'Upcoming' : 'Upcoming & in service',
+          title: inWorkshop.isEmpty
+              ? t.bkUpcoming
+              : '${t.bkUpcoming} & ${t.bkInService.toLowerCase()}',
           count: activeOrdered.length,
           bookings: activeOrdered,
           liveService: liveService,
@@ -150,7 +155,7 @@ class CustomerBookingsTab extends ConsumerWidget {
         ),
       if (historyOrdered.isNotEmpty)
         _BookingSection(
-          title: 'History',
+          title: t.bkHistory,
           count: historyOrdered.length,
           bookings: historyOrdered,
           liveService: liveService,
@@ -181,6 +186,7 @@ class CustomerBookingsTab extends ConsumerWidget {
             ],
             _BookingsHeader(
               subtitle: _subtitle(
+                t,
                 active: activeOrdered.length,
                 inWorkshop: inWorkshop.length,
                 history: historyOrdered.length,
@@ -222,20 +228,24 @@ class CustomerBookingsTab extends ConsumerWidget {
     await ref.read(customerDashboardProvider.notifier).refresh();
   }
 
-  String _subtitle({
+  static String _subtitle(
+    CustomerLocalizations t, {
     required int active,
     required int inWorkshop,
     required int history,
   }) {
+    // Local presentation count copy; the groups themselves come from the
+    // frozen presentation helpers.
     final upcoming = active - inWorkshop;
     final parts = <String>[
-      if (upcoming > 0) upcoming == 1 ? '1 upcoming' : '$upcoming upcoming',
+      if (upcoming > 0)
+        upcoming == 1 ? t.bkUpOne : t.bkUpMany(upcoming),
       if (inWorkshop > 0)
-        inWorkshop == 1 ? '1 in service' : '$inWorkshop in service',
+        inWorkshop == 1 ? t.bkInOne : t.bkInMany(inWorkshop),
       if (history > 0)
-        history == 1 ? '1 past service' : '$history past services',
+        history == 1 ? t.bkPastOne : t.bkPastMany(history),
     ];
-    if (parts.isEmpty) return 'Your appointments and service history.';
+    if (parts.isEmpty) return t.bkSubDefault;
     return parts.join(' \u00b7 ');
   }
 }
@@ -248,6 +258,7 @@ class _BookingsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -260,7 +271,7 @@ class _BookingsHeader extends StatelessWidget {
               child: Semantics(
                 header: true,
                 child: Text(
-                  'Bookings',
+                  t.bkTitle,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -274,7 +285,7 @@ class _BookingsHeader extends StatelessWidget {
               TextButton.icon(
                 onPressed: onBookService,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Book service'),
+                label: Text(t.bkBookCta),
               ),
             ],
           ],
@@ -374,6 +385,7 @@ class _NoBookings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -406,7 +418,7 @@ class _NoBookings extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      hasVehicles ? 'No bookings yet' : 'No vehicle yet',
+                      hasVehicles ? t.bkEmptyTitle : t.bkEmptyVehiclesTitle,
                       style: theme.textTheme.titleSmall?.copyWith(
                         color: colors.onSurface,
                         fontWeight: FontWeight.w800,
@@ -415,10 +427,8 @@ class _NoBookings extends StatelessWidget {
                     const SizedBox(height: AppDimensions.s4),
                     Text(
                       hasVehicles
-                          ? "When you're ready, book a service for your "
-                                'vehicle.'
-                          : 'Bookings need a registered vehicle so the workshop '
-                                'knows what to service.',
+                          ? t.bkEmptyBody
+                          : t.bkEmptyVehiclesBody,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
                         height: 1.4,
@@ -436,7 +446,9 @@ class _NoBookings extends StatelessWidget {
               hasVehicles ? Icons.calendar_month_rounded : Icons.add_rounded,
               size: 18,
             ),
-            label: Text(hasVehicles ? 'Book service' : 'Add your vehicle'),
+            label: Text(
+              hasVehicles ? t.bkBookCta : t.garHeroAdd,
+            ),
           ),
         ],
       ),
@@ -482,8 +494,8 @@ class _FailedBookingsSectionState
     setState(() => _busy.remove(id));
     if (!accepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("We couldn't send this booking. Please try again."),
+        SnackBar(
+          content: Text(context.cx.bkSendFail),
         ),
       );
     }
@@ -493,14 +505,13 @@ class _FailedBookingsSectionState
     final id = booking.operationId;
     if (_busy.contains(id)) return;
 
+    final t = context.cx;
     final confirmed = await showAppConfirmationDialog(
       context,
-      title: 'Remove saved booking?',
-      message:
-          'This removes the booking stored on this device. The workshop has '
-          'not received it.',
-      confirmLabel: 'Remove booking',
-      cancelLabel: 'Keep booking',
+      title: t.bkRemoveTitle,
+      message: t.bkRemoveBody,
+      confirmLabel: t.bkRemoveCta,
+      cancelLabel: t.bkKeepCta,
       icon: Icons.delete_outline_rounded,
       destructive: true,
     );
@@ -523,7 +534,7 @@ class _FailedBookingsSectionState
       children: [
         // Phase 07.1: bespoke header migrated to SectionHeader.
         SectionHeader(
-          title: 'Needs attention',
+          title: context.cx.bkFailedTitle,
           count: widget.bookings.length,
         ),
         DecoratedBox(

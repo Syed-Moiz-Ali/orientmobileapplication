@@ -6,6 +6,7 @@ import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_bookings_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
@@ -85,7 +86,7 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    final t = CustomerLocalizations.of(context)!;
+    final t = context.cx;
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
     final items = _navItems(t);
@@ -155,6 +156,10 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
 }
 
 /// Bell with the real unread badge. Opens the pushed notifications inbox.
+///
+/// Carries the exact announcement contract the home header bell used to own
+/// (`Notifications, N unread`), so the single chrome relocation loses no
+/// accessibility behavior.
 class _BellButton extends StatelessWidget {
   final int unreadCount;
 
@@ -162,13 +167,21 @@ class _BellButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NotificationBell(
-      showBadge: unreadCount > 0,
-      badgeCount: unreadCount > 0 ? unreadCount : null,
-      onPressed: () {
-        HapticFeedback.selectionClick();
-        context.push(AppRoutes.customerNotifications);
-      },
+    final hasUnread = unreadCount > 0;
+    return Semantics(
+      button: true,
+      excludeSemantics: true,
+      label: hasUnread
+          ? 'Notifications, $unreadCount unread'
+          : 'Notifications',
+      child: NotificationBell(
+        showBadge: hasUnread,
+        badgeCount: hasUnread ? unreadCount : null,
+        onPressed: () {
+          HapticFeedback.selectionClick();
+          context.push(AppRoutes.customerNotifications);
+        },
+      ),
     );
   }
 }
@@ -186,7 +199,7 @@ class _ProfileAvatar extends StatelessWidget {
       onTap: onTap,
       customBorder: const CircleBorder(),
       child: Tooltip(
-        message: CustomerLocalizations.of(context)!.garNavProfile,
+        message: context.cx.garNavProfile,
         child: CircleAvatar(
           radius: 17,
           backgroundColor: colors.primary.withValues(alpha: 0.14),

@@ -26,37 +26,41 @@ void main() {
       final remote = _FakeRemote();
       await _pumpForm(tester, remote: remote);
 
+      // Phase 16: stepped flow — one section per step, same requirements.
       expect(find.text('Add vehicle'), findsWidgets);
-      expect(find.text('VEHICLE'), findsOneWidget);
       expect(find.text('REGISTRATION'), findsOneWidget);
-      expect(find.text('DETAILS'), findsOneWidget);
+      expect(find.text('VEHICLE'), findsNothing);
+      expect(find.text('DETAILS'), findsNothing);
 
-      await tester.tap(find.text('Add vehicle').last);
+      await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
+      expect(find.text('Enter the registration plate'), findsOneWidget);
+      expect(remote.created, isEmpty);
 
+      await _fillStep(tester, {0: 'A 12345'});
+      expect(find.text('VEHICLE'), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
       expect(find.text('Enter the make of your vehicle'), findsOneWidget);
-      expect(find.text('Enter the registration plate'), findsOneWidget);
       expect(remote.created, isEmpty);
 
-      await tester.enterText(find.byType(TextField).at(0), 'Toyota');
+      await _fillStep(tester, {0: 'Toyota'});
       await tester.tap(find.text('Add vehicle').last);
       await tester.pumpAndSettle();
-      expect(find.text('Enter the registration plate'), findsOneWidget);
-      expect(remote.created, isEmpty);
+      expect(remote.created, hasLength(1));
     });
 
     testWidgets('sends exactly the documented contract', (tester) async {
       final remote = _FakeRemote();
       await _pumpForm(tester, remote: remote);
 
+      // Step order is plate → vehicle → details (field indices are per step).
+      await _fillStep(tester, {0: 'a 12345'});
+      await _fillStep(tester, {0: 'toyota', 1: 'camry', 2: '2021'});
       await _fill(tester, {
-        0: 'toyota',
-        1: 'camry',
-        2: 'a 12345',
-        3: 'jt2bf22k1w0123456',
-        4: '2021',
-        5: 'white',
-        6: '48,200',
+        0: 'jt2bf22k1w0123456',
+        1: 'white',
+        2: '48,200',
       });
       await tester.tap(find.text('Add vehicle').last);
       await tester.pumpAndSettle();
@@ -95,7 +99,8 @@ void main() {
       final remote = _FakeRemote();
       await _pumpForm(tester, remote: remote);
 
-      await _fill(tester, {0: 'Toyota', 2: 'A 12345'});
+      await _fillStep(tester, {0: 'A 12345'});
+      await _fillStep(tester, {0: 'Toyota'});
       await tester.tap(find.text('Add vehicle').last);
       await tester.pumpAndSettle();
 
@@ -105,8 +110,9 @@ void main() {
 
       // An impossible year is rejected rather than saved.
       await _pumpForm(tester, remote: remote);
-      await _fill(tester, {0: 'Toyota', 2: 'A 12345', 4: '1899'});
-      await tester.tap(find.text('Add vehicle').last);
+      await _fillStep(tester, {0: 'A 12345'});
+      await _fill(tester, {0: 'Toyota', 2: '1899'});
+      await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Enter a year between'), findsOneWidget);
       expect(remote.created, hasLength(1));
@@ -116,7 +122,8 @@ void main() {
       final remote = _FakeRemote();
       await _pumpForm(tester, remote: remote);
 
-      await _fill(tester, {0: 'Nissan', 2: 'B 54321'});
+      await _fillStep(tester, {0: 'B 54321'});
+      await _fillStep(tester, {0: 'Nissan'});
       await tester.tap(find.text('Add vehicle').last);
       await tester.pumpAndSettle();
 
@@ -132,11 +139,12 @@ void main() {
       final remote = _FakeRemote(pending: true);
       await _pumpForm(tester, remote: remote);
 
-      await _fill(tester, {0: 'Toyota', 2: 'A 12345'});
+      await _fillStep(tester, {0: 'A 12345'});
+      await _fillStep(tester, {0: 'Toyota'});
       await tester.tap(find.text('Add vehicle').last);
       await tester.pump();
-      expect(find.text('Saving…'), findsOneWidget);
-      await tester.tap(find.text('Saving…'), warnIfMissed: false);
+      // The shared primary button swaps its label for a spinner while busy.
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
       await tester.pump();
       expect(remote.created, hasLength(1));
 
@@ -145,9 +153,10 @@ void main() {
 
       // The API's own reason is shown; nothing is swallowed.
       expect(find.text('The workshop rejected this vehicle.'), findsOneWidget);
-      // Every value the customer typed is still there.
+      // Every value the customer typed is still there (step back to see it).
+      await tester.tap(find.text('Back'));
+      await tester.pumpAndSettle();
       expect(find.text('Toyota'), findsWidgets);
-      expect(find.text('A 12345'), findsWidgets);
     });
 
     testWidgets('never claims a save the device could not store', (
@@ -156,7 +165,8 @@ void main() {
       final remote = _FakeRemote(offline: true);
       await _pumpForm(tester, remote: remote);
 
-      await _fill(tester, {0: 'Toyota', 2: 'A 12345'});
+      await _fillStep(tester, {0: 'A 12345'});
+      await _fillStep(tester, {0: 'Toyota'});
       await tester.tap(find.text('Add vehicle').last);
       await tester.pumpAndSettle();
 
@@ -178,10 +188,14 @@ void main() {
       await _pumpForm(tester, editing: _camry);
 
       expect(find.text('Edit vehicle'), findsWidgets);
+      expect(find.text('A 12345'), findsWidgets);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
       expect(find.text('Toyota'), findsWidgets);
       expect(find.text('Camry'), findsWidgets);
-      expect(find.text('A 12345'), findsWidgets);
       expect(find.text('2021'), findsWidgets);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
       expect(find.text('White'), findsWidgets);
       expect(find.text('48,200'), findsWidgets);
     });
@@ -189,10 +203,14 @@ void main() {
     testWidgets('represents unknown values honestly', (tester) async {
       await _pumpForm(tester, editing: _unknownValues);
 
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
       // No fabricated current year and no 0 km appear in the form.
-      final year = tester.widget<TextField>(find.byType(TextField).at(4));
-      final mileage = tester.widget<TextField>(find.byType(TextField).at(6));
+      final year = tester.widget<TextField>(find.byType(TextField).at(2));
       expect(year.controller?.text ?? '', '');
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      final mileage = tester.widget<TextField>(find.byType(TextField).at(2));
       expect(mileage.controller?.text ?? '', '');
     });
 
@@ -202,7 +220,11 @@ void main() {
       final remote = _FakeRemote();
       await _pumpForm(tester, editing: _camry, remote: remote);
 
-      await tester.enterText(find.byType(TextField).at(5), 'Silver');
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(1), 'Silver');
       await tester.tap(find.text('Save changes'));
       await tester.pumpAndSettle();
 
@@ -379,6 +401,16 @@ Future<void> _fill(WidgetTester tester, Map<int, String> values) async {
   for (final entry in values.entries) {
     await tester.enterText(find.byType(TextField).at(entry.key), entry.value);
   }
+  await tester.pumpAndSettle();
+}
+
+/// Fills the visible step's fields by index, then advances with Continue.
+Future<void> _fillStep(
+  WidgetTester tester,
+  Map<int, String> values,
+) async {
+  await _fill(tester, values);
+  await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
 }
 

@@ -54,25 +54,23 @@ class _CustomerGarageCarouselState extends State<CustomerGarageCarousel> {
     final vehicles = widget.vehicles;
     if (vehicles.isEmpty) return const SizedBox.shrink();
 
-    final wide = context.adaptive.pick(
-      compact: false,
-      medium: false,
-      expanded: true,
-      large: true,
-    );
-    if (wide) {
-      // Wide canvases grid the cards: a 16:10 band of a 900px card would
-      // tower half a viewport, so swipe stays a compact idiom.
+    // Any non-compact canvas grids the cards: a 16:10 band of a wide card
+    // would tower half a viewport inside a fixed-height pager, so swipe
+    // stays a compact idiom.
+    if (!context.isCompact) {
       return GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: vehicles.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: context.adaptive.isLarge ? 3 : 2,
+          // Two-up on tablets keeps cards readable; three-up beyond that
+          // keeps the 16:10 band from towering (audited 1280px at 1.3x).
+          crossAxisCount: context.adaptive.isMedium ? 2 : 3,
           crossAxisSpacing: AppDimensions.s16,
           mainAxisSpacing: AppDimensions.s16,
-          // Art band plus two text lines and the plate row at 1.3x.
-          mainAxisExtent: 360,
+          // Art band plus two text lines and the plate row at 1.3x on
+          // the widest cells (audited 1280px).
+          mainAxisExtent: 384,
         ),
         itemBuilder: (context, index) =>
             _card(context, vehicles[index]),
@@ -169,8 +167,9 @@ class _VehicleCard extends StatelessWidget {
         : vehicle.displayName.trim();
     final plate =
         CustomerVehiclePresentation.plateLabel(vehicle.plateNumber);
-    // Year · mileage · colour: the same honest order the manage rows use,
-    // so one vehicle never shows two different spec lines.
+    // Year · mileage · colour: the hero order pinned by the home contract
+    // (manage rows use the shared specs() order instead — both honest,
+    // each matching its own surface).
     final specs = <String>[
       if (vehicle.year > 0) '${vehicle.year}',
       if (CustomerVehiclePresentation.mileageLabel(vehicle.mileage).isNotEmpty)
@@ -193,6 +192,8 @@ class _VehicleCard extends StatelessWidget {
                         : null),
             ),
       title: name,
+      // Mixed word/number specs follow the ambient direction (same as the
+      // staff/owner surfaces); pure Latin identifiers stay LTR-locked.
       meta: specs.isEmpty ? null : specs.join(' · '),
       footer: plate.isEmpty
           ? null

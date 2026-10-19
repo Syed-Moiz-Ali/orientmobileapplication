@@ -2,6 +2,7 @@ import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
@@ -41,6 +42,7 @@ class CustomerProfileTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.cx;
     final dash = ref.watch(customerDashboardProvider);
     final profile = dash.profile;
     final auth = ref.watch(authNotifierProvider);
@@ -80,18 +82,18 @@ class CustomerProfileTab extends ConsumerWidget {
     Widget? notice() => profile != null
         ? null
         : CustomerNoticePanel(
-            message: "We couldn't load your account.",
-            actionLabel: 'Retry',
+            message: t.pfLoadFail,
+            actionLabel: t.pfRetry,
             onAction: refresh,
           );
 
     Widget? identityBlock({required bool prominent}) => profile == null
         ? null
         : _IdentityBlock(
-            name: _displayName(profile),
+            name: _displayName(context, profile),
             reference: profile.memberId.trim(),
             initials: _initials(profile),
-            summary: _summary(dash),
+            summary: _summary(context, dash),
             prominent: prominent,
           );
 
@@ -100,14 +102,14 @@ class CustomerProfileTab extends ConsumerWidget {
       if (email.isNotEmpty)
         _InfoRow(
           icon: Icons.mail_outline_rounded,
-          label: 'Email',
+          label: t.pfEmail,
           value: email,
           padding: insidePanel ? _panelRowPadding : null,
         ),
       if (phone.isNotEmpty)
         _InfoRow(
           icon: Icons.phone_outlined,
-          label: 'Phone',
+          label: t.pfPhone,
           value: phone,
           padding: insidePanel ? _panelRowPadding : null,
         ),
@@ -177,7 +179,7 @@ class CustomerProfileTab extends ConsumerWidget {
                     notice: notice(),
                     contact: contactRows(insidePanel: true),
                     groups: _groups(context, ref),
-                    session: _session(signOut()),
+                    session: _session(context, signOut()),
                   )
                 else ...[
                   if (notice() case final notice?) ...[
@@ -189,7 +191,7 @@ class CustomerProfileTab extends ConsumerWidget {
                     if (contactRows(insidePanel: false) case final contact
                         when contact.isNotEmpty) ...[
                       const SizedBox(height: AppDimensions.s20),
-                      const _SectionLabel('Contact'),
+                      _SectionLabel(context.cx.pfContact),
                       const SizedBox(height: AppDimensions.s8),
                       _Group(children: contact),
                     ],
@@ -210,62 +212,63 @@ class CustomerProfileTab extends ConsumerWidget {
 
   /// The account actions and about group, using only routes that already exist.
   Widget _groups(BuildContext context, WidgetRef ref) {
+    final t = context.cx;
     final vehicles = ref.watch(customerDashboardProvider).vehicles.length;
     // Phase 02: minimal language entry point. The row uses this screen's own
     // action grammar and opens the shared language picker.
-    final t = SharedCoreL10n.of(context);
+    final shared = SharedCoreL10n.of(context);
     final selectedLocale =
         ref.watch(localeProvider) ?? Localizations.localeOf(context);
     final languageLabel = selectedLocale.languageCode == 'ar'
-        ? t.commonArabic
-        : t.commonEnglish;
+        ? shared.commonArabic
+        : shared.commonEnglish;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionLabel('Account'),
+        _SectionLabel(t.pfAccount),
         const SizedBox(height: AppDimensions.s8),
         _Group(
           children: [
             _ActionRow(
               icon: Icons.directions_car_outlined,
-              title: 'Vehicles',
-              subtitle: 'Cars registered to your account',
-              trailingText: vehicles == 0 ? 'None' : '$vehicles',
+              title: t.pfVehicles,
+              subtitle: t.pfVehiclesHint,
+              trailingText: vehicles == 0 ? t.pfVehiclesNone : '$vehicles',
               onTap: () => ref
                   .read(customerDashboardProvider.notifier)
                   .selectDestination(CustomerDestination.vehicles),
             ),
             _ActionRow(
               icon: Icons.car_crash_outlined,
-              title: 'Roadside assistance',
-              subtitle: 'Request help when your vehicle breaks down',
+              title: t.pfSos,
+              subtitle: t.pfSosHint,
               onTap: () => context.push(AppRoutes.customerBreakdownHelp),
             ),
             _ActionRow(
               icon: Icons.lock_outline_rounded,
-              title: 'Reset password',
-              subtitle: 'Verify with a one-time code, then set a new password',
+              title: t.pfPassword,
+              subtitle: t.pfPasswordHint,
               onTap: () => context.push(AppRoutes.forgotPassword),
             ),
           ],
         ),
         const SizedBox(height: AppDimensions.s20),
-        const _SectionLabel('About'),
+        _SectionLabel(t.pfAbout),
         const SizedBox(height: AppDimensions.s8),
         _Group(
           children: [
             _ActionRow(
               icon: Icons.language_rounded,
-              title: t.commonLanguage,
+              title: shared.commonLanguage,
               subtitle: languageLabel,
               trailingText: languageLabel,
               onTap: () => showLanguagePickerSheet(context),
             ),
             _ActionRow(
               icon: Icons.article_outlined,
-              title: 'Open source licences',
-              subtitle: 'Software used by this app',
+              title: t.pfLicences,
+              subtitle: t.pfLicencesHint,
               onTap: () => showLicensePage(
                 context: context,
                 applicationName: 'Orient Customer App',
@@ -277,10 +280,10 @@ class CustomerProfileTab extends ConsumerWidget {
     );
   }
 
-  Widget _session(Widget signOut) => Column(
+  Widget _session(BuildContext context, Widget signOut) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const _SectionLabel('Session'),
+      _SectionLabel(context.cx.pfSession),
       const SizedBox(height: AppDimensions.s8),
       signOut,
     ],
@@ -306,12 +309,12 @@ bool _useWideComposition(BuildContext context) {
 /// The account's own name, or a neutral label when the server returned none.
 ///
 /// A missing name is never replaced by a plausible-looking account value.
-String _displayName(CustomerEntity profile) {
+String _displayName(BuildContext context, CustomerEntity profile) {
   final name = profile.name.trim();
   if (name.isNotEmpty) return name;
   final first = profile.firstName.trim();
   if (first.isNotEmpty) return first;
-  return 'Your account';
+  return context.cx.pfAccountFallback;
 }
 
 /// Initials the server derived, or derived locally from a real name.
@@ -335,17 +338,19 @@ String _initials(CustomerEntity profile) {
 }
 
 /// A compact, real account summary: registered vehicles and live service.
-String _summary(CustomerDashboardState dash) {
+/// The double-spaced middle dot join is preserved exactly (pinned by tests).
+String _summary(BuildContext context, CustomerDashboardState dash) {
+  final t = context.cx;
   final count = dash.vehicles.length;
   final vehicles = switch (count) {
-    0 => 'No vehicles yet',
-    1 => '1 vehicle',
-    _ => '$count vehicles',
+    0 => t.pfSumNone,
+    1 => t.pfSumOne,
+    _ => t.pfSumMany(count),
   };
   if (!CustomerServiceTracking.isLiveService(dash.activeService)) {
     return vehicles;
   }
-  return '$vehicles  •  Service in progress';
+  return '$vehicles  •  ${t.pfSumLive}';
 }
 
 /// The wide composition: one full-height account panel beside the account
@@ -412,7 +417,7 @@ class _WideWorkspace extends StatelessWidget {
                                   color: colors.primary.withValues(alpha: 0.18),
                                 ),
                                 const SizedBox(height: AppDimensions.s12),
-                                const _SectionLabel('Contact'),
+                      _SectionLabel(context.cx.pfContact),
                                 const SizedBox(height: AppDimensions.s6),
                                 for (final row in contact) row,
                               ],
@@ -448,7 +453,7 @@ class _PageTitle extends StatelessWidget {
     return Semantics(
       header: true,
       child: Text(
-        'Profile',
+        context.cx.pfTitle,
         style: theme.textTheme.headlineSmall?.copyWith(
           color: theme.colorScheme.onSurface,
           fontWeight: FontWeight.w800,

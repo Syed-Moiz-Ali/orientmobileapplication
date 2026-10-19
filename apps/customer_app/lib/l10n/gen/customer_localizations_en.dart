@@ -111,6 +111,15 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get garRecentTitle => 'Recent activity';
 
   @override
+  String get garLoadTitle => 'We couldn\'t load your information';
+
+  @override
+  String get garLoadBody => 'Please try again in a moment.';
+
+  @override
+  String get garRetry => 'Retry';
+
+  @override
   String get garRecentAll => 'All bookings';
 
   @override
@@ -285,6 +294,9 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get vhRemove => 'Remove';
 
   @override
+  String get vhRemoveNoName => 'Remove this vehicle?';
+
+  @override
   String vhRemoveTitle(String name) {
     return 'Remove $name?';
   }
@@ -315,7 +327,7 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get vhSyncFail => 'Vehicle couldn\'t finish saving.';
 
   @override
-  String get vhDeleteFailTitle => 'We couldn\'t remove a vehicle.';
+  String get vhDeleteFailTitle => 'We couldn\'t remove this vehicle.';
 
   @override
   String get vhDeleteFailBody =>
@@ -358,6 +370,15 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get avStepDetails => 'Details';
 
   @override
+  String get avEyebrowReg => 'REGISTRATION';
+
+  @override
+  String get avEyebrowVeh => 'VEHICLE';
+
+  @override
+  String get avEyebrowDet => 'DETAILS';
+
+  @override
   String get avPlateTitle => 'What is the plate?';
 
   @override
@@ -371,7 +392,7 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get avPlateHint => 'A 12345';
 
   @override
-  String get avPlateError => 'Enter the registration plate.';
+  String get avPlateError => 'Enter the registration plate';
 
   @override
   String get avVehicleTitle => 'Which car is it?';
@@ -386,7 +407,7 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get avMakeHint => 'Toyota';
 
   @override
-  String get avMakeError => 'Enter the make of your vehicle.';
+  String get avMakeError => 'Enter the make of your vehicle';
 
   @override
   String get avModelLabel => 'Model (optional)';
@@ -402,7 +423,7 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
 
   @override
   String avYearError(int max) {
-    return 'Enter a year between 1950 and $max.';
+    return 'Enter a year between 1950 and $max';
   }
 
   @override
@@ -447,6 +468,14 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
 
   @override
   String get avSaving => 'Saving…';
+
+  @override
+  String get avNoteKept =>
+      'Service dates already on record are left untouched here.';
+
+  @override
+  String get avNoteFresh =>
+      'This screen never changes the service dates on record.';
 
   @override
   String get avSaveFailFallback =>
@@ -534,6 +563,9 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get ntMarkAll => 'Mark all read';
 
   @override
+  String get ntAllRead => 'All read';
+
+  @override
   String ntUnread(int count) {
     return '$count unread';
   }
@@ -574,4 +606,25 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
 
   @override
   String get ntGroupGeneral => 'General';
+
+  @override
+  String get ntTypeBooking => 'Booking';
+
+  @override
+  String get ntTypeApproval => 'Approval';
+
+  @override
+  String get ntTypeService => 'Service';
+
+  @override
+  String get ntTypeInvoice => 'Invoice';
+
+  @override
+  String get ntTypePayment => 'Payment';
+
+  @override
+  String get ntTypeBreakdown => 'Breakdown';
+
+  @override
+  String get ntTypeUpdate => 'Update';
 }

@@ -299,6 +299,24 @@ abstract class CustomerLocalizations {
   /// **'Recent activity'**
   String get garRecentTitle;
 
+  /// Load error title
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your information'**
+  String get garLoadTitle;
+
+  /// Load error body
+  ///
+  /// In en, this message translates to:
+  /// **'Please try again in a moment.'**
+  String get garLoadBody;
+
+  /// Load retry CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get garRetry;
+
   /// See-all bookings
   ///
   /// In en, this message translates to:
@@ -611,6 +629,12 @@ abstract class CustomerLocalizations {
   /// **'Remove'**
   String get vhRemove;
 
+  /// Remove title without name
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this vehicle?'**
+  String get vhRemoveNoName;
+
   /// Remove confirm title
   ///
   /// In en, this message translates to:
@@ -662,7 +686,7 @@ abstract class CustomerLocalizations {
   /// Recovery title
   ///
   /// In en, this message translates to:
-  /// **'We couldn\'t remove a vehicle.'**
+  /// **'We couldn\'t remove this vehicle.'**
   String get vhDeleteFailTitle;
 
   /// Recovery body
@@ -743,6 +767,24 @@ abstract class CustomerLocalizations {
   /// **'Details'**
   String get avStepDetails;
 
+  /// Step eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'REGISTRATION'**
+  String get avEyebrowReg;
+
+  /// Step eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'VEHICLE'**
+  String get avEyebrowVeh;
+
+  /// Step eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'DETAILS'**
+  String get avEyebrowDet;
+
   /// Step 1 title
   ///
   /// In en, this message translates to:
@@ -770,7 +812,7 @@ abstract class CustomerLocalizations {
   /// Plate error
   ///
   /// In en, this message translates to:
-  /// **'Enter the registration plate.'**
+  /// **'Enter the registration plate'**
   String get avPlateError;
 
   /// Step 2 title
@@ -800,7 +842,7 @@ abstract class CustomerLocalizations {
   /// Make error
   ///
   /// In en, this message translates to:
-  /// **'Enter the make of your vehicle.'**
+  /// **'Enter the make of your vehicle'**
   String get avMakeError;
 
   /// Model field
@@ -830,7 +872,7 @@ abstract class CustomerLocalizations {
   /// Year error
   ///
   /// In en, this message translates to:
-  /// **'Enter a year between 1950 and {max}.'**
+  /// **'Enter a year between 1950 and {max}'**
   String avYearError(int max);
 
   /// Step 3 title
@@ -916,6 +958,18 @@ abstract class CustomerLocalizations {
   /// In en, this message translates to:
   /// **'Saving…'**
   String get avSaving;
+
+  /// Workshop-data note
+  ///
+  /// In en, this message translates to:
+  /// **'Service dates already on record are left untouched here.'**
+  String get avNoteKept;
+
+  /// Fresh-record note
+  ///
+  /// In en, this message translates to:
+  /// **'This screen never changes the service dates on record.'**
+  String get avNoteFresh;
 
   /// Save fallback error
   ///
@@ -1079,6 +1133,12 @@ abstract class CustomerLocalizations {
   /// **'Mark all read'**
   String get ntMarkAll;
 
+  /// All-read line
+  ///
+  /// In en, this message translates to:
+  /// **'All read'**
+  String get ntAllRead;
+
   /// Unread line
   ///
   /// In en, this message translates to:
@@ -1156,6 +1216,48 @@ abstract class CustomerLocalizations {
   /// In en, this message translates to:
   /// **'General'**
   String get ntGroupGeneral;
+
+  /// Row category
+  ///
+  /// In en, this message translates to:
+  /// **'Booking'**
+  String get ntTypeBooking;
+
+  /// Row category
+  ///
+  /// In en, this message translates to:
+  /// **'Approval'**
+  String get ntTypeApproval;
+
+  /// Row category
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get ntTypeService;
+
+  /// Row category
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get ntTypeInvoice;
+
+  /// Row category
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get ntTypePayment;
+
+  /// Row category
+  ///
+  /// In en, this message translates to:
+  /// **'Breakdown'**
+  String get ntTypeBreakdown;
+
+  /// Row category
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get ntTypeUpdate;
 }
 
 class _CustomerLocalizationsDelegate

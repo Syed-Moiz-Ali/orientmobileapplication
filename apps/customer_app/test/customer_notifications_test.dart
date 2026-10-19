@@ -19,7 +19,7 @@ import 'package:customer_app/features/customer/presentation/customer_notificatio
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_notification_presentation.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_scaffold.dart';
 // Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 
 /// The inbox is truthful only if three things hold: read state really reaches
@@ -1029,8 +1029,10 @@ Future<void> _pumpRouter(
     initialLocation: initialLocation,
     routes: [
       GoRoute(
+        // Phase 16: the badge lives in the shell bar (the tab keeps the
+        // greeting), so badge tests pump the scaffold on the home tab.
         path: '/',
-        builder: (_, __) => const Scaffold(body: CustomerHomeTab()),
+        builder: (_, __) => const CustomerScaffold(),
       ),
       GoRoute(
         path: AppRoutes.customerNotifications,

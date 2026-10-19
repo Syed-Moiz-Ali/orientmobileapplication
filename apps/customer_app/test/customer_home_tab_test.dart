@@ -255,16 +255,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is Semantics &&
-              widget.properties.label == 'Notifications, 1 unread',
-        ),
-        findsOneWidget,
-      );
+      // Phase 16 recomposition: one bell in the shell bar with the real
+      // unread badge (the tab keeps the greeting only).
+      expect(find.byType(NotificationBell), findsOneWidget);
+      expect(find.text('1'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Notifications'));
+      await tester.tap(find.byType(NotificationBell));
       await tester.pumpAndSettle();
       expect(find.text('NOTIFICATIONS'), findsOneWidget);
     });

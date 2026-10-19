@@ -9,10 +9,10 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   CustomerLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'أورينت — العميل';
+  String get appTitle => 'أورينت — العملاء';
 
   @override
-  String get loginAppName => 'تطبيق أورينت — العميل';
+  String get loginAppName => 'تطبيق أورينت — العملاء';
 
   @override
   String get loginAppPurpose =>
@@ -23,7 +23,7 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
 
   @override
   String get authSecurityNotice =>
-      'بتسجيل الدخول، فإنك توافق على شروط خدمة تطبيق أورينت — العميل وسياسة الخصوصية.';
+      'بتسجيل الدخول، فإنك توافق على شروط خدمة تطبيق أورينت — العملاء وسياسة الخصوصية.';
 
   @override
   String get garNavHome => 'الرئيسية';
@@ -109,6 +109,15 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
 
   @override
   String get garRecentTitle => 'النشاط الأخير';
+
+  @override
+  String get garLoadTitle => 'تعذر تحميل معلوماتك.';
+
+  @override
+  String get garLoadBody => 'حاول مرة أخرى بعد قليل.';
+
+  @override
+  String get garRetry => 'إعادة المحاولة';
 
   @override
   String get garRecentAll => 'كل الحجوزات';
@@ -284,6 +293,9 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get vhRemove => 'حذف';
 
   @override
+  String get vhRemoveNoName => 'حذف هذه المركبة؟';
+
+  @override
   String vhRemoveTitle(String name) {
     return 'حذف $name؟';
   }
@@ -312,7 +324,7 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get vhSyncFail => 'تعذر إتمام حفظ المركبة.';
 
   @override
-  String get vhDeleteFailTitle => 'تعذر حذف مركبة.';
+  String get vhDeleteFailTitle => 'تعذر حذف هذه المركبة.';
 
   @override
   String get vhDeleteFailBody => 'المركبة ما زالت في حساب الورشة.';
@@ -354,6 +366,15 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get avStepDetails => 'التفاصيل';
 
   @override
+  String get avEyebrowReg => 'التسجيل';
+
+  @override
+  String get avEyebrowVeh => 'المركبة';
+
+  @override
+  String get avEyebrowDet => 'التفاصيل';
+
+  @override
   String get avPlateTitle => 'ما رقم اللوحة؟';
 
   @override
@@ -366,7 +387,7 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get avPlateHint => 'A 12345';
 
   @override
-  String get avPlateError => 'أدخل لوحة التسجيل.';
+  String get avPlateError => 'أدخل لوحة التسجيل';
 
   @override
   String get avVehicleTitle => 'أي سيارة هي؟';
@@ -381,7 +402,7 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get avMakeHint => 'تويوتا';
 
   @override
-  String get avMakeError => 'أدخل صنع مركبتك.';
+  String get avMakeError => 'أدخل صنع مركبتك';
 
   @override
   String get avModelLabel => 'الطراز (اختياري)';
@@ -397,7 +418,7 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
 
   @override
   String avYearError(int max) {
-    return 'أدخل سنة بين 1950 و$max.';
+    return 'أدخل سنة بين 1950 و$max';
   }
 
   @override
@@ -442,6 +463,12 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
 
   @override
   String get avSaving => 'جارٍ الحفظ…';
+
+  @override
+  String get avNoteKept => 'تواريخ الصيانة المسجلة تبقى كما هي هنا.';
+
+  @override
+  String get avNoteFresh => 'هذه الشاشة لا تغيّر تواريخ الصيانة المسجلة أبدًا.';
 
   @override
   String get avSaveFailFallback => 'تعذر حفظ هذه المركبة. حاول مرة أخرى.';
@@ -527,6 +554,9 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get ntMarkAll => 'تعليم الكل كمقروء';
 
   @override
+  String get ntAllRead => 'الكل مقروء';
+
+  @override
   String ntUnread(int count) {
     return '$count غير مقروءة';
   }
@@ -567,4 +597,25 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
 
   @override
   String get ntGroupGeneral => 'عامة';
+
+  @override
+  String get ntTypeBooking => 'حجز';
+
+  @override
+  String get ntTypeApproval => 'موافقة';
+
+  @override
+  String get ntTypeService => 'صيانة';
+
+  @override
+  String get ntTypeInvoice => 'فاتورة';
+
+  @override
+  String get ntTypePayment => 'دفعة';
+
+  @override
+  String get ntTypeBreakdown => 'عطل';
+
+  @override
+  String get ntTypeUpdate => 'تحديث';
 }

@@ -1,5 +1,6 @@
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_notification_presentation.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
@@ -57,16 +58,19 @@ class _CustomerNotificationsViewState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.cx;
     final state = ref.watch(customerDashboardProvider);
     final notifications = state.notifications;
     final unread = state.unreadCount;
     final firstLoadFailed =
         notifications.isEmpty && state.loadError.isNotEmpty && !state.isLoading;
 
+    final groups = _grouped(context, notifications);
+
     return Scaffold(
       // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
       // (same title + back behavior; divider now drawn by the bar itself).
-      appBar: const WorkspaceAppBar(title: 'Notifications', showBack: true),
+      appBar: WorkspaceAppBar(title: t.ntTitle, showBack: true),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -113,9 +117,8 @@ class _CustomerNotificationsViewState
                       if (_markAllFailed) ...[
                         const SizedBox(height: AppDimensions.s12),
                         CustomerNoticePanel(
-                          message:
-                              "We couldn't mark your notifications as read.",
-                          actionLabel: 'Retry',
+                          message: t.ntMarkFail,
+                          actionLabel: t.ntRetry,
                           onAction: _markAllRead,
                         ),
                       ],
@@ -124,25 +127,38 @@ class _CustomerNotificationsViewState
                         child: RefreshIndicator(
                           onRefresh: _refresh,
                           color: theme.colorScheme.primary,
-                          child: ListView.separated(
+                          child: ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.only(
                               bottom: AppDimensions.s24,
                             ),
-                            itemCount: notifications.length,
-                            separatorBuilder: (context, index) => Divider(
-                              height: 1,
-                              color: theme.colorScheme.outlineVariant,
-                            ),
-                            itemBuilder: (context, index) {
-                              final notification = notifications[index];
-                              return _NotificationRow(
-                                notification: notification,
-                                first: index == 0,
-                                last: index == notifications.length - 1,
-                                onTap: () => _open(notification),
-                              );
-                            },
+                            children: [
+                              for (var g = 0;
+                                  g < groups.length;
+                                  g++) ...[
+                                _GroupSection(
+                                  title: groups[g].title,
+                                  children: [
+                                    for (var i = 0;
+                                        i < groups[g].items.length;
+                                        i++)
+                                      _NotificationRow(
+                                        notification:
+                                            groups[g].items[i],
+                                        first: i == 0,
+                                        last: i ==
+                                            groups[g].items.length - 1,
+                                        onTap: () => _open(
+                                          groups[g].items[i],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                if (g < groups.length - 1)
+                                  const SizedBox(
+                                      height: AppDimensions.s20),
+                              ],
+                            ],
                           ),
                         ),
                       ),
@@ -158,6 +174,76 @@ class _CustomerNotificationsViewState
   }
 }
 
+/// Groups the inbox the way customers triage it: service progress first,
+/// then approvals, invoices, and everything else. Group membership derives
+/// from the frozen category mapping, so an unknown backend type lands in
+/// General instead of a wrong group.
+class _Group {
+  final String title;
+  final List<CustomerNotificationEntity> items;
+
+  const _Group({required this.title, required this.items});
+}
+
+List<_Group> _grouped(
+  BuildContext context,
+  List<CustomerNotificationEntity> notifications,
+) {
+  final t = context.cx;
+  final buckets = <String, List<CustomerNotificationEntity>>{};
+  final order = <String>[];
+  for (final n in notifications) {
+    final k = _NotificationRow.groupOf(context, n.type);
+    if (!buckets.containsKey(k)) {
+      buckets[k] = [];
+      order.add(k);
+    }
+    buckets[k]!.add(n);
+  }
+  // Stable group order: service, approvals, invoices, general.
+  order.sort((a, b) {
+    int r(String k) {
+      if (k == t.ntGroupService) return 0;
+      if (k == t.ntGroupApprovals) return 1;
+      if (k == t.ntGroupInvoices) return 2;
+      return 3;
+    }
+
+    return r(a).compareTo(r(b));
+  });
+  return [for (final k in order) _Group(title: k, items: buckets[k]!)];
+}
+
+class _GroupSection extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _GroupSection({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          header: true,
+          child: SectionHeader(title: title),
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius:
+                BorderRadius.circular(AppDimensions.radiusPanel),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+}
+
 /// A compact line that gives the page its structure: how much is new, and the
 /// one bulk action, which appears only when there is something to mark.
 class _SummaryRow extends StatelessWidget {
@@ -168,6 +254,7 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -175,11 +262,7 @@ class _SummaryRow extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            unread == 0
-                ? 'All read'
-                : unread == 1
-                ? '1 unread'
-                : '$unread unread',
+            unread == 0 ? t.ntAllRead : t.ntUnread(unread),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: unread == 0 ? colors.onSurfaceVariant : colors.onSurface,
               fontWeight: FontWeight.w700,
@@ -189,7 +272,7 @@ class _SummaryRow extends StatelessWidget {
         if (unread > 0)
           TextButton(
             onPressed: () => onMarkAllRead(),
-            child: const Text('Mark all read'),
+            child: Text(t.ntMarkAll),
           ),
       ],
     );
@@ -211,8 +294,45 @@ class _NotificationRow extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Group display name for one category (same mapping as the sections).
+  static String groupOf(BuildContext context, NotifType type) {
+    final t = context.cx;
+    return switch (type) {
+      NotifType.bookingReceived ||
+      NotifType.bookingAssigned ||
+      NotifType.completionApproved ||
+      NotifType.breakdownAssigned =>
+        t.ntGroupService,
+      NotifType.approvalNeeded ||
+      NotifType.estimateApproved ||
+      NotifType.estimateRejected =>
+        t.ntGroupApprovals,
+      NotifType.invoiceReady || NotifType.paymentReceived =>
+        t.ntGroupInvoices,
+      NotifType.general => t.ntGroupGeneral,
+    };
+  }
+
+  /// Row category name. Matches the frozen type vocabulary exactly in
+  /// English (pinned by widget tests); localized elsewhere.
+  static String labelOf(BuildContext context, NotifType type) {
+    final t = context.cx;
+    return switch (type) {
+      NotifType.bookingReceived || NotifType.bookingAssigned => t.ntTypeBooking,
+      NotifType.approvalNeeded => t.ntTypeApproval,
+      NotifType.completionApproved => t.ntTypeService,
+      NotifType.invoiceReady => t.ntTypeInvoice,
+      NotifType.paymentReceived => t.ntTypePayment,
+      NotifType.estimateApproved || NotifType.estimateRejected =>
+        t.ntTypeApproval,
+      NotifType.breakdownAssigned => t.ntTypeBreakdown,
+      NotifType.general => t.ntTypeUpdate,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final unread = !notification.isRead;
@@ -232,8 +352,8 @@ class _NotificationRow extends StatelessWidget {
     return Semantics(
       button: destination != null,
       label: [
-        unread ? 'Unread' : 'Read',
-        CustomerNotificationPresentation.label(notification.type),
+        unread ? t.ntUnreadWord : t.ntReadWord,
+        labelOf(context, notification.type),
         notification.title,
         notification.body,
         notification.time,
@@ -316,9 +436,7 @@ class _NotificationRow extends StatelessWidget {
                         const SizedBox(height: AppDimensions.s6),
                         Text(
                           [
-                            CustomerNotificationPresentation.label(
-                              notification.type,
-                            ),
+                            labelOf(context, notification.type),
                             notification.time,
                           ].where((part) => part.trim().isNotEmpty).join(' · '),
                           maxLines: 1,
@@ -360,6 +478,7 @@ class _AllCaughtUp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -376,7 +495,7 @@ class _AllCaughtUp extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.s12),
             Text(
-              "You're all caught up",
+              t.ntCaughtUp,
               textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: colors.onSurface,
@@ -385,8 +504,7 @@ class _AllCaughtUp extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.s6),
             Text(
-              'Updates about your bookings, estimates and service progress '
-              'will appear here.',
+              t.ntCaughtUpBody,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colors.onSurfaceVariant,
@@ -407,6 +525,7 @@ class _LoadFailure extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -423,7 +542,7 @@ class _LoadFailure extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.s12),
             Text(
-              "We couldn't load your notifications.",
+              t.ntLoadTitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: colors.onSurface,
@@ -432,7 +551,7 @@ class _LoadFailure extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.s6),
             Text(
-              'Please try again in a moment.',
+              t.ntLoadBody,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colors.onSurfaceVariant,
@@ -441,7 +560,7 @@ class _LoadFailure extends StatelessWidget {
             const SizedBox(height: AppDimensions.s16),
             FilledButton(
               onPressed: () => onRetry(),
-              child: const Text('Retry'),
+              child: Text(t.ntRetry),
             ),
           ],
         ),

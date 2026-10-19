@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
+
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
@@ -197,14 +199,15 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
     if (_removingId.isNotEmpty) return;
     final name = vehicle.displayName.trim();
     final plate = CustomerVehiclePresentation.plateLabel(vehicle.plateNumber);
+    final t = context.cx;
     final confirmed = await showAppConfirmationDialog(
       context,
-      title: 'Remove ${name.isEmpty ? 'this vehicle' : name}?',
+      title: name.isEmpty ? t.vhRemoveNoName : t.vhRemoveTitle(name),
       message: plate.isEmpty
-          ? 'This vehicle will no longer appear in your vehicles.'
-          : '$plate will be removed from your vehicles.',
-      confirmLabel: 'Remove vehicle',
-      cancelLabel: 'Keep vehicle',
+          ? t.vhRemoveBodyNoPlate
+          : t.vhRemoveBody(plate),
+      confirmLabel: t.vhRemoveCta,
+      cancelLabel: t.vhKeepCta,
       icon: Icons.delete_outline_rounded,
       destructive: true,
     );
@@ -224,14 +227,12 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
     messenger?.showSnackBar(
       SnackBar(
         content: Text(
-          removed
-              ? 'Vehicle removed.'
-              : "We couldn't remove this vehicle. Please try again.",
+          removed ? t.vhRemoved : t.vhRemoveFail,
         ),
         action: removed
             ? null
             : SnackBarAction(
-                label: 'Retry',
+                label: t.vhRetry,
                 onPressed: () => _confirmRemove(vehicle),
               ),
       ),
@@ -257,8 +258,8 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
 
     if (!accepted) {
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(
-          content: Text("We couldn't remove this vehicle. Please try again."),
+        SnackBar(
+          content: Text(context.cx.vhRemoveFail),
         ),
       );
     }
@@ -273,6 +274,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -285,7 +287,7 @@ class _Header extends StatelessWidget {
               child: Semantics(
                 header: true,
                 child: Text(
-                  'My vehicles',
+                  t.vhTitle,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -299,7 +301,7 @@ class _Header extends StatelessWidget {
               TextButton.icon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add vehicle'),
+                label: Text(context.cx.vhAdd),
               ),
             ],
           ],
@@ -307,10 +309,10 @@ class _Header extends StatelessWidget {
         const SizedBox(height: AppDimensions.s4),
         Text(
           count == 0
-              ? 'Registered vehicles appear here.'
+              ? t.vhCountNone
               : count == 1
-              ? '1 registered vehicle'
-              : '$count registered vehicles',
+              ? t.vhCountOne
+              : t.vhCountMany(count),
           style: theme.textTheme.bodyMedium?.copyWith(
             color: colors.onSurfaceVariant,
           ),
@@ -371,7 +373,7 @@ class _NoVehicles extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'No vehicles added yet',
+              context.cx.vhEmptyTitle,
               style: theme.textTheme.titleSmall?.copyWith(
                 color: colors.onSurface,
                 fontWeight: FontWeight.w800,
@@ -379,8 +381,7 @@ class _NoVehicles extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.s4),
             Text(
-              'Add your first vehicle to book service and keep your workshop '
-              'activity connected to the correct car.',
+              context.cx.vhEmptyBody,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
                 height: 1.45,
@@ -392,7 +393,7 @@ class _NoVehicles extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add vehicle'),
+                label: Text(context.cx.vhAdd),
               ),
             ),
           ],
@@ -424,7 +425,7 @@ class _LoadFailure extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              "We couldn't load your vehicles",
+              context.cx.vhLoadFailTitle,
               style: theme.textTheme.titleSmall?.copyWith(
                 color: colors.onSurface,
                 fontWeight: FontWeight.w800,
@@ -432,7 +433,7 @@ class _LoadFailure extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.s4),
             Text(
-              'Please try again in a moment.',
+              context.cx.vhLoadFailBody,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
               ),
@@ -442,7 +443,7 @@ class _LoadFailure extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: FilledButton(
                 onPressed: onRetry,
-                child: const Text('Retry'),
+                child: Text(context.cx.vhRetry),
               ),
             ),
           ],
@@ -475,8 +476,7 @@ class _UnmatchedDeleteRecovery extends StatelessWidget {
       liveRegion: true,
       container: true,
       label:
-          "We couldn't remove a vehicle. "
-          'The vehicle is still in your workshop account.',
+          '${context.cx.vhDeleteFailTitle} ${context.cx.vhDeleteFailBody}',
       child: Container(
         padding: const EdgeInsets.all(AppDimensions.s14),
         decoration: BoxDecoration(
@@ -504,7 +504,7 @@ class _UnmatchedDeleteRecovery extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "We couldn't remove a vehicle.",
+                        context.cx.vhDeleteFailTitle,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colors.onSurface,
                           fontWeight: FontWeight.w700,
@@ -512,7 +512,7 @@ class _UnmatchedDeleteRecovery extends StatelessWidget {
                       ),
                       const SizedBox(height: AppDimensions.r2),
                       Text(
-                        'The vehicle is still in your workshop account.',
+                        context.cx.vhDeleteFailBody,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colors.onSurfaceVariant,
                           height: 1.35,
@@ -535,8 +535,8 @@ class _UnmatchedDeleteRecovery extends StatelessWidget {
                         : () => onRetry(operation),
                     child: Text(
                       busyId == operation.vehicleId
-                          ? 'Retrying\u2026'
-                          : 'Retry removal',
+                          ? context.cx.vhRetrying
+                          : context.cx.vhRetryRemoval,
                     ),
                   ),
                 ),

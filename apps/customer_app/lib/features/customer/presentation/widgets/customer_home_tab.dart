@@ -112,9 +112,9 @@ class CustomerHomeTab extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: AppDimensions.s48),
           child: EmptyState(
             icon: Icons.sync_problem_rounded,
-            title: "We couldn't load your information",
-            message: 'Please try again in a moment.',
-            actionLabel: 'Retry',
+            title: t.garLoadTitle,
+            message: t.garLoadBody,
+            actionLabel: t.garRetry,
             onAction: notifier.refresh,
           ),
         ),
